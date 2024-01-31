@@ -2,6 +2,9 @@ body {
     color: white;
     background-color: #202020;
     text-align: center;
+    font-family: "Comic Neue", cursive;
+    font-weight: 700;
+    font-style: normal;
 }
 
 a {
