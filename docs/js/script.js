@@ -95,7 +95,7 @@ window.addEventListener("hashchange", () => {
                 if (parseUrl.hostname !== window.location.hostname) {
                     const file = url.split("/").pop();
                     const gameId = window.location.hash.substring(1);
-                    if (gameId == "wachk-a-kass") {
+                    if (gameId == "whack-a-kass") {
                         url = `swf/${gameId}/${file}`;
                     }
                 }
