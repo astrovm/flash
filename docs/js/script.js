@@ -13,36 +13,54 @@ const gamesList = [
 ];
 
 window.RufflePlayer = window.RufflePlayer || {};
-
-function loadRuffleSWF(file) {
+const loadRuffleSWF = (file) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
     const flashContainer = document.getElementById("flash-container");
-    flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
     player.load(file);
-    const element_to_scroll_to = document.getElementById("title");
-    element_to_scroll_to.scrollIntoView();
 };
 
-window.addEventListener("load", (event) => {
+const clearElement = (id) => {
+    const element = document.getElementById(id);
+    element.innerHTML = "";
+};
+
+const scrollTo = (id) => {
+    const element = document.getElementById(id);
+    element.scrollIntoView();
+};
+
+const checkLocationHash = () => {
+    if (window.location.hash) {
+        const gameId = window.location.hash.substring(1);
+        loadRuffleSWF(`swf/${gameId}.swf`);
+    }
+};
+
+const renderGamesList = () => {
     const listContainer = document.getElementById("list-container");
-    listContainer.innerHTML = "";
 
     gamesList.forEach((game) => {
         const p = document.createElement("p");
         const a = document.createElement("a");
 
         a.href = `#${game.id}`;
-        a.onclick = () => loadRuffleSWF(`swf/${game.id}.swf`);
         a.textContent = game.name;
 
         p.appendChild(a);
         listContainer.appendChild(p);
     });
+};
 
-    if (window.location.hash) {
-        const game = window.location.hash.substring(1);
-        loadRuffleSWF(`swf/${game}.swf`);
-    };
+window.addEventListener("load", () => {
+    checkLocationHash();
+    clearElement("list-container");
+    renderGamesList();
+});
+
+window.addEventListener("hashchange", () => {
+    scrollTo("title");
+    clearElement("flash-container");
+    checkLocationHash();
 });
