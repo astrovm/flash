@@ -80,3 +80,40 @@ window.addEventListener("hashchange", () => {
     clearElement("flash-container");
     updateFlashContainer();
 });
+
+// url spoofing https://github.com/ruffle-rs/ruffle/issues/1486
+((originalFetch) => {
+    const changeUrl = (url) => {
+        const hashElement = document.querySelector(
+            `a[href="${window.location.hash}"]`
+        );
+        const gameType = hashElement.className;
+
+        switch (gameType) {
+            case "swf":
+                const parseUrl = new URL(url);
+                if (parseUrl.hostname !== window.location.hostname) {
+                    const file = url.split("/").pop();
+                    const gameId = window.location.hash.substring(1);
+                    url = `swf/${gameId}/${file}`;
+                }
+                break;
+            default:
+                break;
+        }
+        return url;
+    };
+
+    window.fetch = (...args) => {
+        let a = Array.from(args);
+        if (typeof a[0] === "string") {
+            a[0] = changeUrl(a[0]);
+        } else if (a[0] && typeof a[0].url === "string") {
+            const changedUrl = changeUrl(a[0].url);
+            if (changedUrl !== a[0].url) {
+                a[0] = changedUrl;
+            }
+        }
+        return originalFetch.apply(window, a);
+    };
+})(window.fetch);
