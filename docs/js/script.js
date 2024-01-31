@@ -1,8 +1,10 @@
 window.RufflePlayer = window.RufflePlayer || {};
-window.addEventListener("load", (event) => {
+
+function loadRuffleSWF(file) {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
-    const container = document.getElementById("flash-container");
-    container.appendChild(player);
-    player.load("swf/dirtbike.swf");
-});
+    const flashContainer = document.getElementById("flash-container");
+    flashContainer.innerHTML = ""
+    flashContainer.appendChild(player);
+    player.load(file);
+};
