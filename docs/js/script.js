@@ -6,7 +6,10 @@ const loadRuffleSWF = (gameId) => {
     player.style.height = "600px";
     const flashContainer = document.getElementById("flash-container");
     flashContainer.appendChild(player);
-    player.load(`swf/${gameId}.swf`);
+    player.load({
+        url: `swf/${gameId}/main.swf`,
+        base: `swf/${gameId}`,
+    });
 };
 
 const clearElement = (id) => {
