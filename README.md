@@ -1,1 +1,1 @@
-# flash games
+# Astro Flash Collection
