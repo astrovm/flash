@@ -7,6 +7,10 @@ body {
     font-style: normal;
 }
 
+iframe {
+    border: none;
+}
+
 a {
     color: #fff;
     text-decoration: none;
