@@ -84,24 +84,24 @@ window.addEventListener("hashchange", () => {
 // url spoofing https://github.com/ruffle-rs/ruffle/issues/1486
 ((originalFetch) => {
     const changeUrl = (url) => {
-        const hashElement = document.querySelector(
-            `a[href="${window.location.hash}"]`
-        );
-        const gameType = hashElement.className;
+        console.log(`URL spoof log: ${url}`);
 
-        switch (gameType) {
-            case "swf":
-                const parseUrl = new URL(url);
-                if (parseUrl.hostname !== window.location.hostname) {
+        const parseUrl = new URL(url);
+        if (parseUrl.hostname !== window.location.hostname) {
+            const hashElement = document.querySelector(
+                `a[href="${window.location.hash}"]`
+            );
+            const gameType = hashElement.className;
+
+            switch (gameType) {
+                case "swf":
                     const file = url.split("/").pop();
                     const gameId = window.location.hash.substring(1);
-                    if (gameId == "whack-a-kass") {
-                        url = `swf/${gameId}/${file}`;
-                    }
-                }
-                break;
-            default:
-                break;
+                    const spoofUrl = `swf/${gameId}/${file}`;
+                    return spoofUrl;
+                default:
+                    break;
+            }
         }
         return url;
     };
