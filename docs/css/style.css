@@ -7,6 +7,14 @@ body {
     font-style: normal;
 }
 
+h1 a {
+    color: #f462c6;
+}
+
+h1 a:hover {
+    text-decoration: none;
+}
+
 iframe {
     border: none;
 }
