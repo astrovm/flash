@@ -13,3 +13,4 @@
 - Captain USA
 - Bike Mania
 - Super Smash Flash
+- Whack-A-Kass
