@@ -1,1 +1,1 @@
-# Astro Flash Collection
+# Flash Collection
