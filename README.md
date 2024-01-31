@@ -8,3 +8,4 @@
 - Big Truck Adventures 2
 - Captain USA
 - Bike Mania
+- Super Smash Flash
