@@ -1,6 +1,6 @@
 body {
-    color: white;
-    background-color: #202020;
+    color: #f462c6;
+    background-color: #211f2b;
     text-align: center;
     font-family: "Comic Neue", cursive;
     font-weight: 700;
@@ -8,5 +8,5 @@ body {
 }
 
 a {
-    color: white;
+    color: #fff;
 }
