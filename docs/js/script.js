@@ -28,17 +28,19 @@ function loadRuffleSWF(file) {
 window.addEventListener("load", (event) => {
     const listContainer = document.getElementById("list-container");
 
-    gamesList.forEach((game) => {
-        const p = document.createElement("p");
+    const gameListHTML = gamesList.map((game) => {
         const a = document.createElement("a");
-
         a.href = `#${game.id}`;
         a.onclick = () => loadRuffleSWF(`swf/${game.id}.swf`);
         a.textContent = game.name;
 
+        const p = document.createElement("p");
         p.appendChild(a);
-        listContainer.appendChild(p);
+
+        return p.outerHTML;
     });
+
+    listContainer.innerHTML = gameListHTML.join("");
 
     if (window.location.hash) {
         const game = window.location.hash.substring(1);
