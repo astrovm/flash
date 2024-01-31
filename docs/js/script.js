@@ -2,6 +2,8 @@ window.RufflePlayer = window.RufflePlayer || {};
 const loadRuffleSWF = (file) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
+    player.style.width = "825px";
+    player.style.height = "600px";
     const flashContainer = document.getElementById("flash-container");
     flashContainer.appendChild(player);
     player.load(file);
