@@ -162,25 +162,30 @@ window.addEventListener("hashchange", () => {
     };
 })(window.fetch);
 
-const updateOfflineModePreference = () => {
+const updateOfflineModePreference = async () => {
     const offlineModeToggle = document.getElementById("offline-mode-toggle");
     localStorage.setItem("offlineModeEnabled", offlineModeToggle.checked);
 
     if (offlineModeToggle.checked) {
-        navigator.serviceWorker
-            .register("sw.js")
-            .catch((error) =>
-                console.error("Service worker registration failed:", error)
-            );
+        try {
+            const registration = await navigator.serviceWorker.register("sw.js");
+        } catch (error) {
+            console.error("Service worker registration failed:", error);
+        }
     } else {
-        navigator.serviceWorker
-            .getRegistrations()
-            .then((registrations) => {
-                registrations.forEach((registration) => registration.unregister());
-            })
-            .catch((error) =>
-                console.error("Service worker unregistration failed:", error)
-            );
+        try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+                const cachesKeys = await caches.keys();
+                for (const cacheKey of cachesKeys) {
+                    await caches.delete(cacheKey);
+                }
+            }
+            console.log("Caches removed successfully");
+        } catch (error) {
+            console.error("Service worker unregistration failed:", error);
+        }
     }
 };
 
