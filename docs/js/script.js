@@ -1,8 +1,54 @@
+const gamesList = {
+    "inside-the-firewall": {
+        width: "725px",
+        iframe: "https://4st.li/insidethefirewall/"
+    },
+    "la-isla-de-lo-mono": {
+        width: "725px",
+    },
+    "dirt-bike": {
+        width: "750px",
+    },
+    "dirt-bike-2": {
+        width: "750px",
+    },
+    "dark-cut": {
+        width: "825px",
+    },
+    "simpsons-wrecking-ball": {
+        width: "800px",
+    },
+    "knd-numbuh-generator": {
+        width: "875px",
+    },
+    "knd-operation-startup": {
+        width: "900px",
+    },
+    "big-truck-adventures": {
+        width: "750px",
+    },
+    "big-truck-adventures-2": {
+        width: "750px",
+    },
+    "captain-usa": {
+        width: "800px",
+    },
+    "bike-mania": {
+        width: "700px",
+    },
+    "super-smash-flash": {
+        width: "1050px",
+    },
+    "whack-a-kass": {
+        width: "600px",
+    },
+};
+
 window.RufflePlayer = window.RufflePlayer || {};
 const loadRuffleSWF = (gameId) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
-    player.style.width = "825px";
+    player.style.width = gamesList[gameId]["width"];
     player.style.height = "600px";
     const flashContainer = document.getElementById("flash-container");
     flashContainer.appendChild(player);
@@ -34,16 +80,12 @@ const updateDocumentTitle = () => {
     }
 };
 
-const iframeGames = {
-    "inside-the-firewall": "https://4st.li/insidethefirewall/",
-};
-
 const loadIframe = (gameId) => {
     const player = document.createElement("iframe");
-    player.width = "825px";
+    player.width = gamesList[gameId]["width"];
     player.height = "600px";
     player.allow = "fullscreen";
-    player.src = iframeGames[gameId];
+    player.src = gamesList[gameId]["iframe"];
     const flashContainer = document.getElementById("flash-container");
     flashContainer.appendChild(player);
 };
