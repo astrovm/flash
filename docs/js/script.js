@@ -1,7 +1,6 @@
 const gamesList = {
     "inside-the-firewall": {
         width: "725px",
-        iframe: "https://4st.li/insidethefirewall/"
     },
     "la-isla-de-lo-mono": {
         width: "725px",
@@ -85,7 +84,7 @@ const loadIframe = (gameId) => {
     player.width = gamesList[gameId]["width"];
     player.height = "600px";
     player.allow = "fullscreen";
-    player.src = gamesList[gameId]["iframe"];
+    player.src = `iframe/${gameId}`;
     const flashContainer = document.getElementById("flash-container");
     flashContainer.appendChild(player);
 };

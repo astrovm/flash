@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'wasm-unsafe-eval'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+        script-src 'self' 'wasm-unsafe-eval';
+        style-src 'self' 'unsafe-inline';" />
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <title>Astro Flash Collection</title>
     <script src="js/ruffle/ruffle.js?v=1706779272"></script>
-    <script src="js/script.js?v=1706779272"></script>
+    <script src="js/script.js?v=1706783429"></script>
     <link rel="stylesheet" href="css/style.css?v=1706781988" />
 </head>
 
