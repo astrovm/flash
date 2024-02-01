@@ -53,7 +53,7 @@ const loadRuffleSWF = (gameId) => {
     flashContainer.appendChild(player);
     player.load({
         url: `swf/${gameId}/main.swf`,
-        base: `swf/${gameId}`,
+        base: `swf/${gameId}/`,
     });
 };
 
@@ -84,7 +84,7 @@ const loadIframe = (gameId) => {
     player.width = gamesList[gameId]["width"];
     player.height = "600px";
     player.allow = "fullscreen";
-    player.src = `iframe/${gameId}`;
+    player.src = `iframe/${gameId}/`;
     const flashContainer = document.getElementById("flash-container");
     flashContainer.appendChild(player);
 };
