@@ -178,11 +178,12 @@ const updateOfflineModePreference = async () => {
             for (const registration of registrations) {
                 await registration.unregister();
                 const cachesKeys = await caches.keys();
+
                 for (const cacheKey of cachesKeys) {
                     await caches.delete(cacheKey);
+                    console.log("Cache removed successfully:", cacheKey);
                 }
             }
-            console.log("Caches removed successfully");
         } catch (error) {
             console.error("Service worker unregistration failed:", error);
         }

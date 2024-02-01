@@ -20,3 +20,9 @@
 ```bash
 python -m http.server -d docs
 ```
+
+## Regenerate service worker
+
+```bash
+workbox generateSW workbox-config.js
+```
