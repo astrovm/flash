@@ -195,7 +195,7 @@ const offlineModeService = () => {
 
         updateOfflineModePreference();
     } else {
-        const offlineModeDiv = document.getElementById("offline-mode");
-        offlineModeDiv.innerHTML = "Offline mode is not supported in your browser.";
+        const offlineModeLabel = document.getElementById("offline-mode-label");
+        offlineModeLabel.innerHTML = "Offline mode is not supported in your browser.";
     }
 };
