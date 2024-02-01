@@ -14,3 +14,9 @@
 - Bike Mania
 - Super Smash Flash
 - Whack-A-Kass
+
+## Local test
+
+```bash
+python -m http.server -d docs
+```
