@@ -113,6 +113,7 @@ const updateFlashContainer = () => {
 window.addEventListener("load", () => {
     updateDocumentTitle();
     updateFlashContainer();
+    offlineModeService();
 });
 
 window.addEventListener("hashchange", () => {
@@ -161,6 +162,40 @@ window.addEventListener("hashchange", () => {
     };
 })(window.fetch);
 
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
-}
+const updateOfflineModePreference = () => {
+    const offlineModeToggle = document.getElementById("offline-mode-toggle");
+    localStorage.setItem("offlineModeEnabled", offlineModeToggle.checked);
+
+    if (offlineModeToggle.checked) {
+        navigator.serviceWorker
+            .register("sw.js")
+            .catch((error) =>
+                console.error("Service worker registration failed:", error)
+            );
+    } else {
+        navigator.serviceWorker
+            .getRegistrations()
+            .then((registrations) => {
+                registrations.forEach((registration) => registration.unregister());
+            })
+            .catch((error) =>
+                console.error("Service worker unregistration failed:", error)
+            );
+    }
+};
+
+const offlineModeService = () => {
+    if ("serviceWorker" in navigator) {
+        const offlineModeToggle = document.getElementById("offline-mode-toggle");
+        const isOfflineModeEnabled =
+            localStorage.getItem("offlineModeEnabled") === "true";
+
+        offlineModeToggle.checked = isOfflineModeEnabled;
+        offlineModeToggle.addEventListener("change", updateOfflineModePreference);
+
+        updateOfflineModePreference();
+    } else {
+        const offlineModeDiv = document.getElementById("offline-mode");
+        offlineModeDiv.innerHTML = "Offline mode is not supported in your browser.";
+    }
+};
