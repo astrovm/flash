@@ -1,10 +1,15 @@
+@font-face {
+    font-family: "Comic Neue";
+    src: url("ComicNeue-Bold.ttf");
+    font-weight: 700;
+    font-style: normal;
+}
+
 body {
     color: #f462c6;
     background-color: #211f2b;
     text-align: center;
-    font-family: "Comic Neue", cursive;
-    font-weight: 700;
-    font-style: normal;
+    font-family: "Comic Neue";
 }
 
 h1 a {
