@@ -36,3 +36,7 @@ a:hover {
 #flash-container {
     --splash-screen-background: none;
 }
+
+h6 {
+    color: #fff;
+}

@@ -14,6 +14,7 @@
 - La Isla De Lo Mono
 - Metal Slug Brutal
 - Portal: The Flash Version
+- Stunt Dirt Bike
 - Super Smash Flash
 - The Simpsons Movie: Wrecking Ball
 - Ultimate Flash Sonic

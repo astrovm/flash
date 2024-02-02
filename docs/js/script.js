@@ -54,6 +54,9 @@ const gamesList = {
     "whack-a-kass": {
         type: "swf",
     },
+    "stunt-dirt-bike": {
+        type: "swf",
+    },
 };
 
 window.RufflePlayer = window.RufflePlayer || {};
@@ -212,6 +215,8 @@ const updateOfflineModePreference = async () => {
                     await caches.delete(cacheKey);
                     console.log("Cache removed successfully:", cacheKey);
                 }
+
+                window.location.reload(true);
             }
         } catch (error) {
             console.error("Service worker unregistration failed:", error);
