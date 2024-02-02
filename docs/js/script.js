@@ -1,36 +1,8 @@
 const gamesList = {
-    "inside-the-firewall": {
-        width: "750px",
-        type: "iframe",
-    },
-    "la-isla-de-lo-mono": {
-        type: "swf",
-    },
-    "dirt-bike": {
-        type: "swf",
-    },
-    "dirt-bike-2": {
-        type: "swf",
-    },
-    "dark-cut": {
-        type: "swf",
-    },
-    "simpsons-wrecking-ball": {
-        type: "swf",
-    },
-    "knd-numbuh-generator": {
-        type: "swf",
-    },
-    "knd-operation-startup": {
-        type: "swf",
-    },
     "big-truck-adventures": {
         type: "swf",
     },
     "big-truck-adventures-2": {
-        type: "swf",
-    },
-    "captain-usa": {
         type: "swf",
     },
     "bike-mania": {
@@ -39,13 +11,44 @@ const gamesList = {
     "bike-mania-2": {
         type: "swf",
     },
-    "super-smash-flash": {
+    "captain-usa": {
         type: "swf",
     },
-    "whack-a-kass": {
+    "dark-cut": {
+        type: "swf",
+    },
+    "dirt-bike": {
+        type: "swf",
+    },
+    "dirt-bike-2": {
+        type: "swf",
+    },
+    "inside-the-firewall": {
+        width: "750px",
+        type: "iframe",
+    },
+    "knd-numbuh-generator": {
+        type: "swf",
+    },
+    "knd-operation-startup": {
+        type: "swf",
+    },
+    "la-isla-de-lo-mono": {
         type: "swf",
     },
     "metal-slug-brutal": {
+        type: "swf",
+    },
+    "simpsons-wrecking-ball": {
+        type: "swf",
+    },
+    "super-smash-flash": {
+        type: "swf",
+    },
+    "ultimate-flash-sonic": {
+        type: "swf",
+    },
+    "whack-a-kass": {
         type: "swf",
     },
 };
