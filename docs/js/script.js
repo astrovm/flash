@@ -24,7 +24,7 @@ const gamesList = {
         type: "swf",
     },
     "inside-the-firewall": {
-        width: "750px",
+        width: 750,
         type: "iframe",
     },
     "knd-numbuh-generator": {
@@ -63,11 +63,19 @@ window.RufflePlayer = window.RufflePlayer || {};
 const loadRuffleSWF = (gameId) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
-    player.style.height = "600px";
-    player.style.width = gamesList[gameId]["width"] || player.style.height;
+
+    const maxWidth = 800;
+    const maxHeight = 600;
+    player.style.width = "100%";
+    player.style.maxWidth = `${maxWidth}px`;
+    player.style.height = "auto";
+    player.style.maxHeight = `${maxHeight}px`;
+    player.style.aspectRatio = `${maxWidth} / ${maxHeight}`;
+
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
+
     player.load({
         url: `swf/${gameId}/main.swf`,
         base: `swf/${gameId}/`,
@@ -76,21 +84,30 @@ const loadRuffleSWF = (gameId) => {
         openUrlMode: "confirm",
         showSwfDownload: true,
     });
-    if (!gamesList[gameId]["width"]) {
-        player.addEventListener("loadedmetadata", () => {
-            originalWidth = player.metadata.width;
-            originalHeight = player.metadata.height;
-            player.style.width = `${(originalWidth / originalHeight) * 600}px`;
-        });
-    }
+
+    player.addEventListener("loadedmetadata", () => {
+        const originalWidth = player.metadata.width;
+        const originalHeight = player.metadata.height;
+        const originalMaxWidth = (originalWidth / originalHeight) * maxHeight;
+        player.style.maxWidth = `${originalMaxWidth}px`;
+        player.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
+    });
 };
 
 const loadIframe = (gameId) => {
     const player = document.createElement("iframe");
-    player.width = gamesList[gameId]["width"];
-    player.height = "600px";
+
+    const maxWidth = gamesList[gameId]["width"];
+    const maxHeight = 600;
+    player.style.width = "100%";
+    player.style.maxWidth = `${maxWidth}px`;
+    player.style.height = "auto";
+    player.style.maxHeight = `${maxHeight}px`;
+    player.style.aspectRatio = `${maxWidth} / ${maxHeight}`;
+
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
+
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
