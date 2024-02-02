@@ -1,62 +1,51 @@
 const gamesList = {
     "inside-the-firewall": {
-        width: "725px",
+        width: "750px",
         type: "iframe",
     },
     "la-isla-de-lo-mono": {
-        width: "725px",
         type: "swf",
     },
     "dirt-bike": {
-        width: "750px",
         type: "swf",
     },
     "dirt-bike-2": {
-        width: "750px",
         type: "swf",
     },
     "dark-cut": {
-        width: "825px",
         type: "swf",
     },
     "simpsons-wrecking-ball": {
-        width: "800px",
         type: "swf",
     },
     "knd-numbuh-generator": {
-        width: "875px",
         type: "swf",
     },
     "knd-operation-startup": {
-        width: "900px",
         type: "swf",
     },
     "big-truck-adventures": {
-        width: "750px",
         type: "swf",
     },
     "big-truck-adventures-2": {
-        width: "750px",
         type: "swf",
     },
     "captain-usa": {
-        width: "800px",
         type: "swf",
     },
     "bike-mania": {
-        width: "700px",
         type: "swf",
     },
     "bike-mania-2": {
-        width: "750px",
         type: "swf",
     },
     "super-smash-flash": {
-        width: "1050px",
         type: "swf",
     },
     "whack-a-kass": {
-        width: "600px",
+        type: "swf",
+    },
+    "metal-slug-brutal": {
         type: "swf",
     },
 };
@@ -65,17 +54,27 @@ window.RufflePlayer = window.RufflePlayer || {};
 const loadRuffleSWF = (gameId) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
-    player.style.width = gamesList[gameId]["width"];
     player.style.height = "600px";
+    player.style.width = gamesList[gameId]["width"] || player.style.height;
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
     player.load({
         url: `swf/${gameId}/main.swf`,
         base: `swf/${gameId}/`,
+        scale: "showAll",
+        forceScale: true,
+        quality: "best",
         openUrlMode: "confirm",
         showSwfDownload: true,
     });
+    if (!gamesList[gameId]["width"]) {
+        player.addEventListener("loadedmetadata", () => {
+            originalWidth = player.metadata.width;
+            originalHeight = player.metadata.height;
+            player.style.width = `${(originalWidth / originalHeight) * 600}px`;
+        });
+    }
 };
 
 const loadIframe = (gameId) => {

@@ -15,6 +15,7 @@
 - Bike Mania 2
 - Super Smash Flash
 - Whack-A-Kass
+- Metal Slug Brutal
 
 ## Local test
 
