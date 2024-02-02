@@ -39,6 +39,9 @@ const gamesList = {
     "metal-slug-brutal": {
         type: "swf",
     },
+    "portal-flash": {
+        type: "swf",
+    },
     "simpsons-wrecking-ball": {
         type: "swf",
     },
