@@ -68,6 +68,7 @@ const loadRuffleSWF = (gameId) => {
     player.style.width = gamesList[gameId]["width"];
     player.style.height = "600px";
     const flashContainer = document.getElementById("flash-container");
+    flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
     player.load({
         url: `swf/${gameId}/main.swf`,
@@ -77,9 +78,15 @@ const loadRuffleSWF = (gameId) => {
     });
 };
 
-const clearElement = (id) => {
-    const element = document.getElementById(id);
-    element.innerHTML = "";
+const loadIframe = (gameId) => {
+    const player = document.createElement("iframe");
+    player.width = gamesList[gameId]["width"];
+    player.height = "600px";
+    player.allow = "fullscreen";
+    player.src = `iframe/${gameId}/`;
+    const flashContainer = document.getElementById("flash-container");
+    flashContainer.innerHTML = "";
+    flashContainer.appendChild(player);
 };
 
 const scrollTo = (id) => {
@@ -88,7 +95,7 @@ const scrollTo = (id) => {
 };
 
 const updateDocumentTitle = () => {
-    if (window.location.hash) {
+    if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         const hashElement = document.querySelector(
             `a[href="${window.location.hash}"]`
         );
@@ -99,18 +106,8 @@ const updateDocumentTitle = () => {
     }
 };
 
-const loadIframe = (gameId) => {
-    const player = document.createElement("iframe");
-    player.width = gamesList[gameId]["width"];
-    player.height = "600px";
-    player.allow = "fullscreen";
-    player.src = `iframe/${gameId}/`;
-    const flashContainer = document.getElementById("flash-container");
-    flashContainer.appendChild(player);
-};
-
 const updateFlashContainer = () => {
-    if (window.location.hash) {
+    if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         const gameId = window.location.hash.substring(1);
         const gameType = gamesList[gameId]["type"];
 
@@ -124,20 +121,34 @@ const updateFlashContainer = () => {
             default:
                 break;
         }
+    } else {
+        const flashContainer = document.getElementById("flash-container");
+        flashContainer.innerHTML = "";
+    }
+};
+
+const moveGameLink = () => {
+    if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
+        const gameLink = document.querySelector(
+            `a[href="${window.location.hash}"]`
+        );
+        const gameList = document.getElementById("list-container");
+        gameList.prepend(gameLink);
     }
 };
 
 window.addEventListener("load", () => {
     updateDocumentTitle();
     updateFlashContainer();
+    moveGameLink();
     offlineModeService();
 });
 
 window.addEventListener("hashchange", () => {
     updateDocumentTitle();
     scrollTo("title");
-    clearElement("flash-container");
     updateFlashContainer();
+    moveGameLink();
 });
 
 // url spoofing https://github.com/ruffle-rs/ruffle/issues/1486
