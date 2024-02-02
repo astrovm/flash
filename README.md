@@ -1,6 +1,6 @@
 # Flash Collection
 
-- Inside the firewall
+- Inside The Firewall
 - La Isla De Lo Mono
 - Dirt Bike
 - Dirt Bike 2
@@ -12,6 +12,7 @@
 - Big Truck Adventures 2
 - Captain USA
 - Bike Mania
+- Bike Mania 2
 - Super Smash Flash
 - Whack-A-Kass
 

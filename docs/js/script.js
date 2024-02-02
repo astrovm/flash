@@ -35,6 +35,9 @@ const gamesList = {
     "bike-mania": {
         width: "700px",
     },
+    "bike-mania-2": {
+        width: "750px",
+    },
     "super-smash-flash": {
         width: "1050px",
     },
