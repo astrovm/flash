@@ -1,3 +1,5 @@
+"use strict";
+
 const gamesList = {
     "big-truck-adventures": {
         type: "swf",
@@ -198,7 +200,7 @@ window.addEventListener("hashchange", () => {
     };
 
     window.fetch = (...args) => {
-        let a = Array.from(args);
+        const a = Array.from(args);
         if (typeof a[0] === "string") {
             a[0] = changeUrl(a[0]);
         } else if (a[0] && typeof a[0].url === "string") {
