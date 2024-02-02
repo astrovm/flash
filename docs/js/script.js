@@ -1,48 +1,63 @@
 const gamesList = {
     "inside-the-firewall": {
         width: "725px",
+        type: "iframe",
     },
     "la-isla-de-lo-mono": {
         width: "725px",
+        type: "swf",
     },
     "dirt-bike": {
         width: "750px",
+        type: "swf",
     },
     "dirt-bike-2": {
         width: "750px",
+        type: "swf",
     },
     "dark-cut": {
         width: "825px",
+        type: "swf",
     },
     "simpsons-wrecking-ball": {
         width: "800px",
+        type: "swf",
     },
     "knd-numbuh-generator": {
         width: "875px",
+        type: "swf",
     },
     "knd-operation-startup": {
         width: "900px",
+        type: "swf",
     },
     "big-truck-adventures": {
         width: "750px",
+        type: "swf",
     },
     "big-truck-adventures-2": {
         width: "750px",
+        type: "swf",
     },
     "captain-usa": {
         width: "800px",
+        type: "swf",
     },
     "bike-mania": {
         width: "700px",
+        type: "swf",
     },
     "bike-mania-2": {
         width: "750px",
+        type: "swf",
     },
     "super-smash-flash": {
         width: "1050px",
+        type: "swf",
     },
     "whack-a-kass": {
         width: "600px",
+        type: "swf",
     },
 };
 
@@ -96,11 +111,8 @@ const loadIframe = (gameId) => {
 
 const updateFlashContainer = () => {
     if (window.location.hash) {
-        const hashElement = document.querySelector(
-            `a[href="${window.location.hash}"]`
-        );
-        const gameType = hashElement.className;
         const gameId = window.location.hash.substring(1);
+        const gameType = gamesList[gameId]["type"];
 
         switch (gameType) {
             case "swf":
@@ -135,15 +147,12 @@ window.addEventListener("hashchange", () => {
 
         const parseUrl = new URL(url);
         if (parseUrl.hostname !== window.location.hostname) {
-            const hashElement = document.querySelector(
-                `a[href="${window.location.hash}"]`
-            );
-            const gameType = hashElement.className;
+            const gameId = window.location.hash.substring(1);
+            const gameType = gamesList[gameId]["type"];
 
             switch (gameType) {
                 case "swf":
                     const file = url.split("/").pop();
-                    const gameId = window.location.hash.substring(1);
                     const spoofUrl = `swf/${gameId}/${file}`;
                     return spoofUrl;
                 default:
@@ -207,6 +216,7 @@ const offlineModeService = () => {
         updateOfflineModePreference();
     } else {
         const offlineModeLabel = document.getElementById("offline-mode-label");
-        offlineModeLabel.innerHTML = "Offline mode is not supported in your browser.";
+        offlineModeLabel.innerHTML =
+            "Offline mode is not supported in your browser.";
     }
 };
