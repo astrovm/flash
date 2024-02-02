@@ -54,6 +54,8 @@ const loadRuffleSWF = (gameId) => {
     player.load({
         url: `swf/${gameId}/main.swf`,
         base: `swf/${gameId}/`,
+        openUrlMode: "confirm",
+        showSwfDownload: true,
     });
 };
 
