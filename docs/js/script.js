@@ -91,12 +91,14 @@ const gamesList = {
 const setResolution = (player, aspectRatio) => {
     const absoluteHeight = 820;
     const absoluteWidth = absoluteHeight * aspectRatio;
-    const scrollBar = window.innerWidth - document.documentElement.clientWidth;
-    const relativeWidth = 100 - (scrollBar / window.innerWidth) * 100;
-    player.style.width = "100%";
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollBarHeight = window.innerHeight - document.documentElement.clientHeight;
+    const relativeWidth = 100 - (scrollBarWidth / window.innerWidth) * 100;
+    const relativeHeight = 100 - (scrollBarHeight / window.innerHeight) * 100;
+    player.style.width = `${relativeWidth}vw`
     player.style.height = `${relativeWidth / aspectRatio}vw`;
-    player.style.maxWidth = `min(${100 * aspectRatio}vh, ${absoluteWidth}px)`;
-    player.style.maxHeight = `min(100vh, ${absoluteHeight}px)`;
+    player.style.maxWidth = `min(${relativeHeight * aspectRatio}vh, ${absoluteWidth}px)`;
+    player.style.maxHeight = `min(${relativeHeight}vh, ${absoluteHeight}px)`;
 };
 
 const scaleGame = (player) => {
