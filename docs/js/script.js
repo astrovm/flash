@@ -88,25 +88,43 @@ const gamesList = {
     },
 };
 
-const setResolution = (player, aspectRatio = 1.25) => {
-    const height = 820;
-    const width = height * aspectRatio;
-    const scrollBarSize = window.innerWidth - document.documentElement.clientWidth;
+const setResolution = (player, aspectRatio) => {
+    const absoluteHeight = 820;
+    const absoluteWidth = absoluteHeight * aspectRatio;
+    const scrollBar = window.innerWidth - document.documentElement.clientWidth;
+    const relativeWidth = 100 - (scrollBar / window.innerWidth) * 100;
     player.style.width = "100%";
-    player.style.height = `calc(${100 / aspectRatio}vw - ${scrollBarSize}px)`;
-    player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
-    player.style.maxHeight = `min(100vh, ${height}px)`;
+    player.style.height = `${relativeWidth / aspectRatio}vw`;
+    player.style.maxWidth = `min(${100 * aspectRatio}vh, ${absoluteWidth}px)`;
+    player.style.maxHeight = `min(100vh, ${absoluteHeight}px)`;
 };
+
+const scaleGame = (player) => {
+    const gameId = window.location.hash.substring(1);
+    const width = player.metadata?.width || 5;
+    const height = player.metadata?.height || 4;
+    const aspectRatio = gamesList[gameId].aspectRatio || width / height;
+    setResolution(player, aspectRatio);
+};
+
+window.addEventListener("resize", () => {
+    const player = document.getElementById("player");
+    if (player) {
+        scaleGame(player);
+    }
+});
 
 window.RufflePlayer = window.RufflePlayer || {};
 const loadRuffleSWF = (gameId) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
-    setResolution(player);
+    player.setAttribute("id", "player");
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
+
+    scaleGame(player);
 
     player.load({
         url: `swf/${gameId}/main.swf`,
@@ -118,23 +136,21 @@ const loadRuffleSWF = (gameId) => {
     });
 
     player.addEventListener("loadedmetadata", () => {
-        const swfWidth = player.metadata.width;
-        const swfHeight = player.metadata.height;
-        const aspectRatio = swfWidth / swfHeight;
-        setResolution(player, aspectRatio);
+        scaleGame(player);
     });
 };
 
 const loadIframe = (gameId) => {
     const player = document.createElement("iframe");
-    const aspectRatio = gamesList[gameId]["aspectRatio"];
-    setResolution(player, aspectRatio);
+    player.setAttribute("id", "player");
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
+
+    scaleGame(player);
 };
 
 const scrollTo = (id) => {
@@ -157,7 +173,7 @@ const updateDocumentTitle = () => {
 const updateFlashContainer = () => {
     if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         const gameId = window.location.hash.substring(1);
-        const gameType = gamesList[gameId]["type"];
+        const gameType = gamesList[gameId].type;
 
         switch (gameType) {
             case "swf":
@@ -207,7 +223,7 @@ window.addEventListener("hashchange", () => {
         const parseUrl = new URL(url);
         if (parseUrl.hostname !== window.location.hostname) {
             const gameId = window.location.hash.substring(1);
-            const gameType = gamesList[gameId]["type"];
+            const gameType = gamesList[gameId].type;
 
             switch (gameType) {
                 case "swf":

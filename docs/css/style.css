@@ -5,12 +5,17 @@
     font-style: normal;
 }
 
+html,
+body {
+    margin: 0;
+    height: 100vh;
+}
+
 body {
     color: #f462c6;
     background-color: #211f2b;
     text-align: center;
     font-family: "Comic Neue";
-    margin: 0;
 }
 
 h1 a {
