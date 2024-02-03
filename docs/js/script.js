@@ -83,6 +83,9 @@ const gamesList = {
     "bike-mania-arena-5": {
         type: "swf",
     },
+    "eds-candy-machine": {
+        type: "swf",
+    },
 };
 
 const setResolution = (player, aspectRatio = 1.25) => {
