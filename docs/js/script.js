@@ -64,18 +64,20 @@ const gamesList = {
     },
 };
 
-window.RufflePlayer = window.RufflePlayer || {};
-const loadRuffleSWF = (gameId) => {
-    const ruffle = window.RufflePlayer.newest();
-    const player = ruffle.createPlayer();
-
-    const aspectRatio = 4 / 3;
+const setResolution = (player, aspectRatio = 4 / 3) => {
     const height = 820;
     const width = height * aspectRatio;
     player.style.width = "100vw";
     player.style.height = `${100 / aspectRatio}vw`;
     player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
     player.style.maxHeight = `min(100vh, ${height}px)`;
+};
+
+window.RufflePlayer = window.RufflePlayer || {};
+const loadRuffleSWF = (gameId) => {
+    const ruffle = window.RufflePlayer.newest();
+    const player = ruffle.createPlayer();
+    setResolution(player);
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
@@ -94,23 +96,14 @@ const loadRuffleSWF = (gameId) => {
         const swfWidth = player.metadata.width;
         const swfHeight = player.metadata.height;
         const aspectRatio = swfWidth / swfHeight;
-        const width = height * aspectRatio;
-        player.style.height = `${100 / aspectRatio}vw`;
-        player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
+        setResolution(player, aspectRatio);
     });
 };
 
 const loadIframe = (gameId) => {
     const player = document.createElement("iframe");
-
     const aspectRatio = gamesList[gameId]["aspectRatio"];
-    const height = 820;
-    const width = height * aspectRatio;
-    player.style.width = "100vw";
-    player.style.height = `${100 / aspectRatio}vw`;
-    player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
-    player.style.maxHeight = `min(100vh, ${height}px)`;
-
+    setResolution(player, aspectRatio);
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
 
