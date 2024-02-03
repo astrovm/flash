@@ -5,6 +5,13 @@
 - Bike Mania
 - Bike Mania 2
 - Bike Mania 3: On Ice
+- Bike Mania 4: Micro Office
+- Bike Mania 5: Military
+- Bike Mania Arena
+- Bike Mania Arena 2
+- Bike Mania Arena 3: On Ice
+- Bike Mania Arena 4: Micro Office
+- Bike Mania Arena 5: Military
 - Captain USA
 - Dark Cut
 - Dirt Bike

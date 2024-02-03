@@ -62,6 +62,27 @@ const gamesList = {
     "stunt-dirt-bike": {
         type: "swf",
     },
+    "bike-mania-4": {
+        type: "swf",
+    },
+    "bike-mania-5": {
+        type: "swf",
+    },
+    "bike-mania-arena": {
+        type: "swf",
+    },
+    "bike-mania-arena-2": {
+        type: "swf",
+    },
+    "bike-mania-arena-3": {
+        type: "swf",
+    },
+    "bike-mania-arena-4": {
+        type: "swf",
+    },
+    "bike-mania-arena-5": {
+        type: "swf",
+    },
 };
 
 const setResolution = (player, aspectRatio = 1.25) => {
