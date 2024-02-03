@@ -29,7 +29,7 @@ const gamesList = {
         type: "swf",
     },
     "inside-the-firewall": {
-        width: 750,
+        aspectRatio: 1.25,
         type: "iframe",
     },
     "knd-numbuh-generator": {
@@ -69,13 +69,13 @@ const loadRuffleSWF = (gameId) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
 
-    const maxWidth = 800;
-    const maxHeight = 600;
-    player.style.width = "100%";
-    player.style.maxWidth = `${maxWidth}px`;
-    player.style.height = "auto";
-    player.style.maxHeight = `${maxHeight}px`;
-    player.style.aspectRatio = `${maxWidth} / ${maxHeight}`;
+    const aspectRatio = 4 / 3;
+    const height = 820;
+    const width = height * aspectRatio;
+    player.style.width = "100vw";
+    player.style.height = `${100 / aspectRatio}vw`;
+    player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
+    player.style.maxHeight = `min(100vh, ${height}px)`;
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
@@ -91,24 +91,25 @@ const loadRuffleSWF = (gameId) => {
     });
 
     player.addEventListener("loadedmetadata", () => {
-        const originalWidth = player.metadata.width;
-        const originalHeight = player.metadata.height;
-        const originalMaxWidth = (originalWidth / originalHeight) * maxHeight;
-        player.style.maxWidth = `${originalMaxWidth}px`;
-        player.style.aspectRatio = `${originalWidth} / ${originalHeight}`;
+        const swfWidth = player.metadata.width;
+        const swfHeight = player.metadata.height;
+        const aspectRatio = swfWidth / swfHeight;
+        const width = height * aspectRatio;
+        player.style.height = `${100 / aspectRatio}vw`;
+        player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
     });
 };
 
 const loadIframe = (gameId) => {
     const player = document.createElement("iframe");
 
-    const maxWidth = gamesList[gameId]["width"];
-    const maxHeight = 600;
-    player.style.width = "100%";
-    player.style.maxWidth = `${maxWidth}px`;
-    player.style.height = "auto";
-    player.style.maxHeight = `${maxHeight}px`;
-    player.style.aspectRatio = `${maxWidth} / ${maxHeight}`;
+    const aspectRatio = gamesList[gameId]["aspectRatio"];
+    const height = 820;
+    const width = height * aspectRatio;
+    player.style.width = "100vw";
+    player.style.height = `${100 / aspectRatio}vw`;
+    player.style.maxWidth = `min(${100 * aspectRatio}vh, ${width}px)`;
+    player.style.maxHeight = `min(100vh, ${height}px)`;
 
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;

@@ -11,6 +11,7 @@ body {
     text-align: center;
     font-family: "Comic Neue";
     margin: 0;
+    overflow-x: hidden;
 }
 
 h1 a {
