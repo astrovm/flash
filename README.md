@@ -4,6 +4,7 @@
 - Big Truck Adventures 2
 - Bike Mania
 - Bike Mania 2
+- Bike Mania 3: On Ice
 - Captain USA
 - Dark Cut
 - Dirt Bike

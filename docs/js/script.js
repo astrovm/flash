@@ -13,6 +13,9 @@ const gamesList = {
     "bike-mania-2": {
         type: "swf",
     },
+    "bike-mania-3": {
+        type: "swf",
+    },
     "captain-usa": {
         type: "swf",
     },
