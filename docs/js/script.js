@@ -86,6 +86,9 @@ const gamesList = {
     "eds-candy-machine": {
         type: "swf",
     },
+    "dexter-runaway-robot": {
+        type: "swf",
+    },
 };
 
 const setResolution = (player, aspectRatio) => {
