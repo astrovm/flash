@@ -154,12 +154,11 @@ const loadRuffleSWF = (gameId) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
     player.setAttribute("id", "player");
+    scaleGame(player);
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
-
-    scaleGame(player);
 
     player.load({
         url: `swf/${gameId}/main.swf`,
@@ -182,12 +181,11 @@ const loadIframe = (gameId) => {
     player.setAttribute("id", "player");
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
+    scaleGame(player);
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
     flashContainer.appendChild(player);
-
-    scaleGame(player);
 };
 
 const scrollTo = (id) => {
