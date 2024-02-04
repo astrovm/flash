@@ -34,7 +34,7 @@ const gamesList = {
         type: "swf",
     },
     "inside-the-firewall": {
-        aspectRatio: 1.33,
+        aspectRatio: 480 / 360,
         type: "iframe",
     },
     "knd-numbuh-generator": {
@@ -136,9 +136,9 @@ const setResolution = (player, aspectRatio) => {
 
 const scaleGame = (player) => {
     const gameId = window.location.hash.substring(1);
-    const width = player.metadata?.width || 5;
-    const height = player.metadata?.height || 4;
-    const aspectRatio = gamesList[gameId].aspectRatio || width / height;
+    const width = player.metadata?.width;
+    const height = player.metadata?.height;
+    const aspectRatio = gamesList[gameId].aspectRatio || width / height || 1.25;
     setResolution(player, aspectRatio);
 };
 
