@@ -9,15 +9,15 @@ const gamesList = {
     },
     "bike-mania": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-2": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-3": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "captain-usa": {
         type: "swf",
@@ -67,31 +67,31 @@ const gamesList = {
     },
     "bike-mania-4": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-5": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-arena": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-arena-2": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-arena-3": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-arena-4": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "bike-mania-arena-5": {
         type: "swf",
-        frameRate: 240
+        frameRate: 60
     },
     "eds-candy-machine": {
         type: "swf",
