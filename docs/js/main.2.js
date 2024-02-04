@@ -289,7 +289,7 @@ const updateOfflineModePreference = async () => {
 
     if (offlineModeToggle.checked) {
         try {
-            const registration = await navigator.serviceWorker.register("sw.js");
+            const registration = await navigator.serviceWorker.register("js/sw.js");
         } catch (error) {
             console.error("Service worker registration failed:", error);
         }
