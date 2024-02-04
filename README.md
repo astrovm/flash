@@ -17,13 +17,19 @@
 - Dexter's Laboratory: Runaway Robot
 - Dirt Bike
 - Dirt Bike 2
+- Do Not Press The Red Button
 - Ed, Edd n Eddy's Candy Machine Deluxe
 - Inside The Firewall
 - KND Numbuh Generator
 - KND Operation S.T.A.R.T.U.P.
 - La Isla De Lo Mono
+- Learn To Fly
+- Learn To Fly 2
+- Learn To Fly 3
 - Metal Slug Brutal
 - Portal: The Flash Version
+- Riddle School
+- Riddle School 2
 - Stunt Dirt Bike
 - Super Smash Flash
 - The Simpsons Movie: Wrecking Ball

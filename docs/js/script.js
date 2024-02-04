@@ -99,6 +99,24 @@ const gamesList = {
     "dexter-runaway-robot": {
         type: "swf",
     },
+    "do-not-press": {
+        type: "swf",
+    },
+    "learn-to-fly": {
+        type: "swf",
+    },
+    "learn-to-fly-2": {
+        type: "swf",
+    },
+    "learn-to-fly-3": {
+        type: "swf",
+    },
+    "riddle-school": {
+        type: "swf",
+    },
+    "riddle-school-2": {
+        type: "swf",
+    },
 };
 
 const setResolution = (player, aspectRatio) => {
