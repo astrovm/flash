@@ -121,6 +121,10 @@ const gamesList = {
     "riddle-school-2": {
         type: "swf",
     },
+    "sugar-sugar": {
+        type: "swf",
+        spoofUrl: "https://www.friv.com/z/games/sugarsugar",
+    },
 };
 
 const setResolution = (player, aspectRatio) => {
@@ -161,8 +165,12 @@ const loadRuffleSWF = (gameId) => {
     flashContainer.appendChild(player);
 
     player.load({
-        url: `swf/${gameId}/main.swf`,
-        base: `swf/${gameId}/`,
+        url: gamesList[gameId].spoofUrl
+            ? `${gamesList[gameId].spoofUrl}/main.swf`
+            : `swf/${gameId}/main.swf`,
+        base: gamesList[gameId].spoofUrl
+            ? `${gamesList[gameId].spoofUrl}/`
+            : `swf/${gameId}/`,
         letterbox: "on",
         scale: "showAll",
         forceScale: true,
@@ -272,17 +280,25 @@ window.addEventListener("hashchange", () => {
         return url;
     };
 
-    window.fetch = (...args) => {
-        const a = Array.from(args);
-        if (typeof a[0] === "string") {
-            a[0] = changeUrl(a[0]);
-        } else if (a[0] && typeof a[0].url === "string") {
-            const changedUrl = changeUrl(a[0].url);
-            if (changedUrl !== a[0].url) {
-                a[0] = changedUrl;
+    window.fetch = async (...args) => {
+        const argsArray = Array.from(args);
+        const originalUrl = argsArray[0]?.url;
+        if (typeof originalUrl === "string") {
+            const changedUrl = changeUrl(originalUrl);
+            if (changedUrl !== originalUrl) {
+                argsArray[0] = changedUrl;
             }
         }
-        return originalFetch.apply(window, a);
+
+        const response = await originalFetch.apply(window, argsArray);
+        const modifiedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        });
+
+        Object.defineProperty(modifiedResponse, "url", { value: originalUrl });
+        return modifiedResponse;
     };
 })(window.fetch);
 
