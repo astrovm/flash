@@ -10,6 +10,7 @@ A curated archive of Flash games
 - Fast CDN
 - Flawless screen adaptation
 - No requests to external resources
+- Automatic sitelock bypass
 
 ## Local test
 
