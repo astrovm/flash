@@ -259,48 +259,41 @@ window.addEventListener("hashchange", () => {
 });
 
 // url spoofing https://github.com/ruffle-rs/ruffle/issues/1486
-((originalFetch) => {
-    const changeUrl = (url) => {
-        if (!url) {
-            return url;
-        }
+const changeUrl = (request) => {
+    if (!request.url) return request;
 
-        const parseUrl = new URL(url);
-        if (parseUrl.hostname !== window.location.hostname) {
-            const gameId = window.location.hash.substring(1);
-            const gameType = gamesList[gameId].type;
-
-            switch (gameType) {
-                case "swf":
-                    const file = url.split("?")[0].split("/").pop();
-                    const spoofUrl = `swf/${gameId}/${file}`;
-                    return spoofUrl;
-                default:
-                    break;
-            }
+    const parsedUrl = new URL(request.url);
+    if (parsedUrl.hostname !== window.location.hostname) {
+        const gameId = window.location.hash.substring(1);
+        const gameType = gamesList[gameId]?.type;
+        switch (gameType) {
+            case "swf":
+                const file = request.url.split("?")[0].split("/").pop();
+                return `swf/${gameId}/${file}`;
+            default:
+                break;
         }
-        return url;
-    };
+    }
+    return request;
+};
 
-    window.fetch = async (...args) => {
-        const argsArray = Array.from(args);
-        const originalUrl = argsArray[0]?.url;
-        const changedUrl = changeUrl(originalUrl);
-        if (changedUrl !== originalUrl) {
-            console.log(`URL spoofed: ${originalUrl} => ${changedUrl}`);
-            argsArray[0] = changedUrl;
-            const response = await originalFetch.apply(window, argsArray);
-            const modifiedResponse = new Response(response.body, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers,
-            });
-            Object.defineProperty(modifiedResponse, "url", { value: originalUrl });
-            return modifiedResponse;
-        }
-        return originalFetch.apply(window, argsArray);
-    };
-})(window.fetch);
+const interceptResponse = async (response, url) => {
+    Object.defineProperty(await response, "url", { value: url });
+    return response;
+};
+
+const { fetch: originalFetch } = window;
+window.fetch = async (...args) => {
+    const originalRequest = args[0];
+    args[0] = changeUrl(originalRequest);
+
+    const response = originalFetch.apply(window, args);
+    if (args[0] !== originalRequest) {
+        console.log(`URL spoofed: ${originalRequest.url} => ${args[0]}`);
+        return interceptResponse(response, originalRequest.url);
+    }
+    return response;
+};
 
 const updateOfflineModePreference = async () => {
     const offlineModeToggle = document.getElementById("offline-mode-toggle");

@@ -14,7 +14,7 @@ A curated archive of Flash games
 ## Local test
 
 ```bash
-python -m http.server -d docs
+python -m http.server
 ```
 
 ## Regenerate service worker
