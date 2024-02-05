@@ -287,6 +287,7 @@ window.addEventListener("hashchange", () => {
         const originalUrl = argsArray[0]?.url;
         const changedUrl = changeUrl(originalUrl);
         if (changedUrl !== originalUrl) {
+            console.log(`URL spoofed: ${originalUrl} => ${changedUrl}`);
             argsArray[0] = changedUrl;
             const response = await originalFetch.apply(window, argsArray);
             const modifiedResponse = new Response(response.body, {
@@ -295,7 +296,6 @@ window.addEventListener("hashchange", () => {
                 headers: response.headers,
             });
             Object.defineProperty(modifiedResponse, "url", { value: originalUrl });
-            console.log(`URL spoofed: ${originalUrl} => ${changedUrl}`);
             return modifiedResponse;
         }
         return originalFetch.apply(window, argsArray);
