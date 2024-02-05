@@ -261,7 +261,9 @@ window.addEventListener("hashchange", () => {
 // url spoofing https://github.com/ruffle-rs/ruffle/issues/1486
 ((originalFetch) => {
     const changeUrl = (url) => {
-        console.log(`URL spoof log: ${url}`);
+        if (!url) {
+            return url;
+        }
 
         const parseUrl = new URL(url);
         if (parseUrl.hostname !== window.location.hostname) {
@@ -283,22 +285,20 @@ window.addEventListener("hashchange", () => {
     window.fetch = async (...args) => {
         const argsArray = Array.from(args);
         const originalUrl = argsArray[0]?.url;
-        if (typeof originalUrl === "string") {
-            const changedUrl = changeUrl(originalUrl);
-            if (changedUrl !== originalUrl) {
-                argsArray[0] = changedUrl;
-            }
+        const changedUrl = changeUrl(originalUrl);
+        if (changedUrl !== originalUrl) {
+            argsArray[0] = changedUrl;
+            const response = await originalFetch.apply(window, argsArray);
+            const modifiedResponse = new Response(response.body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+            });
+            Object.defineProperty(modifiedResponse, "url", { value: originalUrl });
+            console.log(`URL spoofed: ${originalUrl} => ${changedUrl}`);
+            return modifiedResponse;
         }
-
-        const response = await originalFetch.apply(window, argsArray);
-        const modifiedResponse = new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-        });
-
-        Object.defineProperty(modifiedResponse, "url", { value: originalUrl });
-        return modifiedResponse;
+        return originalFetch.apply(window, argsArray);
     };
 })(window.fetch);
 
