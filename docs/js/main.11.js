@@ -277,8 +277,8 @@ const changeUrl = (request) => {
     return request;
 };
 
-const interceptResponse = async (response, url) => {
-    Object.defineProperty(await response, "url", { value: url });
+const interceptResponse = (response, request) => {
+    Object.defineProperty(response, "url", { value: request.url });
     return response;
 };
 
@@ -287,10 +287,10 @@ window.fetch = async (...args) => {
     const originalRequest = args[0];
     args[0] = changeUrl(originalRequest);
 
-    const response = originalFetch.apply(window, args);
+    const response = await originalFetch(...args);
     if (args[0] !== originalRequest) {
         console.log(`URL spoofed: ${originalRequest.url} => ${args[0]}`);
-        return interceptResponse(response, originalRequest.url);
+        return interceptResponse(response, originalRequest);
     }
     return response;
 };
