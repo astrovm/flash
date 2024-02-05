@@ -272,7 +272,7 @@ window.addEventListener("hashchange", () => {
 
             switch (gameType) {
                 case "swf":
-                    const file = url.split("/").pop();
+                    const file = url.split("?")[0].split("/").pop();
                     const spoofUrl = `swf/${gameId}/${file}`;
                     return spoofUrl;
                 default:
