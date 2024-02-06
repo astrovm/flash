@@ -48,6 +48,10 @@ const gamesList = {
         type: "swf",
         frameRate: 30,
     },
+    "knd-operation-startup-final": {
+        type: "swf",
+        frameRate: 30,
+    },
     "la-isla-de-lo-mono": {
         type: "swf",
     },
