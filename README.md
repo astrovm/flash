@@ -11,15 +11,33 @@ A curated archive of Flash games
 - Flawless screen adaptation
 - No requests to external resources
 - Automatic sitelock bypass
+- Game categories
+- Favorites system
+- Recently played tracking
+- Fullscreen support
+- Search functionality
 
-## Local test
+## Development
+
+### Local testing
 
 ```bash
-python -m http.server
+python tools/dev_server.py
 ```
 
-## Regenerate service worker
+### Deployment
+
+The project includes deployment scripts that handle:
+- Updating Ruffle to the latest version
+- Versioning CSS and JS files
+- Generating service worker for offline mode
+
+To deploy:
 
 ```bash
-workbox generateSW workbox-config.js
+# Install dependencies
+npm install workbox-cli --save-dev
+
+# Run deployment script
+python tools/deploy.py
 ```

@@ -6,4 +6,5 @@ module.exports = {
 	swDest: "docs/sw.js",
 	maximumFileSizeToCacheInBytes: 25000000,
 	ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
+	sourcemap: false
 };
