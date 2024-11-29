@@ -533,7 +533,8 @@ const populateGameCategories = () => {
             if (gameStats[game.id]) {
                 const playCount = document.createElement('span');
                 playCount.className = 'play-count';
-                playCount.textContent = `${gameStats[game.id].plays} plays`;
+                const plays = gameStats[game.id].plays;
+                playCount.textContent = `${plays} ${plays === 1 ? 'play' : 'plays'}`;
                 gameTitle.appendChild(playCount);
             }
 

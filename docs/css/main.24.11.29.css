@@ -176,11 +176,6 @@ a:hover {
     border-radius: 8px;
     padding: 1rem;
     text-align: left;
-    transition: transform 0.2s;
-}
-
-.category:hover {
-    transform: translateY(-2px);
 }
 
 .category h2 {
