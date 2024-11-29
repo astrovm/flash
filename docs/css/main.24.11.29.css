@@ -85,17 +85,20 @@ a:hover {
     margin: 0 auto 2rem auto;
     background: var(--overlay-background);
     border-radius: 8px;
-    padding: 1rem;
 }
 
 .game-controls {
     position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
+    top: 20px;
+    right: 20px;
     z-index: 1000;
     display: flex;
     gap: 0.625rem;
     transition: all 0.3s ease;
+}
+
+.game-controls.controls-top {
+    top: -50px;
 }
 
 .control-btn {

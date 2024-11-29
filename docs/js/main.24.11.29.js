@@ -197,6 +197,7 @@ window.addEventListener("resize", () => {
     const player = document.getElementById("player");
     if (player) {
         scaleGame(player);
+        checkControlsOverlap(player);
     }
 });
 
@@ -415,6 +416,11 @@ const updateFlashContainer = () => {
             default:
                 break;
         }
+
+        // Scroll to flash container after a short delay to ensure content is loaded
+        setTimeout(() => {
+            flashContainer.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     } else {
         // Hide container when no game is selected
         flashContainer.innerHTML = ''; // Clear container contents
@@ -716,6 +722,8 @@ const checkControlsOverlap = (player) => {
 
     const playerRect = player.getBoundingClientRect();
     const controlsRect = controls.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const availableWidth = document.documentElement.clientWidth;
 
     // Check if controls are overlapping with the actual game content
     const isOverlapping = !(
@@ -725,13 +733,20 @@ const checkControlsOverlap = (player) => {
         playerRect.top > controlsRect.bottom
     );
 
-    // Move controls if they overlap
-    if (isOverlapping) {
-        controls.style.right = '20px';
-        controls.style.top = '-50px';  // Move above the player
+    // Check if there's enough space at the sides
+    const controlsWidth = controlsRect.width;
+    const safeSpace = controlsWidth + 100; // Add 100px buffer for comfortable spacing
+
+    // Check for both current width and potential width after DevTools close
+    const needsVerticalSpace = availableWidth < playerRect.width + safeSpace ||
+        windowWidth < playerRect.width + safeSpace;
+
+    if (isOverlapping || needsVerticalSpace) {
+        controls.classList.add('controls-top');
+        document.body.classList.add('controls-above-title');
     } else {
-        controls.style.right = '20px';
-        controls.style.top = '20px';   // Default position
+        controls.classList.remove('controls-top');
+        document.body.classList.remove('controls-above-title');
     }
 };
 
