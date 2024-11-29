@@ -299,6 +299,7 @@ const loadRuffleSWF = (gameId) => {
 };
 
 const loadIframe = (gameId) => {
+    trackGamePlay(gameId);
     showLoader();
     const player = document.createElement("iframe");
     player.setAttribute("id", "player");
@@ -449,7 +450,7 @@ const populateGameCategories = () => {
     // Add Recently Played category
     const recentlyPlayed = Object.entries(gameStats)
         .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
-        .slice(0, 5) // Show last 5 played games
+        .slice(0, 8) // Show last 8 played games
         .map(([gameId]) => gameId);
 
     if (recentlyPlayed.length > 0) {
@@ -723,8 +724,10 @@ const checkControlsOverlap = (player) => {
     const playerRect = player.getBoundingClientRect();
     const controlsRect = controls.getBoundingClientRect();
     const windowWidth = window.innerWidth;
-    const availableWidth = document.documentElement.clientWidth;
 
+    // Calculate space available on the right side of the player
+    const spaceOnRight = windowWidth - playerRect.right;
+    
     // Check if controls are overlapping with the actual game content
     const isOverlapping = !(
         playerRect.right < controlsRect.left ||
@@ -733,21 +736,17 @@ const checkControlsOverlap = (player) => {
         playerRect.top > controlsRect.bottom
     );
 
-    // Check if there's enough space at the sides
-    const controlsWidth = controlsRect.width;
-    const safeSpace = controlsWidth + 100; // Add 100px buffer for comfortable spacing
+    // Remove all layout classes first
+    controls.classList.remove('controls-top', 'controls-horizontal');
+    document.body.classList.remove('controls-above-title');
 
-    // Check for both current width and potential width after DevTools close
-    const needsVerticalSpace = availableWidth < playerRect.width + safeSpace ||
-        windowWidth < playerRect.width + safeSpace;
-
-    if (isOverlapping || needsVerticalSpace) {
+    if (isOverlapping || spaceOnRight < 100) { // If severely constrained or overlapping
+        // Move to top and make horizontal
         controls.classList.add('controls-top');
+        controls.classList.add('controls-horizontal');
         document.body.classList.add('controls-above-title');
-    } else {
-        controls.classList.remove('controls-top');
-        document.body.classList.remove('controls-above-title');
     }
+    // Otherwise, leave as vertical (default state)
 };
 
 const getStoredVolume = () => {

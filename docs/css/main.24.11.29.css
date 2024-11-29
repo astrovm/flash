@@ -93,12 +93,23 @@ a:hover {
     right: 20px;
     z-index: 1000;
     display: flex;
+    flex-direction: column;
     gap: 0.625rem;
     transition: all 0.3s ease;
+    background: var(--overlay-background);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.game-controls.controls-horizontal {
+    flex-direction: row;
+    padding: 5px 10px;
 }
 
 .game-controls.controls-top {
     top: -50px;
+    right: 20px;
+    flex-direction: row;
 }
 
 .control-btn {
@@ -258,7 +269,7 @@ footer h3 {
 }
 
 .volume-slider {
-    width: 5rem;
+    width: 100px;
     height: 0.5rem;
     appearance: none;
     background: rgba(255, 255, 255, 0.2);
@@ -266,6 +277,10 @@ footer h3 {
     outline: none;
     margin: auto 0;
     cursor: pointer;
+}
+
+.controls-horizontal .volume-slider {
+    width: 5rem;
 }
 
 .volume-slider::-webkit-slider-thumb {
