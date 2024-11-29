@@ -189,7 +189,7 @@ const scaleGame = (player) => {
     const height = player.metadata?.height;
     const aspectRatio = gamesList[gameId].aspectRatio || width / height || 1.25;
     setResolution(player, aspectRatio);
-    
+
     setTimeout(() => checkControlsOverlap(player), 100);
 };
 
@@ -216,36 +216,55 @@ const loadRuffleSWF = (gameId) => {
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
-    
+
     // Create controls container
     const controlsContainer = document.createElement('div');
     controlsContainer.className = 'game-controls';
-    
+
     // Add fullscreen button
     const fullscreenBtn = document.createElement('button');
     fullscreenBtn.className = 'control-btn fullscreen-btn';
     fullscreenBtn.innerHTML = '⛶';
     fullscreenBtn.onclick = () => toggleFullscreen(player);
     controlsContainer.appendChild(fullscreenBtn);
-    
+
     // Add favorite button
     const favoriteBtn = document.createElement('button');
     favoriteBtn.className = 'control-btn favorite-btn';
     favoriteBtn.innerHTML = '★';
     favoriteBtn.dataset.game = gameId;
     favoriteBtn.onclick = () => toggleFavorite(gameId);
-    // Set initial state
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     if (favorites.includes(gameId)) {
         favoriteBtn.classList.add('active');
     }
     controlsContainer.appendChild(favoriteBtn);
 
+    // Add volume controls
+    const volume = getStoredVolume();
+    const isMuted = localStorage.getItem('isMuted') === 'true';
+
+    const volumeBtn = document.createElement('button');
+    volumeBtn.className = 'control-btn volume-btn';
+    volumeBtn.innerHTML = isMuted ? '🔈' : '🔊';
+    volumeBtn.onclick = toggleMute;
+
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.className = 'volume-slider';
+    volumeSlider.min = '0';
+    volumeSlider.max = '100';
+    volumeSlider.value = isMuted ? 0 : volume;
+    volumeSlider.onchange = (e) => updateVolume(e.target.value);
+
+    controlsContainer.appendChild(volumeBtn);
+    controlsContainer.appendChild(volumeSlider);
+
     flashContainer.appendChild(controlsContainer);
     flashContainer.appendChild(player);
 
     try {
-        player.load({
+        const config = {
             url: gamesList[gameId].spoofUrl
                 ? `${gamesList[gameId].spoofUrl}/main.swf`
                 : `swf/${gameId}/main.swf`,
@@ -258,11 +277,21 @@ const loadRuffleSWF = (gameId) => {
             openUrlMode: "confirm",
             showSwfDownload: true,
             frameRate: gamesList[gameId].frameRate,
-        });
+            volume: isMuted ? 0 : volume / 100,
+            allowScriptAccess: false
+        };
 
         player.addEventListener("loadedmetadata", () => {
             scaleGame(player);
+            player.volume = isMuted ? 0 : volume / 100;
         });
+
+        player.addEventListener("load", () => {
+            player.volume = isMuted ? 0 : volume / 100;
+        });
+
+        player.load(config);
+
     } catch (error) {
         handleGameError(error, gameId);
     }
@@ -278,18 +307,18 @@ const loadIframe = (gameId) => {
 
     const flashContainer = document.getElementById("flash-container");
     flashContainer.innerHTML = "";
-    
+
     // Create controls container
     const controlsContainer = document.createElement('div');
     controlsContainer.className = 'game-controls';
-    
+
     // Add fullscreen button
     const fullscreenBtn = document.createElement('button');
     fullscreenBtn.className = 'control-btn fullscreen-btn';
     fullscreenBtn.innerHTML = '⛶';
     fullscreenBtn.onclick = () => toggleFullscreen(player);
     controlsContainer.appendChild(fullscreenBtn);
-    
+
     // Add favorite button
     const favoriteBtn = document.createElement('button');
     favoriteBtn.className = 'control-btn favorite-btn';
@@ -303,8 +332,36 @@ const loadIframe = (gameId) => {
     }
     controlsContainer.appendChild(favoriteBtn);
 
+    // Add volume controls
+    const isMuted = localStorage.getItem('isMuted') === 'true';
+    const volume = getStoredVolume();
+
+    const volumeBtn = document.createElement('button');
+    volumeBtn.className = 'control-btn volume-btn';
+    volumeBtn.innerHTML = isMuted ? '🔈' : '🔊';
+    volumeBtn.onclick = toggleMute;
+
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.className = 'volume-slider';
+    volumeSlider.min = '0';
+    volumeSlider.max = '100';
+    volumeSlider.value = isMuted ? 0 : volume;
+    volumeSlider.onchange = (e) => updateVolume(e.target.value);
+
+    controlsContainer.appendChild(volumeBtn);
+    controlsContainer.appendChild(volumeSlider);
+
     flashContainer.appendChild(controlsContainer);
     flashContainer.appendChild(player);
+
+    // Set initial volume after iframe loads
+    player.onload = () => {
+        player.contentWindow.postMessage({
+            type: 'setVolume',
+            volume: isMuted ? 0 : volume / 100
+        }, '*');
+    };
 };
 
 const scrollTo = (id) => {
@@ -315,7 +372,7 @@ const scrollTo = (id) => {
 const updateDocumentTitle = () => {
     if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         const gameId = window.location.hash.substring(1);
-        const gameTitle = gameId.split('-').map(word => 
+        const gameTitle = gameId.split('-').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
         document.title = gameTitle;
@@ -328,7 +385,7 @@ const updateDocumentTitle = () => {
 const updateFlashContainer = () => {
     const flashContainer = document.getElementById("flash-container");
     const player = document.getElementById("player");
-    
+
     // Clean up existing player if any
     if (player) {
         if (player instanceof HTMLIFrameElement) {
@@ -341,7 +398,7 @@ const updateFlashContainer = () => {
             }
         }
     }
-    
+
     if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         // Show container when a game is selected
         flashContainer.style.display = "block";
@@ -370,7 +427,7 @@ const setupSearch = () => {
     searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
         const gameLinks = document.querySelectorAll('#list-container a');
-        
+
         gameLinks.forEach(link => {
             const gameName = link.textContent.toLowerCase();
             link.style.display = gameName.includes(searchTerm) ? '' : 'none';
@@ -382,27 +439,27 @@ const populateGameCategories = () => {
     const gamesByCategory = {};
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{}');
-    
+
     // Add Recently Played category
     const recentlyPlayed = Object.entries(gameStats)
         .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
         .slice(0, 5) // Show last 5 played games
         .map(([gameId]) => gameId);
-    
+
     if (recentlyPlayed.length > 0) {
         gamesByCategory['Recently Played'] = [];
         recentlyPlayed.forEach(gameId => {
             if (gamesList[gameId]) {
                 gamesByCategory['Recently Played'].push({
                     id: gameId,
-                    title: gameId.split('-').map(word => 
+                    title: gameId.split('-').map(word =>
                         word.charAt(0).toUpperCase() + word.slice(1)
                     ).join(' ')
                 });
             }
         });
     }
-    
+
     // Add Favorites category if there are any
     if (favorites.length > 0) {
         gamesByCategory['Favorites'] = [];
@@ -410,14 +467,14 @@ const populateGameCategories = () => {
             if (gamesList[gameId]) {
                 gamesByCategory['Favorites'].push({
                     id: gameId,
-                    title: gameId.split('-').map(word => 
+                    title: gameId.split('-').map(word =>
                         word.charAt(0).toUpperCase() + word.slice(1)
                     ).join(' ')
                 });
             }
         });
     }
-    
+
     // Sort other games into categories
     Object.entries(gamesList).forEach(([gameId, game]) => {
         const category = game.category || 'Other';
@@ -426,7 +483,7 @@ const populateGameCategories = () => {
         }
         gamesByCategory[category].push({
             id: gameId,
-            title: gameId.split('-').map(word => 
+            title: gameId.split('-').map(word =>
                 word.charAt(0).toUpperCase() + word.slice(1)
             ).join(' ')
         });
@@ -449,7 +506,7 @@ const populateGameCategories = () => {
         const categoryDiv = document.createElement('div');
         categoryDiv.className = 'category';
         categoryDiv.id = `${category.toLowerCase().replace(/\s+/g, '-')}-games`;
-        
+
         const categoryTitle = document.createElement('h2');
         categoryTitle.textContent = category;
         categoryDiv.appendChild(categoryTitle);
@@ -459,12 +516,12 @@ const populateGameCategories = () => {
             gameLink.href = `#${game.id}`;
             const gameTitle = document.createElement('h3');
             gameTitle.textContent = game.title;
-            
+
             // Highlight current game
             if (window.location.hash === `#${game.id}`) {
                 gameLink.classList.add('current-game');
             }
-            
+
             // Add play count if available
             if (gameStats[game.id]) {
                 const playCount = document.createElement('span');
@@ -472,7 +529,7 @@ const populateGameCategories = () => {
                 playCount.textContent = `${gameStats[game.id].plays} plays`;
                 gameTitle.appendChild(playCount);
             }
-            
+
             gameLink.appendChild(gameTitle);
             categoryDiv.appendChild(gameLink);
         });
@@ -595,7 +652,7 @@ const addFullscreenButton = (player) => {
     fullscreenBtn.className = 'fullscreen-btn';
     fullscreenBtn.innerHTML = '⛶';
     fullscreenBtn.onclick = () => toggleFullscreen(player);
-    
+
     const container = document.getElementById('flash-container');
     container.appendChild(fullscreenBtn);
 };
@@ -603,21 +660,21 @@ const addFullscreenButton = (player) => {
 const toggleFavorite = (gameId) => {
     let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     const index = favorites.indexOf(gameId);
-    
+
     if (index === -1) {
         favorites.push(gameId);
     } else {
         favorites.splice(index, 1);
     }
-    
+
     localStorage.setItem('favorites', JSON.stringify(favorites));
-    
+
     // Update favorite button state
     const favoriteBtn = document.querySelector(`.favorite-btn[data-game="${gameId}"]`);
     if (favoriteBtn) {
         favoriteBtn.classList.toggle('active');
     }
-    
+
     // Refresh categories to update favorites section
     populateGameCategories();
 };
@@ -639,17 +696,17 @@ const retryLoad = (gameId) => {
 
 const trackGamePlay = (gameId) => {
     const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{}');
-    
+
     if (!gameStats[gameId]) {
         gameStats[gameId] = {
             plays: 0,
             lastPlayed: null
         };
     }
-    
+
     gameStats[gameId].plays += 1;
     gameStats[gameId].lastPlayed = Date.now();
-    
+
     localStorage.setItem('gameStats', JSON.stringify(gameStats));
 };
 
@@ -677,3 +734,98 @@ const checkControlsOverlap = (player) => {
         controls.style.top = '20px';   // Default position
     }
 };
+
+const getStoredVolume = () => {
+    if (localStorage.getItem('isMuted') === 'true') {
+        return 0;
+    }
+    const storedVolume = localStorage.getItem('volume');
+    return storedVolume ? parseInt(storedVolume) : 100;
+};
+
+const updateVolume = (value) => {
+    const player = document.getElementById('player');
+    const volumeBtn = document.querySelector('.volume-btn');
+    if (!player || !volumeBtn) return;
+
+    // If volume is 0, treat as muted but remember previous volume
+    if (parseInt(value) === 0) {
+        localStorage.setItem('isMuted', 'true');
+        volumeBtn.innerHTML = '🔈';
+    } else {
+        localStorage.setItem('isMuted', 'false');
+        localStorage.setItem('previousVolume', value);
+        volumeBtn.innerHTML = '🔊';
+    }
+
+    localStorage.setItem('volume', value);
+
+    // Handle volume for both iframe and regular players
+    if (player instanceof HTMLIFrameElement) {
+        // Post message to iframe to update volume
+        player.contentWindow.postMessage({
+            type: 'setVolume',
+            volume: value / 100
+        }, '*');
+    } else {
+        player.volume = value / 100;
+    }
+};
+
+const toggleMute = () => {
+    const player = document.getElementById('player');
+    const volumeBtn = document.querySelector('.volume-btn');
+    const volumeSlider = document.querySelector('.volume-slider');
+    if (!player || !volumeBtn || !volumeSlider) return;
+
+    const isMuted = localStorage.getItem('isMuted') === 'true';
+
+    if (isMuted) {
+        // Unmuting - restore to previous volume
+        const previousVolume = localStorage.getItem('previousVolume');
+        const volume = previousVolume ? parseInt(previousVolume) : 100;
+        localStorage.setItem('isMuted', 'false');
+        localStorage.setItem('volume', volume);
+
+        if (player instanceof HTMLIFrameElement) {
+            player.contentWindow.postMessage({
+                type: 'setVolume',
+                volume: volume / 100
+            }, '*');
+        } else {
+            player.volume = volume / 100;
+        }
+
+        volumeBtn.innerHTML = '🔊';
+        volumeSlider.value = volume;
+    } else {
+        // Muting - store current volume before setting to 0
+        const currentVolume = volumeSlider.value;
+        if (currentVolume > 0) {
+            localStorage.setItem('previousVolume', currentVolume);
+        }
+        localStorage.setItem('isMuted', 'true');
+        localStorage.setItem('volume', '0');
+
+        if (player instanceof HTMLIFrameElement) {
+            player.contentWindow.postMessage({
+                type: 'setVolume',
+                volume: 0
+            }, '*');
+        } else {
+            player.volume = 0;
+        }
+
+        volumeBtn.innerHTML = '🔈';
+        volumeSlider.value = 0;
+    }
+};
+
+// Add message event listener to handle iframe responses
+window.addEventListener('message', (event) => {
+    // You can add validation here if needed
+    if (event.data.type === 'volumeUpdate') {
+        // Handle any volume update confirmations from iframe if needed
+        console.log('Volume update confirmed by iframe:', event.data.volume);
+    }
+});

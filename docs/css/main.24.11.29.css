@@ -4,6 +4,15 @@
         url("ComicNeue-Bold.woff2") format("woff2");
     font-weight: 700;
     font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --primary-color: #f462c6;
+    --background-color: #211f2b;
+    --text-color: #ffffff;
+    --overlay-background: rgba(0, 0, 0, 0.2);
+    --hover-background: rgba(244, 98, 198, 0.1);
 }
 
 html,
@@ -11,12 +20,12 @@ body {
     margin: 0;
     width: 100%;
     min-height: 100vh;
-    background-color: #211f2b;
+    background-color: var(--background-color);
 }
 
 body {
     font-size: 1rem;
-    color: #f462c6;
+    color: var(--primary-color);
     text-align: center;
     font-family: "Comic Neue", "Comic Sans MS", "Comic Sans", cursive, sans-serif;
     font-weight: 700;
@@ -29,7 +38,7 @@ h1 {
 }
 
 h1 a {
-    color: #f462c6;
+    color: var(--primary-color);
 }
 
 h1 a:hover {
@@ -38,7 +47,7 @@ h1 a:hover {
 
 h2 {
     font-size: 1.5rem;
-    color: #f462c6;
+    color: var(--primary-color);
     margin: 0.5rem 0;
 }
 
@@ -50,7 +59,7 @@ h3 {
 
 h6 {
     font-size: 0.75rem;
-    color: #ffffff;
+    color: var(--text-color);
     margin: 0.5rem 0;
 }
 
@@ -59,13 +68,13 @@ iframe {
 }
 
 a {
-    color: #ffffff;
+    color: var(--text-color);
     text-decoration: none;
     transition: color 0.2s;
 }
 
 a:hover {
-    color: #f462c6;
+    color: var(--primary-color);
     text-decoration: none;
 }
 
@@ -74,24 +83,24 @@ a:hover {
     position: relative;
     max-width: 1600px;
     margin: 0 auto 2rem auto;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-background);
     border-radius: 8px;
     padding: 1rem;
 }
 
 .game-controls {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 1.25rem;
+    right: 1.25rem;
     z-index: 1000;
     display: flex;
-    gap: 10px;
+    gap: 0.625rem;
     transition: all 0.3s ease;
 }
 
 .control-btn {
-    background: rgba(0, 0, 0, 0.4);
-    color: white;
+    background: var(--overlay-background);
+    color: var(--text-color);
     border: none;
     border-radius: 4px;
     padding: 8px 12px;
@@ -101,13 +110,13 @@ a:hover {
 }
 
 .control-btn:hover {
-    background: rgba(244, 98, 198, 0.6);
+    background: var(--hover-background);
     transform: scale(1.1);
 }
 
 .favorite-btn.active {
     color: gold;
-    background: rgba(244, 98, 198, 0.6);
+    background: var(--hover-background);
 }
 
 #search-container {
@@ -119,10 +128,10 @@ a:hover {
 #game-search {
     width: 100%;
     padding: 12px;
-    border: 2px solid rgba(244, 98, 198, 0.3);
+    border: 2px solid var(--primary-color);
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    color: #ffffff;
+    background: var(--overlay-background);
+    color: var(--text-color);
     font-family: inherit;
     font-size: 1rem;
     transition: all 0.2s;
@@ -134,9 +143,9 @@ a:hover {
 
 #game-search:focus {
     outline: none;
-    border-color: #f462c6;
-    background: rgba(0, 0, 0, 0.3);
-    box-shadow: 0 0 10px rgba(244, 98, 198, 0.2);
+    border-color: var(--primary-color);
+    background: var(--overlay-background);
+    box-shadow: 0 0 10px var(--primary-color);
 }
 
 #list-container {
@@ -149,7 +158,7 @@ a:hover {
 }
 
 .category {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-background);
     border-radius: 8px;
     padding: 1rem;
     text-align: left;
@@ -164,7 +173,7 @@ a:hover {
     text-align: center;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid rgba(244, 98, 198, 0.3);
+    border-bottom: 2px solid var(--primary-color);
 }
 
 .category a {
@@ -176,7 +185,7 @@ a:hover {
 }
 
 .category a:hover {
-    background: rgba(244, 98, 198, 0.1);
+    background: var(--hover-background);
     transform: translateX(5px);
 }
 
@@ -204,8 +213,8 @@ a:hover {
 .error-container button {
     margin-top: 10px;
     padding: 8px 16px;
-    background: rgba(244, 98, 198, 0.8);
-    color: white;
+    background: var(--hover-background);
+    color: var(--text-color);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -213,7 +222,7 @@ a:hover {
 }
 
 .error-container button:hover {
-    background: #f462c6;
+    background: var(--primary-color);
     transform: scale(1.05);
 }
 
@@ -221,14 +230,14 @@ a:hover {
     margin: 2rem auto;
     padding: 1rem;
     max-width: 300px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-background);
     border-radius: 8px;
 }
 
 footer {
     margin-top: 2rem;
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-background);
 }
 
 footer h3 {
@@ -236,11 +245,49 @@ footer h3 {
 }
 
 .current-game {
-    background: rgba(244, 98, 198, 0.2);
-    border-left: 3px solid #f462c6;
+    background: var(--hover-background);
+    border-left: 3px solid var(--primary-color);
 }
 
 .current-game:hover {
     transform: none;
-    background: rgba(244, 98, 198, 0.3);
+    background: var(--hover-background);
+}
+
+.volume-slider {
+    width: 5rem;
+    height: 0.5rem;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0.25rem;
+    outline: none;
+    margin: auto 0;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.volume-slider:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.volume-btn {
+    font-size: 16px;
+    padding: 8px 10px;
 }

@@ -323,5 +323,27 @@
     };
     run().catch(handleError);
   </script>
+  <script>
+    // Handle volume control messages from parent window
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'setVolume') {
+        try {
+          // Set volume for Scratch audio engine
+          if (window.Scratch && window.Scratch.audioEngine) {
+            const audioEngine = window.Scratch.audioEngine;
+            audioEngine.inputNode.gain.value = event.data.volume;
+            
+            // Confirm volume change to parent
+            window.parent.postMessage({
+              type: 'volumeUpdate',
+              volume: event.data.volume
+            }, '*');
+          }
+        } catch (error) {
+          console.error('Error setting volume:', error);
+        }
+      }
+    });
+  </script>
 </body>
 </html>
