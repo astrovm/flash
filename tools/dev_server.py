@@ -18,5 +18,5 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     server_address = ('', 8000)
     httpd = HTTPServer(server_address, NoCacheHandler)
-    print("Server running on http://0.0.0.0:8000/")
+    print("Server running on http://localhost:8000/")
     httpd.serve_forever() 
