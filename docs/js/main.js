@@ -1,7 +1,7 @@
 "use strict";
 
 // Constants
-const MAX_STORED_GAMES = 3;
+const MAX_STORED_GAMES = 8;
 let activeGameId = null;
 let storedGames = new Map();
 
@@ -194,7 +194,7 @@ const handleGameStateTransition = (fromGameId, toGameId) => {
         } else if (fromGame.type === 'iframe') {
             const iframe = fromGame.container.querySelector('#player');
             if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage({ 
+                iframe.contentWindow.postMessage({
                     type: 'setVolume',
                     volume: 0
                 }, '*');
@@ -306,7 +306,7 @@ const loadRuffleSWF = (gameId, container) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
     player.setAttribute("id", "player");
-    
+
     scaleGame(player);
     container.appendChild(player);
 
@@ -382,7 +382,7 @@ const updateDocumentTitle = () => {
 
 const updateFlashContainer = () => {
     const flashContainer = document.getElementById("flash-container");
-    
+
     if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         const gameId = window.location.hash.substring(1);
         const gameType = gamesList[gameId].type;
@@ -420,18 +420,33 @@ const updateFlashContainer = () => {
             // Store new game state
             storedGames.set(gameId, {
                 container: gameContainer,
-                type: gameType
+                type: gameType,
+                lastPlayed: Date.now()
             });
 
             // Remove oldest game if limit exceeded
             if (storedGames.size > MAX_STORED_GAMES) {
-                const oldestGameId = storedGames.keys().next().value;
-                // Pause the game before removing it
-                handleGameStateTransition(oldestGameId, null);
-                const oldestContainer = storedGames.get(oldestGameId).container;
-                oldestContainer.remove();
-                storedGames.delete(oldestGameId);
+                // Find the oldest game by lastPlayed timestamp
+                let oldestGameId = null;
+                let oldestTime = Infinity;
+
+                for (const [id, game] of storedGames.entries()) {
+                    if (game.lastPlayed < oldestTime) {
+                        oldestTime = game.lastPlayed;
+                        oldestGameId = id;
+                    }
+                }
+
+                if (oldestGameId) {
+                    handleGameStateTransition(oldestGameId, null);
+                    const oldestContainer = storedGames.get(oldestGameId).container;
+                    oldestContainer.remove();
+                    storedGames.delete(oldestGameId);
+                }
             }
+        } else {
+            // Track game play when restoring a game
+            trackGamePlay(gameId);
         }
 
         activeGameId = gameId;
@@ -739,6 +754,7 @@ const retryLoad = (gameId) => {
 
 const trackGamePlay = (gameId) => {
     const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+    const timestamp = Date.now();
 
     if (!gameStats[gameId]) {
         gameStats[gameId] = {
@@ -748,9 +764,16 @@ const trackGamePlay = (gameId) => {
     }
 
     gameStats[gameId].plays += 1;
-    gameStats[gameId].lastPlayed = Date.now();
+    gameStats[gameId].lastPlayed = timestamp;
 
     localStorage.setItem('gameStats', JSON.stringify(gameStats));
+
+    // Also update lastPlayed in storedGames if the game exists there
+    if (storedGames.has(gameId)) {
+        const gameState = storedGames.get(gameId);
+        gameState.lastPlayed = timestamp;
+        storedGames.set(gameId, gameState);
+    }
 };
 
 const checkControlsOverlap = (player) => {
@@ -797,7 +820,7 @@ const updateVolume = (value) => {
     const player = document.querySelector(`#game-container-${activeGameId} #player`);
     const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
     const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
-    
+
     if (!player || !volumeBtn || !volumeSlider) return;
 
     // If volume is 0, treat as muted but remember previous volume
