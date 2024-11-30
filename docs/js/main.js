@@ -1,5 +1,10 @@
 "use strict";
 
+// Constants
+const MAX_STORED_GAMES = 3;
+let activeGameId = null;
+let storedGames = new Map();
+
 const gamesList = {
     "big-truck-adventures": {
         type: "swf",
@@ -172,6 +177,100 @@ const gamesList = {
     }
 };
 
+// Helper Functions
+const handleGameStateTransition = (fromGameId, toGameId) => {
+    if (fromGameId && storedGames.has(fromGameId)) {
+        const fromGame = storedGames.get(fromGameId);
+        // Mute the previous game
+        if (fromGame.type === 'swf') {
+            const player = fromGame.container.querySelector('#player');
+            if (player) {
+                try {
+                    player.volume = 0;
+                } catch (error) {
+                    console.error('Error muting SWF game:', error);
+                }
+            }
+        } else if (fromGame.type === 'iframe') {
+            const iframe = fromGame.container.querySelector('#player');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ 
+                    type: 'setVolume',
+                    volume: 0
+                }, '*');
+            }
+        }
+        fromGame.container.style.display = 'none';
+    }
+
+    if (toGameId && storedGames.has(toGameId)) {
+        const toGame = storedGames.get(toGameId);
+        // Restore volume for the new game using game-specific settings
+        const gameSettings = getGameVolume(toGameId);
+        const volume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+
+        if (toGame.type === 'swf') {
+            const player = toGame.container.querySelector('#player');
+            if (player) {
+                try {
+                    player.volume = volume;
+                } catch (error) {
+                    console.error('Error setting SWF volume:', error);
+                }
+            }
+        } else if (toGame.type === 'iframe') {
+            const iframe = toGame.container.querySelector('#player');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'setVolume',
+                    volume: volume
+                }, '*');
+            }
+        }
+        toGame.container.style.display = 'block';
+    }
+};
+
+const addGameControls = (controlsContainer, gameId) => {
+    // Add fullscreen button
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.className = 'control-btn fullscreen-btn';
+    fullscreenBtn.innerHTML = '⛶';
+    fullscreenBtn.onclick = () => toggleFullscreen(document.querySelector(`#game-container-${gameId} #player`));
+    controlsContainer.appendChild(fullscreenBtn);
+
+    // Add favorite button
+    const favoriteBtn = document.createElement('button');
+    favoriteBtn.className = 'control-btn favorite-btn';
+    favoriteBtn.innerHTML = '★';
+    favoriteBtn.dataset.game = gameId;
+    favoriteBtn.onclick = () => toggleFavorite(gameId);
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    if (favorites.includes(gameId)) {
+        favoriteBtn.classList.add('active');
+    }
+    controlsContainer.appendChild(favoriteBtn);
+
+    // Add volume controls with game-specific settings
+    const gameSettings = getGameVolume(gameId);
+
+    const volumeBtn = document.createElement('button');
+    volumeBtn.className = 'control-btn volume-btn';
+    volumeBtn.innerHTML = gameSettings.isMuted ? '🔈' : '🔊';
+    volumeBtn.onclick = toggleMute;
+
+    const volumeSlider = document.createElement('input');
+    volumeSlider.type = 'range';
+    volumeSlider.className = 'volume-slider';
+    volumeSlider.min = '0';
+    volumeSlider.max = '100';
+    volumeSlider.value = gameSettings.isMuted ? 0 : gameSettings.volume;
+    volumeSlider.onchange = (e) => updateVolume(e.target.value);
+
+    controlsContainer.appendChild(volumeBtn);
+    controlsContainer.appendChild(volumeSlider);
+};
+
 const setResolution = (player, aspectRatio) => {
     const absoluteHeight = 820;
     const absoluteWidth = absoluteHeight * aspectRatio;
@@ -202,69 +301,19 @@ window.addEventListener("resize", () => {
 });
 
 window.RufflePlayer = window.RufflePlayer || {};
-const showLoader = () => {
-    const flashContainer = document.getElementById("flash-container");
-    flashContainer.innerHTML = '<div class="loader">Loading...</div>';
-};
-
-const loadRuffleSWF = (gameId) => {
+const loadRuffleSWF = (gameId, container) => {
     trackGamePlay(gameId);
-    showLoader();
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
     player.setAttribute("id", "player");
+    
     scaleGame(player);
-
-    const flashContainer = document.getElementById("flash-container");
-    flashContainer.innerHTML = "";
-
-    // Create controls container
-    const controlsContainer = document.createElement('div');
-    controlsContainer.className = 'game-controls';
-
-    // Add fullscreen button
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'control-btn fullscreen-btn';
-    fullscreenBtn.innerHTML = '⛶';
-    fullscreenBtn.onclick = () => toggleFullscreen(player);
-    controlsContainer.appendChild(fullscreenBtn);
-
-    // Add favorite button
-    const favoriteBtn = document.createElement('button');
-    favoriteBtn.className = 'control-btn favorite-btn';
-    favoriteBtn.innerHTML = '★';
-    favoriteBtn.dataset.game = gameId;
-    favoriteBtn.onclick = () => toggleFavorite(gameId);
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    if (favorites.includes(gameId)) {
-        favoriteBtn.classList.add('active');
-    }
-    controlsContainer.appendChild(favoriteBtn);
-
-    // Add volume controls
-    const volume = getStoredVolume();
-    const isMuted = localStorage.getItem('isMuted') === 'true';
-
-    const volumeBtn = document.createElement('button');
-    volumeBtn.className = 'control-btn volume-btn';
-    volumeBtn.innerHTML = isMuted ? '🔈' : '🔊';
-    volumeBtn.onclick = toggleMute;
-
-    const volumeSlider = document.createElement('input');
-    volumeSlider.type = 'range';
-    volumeSlider.className = 'volume-slider';
-    volumeSlider.min = '0';
-    volumeSlider.max = '100';
-    volumeSlider.value = isMuted ? 0 : volume;
-    volumeSlider.onchange = (e) => updateVolume(e.target.value);
-
-    controlsContainer.appendChild(volumeBtn);
-    controlsContainer.appendChild(volumeSlider);
-
-    flashContainer.appendChild(controlsContainer);
-    flashContainer.appendChild(player);
+    container.appendChild(player);
 
     try {
+        const gameSettings = getGameVolume(gameId);
+        const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+
         const config = {
             url: gamesList[gameId].spoofUrl
                 ? `${gamesList[gameId].spoofUrl}/main.swf`
@@ -278,17 +327,15 @@ const loadRuffleSWF = (gameId) => {
             openUrlMode: "confirm",
             showSwfDownload: true,
             frameRate: gamesList[gameId].frameRate,
-            volume: isMuted ? 0 : volume / 100,
-            allowScriptAccess: false
+            volume: initialVolume,
+            allowScriptAccess: false,
+            autoplay: "on",
+            unmuteOverlay: "hidden"
         };
 
+        // Add event listener to ensure volume is set after load
         player.addEventListener("loadedmetadata", () => {
-            scaleGame(player);
-            player.volume = isMuted ? 0 : volume / 100;
-        });
-
-        player.addEventListener("load", () => {
-            player.volume = isMuted ? 0 : volume / 100;
+            player.volume = initialVolume;
         });
 
         player.load(config);
@@ -298,77 +345,26 @@ const loadRuffleSWF = (gameId) => {
     }
 };
 
-const loadIframe = (gameId) => {
+const loadIframe = (gameId, container) => {
     trackGamePlay(gameId);
-    showLoader();
     const player = document.createElement("iframe");
     player.setAttribute("id", "player");
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
     scaleGame(player);
 
-    const flashContainer = document.getElementById("flash-container");
-    flashContainer.innerHTML = "";
-
-    // Create controls container
-    const controlsContainer = document.createElement('div');
-    controlsContainer.className = 'game-controls';
-
-    // Add fullscreen button
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'control-btn fullscreen-btn';
-    fullscreenBtn.innerHTML = '⛶';
-    fullscreenBtn.onclick = () => toggleFullscreen(player);
-    controlsContainer.appendChild(fullscreenBtn);
-
-    // Add favorite button
-    const favoriteBtn = document.createElement('button');
-    favoriteBtn.className = 'control-btn favorite-btn';
-    favoriteBtn.innerHTML = '★';
-    favoriteBtn.dataset.game = gameId;
-    favoriteBtn.onclick = () => toggleFavorite(gameId);
-    // Set initial state
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    if (favorites.includes(gameId)) {
-        favoriteBtn.classList.add('active');
-    }
-    controlsContainer.appendChild(favoriteBtn);
-
-    // Add volume controls
-    const isMuted = localStorage.getItem('isMuted') === 'true';
-    const volume = getStoredVolume();
-
-    const volumeBtn = document.createElement('button');
-    volumeBtn.className = 'control-btn volume-btn';
-    volumeBtn.innerHTML = isMuted ? '🔈' : '🔊';
-    volumeBtn.onclick = toggleMute;
-
-    const volumeSlider = document.createElement('input');
-    volumeSlider.type = 'range';
-    volumeSlider.className = 'volume-slider';
-    volumeSlider.min = '0';
-    volumeSlider.max = '100';
-    volumeSlider.value = isMuted ? 0 : volume;
-    volumeSlider.onchange = (e) => updateVolume(e.target.value);
-
-    controlsContainer.appendChild(volumeBtn);
-    controlsContainer.appendChild(volumeSlider);
-
-    flashContainer.appendChild(controlsContainer);
-    flashContainer.appendChild(player);
+    container.appendChild(player);
 
     // Set initial volume after iframe loads
+    const gameSettings = getGameVolume(gameId);
+    const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+
     player.onload = () => {
         player.contentWindow.postMessage({
             type: 'setVolume',
-            volume: isMuted ? 0 : volume / 100
+            volume: initialVolume
         }, '*');
     };
-};
-
-const scrollTo = (id) => {
-    const element = document.getElementById(id);
-    element.scrollIntoView();
 };
 
 const updateDocumentTitle = () => {
@@ -386,46 +382,72 @@ const updateDocumentTitle = () => {
 
 const updateFlashContainer = () => {
     const flashContainer = document.getElementById("flash-container");
-    const player = document.getElementById("player");
-
-    // Clean up existing player if any
-    if (player) {
-        if (player instanceof HTMLIFrameElement) {
-            player.src = 'about:blank'; // Clear iframe content
-        } else {
-            try {
-                player.remove(); // Remove Ruffle player
-            } catch (error) {
-                console.error("Error removing player:", error);
-            }
-        }
-    }
-
+    
     if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
-        // Show container when a game is selected
-        flashContainer.style.display = "block";
         const gameId = window.location.hash.substring(1);
         const gameType = gamesList[gameId].type;
 
-        switch (gameType) {
-            case "swf":
-                loadRuffleSWF(gameId);
-                break;
-            case "iframe":
-                loadIframe(gameId);
-                break;
-            default:
-                break;
+        // Handle game state transition
+        handleGameStateTransition(activeGameId, gameId);
+
+        // Show container when a game is selected
+        flashContainer.style.display = "block";
+
+        if (!storedGames.has(gameId)) {
+            // Create new game container
+            const gameContainer = document.createElement('div');
+            gameContainer.id = `game-container-${gameId}`;
+            flashContainer.appendChild(gameContainer);
+
+            // Create controls container
+            const controlsContainer = document.createElement('div');
+            controlsContainer.className = 'game-controls';
+            gameContainer.appendChild(controlsContainer);
+
+            // Add game controls
+            addGameControls(controlsContainer, gameId);
+
+            // Load new game
+            switch (gameType) {
+                case "swf":
+                    loadRuffleSWF(gameId, gameContainer);
+                    break;
+                case "iframe":
+                    loadIframe(gameId, gameContainer);
+                    break;
+            }
+
+            // Store new game state
+            storedGames.set(gameId, {
+                container: gameContainer,
+                type: gameType
+            });
+
+            // Remove oldest game if limit exceeded
+            if (storedGames.size > MAX_STORED_GAMES) {
+                const oldestGameId = storedGames.keys().next().value;
+                // Pause the game before removing it
+                handleGameStateTransition(oldestGameId, null);
+                const oldestContainer = storedGames.get(oldestGameId).container;
+                oldestContainer.remove();
+                storedGames.delete(oldestGameId);
+            }
         }
 
-        // Scroll to flash container after a short delay to ensure content is loaded
+        activeGameId = gameId;
+
+        // Scroll to flash container after a short delay
         setTimeout(() => {
             flashContainer.scrollIntoView({ behavior: 'smooth' });
         }, 100);
     } else {
-        // Hide container when no game is selected
-        flashContainer.innerHTML = ''; // Clear container contents
+        // Pause current game if exists
+        if (activeGameId) {
+            handleGameStateTransition(activeGameId, null);
+        }
+        // Hide all games
         flashContainer.style.display = "none";
+        activeGameId = null;
     }
 };
 
@@ -556,7 +578,6 @@ window.addEventListener("load", () => {
 
 window.addEventListener("hashchange", () => {
     updateDocumentTitle();
-    scrollTo("title");
     updateFlashContainer();
     populateGameCategories();
 });
@@ -773,25 +794,21 @@ const getStoredVolume = () => {
 };
 
 const updateVolume = (value) => {
-    const player = document.getElementById('player');
-    const volumeBtn = document.querySelector('.volume-btn');
-    if (!player || !volumeBtn) return;
+    const player = document.querySelector(`#game-container-${activeGameId} #player`);
+    const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
+    const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
+    
+    if (!player || !volumeBtn || !volumeSlider) return;
 
     // If volume is 0, treat as muted but remember previous volume
-    if (parseInt(value) === 0) {
-        localStorage.setItem('isMuted', 'true');
-        volumeBtn.innerHTML = '🔈';
-    } else {
-        localStorage.setItem('isMuted', 'false');
-        localStorage.setItem('previousVolume', value);
-        volumeBtn.innerHTML = '🔊';
-    }
+    const isMuted = parseInt(value) === 0;
+    volumeBtn.innerHTML = isMuted ? '🔈' : '🔊';
 
-    localStorage.setItem('volume', value);
+    // Store the volume settings for this specific game
+    setGameVolume(activeGameId, value, isMuted);
 
-    // Handle volume for both iframe and regular players
+    // Update the actual volume
     if (player instanceof HTMLIFrameElement) {
-        // Post message to iframe to update volume
         player.contentWindow.postMessage({
             type: 'setVolume',
             volume: value / 100
@@ -802,19 +819,18 @@ const updateVolume = (value) => {
 };
 
 const toggleMute = () => {
-    const player = document.getElementById('player');
-    const volumeBtn = document.querySelector('.volume-btn');
-    const volumeSlider = document.querySelector('.volume-slider');
+    const player = document.querySelector(`#game-container-${activeGameId} #player`);
+    const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
+    const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
     if (!player || !volumeBtn || !volumeSlider) return;
 
-    const isMuted = localStorage.getItem('isMuted') === 'true';
+    const gameSettings = getGameVolume(activeGameId);
+    const isMuted = gameSettings.isMuted;
 
     if (isMuted) {
         // Unmuting - restore to previous volume
-        const previousVolume = localStorage.getItem('previousVolume');
-        const volume = previousVolume ? parseInt(previousVolume) : 100;
-        localStorage.setItem('isMuted', 'false');
-        localStorage.setItem('volume', volume);
+        const volume = gameSettings.volume || 100;
+        setGameVolume(activeGameId, volume, false);
 
         if (player instanceof HTMLIFrameElement) {
             player.contentWindow.postMessage({
@@ -830,11 +846,7 @@ const toggleMute = () => {
     } else {
         // Muting - store current volume before setting to 0
         const currentVolume = volumeSlider.value;
-        if (currentVolume > 0) {
-            localStorage.setItem('previousVolume', currentVolume);
-        }
-        localStorage.setItem('isMuted', 'true');
-        localStorage.setItem('volume', '0');
+        setGameVolume(activeGameId, currentVolume, true);
 
         if (player instanceof HTMLIFrameElement) {
             player.contentWindow.postMessage({
@@ -858,3 +870,28 @@ window.addEventListener('message', (event) => {
         console.log('Volume update confirmed by iframe:', event.data.volume);
     }
 });
+
+// Add this helper function to manage per-game volume settings
+const getGameVolume = (gameId) => {
+    const gameVolumes = JSON.parse(localStorage.getItem('gameVolumes') || '{}');
+    if (gameId in gameVolumes) {
+        return {
+            volume: parseInt(gameVolumes[gameId].volume),
+            isMuted: gameVolumes[gameId].isMuted
+        };
+    }
+    // Fall back to global settings if no game-specific settings exist
+    return {
+        volume: parseInt(localStorage.getItem('volume') || '100'),
+        isMuted: localStorage.getItem('isMuted') === 'true'
+    };
+};
+
+const setGameVolume = (gameId, volume, isMuted) => {
+    const gameVolumes = JSON.parse(localStorage.getItem('gameVolumes') || '{}');
+    gameVolumes[gameId] = {
+        volume: volume,
+        isMuted: isMuted
+    };
+    localStorage.setItem('gameVolumes', JSON.stringify(gameVolumes));
+};
