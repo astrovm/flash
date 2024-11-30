@@ -603,11 +603,25 @@ const updateOfflineModePreference = async () => {
     localStorage.setItem("offlineModeEnabled", offlineModeToggle.checked);
 
     if (offlineModeToggle.checked) {
-        try {
-            const registration = await navigator.serviceWorker.register("sw.js");
-        } catch (error) {
+        navigator.serviceWorker.register("sw.js").then(registration => {
+            // Listen for updates to the service worker
+            registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            // New update available, reload the page to activate
+                            window.location.reload();
+                        } else {
+                            // Service worker installed for the first time
+                            console.log('Service worker installed for offline use.');
+                        }
+                    }
+                };
+            };
+        }).catch(error => {
             console.error("Service worker registration failed:", error);
-        }
+        });
     } else {
         try {
             const registrations = await navigator.serviceWorker.getRegistrations();
@@ -728,7 +742,7 @@ const checkControlsOverlap = (player) => {
 
     // Calculate space available on the right side of the player
     const spaceOnRight = windowWidth - playerRect.right;
-    
+
     // Check if controls are overlapping with the actual game content
     const isOverlapping = !(
         playerRect.right < controlsRect.left ||

@@ -8,5 +8,7 @@ module.exports = {
 	ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
 	sourcemap: false,
 	cacheId: 'astro-flash',
-	cleanupOutdatedCaches: true
+	cleanupOutdatedCaches: true,
+	skipWaiting: true,
+	clientsClaim: true
 };
