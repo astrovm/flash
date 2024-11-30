@@ -104,9 +104,32 @@ def cleanup_old_versions():
         
     current_date = datetime.now().strftime('%y.%m.%d')
     for file in os.listdir(js_dir):
-        if file.startswith("ruffle.") and not current_date in file:
+        # Check for old ruffle.*.min.js files
+        if file.startswith("ruffle.") and file.endswith(".min.js") and current_date not in file:
             os.remove(os.path.join(js_dir, file))
             print(f"Removed old file: {file}")
+            
+        # Check for old core.ruffle.*.js files
+        if file.startswith("core.ruffle.") and file.endswith(".js"):
+            # Keep the file if it's referenced by the current ruffle.js
+            current_ruffle_path = os.path.join(js_dir, f"ruffle.{current_date}.min.js")
+            if os.path.exists(current_ruffle_path):
+                with open(current_ruffle_path, 'r', encoding='utf-8') as f:
+                    current_content = f.read()
+                if file not in current_content:
+                    os.remove(os.path.join(js_dir, file))
+                    print(f"Removed old file: {file}")
+                    
+        # Check for old .wasm files
+        if file.endswith(".wasm"):
+            # Keep the file if it's referenced by the current ruffle.js
+            current_ruffle_path = os.path.join(js_dir, f"ruffle.{current_date}.min.js")
+            if os.path.exists(current_ruffle_path):
+                with open(current_ruffle_path, 'r', encoding='utf-8') as f:
+                    current_content = f.read()
+                if file not in current_content:
+                    os.remove(os.path.join(js_dir, file))
+                    print(f"Removed old file: {file}")
 
 def main():
     try:
