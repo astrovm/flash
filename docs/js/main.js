@@ -179,55 +179,50 @@ const gamesList = {
 
 // Helper Functions
 const handleGameStateTransition = (fromGameId, toGameId) => {
+    // Handle previous game
     if (fromGameId && storedGames.has(fromGameId)) {
         const fromGame = storedGames.get(fromGameId);
+        const player = fromGame.container.querySelector('#player');
+
         // Mute the previous game
-        if (fromGame.type === 'swf') {
-            const player = fromGame.container.querySelector('#player');
-            if (player) {
-                try {
-                    player.volume = 0;
-                } catch (error) {
-                    console.error('Error muting SWF game:', error);
-                }
+        if (player) {
+            if (fromGame.type === 'swf') {
+                try { player.volume = 0; }
+                catch (error) { console.error('Error muting SWF game:', error); }
+            } else if (fromGame.type === 'iframe') {
+                player.contentWindow?.postMessage({ type: 'setVolume', volume: 0 }, '*');
             }
-        } else if (fromGame.type === 'iframe') {
-            const iframe = fromGame.container.querySelector('#player');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage({
-                    type: 'setVolume',
-                    volume: 0
-                }, '*');
-            }
+        }
+
+        // Reset control classes
+        const fromControls = fromGame.container.querySelector('.game-controls');
+        if (fromControls) {
+            fromControls.classList.remove('controls-top', 'controls-horizontal');
+            document.body.classList.remove('controls-above-title');
         }
         fromGame.container.style.display = 'none';
     }
 
+    // Handle new game
     if (toGameId && storedGames.has(toGameId)) {
         const toGame = storedGames.get(toGameId);
-        // Restore volume for the new game using game-specific settings
-        const gameSettings = getGameVolume(toGameId);
-        const volume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+        const player = toGame.container.querySelector('#player');
 
-        if (toGame.type === 'swf') {
-            const player = toGame.container.querySelector('#player');
-            if (player) {
-                try {
-                    player.volume = volume;
-                } catch (error) {
-                    console.error('Error setting SWF volume:', error);
-                }
+        // Set volume for new game
+        if (player) {
+            const gameSettings = getGameVolume(toGameId);
+            const volume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+
+            if (toGame.type === 'swf') {
+                try { player.volume = volume; }
+                catch (error) { console.error('Error setting SWF volume:', error); }
+            } else if (toGame.type === 'iframe') {
+                player.contentWindow?.postMessage({ type: 'setVolume', volume }, '*');
             }
-        } else if (toGame.type === 'iframe') {
-            const iframe = toGame.container.querySelector('#player');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage({
-                    type: 'setVolume',
-                    volume: volume
-                }, '*');
-            }
+
+            toGame.container.style.display = 'block';
+            setTimeout(() => checkControlsPosition(player), 100);
         }
-        toGame.container.style.display = 'block';
     }
 };
 
@@ -265,7 +260,7 @@ const addGameControls = (controlsContainer, gameId) => {
     volumeSlider.min = '0';
     volumeSlider.max = '100';
     volumeSlider.value = gameSettings.isMuted ? 0 : gameSettings.volume;
-    volumeSlider.onchange = (e) => updateVolume(e.target.value);
+    volumeSlider.oninput = (e) => updateVolume(e.target.value);
 
     controlsContainer.appendChild(volumeBtn);
     controlsContainer.appendChild(volumeSlider);
@@ -288,16 +283,43 @@ const scaleGame = (player) => {
     const height = player.metadata?.height;
     const aspectRatio = gamesList[gameId].aspectRatio || width / height || 1.25;
     setResolution(player, aspectRatio);
-
-    setTimeout(() => checkControlsOverlap(player), 100);
+    checkControlsPosition(player);
 };
 
+const checkControlsPosition = (player) => {
+    // Ensure we have valid elements
+    const controls = document.querySelector('.game-controls');
+    if (!controls || !player) return;
+
+    const playerRect = player.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const spaceOnRight = windowWidth - playerRect.right;
+
+    // Reset to default state first
+    controls.classList.remove('controls-top', 'controls-horizontal');
+    document.body.classList.remove('controls-above-title');
+
+    // Force a reflow to get accurate measurements after removing classes
+    controls.offsetHeight;
+
+    // Check if we need to switch to horizontal layout
+    if (spaceOnRight < 100) {
+        controls.classList.add('controls-top', 'controls-horizontal');
+        document.body.classList.add('controls-above-title');
+    }
+};
+
+// Use a debounced resize handler
+let resizeTimeout;
 window.addEventListener("resize", () => {
     if (activeGameId && storedGames.has(activeGameId)) {
         const activeGame = storedGames.get(activeGameId);
         const player = activeGame.container.querySelector('#player');
         if (player) {
-            scaleGame(player);
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                scaleGame(player);
+            }, 100);
         }
     }
 });
@@ -312,38 +334,34 @@ const loadRuffleSWF = (gameId, container) => {
     scaleGame(player);
     container.appendChild(player);
 
-    try {
-        const gameSettings = getGameVolume(gameId);
-        const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+    const gameSettings = getGameVolume(gameId);
+    const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
 
-        const config = {
-            url: gamesList[gameId].spoofUrl
-                ? `${gamesList[gameId].spoofUrl}/main.swf`
-                : `swf/${gameId}/main.swf`,
-            base: gamesList[gameId].spoofUrl
-                ? `${gamesList[gameId].spoofUrl}/`
-                : `swf/${gameId}/`,
-            letterbox: "on",
-            scale: "showAll",
-            forceScale: true,
-            openUrlMode: "confirm",
-            showSwfDownload: true,
-            frameRate: gamesList[gameId].frameRate,
-            volume: initialVolume,
-            allowScriptAccess: false,
-            autoplay: "on",
-            unmuteOverlay: "hidden"
-        };
+    const config = {
+        url: gamesList[gameId].spoofUrl
+            ? `${gamesList[gameId].spoofUrl}/main.swf`
+            : `swf/${gameId}/main.swf`,
+        base: gamesList[gameId].spoofUrl
+            ? `${gamesList[gameId].spoofUrl}/`
+            : `swf/${gameId}/`,
+        letterbox: "on",
+        scale: "showAll",
+        forceScale: true,
+        openUrlMode: "confirm",
+        showSwfDownload: true,
+        frameRate: gamesList[gameId].frameRate,
+        volume: initialVolume,
+        allowScriptAccess: false,
+        autoplay: "on",
+        unmuteOverlay: "hidden"
+    };
 
-        player.addEventListener("loadedmetadata", () => {
-            player.volume = initialVolume;
-            scaleGame(player);
-        });
+    player.addEventListener("loadedmetadata", () => {
+        player.volume = initialVolume;
+        scaleGame(player);
+    });
 
-        player.load(config);
-    } catch (error) {
-        handleGameError(error, gameId);
-    }
+    player.load(config);
 };
 
 const loadIframe = (gameId, container) => {
@@ -710,16 +728,6 @@ const toggleFullscreen = (element) => {
     }
 };
 
-const addFullscreenButton = (player) => {
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'fullscreen-btn';
-    fullscreenBtn.innerHTML = '⛶';
-    fullscreenBtn.onclick = () => toggleFullscreen(player);
-
-    const container = document.getElementById('flash-container');
-    container.appendChild(fullscreenBtn);
-};
-
 const toggleFavorite = (gameId) => {
     let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     const index = favorites.indexOf(gameId);
@@ -740,21 +748,6 @@ const toggleFavorite = (gameId) => {
 
     // Refresh categories to update favorites section
     populateGameCategories();
-};
-
-const handleGameError = (error, gameId) => {
-    const flashContainer = document.getElementById("flash-container");
-    flashContainer.innerHTML = `
-        <div class="error-container">
-            <h3>Oops! Something went wrong loading the game</h3>
-            <p>${error.message}</p>
-            <button onclick="retryLoad('${gameId}')">Try Again</button>
-        </div>
-    `;
-};
-
-const retryLoad = (gameId) => {
-    updateFlashContainer();
 };
 
 const trackGamePlay = (gameId) => {
@@ -779,46 +772,6 @@ const trackGamePlay = (gameId) => {
         gameState.lastPlayed = timestamp;
         storedGames.set(gameId, gameState);
     }
-};
-
-const checkControlsOverlap = (player) => {
-    const controls = document.querySelector('.game-controls');
-    if (!controls || !player) return;
-
-    const playerRect = player.getBoundingClientRect();
-    const controlsRect = controls.getBoundingClientRect();
-    const windowWidth = window.innerWidth;
-
-    // Calculate space available on the right side of the player
-    const spaceOnRight = windowWidth - playerRect.right;
-
-    // Check if controls are overlapping with the actual game content
-    const isOverlapping = !(
-        playerRect.right < controlsRect.left ||
-        playerRect.left > controlsRect.right ||
-        playerRect.bottom < controlsRect.top ||
-        playerRect.top > controlsRect.bottom
-    );
-
-    // Remove all layout classes first
-    controls.classList.remove('controls-top', 'controls-horizontal');
-    document.body.classList.remove('controls-above-title');
-
-    if (isOverlapping || spaceOnRight < 100) { // If severely constrained or overlapping
-        // Move to top and make horizontal
-        controls.classList.add('controls-top');
-        controls.classList.add('controls-horizontal');
-        document.body.classList.add('controls-above-title');
-    }
-    // Otherwise, leave as vertical (default state)
-};
-
-const getStoredVolume = () => {
-    if (localStorage.getItem('isMuted') === 'true') {
-        return 0;
-    }
-    const storedVolume = localStorage.getItem('volume');
-    return storedVolume ? parseInt(storedVolume) : 100;
 };
 
 const updateVolume = (value) => {
