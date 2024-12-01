@@ -55,6 +55,17 @@ def get_file_hash(file_path):
         sha384.update(content)
     return f"sha384-{base64.b64encode(sha384.digest()).decode('utf-8')}"
 
+def get_short_hash(file_path):
+    """Get first 8 characters of the file's hash"""
+    sha384 = hashlib.sha384()
+    mode = 'rb' if str(file_path).endswith('.wasm') else 'r'
+    with open(file_path, mode) as f:
+        content = f.read()
+        if mode == 'r':
+            content = content.encode()
+        sha384.update(content)
+    return sha384.hexdigest()[:8]
+
 def get_current_version():
     if not HTML_PATH.exists():
         return None
@@ -80,18 +91,21 @@ def get_next_version():
 def update_html():
     version_str = get_next_version()
     print("Updating HTML with integrity hashes...")
+    
+    # Get both full integrity hashes and short hashes for query params
     integrity_hashes = {name: get_file_hash(path) for name, path in ASSET_PATHS.items()}
+    short_hashes = {name: get_short_hash(path) for name, path in ASSET_PATHS.items()}
     
     with open(HTML_PATH, "r") as f:
         content = f.read()
 
     replacements = {
         r'<script src="js/ruffle\.[^"]+" ?[^>]*>': 
-            f'<script src="js/ruffle.js" integrity="{integrity_hashes["ruffle"]}" crossorigin="anonymous">',
+            f'<script src="js/ruffle.js?v={short_hashes["ruffle"]}" integrity="{integrity_hashes["ruffle"]}" crossorigin="anonymous">',
         r'<script src="js/main\.[^"]+" ?[^>]*>':
-            f'<script src="js/main.js" integrity="{integrity_hashes["main_js"]}" crossorigin="anonymous">',
+            f'<script src="js/main.js?v={short_hashes["main_js"]}" integrity="{integrity_hashes["main_js"]}" crossorigin="anonymous">',
         r'<link rel="stylesheet" href="css/main\.[^"]+" ?[^>]*>':
-            f'<link rel="stylesheet" href="css/main.css" integrity="{integrity_hashes["main_css"]}" crossorigin="anonymous">',
+            f'<link rel="stylesheet" href="css/main.css?v={short_hashes["main_css"]}" integrity="{integrity_hashes["main_css"]}" crossorigin="anonymous">',
         r'<h6>v[0-9.]+(?:-\d+)?</h6>':
             f'<h6>v{version_str}</h6>'
     }
