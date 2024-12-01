@@ -296,7 +296,6 @@ window.addEventListener("resize", () => {
     const player = document.getElementById("player");
     if (player) {
         scaleGame(player);
-        checkControlsOverlap(player);
     }
 });
 
@@ -336,10 +335,10 @@ const loadRuffleSWF = (gameId, container) => {
         // Add event listener to ensure volume is set after load
         player.addEventListener("loadedmetadata", () => {
             player.volume = initialVolume;
+            scaleGame(player);
         });
 
         player.load(config);
-
     } catch (error) {
         handleGameError(error, gameId);
     }
@@ -364,6 +363,7 @@ const loadIframe = (gameId, container) => {
             type: 'setVolume',
             volume: initialVolume
         }, '*');
+        scaleGame(player);
     };
 };
 
