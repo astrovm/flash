@@ -1,7 +1,7 @@
 "use strict";
 
 // Constants
-const MAX_STORED_GAMES = 8;
+const MAX_STORED_GAMES = 4;
 let activeGameId = null;
 let storedGames = new Map();
 
@@ -293,9 +293,12 @@ const scaleGame = (player) => {
 };
 
 window.addEventListener("resize", () => {
-    const player = document.getElementById("player");
-    if (player) {
-        scaleGame(player);
+    if (activeGameId && storedGames.has(activeGameId)) {
+        const activeGame = storedGames.get(activeGameId);
+        const player = activeGame.container.querySelector('#player');
+        if (player) {
+            scaleGame(player);
+        }
     }
 });
 
@@ -332,7 +335,6 @@ const loadRuffleSWF = (gameId, container) => {
             unmuteOverlay: "hidden"
         };
 
-        // Add event listener to ensure volume is set after load
         player.addEventListener("loadedmetadata", () => {
             player.volume = initialVolume;
             scaleGame(player);
@@ -354,17 +356,16 @@ const loadIframe = (gameId, container) => {
 
     container.appendChild(player);
 
-    // Set initial volume after iframe loads
     const gameSettings = getGameVolume(gameId);
     const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
 
-    player.onload = () => {
+    player.addEventListener('load', () => {
         player.contentWindow.postMessage({
             type: 'setVolume',
             volume: initialVolume
         }, '*');
         scaleGame(player);
-    };
+    });
 };
 
 const updateDocumentTitle = () => {
@@ -447,6 +448,12 @@ const updateFlashContainer = () => {
         } else {
             // Track game play when restoring a game
             trackGamePlay(gameId);
+            // Get the stored game's player and check controls
+            const storedGame = storedGames.get(gameId);
+            const player = storedGame.container.querySelector('#player');
+            if (player) {
+                scaleGame(player);
+            }
         }
 
         activeGameId = gameId;
