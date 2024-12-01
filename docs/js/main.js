@@ -458,10 +458,8 @@ const updateFlashContainer = () => {
 
         activeGameId = gameId;
 
-        // Scroll to flash container after a short delay
-        setTimeout(() => {
-            flashContainer.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        // Scroll to flash container
+        flashContainer.scrollIntoView({ behavior: 'smooth' });
     } else {
         // Pause current game if exists
         if (activeGameId) {
