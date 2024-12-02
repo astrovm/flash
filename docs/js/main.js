@@ -287,13 +287,15 @@ const scaleGame = (player) => {
 };
 
 const checkControlsPosition = (player) => {
-    // Ensure we have valid elements
-    const controls = document.querySelector('.game-controls');
+    // Get controls for the active game specifically
+    const gameContainer = player.closest('[id^="game-container-"]');
+    const controls = gameContainer?.querySelector('.game-controls');
     if (!controls || !player) return;
 
     const playerRect = player.getBoundingClientRect();
     const windowWidth = window.innerWidth;
     const spaceOnRight = windowWidth - playerRect.right;
+    const controlsWidth = controls.offsetWidth;
 
     // Reset to default state first
     controls.classList.remove('controls-top', 'controls-horizontal');
@@ -303,7 +305,7 @@ const checkControlsPosition = (player) => {
     controls.offsetHeight;
 
     // Check if we need to switch to horizontal layout
-    if (spaceOnRight < 100) {
+    if (spaceOnRight < controlsWidth + 20) {
         controls.classList.add('controls-top', 'controls-horizontal');
         document.body.classList.add('controls-above-title');
     }
