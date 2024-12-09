@@ -158,8 +158,8 @@ def generate_service_worker():
 def deploy():
     try:
         print("\nStarting deployment...")
-        cleanup_old_files()
         download_ruffle()
+        cleanup_old_files()
         update_html()
         generate_service_worker()
         print("\nDeployment completed successfully!")
