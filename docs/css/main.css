@@ -89,7 +89,7 @@ a:hover {
 .game-controls {
     position: absolute;
     top: 20px;
-    right: 20px;
+    right: 5px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
