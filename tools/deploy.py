@@ -27,17 +27,17 @@ def download_ruffle():
     with open(ASSET_PATHS['ruffle'], 'w') as f:
         f.write(response.text)
     
-    # Extract filenames and download dependencies
-    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+{[^}]*69:"([a-f0-9]+)"', response.text)
-    wasm_match = re.search(r'"([a-f0-9]+\.wasm)"', response.text)
+    # Extract filenames and download dependencies  
+    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+\{[^}]*\d+:"([a-f0-9]+)"', response.text)
+    wasm_matches = re.findall(r'e\.exports=t\.p\+"([a-f0-9]+\.wasm)"', response.text)
     
-    if not core_match or not wasm_match:
+    if not core_match or not wasm_matches:
         raise Exception("Could not find core or wasm file names in ruffle.js")
     
     core_file = f"core.ruffle.{core_match.group(1)}.js"
-    wasm_file = wasm_match.group(1)
+    files_to_download = [core_file] + wasm_matches
     
-    for filename in [core_file, wasm_file]:
+    for filename in files_to_download:
         print(f"  - Downloading {filename}")
         response = requests.get(f"{base_url}/{filename}")
         mode = 'wb' if filename.endswith('.wasm') else 'w'
@@ -117,12 +117,12 @@ def cleanup_old_files():
     with open(ASSET_PATHS['ruffle'], 'r') as f:
         current_content = f.read()
     
-    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+{[^}]*69:"([a-f0-9]+)"', current_content)
-    wasm_match = re.search(r'"([a-f0-9]+\.wasm)"', current_content)
+    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+\{[^}]*\d+:"([a-f0-9]+)"', current_content)
+    wasm_matches = re.findall(r'e\.exports=t\.p\+"([a-f0-9]+\.wasm)"', current_content)
     
-    if core_match and wasm_match:
+    if core_match and wasm_matches:
         current_core = f"core.ruffle.{core_match.group(1)}.js"
-        current_wasm = wasm_match.group(1)
+        current_wasms = set(wasm_matches)
         
         for file in JS_DIR.iterdir():
             if file.name.startswith("core.ruffle.") and file.name.endswith(".js"):
@@ -130,7 +130,7 @@ def cleanup_old_files():
                     file.unlink()
                     print(f"  - Removed {file.name}")
             elif file.name.endswith(".wasm"):
-                if file.name != current_wasm:
+                if file.name not in current_wasms:
                     file.unlink()
                     print(f"  - Removed {file.name}")
 
