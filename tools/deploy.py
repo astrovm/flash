@@ -150,7 +150,7 @@ def generate_service_worker():
     print("Generating service worker...")
     try:
         cleanup_workbox_files()
-        subprocess.run(["npx", "workbox", "generateSW", "workbox-config.js"], check=True)
+        subprocess.run(["bunx", "workbox", "generateSW", "workbox-config.js"], check=True)
         print("  - Service worker generated successfully")
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"Error generating service worker: {e}")
@@ -167,4 +167,4 @@ def deploy():
         print(f"\nError during deployment: {e}")
 
 if __name__ == "__main__":
-    deploy() 
+    deploy()
