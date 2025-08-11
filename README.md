@@ -40,7 +40,7 @@ To deploy:
 
 ```bash
 # Install dependencies
-npm install workbox-cli --save-dev
+bun add workbox-cli --dev
 
 # Run deployment script
 python tools/deploy.py
