@@ -26,8 +26,10 @@ A curated archive of Flash games
 ### Local testing
 
 ```bash
-python tools/dev_server.py
+python tools/dev_server.py --port 8000
 ```
+
+Use the `--port` flag to change the listening port (defaults to `8000`).
 
 ### Deployment
 
