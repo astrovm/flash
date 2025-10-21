@@ -185,6 +185,11 @@ const formatGameTitle = (gameId) => (
         .join(' ')
 );
 
+const getSelectedGameId = () => {
+    const id = window.location.hash.slice(1);
+    return id && gamesList[id] ? id : null;
+};
+
 const handleGameStateTransition = (fromGameId, toGameId) => {
     // Handle previous game
     if (fromGameId && storedGames.has(fromGameId)) {
@@ -285,10 +290,13 @@ const setResolution = (player, aspectRatio) => {
 };
 
 const scaleGame = (player) => {
-    const gameId = window.location.hash.substring(1);
+    const gameId = getSelectedGameId();
     const width = player.metadata?.width;
     const height = player.metadata?.height;
-    const aspectRatio = gamesList[gameId].aspectRatio || width / height || 1.25;
+    const aspectRatio =
+        (gameId && gamesList[gameId].aspectRatio) ||
+        (width && height ? width / height : null) ||
+        1.25;
     setResolution(player, aspectRatio);
     checkControlsPosition(player);
 };
@@ -396,8 +404,8 @@ const loadIframe = (gameId, container) => {
 };
 
 const updateDocumentTitle = () => {
-    if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
-        const gameId = window.location.hash.substring(1);
+    const gameId = getSelectedGameId();
+    if (gameId) {
         document.title = formatGameTitle(gameId);
     } else {
         const titleElement = document.getElementById("title");
@@ -408,8 +416,9 @@ const updateDocumentTitle = () => {
 const updateFlashContainer = () => {
     const flashContainer = document.getElementById("flash-container");
 
-    if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
-        const gameId = window.location.hash.substring(1);
+    const gameId = getSelectedGameId();
+
+    if (gameId) {
         const gameType = gamesList[gameId].type;
 
         // Handle game state transition
@@ -512,6 +521,7 @@ const populateGameCategories = () => {
     const gamesByCategory = {};
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+    const selectedGameId = getSelectedGameId();
 
     // Add Recently Played category
     const recentlyPlayed = Object.entries(gameStats)
@@ -585,7 +595,7 @@ const populateGameCategories = () => {
             gameTitle.textContent = game.title;
 
             // Highlight current game
-            if (window.location.hash === `#${game.id}`) {
+            if (selectedGameId === game.id) {
                 gameLink.classList.add('current-game');
             }
 
@@ -626,7 +636,10 @@ const changeUrl = (request) => {
 
     const parsedUrl = new URL(request.url);
     if (parsedUrl.hostname !== window.location.hostname) {
-        const gameId = window.location.hash.substring(1);
+        const gameId = getSelectedGameId();
+        if (!gameId) {
+            return request;
+        }
         const gameType = gamesList[gameId]?.type;
         switch (gameType) {
             case "swf":
