@@ -178,6 +178,13 @@ const gamesList = {
 };
 
 // Helper Functions
+const formatGameTitle = (gameId) => (
+    gameId
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+);
+
 const handleGameStateTransition = (fromGameId, toGameId) => {
     // Handle previous game
     if (fromGameId && storedGames.has(fromGameId)) {
@@ -391,10 +398,7 @@ const loadIframe = (gameId, container) => {
 const updateDocumentTitle = () => {
     if (window.location.hash && gamesList[window.location.hash.substring(1)]) {
         const gameId = window.location.hash.substring(1);
-        const gameTitle = gameId.split('-').map(word =>
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
-        document.title = gameTitle;
+        document.title = formatGameTitle(gameId);
     } else {
         const titleElement = document.getElementById("title");
         document.title = titleElement.textContent;
@@ -521,9 +525,7 @@ const populateGameCategories = () => {
             if (gamesList[gameId]) {
                 gamesByCategory['Recently Played'].push({
                     id: gameId,
-                    title: gameId.split('-').map(word =>
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join(' ')
+                    title: formatGameTitle(gameId)
                 });
             }
         });
@@ -536,9 +538,7 @@ const populateGameCategories = () => {
             if (gamesList[gameId]) {
                 gamesByCategory['Favorites'].push({
                     id: gameId,
-                    title: gameId.split('-').map(word =>
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join(' ')
+                    title: formatGameTitle(gameId)
                 });
             }
         });
@@ -552,9 +552,7 @@ const populateGameCategories = () => {
         }
         gamesByCategory[category].push({
             id: gameId,
-            title: gameId.split('-').map(word =>
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ')
+            title: formatGameTitle(gameId)
         });
     });
 
