@@ -343,16 +343,43 @@ window.addEventListener("resize", () => {
 });
 
 window.RufflePlayer = window.RufflePlayer || {};
-const loadRuffleSWF = (gameId, container) => {
-    trackGamePlay(gameId);
-    const ruffle = window.RufflePlayer.newest();
-    const player = ruffle.createPlayer();
+const initializePlayerElement = (player, gameId, container, options = {}) => {
+    const { readyEvent, volumeType, onReady } = options;
+
     player.setAttribute("id", "player");
 
     scaleGame(player);
     container.appendChild(player);
 
     const initialVolume = normalizeGameVolume(gameId);
+
+    const applyInitialSettings = () => {
+        setPlayerVolume(player, volumeType, initialVolume);
+        scaleGame(player);
+
+        if (typeof onReady === "function") {
+            onReady(player, initialVolume);
+        }
+    };
+
+    if (readyEvent) {
+        player.addEventListener(readyEvent, applyInitialSettings, { once: true });
+    } else {
+        applyInitialSettings();
+    }
+
+    return initialVolume;
+};
+
+const loadRuffleSWF = (gameId, container) => {
+    trackGamePlay(gameId);
+    const ruffle = window.RufflePlayer.newest();
+    const player = ruffle.createPlayer();
+
+    const initialVolume = initializePlayerElement(player, gameId, container, {
+        readyEvent: "loadedmetadata",
+        volumeType: "swf"
+    });
 
     const config = {
         url: gamesList[gameId].spoofUrl
@@ -373,29 +400,18 @@ const loadRuffleSWF = (gameId, container) => {
         unmuteOverlay: "hidden"
     };
 
-    player.addEventListener("loadedmetadata", () => {
-        setPlayerVolume(player, 'swf', initialVolume);
-        scaleGame(player);
-    });
-
     player.load(config);
 };
 
 const loadIframe = (gameId, container) => {
     trackGamePlay(gameId);
     const player = document.createElement("iframe");
-    player.setAttribute("id", "player");
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
-    scaleGame(player);
 
-    container.appendChild(player);
-
-    const initialVolume = normalizeGameVolume(gameId);
-
-    player.addEventListener('load', () => {
-        setPlayerVolume(player, 'iframe', initialVolume);
-        scaleGame(player);
+    initializePlayerElement(player, gameId, container, {
+        readyEvent: "load",
+        volumeType: "iframe"
     });
 };
 
