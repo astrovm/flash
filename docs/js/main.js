@@ -190,6 +190,32 @@ const getSelectedGameId = () => {
     return id && gamesList[id] ? id : null;
 };
 
+const readJsonStorage = (key, fallbackValue, validator) => {
+    const rawValue = localStorage.getItem(key);
+    if (!rawValue) {
+        return fallbackValue;
+    }
+
+    try {
+        const parsedValue = JSON.parse(rawValue);
+        if (typeof validator === 'function' && !validator(parsedValue)) {
+            return fallbackValue;
+        }
+        return parsedValue;
+    } catch (error) {
+        console.error(`Error parsing ${key} from localStorage:`, error);
+        return fallbackValue;
+    }
+};
+
+const writeJsonStorage = (key, value) => {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error(`Error storing ${key} in localStorage:`, error);
+    }
+};
+
 const getActivePlayerElements = () => {
     const state = storedGames.get(activeGameId);
     if (!state) return {};
@@ -198,6 +224,15 @@ const getActivePlayerElements = () => {
         player: state.container.querySelector('#player'),
         controls: state.container
     };
+};
+
+const resetControlsLayout = (controls) => {
+    if (!controls) {
+        return;
+    }
+
+    controls.classList.remove('controls-top', 'controls-horizontal');
+    document.body.classList.remove('controls-above-title');
 };
 
 const handleGameStateTransition = (fromGameId, toGameId) => {
@@ -211,10 +246,7 @@ const handleGameStateTransition = (fromGameId, toGameId) => {
 
         // Reset control classes
         const fromControls = fromGame.container.querySelector('.game-controls');
-        if (fromControls) {
-            fromControls.classList.remove('controls-top', 'controls-horizontal');
-            document.body.classList.remove('controls-above-title');
-        }
+        resetControlsLayout(fromControls);
         fromGame.container.style.display = 'none';
     }
 
@@ -314,8 +346,7 @@ const checkControlsPosition = (player) => {
     const controlsWidth = controls.offsetWidth;
 
     // Reset to default state first
-    controls.classList.remove('controls-top', 'controls-horizontal');
-    document.body.classList.remove('controls-above-title');
+    resetControlsLayout(controls);
 
     // Force a reflow to get accurate measurements after removing classes
     controls.offsetHeight;
@@ -372,7 +403,6 @@ const initializePlayerElement = (player, gameId, container, options = {}) => {
 };
 
 const loadRuffleSWF = (gameId, container) => {
-    trackGamePlay(gameId);
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
 
@@ -404,7 +434,6 @@ const loadRuffleSWF = (gameId, container) => {
 };
 
 const loadIframe = (gameId, container) => {
-    trackGamePlay(gameId);
     const player = document.createElement("iframe");
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
@@ -431,6 +460,7 @@ const updateFlashContainer = () => {
     const gameId = getSelectedGameId();
 
     if (gameId) {
+        trackGamePlay(gameId);
         const gameType = gamesList[gameId].type;
 
         // Handle game state transition
@@ -491,8 +521,6 @@ const updateFlashContainer = () => {
                 }
             }
         } else {
-            // Track game play when restoring a game
-            trackGamePlay(gameId);
             // Get the stored game's player and check controls
             const storedGame = storedGames.get(gameId);
             const player = storedGame.container.querySelector('#player');
@@ -529,6 +557,21 @@ const setupSearch = () => {
     });
 };
 
+const addGameToCategory = (gamesByCategory, category, gameId) => {
+    if (!gamesList[gameId]) {
+        return;
+    }
+
+    if (!gamesByCategory[category]) {
+        gamesByCategory[category] = [];
+    }
+
+    gamesByCategory[category].push({
+        id: gameId,
+        title: formatGameTitle(gameId)
+    });
+};
+
 const populateGameCategories = () => {
     const gamesByCategory = {};
     const favorites = getFavorites();
@@ -542,40 +585,22 @@ const populateGameCategories = () => {
         .map(([gameId]) => gameId);
 
     if (recentlyPlayed.length > 0) {
-        gamesByCategory['Recently Played'] = [];
         recentlyPlayed.forEach(gameId => {
-            if (gamesList[gameId]) {
-                gamesByCategory['Recently Played'].push({
-                    id: gameId,
-                    title: formatGameTitle(gameId)
-                });
-            }
+            addGameToCategory(gamesByCategory, 'Recently Played', gameId);
         });
     }
 
     // Add Favorites category if there are any
     if (favorites.length > 0) {
-        gamesByCategory['Favorites'] = [];
         favorites.forEach(gameId => {
-            if (gamesList[gameId]) {
-                gamesByCategory['Favorites'].push({
-                    id: gameId,
-                    title: formatGameTitle(gameId)
-                });
-            }
+            addGameToCategory(gamesByCategory, 'Favorites', gameId);
         });
     }
 
     // Sort other games into categories
     Object.entries(gamesList).forEach(([gameId, game]) => {
         const category = game.category || 'Other';
-        if (!gamesByCategory[category]) {
-            gamesByCategory[category] = [];
-        }
-        gamesByCategory[category].push({
-            id: gameId,
-            title: formatGameTitle(gameId)
-        });
+        addGameToCategory(gamesByCategory, category, gameId);
     });
 
     // Clear and populate list container
@@ -628,18 +653,20 @@ const populateGameCategories = () => {
     });
 };
 
-window.addEventListener("load", () => {
-    populateGameCategories();
-    setupSearch();
+const refreshSelectedGame = () => {
     updateDocumentTitle();
     updateFlashContainer();
+    populateGameCategories();
+};
+
+window.addEventListener("load", () => {
+    refreshSelectedGame();
+    setupSearch();
     offlineModeService();
 });
 
 window.addEventListener("hashchange", () => {
-    updateDocumentTitle();
-    updateFlashContainer();
-    populateGameCategories();
+    refreshSelectedGame();
 });
 
 // url spoofing https://github.com/ruffle-rs/ruffle/issues/1486
@@ -789,7 +816,7 @@ const trackGamePlay = (gameId) => {
     gameStats[gameId].plays += 1;
     gameStats[gameId].lastPlayed = timestamp;
 
-    localStorage.setItem('gameStats', JSON.stringify(gameStats));
+    writeJsonStorage('gameStats', gameStats);
 
     // Also update lastPlayed in storedGames if the game exists there
     if (storedGames.has(gameId)) {
@@ -799,34 +826,53 @@ const trackGamePlay = (gameId) => {
     }
 };
 
-const updateVolume = (value) => {
+const getActiveVolumeControls = () => {
+    if (!storedGames.has(activeGameId)) {
+        return null;
+    }
+
     const storedGame = storedGames.get(activeGameId);
-    const { player, controls } = getActivePlayerElements();
-    if (!storedGame || !player || !controls) return;
+    const player = storedGame.container.querySelector('#player');
+    const controls = storedGame.container.querySelector('.game-controls');
+
+    if (!player || !controls) {
+        return null;
+    }
 
     const volumeBtn = controls.querySelector('.volume-btn');
     const volumeSlider = controls.querySelector('.volume-slider');
-    if (!volumeBtn || !volumeSlider) return;
+
+    if (!volumeBtn || !volumeSlider) {
+        return null;
+    }
+
+    return { storedGame, player, controls, volumeBtn, volumeSlider };
+};
+
+const updateVolume = (value) => {
+    const volumeContext = getActiveVolumeControls();
+    if (!volumeContext) return;
+
+    const { storedGame, player, volumeBtn, volumeSlider } = volumeContext;
 
     // If volume is 0, treat as muted but remember previous volume
-    const isMuted = parseInt(value) === 0;
+    const numericValue = parseInt(value, 10);
+    const isMuted = Number.isFinite(numericValue) && numericValue === 0;
     volumeBtn.innerHTML = isMuted ? '🔈' : '🔊';
 
     // Store the volume settings for this specific game
     setGameVolume(activeGameId, value, isMuted);
 
     // Update the actual volume
-    setPlayerVolume(player, storedGame.type, value / 100);
+    const normalizedVolume = Number.isFinite(numericValue) ? numericValue / 100 : 1;
+    setPlayerVolume(player, storedGame.type, normalizedVolume);
 };
 
 const toggleMute = () => {
-    const storedGame = storedGames.get(activeGameId);
-    const { player, controls } = getActivePlayerElements();
-    if (!storedGame || !player || !controls) return;
+    const volumeContext = getActiveVolumeControls();
+    if (!volumeContext) return;
 
-    const volumeBtn = controls.querySelector('.volume-btn');
-    const volumeSlider = controls.querySelector('.volume-slider');
-    if (!volumeBtn || !volumeSlider) return;
+    const { storedGame, player, volumeBtn, volumeSlider } = volumeContext;
 
     const gameSettings = getGameVolume(activeGameId);
     const isMuted = gameSettings.isMuted;
@@ -861,64 +907,55 @@ window.addEventListener('message', (event) => {
     }
 });
 
-const getFavorites = () => {
-    const rawFavorites = localStorage.getItem('favorites');
-    if (!rawFavorites) {
-        return [];
-    }
-
-    try {
-        const parsedFavorites = JSON.parse(rawFavorites);
-        return Array.isArray(parsedFavorites) ? parsedFavorites : [];
-    } catch (error) {
-        console.error('Error parsing favorites from localStorage:', error);
-        return [];
-    }
-};
+const getFavorites = () => (
+    readJsonStorage('favorites', [], Array.isArray)
+);
 
 const setFavorites = (favorites) => {
     const normalizedFavorites = Array.isArray(favorites) ? favorites : [];
-    localStorage.setItem('favorites', JSON.stringify(normalizedFavorites));
+    writeJsonStorage('favorites', normalizedFavorites);
 };
 
-const getGameStats = () => {
-    const rawGameStats = localStorage.getItem('gameStats');
-    if (!rawGameStats) {
-        return {};
-    }
-
-    try {
-        const parsedStats = JSON.parse(rawGameStats);
-        return parsedStats && typeof parsedStats === 'object' ? parsedStats : {};
-    } catch (error) {
-        console.error('Error parsing game stats from localStorage:', error);
-        return {};
-    }
-};
+const getGameStats = () => (
+    readJsonStorage(
+        'gameStats',
+        {},
+        (stats) => stats && typeof stats === 'object'
+    )
+);
 
 // Add this helper function to manage per-game volume settings
 const getGameVolume = (gameId) => {
-    const gameVolumes = JSON.parse(localStorage.getItem('gameVolumes') || '{}');
+    const gameVolumes = readJsonStorage(
+        'gameVolumes',
+        {},
+        (volumes) => volumes && typeof volumes === 'object'
+    );
+
     if (gameId in gameVolumes) {
         return {
-            volume: parseInt(gameVolumes[gameId].volume),
+            volume: parseInt(gameVolumes[gameId].volume, 10),
             isMuted: gameVolumes[gameId].isMuted
         };
     }
     // Fall back to global settings if no game-specific settings exist
     return {
-        volume: parseInt(localStorage.getItem('volume') || '100'),
+        volume: parseInt(localStorage.getItem('volume') || '100', 10),
         isMuted: localStorage.getItem('isMuted') === 'true'
     };
 };
 
 const setGameVolume = (gameId, volume, isMuted) => {
-    const gameVolumes = JSON.parse(localStorage.getItem('gameVolumes') || '{}');
+    const gameVolumes = readJsonStorage(
+        'gameVolumes',
+        {},
+        (volumes) => volumes && typeof volumes === 'object'
+    );
     gameVolumes[gameId] = {
         volume: volume,
         isMuted: isMuted
     };
-    localStorage.setItem('gameVolumes', JSON.stringify(gameVolumes));
+    writeJsonStorage('gameVolumes', gameVolumes);
 };
 
 const normalizeGameVolume = (gameId) => {

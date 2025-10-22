@@ -141,15 +141,10 @@ def cleanup_old_files():
 
 def cleanup_workbox_files():
     patterns = ["sw.js", "sw.js.map", "workbox-*.js", "workbox-*.js.map"]
-    
+
     for pattern in patterns:
-        if "*" in pattern:
-            for file in DOCS_DIR.glob(pattern):
-                file.unlink()
-        else:
-            file = DOCS_DIR / pattern
-            if file.exists():
-                file.unlink()
+        for file in DOCS_DIR.glob(pattern):
+            file.unlink()
 
 def generate_service_worker():
     print("Generating service worker...")
