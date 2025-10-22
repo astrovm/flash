@@ -197,14 +197,7 @@ const handleGameStateTransition = (fromGameId, toGameId) => {
         const player = fromGame.container.querySelector('#player');
 
         // Mute the previous game
-        if (player) {
-            if (fromGame.type === 'swf') {
-                try { player.volume = 0; }
-                catch (error) { console.error('Error muting SWF game:', error); }
-            } else if (fromGame.type === 'iframe') {
-                player.contentWindow?.postMessage({ type: 'setVolume', volume: 0 }, '*');
-            }
-        }
+        setPlayerVolume(player, fromGame.type, 0);
 
         // Reset control classes
         const fromControls = fromGame.container.querySelector('.game-controls');
@@ -222,15 +215,8 @@ const handleGameStateTransition = (fromGameId, toGameId) => {
 
         // Set volume for new game
         if (player) {
-            const gameSettings = getGameVolume(toGameId);
-            const volume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
-
-            if (toGame.type === 'swf') {
-                try { player.volume = volume; }
-                catch (error) { console.error('Error setting SWF volume:', error); }
-            } else if (toGame.type === 'iframe') {
-                player.contentWindow?.postMessage({ type: 'setVolume', volume }, '*');
-            }
+            const volume = normalizeGameVolume(toGameId);
+            setPlayerVolume(player, toGame.type, volume);
 
             toGame.container.style.display = 'block';
             setTimeout(() => checkControlsPosition(player), 100);
@@ -351,8 +337,7 @@ const loadRuffleSWF = (gameId, container) => {
     scaleGame(player);
     container.appendChild(player);
 
-    const gameSettings = getGameVolume(gameId);
-    const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+    const initialVolume = normalizeGameVolume(gameId);
 
     const config = {
         url: gamesList[gameId].spoofUrl
@@ -374,7 +359,7 @@ const loadRuffleSWF = (gameId, container) => {
     };
 
     player.addEventListener("loadedmetadata", () => {
-        player.volume = initialVolume;
+        setPlayerVolume(player, 'swf', initialVolume);
         scaleGame(player);
     });
 
@@ -391,14 +376,10 @@ const loadIframe = (gameId, container) => {
 
     container.appendChild(player);
 
-    const gameSettings = getGameVolume(gameId);
-    const initialVolume = gameSettings.isMuted ? 0 : gameSettings.volume / 100;
+    const initialVolume = normalizeGameVolume(gameId);
 
     player.addEventListener('load', () => {
-        player.contentWindow.postMessage({
-            type: 'setVolume',
-            volume: initialVolume
-        }, '*');
+        setPlayerVolume(player, 'iframe', initialVolume);
         scaleGame(player);
     });
 };
@@ -791,8 +772,9 @@ const updateVolume = (value) => {
     const player = document.querySelector(`#game-container-${activeGameId} #player`);
     const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
     const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
+    const storedGame = storedGames.get(activeGameId);
 
-    if (!player || !volumeBtn || !volumeSlider) return;
+    if (!player || !volumeBtn || !volumeSlider || !storedGame) return;
 
     // If volume is 0, treat as muted but remember previous volume
     const isMuted = parseInt(value) === 0;
@@ -802,21 +784,15 @@ const updateVolume = (value) => {
     setGameVolume(activeGameId, value, isMuted);
 
     // Update the actual volume
-    if (player instanceof HTMLIFrameElement) {
-        player.contentWindow.postMessage({
-            type: 'setVolume',
-            volume: value / 100
-        }, '*');
-    } else {
-        player.volume = value / 100;
-    }
+    setPlayerVolume(player, storedGame.type, value / 100);
 };
 
 const toggleMute = () => {
     const player = document.querySelector(`#game-container-${activeGameId} #player`);
     const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
     const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
-    if (!player || !volumeBtn || !volumeSlider) return;
+    const storedGame = storedGames.get(activeGameId);
+    if (!player || !volumeBtn || !volumeSlider || !storedGame) return;
 
     const gameSettings = getGameVolume(activeGameId);
     const isMuted = gameSettings.isMuted;
@@ -826,14 +802,7 @@ const toggleMute = () => {
         const volume = gameSettings.volume || 100;
         setGameVolume(activeGameId, volume, false);
 
-        if (player instanceof HTMLIFrameElement) {
-            player.contentWindow.postMessage({
-                type: 'setVolume',
-                volume: volume / 100
-            }, '*');
-        } else {
-            player.volume = volume / 100;
-        }
+        setPlayerVolume(player, storedGame.type, volume / 100);
 
         volumeBtn.innerHTML = '🔊';
         volumeSlider.value = volume;
@@ -842,14 +811,7 @@ const toggleMute = () => {
         const currentVolume = volumeSlider.value;
         setGameVolume(activeGameId, currentVolume, true);
 
-        if (player instanceof HTMLIFrameElement) {
-            player.contentWindow.postMessage({
-                type: 'setVolume',
-                volume: 0
-            }, '*');
-        } else {
-            player.volume = 0;
-        }
+        setPlayerVolume(player, storedGame.type, 0);
 
         volumeBtn.innerHTML = '🔈';
         volumeSlider.value = 0;
@@ -888,4 +850,40 @@ const setGameVolume = (gameId, volume, isMuted) => {
         isMuted: isMuted
     };
     localStorage.setItem('gameVolumes', JSON.stringify(gameVolumes));
+};
+
+const normalizeGameVolume = (gameId) => {
+    if (!gameId) {
+        return 0;
+    }
+
+    const { volume, isMuted } = getGameVolume(gameId);
+    const numericVolume = parseInt(volume, 10);
+    const clampedVolume = Number.isFinite(numericVolume)
+        ? Math.min(Math.max(numericVolume, 0), 100)
+        : 100;
+
+    return isMuted ? 0 : clampedVolume / 100;
+};
+
+const setPlayerVolume = (player, type, normalizedVolume) => {
+    if (!player) {
+        return;
+    }
+
+    const resolvedVolume = Number.isFinite(normalizedVolume) ? normalizedVolume : 0;
+    const resolvedType = type || (player instanceof HTMLIFrameElement ? 'iframe' : 'swf');
+
+    if (resolvedType === 'iframe') {
+        player.contentWindow?.postMessage({
+            type: 'setVolume',
+            volume: resolvedVolume
+        }, '*');
+    } else {
+        try {
+            player.volume = resolvedVolume;
+        } catch (error) {
+            console.error('Error setting SWF volume:', error);
+        }
+    }
 };
