@@ -17,24 +17,29 @@ ASSET_PATHS = {
     'main_css': CSS_DIR / "main.css"
 }
 
+def extract_ruffle_assets(content):
+    """Extract the core Ruffle filename and associated wasm assets."""
+    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+\{[^}]*\d+:"([a-f0-9]+)"', content)
+    wasm_matches = re.findall(r'e\.exports=t\.p\+"([a-f0-9]+\.wasm)"', content)
+
+    if not core_match or not wasm_matches:
+        raise ValueError("Could not find core or wasm file names in ruffle.js")
+
+    core_file = f"core.ruffle.{core_match.group(1)}.js"
+    return core_file, wasm_matches
+
 def download_ruffle():
     JS_DIR.mkdir(parents=True, exist_ok=True)
     base_url = "https://unpkg.com/@ruffle-rs/ruffle"
     print("Downloading Ruffle files...")
-    
+
     # Download and save ruffle.js
     response = requests.get(f"{base_url}/ruffle.js")
     with open(ASSET_PATHS['ruffle'], 'w') as f:
         f.write(response.text)
-    
-    # Extract filenames and download dependencies  
-    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+\{[^}]*\d+:"([a-f0-9]+)"', response.text)
-    wasm_matches = re.findall(r'e\.exports=t\.p\+"([a-f0-9]+\.wasm)"', response.text)
-    
-    if not core_match or not wasm_matches:
-        raise Exception("Could not find core or wasm file names in ruffle.js")
-    
-    core_file = f"core.ruffle.{core_match.group(1)}.js"
+
+    # Extract filenames and download dependencies
+    core_file, wasm_matches = extract_ruffle_assets(response.text)
     files_to_download = [core_file] + wasm_matches
     
     for filename in files_to_download:
@@ -116,23 +121,23 @@ def cleanup_old_files():
         
     with open(ASSET_PATHS['ruffle'], 'r') as f:
         current_content = f.read()
-    
-    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+\{[^}]*\d+:"([a-f0-9]+)"', current_content)
-    wasm_matches = re.findall(r'e\.exports=t\.p\+"([a-f0-9]+\.wasm)"', current_content)
-    
-    if core_match and wasm_matches:
-        current_core = f"core.ruffle.{core_match.group(1)}.js"
-        current_wasms = set(wasm_matches)
-        
-        for file in JS_DIR.iterdir():
-            if file.name.startswith("core.ruffle.") and file.name.endswith(".js"):
-                if file.name != current_core:
-                    file.unlink()
-                    print(f"  - Removed {file.name}")
-            elif file.name.endswith(".wasm"):
-                if file.name not in current_wasms:
-                    file.unlink()
-                    print(f"  - Removed {file.name}")
+
+    try:
+        current_core, wasm_matches = extract_ruffle_assets(current_content)
+    except ValueError:
+        return
+
+    current_wasms = set(wasm_matches)
+
+    for file in JS_DIR.iterdir():
+        if file.name.startswith("core.ruffle.") and file.name.endswith(".js"):
+            if file.name != current_core:
+                file.unlink()
+                print(f"  - Removed {file.name}")
+        elif file.name.endswith(".wasm"):
+            if file.name not in current_wasms:
+                file.unlink()
+                print(f"  - Removed {file.name}")
 
 def cleanup_workbox_files():
     patterns = ["sw.js", "sw.js.map", "workbox-*.js", "workbox-*.js.map"]
