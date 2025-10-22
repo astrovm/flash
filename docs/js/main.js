@@ -253,7 +253,7 @@ const addGameControls = (controlsContainer, gameId) => {
     favoriteBtn.innerHTML = '★';
     favoriteBtn.dataset.game = gameId;
     favoriteBtn.onclick = () => toggleFavorite(gameId);
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const favorites = getFavorites();
     if (favorites.includes(gameId)) {
         favoriteBtn.classList.add('active');
     }
@@ -531,8 +531,8 @@ const setupSearch = () => {
 
 const populateGameCategories = () => {
     const gamesByCategory = {};
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+    const favorites = getFavorites();
+    const gameStats = getGameStats();
     const selectedGameId = getSelectedGameId();
 
     // Add Recently Played category
@@ -754,7 +754,7 @@ const toggleFullscreen = (element) => {
 };
 
 const toggleFavorite = (gameId) => {
-    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const favorites = getFavorites();
     const index = favorites.indexOf(gameId);
 
     if (index === -1) {
@@ -763,7 +763,7 @@ const toggleFavorite = (gameId) => {
         favorites.splice(index, 1);
     }
 
-    localStorage.setItem('favorites', JSON.stringify(favorites));
+    setFavorites(favorites);
 
     // Update favorite button state
     const favoriteBtn = document.querySelector(`.favorite-btn[data-game="${gameId}"]`);
@@ -776,7 +776,7 @@ const toggleFavorite = (gameId) => {
 };
 
 const trackGamePlay = (gameId) => {
-    const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+    const gameStats = getGameStats();
     const timestamp = Date.now();
 
     if (!gameStats[gameId]) {
@@ -860,6 +860,41 @@ window.addEventListener('message', (event) => {
         console.log('Volume update confirmed by iframe:', event.data.volume);
     }
 });
+
+const getFavorites = () => {
+    const rawFavorites = localStorage.getItem('favorites');
+    if (!rawFavorites) {
+        return [];
+    }
+
+    try {
+        const parsedFavorites = JSON.parse(rawFavorites);
+        return Array.isArray(parsedFavorites) ? parsedFavorites : [];
+    } catch (error) {
+        console.error('Error parsing favorites from localStorage:', error);
+        return [];
+    }
+};
+
+const setFavorites = (favorites) => {
+    const normalizedFavorites = Array.isArray(favorites) ? favorites : [];
+    localStorage.setItem('favorites', JSON.stringify(normalizedFavorites));
+};
+
+const getGameStats = () => {
+    const rawGameStats = localStorage.getItem('gameStats');
+    if (!rawGameStats) {
+        return {};
+    }
+
+    try {
+        const parsedStats = JSON.parse(rawGameStats);
+        return parsedStats && typeof parsedStats === 'object' ? parsedStats : {};
+    } catch (error) {
+        console.error('Error parsing game stats from localStorage:', error);
+        return {};
+    }
+};
 
 // Add this helper function to manage per-game volume settings
 const getGameVolume = (gameId) => {
