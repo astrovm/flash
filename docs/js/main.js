@@ -190,6 +190,16 @@ const getSelectedGameId = () => {
     return id && gamesList[id] ? id : null;
 };
 
+const getActivePlayerElements = () => {
+    const state = storedGames.get(activeGameId);
+    if (!state) return {};
+
+    return {
+        player: state.container.querySelector('#player'),
+        controls: state.container
+    };
+};
+
 const handleGameStateTransition = (fromGameId, toGameId) => {
     // Handle previous game
     if (fromGameId && storedGames.has(fromGameId)) {
@@ -229,7 +239,12 @@ const addGameControls = (controlsContainer, gameId) => {
     const fullscreenBtn = document.createElement('button');
     fullscreenBtn.className = 'control-btn fullscreen-btn';
     fullscreenBtn.innerHTML = '⛶';
-    fullscreenBtn.onclick = () => toggleFullscreen(document.querySelector(`#game-container-${gameId} #player`));
+    fullscreenBtn.onclick = () => {
+        const { player } = getActivePlayerElements();
+        if (player) {
+            toggleFullscreen(player);
+        }
+    };
     controlsContainer.appendChild(fullscreenBtn);
 
     // Add favorite button
@@ -769,12 +784,13 @@ const trackGamePlay = (gameId) => {
 };
 
 const updateVolume = (value) => {
-    const player = document.querySelector(`#game-container-${activeGameId} #player`);
-    const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
-    const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
     const storedGame = storedGames.get(activeGameId);
+    const { player, controls } = getActivePlayerElements();
+    if (!storedGame || !player || !controls) return;
 
-    if (!player || !volumeBtn || !volumeSlider || !storedGame) return;
+    const volumeBtn = controls.querySelector('.volume-btn');
+    const volumeSlider = controls.querySelector('.volume-slider');
+    if (!volumeBtn || !volumeSlider) return;
 
     // If volume is 0, treat as muted but remember previous volume
     const isMuted = parseInt(value) === 0;
@@ -788,11 +804,13 @@ const updateVolume = (value) => {
 };
 
 const toggleMute = () => {
-    const player = document.querySelector(`#game-container-${activeGameId} #player`);
-    const volumeBtn = document.querySelector(`#game-container-${activeGameId} .volume-btn`);
-    const volumeSlider = document.querySelector(`#game-container-${activeGameId} .volume-slider`);
     const storedGame = storedGames.get(activeGameId);
-    if (!player || !volumeBtn || !volumeSlider || !storedGame) return;
+    const { player, controls } = getActivePlayerElements();
+    if (!storedGame || !player || !controls) return;
+
+    const volumeBtn = controls.querySelector('.volume-btn');
+    const volumeSlider = controls.querySelector('.volume-slider');
+    if (!volumeBtn || !volumeSlider) return;
 
     const gameSettings = getGameVolume(activeGameId);
     const isMuted = gameSettings.isMuted;
