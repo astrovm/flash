@@ -1,4 +1,4 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 import argparse
 
@@ -29,7 +29,7 @@ def main():
     args = parser.parse_args()
 
     server_address = ("", args.port)
-    httpd = HTTPServer(server_address, NoCacheHandler)
+    httpd = ThreadingHTTPServer(server_address, NoCacheHandler)
     print(f"Server running on http://localhost:{args.port}/")
     httpd.serve_forever()
 

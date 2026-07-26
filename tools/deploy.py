@@ -1,7 +1,9 @@
+import io
 import requests
 import subprocess
 import re
 import hashlib
+import zipfile
 from datetime import datetime
 from pathlib import Path
 
@@ -10,6 +12,9 @@ DOCS_DIR = Path("docs")
 JS_DIR = DOCS_DIR / "js"
 CSS_DIR = DOCS_DIR / "css"
 HTML_PATH = DOCS_DIR / "index.html"
+RUFFLE_LATEST_RELEASE_URL = "https://api.github.com/repos/ruffle-rs/ruffle/releases/latest"
+RUFFLE_ASSET_SUFFIX = "-web-selfhosted.zip"
+RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
 
 ASSET_PATHS = {
     'ruffle': JS_DIR / "ruffle.js",
@@ -17,37 +22,55 @@ ASSET_PATHS = {
     'main_css': CSS_DIR / "main.css"
 }
 
-def extract_ruffle_assets(content):
-    """Extract the core Ruffle filename and associated wasm assets."""
-    core_match = re.search(r'r\.u=e=>"core\.ruffle\."\+\{[^}]*\d+:"([a-f0-9]+)"', content)
-    wasm_matches = re.findall(r'e\.exports=t\.p\+"([a-f0-9]+\.wasm)"', content)
-
-    if not core_match or not wasm_matches:
-        raise ValueError("Could not find core or wasm file names in ruffle.js")
-
-    core_file = f"core.ruffle.{core_match.group(1)}.js"
-    return core_file, wasm_matches
-
 def download_ruffle():
+    """Download and install the latest stable self-hosted Ruffle web package."""
     JS_DIR.mkdir(parents=True, exist_ok=True)
-    base_url = "https://unpkg.com/@ruffle-rs/ruffle"
-    print("Downloading Ruffle files...")
+    print("Finding latest stable Ruffle release...")
 
-    # Download and save ruffle.js
-    response = requests.get(f"{base_url}/ruffle.js")
-    with open(ASSET_PATHS['ruffle'], 'w') as f:
-        f.write(response.text)
+    release_response = requests.get(RUFFLE_LATEST_RELEASE_URL, timeout=30)
+    release_response.raise_for_status()
+    release = release_response.json()
+    asset = next(
+        (
+            item for item in release.get("assets", [])
+            if item.get("name", "").endswith(RUFFLE_ASSET_SUFFIX)
+        ),
+        None,
+    )
+    if asset is None:
+        raise ValueError("Latest Ruffle release has no self-hosted web package")
 
-    # Extract filenames and download dependencies
-    core_file, wasm_matches = extract_ruffle_assets(response.text)
-    files_to_download = [core_file] + wasm_matches
-    
-    for filename in files_to_download:
-        print(f"  - Downloading {filename}")
-        response = requests.get(f"{base_url}/{filename}")
-        mode = 'wb' if filename.endswith('.wasm') else 'w'
-        with open(JS_DIR / filename, mode) as f:
-            f.write(response.content if mode == 'wb' else response.text)
+    version = release.get("tag_name", "unknown")
+    print(f"Downloading Ruffle {version}...")
+    archive_response = requests.get(
+        asset["browser_download_url"],
+        timeout=120,
+    )
+    archive_response.raise_for_status()
+
+    with zipfile.ZipFile(io.BytesIO(archive_response.content)) as archive:
+        files = {
+            Path(info.filename).name: archive.read(info)
+            for info in archive.infolist()
+            if (
+                not info.is_dir()
+                and Path(info.filename).parent == Path(".")
+                and info.filename.endswith(RUFFLE_FILE_SUFFIXES)
+            )
+        }
+
+    if (
+        "ruffle.js" not in files
+        or not any(name.startswith("core.ruffle.") and name.endswith(".js") for name in files)
+        or not any(name.endswith(".wasm") for name in files)
+    ):
+        raise ValueError("Downloaded Ruffle package is missing required runtime files")
+
+    for filename, content in files.items():
+        (JS_DIR / filename).write_bytes(content)
+        print(f"  - Installed {filename}")
+
+    return set(files)
 
 def get_short_hash(file_path):
     """Get first 8 characters of the file's hash for cache busting"""
@@ -109,35 +132,21 @@ def update_html():
         f.write(content)
     print(f"  - Updated to version {version_str}")
 
-def cleanup_old_files():
+def cleanup_old_files(current_files):
     if not JS_DIR.exists():
         return
-        
+
     print("Cleaning up old files...")
-    
-    # Skip cleanup if ruffle.js doesn't exist yet
-    if not ASSET_PATHS['ruffle'].exists():
-        return
-        
-    with open(ASSET_PATHS['ruffle'], 'r') as f:
-        current_content = f.read()
-
-    try:
-        current_core, wasm_matches = extract_ruffle_assets(current_content)
-    except ValueError:
-        return
-
-    current_wasms = set(wasm_matches)
 
     for file in JS_DIR.iterdir():
-        if file.name.startswith("core.ruffle.") and file.name.endswith(".js"):
-            if file.name != current_core:
-                file.unlink()
-                print(f"  - Removed {file.name}")
-        elif file.name.endswith(".wasm"):
-            if file.name not in current_wasms:
-                file.unlink()
-                print(f"  - Removed {file.name}")
+        is_ruffle_asset = (
+            file.name.startswith("core.ruffle.")
+            or file.name.endswith(".wasm")
+            or file.name == "ruffle.js.map"
+        )
+        if is_ruffle_asset and file.name not in current_files:
+            file.unlink()
+            print(f"  - Removed {file.name}")
 
 def cleanup_workbox_files():
     patterns = ["sw.js", "sw.js.map", "workbox-*.js", "workbox-*.js.map"]
@@ -158,8 +167,8 @@ def generate_service_worker():
 def deploy():
     try:
         print("\nStarting deployment...")
-        download_ruffle()
-        cleanup_old_files()
+        ruffle_files = download_ruffle()
+        cleanup_old_files(ruffle_files)
         update_html()
         generate_service_worker()
         print("\nDeployment completed successfully!")
