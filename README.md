@@ -5,6 +5,7 @@ A curated archive of Flash games
 ## Features
 
 - Windows XP desktop simulation with boot, login and turn-off screens
+- Original Windows XP assets: Bliss wallpaper, arrow cursor and system sounds
 - Games as desktop icons, opened in draggable/resizable windows
 - Start menu with game categories, search, favorites and recently played
 - Taskbar with window buttons and tray clock

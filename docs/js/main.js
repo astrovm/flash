@@ -1262,6 +1262,15 @@ const offlineModeService = () => {
 // Screen Flow (boot -> welcome -> desktop)
 // ============================================
 
+// Original Windows XP system sounds (playback is skipped if the
+// browser still blocks audio before the user's first interaction)
+const playXPSound = (name) => {
+    const audio = new Audio(`assets/xp/sounds/${name}.mp3`);
+    audio.play().catch(() => {});
+};
+
+let startupSoundPending = true;
+
 const setScreen = (...visibleIds) => {
     ["boot-screen", "welcome-screen", "desktop", "taskbar", "turn-off-screen"]
         .forEach((id) => {
@@ -1271,6 +1280,7 @@ const setScreen = (...visibleIds) => {
 
 const showBootScreen = () => {
     setScreen("boot-screen");
+    startupSoundPending = true;
     clearTimeout(bootTimeout);
     bootTimeout = setTimeout(showWelcomeScreen, BOOT_DURATION_MS);
 };
@@ -1278,6 +1288,10 @@ const showBootScreen = () => {
 const showWelcomeScreen = () => {
     clearTimeout(bootTimeout);
     setScreen("welcome-screen");
+    if (startupSoundPending) {
+        startupSoundPending = false;
+        playXPSound("startup");
+    }
 };
 
 const showDesktop = () => {
@@ -1291,6 +1305,7 @@ const showTurnOffScreen = () => {
 
 const login = () => {
     showDesktop();
+    playXPSound("logon");
 
     if (!loggedIn) {
         loggedIn = true;
@@ -1315,11 +1330,13 @@ const setupScreenFlow = () => {
 
     document.getElementById("log-off-button").addEventListener("click", () => {
         closeStartMenu();
+        playXPSound("logoff");
         showWelcomeScreen();
     });
 
     document.getElementById("turn-off-button").addEventListener("click", () => {
         closeStartMenu();
+        playXPSound("shutdown");
         showTurnOffScreen();
     });
 
