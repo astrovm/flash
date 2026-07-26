@@ -480,19 +480,19 @@ const createWindowElement = (gameId) => {
     minimizeBtn.type = "button";
     minimizeBtn.className = "tb-btn minimize-btn";
     minimizeBtn.title = "Minimize";
-    minimizeBtn.textContent = "_";
+    minimizeBtn.setAttribute("aria-label", "Minimize");
 
     const maximizeBtn = document.createElement("button");
     maximizeBtn.type = "button";
     maximizeBtn.className = "tb-btn maximize-btn";
     maximizeBtn.title = "Maximize";
-    maximizeBtn.textContent = "▢";
+    maximizeBtn.setAttribute("aria-label", "Maximize");
 
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "tb-btn close-btn";
     closeBtn.title = "Close";
-    closeBtn.textContent = "✕";
+    closeBtn.setAttribute("aria-label", "Close");
 
     titleButtons.append(minimizeBtn, maximizeBtn, closeBtn);
     titleBar.append(titleIcon, titleText, titleButtons);
@@ -538,6 +538,15 @@ const createWindowElement = (gameId) => {
 
     win.append(titleBar, toolbar, content, resizeHandle);
     return win;
+};
+
+const updateMaximizeButton = (win) => {
+    const button = win.maximizeBtn || win.el.querySelector(".maximize-btn");
+    if (!button) return;
+
+    button.classList.toggle("restore-btn", win.maximized);
+    button.title = win.maximized ? "Restore" : "Maximize";
+    button.setAttribute("aria-label", button.title);
 };
 
 const loadRuffleSWF = (gameId, win) => {
@@ -684,6 +693,7 @@ const toggleMaximize = (gameId) => {
         }
         win.maximized = false;
     }
+    updateMaximizeButton(win);
     focusWindow(gameId);
 };
 
@@ -821,6 +831,7 @@ const wireWindowControls = (win) => {
 
     syncWindowVolumeUI(win);
     updateFavoriteUI(win);
+    updateMaximizeButton(win);
     wireDrag(win);
     wireResize(win);
 };
@@ -886,6 +897,7 @@ const openGameWindow = (gameId) => {
         zIndex: 0,
         lastOpened: Date.now(),
         content: el.querySelector(".window-content"),
+        maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: el.querySelector(".favorite-btn"),
         volumeBtn: el.querySelector(".volume-btn"),
         volumeSlider: el.querySelector(".volume-slider")

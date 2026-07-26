@@ -10,11 +10,11 @@
     --xp-border-blue: #0053e0;
     --xp-text: #1a1a1a;
     --titlebar-active: linear-gradient(180deg,
-        #0e8bff 0%, #3787f5 4%, #005df2 10%,
-        #0053e0 50%, #0048c4 92%, #005ef5 100%);
+        #0997ff 0%, #0053ee 8%, #0050e6 42%,
+        #0046c7 90%, #0054f0 100%);
     --titlebar-inactive: linear-gradient(180deg,
-        #b9cff0 0%, #9db9e8 10%, #8baade 50%,
-        #7c9cd3 92%, #93b3e2 100%);
+        #dbe7f8 0%, #b8ceea 8%, #9cb9df 42%,
+        #89abd4 90%, #a5c3e5 100%);
     --taskbar-gradient: linear-gradient(180deg,
         #245edb 0%, #3f8cf3 9%, #245edb 18%,
         #245edb 92%, #123e9e 100%);
@@ -351,13 +351,15 @@ iframe {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 0 3px 0 8px;
+    padding: 0 2px 0 8px;
     border-radius: 7px 7px 0 0;
     background: var(--titlebar-inactive);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
     color: #fff;
     font-size: 13px;
     font-weight: 700;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.55);
+    letter-spacing: 0.2px;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
     touch-action: none;
     cursor: var(--xp-cursor);
 }
@@ -366,11 +368,21 @@ iframe {
     background: var(--titlebar-active);
 }
 
+.xp-window:not(.active) .tb-btn {
+    filter: saturate(0.72) brightness(1.08);
+}
+
 .xp-window.maximized .title-bar {
     border-radius: 0;
 }
 
 .title-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
     font-size: 15px;
     line-height: 1;
     text-shadow: none;
@@ -385,33 +397,111 @@ iframe {
 
 .title-buttons {
     display: flex;
+    align-items: center;
     gap: 2px;
 }
 
 .tb-btn {
+    position: relative;
     width: 21px;
     height: 21px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    flex: none;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.75);
     border-radius: 3px;
-    background: linear-gradient(180deg, #4e93f7 0%, #2067e8 50%, #0f56d8 100%);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1;
-    padding: 0 0 2px;
+    background: linear-gradient(180deg,
+        #8bb7fb 0%, #4385ef 12%, #1f6ae5 48%, #0c54cf 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+        0 1px 1px rgba(0, 0, 0, 0.28);
     cursor: var(--xp-cursor);
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .tb-btn:hover {
-    filter: brightness(1.18);
+    background: linear-gradient(180deg,
+        #b3d1fd 0%, #62a1f4 12%, #3482ef 48%, #1b66dd 100%);
 }
 
-.tb-btn.close-btn {
-    background: linear-gradient(180deg, #f0a179 0%, #e0682f 50%, #c94e12 100%);
+.tb-btn:active {
+    transform: translateY(1px);
+    box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.tb-btn::before,
+.tb-btn::after {
+    content: "";
+    position: absolute;
+    background: #fff;
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.minimize-btn::before {
+    left: 6px;
+    right: 6px;
+    bottom: 5px;
+    height: 2px;
+}
+
+.maximize-btn::before {
+    left: 6px;
+    top: 5px;
+    width: 9px;
+    height: 8px;
+    border: 1px solid #fff;
+    border-top-width: 3px;
+    background: transparent;
+}
+
+.maximize-btn::after,
+.restore-btn::after {
+    content: none;
+}
+
+.restore-btn::before {
+    left: 7px;
+    top: 5px;
+    width: 8px;
+    height: 7px;
+    border: 1px solid #fff;
+    border-top-width: 3px;
+    background: transparent;
+}
+
+.restore-btn::after {
+    content: "";
+    left: 4px;
+    top: 8px;
+    width: 8px;
+    height: 7px;
+    border: 1px solid #fff;
+    border-top-width: 3px;
+    background: transparent;
+}
+
+.close-btn {
+    background: linear-gradient(180deg,
+        #f6b893 0%, #ed8750 12%, #dc6124 48%, #bd4208 100%);
+}
+
+.close-btn:hover {
+    background: linear-gradient(180deg,
+        #ffc8a8 0%, #f39c66 12%, #e97835 48%, #cf520f 100%);
+}
+
+.close-btn::before,
+.close-btn::after {
+    left: 5px;
+    top: 9px;
+    width: 11px;
+    height: 2px;
+}
+
+.close-btn::before {
+    transform: rotate(45deg);
+}
+
+.close-btn::after {
+    transform: rotate(-45deg);
 }
 
 /* ---- Window toolbar (game controls) ---- */
