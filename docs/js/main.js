@@ -42,6 +42,11 @@ const systemShortcuts = {
     "__recycle-bin": {
         title: "Recycle Bin",
         icon: "assets/xp/icons/recycler-empty.png"
+    },
+    "__display-properties": {
+        title: "Display Properties",
+        icon: "assets/xp/icons/mycomputer.png",
+        desktop: false
     }
 };
 
@@ -78,7 +83,12 @@ const createGameIconElement = (gameId, className) => {
         }
         icon.appendChild(image);
     } else {
-        icon.textContent = getGameIcon(gameId);
+        const systemGlyph = systemShortcuts[gameId]?.glyph;
+        if (systemGlyph) {
+            icon.classList.add("system-glyph", `system-glyph-${systemGlyph}`);
+        } else {
+            icon.textContent = getGameIcon(gameId);
+        }
     }
 
     return icon;
@@ -737,6 +747,32 @@ const createSystemWindowContent = (shortcutId) => {
     const content = document.createElement("div");
     content.className = "explorer-content";
 
+    if (shortcutId === "__display-properties") {
+        content.className = "display-properties-content";
+        content.innerHTML = `
+            <div class="display-tabs" role="tablist" aria-label="Display Properties">
+                <button type="button" role="tab">Themes</button>
+                <button type="button" role="tab" class="active" aria-selected="true">Desktop</button>
+                <button type="button" role="tab">Screen Saver</button>
+                <button type="button" role="tab">Appearance</button>
+                <button type="button" role="tab">Settings</button>
+            </div>
+            <div class="display-preview" aria-label="Desktop preview">
+                <div><span>start</span></div>
+            </div>
+            <label class="display-wallpaper-label">Background:</label>
+            <select aria-label="Desktop background">
+                <option selected>Bliss</option>
+            </select>
+            <div class="display-dialog-buttons">
+                <button type="button" data-display-action="ok">OK</button>
+                <button type="button" data-display-action="cancel">Cancel</button>
+                <button type="button" disabled>Apply</button>
+            </div>
+        `;
+        return content;
+    }
+
     const taskTitles = {
         "__my-documents": "File and Folder Tasks",
         "__my-computer": "System Tasks",
@@ -805,6 +841,22 @@ const wireSystemWindowControls = (win) => {
     wireResize(win);
 };
 
+const ensureWindowCapacity = () => {
+    if (openWindows.size < MAX_OPEN_WINDOWS) return;
+
+    let oldestId = null;
+    let oldestTime = Infinity;
+    for (const [id, win] of openWindows.entries()) {
+        if (win.lastUsed < oldestTime) {
+            oldestTime = win.lastUsed;
+            oldestId = id;
+        }
+    }
+    if (oldestId) {
+        closeGameWindow(oldestId);
+    }
+};
+
 const openSystemWindow = (shortcutId) => {
     const existing = openWindows.get(shortcutId);
     if (existing) {
@@ -813,6 +865,7 @@ const openSystemWindow = (shortcutId) => {
         return;
     }
 
+    ensureWindowCapacity();
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
     const el = createWindowElement(shortcutId);
     el.classList.add("explorer-window");
@@ -842,6 +895,9 @@ const openSystemWindow = (shortcutId) => {
     };
     openWindows.set(shortcutId, win);
     wireSystemWindowControls(win);
+    el.querySelectorAll("[data-display-action]").forEach((button) => {
+        button.addEventListener("click", () => closeGameWindow(shortcutId));
+    });
     focusWindow(shortcutId);
 };
 
@@ -863,21 +919,7 @@ const openGameWindow = (gameId) => {
         return;
     }
 
-    // Evict the least recently used window when the limit is reached
-    if (openWindows.size >= MAX_OPEN_WINDOWS) {
-        let oldestId = null;
-        let oldestTime = Infinity;
-        for (const [id, win] of openWindows.entries()) {
-            if (win.lastUsed < oldestTime) {
-                oldestTime = win.lastUsed;
-                oldestId = id;
-            }
-        }
-        if (oldestId) {
-            closeGameWindow(oldestId);
-        }
-    }
-
+    ensureWindowCapacity();
     const game = gamesList[gameId];
     const aspectRatio = game.aspectRatio || DEFAULT_ASPECT_RATIO;
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
@@ -1125,7 +1167,12 @@ const wireDesktopSelectionRectangle = () => {
         if (event.button !== 0 || event.target !== container) return;
 
         closeDesktopContextMenu();
-        if (!event.ctrlKey && !event.metaKey) {
+        const additive = event.ctrlKey || event.metaKey;
+        const initialSelection = new Set(
+            Array.from(document.querySelectorAll(".desktop-icon.selected"))
+                .map((icon) => icon.dataset.game)
+        );
+        if (!additive) {
             clearDesktopSelection();
         }
 
@@ -1160,7 +1207,10 @@ const wireDesktopSelectionRectangle = () => {
                     && icon.offsetTop < top + height
                     && icon.offsetTop + icon.offsetHeight > top
                 );
-                icon.classList.toggle("selected", intersects);
+                icon.classList.toggle(
+                    "selected",
+                    intersects || (additive && initialSelection.has(icon.dataset.game))
+                );
             });
         };
 
@@ -1190,7 +1240,10 @@ const buildDesktopIcons = () => {
     const sortedGames = Object.keys(gamesList).sort((a, b) =>
         formatGameTitle(a).localeCompare(formatGameTitle(b))
     );
-    const desktopItems = [...Object.keys(systemShortcuts), ...sortedGames];
+    const desktopItems = [
+        ...Object.keys(systemShortcuts).filter((id) => systemShortcuts[id].desktop !== false),
+        ...sortedGames
+    ];
 
     desktopItems.forEach((gameId) => {
         const icon = document.createElement("button");
@@ -1281,6 +1334,8 @@ const setupDesktopContextMenu = () => {
             const icons = document.getElementById("desktop-icons");
             icons.classList.remove("desktop-refresh");
             requestAnimationFrame(() => icons.classList.add("desktop-refresh"));
+        } else if (action === "properties") {
+            openSystemWindow("__display-properties");
         }
         closeDesktopContextMenu();
     });
