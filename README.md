@@ -4,6 +4,10 @@ A curated archive of Flash games
 
 ## Features
 
+- Windows XP desktop simulation with boot, login and turn-off screens
+- Games as desktop icons, opened in draggable/resizable windows
+- Start menu with game categories, search, favorites and recently played
+- Taskbar with window buttons and tray clock
 - Flash emulation by Ruffle
 - Play offline, no internet connection required
 - FPS optimized per game
@@ -11,15 +15,13 @@ A curated archive of Flash games
 - Flawless screen adaptation
 - No requests to external resources
 - Automatic sitelock bypass
-- Game categories
-- Favorites system
-- Recently played tracking
 - Fullscreen support
-- Search functionality
 - Volume controls for both Flash and HTML5 games
 - Persistent volume settings across sessions
 - Mute/unmute functionality
-- Adaptive controls positioning
+- Per-window volume controls with focus-based muting
+- Up to 4 game windows open simultaneously
+- Deep linking via URL hash (#game-id)
 
 ## Development
 
