@@ -1476,7 +1476,14 @@ const buildPlaces = () => {
 
         const glyph = document.createElement("span");
         glyph.className = "sm-place-icon";
-        glyph.textContent = icon;
+        if (icon.endsWith(".png")) {
+            const image = document.createElement("img");
+            image.src = `assets/xp/icons/${icon}`;
+            image.alt = "";
+            glyph.appendChild(image);
+        } else {
+            glyph.textContent = icon;
+        }
 
         const text = document.createElement("span");
         text.textContent = label;
@@ -1485,11 +1492,11 @@ const buildPlaces = () => {
     };
 
     [
-        ["My Documents", "📁"],
-        ["My Recent Documents", "📄"],
-        ["My Pictures", "▣"],
-        ["My Music", "♫"],
-        ["My Computer", "▥"],
+        ["My Documents", "MyDocuments.png"],
+        ["My Recent Documents", "RecentDocuments.png"],
+        ["My Pictures", "MyPictures.png"],
+        ["My Music", "MyMusic.png"],
+        ["My Computer", "MyComputer.png"],
     ].forEach(([label, icon]) => container.appendChild(createPlace(label, icon)));
 
     const separatorOne = document.createElement("div");
@@ -1497,19 +1504,19 @@ const buildPlaces = () => {
     container.appendChild(separatorOne);
 
     [
-        ["Control Panel", "⚙"],
-        ["Printers and Faxes", "▤"],
-        ["Help and Support", "?"],
+        ["Control Panel", "ControlPanel.png"],
+        ["Printers and Faxes", "PrintersandFaxes.png"],
+        ["Help and Support", "HelpandSupport.png"],
     ].forEach(([label, icon]) => container.appendChild(createPlace(label, icon)));
 
-    const search = createPlace("Search", "⌕");
+    const search = createPlace("Search", "Search.png");
     search.addEventListener("click", () => {
         openAllPrograms();
         document.getElementById("game-search").focus();
     });
     container.appendChild(search);
 
-    const run = createPlace("Run...", "▱");
+    const run = createPlace("Run...", "Run.png");
     run.addEventListener("click", openAllPrograms);
     container.appendChild(run);
 
