@@ -88,23 +88,53 @@ iframe {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 42px;
     cursor: var(--xp-cursor);
 }
 
 .boot-wordmark-img {
-    width: min(360px, 72vw);
+    width: min(245px, 61vw);
     height: auto;
-    filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.08));
+    transform: translateY(-28px);
+    filter: none;
+}
+
+.boot-edition {
+    position: absolute;
+    top: calc(50% + 11px);
+    margin-left: -38px;
+    color: #fff;
+    font-size: 24px;
 }
 
 .boot-progress {
-    width: 158px;
-    height: 15px;
+    position: absolute;
+    top: calc(50% + 82px);
+    width: 134px;
+    height: 17px;
     border: 1px solid #8f8f8f;
     border-radius: 3px;
     padding: 2px;
     overflow: hidden;
+}
+
+.boot-copyright {
+    position: absolute;
+    left: 3%;
+    bottom: 4%;
+    margin: 0;
+    color: #fff;
+    font-size: 10px;
+    line-height: 1.3;
+}
+
+.boot-microsoft {
+    position: absolute;
+    right: 3%;
+    bottom: 4%;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    font-style: italic;
 }
 
 .boot-blocks {
@@ -226,11 +256,11 @@ iframe {
 }
 
 .welcome-instruction {
-    position: fixed;
-    top: calc(50% + 70px);
-    right: 50%;
-    width: 39%;
-    margin: 0 28px 0 0;
+    position: absolute;
+    top: 70px;
+    right: calc(100% + 28px);
+    width: min(300px, 40vw);
+    margin: 0;
     color: #fff;
     font-size: 18px;
     font-weight: 700;
@@ -379,29 +409,24 @@ iframe {
 
 #desktop-icons {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    bottom: 8px;
-    display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: repeat(auto-fill, 96px);
-    justify-content: start;
-    overflow-x: auto;
-    max-width: 100%;
+    inset: 0;
     z-index: 1;
 }
 
 .desktop-icon {
-    width: 92px;
-    height: 94px;
+    position: absolute;
+    width: 76px;
+    min-height: 70px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    padding: 6px 2px;
+    padding: 4px 1px 3px;
     background: none;
     border: 1px solid transparent;
     cursor: var(--xp-cursor);
+    touch-action: none;
+    user-select: none;
 }
 
 .desktop-icon .icon-glyph {
@@ -411,8 +436,17 @@ iframe {
 }
 
 .desktop-icon .icon-glyph.has-image {
+    position: relative;
     width: 38px;
     height: 38px;
+}
+
+.desktop-icon .icon-glyph.has-image:not(.system-icon)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: url("../assets/xp/icons/shortcut.png") center / contain no-repeat;
+    pointer-events: none;
 }
 
 .game-icon-image {
@@ -429,17 +463,90 @@ iframe {
     text-align: center;
     text-shadow: 1px 1px 2px #000;
     padding: 1px 3px;
-    max-width: 88px;
+    max-width: 74px;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+}
+
+.desktop-icon.selected .icon-glyph {
+    filter:
+        drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5))
+        sepia(0.2) saturate(2.2) hue-rotate(176deg) brightness(0.68);
 }
 
 .desktop-icon.selected .icon-label {
     background: #0b61ce;
     outline: 1px dotted #fff;
     text-shadow: none;
+}
+
+#desktop-selection {
+    position: absolute;
+    z-index: 900;
+    border: 1px dotted #fff;
+    background: rgba(49, 106, 197, 0.2);
+    pointer-events: none;
+}
+
+.xp-context-menu {
+    position: absolute;
+    z-index: 2500;
+    min-width: 178px;
+    padding: 2px;
+    background: #fff;
+    border: 1px solid #aca899;
+    box-shadow:
+        2px 2px 3px rgba(0, 0, 0, 0.35),
+        inset 1px 1px 0 #fff;
+    color: #000;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+}
+
+.xp-context-menu button {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 22px;
+    padding: 3px 26px 3px 25px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.xp-context-menu button:not(:disabled):hover,
+.xp-context-menu button:not(:disabled):focus-visible {
+    background: #316ac5;
+    color: #fff;
+    outline: 0;
+}
+
+.xp-context-menu button:disabled {
+    color: #aca899;
+    text-shadow: 1px 1px #fff;
+}
+
+.context-separator {
+    display: block;
+    height: 1px;
+    margin: 3px 2px 3px 24px;
+    background: #aca899;
+    box-shadow: 0 1px #fff;
+}
+
+.context-arrow {
+    position: absolute;
+    right: 7px;
+    top: 8px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid currentColor;
 }
 
 /* ============ Windows ============ */
@@ -449,7 +556,8 @@ iframe {
     display: flex;
     flex-direction: column;
     background: var(--xp-beige);
-    border: 1px solid #0831d9;
+    border: 3px solid #0831d9;
+    border-top-width: 1px;
     border-radius: 8px 8px 0 0;
     box-shadow: 2px 2px 14px rgba(0, 0, 0, 0.45),
         inset 0 0 0 1px rgba(255, 255, 255, 0.25);
@@ -635,20 +743,22 @@ iframe {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 3px 6px;
+    gap: 0;
+    min-height: 27px;
+    padding: 2px 4px;
     background: var(--xp-beige);
     border-bottom: 1px solid var(--xp-beige-dark);
 }
 
 .toolbar-btn {
     min-width: 24px;
-    height: 22px;
-    padding: 0 5px;
-    background: linear-gradient(180deg, #fdfdfd, #e3dfd0);
-    border: 1px solid #b5b0a0;
-    border-radius: 3px;
-    font-size: 13px;
+    height: 21px;
+    padding: 0 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0;
+    color: #111;
+    font-size: 11px;
     line-height: 1;
     cursor: var(--xp-cursor);
     display: inline-flex;
@@ -657,14 +767,16 @@ iframe {
 }
 
 .toolbar-btn:hover {
-    background: linear-gradient(180deg, #fff8ea, #f4e8c8);
-    border-color: #c8a84b;
+    background: #316ac5;
+    border-color: #0b4aa3;
+    color: #fff;
 }
 
-.favorite-btn.active {
-    color: #d4a000;
-    background: linear-gradient(180deg, #fff3c4, #f0d878);
-    border-color: #c8a84b;
+.favorite-btn.active,
+.volume-btn.active {
+    background: #d8e7f8;
+    border-color: #7f9db9;
+    color: #111;
 }
 
 .toolbar-separator {
@@ -722,6 +834,131 @@ iframe {
     height: 100%;
 }
 
+.explorer-window {
+    background: #fff;
+}
+
+.explorer-content {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 174px minmax(0, 1fr);
+    overflow: hidden;
+    background: #fff;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+}
+
+.explorer-sidebar {
+    padding: 9px 12px;
+    overflow: auto;
+    background: linear-gradient(90deg, #748aff, #c4d2ff);
+}
+
+.explorer-sidebar section {
+    margin-bottom: 12px;
+    padding: 0 8px 8px;
+    overflow: hidden;
+    border-radius: 4px 4px 2px 2px;
+    background: #d6dff7;
+}
+
+.explorer-sidebar h3 {
+    margin: 0 -8px 6px;
+    padding: 5px 22px 5px 8px;
+    background: linear-gradient(90deg, #fff, #c6d4f5);
+    color: #215dc6;
+    font-size: 11px;
+}
+
+.explorer-sidebar button {
+    display: block;
+    width: 100%;
+    padding: 3px 0 3px 15px;
+    border: 0;
+    background: transparent;
+    color: #0b4aa3;
+    font: inherit;
+    text-align: left;
+}
+
+.explorer-sidebar button::before {
+    content: "›";
+    margin-left: -12px;
+    margin-right: 5px;
+    color: #409441;
+    font-weight: 700;
+}
+
+.explorer-main {
+    min-width: 0;
+    padding: 18px;
+    overflow: auto;
+    background: #fff;
+}
+
+.explorer-main h2 {
+    margin: 0 0 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #d6dff7;
+    color: #215dc6;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.explorer-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+}
+
+.explorer-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 52px;
+    padding: 5px;
+}
+
+.explorer-item img,
+.drive-icon,
+.disc-icon {
+    width: 42px;
+    height: 42px;
+    flex: none;
+    object-fit: contain;
+}
+
+.drive-icon {
+    border-radius: 3px;
+    background:
+        linear-gradient(#d6d6d6 0 58%, #777 59% 64%, #eee 65% 100%);
+    border: 1px solid #555;
+    box-shadow: inset 3px 3px 0 #f5f5f5;
+}
+
+.disc-icon {
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, #555 0 8%, #fff 9% 18%, transparent 19%),
+        conic-gradient(#b8e6ff, #fbd9ff, #fff8af, #aef0d1, #b8e6ff);
+    border: 1px solid #777;
+}
+
+.explorer-item span:last-child {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.explorer-item small {
+    color: #777;
+}
+
+.explorer-empty {
+    color: #777;
+}
+
 .resize-handle {
     position: absolute;
     right: 0;
@@ -753,8 +990,9 @@ iframe {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 0 22px 0 10px;
+    gap: 4px;
+    min-width: 82px;
+    padding: 0 15px 0 8px;
     margin: 0;
     border: none;
     border-radius: 0 12px 14px 0;
@@ -836,10 +1074,61 @@ iframe {
     flex: none;
     display: flex;
     align-items: center;
-    padding: 0 14px;
+    gap: 7px;
+    padding: 0 10px 0 7px;
     background: var(--tray-gradient);
     border-left: 1px solid rgba(0, 0, 0, 0.3);
     box-shadow: inset 1px 0 3px rgba(0, 0, 0, 0.3);
+}
+
+.tray-network,
+.tray-volume {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 15px;
+    height: 15px;
+}
+
+.tray-network::before,
+.tray-network::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 6px;
+    border: 1px solid #fff;
+    background: #36a4ef;
+    box-shadow: inset 0 0 0 1px #135faf;
+}
+
+.tray-network::before {
+    left: 0;
+    top: 1px;
+}
+
+.tray-network::after {
+    right: 0;
+    bottom: 1px;
+}
+
+.tray-volume::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 5px;
+    width: 5px;
+    height: 6px;
+    background: #e9eef7;
+    clip-path: polygon(0 30%, 45% 30%, 100% 0, 100% 100%, 45% 70%, 0 70%);
+}
+
+.tray-volume::after {
+    content: ")";
+    position: absolute;
+    left: 7px;
+    top: -1px;
+    color: #fff;
+    font-size: 13px;
 }
 
 #taskbar-clock {
@@ -855,7 +1144,7 @@ iframe {
     left: 0;
     bottom: 0;
     z-index: 7000;
-    width: min(420px, 96vw);
+    width: min(300px, 96vw);
     display: flex;
     flex-direction: column;
     background: var(--xp-beige);
@@ -869,15 +1158,15 @@ iframe {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 10px;
+    padding: 6px 8px;
     background: var(--menu-header-gradient);
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .start-menu-avatar {
     flex: none;
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     border: 2px solid rgba(255, 255, 255, 0.85);
     border-radius: 5px;
     box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
@@ -892,8 +1181,8 @@ iframe {
 
 .start-menu-body {
     display: flex;
-    min-height: 320px;
-    max-height: min(440px, 62vh);
+    min-height: 292px;
+    max-height: min(390px, 66vh);
 }
 
 .start-menu-left {
@@ -902,6 +1191,68 @@ iframe {
     flex-direction: column;
     background: #fff;
     min-width: 0;
+}
+
+#start-menu-pinned {
+    flex: 1;
+    padding: 5px 0;
+    overflow: hidden;
+}
+
+#start-menu-pinned .sm-game {
+    min-height: 38px;
+}
+
+#start-menu-pinned .sm-game-icon.has-image {
+    width: 28px;
+    height: 28px;
+}
+
+#all-programs-button {
+    flex: none;
+    width: 100%;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 12px;
+    border: 0;
+    border-top: 1px solid #d7d7d7;
+    background: #fff;
+    color: #111;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: var(--xp-cursor);
+}
+
+#all-programs-button:hover,
+#all-programs-button.active {
+    background: #316ac5;
+    color: #fff;
+}
+
+.all-programs-arrow {
+    width: 0;
+    height: 0;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-left: 9px solid #27933b;
+    filter: drop-shadow(1px 1px 0 #145f24);
+}
+
+#all-programs-panel {
+    position: absolute;
+    left: calc(50% - 1px);
+    bottom: 40px;
+    z-index: 2;
+    width: min(260px, 58vw);
+    height: min(420px, 70vh);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 2px solid #1d58c7;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 .start-menu-search {
@@ -1039,7 +1390,7 @@ iframe {
 
 .start-menu-right {
     flex: none;
-    width: 158px;
+    width: 148px;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -1050,14 +1401,40 @@ iframe {
 }
 
 .sm-place {
-    display: block;
-    padding: 6px 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 28px;
+    padding: 4px 7px;
     border-radius: 3px;
     font-size: 11px;
     font-weight: 700;
     color: #0b3d91;
     text-decoration: none;
     cursor: var(--xp-cursor);
+}
+
+.sm-place-icon {
+    flex: none;
+    width: 20px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #174f9b;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.sm-place-separator {
+    height: 1px;
+    margin: 3px 6px;
+    background: #9abfe8;
 }
 
 .sm-place:hover {
@@ -1082,6 +1459,7 @@ iframe {
     display: flex;
     align-items: center;
     gap: 6px;
+    justify-content: flex-end;
     padding: 6px 10px;
     background: var(--menu-header-gradient);
 }
@@ -1157,32 +1535,219 @@ iframe {
     display: none;
 }
 
-/* ============ Turn off screen ============ */
+/* ============ Logoff and shutdown dialogs ============ */
 
+.system-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 36, 130, 0.38);
+}
+
+.system-dialog {
+    width: min(330px, calc(100vw - 24px));
+    color: #fff;
+    border: 1px solid #07379d;
+    box-shadow: 3px 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+.system-dialog-title {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    background: linear-gradient(180deg, #0752c8, #003399);
+    border-bottom: 1px solid #8da7e4;
+    font-size: 18px;
+}
+
+.dialog-flag {
+    width: 31px;
+    height: 31px;
+    filter: none;
+}
+
+.system-dialog-actions {
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    padding: 16px;
+    background: linear-gradient(180deg, #85a7ed, #668bdc);
+}
+
+.shutdown-actions {
+    gap: 26px;
+}
+
+.system-dialog-actions button {
+    min-width: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font-size: 11px;
+    cursor: var(--xp-cursor);
+}
+
+.dialog-action-icon {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        1px 2px 3px rgba(0, 0, 0, 0.4);
+}
+
+.switch-user-icon,
+.restart-icon {
+    background: linear-gradient(180deg, #74d374, #15942c);
+}
+
+.switch-user-icon::before,
+.switch-user-icon::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    width: 18px;
+    height: 8px;
+    border: 2px solid #fff;
+    border-left: 0;
+    border-right: 0;
+}
+
+.switch-user-icon::before {
+    top: 7px;
+}
+
+.switch-user-icon::after {
+    bottom: 7px;
+}
+
+.system-dialog .xp-logoff-icon {
+    width: 36px;
+    height: 36px;
+}
+
+.system-dialog .xp-logoff-icon::before {
+    left: 8px;
+    top: 14px;
+    width: 17px;
+    height: 7px;
+}
+
+.system-dialog .xp-logoff-icon::after {
+    right: 5px;
+    top: 11px;
+    border-width: 6px;
+}
+
+.standby-icon {
+    background: linear-gradient(180deg, #ffd66b, #e79418);
+}
+
+.shutdown-icon {
+    background: linear-gradient(180deg, #ef9070, #c64127);
+}
+
+.restart-icon::before {
+    content: "✣";
+    color: #fff;
+    font-size: 24px;
+}
+
+.system-dialog-footer {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 8px;
+    background: linear-gradient(180deg, #0a4abb, #003399);
+    border-top: 1px solid #3759b4;
+}
+
+.system-dialog-footer button {
+    min-width: 62px;
+    height: 22px;
+    border: 1px solid #444;
+    background: linear-gradient(180deg, #fff, #e5e5e5);
+    color: #111;
+    font-size: 11px;
+    cursor: var(--xp-cursor);
+}
+
+/* ============ Shutdown screens ============ */
+
+#shutdown-screen,
 #turn-off-screen {
     position: fixed;
     inset: 0;
     z-index: 9500;
+    cursor: var(--xp-cursor);
+}
+
+#shutdown-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background:
+        linear-gradient(180deg,
+            #003399 0 13%,
+            #87a8ea 13.3%,
+            #5a7edc 13.6% 84%,
+            #e69232 84.2%,
+            #003399 84.5% 100%);
+}
+
+#shutdown-screen img {
+    width: min(145px, 38vw);
+}
+
+#shutdown-screen p {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+}
+
+#turn-off-screen {
     background: #000;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 26px;
-    cursor: var(--xp-cursor);
+    gap: 8px;
+}
+
+#turn-off-screen img {
+    width: min(260px, 62vw);
 }
 
 #turn-off-screen p {
     margin: 0;
-    color: #f7a832;
-    font-size: 26px;
-    font-weight: 700;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 400;
     text-align: center;
-    line-height: 1.5;
 }
 
 .turn-off-hint {
-    color: #555;
+    margin-top: 18px;
+    color: #202020;
     font-size: 11px;
 }
 
@@ -1226,7 +1791,29 @@ iframe {
         width: 128px;
     }
 
+    #all-programs-panel {
+        left: 0;
+        bottom: 38px;
+        width: 100%;
+    }
+
     .task-button {
         min-width: 60px;
+    }
+
+    .explorer-content {
+        grid-template-columns: 1fr;
+    }
+
+    .explorer-sidebar {
+        display: none;
+    }
+
+    .explorer-main {
+        padding: 12px;
+    }
+
+    .explorer-items {
+        grid-template-columns: 1fr;
     }
 }
