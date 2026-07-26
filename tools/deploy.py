@@ -194,7 +194,14 @@ def generate_service_worker():
     backups = {path: path.read_bytes() for path in previous_files}
     try:
         subprocess.run(
-            ["bunx", "workbox", "generateSW", "workbox-config.js"],
+            [
+                "bunx",
+                "--package",
+                "workbox-cli",
+                "workbox",
+                "generateSW",
+                "workbox-config.js",
+            ],
             check=True,
             cwd=PROJECT_DIR,
         )
