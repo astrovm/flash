@@ -7,6 +7,7 @@ const WINDOW_CHROME_HEIGHT = 58; // title bar + toolbar
 const MIN_WINDOW_WIDTH = 340;
 const MIN_WINDOW_HEIGHT = 240;
 const BOOT_DURATION_MS = 2600;
+const WELCOME_DURATION_MS = 1200;
 
 let bootTimeout = null;
 let loggedIn = false;
@@ -14,183 +15,7 @@ let iconsBuilt = false;
 let placesBuilt = false;
 let offlineInitialized = false;
 
-const gamesList = {
-    "big-truck-adventures": {
-        type: "swf",
-        frameRate: 45,
-        category: "Racing"
-    },
-    "big-truck-adventures-2": {
-        type: "swf",
-        frameRate: 45,
-        category: "Racing"
-    },
-    "bike-mania": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-2": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-3": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-4": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-5": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-arena": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-arena-2": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-arena-3": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-arena-4": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "bike-mania-arena-5": {
-        type: "swf",
-        frameRate: 60,
-        category: "Racing"
-    },
-    "dirt-bike": {
-        type: "swf",
-        category: "Racing"
-    },
-    "dirt-bike-2": {
-        type: "swf",
-        category: "Racing"
-    },
-    "dirt-bike-3": {
-        type: "swf",
-        category: "Racing"
-    },
-    "stunt-dirt-bike": {
-        type: "swf",
-        category: "Racing"
-    },
-    "captain-usa": {
-        type: "swf",
-        category: "Action"
-    },
-    "dark-cut": {
-        type: "swf",
-        category: "Action"
-    },
-    "metal-slug-brutal": {
-        type: "swf",
-        category: "Action"
-    },
-    "simpsons-wrecking-ball": {
-        type: "swf",
-        externalHosts: ["files.gamezhero.com"],
-        category: "Action"
-    },
-    "super-smash-flash": {
-        type: "swf",
-        category: "Action"
-    },
-    "ultimate-flash-sonic": {
-        type: "swf",
-        category: "Action"
-    },
-    "inside-the-firewall": {
-        aspectRatio: 480 / 360,
-        type: "iframe",
-        category: "Adventure"
-    },
-    "knd-operation-startup": {
-        type: "swf",
-        frameRate: 30,
-        category: "Adventure"
-    },
-    "knd-operation-startup-final": {
-        type: "swf",
-        frameRate: 30,
-        category: "Adventure"
-    },
-    "la-isla-de-lo-mono": {
-        type: "swf",
-        category: "Adventure"
-    },
-    "dexter-runaway-robot": {
-        type: "swf",
-        category: "Adventure"
-    },
-    "riddle-school": {
-        type: "swf",
-        category: "Adventure"
-    },
-    "riddle-school-2": {
-        type: "swf",
-        category: "Adventure"
-    },
-    "portal-flash": {
-        type: "swf",
-        category: "Puzzle"
-    },
-    "do-not-press": {
-        type: "swf",
-        category: "Puzzle"
-    },
-    "doom": {
-        aspectRatio: 4 / 3,
-        type: "iframe",
-        category: "Action"
-    },
-    "sugar-sugar": {
-        type: "swf",
-        spoofUrl: "https://www.friv.com/z/games/sugarsugar",
-        category: "Puzzle"
-    },
-    "learn-to-fly": {
-        type: "swf",
-        category: "Arcade"
-    },
-    "learn-to-fly-2": {
-        type: "swf",
-        category: "Arcade"
-    },
-    "learn-to-fly-3": {
-        type: "swf",
-        category: "Arcade"
-    },
-    "whack-a-kass": {
-        type: "swf",
-        category: "Arcade"
-    },
-    "eds-candy-machine": {
-        type: "swf",
-        category: "Arcade"
-    },
-    "knd-numbuh-generator": {
-        type: "swf",
-        frameRate: 45,
-        category: "Misc"
-    }
-};
+const gamesList = window.FLASH_GAMES;
 
 const categoryIcons = {
     "Racing": "🏁",
@@ -209,7 +34,8 @@ const categoryIcons = {
 // ============================================
 
 const formatGameTitle = (gameId) => (
-    gameId
+    gamesList[gameId]?.title
+    || gameId
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ')
@@ -218,6 +44,25 @@ const formatGameTitle = (gameId) => (
 const getGameIcon = (gameId) => (
     categoryIcons[gamesList[gameId]?.category] || categoryIcons["Other"]
 );
+
+const createGameIconElement = (gameId, className) => {
+    const icon = document.createElement("span");
+    icon.className = className;
+
+    const imagePath = gamesList[gameId]?.icon;
+    if (imagePath) {
+        const image = document.createElement("img");
+        image.className = "game-icon-image";
+        image.src = imagePath;
+        image.alt = "";
+        icon.classList.add("has-image");
+        icon.appendChild(image);
+    } else {
+        icon.textContent = getGameIcon(gameId);
+    }
+
+    return icon;
+};
 
 const getHashGameId = () => {
     const id = window.location.hash.slice(1);
@@ -326,7 +171,7 @@ const setPlayerVolume = (player, type, normalizedVolume) => {
         player.contentWindow?.postMessage({
             type: 'setVolume',
             volume: resolvedVolume
-        }, '*');
+        }, window.location.origin);
     } else {
         try {
             player.volume = resolvedVolume;
@@ -459,7 +304,7 @@ const trackGamePlay = (gameId) => {
 
     const win = openWindows.get(gameId);
     if (win) {
-        win.lastOpened = timestamp;
+        win.lastUsed = timestamp;
     }
 };
 
@@ -471,9 +316,7 @@ const createWindowElement = (gameId) => {
     const titleBar = document.createElement("div");
     titleBar.className = "title-bar";
 
-    const titleIcon = document.createElement("span");
-    titleIcon.className = "title-icon";
-    titleIcon.textContent = getGameIcon(gameId);
+    const titleIcon = createGameIconElement(gameId, "title-icon");
 
     const titleText = document.createElement("span");
     titleText.className = "title-text";
@@ -558,7 +401,7 @@ const updateMaximizeButton = (win) => {
 const loadRuffleSWF = (gameId, win) => {
     const ruffle = window.RufflePlayer.newest();
     const player = ruffle.createPlayer();
-    player.setAttribute("id", "player");
+    player.id = `player-${gameId}`;
     win.content.appendChild(player);
     win.player = player;
 
@@ -594,7 +437,7 @@ const loadIframe = (gameId, win) => {
     const player = document.createElement("iframe");
     player.allow = "fullscreen";
     player.src = `iframe/${gameId}/`;
-    player.setAttribute("id", "player");
+    player.id = `player-${gameId}`;
     win.content.appendChild(player);
     win.player = player;
 
@@ -609,6 +452,7 @@ const focusWindow = (gameId) => {
     if (!win) return;
 
     focusedGameId = gameId;
+    win.lastUsed = Date.now();
     win.zIndex = ++zIndexCounter;
     win.el.style.zIndex = win.zIndex;
 
@@ -852,13 +696,13 @@ const openGameWindow = (gameId) => {
         return;
     }
 
-    // Evict the least recently opened window when the limit is reached
+    // Evict the least recently used window when the limit is reached
     if (openWindows.size >= MAX_OPEN_WINDOWS) {
         let oldestId = null;
         let oldestTime = Infinity;
         for (const [id, win] of openWindows.entries()) {
-            if (win.lastOpened < oldestTime) {
-                oldestTime = win.lastOpened;
+            if (win.lastUsed < oldestTime) {
+                oldestTime = win.lastUsed;
                 oldestId = id;
             }
         }
@@ -905,7 +749,7 @@ const openGameWindow = (gameId) => {
         maximized: false,
         prevRect: null,
         zIndex: 0,
-        lastOpened: Date.now(),
+        lastUsed: Date.now(),
         content: el.querySelector(".window-content"),
         maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: el.querySelector(".favorite-btn"),
@@ -946,9 +790,7 @@ const renderTaskButtons = () => {
         btn.className = "task-button" + (gameId === focusedGameId && !win.minimized ? " active" : "");
         btn.title = formatGameTitle(gameId);
 
-        const icon = document.createElement("span");
-        icon.className = "task-icon";
-        icon.textContent = getGameIcon(gameId);
+        const icon = createGameIconElement(gameId, "task-icon");
 
         const label = document.createElement("span");
         label.className = "task-label";
@@ -1004,28 +846,19 @@ const buildDesktopIcons = () => {
         icon.className = "desktop-icon";
         icon.dataset.game = gameId;
 
-        const glyph = document.createElement("span");
-        glyph.className = "icon-glyph";
-        if (gameId === "doom") {
-            const image = document.createElement("img");
-            image.src = "assets/icons/doom.png";
-            image.alt = "";
-            glyph.classList.add("has-image");
-            glyph.appendChild(image);
-        } else {
-            glyph.textContent = getGameIcon(gameId);
-        }
+        const glyph = createGameIconElement(gameId, "icon-glyph");
 
         const label = document.createElement("span");
         label.className = "icon-label";
         label.textContent = formatGameTitle(gameId);
 
         icon.append(glyph, label);
-        icon.addEventListener("click", () => {
-            if (icon.classList.contains("selected")) {
+        icon.addEventListener("click", () => selectDesktopIcon(gameId));
+        icon.addEventListener("dblclick", () => openGameWindow(gameId));
+        icon.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
                 openGameWindow(gameId);
-            } else {
-                selectDesktopIcon(gameId);
             }
         });
         container.appendChild(icon);
@@ -1047,9 +880,7 @@ const createMenuGameItem = (gameId) => {
     item.type = "button";
     item.className = "sm-game";
 
-    const icon = document.createElement("span");
-    icon.className = "sm-game-icon";
-    icon.textContent = getGameIcon(gameId);
+    const icon = createGameIconElement(gameId, "sm-game-icon");
 
     const title = document.createElement("span");
     title.className = "sm-game-title";
@@ -1251,17 +1082,23 @@ const updateOfflineModePreference = async () => {
         });
     } else {
         try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (const registration of registrations) {
+            let stateChanged = false;
+            const registration = await navigator.serviceWorker.getRegistration("./");
+            if (registration) {
                 await registration.unregister();
-                const cachesKeys = await caches.keys();
+                stateChanged = true;
+            }
 
-                for (const cacheKey of cachesKeys) {
+            const cacheKeys = await caches.keys();
+            for (const cacheKey of cacheKeys) {
+                if (cacheKey.startsWith("astro-flash")) {
                     await caches.delete(cacheKey);
-                    console.log("Cache removed successfully:", cacheKey);
+                    stateChanged = true;
                 }
+            }
 
-                window.location.reload(true);
+            if (stateChanged) {
+                window.location.reload();
             }
         } catch (error) {
             console.error("Service worker unregistration failed:", error);
@@ -1317,16 +1154,23 @@ const showBootScreen = () => {
     setScreen("boot-screen");
     startupSoundPending = true;
     clearTimeout(bootTimeout);
-    bootTimeout = setTimeout(showWelcomeScreen, BOOT_DURATION_MS);
+    bootTimeout = setTimeout(() => showWelcomeScreen(true), BOOT_DURATION_MS);
 };
 
-const showWelcomeScreen = () => {
+const showWelcomeScreen = (autoLogin = false) => {
     clearTimeout(bootTimeout);
     muteAllWindows();
+    document.getElementById("welcome-screen").classList.toggle(
+        "auto-login",
+        autoLogin,
+    );
     setScreen("welcome-screen");
     if (startupSoundPending) {
         startupSoundPending = false;
         playXPSound("startup");
+    }
+    if (autoLogin) {
+        bootTimeout = setTimeout(() => login(false), WELCOME_DURATION_MS);
     }
 };
 
@@ -1341,6 +1185,7 @@ const showTurnOffScreen = () => {
 };
 
 const login = (playSound = true) => {
+    clearTimeout(bootTimeout);
     showDesktop();
     applyFocusVolumes();
     if (playSound) {
@@ -1364,7 +1209,10 @@ const login = (playSound = true) => {
 };
 
 const setupScreenFlow = () => {
-    document.getElementById("boot-screen").addEventListener("click", showWelcomeScreen);
+    document.getElementById("boot-screen").addEventListener(
+        "click",
+        () => showWelcomeScreen(true),
+    );
     document.getElementById("login-user").addEventListener("click", () => login());
     document.getElementById("turn-off-screen").addEventListener("click", showBootScreen);
 
@@ -1376,7 +1224,7 @@ const setupScreenFlow = () => {
     document.getElementById("log-off-button").addEventListener("click", () => {
         closeStartMenu();
         playXPSound("logoff");
-        showWelcomeScreen();
+        showWelcomeScreen(false);
     });
 
     document.getElementById("turn-off-button").addEventListener("click", () => {
@@ -1475,15 +1323,19 @@ document.addEventListener("pointerdown", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
+        e.preventDefault();
+        toggleStartMenu();
+        return;
+    }
+
+    if (e.altKey && e.key === "F4" && focusedGameId) {
+        e.preventDefault();
+        closeGameWindow(focusedGameId);
+        return;
+    }
+
     if (e.key === "Escape") {
         closeStartMenu();
-    }
-});
-
-// Add message event listener to handle iframe responses
-window.addEventListener('message', (event) => {
-    if (event.data.type === 'volumeUpdate') {
-        // Handle any volume update confirmations from iframe if needed
-        console.log('Volume update confirmed by iframe:', event.data.volume);
     }
 });

@@ -33,6 +33,10 @@
             let player = null;
 
             window.addEventListener("message", (event) => {
+                if (
+                    event.source !== window.parent
+                    || event.origin !== window.location.origin
+                ) return;
                 if (event.data?.type !== "setVolume") return;
 
                 const volume = Number(event.data.volume);

@@ -47,6 +47,7 @@ To deploy:
 ```bash
 # Install dependencies
 bun add workbox-cli --dev
+python -m pip install -r requirements-dev.txt
 
 # Run deployment script
 python tools/deploy.py
@@ -62,12 +63,20 @@ Each game can be configured with specific settings:
 ```javascript
 {
     type: "swf",              // Game type: "swf" or "iframe"
+    title: "Display Name",     // Optional: Preserve original title styling
+    icon: "assets/icons/x.png", // Sourced PNG used throughout the shell
     frameRate: 45,            // Optional: Set specific frame rate
     category: "Racing",       // Game category for organization
     aspectRatio: 480/360,     // Optional: Force specific aspect ratio
     spoofUrl: "example.com"   // Optional: URL spoofing for sitelock bypass
 }
 ```
+
+Game definitions live in `docs/js/games.js`. Icon provenance and checksums live
+in `docs/assets/icons/SOURCES.json`; run `bun run validate:icons` to ensure every
+game has a valid, source-documented PNG. `tools/sync_game_icons.py` contains the
+reviewed Flashpoint UUID mappings and can refresh those assets without fuzzy
+auto-matching.
 
 ### Volume Control Implementation
 

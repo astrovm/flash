@@ -12,8 +12,9 @@
         <link rel="icon" href="favicon.ico" type="image/x-icon" />
         <title>Astro Flash Collection</title>
         <script src="js/ruffle.js?v=bf02ea2d"></script>
-        <script src="js/main.js?v=02db39ed"></script>
-        <link rel="stylesheet" href="css/main.css?v=997fcf07">
+        <script src="js/games.js?v=65ef7d86"></script>
+        <script src="js/main.js?v=fe001bd0"></script>
+        <link rel="stylesheet" href="css/main.css?v=7f869ecd">
     </head>
 
     <body>
@@ -36,17 +37,18 @@
                 src="assets/xp/wordmark.png"
                 alt="Microsoft Windows XP"
             />
+            <p class="welcome-message">welcome</p>
             <div class="welcome-panel">
                 <p class="welcome-instruction">
                     To begin, click your user name
                 </p>
                 <button id="login-user" type="button">
-                    <span class="welcome-avatar" aria-hidden="true">🧑‍🚀</span>
+                    <span class="welcome-avatar xp-user-tile" aria-hidden="true"></span>
                     <span class="welcome-username">astro</span>
                 </button>
             </div>
             <button id="welcome-turn-off" type="button">
-                <span class="welcome-turn-off-icon" aria-hidden="true">⏻</span>
+                <span class="welcome-turn-off-icon xp-power-icon" aria-hidden="true"></span>
                 <span>Turn off computer</span>
             </button>
         </div>
@@ -58,7 +60,7 @@
             <!-- Start menu -->
             <div id="start-menu" hidden>
                 <div class="start-menu-header">
-                    <span class="start-menu-avatar" aria-hidden="true">🧑‍🚀</span>
+                    <span class="start-menu-avatar xp-user-tile" aria-hidden="true"></span>
                     <span class="start-menu-user">astro</span>
                 </div>
                 <div class="start-menu-body">
@@ -76,12 +78,14 @@
                 </div>
                 <div class="start-menu-footer">
                     <button id="log-off-button" type="button">
-                        🔑 Log Off
+                        <span class="xp-logoff-icon" aria-hidden="true"></span>
+                        Log Off
                     </button>
                     <button id="turn-off-button" type="button">
-                        ⏻ Turn Off Computer
+                        <span class="xp-power-icon" aria-hidden="true"></span>
+                        Turn Off Computer
                     </button>
-                    <h6>v26.07.26-7</h6>
+                    <h6>v26.07.26-12</h6>
                 </div>
             </div>
         </div>

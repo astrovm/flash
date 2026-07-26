@@ -1,23 +1,30 @@
 import io
-import requests
-import subprocess
-import re
 import hashlib
+import json
+import re
+import subprocess
+import sys
+import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
 
-# Constants
-DOCS_DIR = Path("docs")
+import requests
+
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+DOCS_DIR = PROJECT_DIR / "docs"
 JS_DIR = DOCS_DIR / "js"
 CSS_DIR = DOCS_DIR / "css"
 HTML_PATH = DOCS_DIR / "index.html"
+RUFFLE_MANIFEST_PATH = JS_DIR / "ruffle-manifest.json"
 RUFFLE_LATEST_RELEASE_URL = "https://api.github.com/repos/ruffle-rs/ruffle/releases/latest"
 RUFFLE_ASSET_SUFFIX = "-web-selfhosted.zip"
 RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
 
 ASSET_PATHS = {
     'ruffle': JS_DIR / "ruffle.js",
+    'games_js': JS_DIR / "games.js",
     'main_js': JS_DIR / "main.js",
     'main_css': CSS_DIR / "main.css"
 }
@@ -67,27 +74,34 @@ def download_ruffle():
         raise ValueError("Downloaded Ruffle package is missing required runtime files")
 
     for filename, content in files.items():
-        (JS_DIR / filename).write_bytes(content)
+        write_bytes_atomic(JS_DIR / filename, content)
         print(f"  - Installed {filename}")
 
     return set(files)
 
+
+def write_bytes_atomic(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as temporary:
+        temporary.write(content)
+        temporary_path = Path(temporary.name)
+    temporary_path.replace(path)
+
+
+def write_text_atomic(path, content):
+    write_bytes_atomic(path, content.encode("utf-8"))
+
+
 def get_short_hash(file_path):
     """Get first 8 characters of the file's hash for cache busting"""
     sha384 = hashlib.sha384()
-    mode = 'rb' if str(file_path).endswith('.wasm') else 'r'
-    with open(file_path, mode) as f:
-        content = f.read()
-        if mode == 'r':
-            content = content.encode()
-        sha384.update(content)
+    sha384.update(file_path.read_bytes())
     return sha384.hexdigest()[:8]
 
 def get_current_version():
     if not HTML_PATH.exists():
         return None
-    with open(HTML_PATH, "r") as f:
-        content = f.read()
+    content = HTML_PATH.read_text(encoding="utf-8")
     version_match = re.search(r'<h6>v([0-9.]+(?:-\d+)?)</h6>', content)
     return version_match.group(1) if version_match else None
 
@@ -111,12 +125,13 @@ def update_html():
     
     short_hashes = {name: get_short_hash(path) for name, path in ASSET_PATHS.items()}
     
-    with open(HTML_PATH, "r") as f:
-        content = f.read()
+    content = HTML_PATH.read_text(encoding="utf-8")
 
     replacements = {
         r'<script src="js/ruffle\.[^"]+" ?[^>]*></script>': 
             f'<script src="js/ruffle.js?v={short_hashes["ruffle"]}"></script>',
+        r'<script src="js/games\.[^"]+" ?[^>]*></script>':
+            f'<script src="js/games.js?v={short_hashes["games_js"]}"></script>',
         r'<script src="js/main\.[^"]+" ?[^>]*></script>':
             f'<script src="js/main.js?v={short_hashes["main_js"]}"></script>',
         r'<link rel="stylesheet" href="css/main\.[^"]+" ?[^>]*>':
@@ -128,52 +143,104 @@ def update_html():
     for pattern, replacement in replacements.items():
         content = re.sub(pattern, replacement, content)
 
-    with open(HTML_PATH, "w") as f:
-        f.write(content)
+    write_text_atomic(HTML_PATH, content)
     print(f"  - Updated to version {version_str}")
+
+
+def read_ruffle_manifest():
+    if not RUFFLE_MANIFEST_PATH.exists():
+        return set()
+    try:
+        manifest = json.loads(RUFFLE_MANIFEST_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return set()
+    return {
+        filename
+        for filename in manifest.get("files", [])
+        if isinstance(filename, str) and Path(filename).name == filename
+    }
+
+
+def write_ruffle_manifest(current_files):
+    manifest = json.dumps({"files": sorted(current_files)}, indent=2) + "\n"
+    write_text_atomic(RUFFLE_MANIFEST_PATH, manifest)
+
 
 def cleanup_old_files(current_files):
     if not JS_DIR.exists():
         return
 
     print("Cleaning up old files...")
-
-    for file in JS_DIR.iterdir():
-        is_ruffle_asset = (
-            file.name.startswith("core.ruffle.")
-            or file.name.endswith(".wasm")
-            or file.name == "ruffle.js.map"
-        )
-        if is_ruffle_asset and file.name not in current_files:
+    previous_files = read_ruffle_manifest()
+    for filename in previous_files - current_files:
+        file = JS_DIR / filename
+        if file.is_file():
             file.unlink()
-            print(f"  - Removed {file.name}")
+            print(f"  - Removed {filename}")
+    write_ruffle_manifest(current_files)
 
-def cleanup_workbox_files():
-    patterns = ["sw.js", "sw.js.map", "workbox-*.js", "workbox-*.js.map"]
 
+def get_workbox_files():
+    patterns = ("sw.js", "sw.js.map", "workbox-*.js", "workbox-*.js.map")
+    files = set()
     for pattern in patterns:
-        for file in DOCS_DIR.glob(pattern):
-            file.unlink()
+        files.update(path for path in DOCS_DIR.glob(pattern) if path.is_file())
+    return files
+
 
 def generate_service_worker():
     print("Generating service worker...")
+    previous_files = get_workbox_files()
+    backups = {path: path.read_bytes() for path in previous_files}
     try:
-        cleanup_workbox_files()
-        subprocess.run(["bunx", "workbox", "generateSW", "workbox-config.js"], check=True)
-        print("  - Service worker generated successfully")
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print(f"Error generating service worker: {e}")
+        subprocess.run(
+            ["bunx", "workbox", "generateSW", "workbox-config.js"],
+            check=True,
+            cwd=PROJECT_DIR,
+        )
+
+        current_files = get_workbox_files()
+        generated_worker = DOCS_DIR / "sw.js"
+        if generated_worker not in current_files:
+            raise RuntimeError("Workbox did not generate docs/sw.js")
+
+        worker_source = generated_worker.read_text(encoding="utf-8")
+        referenced_runtime_names = {
+            f"{name}.js" if not name.endswith(".js") else name
+            for name in re.findall(r"workbox-[a-f0-9]+(?:\.js)?", worker_source)
+        }
+        if not referenced_runtime_names:
+            raise RuntimeError("Generated service worker references no Workbox runtime")
+        if not all((DOCS_DIR / name).is_file() for name in referenced_runtime_names):
+            raise RuntimeError("Generated service worker references a missing Workbox runtime")
+
+        for path in previous_files - current_files:
+            path.unlink()
+        for path in current_files:
+            if (
+                path.name.startswith("workbox-")
+                and path.name not in referenced_runtime_names
+            ):
+                path.unlink()
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError, RuntimeError):
+        for path in get_workbox_files() - previous_files:
+            path.unlink()
+        for path, content in backups.items():
+            write_bytes_atomic(path, content)
+        raise
+    print("  - Service worker generated successfully")
 
 def deploy():
-    try:
-        print("\nStarting deployment...")
-        ruffle_files = download_ruffle()
-        cleanup_old_files(ruffle_files)
-        update_html()
-        generate_service_worker()
-        print("\nDeployment completed successfully!")
-    except Exception as e:
-        print(f"\nError during deployment: {e}")
+    print("\nStarting deployment...")
+    ruffle_files = download_ruffle()
+    cleanup_old_files(ruffle_files)
+    update_html()
+    generate_service_worker()
+    print("\nDeployment completed successfully!")
 
 if __name__ == "__main__":
-    deploy()
+    try:
+        deploy()
+    except Exception as error:
+        print(f"\nError during deployment: {error}", file=sys.stderr)
+        raise SystemExit(1) from error
