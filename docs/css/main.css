@@ -328,8 +328,8 @@ iframe {
     border-radius: 8px 8px 0 0;
     box-shadow: 2px 2px 14px rgba(0, 0, 0, 0.45),
         inset 0 0 0 1px rgba(255, 255, 255, 0.25);
-    min-width: 340px;
-    min-height: 240px;
+    min-width: min(340px, calc(100% - 8px));
+    min-height: min(240px, calc(100% - 8px));
     z-index: 10;
 }
 

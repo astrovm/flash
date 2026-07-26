@@ -865,16 +865,20 @@ const openGameWindow = (gameId) => {
     const game = gamesList[gameId];
     const aspectRatio = game.aspectRatio || DEFAULT_ASPECT_RATIO;
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+    const availableWidth = Math.max(desktopWidth - 8, 0);
+    const availableHeight = Math.max(desktopHeight - 8, 0);
+    const minWidth = Math.min(MIN_WINDOW_WIDTH, availableWidth);
+    const minHeight = Math.min(MIN_WINDOW_HEIGHT, availableHeight);
 
-    let winWidth = Math.min(720, desktopWidth * 0.92);
+    let winWidth = Math.min(720, availableWidth * 0.92);
     let winHeight = (winWidth / aspectRatio) + WINDOW_CHROME_HEIGHT;
-    const maxHeight = desktopHeight * 0.92;
+    const maxHeight = availableHeight * 0.92;
     if (winHeight > maxHeight) {
         winHeight = maxHeight;
         winWidth = (winHeight - WINDOW_CHROME_HEIGHT) * aspectRatio;
     }
-    winWidth = Math.max(winWidth, MIN_WINDOW_WIDTH);
-    winHeight = Math.max(winHeight, MIN_WINDOW_HEIGHT);
+    winWidth = Math.min(Math.max(winWidth, minWidth), availableWidth);
+    winHeight = Math.min(Math.max(winHeight, minHeight), availableHeight);
 
     const offset = (cascadeCount++ % 6) * 28;
     const left = Math.max(4, Math.min((desktopWidth - winWidth) / 2 + offset - 56, desktopWidth - winWidth - 4));
@@ -1291,7 +1295,12 @@ const setScreen = (...visibleIds) => {
         });
 };
 
+const muteAllWindows = () => {
+    openWindows.forEach((win) => setPlayerVolume(win.player, win.type, 0));
+};
+
 const showBootScreen = () => {
+    muteAllWindows();
     setScreen("boot-screen");
     startupSoundPending = true;
     clearTimeout(bootTimeout);
@@ -1300,6 +1309,7 @@ const showBootScreen = () => {
 
 const showWelcomeScreen = () => {
     clearTimeout(bootTimeout);
+    muteAllWindows();
     setScreen("welcome-screen");
     if (startupSoundPending) {
         startupSoundPending = false;
@@ -1313,11 +1323,13 @@ const showDesktop = () => {
 };
 
 const showTurnOffScreen = () => {
+    muteAllWindows();
     setScreen("turn-off-screen");
 };
 
 const login = () => {
     showDesktop();
+    applyFocusVolumes();
     playXPSound("logon");
 
     if (!loggedIn) {
