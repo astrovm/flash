@@ -1006,7 +1006,15 @@ const buildDesktopIcons = () => {
 
         const glyph = document.createElement("span");
         glyph.className = "icon-glyph";
-        glyph.textContent = getGameIcon(gameId);
+        if (gameId === "doom") {
+            const image = document.createElement("img");
+            image.src = "assets/icons/doom.png";
+            image.alt = "";
+            glyph.classList.add("has-image");
+            glyph.appendChild(image);
+        } else {
+            glyph.textContent = getGameIcon(gameId);
+        }
 
         const label = document.createElement("span");
         label.className = "icon-label";
