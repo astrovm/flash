@@ -105,6 +105,7 @@ const gamesList = {
     },
     "simpsons-wrecking-ball": {
         type: "swf",
+        externalHosts: ["files.gamezhero.com"],
         category: "Action"
     },
     "super-smash-flash": {
@@ -1366,7 +1367,13 @@ const setupScreenFlow = () => {
 
 const getSpoofedGameId = (hostname) => {
     for (const [gameId, game] of Object.entries(gamesList)) {
-        if (game.spoofUrl && new URL(game.spoofUrl).hostname === hostname) {
+        const spoofHostname = game.spoofUrl
+            ? new URL(game.spoofUrl).hostname
+            : null;
+        if (
+            spoofHostname === hostname
+            || game.externalHosts?.includes(hostname)
+        ) {
             return gameId;
         }
     }

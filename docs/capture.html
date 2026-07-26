@@ -16,6 +16,9 @@
     // Mirrors gamesList config from js/main.js
     const gameTypes = { "inside-the-firewall": "iframe" };
     const spoofUrls = { "sugar-sugar": "https://www.friv.com/z/games/sugarsugar" };
+    const externalHosts = {
+        "simpsons-wrecking-ball": ["files.gamezhero.com"]
+    };
     const frameRates = {
         "big-truck-adventures": 45, "big-truck-adventures-2": 45,
         "bike-mania": 60, "bike-mania-2": 60, "bike-mania-3": 60,
@@ -32,8 +35,12 @@
         document.body.appendChild(ifr);
     } else {
         // URL spoofing for sitelock bypass (same trick as js/main.js)
-        const getSpoofedGameId = (hostname) =>
-            Object.entries(spoofUrls).find(([, u]) => new URL(u).hostname === hostname)?.[0] || null;
+        const getSpoofedGameId = (hostname) => {
+            const spoofedGame = Object.entries(spoofUrls)
+                .find(([, url]) => new URL(url).hostname === hostname)?.[0];
+            return spoofedGame || Object.entries(externalHosts)
+                .find(([, hosts]) => hosts.includes(hostname))?.[0] || null;
+        };
         const changeUrl = (request) => {
             if (!request.url) return request;
             const parsedUrl = new URL(request.url);
