@@ -1328,6 +1328,11 @@ const setupScreenFlow = () => {
     document.getElementById("login-user").addEventListener("click", login);
     document.getElementById("turn-off-screen").addEventListener("click", showBootScreen);
 
+    document.getElementById("welcome-turn-off").addEventListener("click", () => {
+        playXPSound("shutdown");
+        showTurnOffScreen();
+    });
+
     document.getElementById("log-off-button").addEventListener("click", () => {
         closeStartMenu();
         playXPSound("logoff");

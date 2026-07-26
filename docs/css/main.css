@@ -1,7 +1,7 @@
 /* ============================================
-   AstroXP - Windows XP style desktop simulation
-   Chrome artwork is original CSS; desktop uses
-   the original Bliss wallpaper, cursor and sounds
+   Windows XP desktop simulation
+   Uses the supplied Bliss wallpaper, arrow cursor,
+   boot/login artwork and system sounds
    ============================================ */
 
 :root {
@@ -63,41 +63,18 @@ iframe {
     border: none;
 }
 
-/* ============ Brand flag (original mark) ============ */
+/* ============ Windows flag artwork ============ */
 
 .brand-flag {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 2px;
+    display: block;
     width: 36px;
     height: 36px;
-    transform: perspective(70px) rotateY(-16deg);
+    background: url("../assets/xp/flag.png") center / contain no-repeat;
     filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
 }
 
 .brand-flag i {
-    display: block;
-}
-
-.brand-flag i:nth-child(1) {
-    background: linear-gradient(135deg, #ff8fd6, #f462c6);
-    border-radius: 8px 2px 2px 2px;
-}
-
-.brand-flag i:nth-child(2) {
-    background: linear-gradient(135deg, #c39bff, #9b5de5);
-    border-radius: 2px 8px 2px 2px;
-}
-
-.brand-flag i:nth-child(3) {
-    background: linear-gradient(135deg, #7ee0ff, #00bbf9);
-    border-radius: 2px 2px 2px 8px;
-}
-
-.brand-flag i:nth-child(4) {
-    background: linear-gradient(135deg, #b6f7c1, #80ed99);
-    border-radius: 2px 2px 8px 2px;
+    display: none;
 }
 
 /* ============ Boot screen ============ */
@@ -111,47 +88,20 @@ iframe {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 34px;
+    gap: 42px;
     cursor: var(--xp-cursor);
 }
 
-.boot-brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-}
-
-.boot-brand .brand-flag {
-    width: 52px;
-    height: 52px;
-}
-
-.boot-wordmark {
-    color: #fff;
-    font-size: 42px;
-    font-weight: 400;
-    letter-spacing: 1px;
-}
-
-.boot-xp {
-    font-weight: 700;
-    font-style: italic;
-    color: #f462c6;
-    margin-left: 8px;
-}
-
-.boot-tagline {
-    color: #9d9d9d;
-    font-size: 14px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
+.boot-wordmark-img {
+    width: min(360px, 72vw);
+    height: auto;
+    filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.08));
 }
 
 .boot-progress {
-    width: 170px;
-    height: 16px;
-    border: 1px solid #b2b2b2;
+    width: 158px;
+    height: 15px;
+    border: 1px solid #8f8f8f;
     border-radius: 3px;
     padding: 2px;
     overflow: hidden;
@@ -165,20 +115,15 @@ iframe {
 }
 
 .boot-blocks i {
-    width: 10px;
+    width: 9px;
     height: 100%;
     border-radius: 1px;
-    background: linear-gradient(180deg, #8fb9f7, #2f6fe0);
+    background: linear-gradient(180deg, #97b8f6, #2f63d8);
 }
 
 @keyframes boot-slide {
-    from { transform: translateX(-36px); }
-    to { transform: translateX(180px); }
-}
-
-.boot-hint {
-    color: #555;
-    font-size: 11px;
+    from { transform: translateX(-34px); }
+    to { transform: translateX(164px); }
 }
 
 /* ============ Welcome screen ============ */
@@ -188,13 +133,12 @@ iframe {
     inset: 0;
     z-index: 9000;
     background:
-        radial-gradient(ellipse 120% 90% at 50% 42%,
-            #7c9ce6 0%, #5a7edc 40%, #3a58b8 75%, #24348c 100%);
+        radial-gradient(ellipse 110% 80% at 50% 42%,
+            #89a7ee 0%, #5f7fdd 38%, #3b58b6 72%, #1d2d84 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 60px;
 }
 
 #welcome-screen::before,
@@ -205,69 +149,105 @@ iframe {
     right: 0;
     height: 3px;
     background: linear-gradient(90deg,
-        transparent, rgba(255, 255, 255, 0.75), transparent);
+        transparent, rgba(255, 255, 255, 0.85), transparent);
 }
 
-#welcome-screen::before { top: 12%; }
-#welcome-screen::after { bottom: 12%; }
+#welcome-screen::before { top: 86px; }
+#welcome-screen::after { bottom: 76px; }
 
-.welcome-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #fff;
-    font-size: 30px;
-    text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.4);
-}
-
-.welcome-brand b {
-    font-style: italic;
-    color: #ffd6f1;
+.welcome-wordmark {
+    position: absolute;
+    top: 96px;
+    left: 50%;
+    width: min(430px, 68vw);
+    height: auto;
+    transform: translateX(-50%);
+    filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.25));
 }
 
 .welcome-panel {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 18px;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(36px, 9vw, 130px);
+    width: min(860px, 92vw);
+    margin-top: 84px;
 }
 
 .welcome-instruction {
+    max-width: 270px;
+    margin: 0;
     color: #fff;
-    font-size: 14px;
-    margin: 0 0 0 6px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+    font-size: 15px;
+    line-height: 1.45;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 #login-user {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 8px 42px 8px 8px;
+    min-width: 244px;
+    padding: 9px 30px 9px 9px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: var(--xp-cursor);
     color: #fff;
     transition: background 0.15s, border-color 0.15s;
 }
 
 #login-user:hover {
-    background: rgba(255, 255, 255, 0.22);
-    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.72);
 }
 
 .welcome-avatar {
     font-size: 34px;
     background: linear-gradient(180deg, #fff, #d8e6ff);
-    border-radius: 6px;
+    border-radius: 5px;
     padding: 6px 8px;
-    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.45);
 }
 
 .welcome-username {
     font-size: 18px;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+#welcome-turn-off {
+    position: absolute;
+    left: 28px;
+    bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 6px 3px 3px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    cursor: var(--xp-cursor);
+}
+
+.welcome-turn-off-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #f4ad4b, #cf711f);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        1px 1px 3px rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+}
+
+#welcome-turn-off:hover .welcome-turn-off-icon {
+    filter: brightness(1.12);
 }
 
 /* ============ Desktop ============ */
@@ -896,10 +876,7 @@ iframe {
 }
 
 .start-menu-footer h6 {
-    margin: 0 0 0 auto;
-    font-size: 9px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.55);
+    display: none;
 }
 
 /* ============ Turn off screen ============ */
@@ -957,6 +934,16 @@ iframe {
 /* ============ Small screens ============ */
 
 @media (max-width: 560px) {
+    .welcome-panel {
+        flex-direction: column;
+        gap: 22px;
+        margin-top: 110px;
+    }
+
+    .welcome-instruction {
+        text-align: center;
+    }
+
     .start-menu-right {
         width: 128px;
     }

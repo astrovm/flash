@@ -1,90 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self';
         script-src 'self' 'wasm-unsafe-eval';
-        style-src 'self' 'unsafe-inline';" />
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <title>Astro Flash Collection</title>
-    <script src="js/ruffle.js?v=bf02ea2d"></script>
-    <script src="js/main.js?v=b5174613"></script>
-    <link rel="stylesheet" href="css/main.css?v=119d425d">
-</head>
+        style-src 'self' 'unsafe-inline';"
+        />
+        <link rel="icon" href="favicon.ico" type="image/x-icon" />
+        <title>Astro Flash Collection</title>
+        <script src="js/ruffle.js?v=bf02ea2d"></script>
+        <script src="js/main.js?v=edce3f59"></script>
+        <link rel="stylesheet" href="css/main.css?v=0247b632">
+    </head>
 
-<body>
-    <!-- Boot screen -->
-    <div id="boot-screen">
-        <div class="boot-brand">
-            <div class="brand-flag" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-            <div class="boot-wordmark">Astro<span class="boot-xp">XP</span></div>
-            <div class="boot-tagline">Flash Collection</div>
+    <body>
+        <!-- Boot screen -->
+        <div id="boot-screen">
+            <img
+                class="boot-wordmark-img"
+                src="assets/xp/wordmark.png"
+                alt="Microsoft Windows XP"
+            />
+            <div class="boot-progress" aria-hidden="true">
+                <div class="boot-blocks"><i></i><i></i><i></i></div>
+            </div>
         </div>
-        <div class="boot-progress" aria-hidden="true">
-            <div class="boot-blocks"><i></i><i></i><i></i></div>
-        </div>
-        <div class="boot-hint">Click anywhere to skip</div>
-    </div>
 
-    <!-- Welcome screen -->
-    <div id="welcome-screen" hidden>
-        <div class="welcome-brand">
-            <div class="brand-flag" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-            <span>Astro<b>XP</b></span>
-        </div>
-        <div class="welcome-panel">
-            <p class="welcome-instruction">To begin, click your user name</p>
-            <button id="login-user" type="button">
-                <span class="welcome-avatar" aria-hidden="true">🧑‍🚀</span>
-                <span class="welcome-username">astro</span>
+        <!-- Welcome screen -->
+        <div id="welcome-screen" hidden>
+            <img
+                class="welcome-wordmark"
+                src="assets/xp/wordmark.png"
+                alt="Microsoft Windows XP"
+            />
+            <div class="welcome-panel">
+                <p class="welcome-instruction">
+                    To begin, click your user name
+                </p>
+                <button id="login-user" type="button">
+                    <span class="welcome-avatar" aria-hidden="true">🧑‍🚀</span>
+                    <span class="welcome-username">astro</span>
+                </button>
+            </div>
+            <button id="welcome-turn-off" type="button">
+                <span class="welcome-turn-off-icon" aria-hidden="true">⏻</span>
+                <span>Turn off computer</span>
             </button>
         </div>
-    </div>
 
-    <!-- Desktop -->
-    <div id="desktop" hidden>
-        <div id="desktop-icons"></div>
+        <!-- Desktop -->
+        <div id="desktop" hidden>
+            <div id="desktop-icons"></div>
 
-        <!-- Start menu -->
-        <div id="start-menu" hidden>
-            <div class="start-menu-header">
-                <span class="start-menu-avatar" aria-hidden="true">🧑‍🚀</span>
-                <span class="start-menu-user">astro</span>
-            </div>
-            <div class="start-menu-body">
-                <div class="start-menu-left">
-                    <div class="start-menu-search">
-                        <input type="text" id="game-search" placeholder="Search games..." />
-                    </div>
-                    <div id="start-menu-programs"></div>
+            <!-- Start menu -->
+            <div id="start-menu" hidden>
+                <div class="start-menu-header">
+                    <span class="start-menu-avatar" aria-hidden="true">🧑‍🚀</span>
+                    <span class="start-menu-user">astro</span>
                 </div>
-                <div class="start-menu-right" id="start-menu-places"></div>
-            </div>
-            <div class="start-menu-footer">
-                <button id="log-off-button" type="button">🔑 Log Off</button>
-                <button id="turn-off-button" type="button">⏻ Turn Off Computer</button>
-                <h6>v26.07.26</h6>
+                <div class="start-menu-body">
+                    <div class="start-menu-left">
+                        <div class="start-menu-search">
+                            <input
+                                type="text"
+                                id="game-search"
+                                placeholder="Search games..."
+                            />
+                        </div>
+                        <div id="start-menu-programs"></div>
+                    </div>
+                    <div class="start-menu-right" id="start-menu-places"></div>
+                </div>
+                <div class="start-menu-footer">
+                    <button id="log-off-button" type="button">
+                        🔑 Log Off
+                    </button>
+                    <button id="turn-off-button" type="button">
+                        ⏻ Turn Off Computer
+                    </button>
+                    <h6>v26.07.26</h6>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Taskbar -->
-    <div id="taskbar" hidden>
-        <button id="start-button" type="button">
-            <span class="brand-flag start-flag" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-            <span class="start-text">start</span>
-        </button>
-        <div id="task-buttons"></div>
-        <div id="taskbar-tray"><span id="taskbar-clock"></span></div>
-    </div>
+        <!-- Taskbar -->
+        <div id="taskbar" hidden>
+            <button id="start-button" type="button">
+                <span class="brand-flag start-flag" aria-hidden="true"
+                    ><i></i><i></i><i></i><i></i
+                ></span>
+                <span class="start-text">start</span>
+            </button>
+            <div id="task-buttons"></div>
+            <div id="taskbar-tray"><span id="taskbar-clock"></span></div>
+        </div>
 
-    <!-- Safe to turn off -->
-    <div id="turn-off-screen" hidden>
-        <p>It's now safe to turn off<br />your computer.</p>
-        <span class="turn-off-hint">Click anywhere to restart</span>
-    </div>
-</body>
-
+        <!-- Safe to turn off -->
+        <div id="turn-off-screen" hidden>
+            <p>It's now safe to turn off<br />your computer.</p>
+            <span class="turn-off-hint">Click anywhere to restart</span>
+        </div>
+    </body>
 </html>
