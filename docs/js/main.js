@@ -155,6 +155,11 @@ const gamesList = {
         type: "swf",
         category: "Puzzle"
     },
+    "doom": {
+        aspectRatio: 4 / 3,
+        type: "iframe",
+        category: "Action"
+    },
     "sugar-sugar": {
         type: "swf",
         spoofUrl: "https://www.friv.com/z/games/sugarsugar",

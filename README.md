@@ -10,6 +10,7 @@ A curated archive of Flash games
 - Start menu with game categories, search, favorites and recently played
 - Taskbar with window buttons and tray clock
 - Flash emulation by Ruffle
+- DOS emulation by js-dos
 - Play offline, no internet connection required
 - FPS optimized per game
 - Fast CDN
@@ -55,7 +56,7 @@ python tools/deploy.py
 
 The collection supports two types of games:
 - SWF (Flash) games using Ruffle emulation
-- HTML5 games via iframe integration
+- DOS and HTML5 games via iframe integration
 
 Each game can be configured with specific settings:
 ```javascript
