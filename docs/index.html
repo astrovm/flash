@@ -73,14 +73,34 @@
             <div id="desktop-icons"></div>
             <div id="desktop-selection" aria-hidden="true" hidden></div>
 
-            <div id="desktop-context-menu" class="xp-context-menu" role="menu" hidden>
+            <div
+                id="desktop-context-menu"
+                class="xp-context-menu"
+                role="menu"
+                hidden
+            >
                 <button type="button" role="menuitem" data-action="arrange">
-                    Arrange Icons By <span class="context-arrow" aria-hidden="true"></span>
+                    Arrange Icons By
+                    <span class="context-arrow" aria-hidden="true"></span>
                 </button>
-                <button type="button" role="menuitem" data-action="refresh">Refresh</button>
+                <button type="button" role="menuitem" data-action="refresh">
+                    Refresh
+                </button>
                 <span class="context-separator" aria-hidden="true"></span>
-                <button type="button" role="menuitem" data-action="paste" disabled>Paste</button>
-                <button type="button" role="menuitem" data-action="paste-shortcut" disabled>
+                <button
+                    type="button"
+                    role="menuitem"
+                    data-action="paste"
+                    disabled
+                >
+                    Paste
+                </button>
+                <button
+                    type="button"
+                    role="menuitem"
+                    data-action="paste-shortcut"
+                    disabled
+                >
                     Paste Shortcut
                 </button>
                 <span class="context-separator" aria-hidden="true"></span>
@@ -88,7 +108,9 @@
                     New <span class="context-arrow" aria-hidden="true"></span>
                 </button>
                 <span class="context-separator" aria-hidden="true"></span>
-                <button type="button" role="menuitem" data-action="properties">Properties</button>
+                <button type="button" role="menuitem" data-action="properties">
+                    Properties
+                </button>
             </div>
 
             <!-- Start menu -->
@@ -105,7 +127,10 @@
                         <div id="start-menu-pinned"></div>
                         <button id="all-programs-button" type="button">
                             <span>All Programs</span>
-                            <span class="all-programs-arrow" aria-hidden="true"></span>
+                            <span
+                                class="all-programs-arrow"
+                                aria-hidden="true"
+                            ></span>
                         </button>
                         <div id="all-programs-panel" hidden>
                             <div class="start-menu-search">
@@ -129,7 +154,7 @@
                         <span class="xp-power-icon" aria-hidden="true"></span>
                         Turn Off Computer
                     </button>
-                    <h6>v26.07.26-2</h6>
+                    <h6>v26.07.26</h6>
                 </div>
             </div>
         </div>
@@ -144,26 +169,47 @@
             </button>
             <div id="task-buttons"></div>
             <div id="taskbar-tray">
-                <span class="tray-network" title="Local Area Connection" aria-hidden="true"></span>
-                <span class="tray-volume" title="Volume" aria-hidden="true"></span>
+                <span
+                    class="tray-network"
+                    title="Local Area Connection"
+                    aria-hidden="true"
+                ></span>
+                <span
+                    class="tray-volume"
+                    title="Volume"
+                    aria-hidden="true"
+                ></span>
                 <span id="taskbar-clock"></span>
             </div>
         </div>
 
         <!-- Log Off Windows -->
         <div id="logoff-dialog" class="system-dialog-overlay" hidden>
-            <div class="system-dialog" role="dialog" aria-labelledby="logoff-title">
+            <div
+                class="system-dialog"
+                role="dialog"
+                aria-labelledby="logoff-title"
+            >
                 <div class="system-dialog-title">
                     <span id="logoff-title">Log Off Windows</span>
-                    <span class="dialog-flag brand-flag" aria-hidden="true"></span>
+                    <span
+                        class="dialog-flag brand-flag"
+                        aria-hidden="true"
+                    ></span>
                 </div>
                 <div class="system-dialog-actions">
                     <button id="switch-user-confirm" type="button">
-                        <span class="dialog-action-icon switch-user-icon" aria-hidden="true"></span>
+                        <span
+                            class="dialog-action-icon switch-user-icon"
+                            aria-hidden="true"
+                        ></span>
                         <span>Switch User</span>
                     </button>
                     <button id="logoff-confirm" type="button">
-                        <span class="dialog-action-icon xp-logoff-icon" aria-hidden="true"></span>
+                        <span
+                            class="dialog-action-icon xp-logoff-icon"
+                            aria-hidden="true"
+                        ></span>
                         <span>Log Off</span>
                     </button>
                 </div>
@@ -175,22 +221,38 @@
 
         <!-- Turn off computer -->
         <div id="shutdown-dialog" class="system-dialog-overlay" hidden>
-            <div class="system-dialog" role="dialog" aria-labelledby="shutdown-title">
+            <div
+                class="system-dialog"
+                role="dialog"
+                aria-labelledby="shutdown-title"
+            >
                 <div class="system-dialog-title">
                     <span id="shutdown-title">Turn off computer</span>
-                    <span class="dialog-flag brand-flag" aria-hidden="true"></span>
+                    <span
+                        class="dialog-flag brand-flag"
+                        aria-hidden="true"
+                    ></span>
                 </div>
                 <div class="system-dialog-actions shutdown-actions">
                     <button id="standby-confirm" type="button">
-                        <span class="dialog-action-icon standby-icon xp-power-icon" aria-hidden="true"></span>
+                        <span
+                            class="dialog-action-icon standby-icon xp-power-icon"
+                            aria-hidden="true"
+                        ></span>
                         <span>Stand By</span>
                     </button>
                     <button id="shutdown-confirm" type="button">
-                        <span class="dialog-action-icon shutdown-icon xp-power-icon" aria-hidden="true"></span>
+                        <span
+                            class="dialog-action-icon shutdown-icon xp-power-icon"
+                            aria-hidden="true"
+                        ></span>
                         <span>Turn Off</span>
                     </button>
                     <button id="restart-confirm" type="button">
-                        <span class="dialog-action-icon restart-icon" aria-hidden="true"></span>
+                        <span
+                            class="dialog-action-icon restart-icon"
+                            aria-hidden="true"
+                        ></span>
                         <span>Restart</span>
                     </button>
                 </div>
