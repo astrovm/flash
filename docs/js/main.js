@@ -1332,10 +1332,12 @@ const showTurnOffScreen = () => {
     setScreen("turn-off-screen");
 };
 
-const login = () => {
+const login = (playSound = true) => {
     showDesktop();
     applyFocusVolumes();
-    playXPSound("logon");
+    if (playSound) {
+        playXPSound("logon");
+    }
 
     if (!loggedIn) {
         loggedIn = true;
@@ -1355,7 +1357,7 @@ const login = () => {
 
 const setupScreenFlow = () => {
     document.getElementById("boot-screen").addEventListener("click", showWelcomeScreen);
-    document.getElementById("login-user").addEventListener("click", login);
+    document.getElementById("login-user").addEventListener("click", () => login());
     document.getElementById("turn-off-screen").addEventListener("click", showBootScreen);
 
     document.getElementById("welcome-turn-off").addEventListener("click", () => {
@@ -1375,7 +1377,12 @@ const setupScreenFlow = () => {
         showTurnOffScreen();
     });
 
-    showBootScreen();
+    if (getHashGameId()) {
+        startupSoundPending = false;
+        login(false);
+    } else {
+        showBootScreen();
+    }
 };
 
 // ============================================
