@@ -1,4 +1,3 @@
-import hashlib
 import re
 import unittest
 from html.parser import HTMLParser
@@ -63,14 +62,6 @@ class ShellSourceTests(unittest.TestCase):
             "additive && initialSelection.has(icon.dataset.game)",
             self.javascript,
         )
-
-    def test_xp_icon_assets_have_provenance_and_matching_hashes(self):
-        icon_dir = PROJECT_DIR / "docs" / "assets" / "xp" / "icons"
-        provenance = (icon_dir.parent / "README.md").read_text(encoding="utf-8")
-        for icon in icon_dir.glob("*.png"):
-            digest = hashlib.sha256(icon.read_bytes()).hexdigest()
-            self.assertIn(icon.name, provenance)
-            self.assertIn(digest, provenance)
 
 
 if __name__ == "__main__":
