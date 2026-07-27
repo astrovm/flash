@@ -13,8 +13,9 @@
         <title>Astro Flash Collection</title>
         <script src="js/ruffle.js?v=bf02ea2d"></script>
         <script src="js/games.js?v=65ef7d86"></script>
-        <script src="js/main.js?v=8a5403a3"></script>
-        <link rel="stylesheet" href="css/main.css?v=63d42b75">
+        <script src="js/filesystem.js?v=22edba7e"></script>
+        <script src="js/main.js?v=e9d929fb"></script>
+        <link rel="stylesheet" href="css/main.css?v=a6f301e4">
     </head>
 
     <body>
@@ -108,6 +109,34 @@
                 </button>
             </div>
 
+            <div
+                id="window-system-menu"
+                class="xp-context-menu"
+                role="menu"
+                hidden
+            >
+                <button type="button" role="menuitem" data-command="restore">
+                    Restore
+                </button>
+                <button type="button" role="menuitem" data-command="move">
+                    Move
+                </button>
+                <button type="button" role="menuitem" data-command="size">
+                    Size
+                </button>
+                <span class="context-separator" aria-hidden="true"></span>
+                <button type="button" role="menuitem" data-command="minimize">
+                    Minimize
+                </button>
+                <button type="button" role="menuitem" data-command="maximize">
+                    Maximize
+                </button>
+                <span class="context-separator" aria-hidden="true"></span>
+                <button type="button" role="menuitem" data-command="close">
+                    Close
+                </button>
+            </div>
+
             <!-- Start menu -->
             <div id="start-menu" hidden>
                 <div class="start-menu-header">
@@ -149,7 +178,7 @@
                         <span class="xp-power-icon" aria-hidden="true"></span>
                         Turn Off Computer
                     </button>
-                    <h6>v26.07.26</h6>
+                    <h6>v26.07.27</h6>
                 </div>
             </div>
         </div>

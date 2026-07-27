@@ -46,15 +46,9 @@ class ShellSourceTests(unittest.TestCase):
         )
         self.assertEqual(parser.actions - handled_actions, set())
 
-    def test_all_window_entrypoints_enforce_capacity(self):
-        for function_name in ("openSystemWindow", "openGameWindow"):
-            match = re.search(
-                rf"const {function_name} = .*?\n}};",
-                self.javascript,
-                re.DOTALL,
-            )
-            self.assertIsNotNone(match)
-            self.assertIn("ensureWindowCapacity();", match.group(0))
+    def test_window_manager_never_discards_windows_silently(self):
+        self.assertNotIn("MAX_OPEN_WINDOWS", self.javascript)
+        self.assertNotIn("ensureWindowCapacity", self.javascript)
 
     def test_additive_marquee_preserves_initial_selection(self):
         self.assertIn("const initialSelection = new Set(", self.javascript)

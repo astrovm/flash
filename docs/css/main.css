@@ -896,6 +896,33 @@ iframe {
     gap: 9px;
     min-height: 52px;
     padding: 5px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 3px;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: var(--xp-cursor);
+}
+
+.explorer-item:hover,
+.explorer-item:focus-visible {
+    border-color: #7f9db9;
+    background: #d8e7f8;
+    outline: 0;
+}
+
+.explorer-item-icon {
+    width: 42px;
+    height: 42px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.explorer-item-emoji {
+    font-size: 30px;
 }
 
 .explorer-item img,
@@ -1055,16 +1082,85 @@ iframe {
     border-color: #aaa;
 }
 
+/* Resize handles on every edge and corner, with XP resize cursors */
 .resize-handle {
     position: absolute;
+    z-index: 2;
+    touch-action: none;
+}
+
+.resize-n {
+    top: -3px;
+    left: 10px;
+    right: 10px;
+    height: 6px;
+    cursor: n-resize;
+}
+
+.resize-s {
+    bottom: -3px;
+    left: 10px;
+    right: 10px;
+    height: 6px;
+    cursor: s-resize;
+}
+
+.resize-e {
+    right: -3px;
+    top: 10px;
+    bottom: 10px;
+    width: 6px;
+    cursor: e-resize;
+}
+
+.resize-w {
+    left: -3px;
+    top: 10px;
+    bottom: 10px;
+    width: 6px;
+    cursor: w-resize;
+}
+
+.resize-ne {
+    top: -3px;
+    right: -3px;
+    width: 14px;
+    height: 14px;
+    cursor: ne-resize;
+}
+
+.resize-nw {
+    top: -3px;
+    left: -3px;
+    width: 14px;
+    height: 14px;
+    cursor: nw-resize;
+}
+
+.resize-sw {
+    bottom: -3px;
+    left: -3px;
+    width: 14px;
+    height: 14px;
+    cursor: sw-resize;
+}
+
+.resize-se {
     right: 0;
     bottom: 0;
     width: 18px;
     height: 18px;
-    cursor: nwse-resize;
-    touch-action: none;
+    cursor: se-resize;
     background:
         linear-gradient(135deg, transparent 0 50%, #a8a494 50% 58%, transparent 58% 66%, #a8a494 66% 74%, transparent 74% 82%, #a8a494 82% 90%, transparent 90%);
+}
+
+.xp-window.move-mode {
+    cursor: move;
+}
+
+.xp-window.size-mode {
+    cursor: se-resize;
 }
 
 /* ============ Taskbar ============ */
