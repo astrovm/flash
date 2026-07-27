@@ -1081,11 +1081,23 @@ const createSystemWindowContent = (shortcutId, win) => {
         emptyBin.type = "button";
         emptyBin.textContent = "Empty Recycle Bin";
         emptyBin.addEventListener("click", () => {
-            try {
-                fs.emptyRecycleBin();
-            } catch (error) {
-                console.error(error);
-            }
+            const count = fs.getChildren(fs.RECYCLE_BIN).length;
+            if (!count) return;
+            const single = count === 1;
+            XPDialogs.confirm(
+                single
+                    ? "Are you sure you want to delete this item?"
+                    : `Are you sure you want to delete these ${count} items?`,
+                single ? "Confirm File Delete" : "Confirm Multiple File Delete",
+                "warning"
+            ).then((yes) => {
+                if (!yes) return;
+                try {
+                    fs.emptyRecycleBin();
+                } catch (error) {
+                    console.error(error);
+                }
+            });
         });
 
         const restoreAll = document.createElement("button");
