@@ -1,5 +1,9 @@
 {
+  "scripts": {
+    "test": "python -m unittest discover -s tests -v && node --check docs/js/games.js && node --check docs/js/main.js && node tools/validate_icons.mjs",
+    "validate:icons": "node tools/validate_icons.mjs --require-all"
+  },
   "devDependencies": {
-    "workbox-cli": "^7.4.0"
+    "workbox-cli": "^7.4.1"
   }
 }

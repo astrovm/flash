@@ -1,4 +1,5 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+from functools import partial
 from pathlib import Path
 import argparse
 
@@ -13,14 +14,6 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
         self.send_header("Expires", "0")
         super().end_headers()
 
-    def translate_path(self, path):
-        # Serve from docs directory
-        docs_dir = Path.cwd() / "docs"
-        full_path = Path(super().translate_path(path))
-        rel_path = full_path.relative_to(Path.cwd())
-        return str(docs_dir / rel_path)
-
-
 def main():
     parser = argparse.ArgumentParser(description="Local development server for docs/")
     parser.add_argument(
@@ -28,8 +21,10 @@ def main():
     )
     args = parser.parse_args()
 
+    docs_dir = Path(__file__).resolve().parents[1] / "docs"
+    handler = partial(NoCacheHandler, directory=docs_dir)
     server_address = ("", args.port)
-    httpd = HTTPServer(server_address, NoCacheHandler)
+    httpd = ThreadingHTTPServer(server_address, handler)
     print(f"Server running on http://localhost:{args.port}/")
     httpd.serve_forever()
 

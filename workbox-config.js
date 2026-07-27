@@ -1,7 +1,7 @@
 module.exports = {
 	globDirectory: "docs/",
 	globPatterns: [
-		"**/*.{woff2,css,ico,svg,mp3,wav,png,json,html,js,wasm,swf,xml,phtml}",
+		"**/*.{woff,woff2,css,ico,svg,mp3,wav,png,jpg,jpeg,cur,json,html,js,mjs,wasm,swf,jsdos,xml,phtml}",
 	],
 	swDest: "docs/sw.js",
 	maximumFileSizeToCacheInBytes: 25000000,
