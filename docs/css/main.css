@@ -1163,6 +1163,328 @@ iframe {
     cursor: se-resize;
 }
 
+/* ============ Reusable dialogs ============ */
+
+/* Modal overlay: transparent (no XP dimming) but blocks interaction. */
+.xp-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.xp-dialog {
+    position: relative;
+    width: min(400px, calc(100vw - 32px));
+    min-width: 0;
+    min-height: 0;
+}
+
+.xp-dialog-wide {
+    width: min(520px, calc(100vw - 32px));
+}
+
+.dlg-body {
+    padding: 11px 12px;
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+}
+
+/* Standard XP button, input, and dropdown controls */
+.xp-btn {
+    min-width: 70px;
+    height: 23px;
+    padding: 0 10px;
+    border: 1px solid #003c74;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #fff, #ecebe5 86%, #d8d0c4);
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+    cursor: var(--xp-cursor);
+}
+
+.xp-btn:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 1px rgba(0, 60, 116, 0.35);
+}
+
+.xp-btn.default {
+    box-shadow: inset 0 0 0 1px #003c74;
+}
+
+.xp-btn:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -4px;
+}
+
+.xp-btn:disabled {
+    border-color: #c9c7ba;
+    background: #f5f4ea;
+    color: #a1a192;
+    cursor: var(--xp-cursor);
+}
+
+.xp-input,
+.xp-select {
+    height: 22px;
+    padding: 0 4px;
+    border: 1px solid #7f9db9;
+    background: #fff;
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+}
+
+.xp-input:focus-visible,
+.xp-select:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -2px;
+}
+
+.xp-input:disabled,
+.xp-select:disabled {
+    background: #f5f4ea;
+    color: #a1a192;
+}
+
+/* Message boxes */
+.dlg-message {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 5px 4px 13px;
+}
+
+.dlg-text {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.dlg-icon {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    flex: none;
+}
+
+.dlg-icon::before {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.dlg-icon-info,
+.dlg-icon-question,
+.dlg-icon-error {
+    border-radius: 50%;
+}
+
+.dlg-icon-info {
+    background: radial-gradient(circle at 35% 30%, #7db3f4, #1e52b0 70%);
+}
+
+.dlg-icon-info::before {
+    content: "i";
+    font: italic 700 22px Georgia, serif;
+}
+
+.dlg-icon-question {
+    background: radial-gradient(circle at 35% 30%, #7db3f4, #1e52b0 70%);
+}
+
+.dlg-icon-question::before {
+    content: "?";
+    font-size: 20px;
+}
+
+.dlg-icon-error {
+    background: radial-gradient(circle at 35% 30%, #f49a8c, #c13018 70%);
+}
+
+.dlg-icon-error::before {
+    content: "×";
+    font-size: 24px;
+}
+
+.dlg-icon-warning {
+    background: linear-gradient(180deg, #fdf17e, #e5b60f);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.dlg-icon-warning::before {
+    content: "!";
+    top: 6px;
+    color: #111;
+    font-size: 18px;
+    text-shadow: none;
+}
+
+.dlg-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding-top: 2px;
+}
+
+.xp-dialog-wide .dlg-buttons {
+    justify-content: flex-end;
+}
+
+/* Progress dialog */
+.dlg-progress-text {
+    margin-bottom: 8px;
+}
+
+.xp-progress {
+    height: 16px;
+    padding: 1px;
+    border: 1px solid #68635a;
+    background: #fff;
+}
+
+.xp-progress-fill {
+    width: 0;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg,
+        #37c837 0 8px,
+        transparent 8px 11px
+    );
+    transition: width 0.15s;
+}
+
+.dlg-progress-text + .xp-progress {
+    margin-bottom: 10px;
+}
+
+/* Properties dialog */
+.dlg-props-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-bottom: 9px;
+    margin-bottom: 9px;
+    border-bottom: 1px solid #d4d0c8;
+    box-shadow: 0 1px #fff;
+}
+
+.dlg-props-name {
+    font-weight: 700;
+}
+
+.dlg-props-table {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 10px;
+    margin: 0 0 10px;
+}
+
+.dlg-props-table dt {
+    color: #444;
+}
+
+.dlg-props-table dd {
+    margin: 0;
+}
+
+/* Node icons (Properties + file dialogs) */
+.dlg-node-icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.dlg-node-icon img {
+    width: 32px;
+    height: 32px;
+}
+
+.dlg-node-icon-file {
+    font-size: 24px;
+}
+
+/* Open / Save As dialogs */
+.dlg-file-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.dlg-file-toolbar .xp-btn {
+    min-width: 44px;
+}
+
+.dlg-file-path {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #444;
+}
+
+.dlg-file-list {
+    height: 150px;
+    padding: 2px;
+    overflow-y: auto;
+    border: 1px solid #7f9db9;
+    background: #fff;
+}
+
+.dlg-file-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    padding: 2px 4px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: var(--xp-cursor);
+}
+
+.dlg-file-item .dlg-node-icon,
+.dlg-file-item .dlg-node-icon img {
+    width: 16px;
+    height: 16px;
+}
+
+.dlg-file-item .dlg-node-icon-file {
+    font-size: 13px;
+}
+
+.dlg-file-item.selected {
+    background: #316ac5;
+    color: #fff;
+}
+
+.dlg-file-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 10px;
+}
+
+.dlg-file-name-row label {
+    white-space: nowrap;
+}
+
+.dlg-file-name-row .xp-input {
+    flex: 1;
+}
+
 /* ============ Taskbar ============ */
 
 #taskbar {

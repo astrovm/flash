@@ -26,6 +26,7 @@ ASSET_PATHS = {
     'ruffle': JS_DIR / "ruffle.js",
     'games_js': JS_DIR / "games.js",
     'filesystem_js': JS_DIR / "filesystem.js",
+    'dialogs_js': JS_DIR / "dialogs.js",
     'main_js': JS_DIR / "main.js",
     'main_css': CSS_DIR / "main.css"
 }
@@ -135,6 +136,8 @@ def update_html():
             f'<script src="js/games.js?v={short_hashes["games_js"]}"></script>',
         r'<script src="js/filesystem\.[^"]+" ?[^>]*></script>':
             f'<script src="js/filesystem.js?v={short_hashes["filesystem_js"]}"></script>',
+        r'<script src="js/dialogs\.[^"]+" ?[^>]*></script>':
+            f'<script src="js/dialogs.js?v={short_hashes["dialogs_js"]}"></script>',
         r'<script src="js/main\.[^"]+" ?[^>]*></script>':
             f'<script src="js/main.js?v={short_hashes["main_js"]}"></script>',
         r'<link rel="stylesheet" href="css/main\.[^"]+" ?[^>]*>':
