@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "python -m unittest discover -s tests -v && node --check docs/js/games.js && node --check docs/js/main.js && node tools/validate_icons.mjs",
+    "test": "python -m unittest discover -s tests -v && node --check docs/js/games.js && node --check docs/js/filesystem.js && node --check docs/js/main.js && node tools/validate_icons.mjs",
     "validate:icons": "node tools/validate_icons.mjs --require-all"
   },
   "devDependencies": {

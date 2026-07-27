@@ -1,11 +1,12 @@
 "use strict";
 
 // Constants
-const MAX_OPEN_WINDOWS = 4;
 const DEFAULT_ASPECT_RATIO = 4 / 3;
 const WINDOW_CHROME_HEIGHT = 58; // title bar + toolbar
 const MIN_WINDOW_WIDTH = 340;
 const MIN_WINDOW_HEIGHT = 240;
+const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
+const MOVE_SIZE_STEP = 8;
 const BOOT_DURATION_MS = 2600;
 const WELCOME_DURATION_MS = 1200;
 
@@ -235,6 +236,34 @@ const getDesktopSize = () => {
     return { width: desktop.clientWidth, height: desktop.clientHeight };
 };
 
+// Keep at least part of the title bar reachable inside the work area,
+// matching how Windows XP constrains window positions.
+const clampWindowPosition = (win, left, top) => {
+    const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+    return {
+        left: Math.min(
+            Math.max(left, 60 - win.el.offsetWidth),
+            desktopWidth - 60
+        ),
+        top: Math.min(Math.max(top, 0), desktopHeight - 28)
+    };
+};
+
+const keepWindowsInWorkArea = () => {
+    const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+    if (desktopWidth === 0 || desktopHeight === 0) return;
+
+    openWindows.forEach((win) => {
+        if (win.maximized) return;
+        const el = win.el;
+        el.style.width = `${Math.min(el.offsetWidth, desktopWidth)}px`;
+        el.style.height = `${Math.min(el.offsetHeight, desktopHeight)}px`;
+        const position = clampWindowPosition(win, el.offsetLeft, el.offsetTop);
+        el.style.left = `${position.left}px`;
+        el.style.top = `${position.top}px`;
+    });
+};
+
 const updateDocumentTitle = () => {
     document.title = focusedGameId
         ? formatGameTitle(focusedGameId)
@@ -415,10 +444,15 @@ const createWindowElement = (gameId) => {
     const content = document.createElement("div");
     content.className = "window-content";
 
-    const resizeHandle = document.createElement("div");
-    resizeHandle.className = "resize-handle";
+    win.append(titleBar, toolbar, content);
 
-    win.append(titleBar, toolbar, content, resizeHandle);
+    RESIZE_DIRECTIONS.forEach((direction) => {
+        const handle = document.createElement("div");
+        handle.className = `resize-handle resize-${direction}`;
+        handle.dataset.dir = direction;
+        win.appendChild(handle);
+    });
+
     return win;
 };
 
@@ -597,6 +631,13 @@ const toggleMaximize = (gameId) => {
         win.el.classList.remove("maximized");
         if (win.prevRect) {
             Object.assign(win.el.style, win.prevRect);
+            const position = clampWindowPosition(
+                win,
+                win.el.offsetLeft,
+                win.el.offsetTop
+            );
+            win.el.style.left = `${position.left}px`;
+            win.el.style.top = `${position.top}px`;
         }
         win.maximized = false;
     }
@@ -621,16 +662,30 @@ const closeGameWindow = (gameId) => {
 
 const wireDrag = (win) => {
     const bar = win.el.querySelector(".title-bar");
+    const titleIcon = bar.querySelector(".title-icon");
 
     bar.addEventListener("pointerdown", (e) => {
-        if (e.button !== 0 || e.target.closest(".title-buttons")) return;
+        if (e.button !== 0 || e.target.closest(".title-buttons, .title-icon")) return;
 
+        closeWindowSystemMenu();
+        let restoredFromMaximized = false;
         if (win.maximized) {
-            // Restore the window under the cursor before dragging
-            const ratio = e.clientX / window.innerWidth;
+            // Restore the window under the pointer before dragging, keeping
+            // the pointer at the same relative position on the title bar.
+            const rect = win.el.getBoundingClientRect();
+            const ratio = Math.min(
+                Math.max((e.clientX - rect.left) / rect.width, 0),
+                1
+            );
             toggleMaximize(win.gameId);
-            win.el.style.left = `${Math.max(0, e.clientX - win.el.offsetWidth * ratio)}px`;
-            win.el.style.top = `${Math.max(0, e.clientY - 14)}px`;
+            const position = clampWindowPosition(
+                win,
+                e.clientX - win.el.offsetWidth * ratio,
+                e.clientY - 14
+            );
+            win.el.style.left = `${position.left}px`;
+            win.el.style.top = `${position.top}px`;
+            restoredFromMaximized = true;
         } else {
             focusWindow(win.gameId);
         }
@@ -639,23 +694,28 @@ const wireDrag = (win) => {
         const offsetY = win.el.offsetTop - e.clientY;
 
         const onMove = (ev) => {
-            const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
-            const left = Math.min(
-                Math.max(ev.clientX + offsetX, 60 - win.el.offsetWidth),
-                desktopWidth - 60
+            const position = clampWindowPosition(
+                win,
+                ev.clientX + offsetX,
+                ev.clientY + offsetY
             );
-            const top = Math.min(
-                Math.max(ev.clientY + offsetY, 0),
-                desktopHeight - 28
-            );
-            win.el.style.left = `${left}px`;
-            win.el.style.top = `${top}px`;
+            win.el.style.left = `${position.left}px`;
+            win.el.style.top = `${position.top}px`;
         };
 
         const onUp = () => {
             bar.removeEventListener("pointermove", onMove);
             bar.removeEventListener("pointerup", onUp);
             bar.removeEventListener("pointercancel", onUp);
+            if (restoredFromMaximized) {
+                // The dragged position becomes the new restore geometry.
+                win.prevRect = {
+                    left: win.el.style.left,
+                    top: win.el.style.top,
+                    width: win.el.style.width,
+                    height: win.el.style.height
+                };
+            }
         };
 
         try {
@@ -669,51 +729,280 @@ const wireDrag = (win) => {
     });
 
     bar.addEventListener("dblclick", (e) => {
-        if (e.target.closest(".title-buttons")) return;
+        if (e.target.closest(".title-buttons, .title-icon")) return;
         toggleMaximize(win.gameId);
+    });
+
+    // Right-clicking the title bar opens the window system menu.
+    bar.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        openWindowSystemMenu(win, e.clientX, e.clientY);
+    });
+
+    // Windows XP: clicking the title-bar icon opens the system menu,
+    // double-clicking it closes the window.
+    titleIcon.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const rect = titleIcon.getBoundingClientRect();
+        openWindowSystemMenu(win, rect.left, rect.bottom + 2);
+    });
+    titleIcon.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        closeGameWindow(win.gameId);
+    });
+};
+
+const applyResize = (win, direction, start, deltaX, deltaY) => {
+    const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+    const right = start.left + start.width;
+    const bottom = start.top + start.height;
+    let { left, top, width, height } = start;
+
+    if (direction.includes("e")) {
+        width = Math.min(
+            Math.max(start.width + deltaX, MIN_WINDOW_WIDTH),
+            desktopWidth - start.left
+        );
+    }
+    if (direction.includes("w")) {
+        width = Math.min(Math.max(start.width - deltaX, MIN_WINDOW_WIDTH), right);
+        left = right - width;
+    }
+    if (direction.includes("s")) {
+        height = Math.min(
+            Math.max(start.height + deltaY, MIN_WINDOW_HEIGHT),
+            desktopHeight - start.top
+        );
+    }
+    if (direction.includes("n")) {
+        height = Math.min(Math.max(start.height - deltaY, MIN_WINDOW_HEIGHT), bottom);
+        top = bottom - height;
+    }
+
+    Object.assign(win.el.style, {
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${width}px`,
+        height: `${height}px`
     });
 };
 
 const wireResize = (win) => {
-    const handle = win.el.querySelector(".resize-handle");
+    win.el.querySelectorAll(".resize-handle").forEach((handle) => {
+        handle.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0 || win.maximized) return;
+            focusWindow(win.gameId);
+            e.preventDefault();
 
-    handle.addEventListener("pointerdown", (e) => {
-        if (e.button !== 0 || win.maximized) return;
-        focusWindow(win.gameId);
+            const direction = handle.dataset.dir;
+            const start = {
+                x: e.clientX,
+                y: e.clientY,
+                left: win.el.offsetLeft,
+                top: win.el.offsetTop,
+                width: win.el.offsetWidth,
+                height: win.el.offsetHeight
+            };
+
+            const onMove = (ev) => {
+                applyResize(
+                    win,
+                    direction,
+                    start,
+                    ev.clientX - start.x,
+                    ev.clientY - start.y
+                );
+            };
+
+            const onUp = () => {
+                handle.removeEventListener("pointermove", onMove);
+                handle.removeEventListener("pointerup", onUp);
+                handle.removeEventListener("pointercancel", onUp);
+            };
+
+            try {
+                handle.setPointerCapture(e.pointerId);
+            } catch (error) { /* pointer capture unsupported */ }
+
+            handle.addEventListener("pointermove", onMove);
+            handle.addEventListener("pointerup", onUp);
+            handle.addEventListener("pointercancel", onUp);
+        });
+    });
+};
+
+// ============================================
+// Window System Menu (Restore / Move / Size / ...)
+// ============================================
+
+let systemMenuWin = null;
+
+const closeWindowSystemMenu = () => {
+    const menu = document.getElementById("window-system-menu");
+    if (menu) menu.hidden = true;
+    systemMenuWin = null;
+};
+
+const openWindowSystemMenu = (win, clientX, clientY) => {
+    const desktop = document.getElementById("desktop");
+    const menu = document.getElementById("window-system-menu");
+    systemMenuWin = win;
+
+    const enabled = {
+        restore: win.maximized,
+        move: !win.maximized,
+        size: !win.maximized,
+        minimize: true,
+        maximize: !win.maximized,
+        close: true
+    };
+    menu.querySelectorAll("[data-command]").forEach((button) => {
+        button.disabled = !enabled[button.dataset.command];
+    });
+
+    closeDesktopContextMenu();
+    closeStartMenu();
+    menu.hidden = false;
+    menu.style.left = "0";
+    menu.style.top = "0";
+
+    const bounds = desktop.getBoundingClientRect();
+    const left = Math.max(
+        0,
+        Math.min(clientX - bounds.left, bounds.width - menu.offsetWidth - 2)
+    );
+    const top = Math.max(
+        0,
+        Math.min(clientY - bounds.top, bounds.height - menu.offsetHeight - 2)
+    );
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.querySelector("button:not(:disabled)")?.focus();
+};
+
+const nudgeWindow = (win, deltaX, deltaY) => {
+    const position = clampWindowPosition(
+        win,
+        win.el.offsetLeft + deltaX,
+        win.el.offsetTop + deltaY
+    );
+    win.el.style.left = `${position.left}px`;
+    win.el.style.top = `${position.top}px`;
+};
+
+const nudgeResize = (win, deltaX, deltaY) => {
+    const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+    const width = Math.min(
+        Math.max(win.el.offsetWidth + deltaX, MIN_WINDOW_WIDTH),
+        desktopWidth - win.el.offsetLeft
+    );
+    const height = Math.min(
+        Math.max(win.el.offsetHeight + deltaY, MIN_WINDOW_HEIGHT),
+        desktopHeight - win.el.offsetTop
+    );
+    win.el.style.width = `${width}px`;
+    win.el.style.height = `${height}px`;
+};
+
+// Windows XP Move/Size commands: the window follows the pointer or the
+// arrow keys until Enter (or a click) commits or Escape cancels.
+const startMoveSizeMode = (win, mode) => {
+    if (win.maximized || win.minimized) return;
+    focusWindow(win.gameId);
+
+    const el = win.el;
+    const original = {
+        left: el.style.left,
+        top: el.style.top,
+        width: el.style.width,
+        height: el.style.height
+    };
+    el.classList.add(`${mode}-mode`);
+    let lastPointer = null;
+
+    const finish = (commit) => {
+        document.removeEventListener("keydown", onKey, true);
+        document.removeEventListener("pointermove", onPointerMove, true);
+        document.removeEventListener("pointerdown", onPointerDown, true);
+        el.classList.remove(`${mode}-mode`);
+        if (!commit) {
+            Object.assign(el.style, original);
+        }
+    };
+
+    const onKey = (e) => {
+        const keys = [
+            "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", "Escape"
+        ];
+        if (!keys.includes(e.key)) return;
         e.preventDefault();
+        e.stopPropagation();
+        if (e.key === "Enter") return finish(true);
+        if (e.key === "Escape") return finish(false);
 
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startWidth = win.el.offsetWidth;
-        const startHeight = win.el.offsetHeight;
+        const deltaX = e.key === "ArrowLeft" ? -MOVE_SIZE_STEP
+            : e.key === "ArrowRight" ? MOVE_SIZE_STEP : 0;
+        const deltaY = e.key === "ArrowUp" ? -MOVE_SIZE_STEP
+            : e.key === "ArrowDown" ? MOVE_SIZE_STEP : 0;
+        if (mode === "move") {
+            nudgeWindow(win, deltaX, deltaY);
+        } else {
+            nudgeResize(win, deltaX, deltaY);
+        }
+    };
 
-        const onMove = (ev) => {
-            const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
-            const width = Math.min(
-                Math.max(startWidth + ev.clientX - startX, MIN_WINDOW_WIDTH),
-                desktopWidth - win.el.offsetLeft
-            );
-            const height = Math.min(
-                Math.max(startHeight + ev.clientY - startY, MIN_WINDOW_HEIGHT),
-                desktopHeight - win.el.offsetTop
-            );
-            win.el.style.width = `${width}px`;
-            win.el.style.height = `${height}px`;
-        };
+    const onPointerMove = (e) => {
+        if (lastPointer === null) {
+            lastPointer = { x: e.clientX, y: e.clientY };
+            return;
+        }
+        const deltaX = e.clientX - lastPointer.x;
+        const deltaY = e.clientY - lastPointer.y;
+        lastPointer = { x: e.clientX, y: e.clientY };
+        if (mode === "move") {
+            nudgeWindow(win, deltaX, deltaY);
+        } else {
+            nudgeResize(win, deltaX, deltaY);
+        }
+    };
 
-        const onUp = () => {
-            handle.removeEventListener("pointermove", onMove);
-            handle.removeEventListener("pointerup", onUp);
-            handle.removeEventListener("pointercancel", onUp);
-        };
+    const onPointerDown = (e) => {
+        e.preventDefault();
+        finish(true);
+    };
 
-        try {
-            handle.setPointerCapture(e.pointerId);
-        } catch (error) { /* pointer capture unsupported */ }
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("pointermove", onPointerMove, true);
+    document.addEventListener("pointerdown", onPointerDown, true);
+};
 
-        handle.addEventListener("pointermove", onMove);
-        handle.addEventListener("pointerup", onUp);
-        handle.addEventListener("pointercancel", onUp);
+const runSystemMenuCommand = (win, command) => {
+    switch (command) {
+        case "restore":
+        case "maximize":
+            toggleMaximize(win.gameId);
+            break;
+        case "minimize":
+            minimizeWindow(win.gameId);
+            break;
+        case "close":
+            closeGameWindow(win.gameId);
+            break;
+        case "move":
+        case "size":
+            startMoveSizeMode(win, command);
+            break;
+    }
+};
+
+const setupWindowSystemMenu = () => {
+    const menu = document.getElementById("window-system-menu");
+    menu.addEventListener("click", (e) => {
+        const button = e.target.closest("[data-command]");
+        if (!button || button.disabled || !systemMenuWin) return;
+        const win = systemMenuWin;
+        closeWindowSystemMenu();
+        runSystemMenuCommand(win, button.dataset.command);
     });
 };
 
@@ -743,7 +1032,7 @@ const wireWindowControls = (win) => {
     wireResize(win);
 };
 
-const createSystemWindowContent = (shortcutId) => {
+const createSystemWindowContent = (shortcutId, win) => {
     const content = document.createElement("div");
     content.className = "explorer-content";
 
@@ -778,58 +1067,272 @@ const createSystemWindowContent = (shortcutId) => {
         "__my-computer": "System Tasks",
         "__recycle-bin": "Recycle Bin Tasks"
     };
-    const descriptions = {
-        "__my-documents": "Files stored on this computer",
-        "__my-computer": "Files Stored on This Computer",
-        "__recycle-bin": "The Recycle Bin is empty."
-    };
 
     const sidebar = document.createElement("aside");
     sidebar.className = "explorer-sidebar";
-    sidebar.innerHTML = `
-        <section>
-            <h3>${taskTitles[shortcutId]}</h3>
-            <button type="button">View system information</button>
-            <button type="button">Add or remove programs</button>
-            <button type="button">Change a setting</button>
-        </section>
-        <section>
-            <h3>Other Places</h3>
-            <button type="button">My Network Places</button>
-            <button type="button">My Documents</button>
-            <button type="button">Control Panel</button>
-        </section>
+
+    const tasksSection = document.createElement("section");
+    const tasksTitle = document.createElement("h3");
+    tasksTitle.textContent = taskTitles[shortcutId];
+    tasksSection.appendChild(tasksTitle);
+
+    if (shortcutId === "__recycle-bin") {
+        const emptyBin = document.createElement("button");
+        emptyBin.type = "button";
+        emptyBin.textContent = "Empty Recycle Bin";
+        emptyBin.addEventListener("click", () => {
+            try {
+                fs.emptyRecycleBin();
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+        const restoreAll = document.createElement("button");
+        restoreAll.type = "button";
+        restoreAll.textContent = "Restore all items";
+        restoreAll.addEventListener("click", () => {
+            fs.getChildren(fs.RECYCLE_BIN).forEach((node) => {
+                try {
+                    fs.restore(node.id);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+        });
+
+        tasksSection.append(emptyBin, restoreAll);
+    } else {
+        ["View system information", "Add or remove programs", "Change a setting"]
+            .forEach((label) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.textContent = label;
+                tasksSection.appendChild(button);
+            });
+    }
+
+    const placesSection = document.createElement("section");
+    placesSection.innerHTML = `
+        <h3>Other Places</h3>
+        <button type="button">My Network Places</button>
+        <button type="button">My Documents</button>
+        <button type="button">Control Panel</button>
     `;
+
+    sidebar.append(tasksSection, placesSection);
 
     const main = document.createElement("main");
     main.className = "explorer-main";
 
     const heading = document.createElement("h2");
-    heading.textContent = descriptions[shortcutId];
     main.appendChild(heading);
 
     const items = document.createElement("div");
     items.className = "explorer-items";
-    if (shortcutId === "__my-computer") {
-        items.innerHTML = `
-            <div class="explorer-item"><span class="drive-icon"></span><span><b>Local Disk (C:)</b><small>Game files and Windows XP</small></span></div>
-            <div class="explorer-item"><span class="disc-icon"></span><span><b>CD Drive (D:)</b><small>Flash Collection</small></span></div>
-        `;
-    } else if (shortcutId === "__my-documents") {
-        items.innerHTML = `
-            <div class="explorer-item"><img src="assets/xp/icons/mydocuments.png" alt=""><span><b>My Pictures</b><small>Picture folder</small></span></div>
-            <div class="explorer-item"><img src="assets/xp/icons/mydocuments.png" alt=""><span><b>My Music</b><small>Music folder</small></span></div>
-        `;
-    } else {
-        const empty = document.createElement("p");
-        empty.className = "explorer-empty";
-        empty.textContent = "There are no items to show in this view.";
-        items.appendChild(empty);
-    }
     main.appendChild(items);
+
     content.append(sidebar, main);
+    renderExplorerItems(win, content);
     return content;
 };
+
+// ============================================
+// Virtual Filesystem integration
+// ============================================
+
+const fs = window.VirtualFS;
+
+const systemFolderShortcuts = {
+    "__my-documents": () => fs.MY_DOCUMENTS,
+    "__my-computer": () => fs.MY_COMPUTER,
+    "__recycle-bin": () => fs.RECYCLE_BIN
+};
+
+const explorerDescriptions = {
+    "__my-documents": "Files stored on this computer",
+    "__my-computer": "Files Stored on This Computer"
+};
+
+const createExplorerIcon = (node) => {
+    const icon = document.createElement("span");
+    icon.className = "explorer-item-icon";
+
+    if (node.id === fs.DRIVE_C) {
+        icon.classList.add("drive-icon");
+        return icon;
+    }
+    if (node.id === fs.DRIVE_D) {
+        icon.classList.add("disc-icon");
+        return icon;
+    }
+    if (node.type === "folder") {
+        const image = document.createElement("img");
+        image.src = "assets/xp/icons/mydocuments.png";
+        image.alt = "";
+        icon.appendChild(image);
+        return icon;
+    }
+
+    const game = node.app ? gamesList[node.app] : null;
+    if (game) {
+        if (game.icon) {
+            const image = document.createElement("img");
+            image.src = game.icon;
+            image.alt = "";
+            icon.appendChild(image);
+        } else {
+            icon.classList.add("explorer-item-emoji");
+            icon.textContent = getGameIcon(node.app);
+        }
+        return icon;
+    }
+
+    icon.classList.add("explorer-item-emoji");
+    icon.textContent = "📄";
+    return icon;
+};
+
+const explorerItemDescription = (node) => {
+    if (node.id === fs.DRIVE_C) return "Game files and Windows XP";
+    if (node.id === fs.DRIVE_D) return "Flash Collection";
+    if (node.type === "folder") return "File folder";
+    if (node.app && gamesList[node.app]) return "Game";
+    return `${(node.ext || "").replace(".", "").toUpperCase() || "File"} file`;
+};
+
+const openExplorerNode = (win, node) => {
+    if (node.type === "folder") {
+        win.currentFolderId = node.id;
+        renderExplorerItems(win);
+        return;
+    }
+    try {
+        fs.open(node.id);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+const renderExplorerItems = (win, contentRoot = win.el) => {
+    const main = contentRoot.querySelector(".explorer-main");
+    if (!main || !win.currentFolderId) return;
+    const folder = fs.getNode(win.currentFolderId);
+    if (!folder) return;
+
+    win.el.querySelector(".title-text").textContent =
+        folder.id === fs.MY_COMPUTER ? "My Computer" : folder.name;
+
+    const heading = main.querySelector("h2");
+    if (win.currentFolderId === fs.RECYCLE_BIN) {
+        const count = fs.getChildren(fs.RECYCLE_BIN).length;
+        heading.textContent = count
+            ? `${count} ${count === 1 ? "object" : "objects"}`
+            : "The Recycle Bin is empty.";
+    } else if (win.currentFolderId === systemFolderShortcuts[win.gameId]?.()) {
+        heading.textContent = explorerDescriptions[win.gameId] || folder.name;
+    } else {
+        heading.textContent = folder.name;
+    }
+
+    const items = main.querySelector(".explorer-items");
+    items.innerHTML = "";
+
+    const children = fs.getChildren(folder.id)
+        .slice()
+        .sort((a, b) => (
+            a.type === b.type
+                ? a.name.localeCompare(b.name)
+                : a.type === "folder" ? -1 : 1
+        ));
+
+    if (!children.length) {
+        const empty = document.createElement("p");
+        empty.className = "explorer-empty";
+        empty.textContent = win.currentFolderId === fs.RECYCLE_BIN
+            ? "The Recycle Bin is empty."
+            : "There are no items to show in this view.";
+        items.appendChild(empty);
+        return;
+    }
+
+    children.forEach((node) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "explorer-item";
+        item.title = node.name;
+
+        const label = document.createElement("span");
+        const name = document.createElement("b");
+        name.textContent = node.name;
+        const description = document.createElement("small");
+        description.textContent = explorerItemDescription(node);
+        label.append(name, description);
+
+        item.append(createExplorerIcon(node), label);
+        item.addEventListener("dblclick", () => openExplorerNode(win, node));
+        item.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                openExplorerNode(win, node);
+            }
+        });
+        items.appendChild(item);
+    });
+};
+
+// Games participate in the filesystem as ".game" files on the Desktop,
+// opened through the registered file association.
+const syncGameFiles = () => {
+    fs.getChildren(fs.DESKTOP)
+        .filter((node) => node.ext === ".game" && !gamesList[node.app])
+        .forEach((stale) => {
+            try {
+                fs.destroy(stale.id);
+            } catch (error) {
+                console.error(error);
+            }
+        });
+
+    Object.keys(gamesList).forEach((gameId) => {
+        const title = formatGameTitle(gameId);
+        const existing = fs
+            .getChildren(fs.DESKTOP)
+            .find((node) => node.ext === ".game" && node.app === gameId);
+        if (existing) {
+            if (existing.name !== `${title}.game`) {
+                try {
+                    fs.rename(existing.id, `${title}.game`);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            return;
+        }
+        try {
+            fs.createFile(fs.DESKTOP, `${title}.game`, { app: gameId });
+        } catch (error) {
+            console.error(error);
+        }
+    });
+};
+
+fs.registerFileType(".game", (file) => {
+    if (file.app && gamesList[file.app]) {
+        openGameWindow(file.app);
+    }
+});
+
+// Keep open explorer windows in sync with filesystem changes.
+fs.subscribe(() => {
+    openWindows.forEach((win) => {
+        if (win.type !== "system" || !win.currentFolderId) return;
+        if (!fs.getNode(win.currentFolderId)) {
+            win.currentFolderId = fs.MY_COMPUTER;
+        }
+        renderExplorerItems(win);
+    });
+});
 
 const wireSystemWindowControls = (win) => {
     win.el.addEventListener("pointerdown", () => focusWindow(win.gameId));
@@ -841,22 +1344,6 @@ const wireSystemWindowControls = (win) => {
     wireResize(win);
 };
 
-const ensureWindowCapacity = () => {
-    if (openWindows.size < MAX_OPEN_WINDOWS) return;
-
-    let oldestId = null;
-    let oldestTime = Infinity;
-    for (const [id, win] of openWindows.entries()) {
-        if (win.lastUsed < oldestTime) {
-            oldestTime = win.lastUsed;
-            oldestId = id;
-        }
-    }
-    if (oldestId) {
-        closeGameWindow(oldestId);
-    }
-};
-
 const openSystemWindow = (shortcutId) => {
     const existing = openWindows.get(shortcutId);
     if (existing) {
@@ -865,13 +1352,10 @@ const openSystemWindow = (shortcutId) => {
         return;
     }
 
-    ensureWindowCapacity();
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
     const el = createWindowElement(shortcutId);
     el.classList.add("explorer-window");
     el.querySelector(".window-toolbar").remove();
-    const content = el.querySelector(".window-content");
-    content.replaceWith(createSystemWindowContent(shortcutId));
     el.style.width = `${Math.min(590, desktopWidth - 16)}px`;
     el.style.height = `${Math.min(410, desktopHeight - 16)}px`;
     el.style.left = `${Math.max(8, (desktopWidth - Math.min(590, desktopWidth - 16)) / 2)}px`;
@@ -888,12 +1372,17 @@ const openSystemWindow = (shortcutId) => {
         prevRect: null,
         zIndex: 0,
         lastUsed: Date.now(),
+        currentFolderId: systemFolderShortcuts[shortcutId]
+            ? systemFolderShortcuts[shortcutId]()
+            : null,
         maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: null,
         volumeBtn: null,
         volumeSlider: null
     };
     openWindows.set(shortcutId, win);
+    const content = el.querySelector(".window-content");
+    content.replaceWith(createSystemWindowContent(shortcutId, win));
     wireSystemWindowControls(win);
     el.querySelectorAll("[data-display-action]").forEach((button) => {
         button.addEventListener("click", () => closeGameWindow(shortcutId));
@@ -919,7 +1408,6 @@ const openGameWindow = (gameId) => {
         return;
     }
 
-    ensureWindowCapacity();
     const game = gamesList[gameId];
     const aspectRatio = game.aspectRatio || DEFAULT_ASPECT_RATIO;
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
@@ -1797,6 +2285,7 @@ const login = (playSound = true) => {
 
     if (!loggedIn) {
         loggedIn = true;
+        syncGameFiles();
         buildDesktopIcons();
         buildPlaces();
         setupSearch();
@@ -1921,12 +2410,16 @@ window.fetch = async (...args) => {
 window.addEventListener("load", () => {
     setupScreenFlow();
     setupDesktopContextMenu();
+    setupWindowSystemMenu();
     document.getElementById("start-button").addEventListener("click", toggleStartMenu);
 });
 
 window.addEventListener("resize", () => {
     if (iconsBuilt) {
         layoutDesktopIcons();
+    }
+    if (loggedIn) {
+        keepWindowsInWorkArea();
     }
 });
 
@@ -1946,6 +2439,10 @@ window.addEventListener("hashchange", () => {
 document.addEventListener("pointerdown", (e) => {
     if (!e.target.closest("#desktop-context-menu")) {
         closeDesktopContextMenu();
+    }
+
+    if (!e.target.closest("#window-system-menu") && !e.target.closest(".title-icon")) {
+        closeWindowSystemMenu();
     }
 
     const startMenu = document.getElementById("start-menu");
@@ -1968,7 +2465,18 @@ document.addEventListener("keydown", (e) => {
         return;
     }
 
+    if (e.altKey && (e.key === " " || e.code === "Space") && focusedGameId) {
+        e.preventDefault();
+        const win = openWindows.get(focusedGameId);
+        if (win && !win.minimized) {
+            const rect = win.el.getBoundingClientRect();
+            openWindowSystemMenu(win, rect.left + 6, rect.top + 28);
+        }
+        return;
+    }
+
     if (e.key === "Escape") {
+        closeWindowSystemMenu();
         hideSystemDialogs();
         closeStartMenu();
     }
