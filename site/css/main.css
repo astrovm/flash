@@ -5,15 +5,52 @@
    ============================================ */
 
 @font-face {
-    font-family: "Trebuchet MS";
-    src: url("trebuchet.ttf") format("truetype");
-    font-weight: normal;
+    font-family: "Tahoma";
+    src: url("fonts/tahoma.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Tahoma";
+    src: url("fonts/tahomabd.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
 }
 
 @font-face {
     font-family: "Trebuchet MS";
-    src: url("trebuchet.ttf") format("truetype");
-    font-weight: bold;
+    src: url("fonts/trebuc.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Trebuchet MS";
+    src: url("fonts/trebucbd.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: "Lucida Console";
+    src: url("fonts/lucon.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Arial";
+    src: url("fonts/arial.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Arial";
+    src: url("fonts/arialbd.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 700;
 }
 
 :root {

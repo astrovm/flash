@@ -1,3 +1,4 @@
+import hashlib
 import re
 import unittest
 from html.parser import HTMLParser
@@ -11,6 +12,7 @@ OFFLINE_JS = PROJECT_DIR / "site" / "js" / "offline.js"
 MAIN_CSS = PROJECT_DIR / "site" / "css" / "main.css"
 WORKBOX_CONFIG = PROJECT_DIR / "workbox-config.js"
 XP_ICONS_DIR = PROJECT_DIR / "site" / "assets" / "xp" / "icons"
+XP_FONTS_DIR = PROJECT_DIR / "site" / "css" / "fonts"
 
 
 def _compact_source(source):
@@ -83,6 +85,39 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn('src="assets/xp/loading-logo.jpg"', self.html)
         self.assertIn('src="assets/xp/loading-microsoft.jpg"', self.html)
         self.assertIn(".boot-footer", self.css)
+
+    def test_xp_fonts_have_real_regular_and_bold_faces(self):
+        font_faces = {
+            "Tahoma": {
+                "tahoma.ttf": "08f45bf539954d3252df97a2ae563362ed2ad5ebe05f2d1f2bc54b931e4d0550",
+                "tahomabd.ttf": "4ba89e145ff39f208151ce269841899fc4e4a360189a4a31dc2359168dae27d0",
+            },
+            "Trebuchet MS": {
+                "trebuc.ttf": "9cf5777ebf93e9193d25ec0697976bb2dcad1637b73e9e36cfbf18d26ef262a9",
+                "trebucbd.ttf": "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e",
+            },
+            "Arial": {
+                "arial.ttf": "413c78f91bd39e134f3c0bb204b1d5a90f29df9efddc8fd26950a178058d5d74",
+                "arialbd.ttf": "df70597f0bdf49da3af270138f8a34396e4f5618c671a1db3480e626f38aaece",
+            },
+            "Lucida Console": {
+                "lucon.ttf": "6ddf64ee896d24cf9908f115ae220a7cfa18dc034bc4a68e4db68dcd57c71512",
+            },
+        }
+
+        for family, fonts in font_faces.items():
+            self.assertIn(f'font-family: "{family}"', self.css)
+            for filename, expected_hash in fonts.items():
+                font_path = XP_FONTS_DIR / filename
+                self.assertTrue(font_path.is_file())
+                self.assertIn(f'url("fonts/{filename}")', self.css)
+                self.assertEqual(
+                    hashlib.sha256(font_path.read_bytes()).hexdigest(),
+                    expected_hash,
+                )
+
+        self.assertIn("**/*.{ttf,woff,woff2", self.workbox_config)
+        self.assertNotIn('url("trebuchet.ttf")', self.css)
 
     def test_game_windows_use_xp_menus_for_their_controls(self):
         self.assertJavascriptContains(
