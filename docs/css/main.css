@@ -127,8 +127,7 @@ iframe {
 }
 
 #boot-screen:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: -4px;
+    outline: none;
 }
 
 .boot-center {
@@ -1087,14 +1086,19 @@ html[data-xp-appearance="silver"] {
 
 .explorer-sidebar h3 .explorer-section-toggle {
     display: flex;
+    width: 100%;
     align-items: center;
     justify-content: space-between;
     padding: 5px 5px 5px 8px;
+    border: 0;
+    background: transparent;
     color: #fff;
+    font: inherit;
     font-weight: 700;
+    text-align: left;
 }
 
-.explorer-sidebar h3 .explorer-section-toggle span {
+.explorer-sidebar h3 .explorer-section-toggle span[aria-hidden="true"] {
     display: inline-grid;
     width: 15px;
     height: 15px;
