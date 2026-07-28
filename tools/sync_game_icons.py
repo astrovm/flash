@@ -18,10 +18,10 @@ from PIL import Image
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-ICONS_DIR = PROJECT_DIR / "docs" / "assets" / "icons"
-GAMES_PATH = PROJECT_DIR / "docs" / "js" / "games.js"
+ICONS_DIR = PROJECT_DIR / "site" / "assets" / "icons"
+GAMES_PATH = PROJECT_DIR / "site" / "js" / "games.js"
 SOURCES_PATH = ICONS_DIR / "SOURCES.json"
-FIREWALL_PATH = PROJECT_DIR / "docs" / "iframe" / "inside-the-firewall" / "index.html"
+FIREWALL_PATH = PROJECT_DIR / "site" / "iframe" / "inside-the-firewall" / "index.html"
 FLASHPOINT_IMAGE_ROOT = "https://infinity.unstable.life/images/Logos"
 
 FLASHPOINT_UUIDS = {

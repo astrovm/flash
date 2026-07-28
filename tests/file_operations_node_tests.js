@@ -9,8 +9,8 @@ global.localStorage = {
     removeItem: (key) => memoryStorage.delete(key)
 };
 
-const fsPath = require.resolve("../docs/js/filesystem.js");
-const operationsPath = require.resolve("../docs/js/file-operations.js");
+const fsPath = require.resolve("../site/js/filesystem.js");
+const operationsPath = require.resolve("../site/js/file-operations.js");
 delete require.cache[fsPath];
 delete require.cache[operationsPath];
 const fs = require(fsPath);

@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ueberSetzung>
+	<sprache cid="ru" >
+		<titleLang>5</titleLang>
+		<logIn>ВОЙТИ</logIn>
+		<userName>Пользователь</userName>
+		<passWort>Пароль</passWort>
+		<notReg>Еще не зарегистрирован?</notReg>
+		<loadIng>Загрузка</loadIng>
+		<startGame>НАЧАТЬ ИГРУ</startGame>
+		<howTo>КАК ИГРАТЬ В </howTo>
+		<continue>Продолжить</continue>
+		<ueberSchrift>РАЗРУШАЮЩИЙ*ШАР</ueberSchrift>
+		<beAbs0>Помоги Гомеру спасти семью от карантина, используя первую попавшуюся под руку вещь разрушающий шар</beAbs0>
+		<beAbs1>Используй клавиши-стрелки, чтобы изменить вес крана и двигаться взад-вперед</beAbs1>
+		<beAbs2>Суть игры состоит в том, чтобы отправить бронированную машину, и быть уверенным, что твоя семья спасется</beAbs2>
+		<beAbs3>Чем дальше ты бросишь машину, тем больше у тебя будет очков. На каждом уровне расстояние до машины увеличивается</beAbs3>
+		<beAbs4>Удачи!</beAbs4>
+		<level>Уровень</level>
+		<gameOver>Игра окончена!</gameOver>	
+		<highScore>Рекорды</highScore>
+		<playAgain>Играть снова</playAgain>
+	</sprache>
+	<sprache cid="fr" >
+		<titleLang>3</titleLang>
+		<logIn>Identifiant</logIn>
+		<userName>Nom d’utilisateur</userName>
+		<passWort>Mot de passe</passWort>
+		<notReg>Pas encore enregistré?</notReg>
+		<loadIng>Chargement</loadIng>
+		<startGame>COMMENCER LE JEU</startGame>
+		<howTo>COMMENT</howTo>
+		<continue>Continuer</continue>
+		<ueberSchrift>LE BOULET * DE DEMOLITION</ueberSchrift>
+		<beAbs0>Aide Homer à sauver sa famille de la police en utilisant la première chose à la main – le boulet de démolition</beAbs0>
+		<beAbs1>Utilise les touche de contrôles sur ton clavier pour ajuster la hauteur de la grue et la diriger en avant et en arrière.</beAbs1>
+		<beAbs2>Le but de ce jeu est de détruire la voiture blindée et faire en sorte que la famille aille bien!</beAbs2>
+		<beAbs3>Plus tu envoies loin la voiture, plus tu fais grimper ton store. A chaque niveau, les distances s’agrandissent!</beAbs3>
+		<beAbs4>Bonne Chance!</beAbs4>
+		<level>Niveau</level>
+		<gameOver>PERDU!</gameOver>	
+		<highScore>Meilleurs scores</highScore>
+		<playAgain>Jouer encore</playAgain>
+	</sprache>	
+	<sprache cid="de" >
+		<titleLang>2</titleLang>
+		<logIn>Login</logIn>
+		<userName>Benutzername</userName>
+		<passWort>Passwort</passWort>
+		<notReg>Noch nicht registriert?</notReg>
+		<loadIng>Seite wird geladen</loadIng>
+		<startGame>SPIEL STARTEN</startGame>
+		<howTo>SPIELANLEITUNG</howTo>
+		<continue>WEITER</continue>
+		<ueberSchrift>WRECKING * BALL</ueberSchrift>
+		<beAbs0>Hilf Homer, seine Familie aus den Händen der Polizei zu befreien. Nimm dazu, was gerade so rumliegt – eine Abrissbirne.</beAbs0>
+		<beAbs1>Benutze die Pfeiltasten, um die Höhe des Krans zu regulieren und ihn vor- und zurückzubewegen.</beAbs1>
+		<beAbs2>Das Ziel des Spiels ist, den Panzerwagen in die Luft zu schleudern um sicherzustellen, dass die Familie entkommt.</beAbs2>
+		<beAbs3>Je weiter das Fahrzeug fliegt, desto mehr Punkte erhältst du. Mit jedem Level erhöht sich die Entfernung zum Panzerwagen.</beAbs3>
+		<beAbs4>Viel Glück!</beAbs4>
+		<level>Level</level>
+		<gameOver>Game Over!</gameOver>	
+		<highScore>Highscore</highScore>
+		<playAgain>Noch mal spielen</playAgain>
+	</sprache>
+	<sprache cid="us" >
+		<titleLang>1</titleLang>
+		<logIn>Login</logIn>
+		<userName>User name</userName>
+		<passWort>Password</passWort>
+		<notReg>Not registered yet?</notReg>
+		<loadIng>Loading</loadIng>
+		<startGame>START GAME</startGame>
+		<howTo>HOW TO PLAY</howTo>
+		<continue>Continue</continue>
+		<ueberSchrift>WRECKING * BALL</ueberSchrift>
+		<beAbs0>Help Homer save his family from police quarantine by using the first thing at hand – a wrecking ball.</beAbs0>
+		<beAbs1>Use control keys to adjust the height of the crane and drive it back and forth.</beAbs1>
+		<beAbs2>The aim of the game is to send the armored car soaring and make sure the family gets out.</beAbs2>
+		<beAbs3>The further you throw the car, the higher your score.  In each level, the distance to the armored car is increased.</beAbs3>
+		<beAbs4>Good Luck!</beAbs4>
+		<level>Level</level>
+		<gameOver>Game Over!</gameOver>	
+		<highScore>High Scores</highScore>
+		<playAgain>Play Again</playAgain>
+	</sprache>
+	<sprache cid="en" >
+		<titleLang>1</titleLang>
+		<logIn>Login</logIn>
+		<userName>User name</userName>
+		<passWort>Password</passWort>
+		<notReg>Not registered yet?</notReg>
+		<loadIng>Loading</loadIng>
+		<startGame>START GAME</startGame>
+		<howTo>HOW TO PLAY</howTo>
+		<continue>Continue</continue>
+		<ueberSchrift>WRECKING * BALL</ueberSchrift>
+		<beAbs0>Help Homer save his family from police quarantine by using the first thing at hand – a wrecking ball.</beAbs0>
+		<beAbs1>Use control keys to adjust the height of the crane and drive it back and forth.</beAbs1>
+		<beAbs2>The aim of the game is to send the armored car soaring and make sure the family gets out.</beAbs2>
+		<beAbs3>The further you throw the car, the higher your score.  In each level, the distance to the armored car is increased.</beAbs3>
+		<beAbs4>Good Luck!</beAbs4>
+		<level>Level</level>
+		<gameOver>Game Over!</gameOver>	
+		<highScore>High Scores</highScore>
+		<playAgain>Play Again</playAgain>
+	</sprache>
+	<sprache cid="br" >
+		<titleLang>6</titleLang>
+		<logIn>Login</logIn>
+		<userName>Nome do usuário</userName>
+		<passWort>Senha</passWort>
+		<notReg>Ainda não se registrou?</notReg>
+		<loadIng>Carregando</loadIng>
+		<startGame>INICIAR O JOGO</startGame>
+		<howTo>COMO JOGAR</howTo>
+		<continue>Continuar</continue>
+		<ueberSchrift>BOLA * DEMOLIDORA</ueberSchrift>
+		<beAbs0>Ajude Homer salvar sua família do cerco policial utilizando a primeira coisa à mão - uma bola demolidora.</beAbs0>
+		<beAbs1>Utilize as teclas de controle para ajustar a altura do trator e o dirija para frente e para trás.</beAbs1>
+		<beAbs2>O objetivo do jogo é atirar o carro-forte para longe e garantir que a família consiga sair.</beAbs2>
+		<beAbs3>Quanto mais longe você atirar o carro, maiores serão seus pontos. A cada nível, a distância do carro-forte aumenta.</beAbs3>
+		<beAbs4>Boa sorte!</beAbs4>
+		<level>Nível</level>
+		<gameOver>Fim do Jogo!</gameOver>	
+		<highScore>Maiores Pontuações</highScore>
+		<playAgain>Jogar Mais Uma Vez</playAgain>
+	</sprache>
+	<sprache cid="it" >
+		<titleLang>8</titleLang>
+		<logIn>Login</logIn>
+		<userName>Nome utente</userName>
+		<passWort>Password</passWort>
+		<notReg>Non ancora registrato?</notReg>
+		<loadIng>Caricamento</loadIng>
+		<startGame>INIZIA GIOCO</startGame>
+		<howTo>COME GIOCARE</howTo>
+		<continue>Continua</continue>
+		<ueberSchrift>PALLA * DEMOLITRICE</ueberSchrift>
+		<beAbs0>Aiuta Homer a salvare la sua famiglia dalla quarantena della polizia usando la prima cosa a portata di mano – una palla demolitrice.</beAbs0>
+		<beAbs1>Usa i pulsante controllo per regolare l’altezza della gru e guidala e davanti.</beAbs1>
+		<beAbs2>Lo spirito del gioco è quello di rovesciare il furgone corazzato  e far scappare la famiglia.</beAbs2>
+		<beAbs3>PIù in là lanci il furgone, più alti sono i punti che prensi. In ogni livello, la distanza dal furgone blindato aumenta.</beAbs3>
+		<beAbs4>Buona Fortuna!</beAbs4>
+		<level>Livello</level>
+		<gameOver>Game Over!</gameOver>	
+		<highScore>Punteggi alti</highScore>
+		<playAgain>Gioca ancora</playAgain>
+	</sprache>
+	<sprache cid="es" >
+		<titleLang>10</titleLang>
+		<logIn>Acceso</logIn>
+		<userName>Nombre de usuario</userName>
+		<passWort>Contraseña</passWort>
+		<notReg>¿No te has registrado aún?</notReg>
+		<loadIng>Cargando</loadIng>
+		<startGame>INICIAR JUEGO</startGame>
+		<howTo>CÓMO SE JUEGA</howTo>
+		<continue>Continua</continue>
+		<ueberSchrift>BOLA DE * DEMOLICIÓN </ueberSchrift>
+		<beAbs0>Ayuda a Homer a salvar a su familia de la cuarentena policial con lo primero que haya a mano – una bola de demolición.</beAbs0>
+		<beAbs1>Utiliza las teclas de control para ajustar la altura de la grúa y muévela hacia delante y hacia a atrás.</beAbs1>
+		<beAbs2>El objetivo del juego es echar al coche blindado volando y asegurarse de que la  familia puede salir.</beAbs2>
+		<beAbs3>Mientras más lejos arrojes el coche, mayor puntuación conseguirás. Con cada nivel aumenta la distancia al coche blindado.</beAbs3>
+		<beAbs4>¡Buena suerte!</beAbs4>
+		<level>Nivel</level>
+		<gameOver>¡Final de juego!</gameOver>	
+		<highScore>Puntuaciones altas</highScore>
+		<playAgain>Jugar otra vez</playAgain>
+	</sprache>
+	<sprache cid="ko" >
+		<titleLang>7</titleLang>
+		<logIn>로그인</logIn>
+		<userName>사용자 ID</userName>
+		<passWort>Contraseña</passWort>
+		<notReg>비밀번호</notReg>
+		<loadIng>등록하기로딩</loadIng>
+		<startGame>게임 시작하기</startGame>
+		<howTo>게임 방법</howTo>
+		<continue>계속하기</continue>
+		<ueberSchrift>펀칭 * 크레인 </ueberSchrift>
+		<beAbs0>호머가 그의 가족을 경찰의 수배로부터 보호할 수 있도록 펀칭 크레인을 이용해 도와주세요.</beAbs0>
+		<beAbs1>방향키를 이용해 크레인의 높이를 조절하고, 앞뒤로 조정하세요.</beAbs1>
+		<beAbs2>게임의 목표는 장갑차를 날려, 가족들의 탈출을 돕는 것입니다.</beAbs2>
+		<beAbs3>차를 멀리 던질수록, 고득점을 합니다. 각 레벨별 장갑차의 거리를 더 늘어납니다.</beAbs3>
+		<beAbs4>행운을 빕니다!</beAbs4>
+		<level>레벨</level>
+		<gameOver>게임 종료!</gameOver>	
+		<highScore>고득점</highScore>
+		<playAgain>다시하기</playAgain>
+	</sprache>
+	<sprache cid="jp" >
+		<titleLang>9</titleLang>
+		<logIn>ログイン</logIn>
+		<userName>ユーザーネーム</userName>
+		<passWort>パスワード</passWort>
+		<notReg>まだ登録していない？</notReg>
+		<loadIng>ロード中</loadIng>
+		<startGame>ゲームスタート</startGame>
+		<howTo>−遊び方</howTo>
+		<continue>コンティニュー</continue>
+		<ueberSchrift>レッキング・* ボール</ueberSchrift>
+		<beAbs0>ホーマーが目の前にある鉄球を使って警察に隔離された家族を救うのを手伝ってあげて。</beAbs0>
+		<beAbs1>クレーンの高さ調節と前後の移動には、コントロールキーを使おう。</beAbs1>
+		<beAbs2>このゲームの目的は、装甲車を吹っ飛ばして、家族を外に出すこと。</beAbs2>
+		<beAbs3>車を遠くに飛ばせば飛ばすほど、スコアはアップ。レベルごとに装甲車までの距離が伸びるぞ</beAbs3>
+		<beAbs4>グッドラック！</beAbs4>
+		<level>レベル</level>
+		<gameOver>ゲームオーバー！</gameOver>	
+		<highScore>ハイスコア</highScore>
+		<playAgain>もう一度プレイ</playAgain>
+	</sprache>
+	
+</ueberSetzung>
+
+
+
+// 4=Taiwan
+

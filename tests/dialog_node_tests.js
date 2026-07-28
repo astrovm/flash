@@ -1,11 +1,11 @@
 "use strict";
 
-// Node test suite for docs/js/dialogs.js pure definitions, driven by
+// Node test suite for site/js/dialogs.js pure definitions, driven by
 // tests/test_dialogs.py. Exits non-zero on the first failed assertion.
 
 const assert = require("assert");
 
-const dialogs = require("../docs/js/dialogs.js");
+const dialogs = require("../site/js/dialogs.js");
 
 // ---- DOM-free exports only under Node ----
 assert.strictEqual(typeof dialogs.message, "undefined", "DOM APIs hidden under Node");

@@ -5,10 +5,10 @@ from pathlib import Path
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-INDEX_HTML = PROJECT_DIR / "docs" / "index.html"
-MAIN_JS = PROJECT_DIR / "docs" / "js" / "main.js"
-MAIN_CSS = PROJECT_DIR / "docs" / "css" / "main.css"
-XP_ICONS_DIR = PROJECT_DIR / "docs" / "assets" / "xp" / "icons"
+INDEX_HTML = PROJECT_DIR / "site" / "index.html"
+MAIN_JS = PROJECT_DIR / "site" / "js" / "main.js"
+MAIN_CSS = PROJECT_DIR / "site" / "css" / "main.css"
+XP_ICONS_DIR = PROJECT_DIR / "site" / "assets" / "xp" / "icons"
 
 
 def _compact_source(source):
