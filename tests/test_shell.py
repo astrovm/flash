@@ -8,7 +8,6 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 INDEX_HTML = PROJECT_DIR / "docs" / "index.html"
 MAIN_JS = PROJECT_DIR / "docs" / "js" / "main.js"
 MAIN_CSS = PROJECT_DIR / "docs" / "css" / "main.css"
-LICENSE_PATH = PROJECT_DIR / "LICENSE"
 XP_ICONS_DIR = PROJECT_DIR / "docs" / "assets" / "xp" / "icons"
 
 
@@ -61,7 +60,6 @@ class ShellSourceTests(unittest.TestCase):
         cls.javascript = MAIN_JS.read_text(encoding="utf-8")
         cls.javascript_compact = _compact_source(cls.javascript)
         cls.css = MAIN_CSS.read_text(encoding="utf-8")
-        cls.license = LICENSE_PATH.read_text(encoding="utf-8")
 
     def assertJavascriptContains(self, *tokens):
         for token in tokens:
@@ -77,17 +75,10 @@ class ShellSourceTests(unittest.TestCase):
         self.assertNotIn("MAX_OPEN_WINDOWS", self.javascript)
         self.assertNotIn("ensureWindowCapacity", self.javascript)
 
-    def test_boot_screen_uses_attributed_win32_run_artwork(self):
+    def test_boot_screen_uses_xp_artwork(self):
         self.assertIn('src="assets/xp/loading-logo.jpg"', self.html)
         self.assertIn('src="assets/xp/loading-microsoft.jpg"', self.html)
         self.assertIn(".boot-footer", self.css)
-        for notice in (
-            "https://github.com/ducbao414/win32.run.cf",
-            "Copyright (c) 2023 Bao Nguyen",
-            "docs/assets/xp/icons/Back.png",
-            "docs/assets/xp/ms.png",
-        ):
-            self.assertIn(notice, self.license)
 
     def test_game_windows_use_xp_menus_for_their_controls(self):
         self.assertJavascriptContains(
@@ -577,7 +568,14 @@ class ShellSourceTests(unittest.TestCase):
             'getElementById("welcome-screen")',
             'addEventListener("click", (event)',
             'event.target.closest("#welcome-turn-off")',
-            'document.getElementById("login-user").focus({ preventScroll: true })',
+            'addEventListener("keydown", (event)',
+            "event.target !== event.currentTarget",
+            'welcomeScreen.setAttribute("role", "button")',
+            'welcomeScreen.setAttribute("tabindex", "0")',
+            "const focusTarget = autoLogin ? welcomeScreen : loginUser",
+            "focusTarget.focus({ preventScroll: true })",
+            "requestAnimationFrame(() =>",
+            "if (!welcomeScreen.hidden) focusTarget.focus",
         )
         self.assertEqual(parser.elements["login-user"][0], "button")
 

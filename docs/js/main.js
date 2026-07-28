@@ -9,7 +9,7 @@ const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
 const MOVE_SIZE_STEP = 8;
 const BOOT_DURATION_MS = 2600;
 const WELCOME_DURATION_MS = 1200;
-const APP_VERSION = "26.07.28-2";
+const APP_VERSION = "26.07.28-4";
 
 let bootTimeout = null;
 let shutdownTimeout = null;
@@ -5975,11 +5975,25 @@ const showWelcomeScreen = (autoLogin = false) => {
   hideSystemDialogs();
   clearTimeout(bootTimeout);
   muteAllWindows();
-  document
-    .getElementById("welcome-screen")
-    .classList.toggle("auto-login", autoLogin);
+  const welcomeScreen = document.getElementById("welcome-screen");
+  const loginUser = document.getElementById("login-user");
+  welcomeScreen.classList.toggle("auto-login", autoLogin);
+  if (autoLogin) {
+    welcomeScreen.setAttribute("role", "button");
+    welcomeScreen.setAttribute("tabindex", "0");
+    welcomeScreen.setAttribute("aria-label", "Continue to the desktop");
+  } else {
+    welcomeScreen.removeAttribute("role");
+    welcomeScreen.removeAttribute("tabindex");
+    welcomeScreen.removeAttribute("aria-label");
+  }
   setScreen("welcome-screen");
-  document.getElementById("login-user").focus({ preventScroll: true });
+  const focusTarget = autoLogin ? welcomeScreen : loginUser;
+  focusTarget.focus({ preventScroll: true });
+  // Keyboard activation can finish after this handler moves focus.
+  requestAnimationFrame(() => {
+    if (!welcomeScreen.hidden) focusTarget.focus({ preventScroll: true });
+  });
   if (startupSoundPending) {
     startupSoundPending = false;
     playXPSound("startup");
@@ -6100,6 +6114,18 @@ const setupScreenFlow = () => {
     .getElementById("welcome-screen")
     .addEventListener("click", (event) => {
       if (event.target.closest("#welcome-turn-off")) return;
+      login();
+    });
+  document
+    .getElementById("welcome-screen")
+    .addEventListener("keydown", (event) => {
+      if (
+        event.target !== event.currentTarget ||
+        !["Enter", " "].includes(event.key)
+      ) {
+        return;
+      }
+      event.preventDefault();
       login();
     });
   document
