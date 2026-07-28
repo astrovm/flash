@@ -772,10 +772,7 @@ iframe {
 }
 
 .game-menu[data-game-menu="file"] { left: 3px; }
-.game-menu[data-game-menu="view"] { left: 38px; }
-.game-menu[data-game-menu="favorites"] { left: 78px; }
-.game-menu[data-game-menu="sound"] { left: 140px; }
-.game-menu[data-game-menu="help"] { left: 190px; }
+.game-menu[data-game-menu="help"] { left: 38px; }
 
 .game-menu-item {
     display: flex;
@@ -837,7 +834,8 @@ iframe {
     padding: 3px 8px 3px 22px;
 }
 
-.game-volume-slider {
+.game-volume-slider,
+.volume-slider {
     width: 90px;
     height: 6px;
     appearance: none;
@@ -849,7 +847,8 @@ iframe {
     cursor: var(--xp-cursor);
 }
 
-.game-volume-slider::-webkit-slider-thumb {
+.game-volume-slider::-webkit-slider-thumb,
+.volume-slider::-webkit-slider-thumb {
     appearance: none;
     -webkit-appearance: none;
     width: 11px;
@@ -859,12 +858,62 @@ iframe {
     border: 1px solid #0f46a8;
 }
 
-.game-volume-slider::-moz-range-thumb {
+.game-volume-slider::-moz-range-thumb,
+.volume-slider::-moz-range-thumb {
     width: 11px;
     height: 16px;
     border-radius: 2px;
     background: linear-gradient(180deg, #5ea0f5, #1e5fe0);
     border: 1px solid #0f46a8;
+}
+
+/* ---- One-click game controls ---- */
+
+.window-toolbar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    height: 21px;
+    margin-left: 3px;
+}
+
+.toolbar-btn {
+    height: 21px;
+    padding: 0 5px;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+    cursor: var(--xp-cursor);
+}
+
+.toolbar-btn:hover,
+.toolbar-btn:focus-visible {
+    border-color: #0b4aa3;
+    background: #316ac5;
+    color: #fff;
+    outline: 0;
+}
+
+.favorite-btn.active,
+.volume-btn.active {
+    border-color: #7f9db9;
+    background: #d8e7f8;
+}
+
+.toolbar-separator {
+    width: 1px;
+    height: 18px;
+    margin: 0 3px;
+    background: #b5b0a0;
+}
+
+.volume-slider {
+    width: clamp(48px, 12vw, 80px);
+    margin-left: 4px;
 }
 
 /* ---- Window content ---- */

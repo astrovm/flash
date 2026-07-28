@@ -71,29 +71,13 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn('menuBar.className = "game-menu-bar"', self.javascript)
         self.assertIn('menuBar.setAttribute("role", "menubar")', self.javascript)
         self.assertIn('makeMenuButton("&File")', self.javascript)
-        self.assertIn('makeMenuButton("&View")', self.javascript)
-        self.assertIn('makeMenuButton("F&avorites")', self.javascript)
-        self.assertIn('makeMenuButton("&Sound")', self.javascript)
-        self.assertIn('makeMenuItem("&Full Screen", "fullscreen"', self.javascript)
-        self.assertIn('makeMenuItem("&Add to Favorites", "favorite"', self.javascript)
-        self.assertIn('makeMenuItem("&Mute", "mute"', self.javascript)
-        self.assertIn('volumeSlider.className = "game-volume-slider"', self.javascript)
-        self.assertIn(
-            "favoriteBtn: el.querySelector('[data-game-action=\"favorite\"]')",
-            self.javascript,
-        )
-        self.assertIn(
-            "volumeBtn: el.querySelector('[data-game-action=\"mute\"]')",
-            self.javascript,
-        )
-        self.assertIn(
-            'volumeSlider: el.querySelector(".game-volume-slider")',
-            self.javascript,
-        )
-        self.assertNotIn('window-toolbar', self.javascript)
-        self.assertNotIn('el.querySelector(".favorite-btn")', self.javascript)
-        self.assertNotIn('el.querySelector(".volume-btn")', self.javascript)
-        self.assertNotIn('el.querySelector(".volume-slider")', self.javascript)
+        self.assertIn('makeMenuButton("&Help")', self.javascript)
+        self.assertNotIn('makeMenuButton("&View")', self.javascript)
+        self.assertNotIn('makeMenuButton("F&avorites")', self.javascript)
+        self.assertNotIn('makeMenuButton("&Sound")', self.javascript)
+        self.assertIn('el.querySelector(".favorite-btn")', self.javascript)
+        self.assertIn('el.querySelector(".volume-btn")', self.javascript)
+        self.assertIn('el.querySelector(".volume-slider")', self.javascript)
         self.assertNotIn("Aavorites", self.javascript)
 
     def test_game_menu_supports_access_keys_and_keyboard_navigation(self):
@@ -202,8 +186,8 @@ class ShellSourceTests(unittest.TestCase):
             self.javascript.index("const buildPlaces = () =>"):
             self.javascript.index("const buildPinnedPrograms = () =>")
         ]
-        self.assertNotIn("Offline Mode", places)
-        self.assertNotIn("offline-mode", places)
+        self.assertIn("Astro Flash Settings", places)
+        self.assertIn("openProjectSettings", places)
         self.assertNotIn("Send suggestions", places)
         self.assertNotIn("games installed", places)
         self.assertNotIn("separatorTwo", places)
@@ -217,6 +201,17 @@ class ShellSourceTests(unittest.TestCase):
             self.javascript,
         )
         self.assertIn('case "project": openProjectSettings();', self.javascript)
+
+    def test_game_controls_are_available_without_opening_menus(self):
+        self.assertIn('toolbar.className = "window-toolbar"', self.javascript)
+        self.assertIn('fullscreenBtn.textContent = "Full Screen"', self.javascript)
+        self.assertIn('toolbarFavoriteBtn.textContent = "Favorite"', self.javascript)
+        self.assertIn('toolbarVolumeBtn.textContent = "Sound"', self.javascript)
+        self.assertIn('toolbarVolumeSlider.className = "volume-slider"', self.javascript)
+        self.assertIn(
+            "menuBar.append(fileButton, helpButton, toolbar)",
+            self.javascript,
+        )
 
     def test_start_menu_footer_has_only_xp_power_actions(self):
         footer = re.search(

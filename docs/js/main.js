@@ -2,7 +2,7 @@
 
 // Constants
 const DEFAULT_ASPECT_RATIO = 4 / 3;
-const WINDOW_CHROME_HEIGHT = 53; // title bar + menu bar
+const WINDOW_CHROME_HEIGHT = 53; // title bar + command bar
 const MIN_WINDOW_WIDTH = 340;
 const MIN_WINDOW_HEIGHT = 240;
 const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
@@ -303,11 +303,18 @@ const syncWindowVolumeUI = (win) => {
     const { volume, isMuted } = getGameVolume(win.gameId);
     const numericVolume = Number.isFinite(volume) ? volume : 100;
     const muted = isMuted || numericVolume === 0;
-    win.volumeBtn.classList.toggle("checked", muted);
-    win.volumeBtn.setAttribute("aria-checked", String(muted));
-    const label = win.volumeBtn.querySelector(".menu-item-label");
+    [win.volumeBtn, win.volumeMenuItem].filter(Boolean).forEach((button) => {
+        button.classList.toggle("checked", muted);
+        button.classList.toggle("active", muted);
+        button.setAttribute("aria-pressed", String(muted));
+        button.setAttribute("aria-checked", String(muted));
+    });
+    win.volumeBtn.title = muted ? "Unmute" : "Mute";
+    const label = win.volumeMenuItem?.querySelector(".menu-item-label");
     if (label) setAccessKeyText(label, muted ? "&Unmute" : "&Mute");
-    win.volumeSlider.value = isMuted ? 0 : numericVolume;
+    [win.volumeSlider, win.volumeMenuSlider].filter(Boolean).forEach((slider) => {
+        slider.value = isMuted ? 0 : numericVolume;
+    });
 };
 
 const setWindowVolume = (win, value) => {
@@ -346,9 +353,16 @@ const toggleWindowMute = (win) => {
 const updateFavoriteUI = (win) => {
     if (!win.favoriteBtn) return;
     const isFavorite = getFavorites().includes(win.gameId);
-    win.favoriteBtn.classList.toggle('checked', isFavorite);
-    win.favoriteBtn.setAttribute('aria-checked', String(isFavorite));
-    const label = win.favoriteBtn.querySelector('.menu-item-label');
+    [win.favoriteBtn, win.favoriteMenuItem].filter(Boolean).forEach((button) => {
+        button.classList.toggle("active", isFavorite);
+        button.classList.toggle("checked", isFavorite);
+        button.setAttribute("aria-pressed", String(isFavorite));
+        button.setAttribute("aria-checked", String(isFavorite));
+    });
+    win.favoriteBtn.title = isFavorite
+        ? "Remove from Favorites"
+        : "Add to Favorites";
+    const label = win.favoriteMenuItem?.querySelector(".menu-item-label");
     if (label) {
         setAccessKeyText(
             label,
@@ -500,11 +514,7 @@ const createWindowElement = (gameId) => {
     };
 
     const fileButton = makeMenuButton("&File");
-    const viewButton = makeMenuButton("&View");
-    const favoritesButton = makeMenuButton("F&avorites");
-    const soundButton = makeMenuButton("&Sound");
     const helpButton = makeMenuButton("&Help");
-    menuBar.append(fileButton, viewButton, favoritesButton, soundButton, helpButton);
 
     const fileMenu = makeMenu("file");
     fileMenu.append(
@@ -513,35 +523,63 @@ const createWindowElement = (gameId) => {
         makeMenuItem("&Properties", "properties", { disabled: true })
     );
 
-    const viewMenu = makeMenu("view");
-    viewMenu.append(makeMenuItem("&Full Screen", "fullscreen", { shortcut: "F11" }));
-
-    const favoritesMenu = makeMenu("favorites");
-    const favoriteBtn = makeMenuItem("&Add to Favorites", "favorite", { checkbox: true });
-    favoritesMenu.append(favoriteBtn);
-
-    const soundMenu = makeMenu("sound");
-    const volumeBtn = makeMenuItem("&Mute", "mute", { checkbox: true });
-    const volumeRow = document.createElement("label");
-    volumeRow.className = "game-volume-row";
-    volumeRow.textContent = "Volume";
-    const volumeSlider = document.createElement("input");
-    volumeSlider.type = "range";
-    volumeSlider.className = "game-volume-slider";
-    volumeSlider.min = "0";
-    volumeSlider.max = "100";
-    volumeSlider.value = "100";
-    volumeSlider.setAttribute("aria-label", "Game volume");
-    volumeRow.append(volumeSlider);
-    soundMenu.append(volumeBtn, Object.assign(document.createElement("div"), { className: "game-menu-separator" }), volumeRow);
-
     const helpMenu = makeMenu("help");
     helpMenu.append(makeMenuItem("&About Astro Flash", "project"));
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "window-toolbar";
+
+    const fullscreenBtn = document.createElement("button");
+    fullscreenBtn.type = "button";
+    fullscreenBtn.className = "toolbar-btn fullscreen-btn";
+    fullscreenBtn.title = "Full Screen (F11)";
+    fullscreenBtn.textContent = "Full Screen";
+
+    const toolbarFavoriteBtn = document.createElement("button");
+    toolbarFavoriteBtn.type = "button";
+    toolbarFavoriteBtn.className = "toolbar-btn favorite-btn";
+    toolbarFavoriteBtn.title = "Add to Favorites";
+    toolbarFavoriteBtn.textContent = "Favorite";
+    toolbarFavoriteBtn.setAttribute("aria-pressed", "false");
+
+    const separator = document.createElement("span");
+    separator.className = "toolbar-separator";
+    separator.setAttribute("aria-hidden", "true");
+
+    const toolbarVolumeBtn = document.createElement("button");
+    toolbarVolumeBtn.type = "button";
+    toolbarVolumeBtn.className = "toolbar-btn volume-btn";
+    toolbarVolumeBtn.title = "Mute";
+    toolbarVolumeBtn.textContent = "Sound";
+    toolbarVolumeBtn.setAttribute("aria-pressed", "false");
+
+    const toolbarVolumeSlider = document.createElement("input");
+    toolbarVolumeSlider.type = "range";
+    toolbarVolumeSlider.className = "volume-slider";
+    toolbarVolumeSlider.min = "0";
+    toolbarVolumeSlider.max = "100";
+    toolbarVolumeSlider.value = "100";
+    toolbarVolumeSlider.setAttribute("aria-label", "Game volume");
+
+    toolbar.append(
+        fullscreenBtn,
+        toolbarFavoriteBtn,
+        separator,
+        toolbarVolumeBtn,
+        toolbarVolumeSlider
+    );
+    menuBar.append(fileButton, helpButton, toolbar);
 
     const content = document.createElement("div");
     content.className = "window-content";
 
-    win.append(titleBar, menuBar, fileMenu, viewMenu, favoritesMenu, soundMenu, helpMenu, content);
+    win.append(
+        titleBar,
+        menuBar,
+        fileMenu,
+        helpMenu,
+        content
+    );
 
     RESIZE_DIRECTIONS.forEach((direction) => {
         const handle = document.createElement("div");
@@ -1138,6 +1176,11 @@ const wireWindowControls = (win) => {
     win.el.querySelector(".close-btn").addEventListener("click", () => closeGameWindow(gameId));
     win.el.querySelector(".minimize-btn").addEventListener("click", () => minimizeWindow(gameId));
     win.el.querySelector(".maximize-btn").addEventListener("click", () => toggleMaximize(gameId));
+    win.el.querySelector(".fullscreen-btn").addEventListener("click", () => {
+        if (win.player) toggleFullscreen(win.player);
+    });
+    win.favoriteBtn.addEventListener("click", () => toggleFavorite(gameId));
+    win.volumeBtn.addEventListener("click", () => toggleWindowMute(win));
 
     menuBar.addEventListener("click", (event) => {
         const button = event.target.closest(".game-menu-button");
@@ -1199,9 +1242,6 @@ const wireWindowControls = (win) => {
             if (!item || item.disabled) return;
             switch (item.dataset.gameAction) {
                 case "close": closeGameWindow(gameId); break;
-                case "fullscreen": if (win.player) toggleFullscreen(win.player); break;
-                case "favorite": toggleFavorite(gameId); break;
-                case "mute": toggleWindowMute(win); break;
                 case "project": openProjectSettings(); break;
             }
             closeGameMenus();
@@ -1551,7 +1591,8 @@ const openSystemWindow = (shortcutId) => {
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
     const el = createWindowElement(shortcutId);
     el.classList.add("explorer-window");
-    el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) => node.remove());
+    el.querySelectorAll(".game-menu-bar, .game-menu, .window-toolbar")
+        .forEach((node) => node.remove());
     el.style.width = `${Math.min(590, desktopWidth - 16)}px`;
     el.style.height = `${Math.min(410, desktopHeight - 16)}px`;
     el.style.left = `${Math.max(8, (desktopWidth - Math.min(590, desktopWidth - 16)) / 2)}px`;
@@ -1652,9 +1693,9 @@ const openGameWindow = (gameId) => {
         lastUsed: Date.now(),
         content: el.querySelector(".window-content"),
         maximizeBtn: el.querySelector(".maximize-btn"),
-        favoriteBtn: el.querySelector('[data-game-action="favorite"]'),
-        volumeBtn: el.querySelector('[data-game-action="mute"]'),
-        volumeSlider: el.querySelector(".game-volume-slider")
+        favoriteBtn: el.querySelector(".favorite-btn"),
+        volumeBtn: el.querySelector(".volume-btn"),
+        volumeSlider: el.querySelector(".volume-slider")
     };
     openWindows.set(gameId, win);
     trackGamePlay(gameId);
@@ -2692,6 +2733,16 @@ const buildPlaces = () => {
         ["Printers and Faxes", "PrintersandFaxes.png"],
         ["Help and Support", "HelpandSupport.png"],
     ].forEach(([label, icon]) => container.appendChild(createPlace(label, icon)));
+
+    const settings = createPlace(
+        "Astro Flash Settings",
+        "ControlPanel.png"
+    );
+    settings.addEventListener("click", () => {
+        closeStartMenu();
+        openProjectSettings();
+    });
+    container.appendChild(settings);
 
     const search = createPlace("Search", "Search.png");
     search.addEventListener("click", () => {
