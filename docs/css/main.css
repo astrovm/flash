@@ -2065,7 +2065,10 @@ html[data-xp-appearance="silver"] {
 }
 
 #task-buttons {
+    --task-button-min-width: 52px;
+    --task-overflow-min-width: 68px;
     flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -2075,7 +2078,7 @@ html[data-xp-appearance="silver"] {
 
 .task-button {
     flex: 1 1 94px;
-    min-width: 62px;
+    min-width: var(--task-button-min-width);
     max-width: 158px;
     height: 22px;
     display: flex;
@@ -2127,7 +2130,7 @@ html[data-xp-appearance="silver"] {
 
 .task-button-grouped {
     flex: 0 1 82px;
-    min-width: 68px;
+    min-width: var(--task-overflow-min-width);
     justify-content: center;
 }
 
@@ -2141,6 +2144,28 @@ html[data-xp-appearance="silver"] {
     background: rgb(30, 82, 183);
     box-shadow: rgba(0, 0, 0, 0.2) 0 0 1px 1px inset,
         rgba(0, 0, 0, 0.7) 1px 0 1px inset;
+}
+
+@keyframes task-button-attention {
+    50% { filter: brightness(1.55); background: #e39a12; }
+}
+
+.task-button.needs-attention:not(.active) {
+    animation: task-button-attention 900ms step-end infinite;
+}
+
+.taskbar-overflow-item.needs-attention {
+    background: #f7c85f;
+    color: #1b1b1b;
+    font-weight: 700;
+}
+
+.taskbar-group-heading {
+    display: block;
+    padding: 4px 7px 2px;
+    color: #1d4f91;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 #taskbar-tray {
@@ -3036,8 +3061,27 @@ html[data-xp-appearance="silver"] {
         width: 100%;
     }
 
+    #start-button {
+        width: 78px;
+    }
+
+    #task-buttons {
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    #taskbar-tray {
+        gap: 3px;
+        margin-left: 3px;
+        padding: 0 4px;
+    }
+
     .task-button {
-        min-width: 60px;
+        --task-button-min-width: 48px;
+    }
+
+    #task-buttons {
+        --task-overflow-min-width: 58px;
     }
 
     .explorer-content {
@@ -3055,4 +3099,11 @@ html[data-xp-appearance="silver"] {
     .explorer-items {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 360px) {
+    #start-button { width: 66px; }
+    #tray-network-button { display: none; }
+    #taskbar-tray { margin-left: 1px; padding: 0 2px; }
+    #taskbar-clock { font-size: 10px; padding: 1px; }
 }

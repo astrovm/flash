@@ -408,21 +408,32 @@ class ShellSourceTests(unittest.TestCase):
 
     def test_taskbar_keeps_overflow_windows_reachable(self):
         self.assertIn('id="taskbar-overflow-menu"', self.html)
-        self.assertIn("const capacity = Math.max(1, Math.floor(container.clientWidth / 94))", self.javascript)
+        self.assertIn("--task-button-min-width", self.javascript)
+        self.assertIn("const contentWidth = Math.max(0, container.clientWidth", self.javascript)
+        self.assertIn("const overflowMinWidth", self.javascript)
+        self.assertIn("contentWidth - overflowMinWidth - taskGap", self.javascript)
         self.assertIn(
             "const appendTaskButton = ([gameId, win]) =>",
             self.javascript,
         )
-        self.assertIn(
-            "hidden.forEach(([gameId, win]) =>",
-            self.javascript,
-        )
+        self.assertIn("const appendWindowItem = ([gameId, win]) =>", self.javascript)
         self.assertNotIn(
             "const appendTaskButton = ([win, gameId]) =>",
             self.javascript,
         )
         self.assertIn('overflow.className = "task-button task-button-grouped"', self.javascript)
         self.assertIn('overflow.setAttribute("aria-haspopup", "menu")', self.javascript)
+        self.assertIn("Windows Explorer (${explorerWindows.length})", self.javascript)
+
+    def test_taskbar_attention_and_fixed_lock_state_are_explicit(self):
+        self.assertIn("const setWindowAttention =", self.javascript)
+        self.assertIn("window.XPShell = Object.assign", self.javascript)
+        self.assertIn("win.needsAttention = false", self.javascript)
+        self.assertIn(".task-button.needs-attention", self.css)
+        self.assertIn("hiddenNeedsAttention", self.javascript)
+        self.assertIn("taskbar-overflow-item", self.javascript)
+        self.assertIn(".taskbar-overflow-item.needs-attention", self.css)
+        self.assertIn('data-taskbar-action="lock" disabled', self.html)
 
     def test_taskbar_supports_window_and_taskbar_context_menus(self):
         self.assertIn('btn.addEventListener("contextmenu"', self.javascript)

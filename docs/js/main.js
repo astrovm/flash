@@ -776,6 +776,7 @@ const focusWindow = (gameId) => {
     if (!win) return;
 
     focusedGameId = gameId;
+    win.needsAttention = false;
     win.lastUsed = Date.now();
     win.zIndex = ++zIndexCounter;
     win.el.style.zIndex = win.zIndex;
@@ -2743,6 +2744,17 @@ const closeTaskbarMenus = () => {
     document.getElementById("taskbar-overflow-menu").hidden = true;
 };
 
+// Public shell hook for windows that need to notify the user without stealing
+// focus (for example, an app that has finished loading).
+const setWindowAttention = (gameId, needsAttention = true) => {
+    const win = openWindows.get(gameId);
+    if (!win) return false;
+    win.needsAttention = Boolean(needsAttention) && gameId !== focusedGameId;
+    renderTaskButtons();
+    return true;
+};
+window.XPShell = Object.assign(window.XPShell || {}, { setWindowAttention });
+
 const positionTaskbarMenu = (menu, clientX, clientY) => {
     menu.hidden = false;
     menu.style.left = "0";
@@ -2798,20 +2810,33 @@ const activateTaskButton = (gameId) => {
 const renderTaskButtons = () => {
     const container = document.getElementById("task-buttons");
     const windows = [...openWindows.entries()];
-    // Keep each task reachable: the final compact button opens a menu for
-    // windows which cannot fit between the fixed Start button and tray.
-    const capacity = Math.max(1, Math.floor(container.clientWidth / 94));
-    const visible = windows.slice(0, windows.length > capacity ? capacity - 1 : capacity);
+    const styles = getComputedStyle(container);
+    const taskMinWidth = Number.parseFloat(styles.getPropertyValue("--task-button-min-width")) || 52;
+    const overflowMinWidth = Number.parseFloat(styles.getPropertyValue("--task-overflow-min-width")) || 68;
+    const taskGap = Number.parseFloat(styles.gap) || 0;
+    const contentWidth = Math.max(0, container.clientWidth
+        - (Number.parseFloat(styles.paddingLeft) || 0)
+        - (Number.parseFloat(styles.paddingRight) || 0));
+    const allTasksWidth = windows.length * taskMinWidth + Math.max(0, windows.length - 1) * taskGap;
+    const hasOverflow = allTasksWidth > contentWidth;
+    // The overflow control has a larger minimum than a normal task. Account
+    // for that control and its separating gap up front so it cannot be clipped.
+    const visibleCapacity = hasOverflow
+        ? Math.max(0, Math.floor((contentWidth - overflowMinWidth - taskGap) / (taskMinWidth + taskGap)))
+        : windows.length;
+    const visible = windows.slice(0, visibleCapacity);
     const hidden = windows.slice(visible.length);
     container.innerHTML = "";
 
     const appendTaskButton = ([gameId, win]) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "task-button" + (gameId === focusedGameId && !win.minimized ? " active" : "");
+        btn.className = "task-button"
+            + (gameId === focusedGameId && !win.minimized ? " active" : "")
+            + (win.needsAttention ? " needs-attention" : "");
         btn.dataset.game = gameId;
         btn.title = formatGameTitle(gameId);
-        btn.setAttribute("aria-label", `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}`);
+        btn.setAttribute("aria-label", `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`);
         btn.setAttribute("aria-pressed", String(gameId === focusedGameId && !win.minimized));
 
         const icon = createGameIconElement(gameId, "task-icon");
@@ -2834,24 +2859,44 @@ const renderTaskButtons = () => {
     if (hidden.length) {
         const overflow = document.createElement("button");
         overflow.type = "button";
-        overflow.className = "task-button task-button-grouped";
-        overflow.textContent = `${hidden.length} more`;
-        overflow.setAttribute("aria-label", `${hidden.length} more open windows`);
+        const hiddenNeedsAttention = hidden.some(([, win]) => win.needsAttention);
+        overflow.className = "task-button task-button-grouped" + (hiddenNeedsAttention ? " needs-attention" : "");
+        overflow.textContent = `${hidden.length} windows`;
+        overflow.setAttribute("aria-label", `Open menu for ${hidden.length} additional windows${hiddenNeedsAttention ? ", including a window that needs attention" : ""}`);
         overflow.setAttribute("aria-haspopup", "menu");
         overflow.addEventListener("click", () => {
             const menu = document.getElementById("taskbar-overflow-menu");
             menu.innerHTML = "";
-            hidden.forEach(([gameId, win]) => {
+            const explorerWindows = hidden.filter(([, win]) => win.type === "system" && win.currentFolderId);
+            const appendWindowItem = ([gameId, win]) => {
                 const item = document.createElement("button");
                 item.type = "button";
+                item.className = "taskbar-overflow-item" + (win.needsAttention ? " needs-attention" : "");
                 item.setAttribute("role", "menuitem");
                 item.textContent = formatGameTitle(gameId);
+                item.setAttribute("aria-label", `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`);
                 item.addEventListener("click", () => {
                     closeTaskbarMenus();
                     activateTaskButton(gameId);
                 });
+                item.addEventListener("contextmenu", (event) => {
+                    event.preventDefault();
+                    closeTaskbarMenus();
+                    openWindowSystemMenu(win, event.clientX, event.clientY);
+                });
                 menu.appendChild(item);
-            });
+            };
+            // Group only genuinely similar windows. Other applications stay
+            // separate menu items rather than being presented as one app.
+            if (explorerWindows.length > 1) {
+                const heading = document.createElement("span");
+                heading.className = "taskbar-group-heading";
+                heading.setAttribute("role", "presentation");
+                heading.textContent = `Windows Explorer (${explorerWindows.length})`;
+                menu.appendChild(heading);
+                explorerWindows.forEach(appendWindowItem);
+            }
+            hidden.filter((entry) => !explorerWindows.includes(entry) || explorerWindows.length <= 1).forEach(appendWindowItem);
             const rect = overflow.getBoundingClientRect();
             positionTaskbarMenu(menu, rect.left, rect.top);
         });
@@ -2906,9 +2951,10 @@ const openTaskbarProperties = () => {
     const label = document.createElement("label");
     const input = document.createElement("input");
     input.type = "checkbox";
-    input.checked = localStorage.getItem("taskbarLocked") === "true";
-    input.addEventListener("change", () => localStorage.setItem("taskbarLocked", String(input.checked)));
-    label.append(input, " Lock the taskbar");
+    input.checked = true;
+    input.disabled = true;
+    input.title = "The taskbar is fixed in this shell.";
+    label.append(input, " Lock the taskbar (taskbar position is fixed)");
     dialog.body.appendChild(label);
 };
 
@@ -2922,8 +2968,6 @@ const setupTaskbarContextMenu = () => {
         event.preventDefault();
         closeWindowSystemMenu();
         closeTaskbarMenus();
-        const lock = menu.querySelector('[data-taskbar-action="lock"]');
-        lock.setAttribute("aria-checked", localStorage.getItem("taskbarLocked") === "true" ? "true" : "false");
         positionTaskbarMenu(menu, event.clientX, event.clientY);
     });
     menu.addEventListener("click", (event) => {
@@ -2934,10 +2978,6 @@ const setupTaskbarContextMenu = () => {
         else if (action === "cascade" || action.startsWith("tile-")) arrangeTaskbarWindows(action);
         else if (action === "task-manager") openTaskManager();
         else if (action === "properties") openTaskbarProperties();
-        else if (action === "lock") {
-            const locked = localStorage.getItem("taskbarLocked") !== "true";
-            localStorage.setItem("taskbarLocked", String(locked));
-        }
     });
 };
 
