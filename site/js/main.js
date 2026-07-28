@@ -4592,6 +4592,9 @@ const projectStorageText = (state) => {
     : `${usage} of ${XPDialogs.formatBytes(state.quota)}`;
 };
 
+const formatProjectState = (value) =>
+  value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Unavailable";
+
 const maybePromptForUpdate = (state) => {
   if (
     !loggedIn ||
@@ -4690,10 +4693,14 @@ const openProjectSettings = () => {
     detailValues.games.textContent = String(Object.keys(gamesList).length);
     detailValues.downloadSize.textContent =
       state.downloadBytes === null
-        ? "Checking..."
+        ? state.downloadMetadataError
+          ? "Unavailable"
+          : "Checking..."
         : XPDialogs.formatBytes(state.downloadBytes);
     detailValues.connection.textContent = state.online ? "Online" : "Offline";
-    detailValues.offlineFiles.textContent = state.workerState;
+    detailValues.offlineFiles.textContent = formatProjectState(
+      state.workerState,
+    );
     detailValues.storage.textContent = projectStorageText(state);
     detailValues.lastChecked.textContent = formatUpdateCheckTime(
       state.lastChecked,

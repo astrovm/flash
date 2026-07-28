@@ -10,6 +10,8 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, () => {
   const ENABLED_KEY = "offlineModeEnabled";
   const LAST_CHECKED_KEY = "astroFlashLastUpdateCheck";
+  const DOWNLOAD_VERSION_KEY = "astroFlashDownloadVersion";
+  const DOWNLOAD_BYTES_KEY = "astroFlashDownloadBytes";
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
 
   const waitForWorker = (worker) =>
@@ -52,6 +54,10 @@
     let reloadWhenControlled = false;
     let lifecycleListenersAttached = false;
 
+    const cachedDownloadBytes =
+      storage.getItem(DOWNLOAD_VERSION_KEY) === currentVersion
+        ? Number(storage.getItem(DOWNLOAD_BYTES_KEY)) || null
+        : null;
     let state = {
       enabled: storage.getItem(ENABLED_KEY) === "true",
       online: navigatorObject.onLine !== false,
@@ -60,7 +66,8 @@
       currentVersion,
       availableVersion: null,
       availableRevision: null,
-      downloadBytes: null,
+      downloadBytes: cachedDownloadBytes,
+      downloadMetadataError: false,
       lastChecked: Number(storage.getItem(LAST_CHECKED_KEY)) || null,
       updateReady: false,
       workerState: "unregistered",
@@ -96,11 +103,21 @@
       return snapshot();
     };
 
+    const rememberVersionMetadata = (metadata) => {
+      storage.setItem(DOWNLOAD_VERSION_KEY, metadata.version);
+      storage.setItem(DOWNLOAD_BYTES_KEY, String(metadata.offlineBytes));
+      setState({
+        downloadBytes: metadata.offlineBytes,
+        downloadMetadataError: false,
+      });
+    };
+
     const markWaitingUpdate = async (worker) => {
       if (!worker) return;
       let metadata = null;
       try {
         metadata = await fetchVersion();
+        rememberVersionMetadata(metadata);
       } catch {
         // A waiting worker is enough to prove that an update is ready.
       }
@@ -226,6 +243,7 @@
         setState({ phase: "checking", error: null });
         try {
           const metadata = await fetchVersion();
+          rememberVersionMetadata(metadata);
           if (state.enabled) {
             if (!registration) await registerAndWait();
             await registration.update();
@@ -260,6 +278,7 @@
                 ? previousPhase
                 : "error",
             error: error.message,
+            downloadMetadataError: state.downloadBytes === null,
           });
           throw error;
         } finally {
@@ -384,6 +403,13 @@
     const initialize = async () => {
       attachLifecycleListeners();
       await refreshStorageEstimate();
+      if (state.downloadBytes === null && navigatorObject.onLine !== false) {
+        try {
+          rememberVersionMetadata(await fetchVersion());
+        } catch {
+          setState({ downloadMetadataError: true });
+        }
+      }
       if (!state.enabled) return snapshot();
       try {
         await registerAndWait();
