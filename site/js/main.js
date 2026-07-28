@@ -27,6 +27,18 @@ let screenSaverWired = false;
 const gamesList = window.FLASH_GAMES;
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
+const USER_STORAGE_KEYS = Object.freeze([
+  DISPLAY_SETTINGS_KEY,
+  "clockOffsetMs",
+  "desktopIconPositions",
+  "desktopLayoutSettings",
+  "favorites",
+  "gameStats",
+  "gameVolumes",
+  "isMuted",
+  "runHistory",
+  "volume",
+]);
 const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
 const DISPLAY_WALLPAPERS = {
   bliss: 'url("../assets/xp/bliss.jpg")',
@@ -3538,6 +3550,21 @@ fs.registerFileType(".game", (file) => {
   }
 });
 
+const restoreDefaultDesktop = () => {
+  Object.keys(gamesList).forEach((gameId) => {
+    fs.findByApp(gameId).forEach((node) => fs.destroy(node.id));
+  });
+  localStorage.removeItem("desktopIconPositions");
+  localStorage.removeItem("desktopLayoutSettings");
+  syncGameFiles();
+};
+
+const resetAstroFlash = () => {
+  USER_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  fs.reset();
+  syncGameFiles();
+};
+
 const NOTEPAD_ID = "__notepad";
 
 const openNotepad = (file = null) => {
@@ -4685,6 +4712,30 @@ const wireProjectSettings = (win) => {
   repairButton.textContent = "Repair Offline Files";
   actions.append(checkButton, applyButton, repairButton);
 
+  const recoveryGroup = document.createElement("fieldset");
+  recoveryGroup.className = "project-recovery-group";
+  const recoveryLegend = document.createElement("legend");
+  recoveryLegend.textContent = "Recovery";
+  const recoveryDescription = document.createElement("p");
+  recoveryDescription.textContent =
+    "Restore the original desktop or erase personal files and preferences. Offline files are preserved.";
+  const recoveryActions = document.createElement("div");
+  recoveryActions.className = "project-settings-actions";
+  const restoreDesktopButton = document.createElement("button");
+  restoreDesktopButton.type = "button";
+  restoreDesktopButton.className = "xp-btn";
+  restoreDesktopButton.textContent = "Restore Default Desktop";
+  const resetButton = document.createElement("button");
+  resetButton.type = "button";
+  resetButton.className = "xp-btn";
+  resetButton.textContent = "Reset Astro Flash";
+  recoveryActions.append(restoreDesktopButton, resetButton);
+  recoveryGroup.append(
+    recoveryLegend,
+    recoveryDescription,
+    recoveryActions,
+  );
+
   const transientPhases = new Set([
     "starting",
     "downloading",
@@ -4767,6 +4818,26 @@ const wireProjectSettings = (win) => {
       status.textContent = error.message;
     });
   });
+  restoreDesktopButton.addEventListener("click", async () => {
+    const accepted = await XPDialogs.confirm(
+      "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
+      "Restore Default Desktop",
+      "question",
+    );
+    if (!accepted) return;
+    restoreDefaultDesktop();
+    window.location.reload();
+  });
+  resetButton.addEventListener("click", async () => {
+    const accepted = await XPDialogs.confirm(
+      "Reset Astro Flash to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
+      "Reset Astro Flash",
+      "warning",
+    );
+    if (!accepted) return;
+    resetAstroFlash();
+    window.location.reload();
+  });
 
   const suggestions = document.createElement("a");
   suggestions.className = "project-suggestions-link";
@@ -4781,6 +4852,7 @@ const wireProjectSettings = (win) => {
     status,
     downloadProgress,
     actions,
+    recoveryGroup,
     suggestions,
   );
 };

@@ -179,4 +179,22 @@ reloaded.createFile(fs.MY_DOCUMENTS, "ping.txt");
 assert.ok(notified > 0, "listener fired");
 unsubscribe();
 
+// ---- Production reset preserves integrations and reseeds the filesystem ----
+let resetNotified = 0;
+reloaded.subscribe(() => {
+    resetNotified += 1;
+});
+reloaded.registerFileType(".txt", () => {});
+reloaded.createFile(reloaded.MY_DOCUMENTS, "delete-on-reset.txt");
+reloaded.reset();
+assert.strictEqual(
+    reloaded.findChild(reloaded.MY_DOCUMENTS, "delete-on-reset.txt"),
+    null,
+    "reset removes user-created files"
+);
+assert.ok(reloaded.getNode(reloaded.DESKTOP), "reset restores the seeded desktop");
+assert.strictEqual(resetNotified, 2, "create and reset both notify subscribers");
+const afterReset = reloaded.createFile(reloaded.MY_DOCUMENTS, "after-reset.txt");
+assert.strictEqual(reloaded.open(afterReset.id), true, "reset preserves file handlers");
+
 console.log("filesystem tests passed");

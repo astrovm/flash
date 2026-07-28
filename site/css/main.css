@@ -2122,6 +2122,16 @@ html[data-xp-appearance="silver"] {
     margin: 0 0 10px;
 }
 
+.project-recovery-group {
+    margin: 12px 0 10px;
+    padding: 8px 8px 2px;
+}
+
+.project-recovery-group p {
+    margin: 2px 0 8px;
+    color: #444;
+}
+
 .project-suggestions-link {
     color: #0000ee;
 }
