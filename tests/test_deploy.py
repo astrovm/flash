@@ -48,6 +48,7 @@ class DeployTests(unittest.TestCase):
                     '<script src="js/filesystem.js?v=old"></script>',
                     '<script src="js/file-operations.js?v=old"></script>',
                     '<script src="js/dialogs.js?v=old"></script>',
+                    '<script src="js/offline.js?v=old"></script>',
                     '<script src="js/main.js?v=old"></script>',
                     '<link rel="stylesheet" href="css/main.css?v=old">',
                 ]
@@ -56,6 +57,7 @@ class DeployTests(unittest.TestCase):
             "js/filesystem.js": "filesystem",
             "js/file-operations.js": "file operations",
             "js/dialogs.js": "dialogs",
+            "js/offline.js": "offline",
             "js/main.js": 'const APP_VERSION = "old";\n',
             "css/main.css": "css",
             "swf/bike-mania/main.swf": "swf",
@@ -164,6 +166,7 @@ class DeployTests(unittest.TestCase):
         paths = deploy.BuildPaths(self.source_dir)
 
         deploy.update_html(paths, "26.07.28-abcdef1")
+        deploy.write_version_metadata(paths, "26.07.28-abcdef1")
 
         main = paths.main_js.read_text(encoding="utf-8")
         html = paths.html.read_text(encoding="utf-8")
@@ -176,6 +179,16 @@ class DeployTests(unittest.TestCase):
             "js/file-operations.js?v="
             f'{deploy.get_short_hash(paths.js / "file-operations.js")}"',
             html,
+        )
+        self.assertIn(
+            f'js/offline.js?v={deploy.get_short_hash(paths.js / "offline.js")}"',
+            html,
+        )
+        metadata = json.loads(paths.version_json.read_text(encoding="utf-8"))
+        self.assertGreater(metadata.pop("offlineBytes"), 0)
+        self.assertEqual(
+            metadata,
+            {"revision": "abcdef1", "version": "26.07.28-abcdef1"},
         )
 
     def test_update_html_fails_if_an_asset_reference_is_missing(self):
@@ -219,6 +232,10 @@ class DeployTests(unittest.TestCase):
         self.make_source()
         self.add_generated_runtime(self.source_dir)
         deploy.update_html(
+            deploy.BuildPaths(self.source_dir),
+            "26.07.28-abcdef1",
+        )
+        deploy.write_version_metadata(
             deploy.BuildPaths(self.source_dir),
             "26.07.28-abcdef1",
         )
@@ -271,6 +288,14 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(current_files, original_files)
         self.assertFalse((self.output_dir / "stale.txt").exists())
         self.assertTrue((self.output_dir / "sw.js").is_file())
+        metadata = json.loads(
+            (self.output_dir / "version.json").read_text(encoding="utf-8")
+        )
+        self.assertGreater(metadata.pop("offlineBytes"), 0)
+        self.assertEqual(
+            metadata,
+            {"revision": "abcdef1", "version": "26.07.28-abcdef1"},
+        )
 
     def test_failed_build_preserves_previous_output(self):
         self.make_source()

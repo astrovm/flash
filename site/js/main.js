@@ -10,6 +10,9 @@ const MOVE_SIZE_STEP = 8;
 const BOOT_DURATION_MS = 2600;
 const WELCOME_DURATION_MS = 1200;
 const APP_VERSION = "26.07.28-2";
+const offlineManager = window.AstroOffline.createManager({
+  currentVersion: APP_VERSION,
+});
 
 let bootTimeout = null;
 let shutdownTimeout = null;
@@ -4555,33 +4558,67 @@ const openNetworkStatus = () => {
   dialog.onResult(() => clearInterval(timer));
 };
 
-const setOfflineModeEnabled = async (enabled) => {
-  if (!("serviceWorker" in navigator)) {
-    throw new Error("Offline mode is not supported by this browser.");
-  }
+let offlineManagerInitialized = false;
+let promptedUpdateVersion = null;
 
-  if (enabled) {
-    await navigator.serviceWorker.register("sw.js");
-    localStorage.setItem("offlineModeEnabled", "true");
+const offlineStatusText = (state) => {
+  const messages = {
+    disabled: "Offline caching is disabled.",
+    starting: "Preparing the offline download...",
+    downloading: "Downloading all files for offline use...",
+    ready: "All files are available offline.",
+    checking: "Checking for updates...",
+    updating: "Downloading the latest update...",
+    "update-available": state.enabled
+      ? "An update is downloading..."
+      : "An update is available.",
+    "update-ready": "An update is ready. Restart Astro Flash to apply it.",
+    applying: "Applying the update...",
+    repairing: "Clearing and downloading all offline files again...",
+    error: "Offline files are incomplete.",
+  };
+  const message = messages[state.phase] || "Offline status is unavailable.";
+  return state.error ? `${message} ${state.error}` : message;
+};
+
+const formatUpdateCheckTime = (timestamp) =>
+  timestamp ? new Date(timestamp).toLocaleString() : "Never";
+
+const projectStorageText = (state) => {
+  if (state.usage === null) return "Unavailable";
+  const usage = XPDialogs.formatBytes(state.usage);
+  return state.quota === null
+    ? usage
+    : `${usage} of ${XPDialogs.formatBytes(state.quota)}`;
+};
+
+const maybePromptForUpdate = (state) => {
+  if (
+    !loggedIn ||
+    !state.updateReady ||
+    !state.availableVersion ||
+    promptedUpdateVersion === state.availableVersion
+  ) {
     return;
   }
-
-  const registration = await navigator.serviceWorker.getRegistration("./");
-  if (registration) await registration.unregister();
-  if ("caches" in window) {
-    const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames
-        .filter((name) => name.startsWith("astro-flash"))
-        .map((name) => caches.delete(name)),
-    );
-  }
-  localStorage.setItem("offlineModeEnabled", "false");
+  promptedUpdateVersion = state.availableVersion;
+  XPDialogs.confirm(
+    `Astro Flash ${state.availableVersion} is ready.\nRestart now to apply the update?`,
+    "Astro Flash Update",
+    "info",
+  ).then((accepted) => {
+    if (!accepted) return;
+    offlineManager.applyUpdate().catch((error) => {
+      XPDialogs.alert(error.message, "Astro Flash Update", "error");
+    });
+  });
 };
 
 const initializeOfflineMode = () => {
-  if (localStorage.getItem("offlineModeEnabled") !== "true") return;
-  setOfflineModeEnabled(true).catch((error) => {
+  if (offlineManagerInitialized) return;
+  offlineManagerInitialized = true;
+  offlineManager.subscribe(maybePromptForUpdate);
+  offlineManager.initialize().catch((error) => {
     console.error("Offline mode initialization failed:", error);
   });
 };
@@ -4591,57 +4628,127 @@ const openProjectSettings = () => {
     title: "Astro Flash Collection",
   });
 
-  const heading = document.createElement("h2");
-  heading.className = "project-settings-title";
-  heading.textContent = "Astro Flash Collection";
-
   const details = document.createElement("dl");
   details.className = "dlg-props-table";
-  const addDetail = (label, value) => {
+  const detailValues = {};
+  const addDetail = (label, id) => {
     const term = document.createElement("dt");
     term.textContent = label;
     const description = document.createElement("dd");
-    description.textContent = value;
+    detailValues[id] = description;
     details.append(term, description);
   };
-  addDetail("Version:", APP_VERSION);
-  addDetail("Installed games:", String(Object.keys(gamesList).length));
-  addDetail("Connection:", navigator.onLine ? "Online" : "Offline");
-  addDetail(
-    "Service worker:",
-    "serviceWorker" in navigator ? "Supported" : "Unavailable",
-  );
+  addDetail("Installed version:", "version");
+  addDetail("Available version:", "availableVersion");
+  addDetail("Installed games:", "games");
+  addDetail("Offline download:", "downloadSize");
+  addDetail("Connection:", "connection");
+  addDetail("Offline files:", "offlineFiles");
+  addDetail("Site storage:", "storage");
+  addDetail("Last update check:", "lastChecked");
 
   const offlineLabel = document.createElement("label");
   offlineLabel.className = "project-offline-setting";
   const offlineToggle = document.createElement("input");
   offlineToggle.type = "checkbox";
-  offlineToggle.checked = localStorage.getItem("offlineModeEnabled") === "true";
-  offlineToggle.disabled = !("serviceWorker" in navigator);
-  offlineLabel.append(offlineToggle, " Enable Offline Mode");
+  offlineLabel.append(offlineToggle, " Download all files for offline use");
 
   const status = document.createElement("p");
   status.className = "project-settings-status";
-  status.textContent = offlineToggle.checked
-    ? "Offline caching is enabled."
-    : "Offline caching is disabled.";
+  const downloadProgress = document.createElement("progress");
+  downloadProgress.className = "project-settings-progress";
+  downloadProgress.setAttribute("aria-label", "Offline download progress");
+
+  const actions = document.createElement("div");
+  actions.className = "project-settings-actions";
+  const checkButton = document.createElement("button");
+  checkButton.type = "button";
+  checkButton.className = "xp-btn";
+  checkButton.textContent = "Check for Updates";
+  const applyButton = document.createElement("button");
+  applyButton.type = "button";
+  applyButton.className = "xp-btn";
+  applyButton.textContent = "Restart to Update";
+  const repairButton = document.createElement("button");
+  repairButton.type = "button";
+  repairButton.className = "xp-btn";
+  repairButton.textContent = "Repair Offline Files";
+  actions.append(checkButton, applyButton, repairButton);
+
+  const transientPhases = new Set([
+    "starting",
+    "downloading",
+    "checking",
+    "updating",
+    "applying",
+    "repairing",
+  ]);
+  const render = (state) => {
+    detailValues.version.textContent = APP_VERSION;
+    detailValues.availableVersion.textContent =
+      state.availableVersion || "None";
+    detailValues.games.textContent = String(Object.keys(gamesList).length);
+    detailValues.downloadSize.textContent =
+      state.downloadBytes === null
+        ? "Checking..."
+        : XPDialogs.formatBytes(state.downloadBytes);
+    detailValues.connection.textContent = state.online ? "Online" : "Offline";
+    detailValues.offlineFiles.textContent = state.workerState;
+    detailValues.storage.textContent = projectStorageText(state);
+    detailValues.lastChecked.textContent = formatUpdateCheckTime(
+      state.lastChecked,
+    );
+    offlineToggle.checked = state.enabled;
+    offlineToggle.disabled =
+      !("serviceWorker" in navigator) || transientPhases.has(state.phase);
+    status.textContent = offlineStatusText(state);
+    downloadProgress.hidden = ![
+      "starting",
+      "downloading",
+      "updating",
+      "repairing",
+    ].includes(state.phase);
+    checkButton.disabled =
+      !state.online || transientPhases.has(state.phase);
+    applyButton.hidden = !state.availableVersion;
+    applyButton.disabled =
+      state.enabled ? !state.updateReady : transientPhases.has(state.phase);
+    repairButton.disabled =
+      !state.enabled || !state.online || transientPhases.has(state.phase);
+  };
+  const unsubscribe = offlineManager.subscribe(render);
+  dialog.onResult(unsubscribe);
 
   offlineToggle.addEventListener("change", async () => {
     offlineToggle.disabled = true;
-    status.textContent = offlineToggle.checked
-      ? "Enabling offline caching..."
-      : "Disabling offline caching...";
     try {
-      await setOfflineModeEnabled(offlineToggle.checked);
-      status.textContent = offlineToggle.checked
-        ? "Offline caching is enabled."
-        : "Offline caching is disabled.";
+      await offlineManager.setEnabled(offlineToggle.checked);
+      if (offlineToggle.checked) {
+        await offlineManager.checkForUpdates();
+      }
     } catch (error) {
-      offlineToggle.checked = !offlineToggle.checked;
       status.textContent = error.message;
-    } finally {
-      offlineToggle.disabled = !("serviceWorker" in navigator);
     }
+  });
+
+  checkButton.addEventListener("click", () => {
+    offlineManager.checkForUpdates().catch(() => {});
+  });
+  applyButton.addEventListener("click", () => {
+    offlineManager.applyUpdate().catch((error) => {
+      status.textContent = error.message;
+    });
+  });
+  repairButton.addEventListener("click", async () => {
+    const accepted = await XPDialogs.confirm(
+      "Clear and download all offline files again?",
+      "Repair Offline Files",
+      "question",
+    );
+    if (!accepted) return;
+    offlineManager.repair().catch((error) => {
+      status.textContent = error.message;
+    });
   });
 
   const suggestions = document.createElement("a");
@@ -4651,7 +4758,14 @@ const openProjectSettings = () => {
   suggestions.rel = "noopener noreferrer";
   suggestions.textContent = "Send suggestions or report a problem";
 
-  dialog.body.append(heading, details, offlineLabel, status, suggestions);
+  dialog.body.append(
+    details,
+    offlineLabel,
+    status,
+    downloadProgress,
+    actions,
+    suggestions,
+  );
   XPDialogs.addButtonRow(dialog, [
     { id: "close", label: "Close", isDefault: true, isCancel: true },
   ]);
@@ -6467,7 +6581,6 @@ const login = (playSound = true) => {
     buildDesktopIcons();
     buildPlaces();
     setupSearch();
-    initializeOfflineMode();
     setupScreenSaver();
     startClock();
 
@@ -6477,6 +6590,7 @@ const login = (playSound = true) => {
       openGameWindow(gameId);
     }
   }
+  maybePromptForUpdate(offlineManager.getSnapshot());
   scheduleScreenSaver();
 };
 
@@ -6655,6 +6769,7 @@ const confirmPermanentDelete = (ids) =>
   ).then((yes) => yes && ids.forEach((id) => fs.destroy(id)));
 
 window.addEventListener("load", () => {
+  initializeOfflineMode();
   setupScreenFlow();
   setupDesktopContextMenu();
   setupWindowSystemMenu();
