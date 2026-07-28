@@ -1330,6 +1330,43 @@ html[data-xp-appearance="silver"] {
 .appearance-preview[data-appearance="silver"] { background: linear-gradient(#a7b0bf, #6d7788); }
 .display-settings-note { color: #555; }
 
+.display-resolution-preview {
+    display: grid;
+    place-items: center;
+    width: 150px;
+    height: 105px;
+    margin: 10px auto 4px;
+    border: 8px solid #444;
+    border-radius: 8px;
+    background: #111;
+}
+
+.display-resolution-preview span {
+    display: block;
+    border: 1px solid #9db9df;
+    background: linear-gradient(#245edb, #3a6ea5);
+}
+
+.display-resolution-preview[data-resolution="auto"] span {
+    width: 112px;
+    height: 70px;
+}
+
+.display-resolution-preview[data-resolution="800x600"] span {
+    width: 88px;
+    height: 66px;
+}
+
+.display-resolution-preview[data-resolution="1024x768"] span {
+    width: 112px;
+    height: 84px;
+}
+
+.display-resolution-value {
+    margin: 0;
+    text-align: center;
+}
+
 .display-properties-content select {
     height: 22px;
     border: 1px solid #7f9db9;

@@ -859,23 +859,26 @@ const minimizeAllWindows = () => {
 let showDesktopSnapshot = null;
 const toggleShowDesktop = () => {
     if (showDesktopSnapshot) {
-        showDesktopSnapshot.forEach(({ gameId, minimized }) => {
+        showDesktopSnapshot.windows.forEach(({ gameId, minimized }) => {
             const win = openWindows.get(gameId);
             if (win && !minimized) restoreWindow(gameId);
         });
-        const active = showDesktopSnapshot.find(({ gameId, minimized }) => (
-            !minimized && openWindows.has(gameId)
-        ));
+        const activeGameId = showDesktopSnapshot.focusedGameId;
         showDesktopSnapshot = null;
-        if (active) focusWindow(active.gameId);
+        if (activeGameId && openWindows.has(activeGameId)) {
+            focusWindow(activeGameId);
+        }
         else focusTopWindow();
         return;
     }
 
-    showDesktopSnapshot = [...openWindows.values()].map((win) => ({
-        gameId: win.gameId,
-        minimized: win.minimized
-    }));
+    showDesktopSnapshot = {
+        focusedGameId,
+        windows: [...openWindows.values()].map((win) => ({
+            gameId: win.gameId,
+            minimized: win.minimized
+        }))
+    };
     minimizeAllWindows();
 };
 
@@ -1457,6 +1460,8 @@ const createSystemWindowContent = (shortcutId, win) => {
                     <p>Monitor: Astro Flash Display</p>
                     <label for="display-resolution">Screen resolution:</label>
                     <select id="display-resolution"><option value="auto">Use browser size</option><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option></select>
+                    <div class="display-resolution-preview" aria-label="Resolution preview"><span></span></div>
+                    <p class="display-resolution-value"></p>
                     <p class="display-settings-note">This changes the simulated monitor preview; browser windows keep their actual size.</p>
                 </fieldset>
             </div>
@@ -1580,6 +1585,8 @@ const wireDisplayProperties = (win) => {
         preview: content.querySelector(".display-preview-surface"),
         saverPreview: content.querySelector(".screen-saver-preview"),
         appearancePreview: content.querySelector(".appearance-preview"),
+        resolutionPreview: content.querySelector(".display-resolution-preview"),
+        resolutionValue: content.querySelector(".display-resolution-value"),
         status: content.querySelector(".display-status"),
         apply: content.querySelector('[data-display-action="apply"]')
     };
@@ -1603,6 +1610,10 @@ const wireDisplayProperties = (win) => {
         controls.preview.dataset.position = pending.position;
         controls.saverPreview.dataset.saver = pending.screenSaver;
         controls.appearancePreview.dataset.appearance = pending.appearance;
+        controls.resolutionPreview.dataset.resolution = pending.resolution;
+        controls.resolutionValue.textContent = pending.resolution === "auto"
+            ? `Current browser size: ${window.innerWidth} by ${window.innerHeight} pixels`
+            : `${pending.resolution.replace("x", " by ")} pixels`;
         controls.apply.disabled = JSON.stringify(pending) === JSON.stringify(current);
     };
     const showTab = (tab) => {
@@ -2057,6 +2068,40 @@ const positionTaskbarMenu = (menu, clientX, clientY) => {
     menu.style.top = "0";
     menu.style.left = `${Math.max(2, Math.min(clientX, innerWidth - menu.offsetWidth - 2))}px`;
     menu.style.top = `${Math.max(2, Math.min(clientY - menu.offsetHeight, innerHeight - menu.offsetHeight - 2))}px`;
+    menu.querySelector("button:not(:disabled)")?.focus();
+};
+
+const wireTaskbarMenuKeyboard = (menu) => {
+    menu.addEventListener("keydown", (event) => {
+        const items = [...menu.querySelectorAll("button:not(:disabled)")];
+        if (!items.length) return;
+        const current = items.indexOf(document.activeElement);
+        let target = null;
+        if (event.key === "ArrowDown") {
+            target = items[(current + 1 + items.length) % items.length];
+        } else if (event.key === "ArrowUp") {
+            target = items[(current - 1 + items.length) % items.length];
+        } else if (event.key === "Home") {
+            target = items[0];
+        } else if (event.key === "End") {
+            target = items.at(-1);
+        } else if (event.key === "Escape") {
+            event.preventDefault();
+            closeTaskbarMenus();
+            return;
+        } else if (
+            (event.key === "Enter" || event.key === " ")
+            && document.activeElement?.matches("button:not(:disabled)")
+        ) {
+            event.preventDefault();
+            document.activeElement.click();
+            return;
+        }
+        if (target) {
+            event.preventDefault();
+            target.focus();
+        }
+    });
 };
 
 const activateTaskButton = (gameId) => {
@@ -2189,6 +2234,8 @@ const openTaskbarProperties = () => {
 const setupTaskbarContextMenu = () => {
     const taskbar = document.getElementById("taskbar");
     const menu = document.getElementById("taskbar-context-menu");
+    wireTaskbarMenuKeyboard(menu);
+    wireTaskbarMenuKeyboard(document.getElementById("taskbar-overflow-menu"));
     taskbar.addEventListener("contextmenu", (event) => {
         if (event.target.closest(".task-button, #tray-volume-popup")) return;
         event.preventDefault();
@@ -3347,10 +3394,12 @@ const buildPlaces = () => {
 
     const container = document.getElementById("start-menu-places");
     const createPlace = ({ id, label, icon, title = label }) => {
+        const { key } = XPDialogs.parseAccessKey(label);
         const item = document.createElement("button");
         item.className = "sm-place";
         item.type = "button";
         item.dataset.startAction = id;
+        item.dataset.accessKey = key;
         item.title = XPDialogs.parseAccessKey(title).text;
 
         const glyph = document.createElement("span");
@@ -3373,6 +3422,16 @@ const buildPlaces = () => {
         });
         return item;
     };
+
+    container.addEventListener("keydown", (event) => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        const item = container.querySelector(
+            `[data-access-key="${event.key.toLowerCase()}"]`
+        );
+        if (!item) return;
+        event.preventDefault();
+        item.click();
+    });
 
     [
         ["documents", "My &Documents", "MyDocuments.png"],
@@ -3596,6 +3655,9 @@ const startShutdown = (restart = false) => {
 };
 
 const closeCurrentSession = () => {
+    clearTimeout(screenSaverTimeout);
+    const saver = document.getElementById("screen-saver-overlay");
+    if (saver) saver.hidden = true;
     Array.from(openWindows.keys()).forEach(closeGameWindow);
     focusedGameId = null;
     zIndexCounter = 100;
@@ -3629,6 +3691,7 @@ const turnOff = () => {
 
 const login = (playSound = true) => {
     clearTimeout(bootTimeout);
+    loggedIn = true;
     showDesktop();
     applyDisplaySettings(getDisplaySettings());
     applyFocusVolumes();
@@ -3636,7 +3699,6 @@ const login = (playSound = true) => {
         playXPSound("logon");
     }
 
-    loggedIn = true;
     networkConnectedAt = Date.now();
     if (!shellInitialized) {
         shellInitialized = true;
@@ -3646,7 +3708,6 @@ const login = (playSound = true) => {
         setupSearch();
         initializeOfflineMode();
         setupScreenSaver();
-        scheduleScreenSaver();
         startClock();
 
         // Deep link: #game-id opens that game's window
@@ -3655,6 +3716,7 @@ const login = (playSound = true) => {
             openGameWindow(gameId);
         }
     }
+    scheduleScreenSaver();
 };
 
 const setupScreenFlow = () => {
@@ -3776,6 +3838,7 @@ window.addEventListener("resize", () => {
     }
     if (loggedIn) {
         keepWindowsInWorkArea();
+        renderTaskButtons();
     }
 });
 

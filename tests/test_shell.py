@@ -274,6 +274,11 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn('event.key === "End"', self.javascript)
         self.assertIn('#desktop[data-wallpaper-position="tile"]', self.css)
         self.assertIn('html[data-xp-appearance="olive"]', self.css)
+        self.assertIn("display-resolution-preview", self.javascript)
+        self.assertIn(
+            "controls.resolutionPreview.dataset.resolution = pending.resolution",
+            self.javascript,
+        )
 
     def test_taskbar_keeps_overflow_windows_reachable(self):
         self.assertIn('id="taskbar-overflow-menu"', self.html)
@@ -308,8 +313,33 @@ class ShellSourceTests(unittest.TestCase):
 
     def test_taskbar_keyboard_and_state_styles_are_present(self):
         self.assertIn('taskButton && ["ArrowLeft", "ArrowRight", "Home", "End"]', self.javascript)
+        self.assertIn("const wireTaskbarMenuKeyboard = (menu) =>", self.javascript)
         self.assertIn('.task-button:focus-visible', self.css)
         self.assertIn('.task-button[aria-pressed="true"]', self.css)
+
+    def test_show_desktop_restores_focus_and_resize_reflows_tasks(self):
+        self.assertIn("focusedGameId,", self.javascript)
+        self.assertIn("showDesktopSnapshot.windows.forEach", self.javascript)
+        resize = self.javascript[
+            self.javascript.index('window.addEventListener("resize"'):
+            self.javascript.index('window.addEventListener("hashchange"')
+        ]
+        self.assertIn("renderTaskButtons();", resize)
+
+    def test_screen_saver_is_rescheduled_for_every_login(self):
+        login = self.javascript[
+            self.javascript.index("const login = (playSound = true) =>"):
+            self.javascript.index("const setupScreenFlow = () =>")
+        ]
+        self.assertLess(login.index("loggedIn = true"), login.index("applyDisplaySettings"))
+        self.assertGreater(login.rindex("scheduleScreenSaver();"), login.index("if (!shellInitialized)"))
+
+    def test_start_destinations_have_working_access_keys(self):
+        self.assertIn("item.dataset.accessKey = key", self.javascript)
+        self.assertIn(
+            '`[data-access-key="${event.key.toLowerCase()}"]`',
+            self.javascript,
+        )
 
     def test_start_menu_footer_has_only_xp_power_actions(self):
         footer = re.search(
