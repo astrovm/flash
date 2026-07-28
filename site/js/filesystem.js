@@ -560,6 +560,14 @@
     [...nodes[WELL_KNOWN.RECYCLE_BIN].children].forEach(destroy);
   };
 
+  // Restores the filesystem to the original protected folder structure.
+  // Registered handlers and subscribers deliberately remain active so this
+  // is safe to use from the running application, not only from tests.
+  const reset = () => {
+    nodes = seedNodes();
+    emitChange();
+  };
+
   const getContent = (id) => {
     const node = requireNode(id);
     return node.type === "file" ? node.content : null;
@@ -644,6 +652,7 @@
     restore,
     destroy,
     emptyRecycleBin,
+    reset,
     getContent,
     setContent,
     registerFileType,
