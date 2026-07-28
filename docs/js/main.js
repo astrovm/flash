@@ -9,6 +9,7 @@ const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
 const MOVE_SIZE_STEP = 8;
 const BOOT_DURATION_MS = 2600;
 const WELCOME_DURATION_MS = 1200;
+const APP_VERSION = "26.07.27-2";
 
 let bootTimeout = null;
 let shutdownTimeout = null;
@@ -226,6 +227,22 @@ const toggleFullscreen = (element) => {
     }
 };
 
+const setAccessKeyText = (element, label) => {
+    const { text, key } = XPDialogs.parseAccessKey(label);
+    const marker = label.indexOf("&");
+    element.replaceChildren();
+    if (!key || marker < 0) {
+        element.textContent = text;
+        return { text, key };
+    }
+    element.append(label.slice(0, marker));
+    const underlined = document.createElement("span");
+    underlined.className = "menu-accesskey";
+    underlined.textContent = label[marker + 1];
+    element.append(underlined, label.slice(marker + 2));
+    return { text, key };
+};
+
 // ============================================
 // Window Manager
 // ============================================
@@ -289,7 +306,7 @@ const syncWindowVolumeUI = (win) => {
     win.volumeBtn.classList.toggle("checked", muted);
     win.volumeBtn.setAttribute("aria-checked", String(muted));
     const label = win.volumeBtn.querySelector(".menu-item-label");
-    if (label) label.textContent = muted ? "Unmute" : "Mute";
+    if (label) setAccessKeyText(label, muted ? "&Unmute" : "&Mute");
     win.volumeSlider.value = isMuted ? 0 : numericVolume;
 };
 
@@ -332,7 +349,12 @@ const updateFavoriteUI = (win) => {
     win.favoriteBtn.classList.toggle('checked', isFavorite);
     win.favoriteBtn.setAttribute('aria-checked', String(isFavorite));
     const label = win.favoriteBtn.querySelector('.menu-item-label');
-    if (label) label.textContent = isFavorite ? 'Remove from Favorites' : 'Add to Favorites';
+    if (label) {
+        setAccessKeyText(
+            label,
+            isFavorite ? "&Remove from Favorites" : "&Add to Favorites"
+        );
+    }
 };
 
 const toggleFavorite = (gameId) => {
@@ -424,30 +446,47 @@ const createWindowElement = (gameId) => {
     menuBar.setAttribute("role", "menubar");
     menuBar.setAttribute("aria-label", "Game menu");
 
-    const makeMenuButton = (name, accessKey) => {
+    const makeMenuButton = (label) => {
+        const { text, key } = XPDialogs.parseAccessKey(label);
         const button = document.createElement("button");
         button.type = "button";
         button.className = "game-menu-button";
-        button.dataset.gameMenu = name.toLowerCase();
-        button.dataset.accessKey = accessKey.toLowerCase();
+        button.dataset.gameMenu = text.toLowerCase();
+        button.dataset.accessKey = key;
         button.setAttribute("role", "menuitem");
         button.setAttribute("aria-haspopup", "menu");
         button.setAttribute("aria-expanded", "false");
-        button.innerHTML = `<span class="menu-accesskey">${accessKey}</span>${name.slice(1)}`;
+        setAccessKeyText(button, label);
         return button;
     };
 
     const makeMenuItem = (label, action, options = {}) => {
+        const { key } = XPDialogs.parseAccessKey(label);
         const item = document.createElement("button");
         item.type = "button";
         item.className = "game-menu-item";
         item.dataset.gameAction = action;
-        if (options.accessKey) item.dataset.accessKey = options.accessKey.toLowerCase();
+        if (key) item.dataset.accessKey = key;
         item.setAttribute("role", options.checkbox ? "menuitemcheckbox" : "menuitem");
         if (options.checkbox) item.setAttribute("aria-checked", "false");
         if (options.disabled) item.disabled = true;
-        const key = options.accessKey || "";
-        item.innerHTML = `${options.checkbox ? '<span class="menu-check" aria-hidden="true">✓</span>' : ''}<span class="menu-item-label">${key ? `<span class="menu-accesskey">${key}</span>${label.slice(1)}` : label}</span>${options.shortcut ? `<span class="menu-shortcut">${options.shortcut}</span>` : ''}`;
+        if (options.checkbox) {
+            const check = document.createElement("span");
+            check.className = "menu-check";
+            check.setAttribute("aria-hidden", "true");
+            check.textContent = "✓";
+            item.appendChild(check);
+        }
+        const itemLabel = document.createElement("span");
+        itemLabel.className = "menu-item-label";
+        setAccessKeyText(itemLabel, label);
+        item.appendChild(itemLabel);
+        if (options.shortcut) {
+            const shortcut = document.createElement("span");
+            shortcut.className = "menu-shortcut";
+            shortcut.textContent = options.shortcut;
+            item.appendChild(shortcut);
+        }
         return item;
     };
 
@@ -460,29 +499,29 @@ const createWindowElement = (gameId) => {
         return menu;
     };
 
-    const fileButton = makeMenuButton("File", "F");
-    const viewButton = makeMenuButton("View", "V");
-    const favoritesButton = makeMenuButton("Favorites", "A");
-    const soundButton = makeMenuButton("Sound", "S");
-    const helpButton = makeMenuButton("Help", "H");
+    const fileButton = makeMenuButton("&File");
+    const viewButton = makeMenuButton("&View");
+    const favoritesButton = makeMenuButton("F&avorites");
+    const soundButton = makeMenuButton("&Sound");
+    const helpButton = makeMenuButton("&Help");
     menuBar.append(fileButton, viewButton, favoritesButton, soundButton, helpButton);
 
     const fileMenu = makeMenu("file");
     fileMenu.append(
-        makeMenuItem("Close", "close", { accessKey: "C", shortcut: "Alt+F4" }),
+        makeMenuItem("&Close", "close", { shortcut: "Alt+F4" }),
         Object.assign(document.createElement("div"), { className: "game-menu-separator" }),
-        makeMenuItem("Properties", "properties", { accessKey: "P", disabled: true })
+        makeMenuItem("&Properties", "properties", { disabled: true })
     );
 
     const viewMenu = makeMenu("view");
-    viewMenu.append(makeMenuItem("Full Screen", "fullscreen", { accessKey: "F", shortcut: "F11" }));
+    viewMenu.append(makeMenuItem("&Full Screen", "fullscreen", { shortcut: "F11" }));
 
     const favoritesMenu = makeMenu("favorites");
-    const favoriteBtn = makeMenuItem("Add to Favorites", "favorite", { accessKey: "A", checkbox: true });
+    const favoriteBtn = makeMenuItem("&Add to Favorites", "favorite", { checkbox: true });
     favoritesMenu.append(favoriteBtn);
 
     const soundMenu = makeMenu("sound");
-    const volumeBtn = makeMenuItem("Mute", "mute", { accessKey: "M", checkbox: true });
+    const volumeBtn = makeMenuItem("&Mute", "mute", { checkbox: true });
     const volumeRow = document.createElement("label");
     volumeRow.className = "game-volume-row";
     volumeRow.textContent = "Volume";
@@ -497,7 +536,7 @@ const createWindowElement = (gameId) => {
     soundMenu.append(volumeBtn, Object.assign(document.createElement("div"), { className: "game-menu-separator" }), volumeRow);
 
     const helpMenu = makeMenu("help");
-    helpMenu.append(makeMenuItem("About this game", "about", { accessKey: "A", disabled: true }));
+    helpMenu.append(makeMenuItem("&About Astro Flash", "project"));
 
     const content = document.createElement("div");
     content.className = "window-content";
@@ -1070,10 +1109,9 @@ const wireWindowControls = (win) => {
     const menus = [...win.el.querySelectorAll(".game-menu")];
     const menuButtons = [...menuBar.querySelectorAll(".game-menu-button")];
 
-    const closeGameMenus = (restoreFocus = false) => {
+    const closeGameMenus = () => {
         menus.forEach((menu) => { menu.hidden = true; });
         menuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
-        if (restoreFocus) menuBar.querySelector('[aria-expanded="true"]')?.focus();
     };
 
     const openGameMenu = (name, focusFirstItem = false) => {
@@ -1164,6 +1202,7 @@ const wireWindowControls = (win) => {
                 case "fullscreen": if (win.player) toggleFullscreen(win.player); break;
                 case "favorite": toggleFavorite(gameId); break;
                 case "mute": toggleWindowMute(win); break;
+                case "project": openProjectSettings(); break;
             }
             closeGameMenus();
         });
@@ -1613,9 +1652,9 @@ const openGameWindow = (gameId) => {
         lastUsed: Date.now(),
         content: el.querySelector(".window-content"),
         maximizeBtn: el.querySelector(".maximize-btn"),
-        favoriteBtn: el.querySelector(".favorite-btn"),
-        volumeBtn: el.querySelector(".volume-btn"),
-        volumeSlider: el.querySelector(".volume-slider")
+        favoriteBtn: el.querySelector('[data-game-action="favorite"]'),
+        volumeBtn: el.querySelector('[data-game-action="mute"]'),
+        volumeSlider: el.querySelector(".game-volume-slider")
     };
     openWindows.set(gameId, win);
     trackGamePlay(gameId);
@@ -1831,6 +1870,109 @@ const openNetworkStatus = () => {
     tick();
     const timer = setInterval(tick, 1000);
     dialog.onResult(() => clearInterval(timer));
+};
+
+const setOfflineModeEnabled = async (enabled) => {
+    if (!("serviceWorker" in navigator)) {
+        throw new Error("Offline mode is not supported by this browser.");
+    }
+
+    if (enabled) {
+        await navigator.serviceWorker.register("sw.js");
+        localStorage.setItem("offlineModeEnabled", "true");
+        return;
+    }
+
+    const registration = await navigator.serviceWorker.getRegistration("./");
+    if (registration) await registration.unregister();
+    if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+            cacheNames
+                .filter((name) => name.startsWith("astro-flash"))
+                .map((name) => caches.delete(name))
+        );
+    }
+    localStorage.setItem("offlineModeEnabled", "false");
+};
+
+const initializeOfflineMode = () => {
+    if (localStorage.getItem("offlineModeEnabled") !== "true") return;
+    setOfflineModeEnabled(true).catch((error) => {
+        console.error("Offline mode initialization failed:", error);
+    });
+};
+
+const openProjectSettings = () => {
+    const dialog = XPDialogs.createDialog({
+        title: "Astro Flash Collection"
+    });
+
+    const heading = document.createElement("h2");
+    heading.className = "project-settings-title";
+    heading.textContent = "Astro Flash Collection";
+
+    const details = document.createElement("dl");
+    details.className = "dlg-props-table";
+    const addDetail = (label, value) => {
+        const term = document.createElement("dt");
+        term.textContent = label;
+        const description = document.createElement("dd");
+        description.textContent = value;
+        details.append(term, description);
+    };
+    addDetail("Version:", APP_VERSION);
+    addDetail("Installed games:", String(Object.keys(gamesList).length));
+    addDetail("Connection:", navigator.onLine ? "Online" : "Offline");
+    addDetail(
+        "Service worker:",
+        "serviceWorker" in navigator ? "Supported" : "Unavailable"
+    );
+
+    const offlineLabel = document.createElement("label");
+    offlineLabel.className = "project-offline-setting";
+    const offlineToggle = document.createElement("input");
+    offlineToggle.type = "checkbox";
+    offlineToggle.checked =
+        localStorage.getItem("offlineModeEnabled") === "true";
+    offlineToggle.disabled = !("serviceWorker" in navigator);
+    offlineLabel.append(offlineToggle, " Enable Offline Mode");
+
+    const status = document.createElement("p");
+    status.className = "project-settings-status";
+    status.textContent = offlineToggle.checked
+        ? "Offline caching is enabled."
+        : "Offline caching is disabled.";
+
+    offlineToggle.addEventListener("change", async () => {
+        offlineToggle.disabled = true;
+        status.textContent = offlineToggle.checked
+            ? "Enabling offline caching..."
+            : "Disabling offline caching...";
+        try {
+            await setOfflineModeEnabled(offlineToggle.checked);
+            status.textContent = offlineToggle.checked
+                ? "Offline caching is enabled."
+                : "Offline caching is disabled.";
+        } catch (error) {
+            offlineToggle.checked = !offlineToggle.checked;
+            status.textContent = error.message;
+        } finally {
+            offlineToggle.disabled = !("serviceWorker" in navigator);
+        }
+    });
+
+    const suggestions = document.createElement("a");
+    suggestions.className = "project-suggestions-link";
+    suggestions.href = "https://github.com/astrovm/flash/issues";
+    suggestions.target = "_blank";
+    suggestions.rel = "noopener noreferrer";
+    suggestions.textContent = "Send suggestions or report a problem";
+
+    dialog.body.append(heading, details, offlineLabel, status, suggestions);
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
 };
 
 const MONTH_NAMES = [
@@ -2784,6 +2926,11 @@ const restart = () => {
     startShutdown(true);
 };
 
+const turnOff = () => {
+    closeCurrentSession();
+    startShutdown(false);
+};
+
 const login = (playSound = true) => {
     clearTimeout(bootTimeout);
     showDesktop();
@@ -2800,6 +2947,7 @@ const login = (playSound = true) => {
         buildDesktopIcons();
         buildPlaces();
         setupSearch();
+        initializeOfflineMode();
         startClock();
 
         // Deep link: #game-id opens that game's window
@@ -2839,7 +2987,7 @@ const setupScreenFlow = () => {
     document.getElementById("logoff-confirm")
         .addEventListener("click", logOff);
     document.getElementById("shutdown-confirm")
-        .addEventListener("click", () => startShutdown(false));
+        .addEventListener("click", turnOff);
     document.getElementById("restart-confirm")
         .addEventListener("click", restart);
     document.getElementById("standby-confirm")
@@ -2981,6 +3129,16 @@ document.addEventListener("keydown", (e) => {
         }
         return;
     }
+
+    if (e.key === "F11" && focusedGameId) {
+        const win = openWindows.get(focusedGameId);
+        if (win?.type !== "system" && win?.player) {
+            e.preventDefault();
+            toggleFullscreen(win.player);
+        }
+        return;
+    }
+
     if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
         e.preventDefault();
         toggleStartMenu();

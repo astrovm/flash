@@ -41,6 +41,10 @@ assert.ok(sets.retryCancel.find((b) => b.id === "cancel").isCancel);
 assert.deepStrictEqual(dialogs.parseAccessKey("&Yes"), { text: "Yes", key: "y" });
 assert.deepStrictEqual(dialogs.parseAccessKey("&No"), { text: "No", key: "n" });
 assert.deepStrictEqual(dialogs.parseAccessKey("&Retry"), { text: "Retry", key: "r" });
+assert.deepStrictEqual(dialogs.parseAccessKey("F&avorites"), {
+    text: "Favorites",
+    key: "a"
+});
 assert.deepStrictEqual(dialogs.parseAccessKey("Cancel"), { text: "Cancel", key: null });
 
 // ---- Byte formatting ----

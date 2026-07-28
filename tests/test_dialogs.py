@@ -35,11 +35,18 @@ class ReusableDialogTests(unittest.TestCase):
         self.assertIn('const switchUser = () =>', main)
         self.assertIn('const logOff = () =>', main)
         self.assertIn('const restart = () =>', main)
+        self.assertIn('const turnOff = () =>', main)
         self.assertIn('const setSuspended = (value) =>', main)
         self.assertIn('const closeCurrentSession = () =>', main)
         self.assertIn('Array.from(openWindows.keys()).forEach(closeGameWindow);', main)
         self.assertIn('setSuspended(true);', main)
         self.assertIn('startShutdown(true);', main)
+        self.assertIn('startShutdown(false);', main)
+        self.assertIn(
+            'document.getElementById("shutdown-confirm")\n'
+            '        .addEventListener("click", turnOff);',
+            main,
+        )
         self.assertIn('id="standby-screen"', index)
         self.assertIn('id="standby-resume"', index)
 

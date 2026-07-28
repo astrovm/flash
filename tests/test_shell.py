@@ -70,21 +70,38 @@ class ShellSourceTests(unittest.TestCase):
     def test_game_windows_use_xp_menus_for_their_controls(self):
         self.assertIn('menuBar.className = "game-menu-bar"', self.javascript)
         self.assertIn('menuBar.setAttribute("role", "menubar")', self.javascript)
-        self.assertIn('makeMenuButton("File", "F")', self.javascript)
-        self.assertIn('makeMenuButton("View", "V")', self.javascript)
-        self.assertIn('makeMenuButton("Favorites", "A")', self.javascript)
-        self.assertIn('makeMenuButton("Sound", "S")', self.javascript)
-        self.assertIn('makeMenuItem("Full Screen", "fullscreen"', self.javascript)
-        self.assertIn('makeMenuItem("Add to Favorites", "favorite"', self.javascript)
-        self.assertIn('makeMenuItem("Mute", "mute"', self.javascript)
+        self.assertIn('makeMenuButton("&File")', self.javascript)
+        self.assertIn('makeMenuButton("&View")', self.javascript)
+        self.assertIn('makeMenuButton("F&avorites")', self.javascript)
+        self.assertIn('makeMenuButton("&Sound")', self.javascript)
+        self.assertIn('makeMenuItem("&Full Screen", "fullscreen"', self.javascript)
+        self.assertIn('makeMenuItem("&Add to Favorites", "favorite"', self.javascript)
+        self.assertIn('makeMenuItem("&Mute", "mute"', self.javascript)
         self.assertIn('volumeSlider.className = "game-volume-slider"', self.javascript)
+        self.assertIn(
+            "favoriteBtn: el.querySelector('[data-game-action=\"favorite\"]')",
+            self.javascript,
+        )
+        self.assertIn(
+            "volumeBtn: el.querySelector('[data-game-action=\"mute\"]')",
+            self.javascript,
+        )
+        self.assertIn(
+            'volumeSlider: el.querySelector(".game-volume-slider")',
+            self.javascript,
+        )
         self.assertNotIn('window-toolbar', self.javascript)
+        self.assertNotIn('el.querySelector(".favorite-btn")', self.javascript)
+        self.assertNotIn('el.querySelector(".volume-btn")', self.javascript)
+        self.assertNotIn('el.querySelector(".volume-slider")', self.javascript)
+        self.assertNotIn("Aavorites", self.javascript)
 
     def test_game_menu_supports_access_keys_and_keyboard_navigation(self):
         self.assertIn('event.altKey || event.ctrlKey || event.metaKey', self.javascript)
         self.assertIn('event.key === "ArrowDown" || event.key === "ArrowUp"', self.javascript)
         self.assertIn('event.key === "ArrowLeft" || event.key === "ArrowRight"', self.javascript)
         self.assertIn('event.key === "Escape"', self.javascript)
+        self.assertIn('e.key === "F11" && focusedGameId', self.javascript)
 
     def test_game_menu_styles_cover_active_and_disabled_states(self):
         self.assertIn('.game-menu-button[aria-expanded="true"]', self.css)
@@ -181,11 +198,25 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn("fallbackTop = container.clientHeight", block)
 
     def test_start_menu_contains_only_xp_places(self):
-        self.assertNotIn("Offline Mode", self.javascript)
-        self.assertNotIn("offline-mode", self.javascript)
-        self.assertNotIn("Send suggestions", self.javascript)
-        self.assertNotIn("games installed", self.javascript)
-        self.assertNotIn("separatorTwo", self.javascript)
+        places = self.javascript[
+            self.javascript.index("const buildPlaces = () =>"):
+            self.javascript.index("const buildPinnedPrograms = () =>")
+        ]
+        self.assertNotIn("Offline Mode", places)
+        self.assertNotIn("offline-mode", places)
+        self.assertNotIn("Send suggestions", places)
+        self.assertNotIn("games installed", places)
+        self.assertNotIn("separatorTwo", places)
+
+    def test_project_controls_live_in_a_separate_dialog(self):
+        self.assertIn('title: "Astro Flash Collection"', self.javascript)
+        self.assertIn('localStorage.getItem("offlineModeEnabled")', self.javascript)
+        self.assertIn('navigator.serviceWorker.register("sw.js")', self.javascript)
+        self.assertIn(
+            '"https://github.com/astrovm/flash/issues"',
+            self.javascript,
+        )
+        self.assertIn('case "project": openProjectSettings();', self.javascript)
 
     def test_start_menu_footer_has_only_xp_power_actions(self):
         footer = re.search(

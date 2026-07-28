@@ -1477,6 +1477,28 @@ iframe {
     object-fit: contain;
 }
 
+/* Astro Flash project settings */
+
+.project-settings-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+}
+
+.project-offline-setting {
+    display: block;
+    margin: 10px 0 4px;
+}
+
+.project-settings-status {
+    min-height: 14px;
+    margin: 0 0 10px 20px;
+    color: #444;
+}
+
+.project-suggestions-link {
+    color: #0000ee;
+}
+
 /* Date and Time Properties */
 
 .dlg-datetime {
