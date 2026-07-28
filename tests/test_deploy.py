@@ -282,6 +282,75 @@ class DeployTests(unittest.TestCase):
         with mock.patch.object(deploy, "MAIN_JS_PATH", main_javascript):
             self.assertEqual(deploy.get_current_version(), "26.07.27-2")
 
+    def test_get_main_version_reads_committed_main_branch(self):
+        main_javascript = self.js_dir / "main.js"
+        main_javascript.write_text(
+            'const APP_VERSION = "99.12.31-99";\n',
+            encoding="utf-8",
+        )
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout='const APP_VERSION = "26.07.28-3";\n',
+            stderr="",
+        )
+
+        with mock.patch.object(
+            deploy.subprocess,
+            "run",
+            return_value=completed,
+        ) as run:
+            self.assertEqual(deploy.get_main_version(), "26.07.28-3")
+
+        run.assert_called_once_with(
+            ["git", "show", "main:docs/js/main.js"],
+            cwd=self.project_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_get_main_version_fails_when_main_cannot_be_read(self):
+        with mock.patch.object(
+            deploy.subprocess,
+            "run",
+            side_effect=subprocess.CalledProcessError(128, ["git", "show"]),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                'Could not read APP_VERSION from the "main" branch',
+            ):
+                deploy.get_main_version()
+
+    def test_next_version_only_increments_version_from_main(self):
+        (self.js_dir / "main.js").write_text(
+            'const APP_VERSION = "26.07.28-99";\n',
+            encoding="utf-8",
+        )
+
+        with mock.patch.object(
+            deploy,
+            "get_main_version",
+            return_value="26.07.28-3",
+        ):
+            self.assertEqual(deploy.get_next_version("26.07.28"), "26.07.28-4")
+
+    def test_next_version_uses_new_date_after_main(self):
+        with mock.patch.object(
+            deploy,
+            "get_main_version",
+            return_value="26.07.27-8",
+        ):
+            self.assertEqual(deploy.get_next_version("26.07.28"), "26.07.28")
+
+    def test_next_version_never_decreases_if_main_is_ahead(self):
+        with mock.patch.object(
+            deploy,
+            "get_main_version",
+            return_value="26.07.29-2",
+        ):
+            self.assertEqual(deploy.get_next_version("26.07.28"), "26.07.29-3")
+
 
 if __name__ == "__main__":
     unittest.main()

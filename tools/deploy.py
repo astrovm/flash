@@ -24,6 +24,10 @@ RUFFLE_LATEST_RELEASE_URL = (
 )
 RUFFLE_ASSET_SUFFIX = "-web-selfhosted.zip"
 RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
+MAIN_BRANCH = "main"
+APP_VERSION_PATTERN = re.compile(
+    r'const APP_VERSION = "([0-9]{2}\.[0-9]{2}\.[0-9]{2}(?:-\d+)?)";'
+)
 
 ASSET_PATHS = {
     "ruffle": JS_DIR / "ruffle.js",
@@ -109,30 +113,64 @@ def get_short_hash(file_path):
     return sha384.hexdigest()[:8]
 
 
-def get_current_version():
-    if not MAIN_JS_PATH.exists():
-        return None
-    content = MAIN_JS_PATH.read_text(encoding="utf-8")
-    version_match = re.search(
-        r'const APP_VERSION = "([0-9.]+(?:-\d+)?)";',
-        content,
-    )
+def extract_app_version(content):
+    version_match = APP_VERSION_PATTERN.search(content)
     return version_match.group(1) if version_match else None
 
 
-def get_next_version():
-    today = datetime.now().strftime("%y.%m.%d")
-    current = get_current_version()
+def get_current_version():
+    if not MAIN_JS_PATH.exists():
+        return None
+    return extract_app_version(MAIN_JS_PATH.read_text(encoding="utf-8"))
 
-    if not current:
+
+def get_main_version():
+    try:
+        main_javascript_path = MAIN_JS_PATH.relative_to(PROJECT_DIR).as_posix()
+    except ValueError as error:
+        raise RuntimeError("MAIN_JS_PATH must be inside the repository") from error
+
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{MAIN_BRANCH}:{main_javascript_path}"],
+            cwd=PROJECT_DIR,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise RuntimeError(
+            f'Could not read APP_VERSION from the "{MAIN_BRANCH}" branch'
+        ) from error
+
+    version = extract_app_version(result.stdout)
+    if not version:
+        raise RuntimeError(
+            f'Could not find APP_VERSION in "{MAIN_BRANCH}:{main_javascript_path}"'
+        )
+    return version
+
+
+def split_version(version):
+    date_part, separator, build_part = version.partition("-")
+    return tuple(int(part) for part in date_part.split(".")), (
+        int(build_part) if separator else 0
+    )
+
+
+def get_next_version(today=None):
+    today = today or datetime.now().strftime("%y.%m.%d")
+    main_version = get_main_version()
+    today_date, _ = split_version(today)
+    main_date, main_build = split_version(main_version)
+
+    if today_date > main_date:
         return today
 
-    if current.startswith(today):
-        build_match = re.search(r"-(\d+)$", current)
-        build_num = int(build_match.group(1)) + 1 if build_match else 1
-        return f"{today}-{build_num}"
-
-    return today
+    # Same-day deployments increment main's build. If the local clock is
+    # behind main, keep main's date and increment it rather than decreasing
+    # the deployed version.
+    return f"{main_version.split('-', 1)[0]}-{main_build + 1}"
 
 
 def update_html():
