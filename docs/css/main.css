@@ -508,6 +508,20 @@ html[data-xp-appearance="silver"] {
     position: absolute;
     inset: 0;
     z-index: 1;
+    overflow: hidden;
+}
+
+#desktop-icons.desktop-icons-overflow {
+    overflow-y: auto;
+}
+
+#desktop-icons::after {
+    content: "";
+    position: absolute;
+    top: var(--desktop-icon-overflow-height, 0);
+    left: 0;
+    width: 1px;
+    height: 1px;
 }
 
 .desktop-icon {
@@ -3072,6 +3086,19 @@ html[data-xp-appearance="silver"] {
     .explorer-items {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 480px) {
+    .desktop-icon {
+        width: 60px;
+        min-height: 58px;
+        gap: 2px;
+        padding: 2px 0;
+    }
+
+    .desktop-icon .icon-glyph { font-size: 26px; }
+    .desktop-icon .icon-glyph.has-image { width: 30px; height: 30px; }
+    .desktop-icon .icon-label { max-width: 58px; font-size: 10px; line-height: 1.05; }
 }
 
 @media (max-width: 360px) {

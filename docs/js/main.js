@@ -3672,11 +3672,17 @@ const setupSystemTray = () => {
 // Desktop Icons
 // ============================================
 
-const DESKTOP_ICON_WIDTH = 76;
-const DESKTOP_ICON_HEIGHT = 74;
-const DESKTOP_ICON_GAP = 6;
-const DESKTOP_ICON_MARGIN = 8;
+const DESKTOP_ICON_METRICS = Object.freeze({
+    regular: { width: 76, height: 74, gap: 6, margin: 8 },
+    compact: { width: 60, height: 58, gap: 4, margin: 4 }
+});
 let desktopDragged = false;
+
+const getDesktopIconMetrics = (container) => (
+    container.clientWidth <= 480
+        ? DESKTOP_ICON_METRICS.compact
+        : DESKTOP_ICON_METRICS.regular
+);
 
 const getDesktopIconPositions = () => (
     readJsonStorage(
@@ -3730,25 +3736,62 @@ const layoutDesktopIcons = (force = false) => {
     if (!container) return;
 
     const positions = force ? {} : getDesktopIconPositions();
-    const usableHeight = Math.max(container.clientHeight - DESKTOP_ICON_MARGIN * 2, DESKTOP_ICON_HEIGHT);
-    const rows = Math.max(1, Math.floor(usableHeight / (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP)));
+    const metrics = getDesktopIconMetrics(container);
+    const { width, height, gap, margin } = metrics;
+    const usableWidth = Math.max(container.clientWidth - margin * 2, width);
+    const usableHeight = Math.max(container.clientHeight - margin * 2, height);
+    const columns = Math.max(1, Math.floor((usableWidth + gap) / (width + gap)));
+    const rows = Math.max(1, Math.floor((usableHeight + gap) / (height + gap)));
+    const icons = Array.from(container.querySelectorAll(".desktop-icon"));
+    const overflowsViewport = icons.length > columns * rows;
+    const requiredRows = overflowsViewport ? Math.ceil(icons.length / columns) : rows;
+    const maxTop = Math.max(container.clientHeight - height, margin + (requiredRows - 1) * (height + gap));
+    const placed = [];
+    const overlapsPlaced = (left, top) => placed.some((rect) => (
+        left < rect.left + width && left + width > rect.left
+        && top < rect.top + height && top + height > rect.top
+    ));
+    const firstFreeGridSlot = () => {
+        for (let row = 0; row < requiredRows; row += 1) {
+            for (let column = 0; column < columns; column += 1) {
+                const left = margin + column * (width + gap);
+                const top = margin + row * (height + gap);
+                if (!overlapsPlaced(left, top)) return { left, top };
+            }
+        }
+        return { left: margin, top: margin + requiredRows * (height + gap) };
+    };
+    container.classList.toggle("desktop-icons-overflow", overflowsViewport);
+    container.style.setProperty("--desktop-icon-overflow-height", `${margin + requiredRows * (height + gap)}px`);
 
-    Array.from(container.querySelectorAll(".desktop-icon")).forEach((icon, index) => {
+    icons.forEach((icon, index) => {
         const saved = positions[icon.dataset.desktopId];
-        let fallbackLeft = DESKTOP_ICON_MARGIN
-            + Math.floor(index / rows) * (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP);
-        let fallbackTop = DESKTOP_ICON_MARGIN
-            + (index % rows) * (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP);
+        const column = overflowsViewport ? index % columns : Math.floor(index / rows);
+        const row = overflowsViewport ? Math.floor(index / columns) : index % rows;
+        let fallbackLeft = margin + column * (width + gap);
+        let fallbackTop = margin + row * (height + gap);
         // The Recycle Bin anchors to the bottom-right corner unless the
         // user has dragged it somewhere else.
         if (icon.dataset.desktopId === "__recycle-bin") {
-            fallbackLeft = container.clientWidth - DESKTOP_ICON_WIDTH - DESKTOP_ICON_MARGIN;
-            fallbackTop = container.clientHeight - DESKTOP_ICON_HEIGHT - DESKTOP_ICON_MARGIN;
+            if (!overflowsViewport) {
+                fallbackLeft = container.clientWidth - width - margin;
+                fallbackTop = container.clientHeight - height - margin;
+            }
         }
-        const left = saved?.left ?? fallbackLeft;
-        const top = saved?.top ?? fallbackTop;
-        icon.style.left = `${Math.max(0, Math.min(left, container.clientWidth - DESKTOP_ICON_WIDTH))}px`;
-        icon.style.top = `${Math.max(0, Math.min(top, container.clientHeight - DESKTOP_ICON_HEIGHT))}px`;
+        const savedLeft = saved?.left;
+        const savedTop = saved?.top;
+        const savedIsValid = Number.isFinite(savedLeft) && Number.isFinite(savedTop)
+            && savedLeft >= 0 && savedLeft <= container.clientWidth - width
+            && savedTop >= 0 && savedTop <= maxTop
+            && !overlapsPlaced(savedLeft, savedTop);
+        let left = savedIsValid ? savedLeft : fallbackLeft;
+        let top = savedIsValid ? savedTop : fallbackTop;
+        left = Math.max(0, Math.min(left, container.clientWidth - width));
+        top = Math.max(0, Math.min(top, maxTop));
+        if (overlapsPlaced(left, top)) ({ left, top } = firstFreeGridSlot());
+        placed.push({ left, top });
+        icon.style.left = `${left}px`;
+        icon.style.top = `${top}px`;
     });
 
     if (force) {
@@ -3803,8 +3846,9 @@ const wireDesktopIconDrag = (icon) => {
                 const { alignToGrid } = getDesktopLayoutSettings();
                 selected.forEach(({ item }) => {
                     if (alignToGrid) {
-                        item.style.left = `${Math.round(item.offsetLeft / (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP)) * (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP)}px`;
-                        item.style.top = `${Math.round(item.offsetTop / (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP)) * (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP)}px`;
+                        const metrics = getDesktopIconMetrics(container);
+                        item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
+                        item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
                     }
                     saveDesktopIconPosition(item);
                 });

@@ -433,6 +433,18 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn("layoutDesktopIcons();", self.javascript)
         self.assertIn("delete desktop.dataset.monitorLimited", self.javascript)
 
+    def test_desktop_icons_use_compact_metrics_and_non_overlapping_overflow(self):
+        self.assertIn("compact: { width: 60, height: 58, gap: 4, margin: 4 }", self.javascript)
+        self.assertIn("const getDesktopIconMetrics", self.javascript)
+        self.assertIn("container.clientWidth <= 480", self.javascript)
+        self.assertIn("const overflowsViewport = icons.length > columns * rows", self.javascript)
+        self.assertIn("container.classList.toggle(\"desktop-icons-overflow\"", self.javascript)
+        self.assertIn("overflowsViewport ? index % columns", self.javascript)
+        self.assertIn("getDesktopIconMetrics(container)", self.javascript)
+        self.assertIn("#desktop-icons.desktop-icons-overflow", self.css)
+        self.assertIn("@media (max-width: 480px)", self.css)
+        self.assertIn("width: 60px", self.css)
+
     def test_taskbar_keeps_overflow_windows_reachable(self):
         self.assertIn('id="taskbar-overflow-menu"', self.html)
         self.assertIn("--task-button-min-width", self.javascript)
