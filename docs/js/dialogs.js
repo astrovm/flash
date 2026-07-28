@@ -437,10 +437,10 @@
     const createNodeIcon = (node) => {
         const icon = document.createElement("span");
         icon.className = "dlg-node-icon";
-        if (node.id === fs().DRIVE_C) {
+        if (node.id === fs().DRIVE_C || node.id === fs().DRIVE_D) {
             icon.classList.add("drive-icon");
-        } else if (node.id === fs().DRIVE_D) {
-            icon.classList.add("disc-icon");
+        } else if (node.id === fs().DRIVE_F) {
+            icon.classList.add("removable-icon");
         } else if (node.type === "folder") {
             const image = document.createElement("img");
             image.src = "assets/xp/icons/mydocuments.png";
@@ -455,7 +455,8 @@
 
     const describeNodeType = (node) => {
         if (node.id === fs().DRIVE_C) return "Local Disk";
-        if (node.id === fs().DRIVE_D) return "CD Drive";
+        if (node.id === fs().DRIVE_D) return "Local Disk";
+        if (node.id === fs().DRIVE_F) return "Removable Disk";
         if (node.type === "folder") return "File folder";
         if (!node.ext) return "File";
         return `${node.ext.replace(".", "").toUpperCase()} File`;

@@ -1654,6 +1654,20 @@ const createSystemWindowContent = (shortcutId, win) => {
     const tasksBody = document.createElement("div");
     tasksBody.className = "explorer-section-body";
     tasksSection.append(tasksTitle, tasksBody);
+    const appendSidebarAction = (container, label, icon, onClick, place = "") => {
+        const button = document.createElement("button");
+        button.type = "button";
+        if (place) button.dataset.place = place;
+        const image = document.createElement("img");
+        image.src = `assets/xp/icons/${icon}`;
+        image.alt = "";
+        const text = document.createElement("span");
+        text.textContent = label;
+        button.append(image, text);
+        if (onClick) button.addEventListener("click", onClick);
+        container.appendChild(button);
+        return button;
+    };
 
     if (shortcutId === "__recycle-bin") {
         const emptyBin = document.createElement("button");
@@ -1715,24 +1729,28 @@ const createSystemWindowContent = (shortcutId, win) => {
         });
         tasksBody.append(restoreSelected, deleteSelected);
     } else {
-        ["View system information", "Add or remove programs", "Change a setting"]
-            .forEach((label) => {
-                const button = document.createElement("button");
-                button.type = "button";
-                button.textContent = label;
-                tasksBody.appendChild(button);
-            });
+        [
+            ["View System Information", "explorerproperties.png", openProjectSettings],
+            ["Add or remove programs", "Programs.png", openControlPanel],
+            ["Change a setting", "ControlPanel.png", openControlPanel]
+        ].forEach(([label, icon, action]) => appendSidebarAction(tasksBody, label, icon, action));
     }
 
     const placesSection = document.createElement("section");
-    placesSection.innerHTML = `
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true">Other Places<span aria-hidden="true">⌃</span></button></h3>
-        <div class="explorer-section-body">
-            <button type="button" data-place="network">My Network Places</button>
-            <button type="button" data-place="documents">My Documents</button>
-            <button type="button" data-place="control-panel">Control Panel</button>
-        </div>
-    `;
+    placesSection.innerHTML = '<h3><button type="button" class="explorer-section-toggle" aria-expanded="true">Other Places<span aria-hidden="true">⌃</span></button></h3>';
+    const placesBody = document.createElement("div");
+    placesBody.className = "explorer-section-body";
+    if (shortcutId === "__my-computer") {
+        appendSidebarAction(placesBody, "My Computer", "MyComputer.png", () => navigateExplorer(win, fs.MY_COMPUTER), "computer");
+        appendSidebarAction(placesBody, "My Pictures", "MyPictures.png", () => navigateExplorer(win, fs.MY_PICTURES), "pictures");
+        appendSidebarAction(placesBody, "My Music", "MyMusic.png", () => navigateExplorer(win, fs.MY_MUSIC), "music");
+        appendSidebarAction(placesBody, "My Network Places", "MyNetworkPlaces.png", openNetworkStatus, "network");
+    } else {
+        appendSidebarAction(placesBody, "My Computer", "MyComputer.png", () => navigateExplorer(win, fs.MY_COMPUTER), "computer");
+        appendSidebarAction(placesBody, "My Documents", "mydocuments.png", () => navigateExplorer(win, fs.MY_DOCUMENTS), "documents");
+        appendSidebarAction(placesBody, "Control Panel", "ControlPanel.png", openControlPanel, "control-panel");
+    }
+    placesSection.appendChild(placesBody);
 
     sidebar.append(tasksSection, placesSection);
     const treeSection = document.createElement("section");
@@ -1751,10 +1769,6 @@ const createSystemWindowContent = (shortcutId, win) => {
             toggle.querySelector("span").textContent = collapsed ? "⌄" : "⌃";
         });
     });
-    sidebar.querySelector('[data-place="documents"]')?.addEventListener("click", () => navigateExplorer(win, fs.MY_DOCUMENTS));
-    sidebar.querySelector('[data-place="control-panel"]')?.addEventListener("click", openControlPanel);
-    sidebar.querySelector('[data-place="network"]')?.addEventListener("click", openNetworkStatus);
-
     const main = document.createElement("main");
     main.className = "explorer-main";
 
@@ -1768,18 +1782,21 @@ const createSystemWindowContent = (shortcutId, win) => {
     const chrome = document.createElement("div");
     chrome.className = "explorer-chrome";
     chrome.innerHTML = `
-        <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
-        <div class="explorer-toolbar">
-            <button data-explorer-action="back"><span aria-hidden="true">←</span> Back</button>
-            <button data-explorer-action="forward" aria-label="Forward"><span aria-hidden="true">→</span></button>
-            <button data-explorer-action="up" aria-label="Up"><span aria-hidden="true">↟</span></button>
-            <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-            <button data-explorer-action="search"><span aria-hidden="true">🔍</span> Search</button>
-            <button data-explorer-action="folders" aria-pressed="false"><span aria-hidden="true">📁</span> Folders</button>
-            <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-            <button data-explorer-action="view"><span aria-hidden="true">▦</span> Views</button>
+        <div class="explorer-menu-row">
+            <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
+            <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/ms.png" alt=""></div>
         </div>
-        <label class="explorer-address"><span>Address</span><input type="text" aria-label="Address"><button type="button" data-explorer-action="go"><span aria-hidden="true">➜</span> Go</button></label>
+        <div class="explorer-toolbar">
+            <button data-explorer-action="back"><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="forward" aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="up" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+            <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+            <button data-explorer-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+            <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderView-Classic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        </div>
+        <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/MyComputer.png" alt=""><input type="text" aria-label="Address"></span><button type="button" data-explorer-action="go" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
     `;
     const body = document.createElement("div");
     body.className = "explorer-body";
@@ -1793,7 +1810,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     explorerMenu.hidden = true;
     chrome.appendChild(explorerMenu);
     const explorerMenuLabels = {
-        file: "&File", edit: "&Edit", view: "&View", favorites: "F&avorites", tools: "&Tools", help: "&Help"
+        file: "&File", view: "&View", favorites: "F&avorites", tools: "&Tools", help: "&Help"
     };
     const explorerMenuButtons = [...chrome.querySelectorAll("[data-explorer-menu]")];
     explorerMenuButtons.forEach((button) => {
@@ -1808,7 +1825,6 @@ const createSystemWindowContent = (shortcutId, win) => {
         const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId);
         const actions = {
             file: [["New Folder", "new", !writable], ["Close", "close"]],
-            edit: [["Cut", "cut", !selected.length], ["Copy", "copy", !selected.length], ["Paste", "paste", !writable || !fileOps.canPaste(win.currentFolderId)], ["Delete", "delete", !selected.length], ["Rename", "rename", selected.length !== 1]],
             view: [["Thumbnails", "thumbnails"], ["Tiles", "tiles"], ["Icons", "icons"], ["List", "list"], ["Details", "details"]],
             favorites: [["My Documents", "documents"]],
             tools: [["Properties", "properties", selected.length !== 1]],
@@ -2505,21 +2521,21 @@ const openExplorerContextMenu = (win, clientX, clientY) => {
 const createExplorerIcon = (node) => {
     const icon = document.createElement("span");
     icon.className = "explorer-item-icon";
-
-    if (node.id === fs.DRIVE_C) {
-        icon.classList.add("drive-icon");
-        return icon;
-    }
-    if (node.id === fs.DRIVE_D) {
-        icon.classList.add("disc-icon");
-        return icon;
-    }
-    if (node.type === "folder") {
+    const addImage = (fileName) => {
         const image = document.createElement("img");
-        image.src = "assets/xp/icons/mydocuments.png";
+        image.src = `assets/xp/icons/${fileName}`;
         image.alt = "";
         icon.appendChild(image);
         return icon;
+    };
+
+    if (node.id === fs.DRIVE_C || node.id === fs.DRIVE_D) return addImage("LocalDisk.png");
+    if (node.id === fs.DRIVE_F) return addImage("RemovableMedia.png");
+    if (node.id === fs.MY_MUSIC) return addImage("MyMusic.png");
+    if (node.id === fs.MY_PICTURES) return addImage("MyPictures.png");
+    if (node.id === fs.MY_COMPUTER) return addImage("MyComputer.png");
+    if (node.type === "folder") {
+        return addImage("mydocuments.png");
     }
 
     const game = node.app ? gamesList[node.app] : null;
@@ -2542,8 +2558,8 @@ const createExplorerIcon = (node) => {
 };
 
 const explorerItemDescription = (node) => {
-    if (node.id === fs.DRIVE_C) return "Game files and Windows XP";
-    if (node.id === fs.DRIVE_D) return "Flash Collection";
+    if (node.id === fs.DRIVE_C || node.id === fs.DRIVE_D) return "Local Disk";
+    if (node.id === fs.DRIVE_F) return "Removable Disk";
     if (node.type === "folder") return "File folder";
     if (node.app && gamesList[node.app]) return "Game";
     return `${(node.ext || "").replace(".", "").toUpperCase() || "File"} file`;
@@ -2572,9 +2588,16 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     const titleIcon = win.el.querySelector(".title-icon");
     if (titleIcon) {
         titleIcon.replaceChildren();
-        titleIcon.textContent = folder.id === fs.RECYCLE_BIN ? "🗑️"
-            : folder.id === fs.MY_COMPUTER ? "💻"
-            : folder.id === fs.DRIVE_C ? "💽" : "📁";
+        const image = document.createElement("img");
+        image.src = folder.id === fs.MY_COMPUTER
+            ? "assets/xp/icons/MyComputer.png"
+            : folder.id === fs.MY_MUSIC
+                ? "assets/xp/icons/MyMusic.png"
+                : folder.id === fs.MY_PICTURES
+                    ? "assets/xp/icons/MyPictures.png"
+                    : "assets/xp/icons/mydocuments.png";
+        image.alt = "";
+        titleIcon.appendChild(image);
     }
     renderExplorerTree(win);
 
@@ -2598,21 +2621,36 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     } else {
         heading.textContent = folder.name;
     }
-    heading.hidden = !heading.textContent;
+    heading.hidden = !heading.textContent || folder.id === fs.MY_COMPUTER;
 
     const items = main.querySelector(".explorer-items");
     items.dataset.view = win.explorerView || "tiles";
     items.innerHTML = "";
 
-    const children = fs.getChildren(folder.id)
-        .slice()
-        .sort((a, b) => (
-            folder.id === fs.MY_COMPUTER
-                ? (a.id === fs.DRIVE_C ? -1 : b.id === fs.DRIVE_C ? 1 : a.name.localeCompare(b.name))
-                : a.type === b.type
+    const myComputerGroup = (node) => (
+        [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
+            ? "Files Stored on This Computer"
+            : node.id === fs.DRIVE_F
+                ? "Devices with Removable Storage"
+                : "Hard Disk Drives"
+    );
+    const myComputerGroupOrder = [
+        "Files Stored on This Computer",
+        "Hard Disk Drives",
+        "Devices with Removable Storage"
+    ];
+    const children = [
+        ...(folder.id === fs.MY_COMPUTER ? [fs.getNode(fs.MY_MUSIC), fs.getNode(fs.MY_PICTURES)] : []),
+        ...fs.getChildren(folder.id)
+    ].filter(Boolean).sort((a, b) => (
+        folder.id === fs.MY_COMPUTER
+            ? myComputerGroupOrder.indexOf(myComputerGroup(a))
+                - myComputerGroupOrder.indexOf(myComputerGroup(b))
+                || a.name.localeCompare(b.name)
+            : a.type === b.type
                 ? a.name.localeCompare(b.name)
                 : a.type === "folder" ? -1 : 1
-        ));
+    ));
 
     if (!children.length) {
         const empty = document.createElement("p");
@@ -2639,7 +2677,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     let currentGroup = "";
     children.forEach((node) => {
         if (folder.id === fs.MY_COMPUTER) {
-            const group = node.id === fs.DRIVE_D ? "Devices with Removable Storage" : "Hard Disk Drives";
+            const group = myComputerGroup(node);
             if (group !== currentGroup) {
                 const groupHeading = document.createElement("h3");
                 groupHeading.className = "explorer-group-heading";
@@ -2660,9 +2698,11 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
         name.textContent = node.name;
         const description = document.createElement("small");
         description.textContent = explorerItemDescription(node);
-        label.append(name, description);
+        label.appendChild(name);
+        if (folder.id !== fs.MY_COMPUTER) label.appendChild(description);
 
         item.append(createExplorerIcon(node), label);
+        if (folder.id === fs.MY_COMPUTER) item.classList.add("my-computer-item");
         if (items.dataset.view === "details") {
             item.classList.add("explorer-details-row");
             const type = document.createElement("span");
@@ -2797,10 +2837,12 @@ const openSystemWindow = (shortcutId) => {
     el.classList.add("explorer-window");
     el.querySelectorAll(".game-menu-bar, .game-menu")
         .forEach((node) => node.remove());
-    el.style.width = `${Math.min(590, desktopWidth - 16)}px`;
-    el.style.height = `${Math.min(410, desktopHeight - 16)}px`;
-    el.style.left = `${Math.max(8, (desktopWidth - Math.min(590, desktopWidth - 16)) / 2)}px`;
-    el.style.top = `${Math.max(8, (desktopHeight - Math.min(410, desktopHeight - 16)) / 2)}px`;
+    const windowWidth = Math.min(700, desktopWidth - 16);
+    const windowHeight = Math.min(500, desktopHeight - 16);
+    el.style.width = `${windowWidth}px`;
+    el.style.height = `${windowHeight}px`;
+    el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
+    el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
     document.getElementById("desktop").appendChild(el);
 
     const win = {

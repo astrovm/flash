@@ -245,7 +245,7 @@ class ShellSourceTests(unittest.TestCase):
 
     def test_explorer_menu_bar_has_access_keys_and_keyboard_navigation(self):
         for token in (
-            'file: "&File", edit: "&Edit"', 'F&avorites',
+            'file: "&File", view: "&View"', 'F&avorites',
             'button.dataset.accessKey = key', 'event.altKey',
             '"ArrowLeft", "ArrowRight", "ArrowDown", "Home", "End"',
             'explorerMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"))',
@@ -255,14 +255,18 @@ class ShellSourceTests(unittest.TestCase):
     def test_explorer_matches_xp_task_pane_toolbar_and_drive_groups(self):
         for token in (
             'class="explorer-section-toggle"',
-            'class="explorer-section-body"',
+            'placesBody.className = "explorer-section-body"',
             'content.classList.toggle("folders-visible")',
             'aria-pressed="false"',
             'data-explorer-action="go"',
+            '"Files Stored on This Computer"',
             '"Hard Disk Drives"',
             '"Devices with Removable Storage"',
-            "a.id === fs.DRIVE_C ? -1",
+            "node.id === fs.DRIVE_F",
             'className = "explorer-group-heading"',
+            'appendSidebarAction(placesBody, "My Pictures", "MyPictures.png"',
+            'src="assets/xp/icons/Back.png"',
+            'src="assets/xp/ms.png"',
         ):
             self.assertIn(token, self.javascript)
         for token in (

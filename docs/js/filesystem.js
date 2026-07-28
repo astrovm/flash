@@ -25,6 +25,7 @@
         MY_COMPUTER: "my-computer",
         DRIVE_C: "drive-c",
         DRIVE_D: "drive-d",
+        DRIVE_F: "drive-f",
         DOCUMENTS_AND_SETTINGS: "documents-and-settings",
         USER_PROFILE: "user-profile",
         DESKTOP: "desktop",
@@ -129,7 +130,8 @@
 
         folder(WELL_KNOWN.MY_COMPUTER, "My Computer", null);
         folder(WELL_KNOWN.DRIVE_C, "Local Disk (C:)", WELL_KNOWN.MY_COMPUTER);
-        folder(WELL_KNOWN.DRIVE_D, "CD Drive (D:)", WELL_KNOWN.MY_COMPUTER);
+        folder(WELL_KNOWN.DRIVE_D, "Local Disk (D:)", WELL_KNOWN.MY_COMPUTER);
+        folder(WELL_KNOWN.DRIVE_F, "Removable Device (F:)", WELL_KNOWN.MY_COMPUTER);
         folder(
             WELL_KNOWN.DOCUMENTS_AND_SETTINGS,
             "Documents and Settings",
@@ -165,6 +167,7 @@
                 return;
             }
             existing.type = "folder";
+            existing.name = seedNode.name;
             existing.protected = true;
             existing.parent = seedNode.parent;
             existing.children = Array.isArray(existing.children)
@@ -247,6 +250,7 @@
         if (id === WELL_KNOWN.MY_COMPUTER) return "My Computer";
         if (id === WELL_KNOWN.DRIVE_C) return "C:\\";
         if (id === WELL_KNOWN.DRIVE_D) return "D:\\";
+        if (id === WELL_KNOWN.DRIVE_F) return "F:\\";
         if (!node.parent || !nodes[node.parent]) return node.name;
         const parentPath = getPath(node.parent);
         if (parentPath === null) return node.name;
@@ -268,10 +272,12 @@
         if (!segments.length) return null;
 
         let currentId;
-        if (/^[cd]:$/i.test(segments[0])) {
-            currentId = segments[0][0].toLowerCase() === "c"
-                ? WELL_KNOWN.DRIVE_C
-                : WELL_KNOWN.DRIVE_D;
+        if (/^[cdf]:$/i.test(segments[0])) {
+            currentId = {
+                c: WELL_KNOWN.DRIVE_C,
+                d: WELL_KNOWN.DRIVE_D,
+                f: WELL_KNOWN.DRIVE_F
+            }[segments[0][0].toLowerCase()];
             segments.shift();
         } else {
             currentId = WELL_KNOWN.MY_COMPUTER;

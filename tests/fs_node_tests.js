@@ -25,7 +25,9 @@ assert.ok(fs.getNode(fs.MY_PICTURES), "My Pictures exists");
 assert.ok(fs.getNode(fs.MY_MUSIC), "My Music exists");
 assert.ok(fs.getNode(fs.DRIVE_C), "Local Disk exists");
 assert.ok(fs.getNode(fs.RECYCLE_BIN), "Recycle Bin exists");
-assert.strictEqual(fs.getChildren(fs.MY_COMPUTER).length, 2);
+assert.strictEqual(fs.getChildren(fs.MY_COMPUTER).length, 3);
+assert.strictEqual(fs.getNode(fs.DRIVE_D).name, "Local Disk (D:)");
+assert.strictEqual(fs.getNode(fs.DRIVE_F).name, "Removable Device (F:)");
 
 // ---- Paths ----
 assert.strictEqual(fs.getPath(fs.DRIVE_C), "C:\\");
@@ -40,6 +42,7 @@ assert.strictEqual(
 assert.strictEqual(fs.resolvePath("c:\\documents and settings\\ASTRO\\desktop"), fs.DESKTOP);
 assert.strictEqual(fs.resolvePath("C:\\does\\not\\exist"), null);
 assert.strictEqual(fs.resolvePath("My Computer"), fs.MY_COMPUTER);
+assert.strictEqual(fs.resolvePath("F:\\"), fs.DRIVE_F);
 
 // ---- Windows-compatible name validation ----
 assert.strictEqual(fs.validateName("notes.txt"), "notes.txt");
