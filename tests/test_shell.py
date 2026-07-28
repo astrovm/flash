@@ -310,10 +310,47 @@ class ShellSourceTests(unittest.TestCase):
             self.javascript.index("const openSearchDialog = () =>"):
             self.javascript.index("const buildPinnedPrograms = () =>")
         ]
-        self.assertIn('title: "Search Results"', places)
+        self.assertIn('openSystemWindow("__search")', places)
         self.assertIn('title: "Run"', places)
+        self.assertIn('XPDialogs.openFile({ title: "Browse" })', places)
+        self.assertIn("resolveShellCommand(input.value)", places)
+        self.assertIn("rememberRunCommand(input.value)", places)
+        self.assertIn('setAccessKeyText(prompt, "&Open:")', places)
+        self.assertIn('dialog.accessKeys.set("o"', places)
         self.assertIn("const openAllPrograms", self.javascript)
         self.assertNotIn('search.addEventListener("click", () => {\n        openAllPrograms()', places)
+
+    def test_all_programs_uses_separate_cascading_flyouts(self):
+        self.assertIn('id="start-menu-flyouts"', self.html)
+        self.assertNotIn('id="game-search"', self.html)
+        for token in (
+            "const getProgramGroups = () =>", "const positionStartFlyout =",
+            "const openProgramsFolder =", "start-program-flyout",
+            "start-program-folder", "setTimeout(open, 220)",
+            'event.key === "ArrowRight"', 'event.key === "Escape"',
+            'e.target.closest("#start-menu-flyouts")',
+            "const getUniqueCategoryMnemonics =", "setAccessKeyText(label, mnemonic)",
+        ):
+            self.assertIn(token, self.javascript)
+
+    def test_favorite_refresh_does_not_depend_on_removed_start_search(self):
+        favorite_block = self.javascript[
+            self.javascript.index("const toggleFavorite ="):
+            self.javascript.index("const trackGamePlay =")
+        ]
+        self.assertIn("buildPinnedPrograms();", favorite_block)
+        self.assertIn("openAllPrograms();", favorite_block)
+        self.assertNotIn("game-search", favorite_block)
+
+    def test_search_companion_uses_virtual_filesystem_filters_and_open_actions(self):
+        for token in (
+            '"__search"', "const searchVirtualNodes =", "fs.MY_COMPUTER",
+            'id="search-filename"', 'id="search-location"', 'id="search-type"',
+            'value="files"', 'value="folders"', 'value="games"',
+            'value="applications"', "wireSearchCompanion(win)", "fs.open(result.node.id)",
+            "const representedGameIds = new Set()", "!representedGameIds.has(id)",
+        ):
+            self.assertIn(token, self.javascript)
 
     def test_project_controls_live_in_a_separate_dialog(self):
         self.assertIn('title: "Astro Flash Collection"', self.javascript)

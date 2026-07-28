@@ -82,6 +82,11 @@ const systemShortcuts = {
         icon: "assets/xp/icons/mycomputer.png",
         desktop: false
     },
+    "__search": {
+        title: "Search Results",
+        icon: "assets/xp/icons/Search.png",
+        desktop: false
+    },
     "__astro-settings": {
         title: "Astro Flash Settings",
         icon: "assets/xp/icons/ControlPanel.png"
@@ -505,7 +510,10 @@ const toggleFavorite = (gameId) => {
     // Refresh start menu if it's open
     const startMenu = document.getElementById("start-menu");
     if (!startMenu.hidden) {
-        buildProgramsList(document.getElementById("game-search").value);
+        buildPinnedPrograms();
+        if (!document.getElementById("start-menu-flyouts").hidden) {
+            openAllPrograms();
+        }
     }
 };
 
@@ -1481,6 +1489,34 @@ const createSystemWindowContent = (shortcutId, win) => {
         return content;
     }
 
+    if (shortcutId === "__search") {
+        content.className = "search-companion-content";
+        content.innerHTML = `
+            <aside class="search-companion-panel">
+                <h2>Search Companion</h2>
+                <label for="search-filename">All or part of the file name:</label>
+                <input id="search-filename" class="xp-input" type="search" autocomplete="off">
+                <label for="search-location">Look in:</label>
+                <select id="search-location" class="xp-input"></select>
+                <label for="search-type">What do you want to find?</label>
+                <select id="search-type" class="xp-input">
+                    <option value="all">All files and folders</option>
+                    <option value="files">Files</option>
+                    <option value="folders">Folders</option>
+                    <option value="games">Games</option>
+                    <option value="applications">Applications</option>
+                </select>
+                <button type="button" class="xp-btn default" data-search-action="search">&nbsp;Search</button>
+            </aside>
+            <main class="search-results-pane">
+                <h2>Search Results</h2>
+                <p class="search-results-status" aria-live="polite">Enter a name and click Search.</p>
+                <div class="search-results-list" role="listbox" aria-label="Search results"></div>
+            </main>
+        `;
+        return content;
+    }
+
     const taskTitles = {
         "__my-documents": "File and Folder Tasks",
         "__my-pictures": "Picture Tasks",
@@ -1878,6 +1914,137 @@ const wireDisplayProperties = (win) => {
 
 const fs = window.VirtualFS;
 const fileOps = window.FileOperations;
+
+// Shared names understood by Run, Search, and the shell. Keep these routes in
+// one place so adding a simulated application does not create another parser.
+const SHELL_COMMANDS = [
+    { id: "documents", title: "My Documents", aliases: ["documents", "my documents"], run: () => openSystemWindow("__my-documents") },
+    { id: "pictures", title: "My Pictures", aliases: ["pictures", "my pictures"], run: () => openSystemWindow("__my-pictures") },
+    { id: "music", title: "My Music", aliases: ["music", "my music"], run: () => openSystemWindow("__my-music") },
+    { id: "computer", title: "My Computer", aliases: ["computer", "my computer"], run: () => openSystemWindow("__my-computer") },
+    { id: "control-panel", title: "Control Panel", aliases: ["control panel"], run: () => openControlPanel() },
+    { id: "printers", title: "Printers and Faxes", aliases: ["printers", "printers and faxes"], run: () => openPrintersAndFaxes() },
+    { id: "help", title: "Help and Support", aliases: ["help", "help and support"], run: () => openHelpAndSupport() },
+    { id: "search", title: "Search", aliases: ["search"], run: () => openSystemWindow("__search") },
+    { id: "run", title: "Run", aliases: ["run"], run: () => openRunDialog() }
+];
+
+const normalizeShellCommand = (value) => String(value || "").trim().toLowerCase();
+const resolveShellCommand = (value) => {
+    const command = normalizeShellCommand(value);
+    if (!command) return null;
+    const shell = SHELL_COMMANDS.find((entry) => entry.aliases.includes(command));
+    if (shell) return { kind: "application", title: shell.title, run: shell.run };
+    const gameId = Object.keys(gamesList).find((id) => (
+        id.toLowerCase() === command || formatGameTitle(id).toLowerCase() === command
+    ));
+    if (gameId) return { kind: "game", title: formatGameTitle(gameId), run: () => openGameWindow(gameId) };
+    const nodeId = fs.resolvePath(String(value).trim());
+    const node = nodeId && fs.getNode(nodeId);
+    if (node) return {
+        kind: node.type === "folder" ? "folder" : "file",
+        title: node.name,
+        run: () => fs.open(node.id)
+    };
+    return null;
+};
+
+const RUN_HISTORY_KEY = "runHistory";
+const getRunHistory = () => readJsonStorage(RUN_HISTORY_KEY, [], (history) => (
+    Array.isArray(history) && history.every((entry) => typeof entry === "string")
+)).slice(0, 10);
+const rememberRunCommand = (value) => {
+    const text = String(value).trim();
+    if (!text) return;
+    const history = getRunHistory().filter((entry) => entry.toLowerCase() !== text.toLowerCase());
+    writeJsonStorage(RUN_HISTORY_KEY, [text, ...history].slice(0, 10));
+};
+
+const searchVirtualNodes = ({ query = "", locationId = fs.MY_COMPUTER, type = "all" } = {}) => {
+    const wanted = normalizeShellCommand(query);
+    const matches = (name) => !wanted || name.toLowerCase().includes(wanted);
+    const results = [];
+    const representedGameIds = new Set();
+    const pending = [locationId];
+    const seen = new Set();
+    while (pending.length) {
+        const id = pending.pop();
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const node = fs.getNode(id);
+        if (!node) continue;
+        if (id !== locationId && matches(node.name) && (type === "all" || type === "files" && node.type === "file" || type === "folders" && node.type === "folder" || type === "games" && !!node.app)) {
+            results.push({ kind: node.app ? "game-file" : node.type, node });
+            if (node.app) representedGameIds.add(node.app);
+        }
+        if (node.type === "folder") fs.getChildren(id).forEach((child) => pending.push(child.id));
+    }
+    if (type === "all" || type === "games") {
+        Object.keys(gamesList).filter((id) => !representedGameIds.has(id) && matches(formatGameTitle(id))).forEach((gameId) => {
+            results.push({ kind: "game", gameId, title: formatGameTitle(gameId) });
+        });
+    }
+    if (type === "all" || type === "applications") {
+        SHELL_COMMANDS.filter((entry) => matches(entry.title)).forEach((entry) => {
+            results.push({ kind: "application", command: entry, title: entry.title });
+        });
+    }
+    return results.sort((a, b) => (a.title || a.node.name).localeCompare(b.title || b.node.name));
+};
+
+const wireSearchCompanion = (win) => {
+    const content = win.el.querySelector(".search-companion-content");
+    if (!content) return;
+    const query = content.querySelector("#search-filename");
+    const location = content.querySelector("#search-location");
+    const type = content.querySelector("#search-type");
+    const status = content.querySelector(".search-results-status");
+    const list = content.querySelector(".search-results-list");
+    [
+        [fs.MY_COMPUTER, "My Computer"],
+        [fs.DESKTOP, "Desktop"],
+        [fs.MY_DOCUMENTS, "My Documents"],
+        [fs.MY_PICTURES, "My Pictures"],
+        [fs.MY_MUSIC, "My Music"]
+    ].filter(([id]) => fs.getNode(id)).forEach(([id, label]) => {
+        const option = new Option(label, id);
+        location.appendChild(option);
+    });
+    const openResult = (result) => {
+        if (result.gameId) return openGameWindow(result.gameId);
+        if (result.command) return result.command.run();
+        return fs.open(result.node.id);
+    };
+    const render = () => {
+        const results = searchVirtualNodes({ query: query.value, locationId: location.value, type: type.value });
+        list.replaceChildren();
+        status.textContent = results.length ? `${results.length} result${results.length === 1 ? "" : "s"} found.` : "No results found.";
+        results.forEach((result) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "explorer-item";
+            item.setAttribute("role", "option");
+            const label = document.createElement("span");
+            const name = document.createElement("b");
+            name.textContent = result.title || result.node.name;
+            const description = document.createElement("small");
+            description.textContent = result.command ? "Application" : result.gameId ? "Game" : `${result.kind === "folder" ? "File folder" : explorerItemDescription(result.node)} — ${fs.getPath(result.node.id)}`;
+            label.append(name, description);
+            item.append(result.gameId ? createGameIconElement(result.gameId, "explorer-item-icon") : result.command ? createGameIconElement("__search", "explorer-item-icon") : createExplorerIcon(result.node), label);
+            item.addEventListener("dblclick", () => openResult(result));
+            item.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); openResult(result); } });
+            item.addEventListener("click", () => {
+                list.querySelectorAll(".selected").forEach((entry) => entry.classList.remove("selected"));
+                item.classList.add("selected");
+            });
+            list.appendChild(item);
+        });
+    };
+    content.querySelector('[data-search-action="search"]').addEventListener("click", render);
+    query.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); render(); } });
+    [location, type].forEach((control) => control.addEventListener("change", render));
+    query.focus();
+};
 const confirmRecycleDelete = (ids) => XPDialogs.confirm(
     ids.length === 1 ? "Are you sure you want to send this item to the Recycle Bin?" : "Are you sure you want to send these items to the Recycle Bin?",
     "Confirm File Delete", "warning"
@@ -2474,6 +2641,7 @@ const openSystemWindow = (shortcutId) => {
     if (win.currentFolderId) renderExplorerItems(win);
     wireSystemWindowControls(win);
     if (shortcutId === "__display-properties") wireDisplayProperties(win);
+    if (shortcutId === "__search") wireSearchCompanion(win);
     focusWindow(shortcutId);
 };
 
@@ -3887,30 +4055,7 @@ const createMenuGameItem = (gameId) => {
     return item;
 };
 
-const buildProgramsList = (filter) => {
-    const container = document.getElementById("start-menu-programs");
-    container.innerHTML = "";
-
-    const query = filter.trim().toLowerCase();
-
-    // Flat search results
-    if (query) {
-        const matches = Object.keys(gamesList)
-            .filter((gameId) => formatGameTitle(gameId).toLowerCase().includes(query))
-            .sort((a, b) => formatGameTitle(a).localeCompare(formatGameTitle(b)));
-
-        if (matches.length === 0) {
-            const empty = document.createElement("div");
-            empty.className = "sm-empty";
-            empty.textContent = "No games found";
-            container.appendChild(empty);
-            return;
-        }
-        matches.forEach((gameId) => container.appendChild(createMenuGameItem(gameId)));
-        return;
-    }
-
-    // Grouped categories
+const getProgramGroups = () => {
     const groups = {};
     const addToGroup = (category, gameId) => {
         if (!groups[category]) {
@@ -3935,45 +4080,24 @@ const buildProgramsList = (filter) => {
         addToGroup(game.category || "Other", gameId);
     });
 
-    const orderedCategories = Object.keys(groups).sort((catA, catB) => {
+    return Object.keys(groups).sort((catA, catB) => {
         if (catA === "Recently Played") return -1;
         if (catB === "Recently Played") return 1;
         if (catA === "Favorites") return -1;
         if (catB === "Favorites") return 1;
         return catA.localeCompare(catB);
-    });
+    }).map((category) => [category, groups[category].slice().sort((a, b) => formatGameTitle(a).localeCompare(formatGameTitle(b)))]);
+};
 
-    orderedCategories.forEach((category, index) => {
-        const group = document.createElement("div");
-        group.className = "sm-category" + (index === 0 ? " open" : "");
-
-        const header = document.createElement("button");
-        header.type = "button";
-        header.className = "sm-category-header";
-
-        const icon = document.createElement("span");
-        icon.className = "sm-cat-icon";
-        icon.textContent = categoryIcons[category] || categoryIcons["Other"];
-
-        const name = document.createElement("span");
-        name.textContent = category;
-
-        const count = document.createElement("span");
-        count.className = "sm-cat-count";
-        count.textContent = groups[category].length;
-
-        header.append(icon, name, count);
-        header.addEventListener("click", () => group.classList.toggle("open"));
-
-        const list = document.createElement("div");
-        list.className = "sm-games";
-        groups[category]
-            .sort((a, b) => formatGameTitle(a).localeCompare(formatGameTitle(b)))
-            .forEach((gameId) => list.appendChild(createMenuGameItem(gameId)));
-
-        group.append(header, list);
-        container.appendChild(group);
-    });
+const getUniqueCategoryMnemonics = (groups) => {
+    const used = new Set();
+    return new Map(groups.map(([category]) => {
+        const index = [...category].findIndex((character) => /[\p{L}\p{N}]/u.test(character) && !used.has(character.toLowerCase()));
+        const marker = index < 0 ? 0 : index;
+        const key = category[marker].toLowerCase();
+        used.add(key);
+        return [category, `${category.slice(0, marker)}&${category.slice(marker)}`];
+    }));
 };
 
 const openRecentDocuments = () => {
@@ -4076,81 +4200,51 @@ const openHelpAndSupport = () => {
     ]);
 };
 
-const openSearchDialog = () => {
-    const dialog = XPDialogs.createDialog({ title: "Search Results" });
-    const prompt = document.createElement("label");
-    prompt.textContent = "Search for a game:";
-    const input = document.createElement("input");
-    input.type = "search";
-    input.className = "shell-dialog-input";
-    prompt.appendChild(input);
-    const results = document.createElement("div");
-    results.className = "shell-dialog-list";
-    const render = () => {
-        const query = input.value.trim().toLowerCase();
-        results.replaceChildren();
-        Object.keys(gamesList)
-            .filter((gameId) => formatGameTitle(gameId).toLowerCase().includes(query))
-            .sort((a, b) => formatGameTitle(a).localeCompare(formatGameTitle(b)))
-            .forEach((gameId) => {
-                const item = document.createElement("button");
-                item.type = "button";
-                item.textContent = formatGameTitle(gameId);
-                item.addEventListener("click", () => {
-                    dialog.close();
-                    openGameWindow(gameId);
-                });
-                results.appendChild(item);
-            });
-        if (!results.childElementCount) results.textContent = "No games found.";
-    };
-    input.addEventListener("input", render);
-    dialog.body.append(prompt, results);
-    render();
-    XPDialogs.addButtonRow(dialog, [
-        { id: "close", label: "Close", isDefault: true, isCancel: true }
-    ]);
-    input.focus();
-};
+const openSearchDialog = () => openSystemWindow("__search");
 
 const openRunDialog = () => {
     const dialog = XPDialogs.createDialog({ title: "Run" });
+    const intro = document.createElement("p");
+    intro.textContent = "Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.";
     const prompt = document.createElement("label");
-    prompt.textContent = "Type the name of a program, folder, or document.";
+    setAccessKeyText(prompt, "&Open:");
     const input = document.createElement("input");
     input.type = "text";
     input.className = "shell-dialog-input";
+    input.setAttribute("list", "run-command-history");
+    input.id = "run-command";
+    const history = document.createElement("datalist");
+    history.id = "run-command-history";
+    getRunHistory().forEach((entry) => history.appendChild(new Option(entry, entry)));
     prompt.appendChild(input);
     const status = document.createElement("p");
+    status.className = "shell-dialog-status";
     const run = () => {
-        const command = input.value.trim().toLowerCase();
-        const locations = {
-            "my documents": () => openSystemWindow("__my-documents"),
-            "my pictures": () => openSystemWindow("__my-pictures"),
-            "my music": () => openSystemWindow("__my-music"),
-            "my computer": () => openSystemWindow("__my-computer"),
-            "control panel": openControlPanel,
-            "printers": openPrintersAndFaxes,
-            "help": openHelpAndSupport
-        };
-        const gameId = Object.keys(gamesList).find((id) => (
-            id.toLowerCase() === command
-            || formatGameTitle(id).toLowerCase() === command
-        ));
-        const action = gameId ? () => openGameWindow(gameId) : locations[command];
-        if (!action) {
-            status.textContent = `Windows cannot find '${input.value}'.`;
+        const resolved = resolveShellCommand(input.value);
+        if (!resolved || resolved.run() === false) {
+            status.textContent = `Windows cannot find "${input.value}". Make sure you typed the name correctly, and then try again.`;
+            XPDialogs.alert(status.textContent, "Run", "error");
             return;
         }
+        rememberRunCommand(input.value);
         dialog.close();
-        action();
     };
     const runButton = XPDialogs.createDialogButton({ id: "run", label: "&OK" }, run);
-    dialog.body.append(prompt, status, runButton);
-    XPDialogs.addButtonRow(dialog, [
-        { id: "cancel", label: "Cancel", isCancel: true }
-    ]);
+    const browseButton = XPDialogs.createDialogButton({ id: "browse", label: "&Browse..." }, async () => {
+        const node = await XPDialogs.openFile({ title: "Browse" });
+        if (node) input.value = fs.getPath(node.id);
+        input.focus();
+    });
+    const cancelButton = XPDialogs.createDialogButton({ id: "cancel", label: "Cancel" }, () => dialog.close());
+    const row = document.createElement("div");
+    row.className = "dlg-buttons";
+    row.append(runButton, cancelButton, browseButton);
+    dialog.body.append(intro, prompt, history, status, row);
     dialog.defaultButton = runButton;
+    [
+        [runButton, "&OK"], [cancelButton, "Cancel"], [browseButton, "&Browse..."]
+    ].forEach(([button, label]) => XPDialogs.registerAccessKey(dialog, button, label));
+    dialog.accessKeys.set("o", { disabled: false, click: () => input.focus() });
     input.focus();
 };
 
@@ -4258,30 +4352,102 @@ const buildPinnedPrograms = () => {
     pinned.forEach((gameId) => container.appendChild(createMenuGameItem(gameId)));
 };
 
-const openAllPrograms = () => {
-    const panel = document.getElementById("all-programs-panel");
-    const button = document.getElementById("all-programs-button");
-    panel.hidden = false;
-    button.classList.add("active");
-    buildProgramsList(document.getElementById("game-search").value);
-};
-
+let startFlyoutTimer = null;
 const closeAllPrograms = () => {
-    document.getElementById("all-programs-panel").hidden = true;
+    clearTimeout(startFlyoutTimer);
+    const host = document.getElementById("start-menu-flyouts");
+    host.replaceChildren();
+    host.hidden = true;
     document.getElementById("all-programs-button").classList.remove("active");
 };
 
+const positionStartFlyout = (panel, anchor) => {
+    const rect = anchor.getBoundingClientRect();
+    panel.style.visibility = "hidden";
+    panel.style.left = "0px";
+    panel.style.top = "0px";
+    const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
+    const right = rect.right + width <= innerWidth - 2;
+    panel.style.left = `${Math.max(2, Math.min(right ? rect.right : rect.left - width, innerWidth - width - 2))}px`;
+    panel.style.top = `${Math.max(2, Math.min(rect.top, innerHeight - height - 2))}px`;
+    panel.style.visibility = "";
+};
+
+const wireStartFlyoutKeyboard = (panel, parentButton) => {
+    panel.addEventListener("keydown", (event) => {
+        const items = [...panel.querySelectorAll("button")];
+        const index = items.indexOf(document.activeElement);
+        if (event.key === "Escape") { event.preventDefault(); closeAllPrograms(); parentButton.focus(); return; }
+        if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+            event.preventDefault();
+            const next = event.key === "Home" ? items[0] : event.key === "End" ? items.at(-1) : items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length];
+            next?.focus();
+            return;
+        }
+        if (event.key === "ArrowLeft") { event.preventDefault(); parentButton.focus(); return; }
+        const item = items.find((entry) => entry.dataset.accessKey === event.key.toLowerCase());
+        if (item) { event.preventDefault(); item.click(); }
+    });
+};
+
+const openProgramsFolder = (category, games, anchor) => {
+    const host = document.getElementById("start-menu-flyouts");
+    [...host.querySelectorAll(".start-program-flyout")].slice(1).forEach((panel) => panel.remove());
+    const panel = document.createElement("div");
+    panel.className = "start-program-flyout";
+    panel.setAttribute("role", "menu");
+    games.forEach((gameId) => {
+        const item = createMenuGameItem(gameId);
+        item.setAttribute("role", "menuitem");
+        panel.appendChild(item);
+    });
+    host.appendChild(panel);
+    positionStartFlyout(panel, anchor);
+    wireStartFlyoutKeyboard(panel, anchor);
+    panel.addEventListener("pointerenter", () => clearTimeout(startFlyoutTimer));
+    panel.addEventListener("pointerleave", () => { startFlyoutTimer = setTimeout(closeAllPrograms, 420); });
+};
+
+const openAllPrograms = (focusFirst = false) => {
+    clearTimeout(startFlyoutTimer);
+    const host = document.getElementById("start-menu-flyouts");
+    const button = document.getElementById("all-programs-button");
+    host.replaceChildren(); host.hidden = false; button.classList.add("active");
+    const panel = document.createElement("div");
+    panel.className = "start-program-flyout";
+    panel.setAttribute("role", "menu");
+    const groups = getProgramGroups();
+    const mnemonics = getUniqueCategoryMnemonics(groups);
+    groups.forEach(([category, games]) => {
+        const folder = document.createElement("button");
+        folder.type = "button"; folder.className = "start-program-folder";
+        folder.dataset.category = category; folder.setAttribute("role", "menuitem"); folder.setAttribute("aria-haspopup", "menu");
+        const label = document.createElement("span");
+        const mnemonic = mnemonics.get(category);
+        const { key } = setAccessKeyText(label, mnemonic);
+        folder.dataset.accessKey = key;
+        const icon = document.createElement("span");
+        icon.textContent = categoryIcons[category] || categoryIcons.Other;
+        folder.append(icon, label, Object.assign(document.createElement("span"), { className: "start-program-arrow", textContent: "▶" }));
+        const open = (withFocus = false) => { openProgramsFolder(category, games, folder); if (withFocus) host.querySelectorAll(".start-program-flyout")[1]?.querySelector("button")?.focus(); };
+        folder.addEventListener("pointerenter", () => { clearTimeout(startFlyoutTimer); startFlyoutTimer = setTimeout(open, 220); });
+        folder.addEventListener("click", () => open(true));
+        folder.addEventListener("keydown", (event) => { if (event.key === "ArrowRight" || event.key === "Enter") { event.preventDefault(); open(true); } });
+        panel.appendChild(folder);
+    });
+    host.appendChild(panel); positionStartFlyout(panel, button); wireStartFlyoutKeyboard(panel, button);
+    panel.addEventListener("pointerenter", () => clearTimeout(startFlyoutTimer));
+    panel.addEventListener("pointerleave", () => { startFlyoutTimer = setTimeout(closeAllPrograms, 420); });
+    if (focusFirst) panel.querySelector("button")?.focus();
+};
+
 const toggleAllPrograms = () => {
-    if (document.getElementById("all-programs-panel").hidden) {
-        openAllPrograms();
-    } else {
-        closeAllPrograms();
-    }
+    const host = document.getElementById("start-menu-flyouts");
+    if (host.hidden) openAllPrograms(true); else closeAllPrograms();
 };
 
 const openStartMenu = () => {
-    const searchInput = document.getElementById("game-search");
-    searchInput.value = "";
     buildPinnedPrograms();
     closeAllPrograms();
     document.getElementById("start-menu").hidden = false;
@@ -4304,12 +4470,10 @@ const toggleStartMenu = () => {
 };
 
 const setupSearch = () => {
-    const searchInput = document.getElementById("game-search");
-    searchInput.addEventListener("input", (e) => {
-        buildProgramsList(e.target.value);
-    });
-    document.getElementById("all-programs-button")
-        .addEventListener("click", toggleAllPrograms);
+    const button = document.getElementById("all-programs-button");
+    button.addEventListener("click", toggleAllPrograms);
+    button.addEventListener("pointerenter", () => { if (!document.getElementById("start-menu").hidden) { clearTimeout(startFlyoutTimer); startFlyoutTimer = setTimeout(openAllPrograms, 220); } });
+    button.addEventListener("keydown", (event) => { if (["ArrowRight", "ArrowDown"].includes(event.key)) { event.preventDefault(); openAllPrograms(true); } });
 };
 
 // ============================================
@@ -4669,7 +4833,7 @@ document.addEventListener("pointerdown", (e) => {
 
     const startMenu = document.getElementById("start-menu");
     if (startMenu.hidden) return;
-    if (!e.target.closest("#start-menu") && !e.target.closest("#start-button")) {
+    if (!e.target.closest("#start-menu") && !e.target.closest("#start-menu-flyouts") && !e.target.closest("#start-button")) {
         closeStartMenu();
     }
 });

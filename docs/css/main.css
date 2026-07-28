@@ -1150,6 +1150,14 @@ html[data-xp-appearance="silver"] {
 .explorer-item.selected { border-color: #316ac5; background: #316ac5; color: #fff; }
 .drop-target { outline: 2px solid #316ac5 !important; background: #d8e7f8 !important; }
 .explorer-item.selected small { color: #fff; }
+.search-companion-content { display: grid; grid-template-columns: minmax(185px, 34%) 1fr; height: 100%; background: #fff; color: #111; }
+.search-companion-panel { display: flex; flex-direction: column; gap: 7px; padding: 14px; background: linear-gradient(#eff7ff, #cfe5fa); border-right: 1px solid #8aa9c5; }
+.search-companion-panel h2, .search-results-pane h2 { margin: 0 0 5px; font-size: 15px; color: #174a86; }
+.search-companion-panel .xp-btn { align-self: flex-start; margin-top: 6px; }
+.search-results-pane { min-width: 0; padding: 14px; overflow: auto; }
+.search-results-status { margin: 0 0 8px; }
+.search-results-list { display: grid; gap: 3px; }
+.search-results-list .explorer-item { width: 100%; text-align: left; }
 .explorer-items[data-view="icons"] { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
 .explorer-items[data-view="thumbnails"] { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 .explorer-items[data-view="thumbnails"] .explorer-item { min-height: 110px; flex-direction: column; align-items: flex-start; }
@@ -2379,6 +2387,14 @@ html[data-xp-appearance="silver"] {
     border: 2px solid #1d58c7;
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45);
 }
+
+/* All Programs is a real adjacent XP flyout; Search lives in Search Companion. */
+#start-menu-flyouts { position: fixed; inset: 0; z-index: 7100; pointer-events: none; }
+.start-program-flyout { position: fixed; width: min(260px, 58vw); max-height: min(420px, 72vh); overflow: auto; padding: 3px; background: #fff; border: 2px solid #1d58c7; box-shadow: 2px 2px 8px rgba(0, 0, 0, .45); pointer-events: auto; }
+.start-program-flyout button { width: 100%; min-height: 28px; display: flex; align-items: center; gap: 5px; padding: 4px 7px; border: 0; background: #fff; color: #111; text-align: left; cursor: var(--xp-cursor); }
+.start-program-flyout button:hover, .start-program-flyout button:focus-visible { background: #316ac5; color: #fff; outline: none; }
+.start-program-folder { font-weight: 700; }
+.start-program-arrow { margin-left: auto; font-size: 10px; }
 
 .start-menu-search {
     flex: none;
