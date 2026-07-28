@@ -2702,6 +2702,9 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
 
 // Games participate in the filesystem as ".game" files on the Desktop,
 // opened through the registered file association.
+const gameFileName = (gameId) =>
+    `${formatGameTitle(gameId).replace(/[<>:"/\\|?*\u0000-\u001f]/g, "").replace(/\s+/g, " ").trim()}.game`;
+
 const syncGameFiles = () => {
     fs.getChildren(fs.DESKTOP)
         .filter((node) => node.ext === ".game" && !gamesList[node.app])
@@ -2714,14 +2717,14 @@ const syncGameFiles = () => {
         });
 
     Object.keys(gamesList).forEach((gameId) => {
-        const title = formatGameTitle(gameId);
+        const fileName = gameFileName(gameId);
         const existing = fs
             .getChildren(fs.DESKTOP)
             .find((node) => node.ext === ".game" && node.app === gameId);
         if (existing) {
-            if (existing.name !== `${title}.game`) {
+            if (existing.name !== fileName) {
                 try {
-                    fs.rename(existing.id, `${title}.game`);
+                    fs.rename(existing.id, fileName);
                 } catch (error) {
                     console.error(error);
                 }
@@ -2729,7 +2732,7 @@ const syncGameFiles = () => {
             return;
         }
         try {
-            fs.createFile(fs.DESKTOP, `${title}.game`, { app: gameId });
+            fs.createFile(fs.DESKTOP, fileName, { app: gameId });
         } catch (error) {
             console.error(error);
         }
@@ -4503,7 +4506,10 @@ const openRunDialog = () => {
     dialog.defaultButton = runButton;
     [
         [runButton, "&OK"], [cancelButton, "Cancel"], [browseButton, "&Browse..."]
-    ].forEach(([button, label]) => XPDialogs.registerAccessKey(dialog, button, label));
+    ].forEach(([button, label]) => {
+        const { key } = XPDialogs.parseAccessKey(label);
+        if (key && !dialog.accessKeys.has(key)) dialog.accessKeys.set(key, button);
+    });
     dialog.accessKeys.set("o", { disabled: false, click: () => input.focus() });
     input.focus();
 };
@@ -4623,14 +4629,16 @@ const closeAllPrograms = () => {
 
 const positionStartFlyout = (panel, anchor) => {
     const rect = anchor.getBoundingClientRect();
+    const taskbarTop = document.getElementById("taskbar")?.getBoundingClientRect().top ?? innerHeight;
     panel.style.visibility = "hidden";
     panel.style.left = "0px";
     panel.style.top = "0px";
+    panel.style.maxHeight = `${Math.max(80, taskbarTop - 4)}px`;
     const width = panel.offsetWidth;
     const height = panel.offsetHeight;
     const right = rect.right + width <= innerWidth - 2;
     panel.style.left = `${Math.max(2, Math.min(right ? rect.right : rect.left - width, innerWidth - width - 2))}px`;
-    panel.style.top = `${Math.max(2, Math.min(rect.top, innerHeight - height - 2))}px`;
+    panel.style.top = `${Math.max(2, Math.min(rect.top, taskbarTop - height - 2))}px`;
     panel.style.visibility = "";
 };
 

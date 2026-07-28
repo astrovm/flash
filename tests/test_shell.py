@@ -319,14 +319,21 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn("rememberRunCommand(input.value)", places)
         self.assertIn('setAccessKeyText(prompt, "&Open:")', places)
         self.assertIn('dialog.accessKeys.set("o"', places)
+        self.assertIn("XPDialogs.parseAccessKey(label)", places)
         self.assertIn("const openAllPrograms", self.javascript)
         self.assertNotIn('search.addEventListener("click", () => {\n        openAllPrograms()', places)
+
+    def test_game_files_use_windows_compatible_names(self):
+        self.assertIn("const gameFileName = (gameId) =>", self.javascript)
+        self.assertIn('replace(/[<>:"/\\\\|?*\\u0000-\\u001f]/g, "")', self.javascript)
+        self.assertIn("fs.createFile(fs.DESKTOP, fileName", self.javascript)
 
     def test_all_programs_uses_separate_cascading_flyouts(self):
         self.assertIn('id="start-menu-flyouts"', self.html)
         self.assertNotIn('id="game-search"', self.html)
         for token in (
             "const getProgramGroups = () =>", "const positionStartFlyout =",
+            'document.getElementById("taskbar")?.getBoundingClientRect().top',
             "const openProgramsFolder =", "start-program-flyout",
             "start-program-folder", "setTimeout(open, 220)",
             'event.key === "ArrowRight"', 'event.key === "Escape"',
