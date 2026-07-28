@@ -130,6 +130,26 @@ class ShellSourceTests(unittest.TestCase):
         # custom desktop icon drag, so images must opt out of it.
         self.assertIn("image.draggable = false", self.javascript)
 
+    def test_virtual_folders_use_desktop_sized_folder_icons(self):
+        self.assertIn('return addImage("NewFolder.png")', self.javascript)
+        self.assertIn(".desktop-icon .explorer-item-icon img", self.css)
+        self.assertRegex(
+            self.css,
+            r"\.desktop-icon \.explorer-item-icon img\s*\{[^}]*width:\s*38px",
+        )
+
+    def test_text_files_open_in_filesystem_backed_notepad(self):
+        self.assertJavascriptContains(
+            'fs.registerFileType(".txt", (file) => openNotepad(file))',
+            'fs.setContent(node.id, editor.value)',
+            'XPDialogs.openFile({ title: "Open"',
+            'XPDialogs.saveFile({ title: "Save As"',
+            'win.beforeClose = confirmSaveChanges',
+        )
+        for label in ("&File", "&Edit", "F&ormat", "&View", "&Help"):
+            self.assertIn(label, self.javascript)
+        self.assertIn(".notepad-editor", self.css)
+
     def test_selected_desktop_icon_shows_full_label(self):
         match = re.search(
             r"\.desktop-icon\.selected \.icon-label\s*\{([^}]*)\}",
