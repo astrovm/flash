@@ -443,6 +443,18 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn('.task-button:focus-visible', self.css)
         self.assertIn('.task-button[aria-pressed="true"]', self.css)
 
+    def test_shell_keyboard_router_covers_window_switching_and_file_shortcuts(self):
+        for token in (
+            "const cycleShellWindow =", "const getMruWindows =", "window-switcher",
+            'e.altKey && e.key === "Tab"', 'e.altKey && e.key === "Escape"',
+            'e.altKey && e.key === "F4" && !focusedGameId',
+            'e.shiftKey && e.key === "F10"', "isEditableTarget", "xp-dialog-overlay",
+            "fileOps.permanentlyDelete(selected)", "pasteIntoFolder(explorerWin.currentFolderId)",
+            ".system-dialog-overlay:not([hidden])", "altTabIndex = windows.findIndex",
+            "if (!showSwitcher) altTabIndex = order.findIndex", "altTabIndex = 0;",
+        ):
+            self.assertIn(token, self.javascript)
+
     def test_show_desktop_restores_focus_and_resize_reflows_tasks(self):
         self.assertIn("focusedGameId,", self.javascript)
         self.assertIn("showDesktopSnapshot.windows.forEach", self.javascript)

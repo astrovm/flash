@@ -1149,6 +1149,7 @@ html[data-xp-appearance="silver"] {
 
 .explorer-item.selected { border-color: #316ac5; background: #316ac5; color: #fff; }
 .drop-target { outline: 2px solid #316ac5 !important; background: #d8e7f8 !important; }
+#window-switcher { position: fixed; z-index: 9900; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 210px; padding: 18px 24px; color: #fff; background: rgba(18, 54, 108, .92); border: 2px solid #d6e7ff; box-shadow: 3px 3px 10px #000; text-align: center; font-weight: 700; }
 .explorer-item.selected small { color: #fff; }
 .search-companion-content { display: grid; grid-template-columns: minmax(185px, 34%) 1fr; height: 100%; background: #fff; color: #111; }
 .search-companion-panel { display: flex; flex-direction: column; gap: 7px; padding: 14px; background: linear-gradient(#eff7ff, #cfe5fa); border-right: 1px solid #8aa9c5; }

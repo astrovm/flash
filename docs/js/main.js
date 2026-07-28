@@ -2494,16 +2494,6 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
                 e.preventDefault();
                 openExplorerNode(win, node);
             }
-            if (e.key === "Delete") {
-                e.preventDefault();
-                if (win.currentFolderId === fs.RECYCLE_BIN) {
-                    XPDialogs.confirm("Are you sure you want to permanently delete this item?", "Confirm File Delete", "warning")
-                        .then((yes) => yes && fileOps.permanentlyDelete([node.id]));
-                } else {
-                    XPDialogs.confirm("Are you sure you want to send this item to the Recycle Bin?", "Confirm File Delete", "warning")
-                        .then((yes) => yes && fileOps.removeToBin([node.id]));
-                }
-            }
             if (e.key === "F2" && !node.protected) {
                 e.preventDefault();
                 const next = window.prompt("Rename", node.name);
@@ -4771,6 +4761,40 @@ window.fetch = async (...args) => {
 // Global Event Listeners
 // ============================================
 
+let altTabOrder = null;
+let altTabIndex = 0;
+const getMruWindows = () => [...openWindows.values()].sort((a, b) => b.zIndex - a.zIndex);
+const cycleShellWindow = (direction = 1, showSwitcher = false) => {
+    const windows = showSwitcher && altTabOrder ? altTabOrder : getMruWindows();
+    if (!windows.length) return;
+    if (showSwitcher && !altTabOrder) {
+        altTabOrder = windows;
+        altTabIndex = windows.findIndex((win) => win.gameId === focusedGameId);
+    }
+    const order = altTabOrder || windows;
+    if (!showSwitcher) altTabIndex = order.findIndex((win) => win.gameId === focusedGameId);
+    altTabIndex = (altTabIndex + direction + order.length) % order.length;
+    const win = order[altTabIndex];
+    restoreWindow(win.gameId);
+    focusWindow(win.gameId);
+    if (showSwitcher) {
+        let switcher = document.getElementById("window-switcher");
+        if (!switcher) { switcher = document.createElement("div"); switcher.id = "window-switcher"; document.body.appendChild(switcher); }
+        switcher.textContent = formatGameTitle(win.gameId);
+        switcher.hidden = false;
+    }
+};
+const finishAltTab = () => {
+    altTabOrder = null;
+    altTabIndex = 0;
+    document.getElementById("window-switcher")?.setAttribute("hidden", "");
+};
+const isEditableTarget = (target) => /^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName || "") || target?.isContentEditable;
+const confirmPermanentDelete = (ids) => XPDialogs.confirm(
+    ids.length === 1 ? "Are you sure you want to permanently delete this item?" : "Are you sure you want to permanently delete these items?",
+    "Confirm File Delete", "warning"
+).then((yes) => yes && ids.forEach((id) => fs.destroy(id)));
+
 window.addEventListener("load", () => {
     setupScreenFlow();
     setupDesktopContextMenu();
@@ -4847,6 +4871,21 @@ document.addEventListener("keydown", (e) => {
         return;
     }
 
+    // Dialogs and editable controls own their keyboard semantics. Do not
+    // steal browser text editing or modal access keys for shell shortcuts.
+    if (e.defaultPrevented || document.querySelector(".xp-dialog-overlay, .system-dialog-overlay:not([hidden])") || isEditableTarget(e.target)) return;
+
+    if (e.altKey && e.key === "Tab") {
+        e.preventDefault();
+        cycleShellWindow(e.shiftKey ? -1 : 1, true);
+        return;
+    }
+    if (e.altKey && e.key === "Escape") {
+        e.preventDefault();
+        cycleShellWindow(1, false);
+        return;
+    }
+
     const desktopIcon = document.activeElement?.closest?.(".desktop-icon");
     const desktopHasFocus = desktopIcon || document.activeElement?.id === "desktop-icons";
     if (desktopHasFocus) {
@@ -4866,7 +4905,9 @@ document.addEventListener("keydown", (e) => {
             e.preventDefault(); pasteIntoFolder(fs.DESKTOP); return;
         }
         if (e.key === "Delete" && movable) {
-            e.preventDefault(); confirmRecycleDelete(selectedFsIds); return;
+            e.preventDefault();
+            if (e.shiftKey) confirmPermanentDelete(selectedFsIds); else confirmRecycleDelete(selectedFsIds);
+            return;
         }
         if (e.key === "F2" && movable && selectedFsIds.length === 1) {
             e.preventDefault(); beginDesktopRename(selectedFsIds[0]); return;
@@ -4888,6 +4929,22 @@ document.addEventListener("keydown", (e) => {
             target.focus();
             return;
         }
+    }
+
+    const explorerItem = document.activeElement?.closest?.(".explorer-item");
+    const explorerWin = explorerItem && [...openWindows.values()].find((win) => win.el.contains(explorerItem));
+    if (explorerWin) {
+        const selected = selectedExplorerNodes(explorerWin);
+        const protectedSelection = selected.some((id) => fs.isProtected(id));
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+            e.preventDefault(); explorerWin.el.querySelectorAll(".explorer-item").forEach((item) => item.classList.add("selected")); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && selected.length) { e.preventDefault(); fileOps.copy(selected); return; }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x" && selected.length && !protectedSelection) { e.preventDefault(); fileOps.cut(selected); return; }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && fileOps.canPaste(explorerWin.currentFolderId)) { e.preventDefault(); pasteIntoFolder(explorerWin.currentFolderId); return; }
+        if (e.key === "F2" && selected.length === 1 && !protectedSelection) { e.preventDefault(); const name = window.prompt("Rename", fs.getNode(selected[0]).name); if (name !== null) fileOps.rename(selected[0], name); return; }
+        if (e.key === "Delete" && selected.length && !protectedSelection) { e.preventDefault(); if (e.shiftKey) confirmPermanentDelete(selected); else if (explorerWin.currentFolderId === fs.RECYCLE_BIN) XPDialogs.confirm("Are you sure you want to permanently delete the selected items?", "Confirm File Delete", "warning").then((yes) => yes && fileOps.permanentlyDelete(selected)); else confirmRecycleDelete(selected); return; }
+        if (e.shiftKey && e.key === "F10") { e.preventDefault(); const rect = explorerItem.getBoundingClientRect(); openExplorerContextMenu(explorerWin, rect.left, rect.bottom); return; }
     }
 
     if (e.key === "F11" && focusedGameId) {
@@ -4923,6 +4980,12 @@ document.addEventListener("keydown", (e) => {
         return;
     }
 
+    if (e.altKey && e.key === "F4" && !focusedGameId) {
+        e.preventDefault();
+        showShutdownDialog();
+        return;
+    }
+
     if (e.altKey && (e.key === " " || e.code === "Space") && focusedGameId) {
         e.preventDefault();
         const win = openWindows.get(focusedGameId);
@@ -4940,4 +5003,8 @@ document.addEventListener("keydown", (e) => {
         closeStartMenu();
         closeTrayVolumePopup();
     }
+});
+
+document.addEventListener("keyup", (e) => {
+    if (e.key === "Alt") finishAltTab();
 });
