@@ -81,6 +81,10 @@ const systemShortcuts = {
         title: "Display Properties",
         icon: "assets/xp/icons/mycomputer.png",
         desktop: false
+    },
+    "__astro-settings": {
+        title: "Astro Flash Settings",
+        icon: "assets/xp/icons/ControlPanel.png"
     }
 };
 
@@ -1964,7 +1968,9 @@ const openSystemWindow = (shortcutId) => {
 };
 
 const openDesktopItem = (itemId) => {
-    if (systemShortcuts[itemId]) {
+    if (itemId === "__astro-settings") {
+        openProjectSettings();
+    } else if (systemShortcuts[itemId]) {
         openSystemWindow(itemId);
     } else {
         openGameWindow(itemId);
@@ -2972,7 +2978,7 @@ const buildDesktopIcons = () => {
     // Windows XP order: My Computer first, My Documents next, then the
     // games; the Recycle Bin comes last and anchors to the corner.
     const desktopItems = [
-        ...["__my-computer", "__my-documents"]
+        ...["__my-computer", "__my-documents", "__astro-settings"]
             .filter((id) => systemShortcuts[id]?.desktop !== false),
         ...sortedGames,
         ...["__recycle-bin"]
@@ -3383,7 +3389,6 @@ const startDestinationActions = {
     controlPanel: openControlPanel,
     printers: openPrintersAndFaxes,
     help: openHelpAndSupport,
-    settings: openProjectSettings,
     search: openSearchDialog,
     run: openRunDialog
 };
@@ -3450,9 +3455,6 @@ const buildPlaces = () => {
         ["printers", "&Printers and Faxes", "PrintersandFaxes.png"],
         ["help", "&Help and Support", "HelpandSupport.png"],
     ].forEach(([id, label, icon]) => container.appendChild(createPlace({ id, label, icon })));
-
-    const settings = createPlace({ id: "settings", label: "Astro Flash Settings", icon: "ControlPanel.png" });
-    container.appendChild(settings);
 
     [
         ["search", "&Search", "Search.png"],

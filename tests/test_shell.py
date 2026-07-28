@@ -186,9 +186,13 @@ class ShellSourceTests(unittest.TestCase):
             self.javascript.index("const buildPlaces = () =>"):
             self.javascript.index("const buildPinnedPrograms = () =>")
         ]
-        self.assertIn("Astro Flash Settings", places)
-        self.assertIn('id: "settings"', places)
-        self.assertIn("settings: openProjectSettings", self.javascript)
+        self.assertNotIn("Astro Flash Settings", places)
+        self.assertNotIn('id: "settings"', places)
+        self.assertIn('"__astro-settings"', self.javascript)
+        self.assertIn(
+            'if (itemId === "__astro-settings")',
+            self.javascript,
+        )
         self.assertNotIn("Send suggestions", places)
         self.assertNotIn("games installed", places)
         self.assertNotIn("separatorTwo", places)
