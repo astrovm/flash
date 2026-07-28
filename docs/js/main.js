@@ -1979,10 +1979,16 @@ const layoutDesktopIcons = (force = false) => {
 
     Array.from(container.querySelectorAll(".desktop-icon")).forEach((icon, index) => {
         const saved = positions[icon.dataset.game];
-        const fallbackLeft = DESKTOP_ICON_MARGIN
+        let fallbackLeft = DESKTOP_ICON_MARGIN
             + Math.floor(index / rows) * (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP);
-        const fallbackTop = DESKTOP_ICON_MARGIN
+        let fallbackTop = DESKTOP_ICON_MARGIN
             + (index % rows) * (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP);
+        // The Recycle Bin anchors to the bottom-right corner unless the
+        // user has dragged it somewhere else.
+        if (icon.dataset.game === "__recycle-bin") {
+            fallbackLeft = container.clientWidth - DESKTOP_ICON_WIDTH - DESKTOP_ICON_MARGIN;
+            fallbackTop = container.clientHeight - DESKTOP_ICON_HEIGHT - DESKTOP_ICON_MARGIN;
+        }
         const left = saved?.left ?? fallbackLeft;
         const top = saved?.top ?? fallbackTop;
         icon.style.left = `${Math.max(0, Math.min(left, container.clientWidth - DESKTOP_ICON_WIDTH))}px`;
@@ -2128,9 +2134,14 @@ const buildDesktopIcons = () => {
     const sortedGames = Object.keys(gamesList).sort((a, b) =>
         formatGameTitle(a).localeCompare(formatGameTitle(b))
     );
+    // Windows XP order: My Computer first, My Documents next, then the
+    // games; the Recycle Bin comes last and anchors to the corner.
     const desktopItems = [
-        ...Object.keys(systemShortcuts).filter((id) => systemShortcuts[id].desktop !== false),
-        ...sortedGames
+        ...["__my-computer", "__my-documents"]
+            .filter((id) => systemShortcuts[id]?.desktop !== false),
+        ...sortedGames,
+        ...["__recycle-bin"]
+            .filter((id) => systemShortcuts[id]?.desktop !== false)
     ];
 
     desktopItems.forEach((gameId) => {

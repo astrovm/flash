@@ -126,6 +126,31 @@ class ShellSourceTests(unittest.TestCase):
             'title: "Date and Time Properties"', self.javascript
         )
 
+    def test_my_computer_is_the_first_desktop_icon(self):
+        match = re.search(
+            r"const desktopItems = \[(.*?)\];", self.javascript, re.S
+        )
+        self.assertIsNotNone(match)
+        items = match.group(1)
+        my_computer = items.index('"__my-computer"')
+        my_documents = items.index('"__my-documents"')
+        recycle_bin = items.index('"__recycle-bin"')
+        sorted_games = items.index("sortedGames")
+        self.assertLess(my_computer, my_documents)
+        self.assertLess(my_documents, sorted_games)
+        self.assertLess(sorted_games, recycle_bin)
+
+    def test_recycle_bin_defaults_to_bottom_right(self):
+        match = re.search(
+            r'icon\.dataset\.game === "__recycle-bin"\) \{(.*?)\}',
+            self.javascript,
+            re.S,
+        )
+        self.assertIsNotNone(match)
+        block = match.group(1)
+        self.assertIn("fallbackLeft = container.clientWidth", block)
+        self.assertIn("fallbackTop = container.clientHeight", block)
+
 
 if __name__ == "__main__":
     unittest.main()
