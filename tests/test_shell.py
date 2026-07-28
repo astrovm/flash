@@ -187,10 +187,44 @@ class ShellSourceTests(unittest.TestCase):
             self.javascript.index("const buildPinnedPrograms = () =>")
         ]
         self.assertIn("Astro Flash Settings", places)
-        self.assertIn("openProjectSettings", places)
+        self.assertIn('id: "settings"', places)
+        self.assertIn("settings: openProjectSettings", self.javascript)
         self.assertNotIn("Send suggestions", places)
         self.assertNotIn("games installed", places)
         self.assertNotIn("separatorTwo", places)
+
+    def test_every_start_destination_has_a_functional_route(self):
+        places = self.javascript[
+            self.javascript.index("const startDestinationActions = {"):
+            self.javascript.index("const buildPinnedPrograms = () =>")
+        ]
+        for action in (
+            "documents", "recent", "pictures", "music", "computer",
+            "controlPanel", "printers", "help", "search", "run",
+        ):
+            self.assertRegex(places, rf"{action}: .+(?:,|\n)")
+        self.assertIn('item.dataset.startAction = id', places)
+        self.assertIn("item.title = XPDialogs.parseAccessKey(title).text", places)
+        self.assertIn("setAccessKeyText(text, label)", places)
+        self.assertIn("closeStartMenu();", places)
+        self.assertIn("startDestinationActions[id]();", places)
+        for icon in (
+            "MyDocuments.png", "RecentDocuments.png", "MyPictures.png",
+            "MyMusic.png", "MyComputer.png", "ControlPanel.png",
+            "PrintersandFaxes.png", "HelpandSupport.png", "Search.png",
+            "Run.png",
+        ):
+            self.assertIn(icon, places)
+
+    def test_start_search_and_run_open_their_own_dialogs(self):
+        places = self.javascript[
+            self.javascript.index("const openSearchDialog = () =>"):
+            self.javascript.index("const buildPinnedPrograms = () =>")
+        ]
+        self.assertIn('title: "Search Results"', places)
+        self.assertIn('title: "Run"', places)
+        self.assertIn("const openAllPrograms", self.javascript)
+        self.assertNotIn('search.addEventListener("click", () => {\n        openAllPrograms()', places)
 
     def test_project_controls_live_in_a_separate_dialog(self):
         self.assertIn('title: "Astro Flash Collection"', self.javascript)
@@ -212,6 +246,70 @@ class ShellSourceTests(unittest.TestCase):
             "menuBar.append(fileButton, helpButton, toolbar)",
             self.javascript,
         )
+
+    def test_display_properties_has_a_validated_persisted_pending_model(self):
+        self.assertIn('const DISPLAY_SETTINGS_KEY = "displaySettings"', self.javascript)
+        self.assertIn("const isDisplaySettings = (value) =>", self.javascript)
+        self.assertIn("const getDisplaySettings = () =>", self.javascript)
+        self.assertIn("const saveDisplaySettings = (settings) =>", self.javascript)
+        self.assertIn("const applyDisplaySettings = (settings) =>", self.javascript)
+        self.assertIn("const wireDisplayProperties = (win) =>", self.javascript)
+        self.assertIn("let pending = { ...current };", self.javascript)
+        self.assertIn("controls.apply.disabled = JSON.stringify(pending) === JSON.stringify(current);", self.javascript)
+        self.assertIn('data-display-action="apply"', self.javascript)
+        self.assertIn('data-display-action="ok"', self.javascript)
+        self.assertIn('data-display-action="cancel"', self.javascript)
+
+    def test_display_properties_exposes_all_tabs_and_safe_wallpaper_controls(self):
+        for tab in ("themes", "desktop", "saver", "appearance", "settings"):
+            self.assertIn(f'display-tab-{tab}', self.javascript)
+            self.assertIn(f'display-panel-{tab}', self.javascript)
+        self.assertIn('accept="image/png,image/jpeg,image/gif,image/webp"', self.javascript)
+        self.assertIn("MAX_CUSTOM_WALLPAPER_BYTES", self.javascript)
+        self.assertIn('reader.result.startsWith("data:image/")', self.javascript)
+        self.assertIn("const scheduleScreenSaver =", self.javascript)
+        self.assertIn('id = "screen-saver-overlay"', self.javascript)
+        self.assertIn("settings.screenSaverWait * 60 * 1000", self.javascript)
+        self.assertIn('event.key === "Home"', self.javascript)
+        self.assertIn('event.key === "End"', self.javascript)
+        self.assertIn('#desktop[data-wallpaper-position="tile"]', self.css)
+        self.assertIn('html[data-xp-appearance="olive"]', self.css)
+
+    def test_taskbar_keeps_overflow_windows_reachable(self):
+        self.assertIn('id="taskbar-overflow-menu"', self.html)
+        self.assertIn("const capacity = Math.max(1, Math.floor(container.clientWidth / 94))", self.javascript)
+        self.assertIn(
+            "const appendTaskButton = ([gameId, win]) =>",
+            self.javascript,
+        )
+        self.assertIn(
+            "hidden.forEach(([gameId, win]) =>",
+            self.javascript,
+        )
+        self.assertNotIn(
+            "const appendTaskButton = ([win, gameId]) =>",
+            self.javascript,
+        )
+        self.assertIn('overflow.className = "task-button task-button-grouped"', self.javascript)
+        self.assertIn('overflow.setAttribute("aria-haspopup", "menu")', self.javascript)
+
+    def test_taskbar_supports_window_and_taskbar_context_menus(self):
+        self.assertIn('btn.addEventListener("contextmenu"', self.javascript)
+        self.assertIn("openWindowSystemMenu(win, event.clientX, event.clientY)", self.javascript)
+        for label in (
+            "Cascade Windows", "Tile Windows Horizontally",
+            "Tile Windows Vertically", "Show the Desktop", "Task Manager",
+            "Lock the Taskbar", "Properties",
+        ):
+            self.assertIn(label, self.html)
+        self.assertIn("const setupTaskbarContextMenu = () =>", self.javascript)
+        self.assertIn("const toggleShowDesktop = () =>", self.javascript)
+        self.assertIn("let showDesktopSnapshot = null", self.javascript)
+
+    def test_taskbar_keyboard_and_state_styles_are_present(self):
+        self.assertIn('taskButton && ["ArrowLeft", "ArrowRight", "Home", "End"]', self.javascript)
+        self.assertIn('.task-button:focus-visible', self.css)
+        self.assertIn('.task-button[aria-pressed="true"]', self.css)
 
     def test_start_menu_footer_has_only_xp_power_actions(self):
         footer = re.search(

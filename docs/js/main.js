@@ -18,8 +18,29 @@ let shellInitialized = false;
 let suspended = false;
 let iconsBuilt = false;
 let placesBuilt = false;
+let screenSaverTimeout = null;
+let screenSaverWired = false;
 
 const gamesList = window.FLASH_GAMES;
+
+const DISPLAY_SETTINGS_KEY = "displaySettings";
+const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
+const DISPLAY_WALLPAPERS = {
+    bliss: "url(\"../assets/xp/bliss.jpg\")",
+    blue: "linear-gradient(135deg, #1e5799, #7db9e8)",
+    olive: "linear-gradient(135deg, #586b2f, #b7c878)"
+};
+const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
+    theme: "windows-xp",
+    wallpaper: "bliss",
+    customWallpaper: "",
+    position: "stretch",
+    backgroundColor: "#3a6ea5",
+    appearance: "blue",
+    screenSaver: "none",
+    screenSaverWait: 10,
+    resolution: "auto"
+});
 
 const categoryIcons = {
     "Racing": "🏁",
@@ -41,6 +62,16 @@ const systemShortcuts = {
     "__my-computer": {
         title: "My Computer",
         icon: "assets/xp/icons/mycomputer.png"
+    },
+    "__my-pictures": {
+        title: "My Pictures",
+        icon: "assets/xp/icons/MyPictures.png",
+        desktop: false
+    },
+    "__my-music": {
+        title: "My Music",
+        icon: "assets/xp/icons/MyMusic.png",
+        desktop: false
     },
     "__recycle-bin": {
         title: "Recycle Bin",
@@ -129,6 +160,82 @@ const writeJsonStorage = (key, value) => {
     } catch (error) {
         console.error(`Error storing ${key} in localStorage:`, error);
     }
+};
+
+const isDisplaySettings = (value) => (
+    value && typeof value === "object"
+    && ["windows-xp", "classic", "olive"].includes(value.theme)
+    && Object.hasOwn(DISPLAY_WALLPAPERS, value.wallpaper)
+    && typeof value.customWallpaper === "string"
+    && (value.customWallpaper === "" || (
+        /^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(value.customWallpaper)
+        && value.customWallpaper.length <= MAX_CUSTOM_WALLPAPER_BYTES * 1.4
+    ))
+    && ["center", "tile", "stretch"].includes(value.position)
+    && /^#[0-9a-f]{6}$/i.test(value.backgroundColor)
+    && ["blue", "olive", "silver"].includes(value.appearance)
+    && ["none", "marquee", "stars"].includes(value.screenSaver)
+    && Number.isInteger(value.screenSaverWait)
+    && value.screenSaverWait >= 1 && value.screenSaverWait <= 60
+    && ["auto", "800x600", "1024x768"].includes(value.resolution)
+);
+
+const getDisplaySettings = () => ({
+    ...DEFAULT_DISPLAY_SETTINGS,
+    ...readJsonStorage(DISPLAY_SETTINGS_KEY, {}, isDisplaySettings)
+});
+
+const saveDisplaySettings = (settings) => {
+    try {
+        localStorage.setItem(DISPLAY_SETTINGS_KEY, JSON.stringify(settings));
+        return true;
+    } catch (error) {
+        console.error("Error storing display settings:", error);
+        return false;
+    }
+};
+
+const displayBackground = (settings) => (
+    settings.customWallpaper
+        ? `url("${settings.customWallpaper}")`
+        : DISPLAY_WALLPAPERS[settings.wallpaper]
+);
+
+const applyDisplaySettings = (settings) => {
+    const desktop = document.getElementById("desktop");
+    if (!desktop) return;
+    desktop.style.setProperty("--desktop-background", displayBackground(settings));
+    desktop.style.setProperty("--desktop-color", settings.backgroundColor);
+    desktop.dataset.wallpaperPosition = settings.position;
+    document.documentElement.dataset.xpAppearance = settings.appearance;
+    scheduleScreenSaver(settings);
+};
+
+const scheduleScreenSaver = (settings = getDisplaySettings()) => {
+    clearTimeout(screenSaverTimeout);
+    const desktop = document.getElementById("desktop");
+    const saver = document.getElementById("screen-saver-overlay");
+    if (!desktop || !saver) return;
+    saver.hidden = true;
+    saver.dataset.saver = settings.screenSaver;
+    if (settings.screenSaver === "none" || !loggedIn) return;
+    screenSaverTimeout = setTimeout(() => {
+        saver.hidden = false;
+    }, settings.screenSaverWait * 60 * 1000);
+};
+
+const setupScreenSaver = () => {
+    if (screenSaverWired) return;
+    screenSaverWired = true;
+    const overlay = document.createElement("div");
+    overlay.id = "screen-saver-overlay";
+    overlay.hidden = true;
+    overlay.setAttribute("aria-label", "Screen saver");
+    document.getElementById("desktop")?.appendChild(overlay);
+    const wake = () => scheduleScreenSaver();
+    ["pointerdown", "keydown", "mousemove", "touchstart"].forEach((eventName) => {
+        document.addEventListener(eventName, wake, { passive: true });
+    });
 };
 
 const getFavorites = () => (
@@ -749,6 +856,29 @@ const minimizeAllWindows = () => {
     updateDocumentTitle();
 };
 
+let showDesktopSnapshot = null;
+const toggleShowDesktop = () => {
+    if (showDesktopSnapshot) {
+        showDesktopSnapshot.forEach(({ gameId, minimized }) => {
+            const win = openWindows.get(gameId);
+            if (win && !minimized) restoreWindow(gameId);
+        });
+        const active = showDesktopSnapshot.find(({ gameId, minimized }) => (
+            !minimized && openWindows.has(gameId)
+        ));
+        showDesktopSnapshot = null;
+        if (active) focusWindow(active.gameId);
+        else focusTopWindow();
+        return;
+    }
+
+    showDesktopSnapshot = [...openWindows.values()].map((win) => ({
+        gameId: win.gameId,
+        minimized: win.minimized
+    }));
+    minimizeAllWindows();
+};
+
 const toggleMaximize = (gameId) => {
     const win = openWindows.get(gameId);
     if (!win) return;
@@ -984,11 +1114,11 @@ const openWindowSystemMenu = (win, clientX, clientY) => {
     systemMenuWin = win;
 
     const enabled = {
-        restore: win.maximized,
-        move: !win.maximized,
-        size: !win.maximized,
-        minimize: true,
-        maximize: !win.maximized,
+        restore: win.maximized || win.minimized,
+        move: !win.maximized && !win.minimized,
+        size: !win.maximized && !win.minimized,
+        minimize: !win.minimized,
+        maximize: !win.maximized && !win.minimized,
         close: true
     };
     menu.querySelectorAll("[data-command]").forEach((button) => {
@@ -1114,6 +1244,13 @@ const startMoveSizeMode = (win, mode) => {
 const runSystemMenuCommand = (win, command) => {
     switch (command) {
         case "restore":
+            if (win.minimized) {
+                restoreWindow(win.gameId);
+                focusWindow(win.gameId);
+                break;
+            }
+            toggleMaximize(win.gameId);
+            break;
         case "maximize":
             toggleMaximize(win.gameId);
             break;
@@ -1264,23 +1401,69 @@ const createSystemWindowContent = (shortcutId, win) => {
         content.className = "display-properties-content";
         content.innerHTML = `
             <div class="display-tabs" role="tablist" aria-label="Display Properties">
-                <button type="button" role="tab">Themes</button>
-                <button type="button" role="tab" class="active" aria-selected="true">Desktop</button>
-                <button type="button" role="tab">Screen Saver</button>
-                <button type="button" role="tab">Appearance</button>
-                <button type="button" role="tab">Settings</button>
+                <button type="button" role="tab" id="display-tab-themes" aria-controls="display-panel-themes" aria-selected="false" tabindex="-1">Themes</button>
+                <button type="button" role="tab" id="display-tab-desktop" aria-controls="display-panel-desktop" aria-selected="true">Desktop</button>
+                <button type="button" role="tab" id="display-tab-saver" aria-controls="display-panel-saver" aria-selected="false" tabindex="-1">Screen Saver</button>
+                <button type="button" role="tab" id="display-tab-appearance" aria-controls="display-panel-appearance" aria-selected="false" tabindex="-1">Appearance</button>
+                <button type="button" role="tab" id="display-tab-settings" aria-controls="display-panel-settings" aria-selected="false" tabindex="-1">Settings</button>
             </div>
-            <div class="display-preview" aria-label="Desktop preview">
-                <div><span>start</span></div>
+            <div class="display-panel active" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop">
+                <div class="display-preview" aria-label="Desktop preview">
+                    <div class="display-preview-surface"><span>start</span></div>
+                </div>
+                <label class="display-wallpaper-label" for="display-wallpaper">Background:</label>
+                <select id="display-wallpaper" aria-label="Desktop background">
+                    <option value="bliss">Bliss</option>
+                    <option value="blue">Windows Blue</option>
+                    <option value="olive">Olive Green</option>
+                </select>
+                <div class="display-form-row">
+                    <label for="display-position">Position:</label>
+                    <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
+                </div>
+                <div class="display-form-row">
+                    <label for="display-color">Color:</label>
+                    <input id="display-color" type="color" value="#3a6ea5">
+                </div>
+                <label class="display-upload" for="display-image">Browse for a picture…</label>
+                <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                <button type="button" class="display-clear-image" hidden>Remove custom picture</button>
+                <p class="display-status" aria-live="polite"></p>
             </div>
-            <label class="display-wallpaper-label">Background:</label>
-            <select aria-label="Desktop background">
-                <option selected>Bliss</option>
-            </select>
+            <div class="display-panel" id="display-panel-themes" role="tabpanel" aria-labelledby="display-tab-themes" hidden>
+                <fieldset><legend>Theme</legend>
+                    <label for="display-theme">Choose a theme:</label>
+                    <select id="display-theme"><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option><option value="olive">Windows XP Olive</option></select>
+                    <p>A theme changes the color scheme and suggested desktop background.</p>
+                </fieldset>
+            </div>
+            <div class="display-panel" id="display-panel-saver" role="tabpanel" aria-labelledby="display-tab-saver" hidden>
+                <fieldset><legend>Screen saver</legend>
+                    <label for="display-saver">Screen saver:</label>
+                    <select id="display-saver"><option value="none">(None)</option><option value="marquee">Marquee</option><option value="stars">Starfield</option></select>
+                    <label class="display-form-row" for="display-saver-wait">Wait <input id="display-saver-wait" type="number" min="1" max="60"> minutes</label>
+                    <div class="screen-saver-preview" aria-label="Screen saver preview"></div>
+                </fieldset>
+            </div>
+            <div class="display-panel" id="display-panel-appearance" role="tabpanel" aria-labelledby="display-tab-appearance" hidden>
+                <fieldset><legend>Windows and buttons</legend>
+                    <label for="display-appearance">Color scheme:</label>
+                    <select id="display-appearance"><option value="blue">Default (blue)</option><option value="olive">Olive green</option><option value="silver">Silver</option></select>
+                    <div class="appearance-preview"><span>Active Window</span><button type="button" tabindex="-1">×</button></div>
+                </fieldset>
+            </div>
+            <div class="display-panel" id="display-panel-settings" role="tabpanel" aria-labelledby="display-tab-settings" hidden>
+                <fieldset><legend>Display</legend>
+                    <p>Monitor: Astro Flash Display</p>
+                    <label for="display-resolution">Screen resolution:</label>
+                    <select id="display-resolution"><option value="auto">Use browser size</option><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option></select>
+                    <p class="display-settings-note">This changes the simulated monitor preview; browser windows keep their actual size.</p>
+                </fieldset>
+            </div>
             <div class="display-dialog-buttons">
                 <button type="button" data-display-action="ok">OK</button>
                 <button type="button" data-display-action="cancel">Cancel</button>
-                <button type="button" disabled>Apply</button>
+                <button type="button" data-display-action="apply" disabled>Apply</button>
             </div>
         `;
         return content;
@@ -1288,6 +1471,8 @@ const createSystemWindowContent = (shortcutId, win) => {
 
     const taskTitles = {
         "__my-documents": "File and Folder Tasks",
+        "__my-pictures": "Picture Tasks",
+        "__my-music": "Music Tasks",
         "__my-computer": "System Tasks",
         "__recycle-bin": "Recycle Bin Tasks"
     };
@@ -1373,6 +1558,144 @@ const createSystemWindowContent = (shortcutId, win) => {
     return content;
 };
 
+const wireDisplayProperties = (win) => {
+    const content = win.el.querySelector(".display-properties-content");
+    if (!content) return;
+
+    let current = getDisplaySettings();
+    let pending = { ...current };
+    const tabs = [...content.querySelectorAll('[role="tab"]')];
+    const panels = [...content.querySelectorAll('[role="tabpanel"]')];
+    const controls = {
+        theme: content.querySelector("#display-theme"),
+        wallpaper: content.querySelector("#display-wallpaper"),
+        position: content.querySelector("#display-position"),
+        color: content.querySelector("#display-color"),
+        image: content.querySelector("#display-image"),
+        clearImage: content.querySelector(".display-clear-image"),
+        saver: content.querySelector("#display-saver"),
+        saverWait: content.querySelector("#display-saver-wait"),
+        appearance: content.querySelector("#display-appearance"),
+        resolution: content.querySelector("#display-resolution"),
+        preview: content.querySelector(".display-preview-surface"),
+        saverPreview: content.querySelector(".screen-saver-preview"),
+        appearancePreview: content.querySelector(".appearance-preview"),
+        status: content.querySelector(".display-status"),
+        apply: content.querySelector('[data-display-action="apply"]')
+    };
+    const themes = {
+        "windows-xp": { appearance: "blue", wallpaper: "bliss", backgroundColor: "#3a6ea5" },
+        classic: { appearance: "silver", wallpaper: "blue", backgroundColor: "#4b6f8f" },
+        olive: { appearance: "olive", wallpaper: "olive", backgroundColor: "#586b2f" }
+    };
+    const sync = () => {
+        controls.theme.value = pending.theme;
+        controls.wallpaper.value = pending.wallpaper;
+        controls.position.value = pending.position;
+        controls.color.value = pending.backgroundColor;
+        controls.saver.value = pending.screenSaver;
+        controls.saverWait.value = String(pending.screenSaverWait);
+        controls.appearance.value = pending.appearance;
+        controls.resolution.value = pending.resolution;
+        controls.clearImage.hidden = !pending.customWallpaper;
+        controls.preview.style.backgroundColor = pending.backgroundColor;
+        controls.preview.style.backgroundImage = displayBackground(pending);
+        controls.preview.dataset.position = pending.position;
+        controls.saverPreview.dataset.saver = pending.screenSaver;
+        controls.appearancePreview.dataset.appearance = pending.appearance;
+        controls.apply.disabled = JSON.stringify(pending) === JSON.stringify(current);
+    };
+    const showTab = (tab) => {
+        const panelId = tab.getAttribute("aria-controls");
+        tabs.forEach((item) => {
+            const active = item === tab;
+            item.classList.toggle("active", active);
+            item.setAttribute("aria-selected", String(active));
+            item.tabIndex = active ? 0 : -1;
+        });
+        panels.forEach((panel) => {
+            const active = panel.id === panelId;
+            panel.hidden = !active;
+            panel.classList.toggle("active", active);
+        });
+    };
+    tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => showTab(tab));
+        tab.addEventListener("keydown", (event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const target = event.key === "Home" ? tabs[0]
+                : event.key === "End" ? tabs.at(-1)
+                : tabs[(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+            showTab(target);
+            target.focus();
+        });
+    });
+    controls.theme.addEventListener("change", () => {
+        pending = { ...pending, theme: controls.theme.value, customWallpaper: "", ...themes[controls.theme.value] };
+        sync();
+    });
+    controls.wallpaper.addEventListener("change", () => {
+        pending = { ...pending, wallpaper: controls.wallpaper.value, customWallpaper: "" };
+        sync();
+    });
+    ["position", "appearance", "resolution", "saver"].forEach((name) => {
+        controls[name].addEventListener("change", () => {
+            pending = { ...pending, [name === "saver" ? "screenSaver" : name]: controls[name].value };
+            sync();
+        });
+    });
+    controls.color.addEventListener("input", () => {
+        pending = { ...pending, backgroundColor: controls.color.value };
+        sync();
+    });
+    controls.saverWait.addEventListener("change", () => {
+        const wait = Math.min(60, Math.max(1, Number.parseInt(controls.saverWait.value, 10) || 1));
+        pending = { ...pending, screenSaverWait: wait };
+        sync();
+    });
+    controls.image.addEventListener("change", () => {
+        const [file] = controls.image.files;
+        if (!file) return;
+        const supportedTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+        if (!supportedTypes.includes(file.type) || file.size > MAX_CUSTOM_WALLPAPER_BYTES) {
+            controls.status.textContent = "Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.";
+            controls.image.value = "";
+            return;
+        }
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+            if (typeof reader.result !== "string" || !reader.result.startsWith("data:image/")) return;
+            pending = { ...pending, customWallpaper: reader.result };
+            controls.status.textContent = `${file.name} will be used after you apply changes.`;
+            sync();
+        });
+        reader.readAsDataURL(file);
+    });
+    controls.clearImage.addEventListener("click", () => {
+        pending = { ...pending, customWallpaper: "" };
+        controls.image.value = "";
+        sync();
+    });
+    content.querySelector('[data-display-action="apply"]').addEventListener("click", () => {
+        if (!isDisplaySettings(pending)) return;
+        if (!saveDisplaySettings(pending)) {
+            controls.status.textContent = "Windows could not save this picture. Try a smaller image.";
+            return;
+        }
+        current = { ...pending };
+        applyDisplaySettings(current);
+        controls.status.textContent = "Settings applied.";
+        sync();
+    });
+    content.querySelector('[data-display-action="ok"]').addEventListener("click", () => {
+        if (!controls.apply.disabled) controls.apply.click();
+        if (controls.apply.disabled) closeGameWindow(win.gameId);
+    });
+    content.querySelector('[data-display-action="cancel"]').addEventListener("click", () => closeGameWindow(win.gameId));
+    sync();
+};
+
 // ============================================
 // Virtual Filesystem integration
 // ============================================
@@ -1382,12 +1705,16 @@ const fs = window.VirtualFS;
 const systemFolderShortcuts = {
     "__my-documents": () => fs.MY_DOCUMENTS,
     "__my-computer": () => fs.MY_COMPUTER,
+    "__my-pictures": () => fs.MY_PICTURES,
+    "__my-music": () => fs.MY_MUSIC,
     "__recycle-bin": () => fs.RECYCLE_BIN
 };
 
 const explorerDescriptions = {
     "__my-documents": "Files stored on this computer",
-    "__my-computer": "Files Stored on This Computer"
+    "__my-computer": "Files Stored on This Computer",
+    "__my-pictures": "Files stored in My Pictures",
+    "__my-music": "Files stored in My Music"
 };
 
 const createExplorerIcon = (node) => {
@@ -1621,9 +1948,7 @@ const openSystemWindow = (shortcutId) => {
     const content = el.querySelector(".window-content");
     content.replaceWith(createSystemWindowContent(shortcutId, win));
     wireSystemWindowControls(win);
-    el.querySelectorAll("[data-display-action]").forEach((button) => {
-        button.addEventListener("click", () => closeGameWindow(shortcutId));
-    });
+    if (shortcutId === "__display-properties") wireDisplayProperties(win);
     focusWindow(shortcutId);
 };
 
@@ -1721,16 +2046,47 @@ const openGameWindow = (gameId) => {
 // Taskbar
 // ============================================
 
+const closeTaskbarMenus = () => {
+    document.getElementById("taskbar-context-menu").hidden = true;
+    document.getElementById("taskbar-overflow-menu").hidden = true;
+};
+
+const positionTaskbarMenu = (menu, clientX, clientY) => {
+    menu.hidden = false;
+    menu.style.left = "0";
+    menu.style.top = "0";
+    menu.style.left = `${Math.max(2, Math.min(clientX, innerWidth - menu.offsetWidth - 2))}px`;
+    menu.style.top = `${Math.max(2, Math.min(clientY - menu.offsetHeight, innerHeight - menu.offsetHeight - 2))}px`;
+};
+
+const activateTaskButton = (gameId) => {
+    const win = openWindows.get(gameId);
+    if (!win) return;
+    if (gameId === focusedGameId && !win.minimized) minimizeWindow(gameId);
+    else {
+        restoreWindow(gameId);
+        focusWindow(gameId);
+    }
+};
+
 const renderTaskButtons = () => {
     const container = document.getElementById("task-buttons");
+    const windows = [...openWindows.entries()];
+    // Keep each task reachable: the final compact button opens a menu for
+    // windows which cannot fit between the fixed Start button and tray.
+    const capacity = Math.max(1, Math.floor(container.clientWidth / 94));
+    const visible = windows.slice(0, windows.length > capacity ? capacity - 1 : capacity);
+    const hidden = windows.slice(visible.length);
     container.innerHTML = "";
 
-    openWindows.forEach((win, gameId) => {
+    const appendTaskButton = ([gameId, win]) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "task-button" + (gameId === focusedGameId && !win.minimized ? " active" : "");
         btn.dataset.game = gameId;
         btn.title = formatGameTitle(gameId);
+        btn.setAttribute("aria-label", `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}`);
+        btn.setAttribute("aria-pressed", String(gameId === focusedGameId && !win.minimized));
 
         const icon = createGameIconElement(gameId, "task-icon");
 
@@ -1739,15 +2095,121 @@ const renderTaskButtons = () => {
         label.textContent = formatGameTitle(gameId);
 
         btn.append(icon, label);
-        btn.addEventListener("click", () => {
-            if (gameId === focusedGameId && !win.minimized) {
-                minimizeWindow(gameId);
-            } else {
-                restoreWindow(gameId);
-                focusWindow(gameId);
-            }
+        btn.addEventListener("click", () => activateTaskButton(gameId));
+        btn.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            closeTaskbarMenus();
+            openWindowSystemMenu(win, event.clientX, event.clientY);
         });
         container.appendChild(btn);
+    };
+    visible.forEach(appendTaskButton);
+
+    if (hidden.length) {
+        const overflow = document.createElement("button");
+        overflow.type = "button";
+        overflow.className = "task-button task-button-grouped";
+        overflow.textContent = `${hidden.length} more`;
+        overflow.setAttribute("aria-label", `${hidden.length} more open windows`);
+        overflow.setAttribute("aria-haspopup", "menu");
+        overflow.addEventListener("click", () => {
+            const menu = document.getElementById("taskbar-overflow-menu");
+            menu.innerHTML = "";
+            hidden.forEach(([gameId, win]) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.setAttribute("role", "menuitem");
+                item.textContent = formatGameTitle(gameId);
+                item.addEventListener("click", () => {
+                    closeTaskbarMenus();
+                    activateTaskButton(gameId);
+                });
+                menu.appendChild(item);
+            });
+            const rect = overflow.getBoundingClientRect();
+            positionTaskbarMenu(menu, rect.left, rect.top);
+        });
+        container.appendChild(overflow);
+    }
+};
+
+const arrangeTaskbarWindows = (mode) => {
+    const windows = [...openWindows.values()].filter((win) => !win.minimized);
+    if (!windows.length) return;
+    const { width, height } = getDesktopSize();
+    windows.forEach((win, index) => {
+        if (win.maximized) toggleMaximize(win.gameId);
+        if (mode === "cascade") {
+            const offset = index * 26;
+            Object.assign(win.el.style, {
+                left: `${Math.min(offset, width - 340)}px`,
+                top: `${Math.min(offset, height - 240)}px`,
+                width: `${Math.max(340, width - Math.min(offset, 130))}px`,
+                height: `${Math.max(240, height - Math.min(offset, 130))}px`
+            });
+        } else {
+            const horizontal = mode === "tile-horizontal";
+            const count = windows.length;
+            Object.assign(win.el.style, horizontal ? {
+                left: "0px", top: `${index * height / count}px`,
+                width: `${width}px`, height: `${height / count}px`
+            } : {
+                left: `${index * width / count}px`, top: "0px",
+                width: `${width / count}px`, height: `${height}px`
+            });
+        }
+    });
+    focusWindow(windows[windows.length - 1].gameId);
+};
+
+const openTaskManager = () => {
+    const dialog = XPDialogs.createDialog({ title: "Windows Task Manager" });
+    const heading = document.createElement("p");
+    heading.textContent = `${openWindows.size} application${openWindows.size === 1 ? "" : "s"} running`;
+    const list = document.createElement("ul");
+    [...openWindows.values()].forEach((win) => {
+        const item = document.createElement("li");
+        item.textContent = `${formatGameTitle(win.gameId)}${win.minimized ? " (Minimized)" : ""}`;
+        list.appendChild(item);
+    });
+    dialog.body.append(heading, list);
+};
+
+const openTaskbarProperties = () => {
+    const dialog = XPDialogs.createDialog({ title: "Taskbar and Start Menu Properties" });
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = localStorage.getItem("taskbarLocked") === "true";
+    input.addEventListener("change", () => localStorage.setItem("taskbarLocked", String(input.checked)));
+    label.append(input, " Lock the taskbar");
+    dialog.body.appendChild(label);
+};
+
+const setupTaskbarContextMenu = () => {
+    const taskbar = document.getElementById("taskbar");
+    const menu = document.getElementById("taskbar-context-menu");
+    taskbar.addEventListener("contextmenu", (event) => {
+        if (event.target.closest(".task-button, #tray-volume-popup")) return;
+        event.preventDefault();
+        closeWindowSystemMenu();
+        closeTaskbarMenus();
+        const lock = menu.querySelector('[data-taskbar-action="lock"]');
+        lock.setAttribute("aria-checked", localStorage.getItem("taskbarLocked") === "true" ? "true" : "false");
+        positionTaskbarMenu(menu, event.clientX, event.clientY);
+    });
+    menu.addEventListener("click", (event) => {
+        const action = event.target.closest("[data-taskbar-action]")?.dataset.taskbarAction;
+        if (!action || event.target.disabled) return;
+        closeTaskbarMenus();
+        if (action === "show-desktop") toggleShowDesktop();
+        else if (action === "cascade" || action.startsWith("tile-")) arrangeTaskbarWindows(action);
+        else if (action === "task-manager") openTaskManager();
+        else if (action === "properties") openTaskbarProperties();
+        else if (action === "lock") {
+            const locked = localStorage.getItem("taskbarLocked") !== "true";
+            localStorage.setItem("taskbarLocked", String(locked));
+        }
     });
 };
 
@@ -2687,17 +3149,209 @@ const buildProgramsList = (filter) => {
     });
 };
 
+const openRecentDocuments = () => {
+    const dialog = XPDialogs.createDialog({ title: "My Recent Documents" });
+    const recentGames = Object.entries(getGameStats())
+        .filter(([gameId]) => gamesList[gameId])
+        .sort(([, a], [, b]) => b.lastPlayed - a.lastPlayed)
+        .slice(0, 10)
+        .map(([gameId]) => gameId);
+
+    const heading = document.createElement("p");
+    heading.textContent = "Documents you have opened recently:";
+    dialog.body.appendChild(heading);
+
+    if (!recentGames.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "There are no recent documents.";
+        dialog.body.appendChild(empty);
+    } else {
+        const list = document.createElement("div");
+        list.className = "shell-dialog-list";
+        recentGames.forEach((gameId) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.textContent = formatGameTitle(gameId);
+            item.addEventListener("click", () => {
+                dialog.close();
+                openGameWindow(gameId);
+            });
+            list.appendChild(item);
+        });
+        dialog.body.appendChild(list);
+    }
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
+};
+
+const openControlPanel = () => {
+    const dialog = XPDialogs.createDialog({ title: "Control Panel" });
+    const heading = document.createElement("p");
+    heading.textContent = "Pick a category to change a setting.";
+    const list = document.createElement("div");
+    list.className = "shell-dialog-list";
+    [
+        ["Display", () => openSystemWindow("__display-properties")],
+        ["Date and Time", openDateTimeProperties],
+        ["Astro Flash Settings", openProjectSettings]
+    ].forEach(([label, action]) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.textContent = label;
+        item.addEventListener("click", () => {
+            dialog.close();
+            action();
+        });
+        list.appendChild(item);
+    });
+    dialog.body.append(heading, list);
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
+};
+
+const openPrintersAndFaxes = () => {
+    const dialog = XPDialogs.createDialog({ title: "Printers and Faxes" });
+    const message = document.createElement("p");
+    message.textContent = "No printers are installed.";
+    const addPrinter = XPDialogs.createDialogButton(
+        { id: "add", label: "Add a &Printer" },
+        () => {
+            dialog.close();
+            XPDialogs.message({
+                title: "Add Printer Wizard",
+                text: "Printer setup is not available in Astro Flash.",
+                icon: "info"
+            });
+        }
+    );
+    dialog.body.append(message, addPrinter);
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
+};
+
+const openHelpAndSupport = () => {
+    const dialog = XPDialogs.createDialog({ title: "Help and Support Center", wide: true });
+    const heading = document.createElement("h2");
+    heading.textContent = "Astro Flash Help and Support";
+    const help = document.createElement("p");
+    help.textContent = "Open games from the desktop or Start menu. Use F11 for full screen, and the taskbar to switch between open windows.";
+    const support = document.createElement("a");
+    support.href = "https://github.com/astrovm/flash/issues";
+    support.target = "_blank";
+    support.rel = "noopener noreferrer";
+    support.textContent = "Get support or send feedback";
+    dialog.body.append(heading, help, support);
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
+};
+
+const openSearchDialog = () => {
+    const dialog = XPDialogs.createDialog({ title: "Search Results" });
+    const prompt = document.createElement("label");
+    prompt.textContent = "Search for a game:";
+    const input = document.createElement("input");
+    input.type = "search";
+    input.className = "shell-dialog-input";
+    prompt.appendChild(input);
+    const results = document.createElement("div");
+    results.className = "shell-dialog-list";
+    const render = () => {
+        const query = input.value.trim().toLowerCase();
+        results.replaceChildren();
+        Object.keys(gamesList)
+            .filter((gameId) => formatGameTitle(gameId).toLowerCase().includes(query))
+            .sort((a, b) => formatGameTitle(a).localeCompare(formatGameTitle(b)))
+            .forEach((gameId) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.textContent = formatGameTitle(gameId);
+                item.addEventListener("click", () => {
+                    dialog.close();
+                    openGameWindow(gameId);
+                });
+                results.appendChild(item);
+            });
+        if (!results.childElementCount) results.textContent = "No games found.";
+    };
+    input.addEventListener("input", render);
+    dialog.body.append(prompt, results);
+    render();
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
+    input.focus();
+};
+
+const openRunDialog = () => {
+    const dialog = XPDialogs.createDialog({ title: "Run" });
+    const prompt = document.createElement("label");
+    prompt.textContent = "Type the name of a program, folder, or document.";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "shell-dialog-input";
+    prompt.appendChild(input);
+    const status = document.createElement("p");
+    const run = () => {
+        const command = input.value.trim().toLowerCase();
+        const locations = {
+            "my documents": () => openSystemWindow("__my-documents"),
+            "my pictures": () => openSystemWindow("__my-pictures"),
+            "my music": () => openSystemWindow("__my-music"),
+            "my computer": () => openSystemWindow("__my-computer"),
+            "control panel": openControlPanel,
+            "printers": openPrintersAndFaxes,
+            "help": openHelpAndSupport
+        };
+        const gameId = Object.keys(gamesList).find((id) => (
+            id.toLowerCase() === command
+            || formatGameTitle(id).toLowerCase() === command
+        ));
+        const action = gameId ? () => openGameWindow(gameId) : locations[command];
+        if (!action) {
+            status.textContent = `Windows cannot find '${input.value}'.`;
+            return;
+        }
+        dialog.close();
+        action();
+    };
+    const runButton = XPDialogs.createDialogButton({ id: "run", label: "&OK" }, run);
+    dialog.body.append(prompt, status, runButton);
+    XPDialogs.addButtonRow(dialog, [
+        { id: "cancel", label: "Cancel", isCancel: true }
+    ]);
+    dialog.defaultButton = runButton;
+    input.focus();
+};
+
+const startDestinationActions = {
+    documents: () => openSystemWindow("__my-documents"),
+    recent: openRecentDocuments,
+    pictures: () => openSystemWindow("__my-pictures"),
+    music: () => openSystemWindow("__my-music"),
+    computer: () => openSystemWindow("__my-computer"),
+    controlPanel: openControlPanel,
+    printers: openPrintersAndFaxes,
+    help: openHelpAndSupport,
+    settings: openProjectSettings,
+    search: openSearchDialog,
+    run: openRunDialog
+};
+
 const buildPlaces = () => {
     if (placesBuilt) return;
     placesBuilt = true;
 
     const container = document.getElementById("start-menu-places");
-    const createPlace = (label, icon, elementName = "button") => {
-        const item = document.createElement(elementName);
+    const createPlace = ({ id, label, icon, title = label }) => {
+        const item = document.createElement("button");
         item.className = "sm-place";
-        if (item instanceof HTMLButtonElement) {
-            item.type = "button";
-        }
+        item.type = "button";
+        item.dataset.startAction = id;
+        item.title = XPDialogs.parseAccessKey(title).text;
 
         const glyph = document.createElement("span");
         glyph.className = "sm-place-icon";
@@ -2711,49 +3365,40 @@ const buildPlaces = () => {
         }
 
         const text = document.createElement("span");
-        text.textContent = label;
+        setAccessKeyText(text, label);
         item.append(glyph, text);
+        item.addEventListener("click", () => {
+            closeStartMenu();
+            startDestinationActions[id]();
+        });
         return item;
     };
 
     [
-        ["My Documents", "MyDocuments.png"],
-        ["My Recent Documents", "RecentDocuments.png"],
-        ["My Pictures", "MyPictures.png"],
-        ["My Music", "MyMusic.png"],
-        ["My Computer", "MyComputer.png"],
-    ].forEach(([label, icon]) => container.appendChild(createPlace(label, icon)));
+        ["documents", "My &Documents", "MyDocuments.png"],
+        ["recent", "My &Recent Documents", "RecentDocuments.png"],
+        ["pictures", "My &Pictures", "MyPictures.png"],
+        ["music", "My &Music", "MyMusic.png"],
+        ["computer", "My &Computer", "MyComputer.png"],
+    ].forEach(([id, label, icon]) => container.appendChild(createPlace({ id, label, icon })));
 
     const separatorOne = document.createElement("div");
     separatorOne.className = "sm-place-separator";
     container.appendChild(separatorOne);
 
     [
-        ["Control Panel", "ControlPanel.png"],
-        ["Printers and Faxes", "PrintersandFaxes.png"],
-        ["Help and Support", "HelpandSupport.png"],
-    ].forEach(([label, icon]) => container.appendChild(createPlace(label, icon)));
+        ["controlPanel", "&Control Panel", "ControlPanel.png"],
+        ["printers", "&Printers and Faxes", "PrintersandFaxes.png"],
+        ["help", "&Help and Support", "HelpandSupport.png"],
+    ].forEach(([id, label, icon]) => container.appendChild(createPlace({ id, label, icon })));
 
-    const settings = createPlace(
-        "Astro Flash Settings",
-        "ControlPanel.png"
-    );
-    settings.addEventListener("click", () => {
-        closeStartMenu();
-        openProjectSettings();
-    });
+    const settings = createPlace({ id: "settings", label: "Astro Flash Settings", icon: "ControlPanel.png" });
     container.appendChild(settings);
 
-    const search = createPlace("Search", "Search.png");
-    search.addEventListener("click", () => {
-        openAllPrograms();
-        document.getElementById("game-search").focus();
-    });
-    container.appendChild(search);
-
-    const run = createPlace("Run...", "Run.png");
-    run.addEventListener("click", openAllPrograms);
-    container.appendChild(run);
+    [
+        ["search", "&Search", "Search.png"],
+        ["run", "&Run...", "Run.png"],
+    ].forEach(([id, label, icon]) => container.appendChild(createPlace({ id, label, icon })));
 
 };
 
@@ -2985,6 +3630,7 @@ const turnOff = () => {
 const login = (playSound = true) => {
     clearTimeout(bootTimeout);
     showDesktop();
+    applyDisplaySettings(getDisplaySettings());
     applyFocusVolumes();
     if (playSound) {
         playXPSound("logon");
@@ -2999,6 +3645,8 @@ const login = (playSound = true) => {
         buildPlaces();
         setupSearch();
         initializeOfflineMode();
+        setupScreenSaver();
+        scheduleScreenSaver();
         startClock();
 
         // Deep link: #game-id opens that game's window
@@ -3116,6 +3764,7 @@ window.addEventListener("load", () => {
     setupScreenFlow();
     setupDesktopContextMenu();
     setupWindowSystemMenu();
+    setupTaskbarContextMenu();
     setupSystemTray();
     document.getElementById("start-button").addEventListener("click", toggleStartMenu);
 });
@@ -3151,6 +3800,10 @@ document.addEventListener("pointerdown", (e) => {
 
     if (!e.target.closest("#window-system-menu") && !e.target.closest(".title-icon")) {
         closeWindowSystemMenu();
+    }
+
+    if (!e.target.closest("#taskbar-context-menu") && !e.target.closest("#taskbar-overflow-menu") && !e.target.closest(".task-button")) {
+        closeTaskbarMenus();
     }
 
     if (!e.target.closest("#tray-volume-popup") && !e.target.closest("#tray-volume-button")) {
@@ -3190,6 +3843,18 @@ document.addEventListener("keydown", (e) => {
         return;
     }
 
+    const taskButton = document.activeElement?.closest?.(".task-button");
+    if (taskButton && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
+        const buttons = [...document.querySelectorAll("#task-buttons .task-button")];
+        const current = buttons.indexOf(taskButton);
+        const target = e.key === "Home" ? buttons[0]
+            : e.key === "End" ? buttons.at(-1)
+            : buttons[(current + (e.key === "ArrowLeft" ? -1 : 1) + buttons.length) % buttons.length];
+        e.preventDefault();
+        target?.focus();
+        return;
+    }
+
     if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
         e.preventDefault();
         toggleStartMenu();
@@ -3214,6 +3879,7 @@ document.addEventListener("keydown", (e) => {
 
     if (e.key === "Escape") {
         closeWindowSystemMenu();
+        closeTaskbarMenus();
         hideSystemDialogs();
         closeStartMenu();
         closeTrayVolumePopup();

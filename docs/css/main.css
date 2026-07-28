@@ -439,7 +439,59 @@ iframe {
     right: 0;
     bottom: 30px;
     overflow: hidden;
-    background: #3a6ea5 url("../assets/xp/bliss.jpg") center / cover no-repeat;
+    background-color: var(--desktop-color, #3a6ea5);
+    background-image: var(--desktop-background, url("../assets/xp/bliss.jpg"));
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+#desktop[data-wallpaper-position="center"] {
+    background-size: auto;
+    background-repeat: no-repeat;
+}
+
+#desktop[data-wallpaper-position="tile"] {
+    background-size: auto;
+    background-repeat: repeat;
+}
+
+#screen-saver-overlay {
+    position: absolute;
+    z-index: 20;
+    inset: 0;
+    background: #000;
+}
+
+#screen-saver-overlay[data-saver="marquee"]::after {
+    content: "Astro Flash";
+    position: absolute;
+    top: 45%;
+    left: 0;
+    width: 100%;
+    color: #0f0;
+    font: bold clamp(20px, 5vw, 48px) monospace;
+    text-align: center;
+    animation: saver-marquee 8s linear infinite;
+}
+
+#screen-saver-overlay[data-saver="stars"] {
+    background-image: radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px), radial-gradient(circle at 45% 20%, #fff 0 1px, transparent 2px);
+    background-size: 130px 100px, 170px 140px, 210px 180px;
+    animation: saver-stars 12s linear infinite;
+}
+
+@keyframes saver-marquee { from { transform: translateX(-35%); } to { transform: translateX(35%); } }
+@keyframes saver-stars { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 130px 100px, -170px 140px, 210px -180px; } }
+
+html[data-xp-appearance="olive"] {
+    --titlebar-active: linear-gradient(#8da64a, #526e20 55%, #3e5716);
+    --taskbar-gradient: linear-gradient(#6f8c35, #405817);
+}
+
+html[data-xp-appearance="silver"] {
+    --titlebar-active: linear-gradient(#a7b0bf, #6d7788 55%, #535d6c);
+    --taskbar-gradient: linear-gradient(#8793a5, #596575);
 }
 
 /* ---- Desktop icons ---- */
@@ -1127,6 +1179,22 @@ iframe {
     font-weight: 700;
 }
 
+.display-panel {
+    min-height: 250px;
+    padding: 4px 0;
+}
+
+.display-panel fieldset {
+    max-width: 420px;
+    margin: 12px auto;
+    padding: 12px;
+    border: 1px solid #919b9c;
+}
+
+.display-panel legend {
+    padding: 0 4px;
+}
+
 .display-preview {
     width: min(260px, 82%);
     aspect-ratio: 4 / 3;
@@ -1142,8 +1210,15 @@ iframe {
     position: relative;
     width: 100%;
     height: 100%;
-    background: url("../assets/xp/bliss.jpg") center / cover;
+    background-color: #3a6ea5;
+    background-image: url("../assets/xp/bliss.jpg");
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
 }
+
+.display-preview > div[data-position="center"] { background-size: auto; }
+.display-preview > div[data-position="tile"] { background-size: auto; background-repeat: repeat; }
 
 .display-preview > div::after {
     content: "";
@@ -1174,6 +1249,86 @@ iframe {
     width: min(260px, 82%);
     margin: 0 auto 3px;
 }
+
+.display-form-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: min(260px, 82%);
+    margin: 5px auto;
+}
+
+.display-form-row select,
+.display-form-row input[type="number"] {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    border: 1px solid #7f9db9;
+    background: #fff;
+    font: inherit;
+}
+
+.display-form-row input[type="color"] { width: 35px; height: 22px; padding: 1px; }
+
+.display-upload,
+.display-clear-image {
+    display: block;
+    width: min(260px, 82%);
+    margin: 6px auto;
+    color: #003c74;
+    cursor: var(--xp-cursor);
+}
+
+.display-clear-image {
+    border: 0;
+    background: transparent;
+    text-align: left;
+    text-decoration: underline;
+    font: inherit;
+}
+
+.display-status {
+    width: min(360px, 82%);
+    min-height: 14px;
+    margin: 6px auto;
+    color: #555;
+}
+
+.screen-saver-preview {
+    width: min(260px, 82%);
+    height: 125px;
+    margin: 14px auto 0;
+    border: 4px solid #222;
+    background: #000;
+}
+
+.screen-saver-preview[data-saver="marquee"]::after {
+    content: "Astro Flash";
+    display: block;
+    padding: 48px 12px;
+    color: #0f0;
+    font: bold 18px monospace;
+    text-align: center;
+}
+
+.screen-saver-preview[data-saver="stars"] {
+    background-image: radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px), radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px), radial-gradient(circle at 45% 20%, #fff 0 1px, transparent 2px);
+}
+
+.appearance-preview {
+    width: min(260px, 82%);
+    margin: 16px auto 0;
+    padding: 5px 7px;
+    border: 1px solid #003c74;
+    background: linear-gradient(#0997ff, #0053ee);
+    color: #fff;
+    font-weight: 700;
+}
+
+.appearance-preview button { float: right; border: 0; background: transparent; color: inherit; font-weight: 700; }
+.appearance-preview[data-appearance="olive"] { background: linear-gradient(#8da64a, #526e20); }
+.appearance-preview[data-appearance="silver"] { background: linear-gradient(#a7b0bf, #6d7788); }
+.display-settings-note { color: #555; }
 
 .display-properties-content select {
     height: 22px;
@@ -1797,8 +1952,9 @@ iframe {
 }
 
 .task-button {
-    flex: 0 1 158px;
-    min-width: 90px;
+    flex: 1 1 94px;
+    min-width: 62px;
+    max-width: 158px;
     height: 22px;
     display: flex;
     align-items: center;
@@ -1834,6 +1990,29 @@ iframe {
 
 .task-button:hover {
     filter: brightness(1.25);
+}
+
+.task-button:active,
+.task-button[aria-pressed="true"] {
+    transform: translateY(1px);
+    filter: brightness(0.86);
+}
+
+.task-button:focus-visible {
+    outline: 1px dotted #fff;
+    outline-offset: -3px;
+}
+
+.task-button-grouped {
+    flex: 0 1 82px;
+    min-width: 68px;
+    justify-content: center;
+}
+
+#taskbar-context-menu,
+#taskbar-overflow-menu {
+    position: fixed;
+    z-index: 8200;
 }
 
 .task-button.active {
@@ -2278,6 +2457,38 @@ iframe {
 
 .sm-place:hover {
     background: #b3d0f0;
+}
+
+.shell-dialog-list {
+    display: grid;
+    gap: 3px;
+    max-height: 210px;
+    margin: 8px 0;
+    overflow-y: auto;
+}
+
+.shell-dialog-list button {
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--xp-text);
+    font: inherit;
+    text-align: left;
+    cursor: var(--xp-cursor);
+}
+
+.shell-dialog-list button:hover,
+.shell-dialog-list button:focus-visible {
+    border-color: #0b4aa3;
+    background: #316ac5;
+    color: #fff;
+    outline: 0;
+}
+
+.shell-dialog-input {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 6px 0;
 }
 
 .sm-place-info {
