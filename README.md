@@ -34,7 +34,7 @@ in the ignored `dist/` directory and must not be committed.
 
 ```bash
 bun install --frozen-lockfile
-python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements.txt
 bun run test
 ```
 
