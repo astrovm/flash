@@ -7,7 +7,9 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 INDEX_HTML = PROJECT_DIR / "site" / "index.html"
 MAIN_JS = PROJECT_DIR / "site" / "js" / "main.js"
+OFFLINE_JS = PROJECT_DIR / "site" / "js" / "offline.js"
 MAIN_CSS = PROJECT_DIR / "site" / "css" / "main.css"
+WORKBOX_CONFIG = PROJECT_DIR / "workbox-config.js"
 XP_ICONS_DIR = PROJECT_DIR / "site" / "assets" / "xp" / "icons"
 
 
@@ -59,7 +61,9 @@ class ShellSourceTests(unittest.TestCase):
         cls.html = INDEX_HTML.read_text(encoding="utf-8")
         cls.javascript = MAIN_JS.read_text(encoding="utf-8")
         cls.javascript_compact = _compact_source(cls.javascript)
+        cls.offline_javascript = OFFLINE_JS.read_text(encoding="utf-8")
         cls.css = MAIN_CSS.read_text(encoding="utf-8")
+        cls.workbox_config = WORKBOX_CONFIG.read_text(encoding="utf-8")
 
     def assertJavascriptContains(self, *tokens):
         for token in tokens:
@@ -141,10 +145,10 @@ class ShellSourceTests(unittest.TestCase):
     def test_text_files_open_in_filesystem_backed_notepad(self):
         self.assertJavascriptContains(
             'fs.registerFileType(".txt", (file) => openNotepad(file))',
-            'fs.setContent(node.id, editor.value)',
+            "fs.setContent(node.id, editor.value)",
             'XPDialogs.openFile({ title: "Open"',
             'XPDialogs.saveFile({ title: "Save As"',
-            'win.beforeClose = confirmSaveChanges',
+            "win.beforeClose = confirmSaveChanges",
         )
         for label in ("&File", "&Edit", "F&ormat", "&View", "&Help"):
             self.assertIn(label, self.javascript)
@@ -552,11 +556,33 @@ class ShellSourceTests(unittest.TestCase):
     def test_project_controls_live_in_a_separate_dialog(self):
         self.assertJavascriptContains(
             'title: "Astro Flash Collection"',
-            'localStorage.getItem("offlineModeEnabled")',
-            'navigator.serviceWorker.register("sw.js")',
+            "offlineManager.checkForUpdates()",
+            "offlineManager.applyUpdate()",
+            "offlineManager.repair()",
+            '"Check for Updates"',
+            '"Repair Offline Files"',
+            '"Offline download progress"',
+            "state.downloadBytes",
             '"https://github.com/astrovm/flash/issues"',
             'case "project": openProjectSettings();',
         )
+        self.assertNotIn(
+            'heading.textContent = "Astro Flash Collection"', self.javascript
+        )
+        for token in (
+            "navigatorObject.serviceWorker.register(",
+            '{ updateViaCache: "none" }',
+            '"updatefound"',
+            '"controllerchange"',
+            '{ type: "SKIP_WAITING" }',
+            'cache: "no-store"',
+            '"visibilitychange"',
+            '"online"',
+        ):
+            self.assertIn(token, self.offline_javascript)
+        self.assertIn('globIgnores: ["version.json"]', self.workbox_config)
+        self.assertIn("skipWaiting: false", self.workbox_config)
+        self.assertIn("clientsClaim: true", self.workbox_config)
 
     def test_game_controls_share_one_compact_menu_row(self):
         self.assertJavascriptContains(

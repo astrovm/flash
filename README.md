@@ -11,7 +11,8 @@ A curated archive of Flash games
 - Taskbar with window buttons and tray clock
 - Flash emulation by Ruffle
 - DOS emulation by js-dos
-- Play offline, no internet connection required
+- Download the complete collection for offline play
+- Check for updates, apply them safely, and repair incomplete offline data
 - FPS optimized per game
 - Fast CDN
 - Flawless screen adaptation
@@ -62,6 +63,7 @@ build without deploying. The build:
 - Copies `site/` into a fresh `dist/`
 - Downloads the pinned self-hosted Ruffle release and verifies its SHA-256
 - Generates a date-plus-commit deployment version and asset hashes
+- Generates uncached `version.json` metadata for client update checks
 - Generates the Workbox service worker
 - Validates representative Flash, DOS, and HTML5 artifacts
 
@@ -73,6 +75,12 @@ Ruffle release metadata is pinned in `tools/ruffle-release.json`. A weekly
 workflow checks for a newer stable release and opens a reviewable dependency PR.
 Repository settings must allow GitHub Actions to create pull requests for that
 automation to work. Ruffle update PRs are never auto-merged.
+
+When offline mode is enabled, the settings dialog reports the actual worker
+state while the complete collection downloads. Astro Flash checks for updates
+at startup, when connectivity returns, and when a long-lived tab becomes
+visible again. An installed update waits for user confirmation before the
+worker activates and reloads the page.
 
 ### Game Support
 

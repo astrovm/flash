@@ -2039,11 +2039,6 @@ html[data-xp-appearance="silver"] {
 
 /* Astro Flash project settings */
 
-.project-settings-title {
-    margin: 0 0 10px;
-    font-size: 14px;
-}
-
 .project-offline-setting {
     display: block;
     margin: 10px 0 4px;
@@ -2053,6 +2048,19 @@ html[data-xp-appearance="silver"] {
     min-height: 14px;
     margin: 0 0 10px 20px;
     color: #444;
+}
+
+.project-settings-progress {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 10px;
+}
+
+.project-settings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 10px;
 }
 
 .project-suggestions-link {

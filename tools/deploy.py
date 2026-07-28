@@ -20,6 +20,28 @@ DEFAULT_OUTPUT_DIR = PROJECT_DIR / "dist"
 RUFFLE_RELEASE_PATH = PROJECT_DIR / "tools" / "ruffle-release.json"
 RUFFLE_DOWNLOAD_ROOT = "https://github.com/ruffle-rs/ruffle/releases/download"
 RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
+PRECACHE_FILE_SUFFIXES = {
+    ".woff",
+    ".woff2",
+    ".css",
+    ".ico",
+    ".svg",
+    ".mp3",
+    ".wav",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".cur",
+    ".json",
+    ".html",
+    ".js",
+    ".mjs",
+    ".wasm",
+    ".swf",
+    ".jsdos",
+    ".xml",
+    ".phtml",
+}
 APP_VERSION_PATTERN = re.compile(r'const APP_VERSION = "[^"]+";')
 
 
@@ -44,6 +66,10 @@ class BuildPaths:
         return self.js / "main.js"
 
     @property
+    def version_json(self):
+        return self.root / "version.json"
+
+    @property
     def asset_paths(self):
         return {
             "ruffle": self.js / "ruffle.js",
@@ -51,6 +77,7 @@ class BuildPaths:
             "filesystem_js": self.js / "filesystem.js",
             "file_operations_js": self.js / "file-operations.js",
             "dialogs_js": self.js / "dialogs.js",
+            "offline_js": self.js / "offline.js",
             "main_js": self.main_js,
             "main_css": self.css / "main.css",
         }
@@ -185,6 +212,9 @@ def update_html(paths, version):
         r'<script src="js/dialogs\.[^"]+" ?[^>]*></script>': (
             f'<script src="js/dialogs.js?v={short_hashes["dialogs_js"]}"></script>'
         ),
+        r'<script src="js/offline\.[^"]+" ?[^>]*></script>': (
+            f'<script src="js/offline.js?v={short_hashes["offline_js"]}"></script>'
+        ),
         r'<script src="js/main\.[^"]+" ?[^>]*></script>': (
             f'<script src="js/main.js?v={short_hashes["main_js"]}"></script>'
         ),
@@ -198,6 +228,30 @@ def update_html(paths, version):
             raise RuntimeError(f"Could not update asset reference matching {pattern}")
     paths.html.write_text(content, encoding="utf-8")
     print(f"  - Set deployment version to {version}")
+
+
+def write_version_metadata(paths, version):
+    revision = version.rsplit("-", maxsplit=1)[-1]
+    offline_bytes = sum(
+        path.stat().st_size
+        for path in paths.root.rglob("*")
+        if path.is_file()
+        and path != paths.version_json
+        and path.suffix.lower() in PRECACHE_FILE_SUFFIXES
+    )
+    paths.version_json.write_text(
+        json.dumps(
+            {
+                "offlineBytes": offline_bytes,
+                "revision": revision,
+                "version": version,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def get_workbox_files(output_dir):
@@ -253,6 +307,7 @@ def validate_output(output_dir):
     paths = BuildPaths(output_dir)
     required = (
         paths.html,
+        paths.version_json,
         output_dir / "sw.js",
         output_dir / "swf" / "bike-mania" / "main.swf",
         output_dir / "iframe" / "doom" / "index.html",
@@ -270,6 +325,7 @@ def validate_output(output_dir):
         "js/filesystem.js",
         "js/file-operations.js",
         "js/dialogs.js",
+        "js/offline.js",
         "js/main.js",
         "css/main.css",
     ):
@@ -279,6 +335,19 @@ def validate_output(output_dir):
         raise RuntimeError("Build output has no Ruffle core JavaScript")
     if not any(paths.js.glob("*.wasm")):
         raise RuntimeError("Build output has no Ruffle WebAssembly")
+    try:
+        version_metadata = json.loads(paths.version_json.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as error:
+        raise RuntimeError("Build output has invalid version metadata") from error
+    if set(version_metadata) != {"offlineBytes", "revision", "version"}:
+        raise RuntimeError("Build output has invalid version metadata")
+    if (
+        not isinstance(version_metadata["offlineBytes"], int)
+        or version_metadata["offlineBytes"] <= 0
+    ):
+        raise RuntimeError("Build output has invalid offline download size")
+    if not version_metadata["version"].endswith(f"-{version_metadata['revision']}"):
+        raise RuntimeError("Build output has inconsistent version metadata")
     print("Build output validated successfully")
 
 
@@ -312,6 +381,7 @@ def build(output_dir=DEFAULT_OUTPUT_DIR, revision="HEAD"):
         paths = BuildPaths(staging_dir)
         download_ruffle(paths.js)
         update_html(paths, version)
+        write_version_metadata(paths, version)
         generate_service_worker(staging_dir)
         validate_output(staging_dir)
         replace_output(staging_dir, output_dir)
