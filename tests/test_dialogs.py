@@ -28,6 +28,21 @@ class ReusableDialogTests(unittest.TestCase):
         self.assertLess(filesystem_at, dialogs_at)
         self.assertLess(dialogs_at, main_at)
 
+    def test_session_actions_have_distinct_transitions(self):
+        main = (PROJECT_DIR / "docs" / "js" / "main.js").read_text(encoding="utf-8")
+        index = (PROJECT_DIR / "docs" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn('const switchUser = () =>', main)
+        self.assertIn('const logOff = () =>', main)
+        self.assertIn('const restart = () =>', main)
+        self.assertIn('const setSuspended = (value) =>', main)
+        self.assertIn('const closeCurrentSession = () =>', main)
+        self.assertIn('Array.from(openWindows.keys()).forEach(closeGameWindow);', main)
+        self.assertIn('setSuspended(true);', main)
+        self.assertIn('startShutdown(true);', main)
+        self.assertIn('id="standby-screen"', index)
+        self.assertIn('id="standby-resume"', index)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,8 +15,8 @@
         <script src="js/games.js?v=65ef7d86"></script>
         <script src="js/filesystem.js?v=22edba7e"></script>
         <script src="js/dialogs.js?v=b3f7c9c4"></script>
-        <script src="js/main.js?v=59247ee2"></script>
-        <link rel="stylesheet" href="css/main.css?v=2ddf9b9a">
+        <script src="js/main.js?v=444e233c"></script>
+        <link rel="stylesheet" href="css/main.css?v=730ac16b">
     </head>
 
     <body>
@@ -179,7 +179,6 @@
                         <span class="xp-power-icon" aria-hidden="true"></span>
                         Turn Off Computer
                     </button>
-                    <h6>v26.07.27-2</h6>
                 </div>
             </div>
         </div>
@@ -323,6 +322,15 @@
             <img src="assets/xp/wordmark.png" alt="Microsoft Windows" />
             <p>It is now safe to turn off your computer.</p>
             <span class="turn-off-hint">Click anywhere to restart</span>
+        </div>
+
+        <!-- Stand By blocks the shell without ending the current session. -->
+        <div id="standby-screen" hidden>
+            <div role="dialog" aria-modal="true" aria-labelledby="standby-title">
+                <p id="standby-title">Windows is standing by.</p>
+                <button id="standby-resume" type="button">Resume</button>
+                <span>Click Resume or press Enter to return to your session.</span>
+            </div>
         </div>
     </body>
 </html>

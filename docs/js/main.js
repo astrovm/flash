@@ -2,7 +2,7 @@
 
 // Constants
 const DEFAULT_ASPECT_RATIO = 4 / 3;
-const WINDOW_CHROME_HEIGHT = 58; // title bar + toolbar
+const WINDOW_CHROME_HEIGHT = 53; // title bar + menu bar
 const MIN_WINDOW_WIDTH = 340;
 const MIN_WINDOW_HEIGHT = 240;
 const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
@@ -13,9 +13,10 @@ const WELCOME_DURATION_MS = 1200;
 let bootTimeout = null;
 let shutdownTimeout = null;
 let loggedIn = false;
+let shellInitialized = false;
+let suspended = false;
 let iconsBuilt = false;
 let placesBuilt = false;
-let offlineInitialized = false;
 
 const gamesList = window.FLASH_GAMES;
 
@@ -285,8 +286,10 @@ const syncWindowVolumeUI = (win) => {
     const { volume, isMuted } = getGameVolume(win.gameId);
     const numericVolume = Number.isFinite(volume) ? volume : 100;
     const muted = isMuted || numericVolume === 0;
-    win.volumeBtn.textContent = muted ? "Unmute" : "Sound";
-    win.volumeBtn.classList.toggle("active", muted);
+    win.volumeBtn.classList.toggle("checked", muted);
+    win.volumeBtn.setAttribute("aria-checked", String(muted));
+    const label = win.volumeBtn.querySelector(".menu-item-label");
+    if (label) label.textContent = muted ? "Unmute" : "Mute";
     win.volumeSlider.value = isMuted ? 0 : numericVolume;
 };
 
@@ -324,7 +327,12 @@ const toggleWindowMute = (win) => {
 };
 
 const updateFavoriteUI = (win) => {
-    win.favoriteBtn.classList.toggle('active', getFavorites().includes(win.gameId));
+    if (!win.favoriteBtn) return;
+    const isFavorite = getFavorites().includes(win.gameId);
+    win.favoriteBtn.classList.toggle('checked', isFavorite);
+    win.favoriteBtn.setAttribute('aria-checked', String(isFavorite));
+    const label = win.favoriteBtn.querySelector('.menu-item-label');
+    if (label) label.textContent = isFavorite ? 'Remove from Favorites' : 'Add to Favorites';
 };
 
 const toggleFavorite = (gameId) => {
@@ -411,43 +419,90 @@ const createWindowElement = (gameId) => {
     titleButtons.append(minimizeBtn, maximizeBtn, closeBtn);
     titleBar.append(titleIcon, titleText, titleButtons);
 
-    const toolbar = document.createElement("div");
-    toolbar.className = "window-toolbar";
+    const menuBar = document.createElement("div");
+    menuBar.className = "game-menu-bar";
+    menuBar.setAttribute("role", "menubar");
+    menuBar.setAttribute("aria-label", "Game menu");
 
-    const fullscreenBtn = document.createElement("button");
-    fullscreenBtn.type = "button";
-    fullscreenBtn.className = "toolbar-btn fullscreen-btn";
-    fullscreenBtn.title = "Fullscreen";
-    fullscreenBtn.textContent = "Full Screen";
+    const makeMenuButton = (name, accessKey) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "game-menu-button";
+        button.dataset.gameMenu = name.toLowerCase();
+        button.dataset.accessKey = accessKey.toLowerCase();
+        button.setAttribute("role", "menuitem");
+        button.setAttribute("aria-haspopup", "menu");
+        button.setAttribute("aria-expanded", "false");
+        button.innerHTML = `<span class="menu-accesskey">${accessKey}</span>${name.slice(1)}`;
+        return button;
+    };
 
-    const favoriteBtn = document.createElement("button");
-    favoriteBtn.type = "button";
-    favoriteBtn.className = "toolbar-btn favorite-btn";
-    favoriteBtn.title = "Favorite";
-    favoriteBtn.textContent = "Favorite";
+    const makeMenuItem = (label, action, options = {}) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "game-menu-item";
+        item.dataset.gameAction = action;
+        if (options.accessKey) item.dataset.accessKey = options.accessKey.toLowerCase();
+        item.setAttribute("role", options.checkbox ? "menuitemcheckbox" : "menuitem");
+        if (options.checkbox) item.setAttribute("aria-checked", "false");
+        if (options.disabled) item.disabled = true;
+        const key = options.accessKey || "";
+        item.innerHTML = `${options.checkbox ? '<span class="menu-check" aria-hidden="true">✓</span>' : ''}<span class="menu-item-label">${key ? `<span class="menu-accesskey">${key}</span>${label.slice(1)}` : label}</span>${options.shortcut ? `<span class="menu-shortcut">${options.shortcut}</span>` : ''}`;
+        return item;
+    };
 
-    const separator = document.createElement("span");
-    separator.className = "toolbar-separator";
+    const makeMenu = (name) => {
+        const menu = document.createElement("div");
+        menu.className = "game-menu";
+        menu.dataset.gameMenu = name;
+        menu.setAttribute("role", "menu");
+        menu.hidden = true;
+        return menu;
+    };
 
-    const volumeBtn = document.createElement("button");
-    volumeBtn.type = "button";
-    volumeBtn.className = "toolbar-btn volume-btn";
-    volumeBtn.title = "Mute";
-    volumeBtn.textContent = "Sound";
+    const fileButton = makeMenuButton("File", "F");
+    const viewButton = makeMenuButton("View", "V");
+    const favoritesButton = makeMenuButton("Favorites", "A");
+    const soundButton = makeMenuButton("Sound", "S");
+    const helpButton = makeMenuButton("Help", "H");
+    menuBar.append(fileButton, viewButton, favoritesButton, soundButton, helpButton);
 
+    const fileMenu = makeMenu("file");
+    fileMenu.append(
+        makeMenuItem("Close", "close", { accessKey: "C", shortcut: "Alt+F4" }),
+        Object.assign(document.createElement("div"), { className: "game-menu-separator" }),
+        makeMenuItem("Properties", "properties", { accessKey: "P", disabled: true })
+    );
+
+    const viewMenu = makeMenu("view");
+    viewMenu.append(makeMenuItem("Full Screen", "fullscreen", { accessKey: "F", shortcut: "F11" }));
+
+    const favoritesMenu = makeMenu("favorites");
+    const favoriteBtn = makeMenuItem("Add to Favorites", "favorite", { accessKey: "A", checkbox: true });
+    favoritesMenu.append(favoriteBtn);
+
+    const soundMenu = makeMenu("sound");
+    const volumeBtn = makeMenuItem("Mute", "mute", { accessKey: "M", checkbox: true });
+    const volumeRow = document.createElement("label");
+    volumeRow.className = "game-volume-row";
+    volumeRow.textContent = "Volume";
     const volumeSlider = document.createElement("input");
     volumeSlider.type = "range";
-    volumeSlider.className = "volume-slider";
+    volumeSlider.className = "game-volume-slider";
     volumeSlider.min = "0";
     volumeSlider.max = "100";
     volumeSlider.value = "100";
+    volumeSlider.setAttribute("aria-label", "Game volume");
+    volumeRow.append(volumeSlider);
+    soundMenu.append(volumeBtn, Object.assign(document.createElement("div"), { className: "game-menu-separator" }), volumeRow);
 
-    toolbar.append(fullscreenBtn, favoriteBtn, separator, volumeBtn, volumeSlider);
+    const helpMenu = makeMenu("help");
+    helpMenu.append(makeMenuItem("About this game", "about", { accessKey: "A", disabled: true }));
 
     const content = document.createElement("div");
     content.className = "window-content";
 
-    win.append(titleBar, toolbar, content);
+    win.append(titleBar, menuBar, fileMenu, viewMenu, favoritesMenu, soundMenu, helpMenu, content);
 
     RESIZE_DIRECTIONS.forEach((direction) => {
         const handle = document.createElement("div");
@@ -1011,6 +1066,34 @@ const setupWindowSystemMenu = () => {
 
 const wireWindowControls = (win) => {
     const gameId = win.gameId;
+    const menuBar = win.el.querySelector(".game-menu-bar");
+    const menus = [...win.el.querySelectorAll(".game-menu")];
+    const menuButtons = [...menuBar.querySelectorAll(".game-menu-button")];
+
+    const closeGameMenus = (restoreFocus = false) => {
+        menus.forEach((menu) => { menu.hidden = true; });
+        menuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
+        if (restoreFocus) menuBar.querySelector('[aria-expanded="true"]')?.focus();
+    };
+
+    const openGameMenu = (name, focusFirstItem = false) => {
+        const menu = menus.find((item) => item.dataset.gameMenu === name);
+        const button = menuButtons.find((item) => item.dataset.gameMenu === name);
+        if (!menu || !button) return;
+        closeGameMenus();
+        menu.hidden = false;
+        button.setAttribute("aria-expanded", "true");
+        if (focusFirstItem) {
+            menu.querySelector('button:not(:disabled), input:not(:disabled)')?.focus();
+        }
+    };
+
+    const switchGameMenu = (currentName, direction) => {
+        const currentIndex = menuButtons.findIndex((button) => button.dataset.gameMenu === currentName);
+        const next = menuButtons[(currentIndex + direction + menuButtons.length) % menuButtons.length];
+        next.focus();
+        openGameMenu(next.dataset.gameMenu, true);
+    };
 
     win.el.addEventListener("pointerdown", () => focusWindow(gameId));
 
@@ -1018,14 +1101,73 @@ const wireWindowControls = (win) => {
     win.el.querySelector(".minimize-btn").addEventListener("click", () => minimizeWindow(gameId));
     win.el.querySelector(".maximize-btn").addEventListener("click", () => toggleMaximize(gameId));
 
-    win.el.querySelector(".fullscreen-btn").addEventListener("click", () => {
-        if (win.player) {
-            toggleFullscreen(win.player);
+    menuBar.addEventListener("click", (event) => {
+        const button = event.target.closest(".game-menu-button");
+        if (!button) return;
+        const menu = menus.find((item) => item.dataset.gameMenu === button.dataset.gameMenu);
+        if (menu.hidden) openGameMenu(button.dataset.gameMenu);
+        else closeGameMenus();
+    });
+    menuBar.addEventListener("keydown", (event) => {
+        const button = event.target.closest(".game-menu-button");
+        if (!button) return;
+        if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+            event.preventDefault();
+            const direction = event.key === "ArrowRight" ? 1 : -1;
+            const index = menuButtons.indexOf(button);
+            menuButtons[(index + direction + menuButtons.length) % menuButtons.length].focus();
+        } else if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openGameMenu(button.dataset.gameMenu, true);
+        } else if (event.key === "Escape") {
+            closeGameMenus();
+            button.focus();
         }
     });
-
-    win.favoriteBtn.addEventListener("click", () => toggleFavorite(gameId));
-    win.volumeBtn.addEventListener("click", () => toggleWindowMute(win));
+    win.el.addEventListener("keydown", (event) => {
+        if (!event.altKey || event.ctrlKey || event.metaKey) return;
+        const button = menuButtons.find((item) => item.dataset.accessKey === event.key.toLowerCase());
+        if (!button) return;
+        event.preventDefault();
+        button.focus();
+        openGameMenu(button.dataset.gameMenu, true);
+    });
+    menus.forEach((menu) => {
+        menu.addEventListener("keydown", (event) => {
+            const items = [...menu.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
+            const index = items.indexOf(document.activeElement);
+            if (event.target.matches("input") && event.key.startsWith("Arrow")) return;
+            if (event.key === "Escape") {
+                event.preventDefault();
+                const button = menuButtons.find((item) => item.dataset.gameMenu === menu.dataset.gameMenu);
+                closeGameMenus();
+                button?.focus();
+            } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+            } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                event.preventDefault();
+                switchGameMenu(menu.dataset.gameMenu, event.key === "ArrowRight" ? 1 : -1);
+            } else {
+                const item = menu.querySelector(`[data-access-key="${event.key.toLowerCase()}"]:not(:disabled)`);
+                if (item) {
+                    event.preventDefault();
+                    item.click();
+                }
+            }
+        });
+        menu.addEventListener("click", (event) => {
+            const item = event.target.closest("[data-game-action]");
+            if (!item || item.disabled) return;
+            switch (item.dataset.gameAction) {
+                case "close": closeGameWindow(gameId); break;
+                case "fullscreen": if (win.player) toggleFullscreen(win.player); break;
+                case "favorite": toggleFavorite(gameId); break;
+                case "mute": toggleWindowMute(win); break;
+            }
+            closeGameMenus();
+        });
+    });
     win.volumeSlider.addEventListener("input", (e) => setWindowVolume(win, e.target.value));
 
     syncWindowVolumeUI(win);
@@ -1370,7 +1512,7 @@ const openSystemWindow = (shortcutId) => {
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
     const el = createWindowElement(shortcutId);
     el.classList.add("explorer-window");
-    el.querySelector(".window-toolbar").remove();
+    el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) => node.remove());
     el.style.width = `${Math.min(590, desktopWidth - 16)}px`;
     el.style.height = `${Math.min(410, desktopHeight - 16)}px`;
     el.style.left = `${Math.max(8, (desktopWidth - Math.min(590, desktopWidth - 16)) / 2)}px`;
@@ -2419,27 +2561,6 @@ const buildPlaces = () => {
     run.addEventListener("click", openAllPrograms);
     container.appendChild(run);
 
-    const separatorTwo = document.createElement("div");
-    separatorTwo.className = "sm-place-separator";
-    container.appendChild(separatorTwo);
-
-    const offlineLabel = document.createElement("label");
-    offlineLabel.className = "sm-place";
-    offlineLabel.id = "offline-mode-label";
-
-    const offlineToggle = document.createElement("input");
-    offlineToggle.type = "checkbox";
-    offlineToggle.id = "offline-mode-toggle";
-    offlineLabel.append(offlineToggle, " Offline Mode");
-
-    const github = createPlace("Send suggestions", "✦", "a");
-    github.href = "https://github.com/astrovm/flash";
-
-    const credits = document.createElement("div");
-    credits.className = "sm-place sm-place-info";
-    credits.textContent = `${Object.keys(gamesList).length} games installed`;
-
-    container.append(offlineLabel, github, credits);
 };
 
 const buildPinnedPrograms = () => {
@@ -2518,79 +2639,6 @@ const setupSearch = () => {
 };
 
 // ============================================
-// Offline Mode (service worker)
-// ============================================
-
-const updateOfflineModePreference = async () => {
-    const offlineModeToggle = document.getElementById("offline-mode-toggle");
-    localStorage.setItem("offlineModeEnabled", offlineModeToggle.checked);
-
-    if (offlineModeToggle.checked) {
-        navigator.serviceWorker.register("sw.js").then(registration => {
-            // Listen for updates to the service worker
-            registration.onupdatefound = () => {
-                const installingWorker = registration.installing;
-                installingWorker.onstatechange = () => {
-                    if (installingWorker.state === 'installed') {
-                        if (navigator.serviceWorker.controller) {
-                            // New update available, reload the page to activate
-                            window.location.reload();
-                        } else {
-                            // Service worker installed for the first time
-                            console.log('Service worker installed for offline use.');
-                        }
-                    }
-                };
-            };
-        }).catch(error => {
-            console.error("Service worker registration failed:", error);
-        });
-    } else {
-        try {
-            let stateChanged = false;
-            const registration = await navigator.serviceWorker.getRegistration("./");
-            if (registration) {
-                await registration.unregister();
-                stateChanged = true;
-            }
-
-            const cacheKeys = await caches.keys();
-            for (const cacheKey of cacheKeys) {
-                if (cacheKey.startsWith("astro-flash")) {
-                    await caches.delete(cacheKey);
-                    stateChanged = true;
-                }
-            }
-
-            if (stateChanged) {
-                window.location.reload();
-            }
-        } catch (error) {
-            console.error("Service worker unregistration failed:", error);
-        }
-    }
-};
-
-const offlineModeService = () => {
-    if ("serviceWorker" in navigator) {
-        const offlineModeToggle = document.getElementById("offline-mode-toggle");
-        const isOfflineModeEnabled =
-            localStorage.getItem("offlineModeEnabled") === "true";
-
-        offlineModeToggle.checked = isOfflineModeEnabled;
-        offlineModeToggle.addEventListener("change", updateOfflineModePreference);
-
-        if (!offlineInitialized) {
-            offlineInitialized = true;
-            updateOfflineModePreference();
-        }
-    } else {
-        const offlineModeLabel = document.getElementById("offline-mode-label");
-        offlineModeLabel.textContent = "Offline mode is not supported in your browser.";
-    }
-};
-
-// ============================================
 // Screen Flow (boot -> welcome -> desktop)
 // ============================================
 
@@ -2619,6 +2667,23 @@ const setScreen = (...visibleIds) => {
         });
 };
 
+const setSuspended = (value) => {
+    suspended = value;
+    const standbyScreen = document.getElementById("standby-screen");
+    standbyScreen.hidden = !value;
+
+    if (value) {
+        closeStartMenu();
+        closeDesktopContextMenu();
+        closeWindowSystemMenu();
+        closeTrayVolumePopup();
+        muteAllWindows();
+        document.getElementById("standby-resume").focus();
+    } else if (loggedIn) {
+        applyFocusVolumes();
+    }
+};
+
 const hideSystemDialogs = () => {
     document.getElementById("logoff-dialog").hidden = true;
     document.getElementById("shutdown-dialog").hidden = true;
@@ -2639,6 +2704,7 @@ const muteAllWindows = () => {
 };
 
 const showBootScreen = () => {
+    setSuspended(false);
     hideSystemDialogs();
     clearTimeout(shutdownTimeout);
     muteAllWindows();
@@ -2649,6 +2715,7 @@ const showBootScreen = () => {
 };
 
 const showWelcomeScreen = (autoLogin = false) => {
+    setSuspended(false);
     hideSystemDialogs();
     clearTimeout(bootTimeout);
     muteAllWindows();
@@ -2662,7 +2729,7 @@ const showWelcomeScreen = (autoLogin = false) => {
         playXPSound("startup");
     }
     if (autoLogin) {
-        bootTimeout = setTimeout(() => login(false), WELCOME_DURATION_MS);
+        bootTimeout = setTimeout(() => login(), WELCOME_DURATION_MS);
     }
 };
 
@@ -2677,6 +2744,7 @@ const showTurnOffScreen = () => {
 };
 
 const startShutdown = (restart = false) => {
+    setSuspended(false);
     hideSystemDialogs();
     muteAllWindows();
     playXPSound("shutdown");
@@ -2688,6 +2756,33 @@ const startShutdown = (restart = false) => {
     );
 };
 
+const closeCurrentSession = () => {
+    Array.from(openWindows.keys()).forEach(closeGameWindow);
+    focusedGameId = null;
+    zIndexCounter = 100;
+    cascadeCount = 0;
+    loggedIn = false;
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+};
+
+const logOff = () => {
+    closeCurrentSession();
+    playXPSound("logoff");
+    showWelcomeScreen(false);
+};
+
+const switchUser = () => {
+    // Fast User Switching leaves this session intact. The desktop is simply
+    // hidden behind the logon screen until this user signs in again.
+    playXPSound("logoff");
+    showWelcomeScreen(false);
+};
+
+const restart = () => {
+    closeCurrentSession();
+    startShutdown(true);
+};
+
 const login = (playSound = true) => {
     clearTimeout(bootTimeout);
     showDesktop();
@@ -2696,14 +2791,14 @@ const login = (playSound = true) => {
         playXPSound("logon");
     }
 
-    if (!loggedIn) {
-        loggedIn = true;
-        networkConnectedAt = Date.now();
+    loggedIn = true;
+    networkConnectedAt = Date.now();
+    if (!shellInitialized) {
+        shellInitialized = true;
         syncGameFiles();
         buildDesktopIcons();
         buildPlaces();
         setupSearch();
-        offlineModeService();
         startClock();
 
         // Deep link: #game-id opens that game's window
@@ -2739,24 +2834,20 @@ const setupScreenFlow = () => {
     document.getElementById("shutdown-cancel")
         .addEventListener("click", hideSystemDialogs);
     document.getElementById("switch-user-confirm")
-        .addEventListener("click", () => {
-            playXPSound("logoff");
-            showWelcomeScreen(false);
-        });
+        .addEventListener("click", switchUser);
     document.getElementById("logoff-confirm")
-        .addEventListener("click", () => {
-            playXPSound("logoff");
-            showWelcomeScreen(false);
-        });
+        .addEventListener("click", logOff);
     document.getElementById("shutdown-confirm")
         .addEventListener("click", () => startShutdown(false));
     document.getElementById("restart-confirm")
-        .addEventListener("click", () => startShutdown(true));
+        .addEventListener("click", restart);
     document.getElementById("standby-confirm")
         .addEventListener("click", () => {
             hideSystemDialogs();
-            minimizeAllWindows();
+            setSuspended(true);
         });
+    document.getElementById("standby-resume")
+        .addEventListener("click", () => setSuspended(false));
 
     if (getHashGameId()) {
         startupSoundPending = false;
@@ -2853,6 +2944,7 @@ window.addEventListener("hashchange", () => {
 
 // Close the start menu when clicking outside of it
 document.addEventListener("pointerdown", (e) => {
+    if (suspended) return;
     if (!e.target.closest("#desktop-context-menu")) {
         closeDesktopContextMenu();
     }
@@ -2865,6 +2957,14 @@ document.addEventListener("pointerdown", (e) => {
         closeTrayVolumePopup();
     }
 
+    if (!e.target.closest(".game-menu-bar") && !e.target.closest(".game-menu")) {
+        document.querySelectorAll(".game-menu:not([hidden])").forEach((menu) => {
+            menu.hidden = true;
+            menu.parentElement?.querySelector(`.game-menu-button[data-game-menu="${menu.dataset.gameMenu}"]`)
+                ?.setAttribute("aria-expanded", "false");
+        });
+    }
+
     const startMenu = document.getElementById("start-menu");
     if (startMenu.hidden) return;
     if (!e.target.closest("#start-menu") && !e.target.closest("#start-button")) {
@@ -2873,6 +2973,13 @@ document.addEventListener("pointerdown", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
+    if (suspended) {
+        if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+            e.preventDefault();
+            setSuspended(false);
+        }
+        return;
+    }
     if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
         e.preventDefault();
         toggleStartMenu();

@@ -719,55 +719,125 @@ iframe {
     background-image: url("../assets/xp/icons/Exit.png");
 }
 
-/* ---- Window toolbar (game controls) ---- */
+/* ---- Game application menu bar ---- */
 
-.window-toolbar {
+.game-menu-bar {
+    position: relative;
+    z-index: 2;
     flex: none;
     display: flex;
     align-items: center;
-    gap: 0;
-    min-height: 27px;
-    padding: 2px 4px;
+    height: 22px;
+    padding: 0 2px;
     background: var(--xp-beige);
-    border-bottom: 1px solid var(--xp-beige-dark);
+    border-bottom: 1px solid #aca899;
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
 }
 
-.toolbar-btn {
-    min-width: 24px;
-    height: 21px;
-    padding: 0 8px;
-    background: transparent;
+.game-menu-button {
+    height: 20px;
+    padding: 1px 7px 2px;
     border: 1px solid transparent;
-    border-radius: 0;
-    color: #111;
-    font-size: 11px;
-    line-height: 1;
+    background: transparent;
+    color: inherit;
+    font: inherit;
     cursor: var(--xp-cursor);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
-.toolbar-btn:hover {
+.game-menu-button:hover,
+.game-menu-button:focus-visible,
+.game-menu-button[aria-expanded="true"] {
+    border-color: #0a246a;
     background: #316ac5;
-    border-color: #0b4aa3;
     color: #fff;
+    outline: 0;
 }
 
-.favorite-btn.active,
-.volume-btn.active {
-    background: #d8e7f8;
-    border-color: #7f9db9;
+.menu-accesskey {
+    text-decoration: underline;
+}
+
+.game-menu {
+    position: absolute;
+    top: 50px;
+    z-index: 20;
+    min-width: 164px;
+    padding: 2px;
+    background: var(--xp-beige);
+    border: 1px solid #7f7f7f;
+    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.35), inset 1px 1px 0 #fff;
     color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
 }
 
-.toolbar-separator {
-    width: 1px;
-    height: 18px;
-    background: #b5b0a0;
+.game-menu[data-game-menu="file"] { left: 3px; }
+.game-menu[data-game-menu="view"] { left: 38px; }
+.game-menu[data-game-menu="favorites"] { left: 78px; }
+.game-menu[data-game-menu="sound"] { left: 140px; }
+.game-menu[data-game-menu="help"] { left: 190px; }
+
+.game-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 22px;
+    padding: 3px 18px 3px 22px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    cursor: var(--xp-cursor);
 }
 
-.volume-slider {
+.game-menu-item:hover:not(:disabled),
+.game-menu-item:focus-visible:not(:disabled) {
+    background: #316ac5;
+    color: #fff;
+    outline: 0;
+}
+
+.game-menu-item:disabled {
+    color: #aca899;
+    cursor: default;
+    text-shadow: 1px 1px #fff;
+}
+
+.menu-check {
+    width: 16px;
+    margin-left: -18px;
+    color: transparent;
+    font-weight: 700;
+}
+
+.game-menu-item.checked .menu-check {
+    color: currentColor;
+}
+
+.menu-shortcut {
+    margin-left: auto;
+    padding-left: 22px;
+    color: inherit;
+}
+
+.game-menu-separator {
+    height: 1px;
+    margin: 3px 2px 3px 22px;
+    background: #aca899;
+    box-shadow: 0 1px #fff;
+}
+
+.game-volume-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 27px;
+    padding: 3px 8px 3px 22px;
+}
+
+.game-volume-slider {
     width: 90px;
     height: 6px;
     appearance: none;
@@ -779,7 +849,7 @@ iframe {
     cursor: var(--xp-cursor);
 }
 
-.volume-slider::-webkit-slider-thumb {
+.game-volume-slider::-webkit-slider-thumb {
     appearance: none;
     -webkit-appearance: none;
     width: 11px;
@@ -789,7 +859,7 @@ iframe {
     border: 1px solid #0f46a8;
 }
 
-.volume-slider::-moz-range-thumb {
+.game-volume-slider::-moz-range-thumb {
     width: 11px;
     height: 16px;
     border-radius: 2px;
@@ -2381,7 +2451,8 @@ iframe {
 /* ============ Shutdown screens ============ */
 
 #shutdown-screen,
-#turn-off-screen {
+#turn-off-screen,
+#standby-screen {
     position: fixed;
     inset: 0;
     z-index: 9500;
@@ -2420,6 +2491,39 @@ iframe {
     align-items: center;
     justify-content: center;
     gap: 8px;
+}
+
+#standby-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    text-align: center;
+}
+
+#standby-screen > div {
+    min-width: 240px;
+    padding: 22px 28px;
+    border: 2px solid #86aaf0;
+    border-radius: 5px;
+    background: linear-gradient(#3063b6, #123b83);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+#standby-screen p {
+    margin: 0 0 16px;
+    font-size: 15px;
+}
+
+#standby-screen button {
+    display: block;
+    min-width: 82px;
+    margin: 0 auto 12px;
+}
+
+#standby-screen span {
+    font-size: 11px;
 }
 
 #turn-off-screen img {
