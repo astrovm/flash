@@ -122,6 +122,9 @@ const createGameIconElement = (gameId, className) => {
         if (systemShortcuts[gameId]) {
             icon.classList.add("system-icon");
         }
+        if (gameId === "__recycle-bin" && window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length) {
+            icon.classList.add("recycle-full");
+        }
         icon.appendChild(image);
     } else {
         const systemGlyph = systemShortcuts[gameId]?.glyph;
@@ -1497,6 +1500,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     if (shortcutId === "__recycle-bin") {
         const emptyBin = document.createElement("button");
         emptyBin.type = "button";
+        emptyBin.className = "recycle-task";
         emptyBin.textContent = "Empty Recycle Bin";
         emptyBin.addEventListener("click", () => {
             const count = fs.getChildren(fs.RECYCLE_BIN).length;
@@ -1511,7 +1515,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             ).then((yes) => {
                 if (!yes) return;
                 try {
-                    fs.emptyRecycleBin();
+                    fileOps.emptyRecycleBin();
                 } catch (error) {
                     console.error(error);
                 }
@@ -1520,11 +1524,12 @@ const createSystemWindowContent = (shortcutId, win) => {
 
         const restoreAll = document.createElement("button");
         restoreAll.type = "button";
+        restoreAll.className = "recycle-task";
         restoreAll.textContent = "Restore all items";
         restoreAll.addEventListener("click", () => {
             fs.getChildren(fs.RECYCLE_BIN).forEach((node) => {
                 try {
-                    fs.restore(node.id);
+                    fileOps.restore([node.id]);
                 } catch (error) {
                     console.error(error);
                 }
@@ -1532,6 +1537,25 @@ const createSystemWindowContent = (shortcutId, win) => {
         });
 
         tasksSection.append(emptyBin, restoreAll);
+        const restoreSelected = document.createElement("button");
+        restoreSelected.type = "button";
+        restoreSelected.className = "recycle-task";
+        restoreSelected.textContent = "Restore selected items";
+        restoreSelected.addEventListener("click", () => {
+            const ids = selectedExplorerNodes(win);
+            if (ids.length) fileOps.restore(ids);
+        });
+        const deleteSelected = document.createElement("button");
+        deleteSelected.type = "button";
+        deleteSelected.className = "recycle-task";
+        deleteSelected.textContent = "Delete selected items";
+        deleteSelected.addEventListener("click", () => {
+            const ids = selectedExplorerNodes(win);
+            if (!ids.length) return;
+            XPDialogs.confirm("Are you sure you want to permanently delete the selected items?", "Confirm File Delete", "warning")
+                .then((yes) => yes && fileOps.permanentlyDelete(ids));
+        });
+        tasksSection.append(restoreSelected, deleteSelected);
     } else {
         ["View system information", "Add or remove programs", "Change a setting"]
             .forEach((label) => {
@@ -1551,6 +1575,14 @@ const createSystemWindowContent = (shortcutId, win) => {
     `;
 
     sidebar.append(tasksSection, placesSection);
+    const treeSection = document.createElement("section");
+    treeSection.className = "explorer-tree-section";
+    treeSection.innerHTML = "<h3>Folders</h3>";
+    const tree = document.createElement("div");
+    tree.className = "explorer-tree";
+    tree.setAttribute("role", "tree");
+    treeSection.appendChild(tree);
+    sidebar.appendChild(treeSection);
 
     const main = document.createElement("main");
     main.className = "explorer-main";
@@ -1562,8 +1594,137 @@ const createSystemWindowContent = (shortcutId, win) => {
     items.className = "explorer-items";
     main.appendChild(items);
 
-    content.append(sidebar, main);
+    const chrome = document.createElement("div");
+    chrome.className = "explorer-chrome";
+    chrome.innerHTML = `
+        <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
+        <div class="explorer-toolbar"><button data-explorer-action="back">Back</button><button data-explorer-action="forward">Forward</button><button data-explorer-action="up">Up</button><button data-explorer-action="search">Search</button><button data-explorer-action="folders">Folders</button><button data-explorer-action="view">Views</button></div>
+        <label class="explorer-address">Address <input type="text" aria-label="Address"></label>
+    `;
+    const body = document.createElement("div");
+    body.className = "explorer-body";
+    body.append(sidebar, main);
+    const status = document.createElement("div");
+    status.className = "explorer-status";
+    content.append(chrome, body, status);
+    const explorerMenu = document.createElement("div");
+    explorerMenu.className = "game-menu explorer-menu";
+    explorerMenu.setAttribute("role", "menu");
+    explorerMenu.hidden = true;
+    chrome.appendChild(explorerMenu);
+    const explorerMenuLabels = {
+        file: "&File", edit: "&Edit", view: "&View", favorites: "F&avorites", tools: "&Tools", help: "&Help"
+    };
+    const explorerMenuButtons = [...chrome.querySelectorAll("[data-explorer-menu]")];
+    explorerMenuButtons.forEach((button) => {
+        const { key } = setAccessKeyText(button, explorerMenuLabels[button.dataset.explorerMenu]);
+        button.dataset.accessKey = key;
+        button.setAttribute("role", "menuitem");
+        button.setAttribute("aria-haspopup", "menu");
+        button.setAttribute("aria-expanded", "false");
+    });
+    const showExplorerMenu = (name, button) => {
+        const selected = selectedExplorerNodes(win);
+        const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId);
+        const actions = {
+            file: [["New Folder", "new", !writable], ["Close", "close"]],
+            edit: [["Cut", "cut", !selected.length], ["Copy", "copy", !selected.length], ["Paste", "paste", !writable || !fileOps.canPaste(win.currentFolderId)], ["Delete", "delete", !selected.length], ["Rename", "rename", selected.length !== 1]],
+            view: [["Thumbnails", "thumbnails"], ["Tiles", "tiles"], ["Icons", "icons"], ["List", "list"], ["Details", "details"]],
+            favorites: [["My Documents", "documents"]],
+            tools: [["Properties", "properties", selected.length !== 1]],
+            help: [["About Astro Flash", "about"]]
+        }[name];
+        explorerMenu.replaceChildren();
+        actions.forEach(([label, action, disabled]) => {
+            const item = document.createElement("button"); item.type = "button"; item.className = "game-menu-item"; item.textContent = label; item.dataset.explorerCommand = action; item.disabled = !!disabled; item.setAttribute("role", "menuitem"); explorerMenu.appendChild(item);
+        });
+        explorerMenu.hidden = false;
+        explorerMenuButtons.forEach((entry) => entry.setAttribute("aria-expanded", String(entry === button)));
+        explorerMenu.style.left = `${button.offsetLeft}px`;
+        explorerMenu.style.top = `${button.offsetTop + button.offsetHeight}px`;
+        explorerMenu.querySelector("button:not(:disabled)")?.focus();
+    };
+    chrome.addEventListener("click", (event) => {
+        const menuName = event.target.dataset.explorerMenu;
+        if (menuName) {
+            showExplorerMenu(menuName, event.target);
+            return;
+        }
+        const command = event.target.dataset.explorerCommand;
+        if (command) {
+            const selected = selectedExplorerNodes(win);
+            if (command === "new" && ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)) fileOps.createFolder(win.currentFolderId, "New Folder");
+            if (command === "close") closeGameWindow(win.gameId);
+            if (command === "cut") fileOps.cut(selected);
+            if (command === "copy") fileOps.copy(selected);
+            if (command === "paste" && ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)) fileOps.paste(win.currentFolderId);
+            if (command === "delete") confirmRecycleDelete(selected);
+            if (command === "rename") { const name = window.prompt("Rename", fs.getNode(selected[0]).name); if (name !== null) fileOps.rename(selected[0], name); }
+            if (["thumbnails", "tiles", "icons", "list", "details"].includes(command)) { win.explorerView = command; renderExplorerItems(win); }
+            if (command === "documents") openSystemWindow("__my-documents");
+            if (command === "properties") XPDialogs.properties(selected[0]);
+            if (command === "about") openProjectSettings();
+            explorerMenu.hidden = true;
+            explorerMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
+            return;
+        }
+        const action = event.target.dataset.explorerAction;
+        if (!action) return;
+        if (action === "back") explorerBack(win);
+        if (action === "forward") explorerForward(win);
+        if (action === "up") {
+            const parent = fs.getParent(win.currentFolderId);
+            if (parent) navigateExplorer(win, parent.id);
+        }
+        if (action === "folders") content.classList.toggle("folders-hidden");
+        if (action === "view") {
+            const views = ["tiles", "thumbnails", "icons", "list", "details"];
+            win.explorerView = views[(views.indexOf(win.explorerView || "tiles") + 1) % views.length];
+            renderExplorerItems(win);
+        }
+        if (action === "search") openSearchDialog();
+    });
+    chrome.querySelector("input").addEventListener("change", (event) => {
+        const destination = fs.resolvePath(event.target.value);
+        if (destination && fs.getNode(destination)?.type === "folder") navigateExplorer(win, destination);
+        else event.target.value = fs.getPath(win.currentFolderId);
+    });
+    chrome.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            const activeButton = explorerMenuButtons.find((button) => button.getAttribute("aria-expanded") === "true");
+            explorerMenu.hidden = true;
+            explorerMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
+            activeButton?.focus();
+            return;
+        }
+        const heading = document.activeElement?.closest?.("[data-explorer-menu]");
+        if (event.altKey) {
+            const target = explorerMenuButtons.find((button) => button.dataset.accessKey === event.key.toLowerCase());
+            if (target) { event.preventDefault(); showExplorerMenu(target.dataset.explorerMenu, target); }
+            return;
+        }
+        if (heading && ["ArrowLeft", "ArrowRight", "ArrowDown", "Home", "End"].includes(event.key)) {
+            event.preventDefault();
+            const index = explorerMenuButtons.indexOf(heading);
+            const target = event.key === "Home" ? explorerMenuButtons[0] : event.key === "End" ? explorerMenuButtons.at(-1) : event.key === "ArrowDown" ? heading : explorerMenuButtons[(index + (event.key === "ArrowRight" ? 1 : -1) + explorerMenuButtons.length) % explorerMenuButtons.length];
+            if (event.key === "ArrowDown") showExplorerMenu(heading.dataset.explorerMenu, heading);
+            else { target.focus(); showExplorerMenu(target.dataset.explorerMenu, target); }
+            return;
+        }
+        const item = explorerMenu.querySelector("button:not(:disabled)");
+        const menuItems = [...explorerMenu.querySelectorAll("button:not(:disabled)")];
+        if (!explorerMenu.hidden && ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+            event.preventDefault();
+            const index = menuItems.indexOf(document.activeElement);
+            const target = event.key === "Home" ? menuItems[0] : event.key === "End" ? menuItems.at(-1) : menuItems[(index + (event.key === "ArrowDown" ? 1 : -1) + menuItems.length) % menuItems.length];
+            target?.focus();
+        }
+        if (event.key === "Enter" && !explorerMenu.hidden && document.activeElement?.matches("[data-explorer-command]")) {
+            event.preventDefault(); document.activeElement.click();
+        }
+    });
     renderExplorerItems(win, content);
+    renderExplorerTree(win);
     return content;
 };
 
@@ -1717,6 +1878,14 @@ const wireDisplayProperties = (win) => {
 
 const fs = window.VirtualFS;
 const fileOps = window.FileOperations;
+const confirmRecycleDelete = (ids) => XPDialogs.confirm(
+    ids.length === 1 ? "Are you sure you want to send this item to the Recycle Bin?" : "Are you sure you want to send these items to the Recycle Bin?",
+    "Confirm File Delete", "warning"
+).then((yes) => yes && fileOps.removeToBin(ids));
+const closeExplorerMenu = (root = document) => {
+    root.querySelectorAll(".explorer-menu").forEach((menu) => { menu.hidden = true; });
+    root.querySelectorAll("[data-explorer-menu][aria-expanded=\"true\"]").forEach((button) => button.setAttribute("aria-expanded", "false"));
+};
 
 const systemFolderShortcuts = {
     "__my-documents": () => fs.MY_DOCUMENTS,
@@ -1731,6 +1900,119 @@ const explorerDescriptions = {
     "__my-computer": "Files Stored on This Computer",
     "__my-pictures": "Files stored in My Pictures",
     "__my-music": "Files stored in My Music"
+};
+
+const navigateExplorer = (win, folderId, { history = true } = {}) => {
+    const folder = fs.getNode(folderId);
+    if (!folder || folder.type !== "folder") return false;
+    if (history) {
+        const entries = (win.history || []).slice(0, (win.historyIndex ?? -1) + 1);
+        if (entries.at(-1) !== folderId) entries.push(folderId);
+        win.history = entries;
+        win.historyIndex = entries.length - 1;
+    }
+    win.currentFolderId = folderId;
+    renderExplorerItems(win);
+    return true;
+};
+
+const explorerBack = (win) => {
+    if ((win.historyIndex ?? 0) <= 0) return;
+    win.historyIndex -= 1;
+    navigateExplorer(win, win.history[win.historyIndex], { history: false });
+};
+
+const explorerForward = (win) => {
+    if ((win.historyIndex ?? -1) >= (win.history?.length ?? 0) - 1) return;
+    win.historyIndex += 1;
+    navigateExplorer(win, win.history[win.historyIndex], { history: false });
+};
+
+const selectedExplorerNodes = (win) => [...win.el.querySelectorAll(".explorer-item.selected")]
+    .map((item) => item.dataset.nodeId)
+    .filter((id) => !!fs.getNode(id));
+
+const renderExplorerTree = (win) => {
+    const tree = win.el.querySelector(".explorer-tree");
+    if (!tree) return;
+    tree.replaceChildren();
+    const expanded = win.expandedFolders || new Set([fs.MY_COMPUTER, fs.DRIVE_C, fs.DOCUMENTS_AND_SETTINGS, fs.USER_PROFILE]);
+    win.expandedFolders = expanded;
+    const addNode = (id, depth = 0) => {
+        const node = fs.getNode(id);
+        if (!node || node.type !== "folder") return;
+        const row = document.createElement("button");
+        row.type = "button"; row.className = "explorer-tree-item"; row.dataset.nodeId = id;
+        row.style.paddingLeft = `${6 + depth * 14}px`;
+        const hasFolders = fs.getChildren(id).some((child) => child.type === "folder");
+        row.textContent = `${hasFolders ? (expanded.has(id) ? "− " : "+ ") : "  "}${node.name}`;
+        row.classList.toggle("active", id === win.currentFolderId);
+        row.addEventListener("click", () => { if (hasFolders) expanded.add(id); navigateExplorer(win, id); });
+        row.addEventListener("dblclick", () => { if (expanded.has(id)) expanded.delete(id); else expanded.add(id); renderExplorerTree(win); });
+        tree.appendChild(row);
+        if (expanded.has(id)) fs.getChildren(id).filter((child) => child.type === "folder").forEach((child) => addNode(child.id, depth + 1));
+    };
+    addNode(fs.MY_COMPUTER);
+    addNode(fs.RECYCLE_BIN);
+};
+
+const openExplorerContextMenu = (win, clientX, clientY) => {
+    const selected = selectedExplorerNodes(win);
+    const recycle = win.currentFolderId === fs.RECYCLE_BIN;
+    const protectedSelection = selected.some((id) => fs.isProtected(id));
+    const menu = document.createElement("div");
+    menu.className = "xp-context-menu explorer-context-menu";
+    menu.setAttribute("role", "menu");
+    const close = () => menu.remove();
+    const add = (label, command, disabled = false) => {
+        const button = document.createElement("button");
+        button.type = "button"; button.textContent = label; button.dataset.command = command;
+        button.disabled = disabled; button.setAttribute("role", "menuitem"); menu.appendChild(button);
+    };
+    if (recycle) {
+        add("Restore", "restore", !selected.length);
+        add("Delete Permanently", "permanent", !selected.length);
+        add("Properties", "properties", selected.length !== 1);
+    } else {
+        add("Open", "open", selected.length !== 1);
+        add("Cut", "cut", !selected.length || protectedSelection);
+        add("Copy", "copy", !selected.length);
+        add("Delete", "delete", !selected.length || protectedSelection);
+        add("Rename", "rename", selected.length !== 1 || protectedSelection);
+        add("Properties", "properties", selected.length !== 1);
+    }
+    win.el.appendChild(menu);
+    const rect = win.el.getBoundingClientRect();
+    menu.style.left = `${Math.max(0, Math.min(clientX - rect.left, rect.width - menu.offsetWidth - 2))}px`;
+    menu.style.top = `${Math.max(25, Math.min(clientY - rect.top, rect.height - menu.offsetHeight - 2))}px`;
+    menu.querySelector("button:not(:disabled)")?.focus();
+    menu.addEventListener("click", (event) => {
+        const command = event.target.dataset.command;
+        if (!command) return;
+        if (command === "open") fs.open(selected[0]);
+        if (command === "cut") fileOps.cut(selected);
+        if (command === "copy") fileOps.copy(selected);
+        if (command === "restore") fileOps.restore(selected);
+        if (command === "properties") XPDialogs.properties(selected[0]);
+        if (command === "rename") { const name = window.prompt("Rename", fs.getNode(selected[0]).name); if (name !== null) fileOps.rename(selected[0], name); }
+        if (command === "delete" || command === "permanent") XPDialogs.confirm(
+            command === "permanent" ? "Are you sure you want to permanently delete the selected items?" : "Are you sure you want to send the selected items to the Recycle Bin?",
+            "Confirm File Delete", "warning"
+        ).then((yes) => yes && (command === "permanent" ? fileOps.permanentlyDelete(selected) : confirmRecycleDelete(selected)));
+        close();
+    });
+    menu.addEventListener("keydown", (event) => {
+        const buttons = [...menu.querySelectorAll("button:not(:disabled)")];
+        const index = buttons.indexOf(document.activeElement);
+        if (event.key === "Escape") { close(); return; }
+        if (event.key === "Enter") { event.preventDefault(); document.activeElement?.click(); return; }
+        if (["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) {
+            event.preventDefault();
+            const target = event.key === "Home" ? buttons[0] : event.key === "End" ? buttons.at(-1) : buttons[(index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length];
+            target?.focus();
+        }
+    });
+    document.addEventListener("pointerdown", (event) => { if (!menu.contains(event.target)) close(); }, { once: true });
 };
 
 const createExplorerIcon = (node) => {
@@ -1782,8 +2064,7 @@ const explorerItemDescription = (node) => {
 
 const openExplorerNode = (win, node) => {
     if (node.type === "folder") {
-        win.currentFolderId = node.id;
-        renderExplorerItems(win);
+        navigateExplorer(win, node.id);
         return;
     }
     try {
@@ -1801,6 +2082,23 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
 
     win.el.querySelector(".title-text").textContent =
         folder.id === fs.MY_COMPUTER ? "My Computer" : folder.name;
+    const titleIcon = win.el.querySelector(".title-icon");
+    if (titleIcon) {
+        titleIcon.replaceChildren();
+        titleIcon.textContent = folder.id === fs.RECYCLE_BIN ? "🗑️"
+            : folder.id === fs.MY_COMPUTER ? "💻"
+            : folder.id === fs.DRIVE_C ? "💽" : "📁";
+    }
+    renderExplorerTree(win);
+
+    const explorerContent = main.closest(".explorer-content");
+    const chrome = explorerContent?.querySelector(".explorer-chrome");
+    if (chrome) {
+        chrome.querySelector("input").value = fs.getPath(folder.id);
+        chrome.querySelector('[data-explorer-action="back"]').disabled = (win.historyIndex ?? 0) <= 0;
+        chrome.querySelector('[data-explorer-action="forward"]').disabled = (win.historyIndex ?? -1) >= (win.history?.length ?? 0) - 1;
+        chrome.querySelector('[data-explorer-action="up"]').disabled = !folder.parent;
+    }
 
     const heading = main.querySelector("h2");
     if (win.currentFolderId === fs.RECYCLE_BIN) {
@@ -1815,6 +2113,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     }
 
     const items = main.querySelector(".explorer-items");
+    items.dataset.view = win.explorerView || "tiles";
     items.innerHTML = "";
 
     const children = fs.getChildren(folder.id)
@@ -1832,13 +2131,26 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
             ? "The Recycle Bin is empty."
             : "There are no items to show in this view.";
         items.appendChild(empty);
+        const status = explorerContent?.querySelector(".explorer-status");
+        if (status) status.textContent = "0 objects";
+        if (win.currentFolderId === fs.RECYCLE_BIN) {
+            win.el.querySelectorAll(".recycle-task").forEach((button) => { button.disabled = true; });
+        }
         return;
+    }
+
+    if (items.dataset.view === "details") {
+        const header = document.createElement("div");
+        header.className = "explorer-details-header";
+        header.innerHTML = "<span>Name</span><span>Type</span><span>Size</span>";
+        items.appendChild(header);
     }
 
     children.forEach((node) => {
         const item = document.createElement("button");
         item.type = "button";
         item.className = "explorer-item";
+        item.dataset.nodeId = node.id;
         item.title = node.name;
 
         const label = document.createElement("span");
@@ -1849,15 +2161,56 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
         label.append(name, description);
 
         item.append(createExplorerIcon(node), label);
+        if (items.dataset.view === "details") {
+            item.classList.add("explorer-details-row");
+            const type = document.createElement("span");
+            type.className = "explorer-detail-type";
+            type.textContent = explorerItemDescription(node);
+            const size = document.createElement("span");
+            size.className = "explorer-detail-size";
+            size.textContent = node.type === "folder" ? "" : XPDialogs.formatBytes(fs.getSize(node.id));
+            item.append(type, size);
+        }
+        item.addEventListener("click", (event) => {
+            if (!event.ctrlKey && !event.metaKey) {
+                items.querySelectorAll(".selected").forEach((entry) => entry.classList.remove("selected"));
+            }
+            item.classList.add("selected");
+        });
         item.addEventListener("dblclick", () => openExplorerNode(win, node));
         item.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 openExplorerNode(win, node);
             }
+            if (e.key === "Delete") {
+                e.preventDefault();
+                if (win.currentFolderId === fs.RECYCLE_BIN) {
+                    XPDialogs.confirm("Are you sure you want to permanently delete this item?", "Confirm File Delete", "warning")
+                        .then((yes) => yes && fileOps.permanentlyDelete([node.id]));
+                } else {
+                    XPDialogs.confirm("Are you sure you want to send this item to the Recycle Bin?", "Confirm File Delete", "warning")
+                        .then((yes) => yes && fileOps.removeToBin([node.id]));
+                }
+            }
+            if (e.key === "F2" && !node.protected) {
+                e.preventDefault();
+                const next = window.prompt("Rename", node.name);
+                if (next !== null) fileOps.rename(node.id, next);
+            }
+        });
+        item.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            item.click();
+            openExplorerContextMenu(win, event.clientX, event.clientY);
         });
         items.appendChild(item);
     });
+    const status = explorerContent?.querySelector(".explorer-status");
+    if (status) status.textContent = `${children.length} ${children.length === 1 ? "object" : "objects"}`;
+    if (win.currentFolderId === fs.RECYCLE_BIN) {
+        win.el.querySelectorAll(".recycle-task").forEach((button) => { button.disabled = false; });
+    }
 };
 
 // Games participate in the filesystem as ".game" files on the Desktop,
@@ -1905,10 +2258,7 @@ fs.registerFileType(".game", (file) => {
 fs.registerFolderHandler((folder) => {
     openSystemWindow("__my-documents");
     const win = openWindows.get("__my-documents");
-    if (win) {
-        win.currentFolderId = folder.id;
-        renderExplorerItems(win);
-    }
+    if (win) navigateExplorer(win, folder.id);
 });
 
 // Keep open explorer windows in sync with filesystem changes.
@@ -1965,6 +2315,9 @@ const openSystemWindow = (shortcutId) => {
         currentFolderId: systemFolderShortcuts[shortcutId]
             ? systemFolderShortcuts[shortcutId]()
             : null,
+        history: systemFolderShortcuts[shortcutId] ? [systemFolderShortcuts[shortcutId]()] : [],
+        historyIndex: 0,
+        explorerView: "tiles",
         maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: null,
         volumeBtn: null,
@@ -1973,6 +2326,7 @@ const openSystemWindow = (shortcutId) => {
     openWindows.set(shortcutId, win);
     const content = el.querySelector(".window-content");
     content.replaceWith(createSystemWindowContent(shortcutId, win));
+    if (win.currentFolderId) renderExplorerItems(win);
     wireSystemWindowControls(win);
     if (shortcutId === "__display-properties") wireDisplayProperties(win);
     focusWindow(shortcutId);
@@ -3310,7 +3664,10 @@ const setupDesktopContextMenu = () => {
         } else if (action === "copy") {
             fileOps.copy(selectedFsIds);
         } else if (action === "delete") {
-            fileOps.removeToBin(selectedFsIds);
+            XPDialogs.confirm(
+                selectedFsIds.length === 1 ? "Are you sure you want to send this item to the Recycle Bin?" : "Are you sure you want to send these items to the Recycle Bin?",
+                "Confirm File Delete", "warning"
+            ).then((yes) => yes && confirmRecycleDelete(selectedFsIds));
         } else if (action === "rename" && selectedFsIds[0]) {
             beginDesktopRename(selectedFsIds[0]);
         } else if (action === "item-properties" && selectedFsIds[0]) {
@@ -4124,6 +4481,7 @@ window.addEventListener("hashchange", () => {
 // Close the start menu when clicking outside of it
 document.addEventListener("pointerdown", (e) => {
     if (suspended) return;
+    if (!e.target.closest(".explorer-chrome")) closeExplorerMenu();
     if (!e.target.closest("#desktop-context-menu")) {
         closeDesktopContextMenu();
     }
@@ -4183,7 +4541,7 @@ document.addEventListener("keydown", (e) => {
             e.preventDefault(); fileOps.paste(fs.DESKTOP); return;
         }
         if (e.key === "Delete" && movable) {
-            e.preventDefault(); fileOps.removeToBin(selectedFsIds); return;
+            e.preventDefault(); confirmRecycleDelete(selectedFsIds); return;
         }
         if (e.key === "F2" && movable && selectedFsIds.length === 1) {
             e.preventDefault(); beginDesktopRename(selectedFsIds[0]); return;

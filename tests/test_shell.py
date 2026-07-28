@@ -180,7 +180,7 @@ class ShellSourceTests(unittest.TestCase):
     def test_desktop_uses_shared_file_operations_and_keyboard_commands(self):
         for command in (
             'fileOps.copy(selectedFsIds)', 'fileOps.cut(selectedFsIds)',
-            'fileOps.paste(fs.DESKTOP)', 'fileOps.removeToBin(selectedFsIds)',
+            'fileOps.paste(fs.DESKTOP)', 'confirmRecycleDelete(selectedFsIds)',
             'beginDesktopRename(selectedFsIds[0])', 'e.key === "F2"',
             'e.shiftKey && e.key === "F10"', 'action === "new-folder"',
         ):
@@ -202,6 +202,48 @@ class ShellSourceTests(unittest.TestCase):
             self.assertIn(token, self.javascript)
         self.assertIn('.context-parent.open > .context-submenu', self.css)
         self.assertIn('#desktop-icons:not(:focus-within)', self.css)
+
+    def test_explorer_and_recycle_bin_use_shared_filesystem_controls(self):
+        for token in (
+            'const navigateExplorer = (win, folderId',
+            'const explorerBack = (win) =>',
+            'const explorerForward = (win) =>',
+            'class="explorer-menu-bar"',
+            'data-explorer-action="back"',
+            'data-explorer-action="forward"',
+            'data-explorer-action="up"',
+            'class="explorer-address"',
+            'status.className = "explorer-status"',
+            'fileOps.restore(ids)',
+            'fileOps.permanentlyDelete(ids)',
+            'fileOps.emptyRecycleBin()',
+            'icon.classList.add("recycle-full")',
+        ):
+            self.assertIn(token, self.javascript)
+        for token in ('.explorer-body', '.explorer-items[data-view="details"]', '.recycle-full::before'):
+            self.assertIn(token, self.css)
+
+    def test_explorer_item_context_menu_supports_normal_and_recycle_commands(self):
+        for token in (
+            'const openExplorerContextMenu = (win, clientX, clientY)',
+            'menu.setAttribute("role", "menu")',
+            'add("Restore", "restore"',
+            'add("Delete Permanently", "permanent"',
+            'add("Open", "open"', 'add("Cut", "cut"',
+            'add("Rename", "rename"', 'event.key === "Escape"',
+            'event.key === "Enter"', '"ArrowUp", "ArrowDown", "Home", "End"',
+            'openExplorerContextMenu(win, event.clientX, event.clientY)',
+        ):
+            self.assertIn(token, self.javascript)
+
+    def test_explorer_menu_bar_has_access_keys_and_keyboard_navigation(self):
+        for token in (
+            'file: "&File", edit: "&Edit"', 'F&avorites',
+            'button.dataset.accessKey = key', 'event.altKey',
+            '"ArrowLeft", "ArrowRight", "ArrowDown", "Home", "End"',
+            'explorerMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"))',
+        ):
+            self.assertIn(token, self.javascript)
 
     def test_start_menu_contains_only_xp_places(self):
         places = self.javascript[
