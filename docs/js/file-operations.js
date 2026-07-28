@@ -62,6 +62,14 @@
         return node;
     };
 
+    const assertWritableFolder = (id) => {
+        const folder = requireFolder(id);
+        if (id === fs.RECYCLE_BIN || id === fs.MY_COMPUTER) {
+            throw new Error("FileOperations: this location cannot accept new items");
+        }
+        return folder;
+    };
+
     const getTopLevelIds = (ids) => {
         if (!Array.isArray(ids)) {
             throw new Error("FileOperations: items must be an array");
@@ -125,6 +133,7 @@
     const canPaste = (destinationId) => {
         if (!clipboard) return false;
         try {
+            assertWritableFolder(destinationId);
             const ids = getTopLevelIds(clipboard.ids);
             if (clipboard.mode === "cut") assertMovableTo(ids, destinationId);
             else assertCopyableTo(ids, destinationId);
@@ -136,6 +145,7 @@
 
     const paste = (destinationId) => {
         if (!clipboard) throw new Error("FileOperations: clipboard is empty");
+        assertWritableFolder(destinationId);
         const ids = getTopLevelIds(clipboard.ids);
         const mode = clipboard.mode;
         if (mode === "cut") assertMovableTo(ids, destinationId);
@@ -154,8 +164,55 @@
         return results;
     };
 
-    const createFolder = (parentId, name) => fs.createFolder(parentId, name);
-    const createFile = (parentId, name, options = {}) => fs.createFile(parentId, name, options);
+    const getConflicts = (ids, destinationId) => {
+        requireFolder(destinationId);
+        return getTopLevelIds(ids)
+            .map((id) => ({ source: fs.getNode(id), existing: fs.findChild(destinationId, fs.getNode(id).name) }))
+            .filter(({ source, existing }) => !!existing && existing.id !== source.id);
+    };
+
+    // Resolver receives { source, existing, mode } and returns "replace",
+    // "rename", or "cancel" (sync or Promise). Replace is limited to files;
+    // folders always use the filesystem's deterministic copy naming.
+    const pasteWithConflicts = async (destinationId, resolveConflict, options = {}) => {
+        if (!clipboard) throw new Error("FileOperations: clipboard is empty");
+        assertWritableFolder(destinationId);
+        const ids = getTopLevelIds(clipboard.ids);
+        const mode = clipboard.mode;
+        if (mode === "cut") assertMovableTo(ids, destinationId); else assertCopyableTo(ids, destinationId);
+        if (mode === "cut" && ids.every((id) => fs.getNode(id).parent === destinationId)) return { cancelled: false, results: ids.map((id) => fs.getNode(id)) };
+        const decisions = [];
+        for (const conflict of getConflicts(ids, destinationId)) {
+            const response = await Promise.resolve(resolveConflict?.({ ...conflict, mode }) || "rename");
+            const decision = ["replace", "rename", "cancel"].includes(response) ? response : "rename";
+            if (decision === "cancel") return { cancelled: true, results: [] };
+            decisions.push({ conflict, decision });
+        }
+        const results = [];
+        for (const [index, id] of ids.entries()) {
+            if (options.isCancelled?.()) {
+                if (mode === "cut") {
+                    const remaining = ids.slice(index).filter((remainingId) => !!fs.getNode(remainingId));
+                    clipboard = remaining.length ? { mode: "cut", ids: remaining } : null;
+                    notify({ type: "clipboard", mode: clipboard?.mode || null });
+                }
+                return { cancelled: true, results };
+            }
+            const planned = decisions.find(({ conflict }) => conflict.source.id === id);
+            if (planned?.decision === "replace" && planned.conflict.source.type === "file" && planned.conflict.existing.type === "file") {
+                fs.destroy(planned.conflict.existing.id);
+            }
+            results.push(mode === "cut" ? fs.move(id, destinationId) : fs.copy(id, destinationId));
+            options.onProgress?.({ completed: index + 1, total: ids.length, mode, id });
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        if (mode === "cut") { clipboard = null; notify({ type: "clipboard", mode: null }); }
+        notify({ type: "paste", mode, destinationId, ids: results.map((node) => node.id) });
+        return { cancelled: false, results };
+    };
+
+    const createFolder = (parentId, name) => { assertWritableFolder(parentId); return fs.createFolder(parentId, name); };
+    const createFile = (parentId, name, options = {}) => { assertWritableFolder(parentId); return fs.createFile(parentId, name, options); };
     const rename = (id, name) => fs.rename(id, name);
 
     const removeToBin = (ids) => {
@@ -208,6 +265,8 @@
         copy,
         cut,
         paste,
+        getConflicts,
+        pasteWithConflicts,
         createFolder,
         createFile,
         rename,

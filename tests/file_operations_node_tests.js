@@ -79,4 +79,105 @@ operations.removeToBin([source.id]);
 operations.emptyRecycleBin();
 assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 0);
 
-console.log("file operations tests passed");
+(async () => {
+    // ---- Conflict-aware paste decisions ----
+    const conflictSource = operations.createFolder(fs.MY_DOCUMENTS, "Conflict Source");
+    const conflictFile = operations.createFile(conflictSource.id, "same.txt", { content: "new" });
+    const conflictFolder = operations.createFolder(conflictSource.id, "same-folder");
+    const conflictTarget = operations.createFolder(fs.MY_DOCUMENTS, "Conflict Target");
+    const existingFile = operations.createFile(conflictTarget.id, "same.txt", { content: "old" });
+    operations.createFolder(conflictTarget.id, "same-folder");
+
+    operations.copy([conflictFile.id]);
+    const conflicts = operations.getConflicts([conflictFile.id], conflictTarget.id);
+    assert.strictEqual(conflicts.length, 1);
+    assert.strictEqual(conflicts[0].existing.id, existingFile.id);
+
+    // Cancel is atomic and retains a cut clipboard for a later destination.
+    operations.cut([conflictFile.id]);
+    const cancelled = await operations.pasteWithConflicts(conflictTarget.id, () => "cancel");
+    assert.strictEqual(cancelled.cancelled, true);
+    assert.strictEqual(fs.getNode(conflictFile.id).parent, conflictSource.id);
+    assert.deepStrictEqual(operations.getClipboard(), { mode: "cut", ids: [conflictFile.id] });
+
+    // Replace overwrites only a conflicting file and completes the move.
+    const replaced = await operations.pasteWithConflicts(conflictTarget.id, () => "replace");
+    assert.strictEqual(replaced.cancelled, false);
+    assert.strictEqual(fs.getNode(existingFile.id), null);
+    assert.strictEqual(fs.getNode(conflictFile.id).parent, conflictTarget.id);
+    assert.strictEqual(operations.getClipboard(), null);
+
+    // Auto-rename leaves the original intact and uses VFS deterministic naming.
+    const renameSource = operations.createFile(conflictSource.id, "same.txt", { content: "copy" });
+    operations.copy([renameSource.id]);
+    const renamed = await operations.pasteWithConflicts(conflictTarget.id, () => "rename");
+    assert.strictEqual(renamed.results[0].name, "same (2).txt");
+    assert.ok(fs.getNode(conflictFile.id));
+
+    // Folder conflicts cannot replace an existing folder; auto-name remains safe.
+    operations.copy([conflictFolder.id]);
+    const folderResult = await operations.pasteWithConflicts(conflictTarget.id, () => "replace");
+    assert.strictEqual(folderResult.results[0].name, "same-folder (2)");
+
+    // Invalid decisions conservatively auto-rename rather than mutating the existing file.
+    const invalidSource = operations.createFile(conflictSource.id, "same.txt", { content: "invalid" });
+    operations.copy([invalidSource.id]);
+    const invalidResult = await operations.pasteWithConflicts(conflictTarget.id, () => "unexpected");
+    assert.ok(invalidResult.results[0].name.startsWith("same"));
+    assert.ok(fs.getNode(conflictFile.id));
+
+    // Protected/system destinations are rejected before resolver execution.
+    let called = false;
+    await assert.rejects(
+        operations.pasteWithConflicts(fs.MY_COMPUTER, () => { called = true; return "rename"; }),
+        /cannot accept new items/
+    );
+    assert.strictEqual(called, false);
+
+    // Two conflict decisions are fully preflighted: a later cancel leaves
+    // both existing files and both sources untouched.
+    const atomicSource = operations.createFolder(fs.MY_DOCUMENTS, "Atomic Source");
+    const atomicA = operations.createFile(atomicSource.id, "a.txt", { content: "a" });
+    const atomicB = operations.createFile(atomicSource.id, "b.txt", { content: "b" });
+    const atomicTarget = operations.createFolder(fs.MY_DOCUMENTS, "Atomic Target");
+    const oldA = operations.createFile(atomicTarget.id, "a.txt", { content: "old a" });
+    const oldB = operations.createFile(atomicTarget.id, "b.txt", { content: "old b" });
+    operations.cut([atomicA.id, atomicB.id]);
+    let decisions = 0;
+    const atomicCancelled = await operations.pasteWithConflicts(atomicTarget.id, () => (++decisions === 1 ? "replace" : "cancel"));
+    assert.strictEqual(atomicCancelled.cancelled, true);
+    assert.ok(fs.getNode(oldA.id) && fs.getNode(oldB.id));
+    assert.strictEqual(fs.getNode(atomicA.id).parent, atomicSource.id);
+    assert.strictEqual(fs.getNode(atomicB.id).parent, atomicSource.id);
+    assert.deepStrictEqual(operations.getClipboard(), { mode: "cut", ids: [atomicA.id, atomicB.id] });
+
+    // Same-folder copy gets the normal deterministic Copy of name.
+    operations.copy([atomicA.id]);
+    const sameCopy = await operations.pasteWithConflicts(atomicSource.id, () => "rename");
+    assert.strictEqual(sameCopy.results[0].name, "Copy of a.txt");
+
+    // Same-folder cut is an explicit no-op and retains the clipboard.
+    operations.cut([atomicB.id]);
+    const sameCut = await operations.pasteWithConflicts(atomicSource.id, () => "replace");
+    assert.strictEqual(sameCut.cancelled, false);
+    assert.strictEqual(sameCut.results[0].id, atomicB.id);
+    assert.deepStrictEqual(operations.getClipboard(), { mode: "cut", ids: [atomicB.id] });
+
+    // Progress cancellation after one item documents partial move behavior;
+    // the cut clipboard remains available for the unprocessed source.
+    operations.cut([atomicA.id, atomicB.id]);
+    let stop = false;
+    const partial = await operations.pasteWithConflicts(destination.id, () => "rename", {
+        onProgress: () => { stop = true; },
+        isCancelled: () => stop
+    });
+    assert.strictEqual(partial.cancelled, true);
+    assert.strictEqual(partial.results.length, 1);
+    assert.strictEqual(fs.getNode(atomicA.id).parent, destination.id);
+    assert.strictEqual(fs.getNode(atomicB.id).parent, atomicSource.id);
+    assert.deepStrictEqual(operations.getClipboard(), { mode: "cut", ids: [atomicB.id] });
+
+    console.log("file operations tests passed");
+})().catch((error) => {
+    process.nextTick(() => { throw error; });
+});

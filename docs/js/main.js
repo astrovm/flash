@@ -1657,7 +1657,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             if (command === "close") closeGameWindow(win.gameId);
             if (command === "cut") fileOps.cut(selected);
             if (command === "copy") fileOps.copy(selected);
-            if (command === "paste" && ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)) fileOps.paste(win.currentFolderId);
+            if (command === "paste" && ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)) pasteIntoFolder(win.currentFolderId);
             if (command === "delete") confirmRecycleDelete(selected);
             if (command === "rename") { const name = window.prompt("Rename", fs.getNode(selected[0]).name); if (name !== null) fileOps.rename(selected[0], name); }
             if (["thumbnails", "tiles", "icons", "list", "details"].includes(command)) { win.explorerView = command; renderExplorerItems(win); }
@@ -1882,6 +1882,144 @@ const confirmRecycleDelete = (ids) => XPDialogs.confirm(
     ids.length === 1 ? "Are you sure you want to send this item to the Recycle Bin?" : "Are you sure you want to send these items to the Recycle Bin?",
     "Confirm File Delete", "warning"
 ).then((yes) => yes && fileOps.removeToBin(ids));
+const choosePasteConflict = ({ existing }) => new Promise((resolve) => {
+    const dialog = XPDialogs.createDialog({ title: "Confirm File Replace", onCancel: () => dialog.close("cancel") });
+    const text = document.createElement("p");
+    text.className = "dlg-text";
+    text.textContent = `${existing.name} already exists. What do you want to do?`;
+    const row = document.createElement("div"); row.className = "dlg-buttons";
+    [["Replace", "replace"], ["Keep Both", "rename"], ["Cancel", "cancel"]].forEach(([label, value]) => {
+        row.appendChild(XPDialogs.createDialogButton({ id: value, label }, () => dialog.close(value)));
+    });
+    dialog.body.append(text, row); dialog.onResult(resolve); dialog.defaultButton = row.firstChild; row.firstChild.focus();
+});
+let pasteBusy = false;
+const pasteIntoFolder = async (destinationId) => {
+    if (pasteBusy) return null;
+    const clipboard = fileOps.getClipboard();
+    if (!clipboard) return;
+    pasteBusy = true;
+    let cancelled = false;
+    const progress = clipboard.ids.length > 1
+        ? XPDialogs.progress({ title: clipboard.mode === "cut" ? "Moving..." : "Copying...", text: "Preparing file operation...", cancellable: true, onCancel: () => { cancelled = true; } })
+        : null;
+    try {
+        const result = await fileOps.pasteWithConflicts(destinationId, choosePasteConflict, {
+            isCancelled: () => cancelled,
+            onProgress: ({ completed, total, mode }) => progress?.update(completed / total, `${mode === "cut" ? "Moving" : "Copying"} ${completed} of ${total}...`)
+        });
+        progress?.close?.(result.cancelled ? "cancelled" : "complete");
+        return result;
+    } catch (error) {
+        progress?.close?.("error");
+        console.error(error);
+        XPDialogs.alert(error.message || "The file operation could not be completed.", "File Operation Error", "error");
+        return null;
+    } finally {
+        pasteBusy = false;
+    }
+};
+// Browser DataTransfer exposes file bytes, but directory traversal is only
+// available through the non-standard webkitGetAsEntry API. Unsupported
+// browsers import the flat FileList and cannot preserve directory structure.
+const readAllDirectoryEntries = (reader) => new Promise((resolve, reject) => {
+    const entries = [];
+    const read = () => reader.readEntries((batch) => {
+        if (!batch.length) resolve(entries);
+        else { entries.push(...batch); read(); }
+    }, reject);
+    read();
+});
+const importFileEntry = (entry, destinationId, state = {}) => new Promise((resolve, reject) => entry.file(async (file) => {
+    try {
+        if (state.cancelled) return resolve(false);
+        const content = file.type.startsWith("text/") ? await file.text() : "";
+        const existing = fs.findChild(destinationId, file.name);
+        if (existing) {
+            const choice = await choosePasteConflict({ existing });
+            if (choice === "cancel") { state.cancelled = true; return resolve(false); }
+            if (choice === "replace" && existing.type === "file") fs.destroy(existing.id);
+        }
+        fileOps.createFile(destinationId, file.name, { content, size: file.size });
+        state.completed = (state.completed || 0) + 1;
+        state.progress?.update(0, `Imported ${state.completed} item(s)...`);
+        resolve(true);
+    } catch (error) { reject(error); }
+}, reject));
+const importDirectoryEntry = async (entry, destinationId, state = {}) => {
+    if (state.cancelled) return;
+    const created = [];
+    try {
+        const existing = fs.findChild(destinationId, entry.name);
+        if (existing) {
+            const choice = await choosePasteConflict({ existing });
+            if (choice === "cancel") { state.cancelled = true; return; }
+            if (choice === "replace" && existing.type === "folder") fs.destroy(existing.id);
+        }
+        const folder = fileOps.createFolder(destinationId, entry.name);
+        created.push(folder.id);
+        const entries = await readAllDirectoryEntries(entry.createReader());
+        for (const child of entries) {
+            if (state.cancelled) throw new Error("Directory import cancelled");
+            if (child.isDirectory) await importDirectoryEntry(child, folder.id, state);
+            else if (child.isFile) await importFileEntry(child, folder.id, state);
+        }
+    } catch (error) {
+        created.reverse().forEach((id) => { if (fs.getNode(id)) fs.destroy(id); });
+        if (error.message === "Directory import cancelled") return;
+        throw error;
+    }
+};
+const importDroppedFiles = async (destinationId, dataTransfer) => {
+    if ([fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(destinationId)) {
+        XPDialogs.alert("This location cannot accept dropped files.", "File Operation Error", "error");
+        return;
+    }
+    const progress = XPDialogs.progress({ title: "Importing...", text: "Preparing dropped files...", cancellable: true });
+    const state = { cancelled: false, completed: 0, progress };
+    const cancelButton = progress.el.querySelector("button");
+    cancelButton?.addEventListener("click", () => { state.cancelled = true; });
+    try {
+        const entries = [...(dataTransfer.items || [])]
+            .map((item) => item.webkitGetAsEntry?.())
+            .filter(Boolean);
+        if (entries.length) {
+            for (const entry of entries) {
+                if (state.cancelled) break;
+                if (entry.isDirectory) await importDirectoryEntry(entry, destinationId, state);
+                else if (entry.isFile) await importFileEntry(entry, destinationId, state);
+            }
+            return;
+        }
+        for (const file of [...(dataTransfer.files || [])]) {
+            if (state.cancelled) break;
+            await importFileEntry({ file: (ok) => ok(file) }, destinationId, state);
+        }
+    } finally {
+        progress.close();
+    }
+};
+const wireFolderDropTarget = (element, destinationId, selectedIds = () => []) => {
+    element.addEventListener("dragover", (event) => {
+        const internal = event.dataTransfer?.types?.includes("application/x-astro-vfs-ids");
+        if (internal || fileOps.canPaste(destinationId) || event.dataTransfer?.files?.length) {
+            event.preventDefault(); element.classList.add("drop-target");
+        }
+    });
+    element.addEventListener("dragleave", () => element.classList.remove("drop-target"));
+    element.addEventListener("drop", async (event) => {
+        event.preventDefault(); element.classList.remove("drop-target");
+        try {
+            const payload = event.dataTransfer?.getData("application/x-astro-vfs-ids");
+            const ids = payload ? JSON.parse(payload) : [];
+            if (!Array.isArray(ids)) throw new Error("Invalid dropped item list");
+            if (ids.length) { fileOps.cut(ids); await pasteIntoFolder(destinationId); }
+            else await importDroppedFiles(destinationId, event.dataTransfer);
+        } catch (error) {
+            XPDialogs.alert(error.message || "The dropped files could not be imported.", "File Operation Error", "error");
+        }
+    });
+};
 const closeExplorerMenu = (root = document) => {
     root.querySelectorAll(".explorer-menu").forEach((menu) => { menu.hidden = true; });
     root.querySelectorAll("[data-explorer-menu][aria-expanded=\"true\"]").forEach((button) => button.setAttribute("aria-expanded", "false"));
@@ -2151,6 +2289,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
         item.type = "button";
         item.className = "explorer-item";
         item.dataset.nodeId = node.id;
+        item.draggable = !node.protected;
         item.title = node.name;
 
         const label = document.createElement("span");
@@ -2176,6 +2315,11 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
                 items.querySelectorAll(".selected").forEach((entry) => entry.classList.remove("selected"));
             }
             item.classList.add("selected");
+        });
+        item.addEventListener("dragstart", (event) => {
+            const ids = selectedExplorerNodes(win);
+            event.dataTransfer.setData("application/x-astro-vfs-ids", JSON.stringify(ids.includes(node.id) ? ids : [node.id]));
+            event.dataTransfer.effectAllowed = "move";
         });
         item.addEventListener("dblclick", () => openExplorerNode(win, node));
         item.addEventListener("keydown", (e) => {
@@ -2204,6 +2348,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
             item.click();
             openExplorerContextMenu(win, event.clientX, event.clientY);
         });
+        if (node.type === "folder") wireFolderDropTarget(item, node.id, () => selectedExplorerNodes(win));
         items.appendChild(item);
     });
     const status = explorerContent?.querySelector(".explorer-status");
@@ -3400,6 +3545,21 @@ const buildDesktopIcons = () => {
         icon.className = "desktop-icon";
         icon.dataset.desktopId = id;
         if (system) icon.dataset.systemId = id;
+        if (node && !node.protected) {
+            icon.title = "Alt+drag to move this item to a folder";
+            icon.setAttribute("aria-description", "Hold Alt while dragging to move this file or folder.");
+            icon.addEventListener("pointerdown", (event) => {
+                icon.draggable = event.altKey;
+            });
+            icon.addEventListener("pointerup", () => { icon.draggable = false; });
+            icon.addEventListener("dragstart", (event) => {
+                const eligibility = getDesktopSelectionEligibility();
+                if (!event.altKey || !eligibility.movable) { event.preventDefault(); return; }
+                event.dataTransfer.setData("application/x-astro-vfs-ids", JSON.stringify(eligibility.filesystemIds));
+                event.dataTransfer.effectAllowed = "move";
+            });
+            icon.addEventListener("dragend", () => { icon.draggable = false; });
+        }
 
         const glyph = system
             ? createGameIconElement(id, "icon-glyph")
@@ -3434,6 +3594,7 @@ const buildDesktopIcons = () => {
     });
 
     if (!wasBuilt) wireDesktopSelectionRectangle();
+    if (!wasBuilt) wireFolderDropTarget(container, fs.DESKTOP, getSelectedFilesystemIds);
     requestAnimationFrame(() => layoutDesktopIcons(getDesktopLayoutSettings().autoArrange));
 };
 
@@ -3656,7 +3817,7 @@ const setupDesktopContextMenu = () => {
             selectDesktopIcon(node.id);
             beginDesktopRename(node.id);
         } else if (action === "paste") {
-            fileOps.paste(fs.DESKTOP);
+            pasteIntoFolder(fs.DESKTOP);
         } else if (action === "open" && itemId) {
             openDesktopItem(itemId);
         } else if (action === "cut") {
@@ -4538,7 +4699,7 @@ document.addEventListener("keydown", (e) => {
             e.preventDefault(); fileOps.cut(selectedFsIds); return;
         }
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && fileOps.canPaste(fs.DESKTOP)) {
-            e.preventDefault(); fileOps.paste(fs.DESKTOP); return;
+            e.preventDefault(); pasteIntoFolder(fs.DESKTOP); return;
         }
         if (e.key === "Delete" && movable) {
             e.preventDefault(); confirmRecycleDelete(selectedFsIds); return;

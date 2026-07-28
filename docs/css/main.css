@@ -1148,6 +1148,7 @@ html[data-xp-appearance="silver"] {
 }
 
 .explorer-item.selected { border-color: #316ac5; background: #316ac5; color: #fff; }
+.drop-target { outline: 2px solid #316ac5 !important; background: #d8e7f8 !important; }
 .explorer-item.selected small { color: #fff; }
 .explorer-items[data-view="icons"] { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
 .explorer-items[data-view="thumbnails"] { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }

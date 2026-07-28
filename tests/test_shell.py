@@ -180,7 +180,7 @@ class ShellSourceTests(unittest.TestCase):
     def test_desktop_uses_shared_file_operations_and_keyboard_commands(self):
         for command in (
             'fileOps.copy(selectedFsIds)', 'fileOps.cut(selectedFsIds)',
-            'fileOps.paste(fs.DESKTOP)', 'confirmRecycleDelete(selectedFsIds)',
+            'pasteIntoFolder(fs.DESKTOP)', 'confirmRecycleDelete(selectedFsIds)',
             'beginDesktopRename(selectedFsIds[0])', 'e.key === "F2"',
             'e.shiftKey && e.key === "F10"', 'action === "new-folder"',
         ):
@@ -242,6 +242,27 @@ class ShellSourceTests(unittest.TestCase):
             'button.dataset.accessKey = key', 'event.altKey',
             '"ArrowLeft", "ArrowRight", "ArrowDown", "Home", "End"',
             'explorerMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"))',
+        ):
+            self.assertIn(token, self.javascript)
+
+    def test_shell_paste_uses_one_conflict_aware_progress_helper(self):
+        for token in (
+            'const pasteIntoFolder = async (destinationId)',
+            'fileOps.pasteWithConflicts(destinationId',
+            'XPDialogs.progress({ title: clipboard.mode === "cut" ? "Moving..." : "Copying..."',
+            'Confirm File Replace',
+            'pasteIntoFolder(win.currentFolderId)',
+            'pasteIntoFolder(fs.DESKTOP)',
+        ):
+            self.assertIn(token, self.javascript)
+
+    def test_desktop_alt_drag_uses_internal_filesystem_payload(self):
+        for token in (
+            'icon.title = "Alt+drag to move this item to a folder"',
+            'icon.draggable = event.altKey',
+            'application/x-astro-vfs-ids',
+            'event.dataTransfer.effectAllowed = "move"',
+            'if (!event.altKey || !eligibility.movable)',
         ):
             self.assertIn(token, self.javascript)
 
