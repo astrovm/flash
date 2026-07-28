@@ -86,7 +86,7 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn('src="assets/xp/loading-microsoft.jpg"', self.html)
         self.assertIn(".boot-footer", self.css)
 
-    def test_xp_fonts_have_real_regular_and_bold_faces(self):
+    def test_xp_fonts_have_authentic_faces(self):
         font_faces = {
             "Tahoma": {
                 "tahoma.ttf": "08f45bf539954d3252df97a2ae563362ed2ad5ebe05f2d1f2bc54b931e4d0550",
@@ -104,6 +104,9 @@ class ShellSourceTests(unittest.TestCase):
             "Lucida Console": {
                 "lucon.ttf": "6ddf64ee896d24cf9908f115ae220a7cfa18dc034bc4a68e4db68dcd57c71512",
             },
+            "Franklin Gothic Medium": {
+                "framdit.ttf": "02bf3f5c3289f66a314e9758f48ad729e3995b26ad74887b04ebbf0d775b2492",
+            },
         }
 
         for family, fonts in font_faces.items():
@@ -119,6 +122,14 @@ class ShellSourceTests(unittest.TestCase):
 
         self.assertIn("**/*.{ttf,woff,woff2", self.workbox_config)
         self.assertNotIn('url("trebuchet.ttf")', self.css)
+        self.assertRegex(
+            self.css,
+            r'\.welcome-message\s*\{[^}]*font-family: "Franklin Gothic Medium"',
+        )
+        self.assertRegex(
+            self.css,
+            r"\.start-menu-user\s*\{[^}]*font-family: \"Tahoma\"",
+        )
 
     def test_game_windows_use_xp_menus_for_their_controls(self):
         self.assertJavascriptContains(

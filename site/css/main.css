@@ -60,6 +60,13 @@
     font-weight: 700;
 }
 
+@font-face {
+    font-family: "Franklin Gothic Medium";
+    src: url("fonts/framdit.ttf") format("truetype");
+    font-style: italic;
+    font-weight: 400;
+}
+
 :root {
     --xp-beige: #ece9d8;
     --xp-beige-dark: #d6d2c2;
@@ -293,9 +300,9 @@ iframe {
     left: 57.5%;
     margin: 0;
     color: #fff;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: "Franklin Gothic Medium", Arial, sans-serif;
     font-size: clamp(34px, 5.75vw, 46px);
-    font-weight: 700;
+    font-weight: 400;
     font-style: italic;
     letter-spacing: -1px;
     text-shadow: 2px 2px 2px rgba(40, 67, 156, 0.45);
@@ -2625,7 +2632,7 @@ html[data-xp-appearance="silver"] {
 
 .start-menu-user {
     color: #fff;
-    font-family: "Trebuchet MS", var(--chrome-font);
+    font-family: "Tahoma", sans-serif;
     font-size: 16px;
     font-weight: 700;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
