@@ -78,6 +78,9 @@ const createGameIconElement = (gameId, className) => {
         image.className = "game-icon-image";
         image.src = imagePath;
         image.alt = "";
+        // A native image drag would cancel the pointer stream used by the
+        // desktop icon drag, so the browser must not start one.
+        image.draggable = false;
         icon.classList.add("has-image");
         if (systemShortcuts[gameId]) {
             icon.classList.add("system-icon");
@@ -1526,16 +1529,401 @@ const renderTaskButtons = () => {
     });
 };
 
+const CLOCK_OFFSET_KEY = "clockOffsetMs";
+
+const getClockOffset = () => {
+    const offset = parseInt(localStorage.getItem(CLOCK_OFFSET_KEY) || "0", 10);
+    return Number.isFinite(offset) ? offset : 0;
+};
+
+const getShellTime = () => new Date(Date.now() + getClockOffset());
+
+let updateClockDisplay = () => {};
+
 const startClock = () => {
     const clock = document.getElementById("taskbar-clock");
     const update = () => {
-        clock.textContent = new Date().toLocaleTimeString([], {
+        const now = getShellTime();
+        clock.textContent = now.toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit"
         });
+        // XP tooltip: hovering the clock shows the full date.
+        clock.title = now.toLocaleDateString([], {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric"
+        });
     };
+    updateClockDisplay = update;
     update();
     setInterval(update, 5000);
+};
+
+// ============================================
+// System Tray
+// ============================================
+
+const getMasterVolume = () => ({
+    volume: parseInt(localStorage.getItem("volume") || "100", 10),
+    isMuted: localStorage.getItem("isMuted") === "true"
+});
+
+const syncTrayVolumeUI = () => {
+    const { volume, isMuted } = getMasterVolume();
+    const button = document.getElementById("tray-volume-button");
+    const slider = document.getElementById("tray-volume-slider");
+    const muteBox = document.getElementById("tray-mute-checkbox");
+    button.classList.toggle("muted", isMuted || volume === 0);
+    button.title = isMuted ? "Volume (muted)" : "Volume";
+    slider.value = String(volume);
+    muteBox.checked = isMuted;
+};
+
+const setMasterVolume = (volume, isMuted) => {
+    localStorage.setItem("volume", String(volume));
+    localStorage.setItem("isMuted", String(isMuted));
+    applyFocusVolumes();
+    openWindows.forEach((win) => syncWindowVolumeUI(win));
+    syncTrayVolumeUI();
+};
+
+const closeTrayVolumePopup = () => {
+    const popup = document.getElementById("tray-volume-popup");
+    popup.hidden = true;
+    document.getElementById("tray-volume-button").classList.remove("pressed");
+};
+
+const openTrayVolumePopup = () => {
+    const popup = document.getElementById("tray-volume-popup");
+    const button = document.getElementById("tray-volume-button");
+    syncTrayVolumeUI();
+    popup.hidden = false;
+    button.classList.add("pressed");
+    const rect = button.getBoundingClientRect();
+    const left = Math.max(
+        4,
+        Math.min(
+            rect.left + rect.width / 2 - popup.offsetWidth / 2,
+            window.innerWidth - popup.offsetWidth - 4
+        )
+    );
+    popup.style.left = `${left}px`;
+    popup.style.top = `${rect.top - popup.offsetHeight - 4}px`;
+    document.getElementById("tray-volume-slider").focus();
+};
+
+const toggleTrayVolumePopup = () => {
+    if (document.getElementById("tray-volume-popup").hidden) {
+        openTrayVolumePopup();
+    } else {
+        closeTrayVolumePopup();
+    }
+};
+
+// Connection "duration" counts from logon, like an XP dial-up/LAN session.
+let networkConnectedAt = Date.now();
+
+const formatDuration = (ms) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return [hours, minutes, seconds]
+        .map((part) => String(part).padStart(2, "0"))
+        .join(":");
+};
+
+const openNetworkStatus = () => {
+    const dialog = XPDialogs.createDialog({
+        title: "Local Area Connection Status"
+    });
+
+    const header = document.createElement("div");
+    header.className = "dlg-props-header";
+    const icon = document.createElement("img");
+    icon.className = "dlg-network-icon";
+    icon.src = "assets/xp/icons/NetworkConnection.png";
+    icon.alt = "";
+    icon.draggable = false;
+    const name = document.createElement("span");
+    name.className = "dlg-props-name";
+    name.textContent = "Local Area Connection";
+    header.append(icon, name);
+
+    const table = document.createElement("dl");
+    table.className = "dlg-props-table";
+    const cells = {};
+    const addRow = (label, id, value) => {
+        const dt = document.createElement("dt");
+        dt.textContent = label;
+        const dd = document.createElement("dd");
+        dd.id = id;
+        dd.textContent = value;
+        table.append(dt, dd);
+        cells[id] = dd;
+    };
+    addRow("Status:", "network-status-state", "Connected");
+    addRow("Duration:", "network-status-duration", "00:00:00");
+    addRow("Speed:", "network-status-speed", "100.0 Mbps");
+    addRow("Packets Sent:", "network-status-sent", "0");
+    addRow("Packets Received:", "network-status-received", "0");
+
+    dialog.body.append(header, table);
+    XPDialogs.addButtonRow(dialog, [
+        { id: "close", label: "Close", isDefault: true, isCancel: true }
+    ]);
+
+    let sent = Math.floor(1000 + Math.random() * 9000);
+    let received = Math.floor(sent * (1.4 + Math.random()));
+    const tick = () => {
+        sent += Math.floor(Math.random() * 40);
+        received += Math.floor(Math.random() * 60);
+        cells["network-status-duration"].textContent =
+            formatDuration(Date.now() - networkConnectedAt);
+        cells["network-status-sent"].textContent = sent.toLocaleString("en-US");
+        cells["network-status-received"].textContent =
+            received.toLocaleString("en-US");
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    dialog.onResult(() => clearInterval(timer));
+};
+
+const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+const openDateTimeProperties = () => {
+    const dialog = XPDialogs.createDialog({
+        title: "Date and Time Properties"
+    });
+
+    const shellNow = getShellTime();
+    const state = {
+        year: shellNow.getFullYear(),
+        month: shellNow.getMonth(),
+        day: shellNow.getDate()
+    };
+
+    // ---- Date group ----
+    const dateGroup = document.createElement("fieldset");
+    dateGroup.className = "dlg-group";
+    const dateLegend = document.createElement("legend");
+    dateLegend.textContent = "Date";
+    dateGroup.appendChild(dateLegend);
+
+    const monthSelect = document.createElement("select");
+    monthSelect.className = "xp-select dlg-month-select";
+    monthSelect.setAttribute("aria-label", "Month");
+    MONTH_NAMES.forEach((monthName, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = monthName;
+        monthSelect.appendChild(option);
+    });
+    monthSelect.value = String(state.month);
+
+    const yearInput = document.createElement("input");
+    yearInput.type = "number";
+    yearInput.min = "1901";
+    yearInput.max = "2099";
+    yearInput.className = "xp-input dlg-year-input";
+    yearInput.setAttribute("aria-label", "Year");
+    yearInput.value = String(state.year);
+
+    const monthYearRow = document.createElement("div");
+    monthYearRow.className = "dlg-month-year";
+    monthYearRow.append(monthSelect, yearInput);
+
+    const calendar = document.createElement("div");
+    calendar.className = "dlg-calendar";
+    dateGroup.append(monthYearRow, calendar);
+
+    // ---- Time group ----
+    const timeGroup = document.createElement("fieldset");
+    timeGroup.className = "dlg-group";
+    const timeLegend = document.createElement("legend");
+    timeLegend.textContent = "Time";
+    timeGroup.appendChild(timeLegend);
+
+    const timeRow = document.createElement("div");
+    timeRow.className = "dlg-time-row";
+    const makeTimeInput = (id, label, min, max, value) => {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.id = id;
+        input.min = String(min);
+        input.max = String(max);
+        input.className = "xp-input dlg-time-input";
+        input.setAttribute("aria-label", label);
+        input.value = String(value);
+        return input;
+    };
+    const hour24 = shellNow.getHours();
+    const hourInput = makeTimeInput(
+        "dlg-time-hour", "Hour", 1, 12, hour24 % 12 || 12
+    );
+    const minuteInput = makeTimeInput(
+        "dlg-time-minute", "Minute", 0, 59, shellNow.getMinutes()
+    );
+    const secondInput = makeTimeInput(
+        "dlg-time-second", "Second", 0, 59, shellNow.getSeconds()
+    );
+    const ampmSelect = document.createElement("select");
+    ampmSelect.className = "xp-select";
+    ampmSelect.setAttribute("aria-label", "AM or PM");
+    ["AM", "PM"].forEach((text) => {
+        const option = document.createElement("option");
+        option.value = text;
+        option.textContent = text;
+        ampmSelect.appendChild(option);
+    });
+    ampmSelect.value = hour24 < 12 ? "AM" : "PM";
+
+    const colon1 = document.createElement("span");
+    colon1.textContent = ":";
+    const colon2 = document.createElement("span");
+    colon2.textContent = ":";
+    timeRow.append(hourInput, colon1, minuteInput, colon2, secondInput, ampmSelect);
+    timeGroup.appendChild(timeRow);
+
+    const groups = document.createElement("div");
+    groups.className = "dlg-datetime";
+    groups.append(dateGroup, timeGroup);
+    dialog.body.appendChild(groups);
+
+    const renderCalendar = () => {
+        calendar.innerHTML = "";
+        DAY_LETTERS.forEach((letter) => {
+            const head = document.createElement("span");
+            head.className = "dlg-calendar-head";
+            head.textContent = letter;
+            calendar.appendChild(head);
+        });
+        const today = getShellTime();
+        const firstWeekday = new Date(state.year, state.month, 1).getDay();
+        for (let i = 0; i < firstWeekday; i += 1) {
+            const blank = document.createElement("span");
+            calendar.appendChild(blank);
+        }
+        const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
+        for (let day = 1; day <= daysInMonth; day += 1) {
+            const dayButton = document.createElement("button");
+            dayButton.type = "button";
+            dayButton.className = "dlg-calendar-day";
+            dayButton.textContent = String(day);
+            if (day === state.day) {
+                dayButton.classList.add("selected");
+            }
+            if (
+                day === today.getDate()
+                && state.month === today.getMonth()
+                && state.year === today.getFullYear()
+            ) {
+                dayButton.classList.add("today");
+            }
+            dayButton.addEventListener("click", () => {
+                state.day = day;
+                renderCalendar();
+            });
+            calendar.appendChild(dayButton);
+        }
+    };
+
+    monthSelect.addEventListener("change", () => {
+        state.month = parseInt(monthSelect.value, 10);
+        state.day = Math.min(
+            state.day,
+            new Date(state.year, state.month + 1, 0).getDate()
+        );
+        renderCalendar();
+    });
+    yearInput.addEventListener("change", () => {
+        const year = parseInt(yearInput.value, 10);
+        state.year = Number.isFinite(year)
+            ? Math.min(Math.max(year, 1901), 2099)
+            : state.year;
+        yearInput.value = String(state.year);
+        state.day = Math.min(
+            state.day,
+            new Date(state.year, state.month + 1, 0).getDate()
+        );
+        renderCalendar();
+    });
+
+    const readTimeField = (input, min, max, fallback) => {
+        const value = parseInt(input.value, 10);
+        return Number.isFinite(value)
+            ? Math.min(Math.max(value, min), max)
+            : fallback;
+    };
+
+    const applyDateTime = () => {
+        let hours = readTimeField(hourInput, 1, 12, 12) % 12;
+        if (ampmSelect.value === "PM") hours += 12;
+        const minutes = readTimeField(minuteInput, 0, 59, 0);
+        const seconds = readTimeField(secondInput, 0, 59, 0);
+        const chosen = new Date(
+            state.year, state.month, state.day, hours, minutes, seconds
+        );
+        localStorage.setItem(
+            CLOCK_OFFSET_KEY,
+            String(chosen.getTime() - Date.now())
+        );
+        updateClockDisplay();
+    };
+
+    const row = document.createElement("div");
+    row.className = "dlg-buttons";
+    const okButton = XPDialogs.createDialogButton(
+        { id: "ok", label: "OK", isDefault: true },
+        () => {
+            applyDateTime();
+            dialog.close("ok");
+        }
+    );
+    const cancelButton = XPDialogs.createDialogButton(
+        { id: "cancel", label: "Cancel" },
+        () => dialog.close(null)
+    );
+    const applyButton = XPDialogs.createDialogButton(
+        { id: "apply", label: "Apply" },
+        applyDateTime
+    );
+    row.append(okButton, cancelButton, applyButton);
+    dialog.body.appendChild(row);
+    dialog.defaultButton = okButton;
+
+    renderCalendar();
+    okButton.focus();
+};
+
+const setupSystemTray = () => {
+    document.getElementById("tray-volume-button")
+        .addEventListener("click", toggleTrayVolumePopup);
+    document.getElementById("tray-network-button")
+        .addEventListener("click", openNetworkStatus);
+    document.getElementById("taskbar-clock")
+        .addEventListener("click", openDateTimeProperties);
+
+    document.getElementById("tray-volume-slider")
+        .addEventListener("input", (event) => {
+            const volume = parseInt(event.target.value, 10);
+            if (Number.isFinite(volume)) {
+                // Moving the XP volume slider clears the mute flag.
+                setMasterVolume(volume, false);
+            }
+        });
+    document.getElementById("tray-mute-checkbox")
+        .addEventListener("change", (event) => {
+            setMasterVolume(getMasterVolume().volume, event.target.checked);
+        });
+
+    syncTrayVolumeUI();
 };
 
 // ============================================
@@ -2198,7 +2586,9 @@ const offlineModeService = () => {
 // Original Windows XP system sounds (playback is skipped if the
 // browser still blocks audio before the user's first interaction)
 const playXPSound = (name) => {
+    const { volume, isMuted } = getMasterVolume();
     const audio = new Audio(`assets/xp/sounds/${name}.mp3`);
+    audio.volume = isMuted ? 0 : Math.min(Math.max(volume, 0), 100) / 100;
     audio.play().catch(() => {});
 };
 
@@ -2297,6 +2687,7 @@ const login = (playSound = true) => {
 
     if (!loggedIn) {
         loggedIn = true;
+        networkConnectedAt = Date.now();
         syncGameFiles();
         buildDesktopIcons();
         buildPlaces();
@@ -2423,10 +2814,12 @@ window.addEventListener("load", () => {
     setupScreenFlow();
     setupDesktopContextMenu();
     setupWindowSystemMenu();
+    setupSystemTray();
     document.getElementById("start-button").addEventListener("click", toggleStartMenu);
 });
 
 window.addEventListener("resize", () => {
+    closeTrayVolumePopup();
     if (iconsBuilt) {
         layoutDesktopIcons();
     }
@@ -2455,6 +2848,10 @@ document.addEventListener("pointerdown", (e) => {
 
     if (!e.target.closest("#window-system-menu") && !e.target.closest(".title-icon")) {
         closeWindowSystemMenu();
+    }
+
+    if (!e.target.closest("#tray-volume-popup") && !e.target.closest("#tray-volume-button")) {
+        closeTrayVolumePopup();
     }
 
     const startMenu = document.getElementById("start-menu");
@@ -2491,5 +2888,6 @@ document.addEventListener("keydown", (e) => {
         closeWindowSystemMenu();
         hideSystemDialogs();
         closeStartMenu();
+        closeTrayVolumePopup();
     }
 });

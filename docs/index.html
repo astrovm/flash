@@ -194,17 +194,42 @@
             </button>
             <div id="task-buttons"></div>
             <div id="taskbar-tray">
-                <span
-                    class="tray-network"
+                <button
+                    id="tray-network-button"
+                    class="tray-icon tray-network"
+                    type="button"
                     title="Local Area Connection"
-                    aria-hidden="true"
-                ></span>
-                <span
-                    class="tray-volume"
+                    aria-label="Local Area Connection Status"
+                ></button>
+                <button
+                    id="tray-volume-button"
+                    class="tray-icon tray-volume"
+                    type="button"
                     title="Volume"
-                    aria-hidden="true"
-                ></span>
-                <span id="taskbar-clock"></span>
+                    aria-label="Volume"
+                    aria-haspopup="dialog"
+                ></button>
+                <button id="taskbar-clock" type="button"></button>
+            </div>
+            <div
+                id="tray-volume-popup"
+                role="dialog"
+                aria-label="Volume"
+                hidden
+            >
+                <input
+                    type="range"
+                    id="tray-volume-slider"
+                    class="tray-volume-slider"
+                    min="0"
+                    max="100"
+                    step="1"
+                    aria-label="Volume"
+                />
+                <label class="tray-mute-row" for="tray-mute-checkbox">
+                    <input type="checkbox" id="tray-mute-checkbox" />
+                    Mute
+                </label>
             </div>
         </div>
 

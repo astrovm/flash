@@ -502,6 +502,7 @@ iframe {
     padding: 1px 3px;
     max-width: 74px;
     overflow: hidden;
+    overflow-wrap: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -513,10 +514,12 @@ iframe {
         sepia(0.2) saturate(2.2) hue-rotate(176deg) brightness(0.68);
 }
 
+/* Like Windows XP, a selected icon reveals its full label text. */
 .desktop-icon.selected .icon-label {
     background: #0b61ce;
     outline: 1px dotted #fff;
     text-shadow: none;
+    -webkit-line-clamp: unset;
 }
 
 #desktop-selection {
@@ -1391,6 +1394,100 @@ iframe {
     margin: 0;
 }
 
+/* Network connection status */
+
+.dlg-network-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+/* Date and Time Properties */
+
+.dlg-datetime {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.dlg-group {
+    margin: 0;
+    padding: 8px 10px 10px;
+    border: 1px solid #d4d0c8;
+    box-shadow: inset 0 0 0 1px #fff;
+}
+
+.dlg-group legend {
+    padding: 0 3px;
+}
+
+.dlg-month-year {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.dlg-month-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.dlg-year-input {
+    width: 56px;
+}
+
+.dlg-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 22px);
+    gap: 1px;
+}
+
+.dlg-calendar-head {
+    text-align: center;
+    color: #444;
+}
+
+.dlg-calendar-day {
+    width: 22px;
+    height: 16px;
+    padding: 0;
+    border: 1px solid transparent;
+    background: none;
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+    text-align: center;
+    cursor: var(--xp-cursor);
+}
+
+.dlg-calendar-day:hover {
+    border-color: #0b61ce;
+}
+
+.dlg-calendar-day.today {
+    font-weight: 700;
+}
+
+.dlg-calendar-day.selected {
+    background: #0b61ce;
+    color: #fff;
+}
+
+.dlg-calendar-day:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: -3px;
+}
+
+.dlg-time-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.dlg-time-input {
+    width: 42px;
+}
+
 /* Node icons (Properties + file dialogs) */
 .dlg-node-icon {
     width: 32px;
@@ -1601,16 +1698,37 @@ iframe {
     box-shadow: inset 1px 0 1px rgb(24, 187, 255);
 }
 
-.tray-network,
-.tray-volume {
+.tray-icon {
     position: relative;
     display: inline-block;
     flex: none;
-    width: 15px;
-    height: 15px;
+    width: 19px;
+    height: 19px;
+    padding: 1px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    background-color: transparent;
     background-position: center;
-    background-size: contain;
+    background-size: 15px 15px;
     background-repeat: no-repeat;
+    cursor: var(--xp-cursor);
+}
+
+.tray-icon:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.tray-icon:active,
+.tray-icon.pressed {
+    background-color: rgba(0, 0, 0, 0.18);
+    border-color: rgba(0, 0, 0, 0.45);
+    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.tray-icon:focus-visible {
+    outline: 1px dotted #fff;
+    outline-offset: -4px;
 }
 
 .tray-network {
@@ -1621,10 +1739,57 @@ iframe {
     background-image: url("../assets/xp/icons/Volume.png");
 }
 
+.tray-volume.muted {
+    background-image: url("../assets/xp/icons/Mute.png");
+}
+
 #taskbar-clock {
     color: #fff;
+    font: inherit;
     font-size: 11px;
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    padding: 1px 3px;
+    cursor: var(--xp-cursor);
+}
+
+#taskbar-clock:focus-visible {
+    outline: 1px dotted #fff;
+    outline-offset: -4px;
+}
+
+/* Quick volume popup (opens above the tray, like XP's sndvol control) */
+
+#tray-volume-popup {
+    position: fixed;
+    z-index: 8100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 9px 8px;
+    background: #ece9d8;
+    border: 1px solid #716f64;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+}
+
+.tray-volume-slider {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 24px;
+    height: 104px;
+    cursor: var(--xp-cursor);
+}
+
+.tray-mute-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #111;
+    cursor: var(--xp-cursor);
 }
 
 /* ============ Start menu ============ */
