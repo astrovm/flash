@@ -516,7 +516,7 @@ const applyFocusVolumes = () => {
 };
 
 const syncWindowVolumeUI = (win) => {
-    if (!win.volumeBtn || !win.volumeSlider) return;
+    if (!win.volumeBtn) return;
     const { volume, isMuted } = getGameVolume(win.gameId);
     const numericVolume = Number.isFinite(volume) ? volume : 100;
     const muted = isMuted || numericVolume === 0;
@@ -526,11 +526,23 @@ const syncWindowVolumeUI = (win) => {
         button.setAttribute("aria-pressed", String(muted));
         button.setAttribute("aria-checked", String(muted));
     });
-    win.volumeBtn.title = muted ? "Unmute" : "Mute";
+    win.volumeBtn.title = muted ? "Unmute / Volume" : "Mute / Volume";
+    win.volumeBtn.setAttribute("aria-label", win.volumeBtn.title);
     const label = win.volumeMenuItem?.querySelector(".menu-item-label");
-    if (label) setAccessKeyText(label, muted ? "&Unmute" : "&Mute");
-    [win.volumeSlider, win.volumeMenuSlider].filter(Boolean).forEach((slider) => {
-        slider.value = isMuted ? 0 : numericVolume;
+    if (label) {
+        const menuLabel = muted ? "&Unmute" : "&Mute";
+        win.volumeMenuItem.dataset.accessKey = XPDialogs.parseAccessKey(menuLabel).key;
+        setAccessKeyText(label, menuLabel);
+    }
+    win.volumePopup?.querySelectorAll("[data-volume-action]").forEach((item) => {
+        const action = item.dataset.volumeAction;
+        const isMute = action === "mute";
+        const isCurrentPreset = !isMute && !muted && numericVolume === Number(action);
+        item.textContent = isMute ? (muted ? "Unmute" : "Mute") : `Volume ${action}%`;
+        item.classList.toggle("checked", isMute ? muted : isCurrentPreset);
+        item.setAttribute("aria-checked", String(isMute ? muted : isCurrentPreset));
+        if (isCurrentPreset) item.setAttribute("aria-current", "true");
+        else item.removeAttribute("aria-current");
     });
 };
 
@@ -579,11 +591,14 @@ const updateFavoriteUI = (win) => {
     win.favoriteBtn.title = isFavorite
         ? "Remove from Favorites"
         : "Add to Favorites";
+    win.favoriteBtn.setAttribute("aria-label", win.favoriteBtn.title);
     const label = win.favoriteMenuItem?.querySelector(".menu-item-label");
     if (label) {
+        const menuLabel = isFavorite ? "&Remove from Favorites" : "Add to &Favorites";
+        win.favoriteMenuItem.dataset.accessKey = XPDialogs.parseAccessKey(menuLabel).key;
         setAccessKeyText(
             label,
-            isFavorite ? "&Remove from Favorites" : "&Add to Favorites"
+            menuLabel
         );
     }
 };
@@ -738,6 +753,11 @@ const createWindowElement = (gameId) => {
 
     const fileMenu = makeMenu("file");
     fileMenu.append(
+        makeMenuItem("&Full Screen", "fullscreen", { shortcut: "F11" }),
+        makeMenuItem("Add to &Favorites", "favorite", { checkbox: true }),
+        makeMenuItem("&Mute", "mute", { checkbox: true }),
+        makeMenuItem("&Volume", "volume-popup"),
+        Object.assign(document.createElement("div"), { className: "game-menu-separator" }),
         makeMenuItem("&Close", "close", { shortcut: "Alt+F4" }),
         Object.assign(document.createElement("div"), { className: "game-menu-separator" }),
         makeMenuItem("&Properties", "properties", { disabled: true })
@@ -746,49 +766,52 @@ const createWindowElement = (gameId) => {
     const helpMenu = makeMenu("help");
     helpMenu.append(makeMenuItem("&About Astro Flash", "project"));
 
-    const toolbar = document.createElement("div");
-    toolbar.className = "window-toolbar";
+    const quickActions = document.createElement("div");
+    quickActions.className = "game-quick-actions";
 
     const fullscreenBtn = document.createElement("button");
     fullscreenBtn.type = "button";
-    fullscreenBtn.className = "toolbar-btn fullscreen-btn";
+    fullscreenBtn.className = "quick-access-btn fullscreen-btn";
     fullscreenBtn.title = "Full Screen (F11)";
-    fullscreenBtn.textContent = "Full Screen";
+    fullscreenBtn.setAttribute("aria-label", "Full Screen (F11)");
+    fullscreenBtn.textContent = "⛶";
 
-    const toolbarFavoriteBtn = document.createElement("button");
-    toolbarFavoriteBtn.type = "button";
-    toolbarFavoriteBtn.className = "toolbar-btn favorite-btn";
-    toolbarFavoriteBtn.title = "Add to Favorites";
-    toolbarFavoriteBtn.textContent = "Favorite";
-    toolbarFavoriteBtn.setAttribute("aria-pressed", "false");
+    const quickFavoriteBtn = document.createElement("button");
+    quickFavoriteBtn.type = "button";
+    quickFavoriteBtn.className = "quick-access-btn favorite-btn";
+    quickFavoriteBtn.title = "Add to Favorites";
+    quickFavoriteBtn.setAttribute("aria-label", "Add to Favorites");
+    quickFavoriteBtn.textContent = "★";
+    quickFavoriteBtn.setAttribute("aria-pressed", "false");
 
-    const separator = document.createElement("span");
-    separator.className = "toolbar-separator";
-    separator.setAttribute("aria-hidden", "true");
+    const quickVolumeBtn = document.createElement("button");
+    quickVolumeBtn.type = "button";
+    quickVolumeBtn.className = "quick-access-btn volume-btn";
+    quickVolumeBtn.title = "Mute / Volume";
+    quickVolumeBtn.setAttribute("aria-label", "Mute / Volume");
+    quickVolumeBtn.setAttribute("aria-haspopup", "menu");
+    quickVolumeBtn.setAttribute("aria-expanded", "false");
+    quickVolumeBtn.textContent = "🔊";
+    quickVolumeBtn.setAttribute("aria-pressed", "false");
 
-    const toolbarVolumeBtn = document.createElement("button");
-    toolbarVolumeBtn.type = "button";
-    toolbarVolumeBtn.className = "toolbar-btn volume-btn";
-    toolbarVolumeBtn.title = "Mute";
-    toolbarVolumeBtn.textContent = "Sound";
-    toolbarVolumeBtn.setAttribute("aria-pressed", "false");
+    const volumePopup = document.createElement("div");
+    volumePopup.className = "game-quick-volume-popup";
+    volumePopup.setAttribute("role", "menu");
+    volumePopup.setAttribute("aria-label", "Game volume");
+    volumePopup.hidden = true;
+    [["Mute", "mute"], ["Volume 25%", "25"], ["Volume 50%", "50"], ["Volume 75%", "75"], ["Volume 100%", "100"]].forEach(([label, value]) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "game-menu-item";
+        item.setAttribute("role", "menuitemcheckbox");
+        item.setAttribute("aria-checked", "false");
+        item.dataset.volumeAction = value;
+        item.textContent = label;
+        volumePopup.appendChild(item);
+    });
 
-    const toolbarVolumeSlider = document.createElement("input");
-    toolbarVolumeSlider.type = "range";
-    toolbarVolumeSlider.className = "volume-slider";
-    toolbarVolumeSlider.min = "0";
-    toolbarVolumeSlider.max = "100";
-    toolbarVolumeSlider.value = "100";
-    toolbarVolumeSlider.setAttribute("aria-label", "Game volume");
-
-    toolbar.append(
-        fullscreenBtn,
-        toolbarFavoriteBtn,
-        separator,
-        toolbarVolumeBtn,
-        toolbarVolumeSlider
-    );
-    menuBar.append(fileButton, helpButton, toolbar);
+    quickActions.append(quickFavoriteBtn, quickVolumeBtn, fullscreenBtn);
+    menuBar.append(fileButton, helpButton, quickActions, volumePopup);
 
     const content = document.createElement("div");
     content.className = "window-content";
@@ -1431,11 +1454,28 @@ const wireWindowControls = (win) => {
     win.el.querySelector(".close-btn").addEventListener("click", () => closeGameWindow(gameId));
     win.el.querySelector(".minimize-btn").addEventListener("click", () => minimizeWindow(gameId));
     win.el.querySelector(".maximize-btn").addEventListener("click", () => toggleMaximize(gameId));
+    const closeQuickVolumePopup = () => {
+        win.volumePopup.hidden = true;
+        win.volumeBtn.setAttribute("aria-expanded", "false");
+    };
+    const toggleQuickVolumePopup = () => {
+        const opening = win.volumePopup.hidden;
+        win.volumePopup.hidden = !opening;
+        win.volumeBtn.setAttribute("aria-expanded", String(opening));
+        if (opening) win.volumePopup.querySelector("button")?.focus();
+    };
     win.el.querySelector(".fullscreen-btn").addEventListener("click", () => {
         if (win.player) toggleFullscreen(win.player);
     });
     win.favoriteBtn.addEventListener("click", () => toggleFavorite(gameId));
-    win.volumeBtn.addEventListener("click", () => toggleWindowMute(win));
+    win.volumeBtn.addEventListener("click", toggleQuickVolumePopup);
+    win.volumePopup.addEventListener("click", (event) => {
+        const action = event.target.closest("[data-volume-action]")?.dataset.volumeAction;
+        if (!action) return;
+        if (action === "mute") toggleWindowMute(win);
+        else setWindowVolume(win, action);
+        closeQuickVolumePopup();
+    });
 
     menuBar.addEventListener("click", (event) => {
         const button = event.target.closest(".game-menu-button");
@@ -1495,14 +1535,31 @@ const wireWindowControls = (win) => {
         menu.addEventListener("click", (event) => {
             const item = event.target.closest("[data-game-action]");
             if (!item || item.disabled) return;
+            if (item.dataset.gameAction === "volume-popup") {
+                closeGameMenus();
+                toggleQuickVolumePopup();
+                return;
+            }
             switch (item.dataset.gameAction) {
                 case "close": closeGameWindow(gameId); break;
                 case "project": openProjectSettings(); break;
+                case "favorite": toggleFavorite(gameId); break;
+                case "mute": toggleWindowMute(win); break;
+                case "fullscreen": if (win.player) toggleFullscreen(win.player); break;
             }
             closeGameMenus();
         });
     });
-    win.volumeSlider.addEventListener("input", (e) => setWindowVolume(win, e.target.value));
+    win.volumePopup.addEventListener("keydown", (event) => {
+        const items = [...win.volumePopup.querySelectorAll("button")];
+        const index = items.indexOf(document.activeElement);
+        if (event.key === "Escape") {
+            event.preventDefault(); closeQuickVolumePopup(); win.volumeBtn.focus();
+        } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+        }
+    });
 
     syncWindowVolumeUI(win);
     updateFavoriteUI(win);
@@ -2724,7 +2781,7 @@ const openSystemWindow = (shortcutId) => {
     const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
     const el = createWindowElement(shortcutId);
     el.classList.add("explorer-window");
-    el.querySelectorAll(".game-menu-bar, .game-menu, .window-toolbar")
+    el.querySelectorAll(".game-menu-bar, .game-menu")
         .forEach((node) => node.remove());
     el.style.width = `${Math.min(590, desktopWidth - 16)}px`;
     el.style.height = `${Math.min(410, desktopHeight - 16)}px`;
@@ -2751,7 +2808,7 @@ const openSystemWindow = (shortcutId) => {
         maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: null,
         volumeBtn: null,
-        volumeSlider: null
+        volumePopup: null
     };
     openWindows.set(shortcutId, win);
     const content = el.querySelector(".window-content");
@@ -2839,8 +2896,10 @@ const openGameWindow = (gameId) => {
         content: el.querySelector(".window-content"),
         maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: el.querySelector(".favorite-btn"),
+        favoriteMenuItem: el.querySelector('[data-game-action="favorite"]'),
         volumeBtn: el.querySelector(".volume-btn"),
-        volumeSlider: el.querySelector(".volume-slider")
+        volumeMenuItem: el.querySelector('[data-game-action="mute"]'),
+        volumePopup: el.querySelector(".game-quick-volume-popup")
     };
     openWindows.set(gameId, win);
     trackGamePlay(gameId);
@@ -5020,6 +5079,12 @@ document.addEventListener("pointerdown", (e) => {
             menu.hidden = true;
             menu.parentElement?.querySelector(`.game-menu-button[data-game-menu="${menu.dataset.gameMenu}"]`)
                 ?.setAttribute("aria-expanded", "false");
+        });
+    }
+    if (!e.target.closest(".game-quick-actions") && !e.target.closest(".game-quick-volume-popup")) {
+        document.querySelectorAll(".game-quick-volume-popup:not([hidden])").forEach((popup) => {
+            popup.hidden = true;
+            popup.parentElement?.querySelector(".volume-btn")?.setAttribute("aria-expanded", "false");
         });
     }
 

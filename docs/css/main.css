@@ -932,72 +932,29 @@ html[data-xp-appearance="silver"] {
     box-shadow: 0 1px #fff;
 }
 
-.game-volume-row {
+/* ---- Compact controls in the application menu row ---- */
+
+.game-quick-actions {
+    margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-height: 27px;
-    padding: 3px 8px 3px 22px;
+    gap: 1px;
 }
 
-.game-volume-slider,
-.volume-slider {
-    width: 90px;
-    height: 6px;
-    appearance: none;
-    -webkit-appearance: none;
-    background: #d6d2c2;
-    border: 1px solid #b5b0a0;
-    border-radius: 3px;
-    outline: none;
-    cursor: var(--xp-cursor);
-}
-
-.game-volume-slider::-webkit-slider-thumb,
-.volume-slider::-webkit-slider-thumb {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 11px;
-    height: 16px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #5ea0f5, #1e5fe0);
-    border: 1px solid #0f46a8;
-}
-
-.game-volume-slider::-moz-range-thumb,
-.volume-slider::-moz-range-thumb {
-    width: 11px;
-    height: 16px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #5ea0f5, #1e5fe0);
-    border: 1px solid #0f46a8;
-}
-
-/* ---- One-click game controls ---- */
-
-.window-toolbar {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    min-width: 0;
-    height: 21px;
-    margin-left: 3px;
-}
-
-.toolbar-btn {
-    height: 21px;
-    padding: 0 5px;
+.quick-access-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
     border: 1px solid transparent;
     border-radius: 0;
     background: transparent;
     color: #111;
-    font: 11px Tahoma, "Segoe UI", sans-serif;
+    font: 13px/1 sans-serif;
     cursor: var(--xp-cursor);
 }
 
-.toolbar-btn:hover,
-.toolbar-btn:focus-visible {
+.quick-access-btn:hover,
+.quick-access-btn:focus-visible {
     border-color: #0b4aa3;
     background: #316ac5;
     color: #fff;
@@ -1010,16 +967,24 @@ html[data-xp-appearance="silver"] {
     background: #d8e7f8;
 }
 
-.toolbar-separator {
-    width: 1px;
-    height: 18px;
-    margin: 0 3px;
-    background: #b5b0a0;
+.game-quick-volume-popup {
+    position: absolute;
+    top: 21px;
+    right: 2px;
+    z-index: 25;
+    min-width: 138px;
+    padding: 2px;
+    background: var(--xp-beige);
+    border: 1px solid #7f7f7f;
+    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.35), inset 1px 1px 0 #fff;
 }
 
-.volume-slider {
-    width: clamp(48px, 12vw, 80px);
-    margin-left: 4px;
+.game-quick-volume-popup .game-menu-item.checked::before {
+    content: "✓";
+    width: 16px;
+    margin-left: -18px;
+    color: currentColor;
+    font-weight: 700;
 }
 
 /* ---- Window content ---- */

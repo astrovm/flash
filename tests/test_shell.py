@@ -77,7 +77,9 @@ class ShellSourceTests(unittest.TestCase):
         self.assertNotIn('makeMenuButton("&Sound")', self.javascript)
         self.assertIn('el.querySelector(".favorite-btn")', self.javascript)
         self.assertIn('el.querySelector(".volume-btn")', self.javascript)
-        self.assertIn('el.querySelector(".volume-slider")', self.javascript)
+        self.assertIn('el.querySelector(".game-quick-volume-popup")', self.javascript)
+        self.assertIn('makeMenuItem("Add to &Favorites", "favorite", { checkbox: true })', self.javascript)
+        self.assertIn('makeMenuItem("&Mute", "mute", { checkbox: true })', self.javascript)
         self.assertNotIn("Aavorites", self.javascript)
 
     def test_game_menu_supports_access_keys_and_keyboard_navigation(self):
@@ -362,16 +364,20 @@ class ShellSourceTests(unittest.TestCase):
         )
         self.assertIn('case "project": openProjectSettings();', self.javascript)
 
-    def test_game_controls_are_available_without_opening_menus(self):
-        self.assertIn('toolbar.className = "window-toolbar"', self.javascript)
-        self.assertIn('fullscreenBtn.textContent = "Full Screen"', self.javascript)
-        self.assertIn('toolbarFavoriteBtn.textContent = "Favorite"', self.javascript)
-        self.assertIn('toolbarVolumeBtn.textContent = "Sound"', self.javascript)
-        self.assertIn('toolbarVolumeSlider.className = "volume-slider"', self.javascript)
-        self.assertIn(
-            "menuBar.append(fileButton, helpButton, toolbar)",
-            self.javascript,
-        )
+    def test_game_controls_share_one_compact_menu_row(self):
+        self.assertIn('quickActions.className = "game-quick-actions"', self.javascript)
+        self.assertIn('quickFavoriteBtn.className = "quick-access-btn favorite-btn"', self.javascript)
+        self.assertIn('quickVolumeBtn.className = "quick-access-btn volume-btn"', self.javascript)
+        self.assertIn('fullscreenBtn.className = "quick-access-btn fullscreen-btn"', self.javascript)
+        self.assertIn('volumePopup.className = "game-quick-volume-popup"', self.javascript)
+        self.assertIn("toggleQuickVolumePopup", self.javascript)
+        self.assertIn('item.setAttribute("role", "menuitemcheckbox")', self.javascript)
+        self.assertIn("item.setAttribute(\"aria-checked\"", self.javascript)
+        self.assertIn('item.setAttribute("aria-current", "true")', self.javascript)
+        self.assertIn('item.textContent = isMute ? (muted ? "Unmute" : "Mute")', self.javascript)
+        self.assertIn(".game-quick-volume-popup .game-menu-item.checked::before", self.css)
+        self.assertNotIn("window-toolbar", self.javascript)
+        self.assertNotIn(".volume-slider", self.javascript)
 
     def test_display_properties_has_a_validated_persisted_pending_model(self):
         self.assertIn('const DISPLAY_SETTINGS_KEY = "displaySettings"', self.javascript)
