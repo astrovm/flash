@@ -99,6 +99,7 @@ class ShellSourceTests(unittest.TestCase):
             "Arial": {
                 "arial.ttf": "413c78f91bd39e134f3c0bb204b1d5a90f29df9efddc8fd26950a178058d5d74",
                 "arialbd.ttf": "df70597f0bdf49da3af270138f8a34396e4f5618c671a1db3480e626f38aaece",
+                "arialbi.ttf": "722c61a99c1af1413d762d0a3b185dd497fe55b873c8672a0c3c4bfe05d29d92",
             },
             "Lucida Console": {
                 "lucon.ttf": "6ddf64ee896d24cf9908f115ae220a7cfa18dc034bc4a68e4db68dcd57c71512",

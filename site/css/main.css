@@ -53,6 +53,13 @@
     font-weight: 700;
 }
 
+@font-face {
+    font-family: "Arial";
+    src: url("fonts/arialbi.ttf") format("truetype");
+    font-style: italic;
+    font-weight: 700;
+}
+
 :root {
     --xp-beige: #ece9d8;
     --xp-beige-dark: #d6d2c2;
