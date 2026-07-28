@@ -1,6 +1,6 @@
 "use strict";
 
-// Node test suite for docs/js/filesystem.js, driven by
+// Node test suite for site/js/filesystem.js, driven by
 // tests/test_filesystem.py. Exits non-zero on the first failed assertion.
 
 const assert = require("assert");
@@ -14,7 +14,7 @@ global.localStorage = {
     clear: () => memoryStorage.clear()
 };
 
-const fsPath = require.resolve("../docs/js/filesystem.js");
+const fsPath = require.resolve("../site/js/filesystem.js");
 const fs = require(fsPath);
 
 // ---- Seed structure and well-known locations ----

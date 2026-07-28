@@ -8,9 +8,9 @@ const projectDirectory = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
     ".."
 );
-const docsDirectory = path.join(projectDirectory, "docs");
-const gamesPath = path.join(docsDirectory, "js", "games.js");
-const sourcesPath = path.join(docsDirectory, "assets", "icons", "SOURCES.json");
+const siteDirectory = path.join(projectDirectory, "site");
+const gamesPath = path.join(siteDirectory, "js", "games.js");
+const sourcesPath = path.join(siteDirectory, "assets", "icons", "SOURCES.json");
 const requireAll = process.argv.includes("--require-all");
 
 const context = vm.createContext({ window: {} });
@@ -29,9 +29,9 @@ for (const [gameId, game] of Object.entries(games)) {
         continue;
     }
 
-    const iconPath = path.resolve(docsDirectory, game.icon);
-    if (!iconPath.startsWith(`${docsDirectory}${path.sep}`)) {
-        errors.push(`${gameId}: icon path escapes docs/`);
+    const iconPath = path.resolve(siteDirectory, game.icon);
+    if (!iconPath.startsWith(`${siteDirectory}${path.sep}`)) {
+        errors.push(`${gameId}: icon path escapes site/`);
         continue;
     }
     if (!fs.existsSync(iconPath)) {

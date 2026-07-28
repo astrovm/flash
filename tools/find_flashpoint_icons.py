@@ -14,7 +14,7 @@ import requests
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-GAMES_PATH = PROJECT_DIR / "docs" / "js" / "games.js"
+GAMES_PATH = PROJECT_DIR / "site" / "js" / "games.js"
 API_URL = "https://db-api.unstable.life/search"
 
 TITLE_OVERRIDES = {

@@ -27,31 +27,52 @@ A curated archive of Flash games
 
 ## Development
 
-### Local testing
+The authored static site lives in `site/`. Deployment-only files are generated
+in the ignored `dist/` directory and must not be committed.
+
+### Tests
 
 ```bash
+bun install --frozen-lockfile
+python -m pip install -r requirements-dev.txt
+bun run test
+```
+
+The test command runs the Python suite, the Node-backed behavioral suites,
+JavaScript syntax checks, and icon validation.
+
+### Local site
+
+Build the deployable site and serve it locally:
+
+```bash
+bun run build
 python tools/dev_server.py --port 8000
 ```
 
-Use the `--port` flag to change the listening port (defaults to `8000`).
+The server reads `dist/` by default and refuses to serve an unbuilt tree. Use
+`--directory` to serve another completed build.
 
 ### Deployment
 
-The project includes deployment scripts that handle:
-- Updating Ruffle to the latest version
-- Versioning CSS and JS files
-- Generating service worker for offline mode
+Pushes to `main` are tested, built, and deployed to GitHub Pages by
+`.github/workflows/pages.yml`. Pull requests run the same tests and production
+build without deploying. The build:
 
-To deploy:
+- Copies `site/` into a fresh `dist/`
+- Downloads the pinned self-hosted Ruffle release and verifies its SHA-256
+- Generates a date-plus-commit deployment version and asset hashes
+- Generates the Workbox service worker
+- Validates representative Flash, DOS, and HTML5 artifacts
 
-```bash
-# Install dependencies
-bun add workbox-cli --dev
-python -m pip install -r requirements-dev.txt
+The Pages repository setting must use **GitHub Actions** as its source. The
+custom domain remains configured in the repository Pages settings; `site/CNAME`
+is retained for documentation and rollback compatibility.
 
-# Run deployment script
-python tools/deploy.py
-```
+Ruffle release metadata is pinned in `tools/ruffle-release.json`. A weekly
+workflow checks for a newer stable release and opens a reviewable dependency PR.
+Repository settings must allow GitHub Actions to create pull requests for that
+automation to work. Ruffle update PRs are never auto-merged.
 
 ### Game Support
 
@@ -72,8 +93,8 @@ Each game can be configured with specific settings:
 }
 ```
 
-Game definitions live in `docs/js/games.js`. Icon provenance and checksums live
-in `docs/assets/icons/SOURCES.json`; run `bun run validate:icons` to ensure every
+Game definitions live in `site/js/games.js`. Icon provenance and checksums live
+in `site/assets/icons/SOURCES.json`; run `bun run validate:icons` to ensure every
 game has a valid, source-documented PNG. `tools/sync_game_icons.py` contains the
 reviewed Flashpoint UUID mappings and can refresh those assets without fuzzy
 auto-matching.

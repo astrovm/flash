@@ -22,7 +22,7 @@ class ReusableDialogTests(unittest.TestCase):
         )
 
     def test_index_loads_dialogs_before_main(self):
-        html = (PROJECT_DIR / "docs" / "index.html").read_text(encoding="utf-8")
+        html = (PROJECT_DIR / "site" / "index.html").read_text(encoding="utf-8")
         filesystem_at = html.index('src="js/filesystem.')
         dialogs_at = html.index('src="js/dialogs.')
         main_at = html.index('src="js/main.')
@@ -30,8 +30,8 @@ class ReusableDialogTests(unittest.TestCase):
         self.assertLess(dialogs_at, main_at)
 
     def test_session_actions_have_distinct_transitions(self):
-        main = (PROJECT_DIR / "docs" / "js" / "main.js").read_text(encoding="utf-8")
-        index = (PROJECT_DIR / "docs" / "index.html").read_text(encoding="utf-8")
+        main = (PROJECT_DIR / "site" / "js" / "main.js").read_text(encoding="utf-8")
+        index = (PROJECT_DIR / "site" / "index.html").read_text(encoding="utf-8")
 
         self.assertIn("const switchUser = () =>", main)
         self.assertIn("const logOff = () =>", main)
@@ -64,7 +64,7 @@ class ReusableDialogTests(unittest.TestCase):
         self.assertIn("closeTaskbarMenus();", main)
 
     def test_reusable_dialogs_are_draggable_and_viewport_clamped(self):
-        dialogs = (PROJECT_DIR / "docs" / "js" / "dialogs.js").read_text(
+        dialogs = (PROJECT_DIR / "site" / "js" / "dialogs.js").read_text(
             encoding="utf-8"
         )
 

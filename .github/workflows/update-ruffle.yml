@@ -1,0 +1,64 @@
+name: Check for stable Ruffle updates
+
+on:
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13.14"
+
+      - name: Install updater dependency
+        run: python -m pip install requests
+
+      - name: Check latest stable release
+        run: python tools/update_ruffle.py
+
+      - name: Detect pin change
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- tools/ruffle-release.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open update pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version="$(python -c 'import json; print(json.load(open("tools/ruffle-release.json"))["tag"])')"
+          branch="deps/ruffle-${version}"
+          if [ "$(gh pr list --state all --head "$branch" --json number --jq length)" -ne 0 ]; then
+            echo "A pull request for ${version} already exists."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add tools/ruffle-release.json
+          git commit -m "Update Ruffle to ${version}"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Update Ruffle to ${version}" \
+            --body "Updates the pinned stable self-hosted Ruffle release and checksum. This pull request is intentionally not auto-merged."
+          gh workflow run pages.yml --ref "$branch"
