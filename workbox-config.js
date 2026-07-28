@@ -5,7 +5,7 @@ module.exports = {
 	],
 	swDest: "docs/sw.js",
 	maximumFileSizeToCacheInBytes: 25000000,
-	ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
+	ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/],
 	sourcemap: false,
 	cacheId: 'astro-flash',
 	cleanupOutdatedCaches: true,

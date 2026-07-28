@@ -25,7 +25,9 @@ assert.ok(fs.getNode(fs.MY_PICTURES), "My Pictures exists");
 assert.ok(fs.getNode(fs.MY_MUSIC), "My Music exists");
 assert.ok(fs.getNode(fs.DRIVE_C), "Local Disk exists");
 assert.ok(fs.getNode(fs.RECYCLE_BIN), "Recycle Bin exists");
-assert.strictEqual(fs.getChildren(fs.MY_COMPUTER).length, 2);
+assert.strictEqual(fs.getChildren(fs.MY_COMPUTER).length, 3);
+assert.strictEqual(fs.getNode(fs.DRIVE_D).name, "Local Disk (D:)");
+assert.strictEqual(fs.getNode(fs.DRIVE_F).name, "Removable Device (F:)");
 
 // ---- Paths ----
 assert.strictEqual(fs.getPath(fs.DRIVE_C), "C:\\");
@@ -40,6 +42,33 @@ assert.strictEqual(
 assert.strictEqual(fs.resolvePath("c:\\documents and settings\\ASTRO\\desktop"), fs.DESKTOP);
 assert.strictEqual(fs.resolvePath("C:\\does\\not\\exist"), null);
 assert.strictEqual(fs.resolvePath("My Computer"), fs.MY_COMPUTER);
+assert.strictEqual(fs.resolvePath("F:\\"), fs.DRIVE_F);
+
+// ---- Windows-compatible name validation ----
+assert.strictEqual(fs.validateName("notes.txt"), "notes.txt");
+assert.strictEqual(fs.validateName("  notes.txt"), "notes.txt");
+[
+    "",
+    "   ",
+    ".",
+    "..",
+    "trailing.",
+    "trailing ",
+    "bad/name.txt",
+    "bad:name.txt",
+    "bad\u0000name.txt",
+    "CON",
+    "nul.txt",
+    "COM1.log",
+    "LPT9"
+].forEach((name) => {
+    assert.throws(() => fs.validateName(name), /VirtualFS:/, `rejects ${JSON.stringify(name)}`);
+});
+
+assert.throws(
+    () => fs.createFolder(fs.MY_DOCUMENTS, "invalid?folder"),
+    /invalid characters/
+);
 
 // ---- Create, timestamps, sizes ----
 const folder = fs.createFolder(fs.MY_DOCUMENTS, "Test Folder");
@@ -58,6 +87,8 @@ assert.strictEqual(fs.getSize(folder.id), 11);
 // ---- Rename and name deduplication ----
 fs.rename(file.id, "todo.txt");
 assert.strictEqual(fs.getNode(file.id).name, "todo.txt");
+assert.throws(() => fs.rename(file.id, "AUX.txt"), /reserved device name/);
+assert.strictEqual(fs.getNode(file.id).name, "todo.txt", "invalid rename leaves node unchanged");
 const duplicate = fs.createFile(folder.id, "todo.txt");
 assert.strictEqual(duplicate.name, "todo (2).txt");
 
@@ -119,6 +150,15 @@ fs.registerFileType(".game", (node) => {
 const gameFile = fs.createFile(fs.DESKTOP, "Doom.game", { app: "doom" });
 assert.strictEqual(fs.open(gameFile.id), true);
 assert.strictEqual(openedWith.id, gameFile.id);
+assert.deepStrictEqual(fs.findByApp("doom").map((node) => node.id), [gameFile.id]);
+fs.move(gameFile.id, fs.MY_DOCUMENTS);
+fs.rename(gameFile.id, "My Doom Shortcut.game");
+assert.deepStrictEqual(
+    fs.findByApp("doom").map((node) => node.id),
+    [gameFile.id],
+    "managed files remain discoverable after move and rename"
+);
+assert.deepStrictEqual(fs.findByApp("missing-game"), []);
 const unknownFile = fs.createFile(fs.DESKTOP, "readme.xyz");
 assert.strictEqual(fs.open(unknownFile.id), false);
 

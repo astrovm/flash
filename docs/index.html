@@ -12,29 +12,39 @@
         <link rel="icon" href="favicon.ico" type="image/x-icon" />
         <title>Astro Flash Collection</title>
         <script src="js/ruffle.js?v=bf02ea2d"></script>
-        <script src="js/games.js?v=65ef7d86"></script>
-        <script src="js/filesystem.js?v=22edba7e"></script>
-        <script src="js/dialogs.js?v=b3f7c9c4"></script>
-        <script src="js/main.js?v=59247ee2"></script>
-        <link rel="stylesheet" href="css/main.css?v=2ddf9b9a">
+        <script src="js/games.js?v=a5b45b42"></script>
+        <script src="js/filesystem.js?v=750917fa"></script>
+        <script src="js/file-operations.js?v=f2bf59d7"></script>
+        <script src="js/dialogs.js?v=63482d98"></script>
+        <script src="js/main.js?v=cdad4a09"></script>
+        <link rel="stylesheet" href="css/main.css?v=d6af5919">
     </head>
 
     <body>
         <!-- Boot screen -->
-        <div id="boot-screen">
-            <img
-                class="boot-wordmark-img"
-                src="assets/xp/wordmark.png"
-                alt="Microsoft Windows XP"
-            />
-            <span class="boot-edition">Professional</span>
-            <div class="boot-progress" aria-hidden="true">
-                <div class="boot-blocks"><i></i><i></i><i></i></div>
+        <div
+            id="boot-screen"
+            role="button"
+            tabindex="0"
+            aria-label="Continue to the welcome screen"
+        >
+            <div class="boot-center">
+                <img
+                    class="boot-logo"
+                    src="assets/xp/loading-logo.jpg"
+                    alt="Microsoft Windows XP"
+                />
+                <div class="boot-progress" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                </div>
             </div>
-            <p class="boot-copyright">
-                Copyright © 1985-2001<br />Microsoft Corporation
-            </p>
-            <span class="boot-microsoft">Microsoft</span>
+            <div class="boot-footer">
+                <p>Copyright © Microsoft Corporation</p>
+                <img
+                    src="assets/xp/loading-microsoft.jpg"
+                    alt="Microsoft"
+                />
+            </div>
         </div>
 
         <!-- Welcome screen -->
@@ -80,35 +90,7 @@
                 class="xp-context-menu"
                 role="menu"
                 hidden
-            >
-                <button type="button" role="menuitem" data-action="arrange">
-                    Arrange Icons
-                </button>
-                <button type="button" role="menuitem" data-action="refresh">
-                    Refresh
-                </button>
-                <span class="context-separator" aria-hidden="true"></span>
-                <button
-                    type="button"
-                    role="menuitem"
-                    data-action="paste"
-                    disabled
-                >
-                    Paste
-                </button>
-                <button
-                    type="button"
-                    role="menuitem"
-                    data-action="paste-shortcut"
-                    disabled
-                >
-                    Paste Shortcut
-                </button>
-                <span class="context-separator" aria-hidden="true"></span>
-                <button type="button" role="menuitem" data-action="properties">
-                    Properties
-                </button>
-            </div>
+            ></div>
 
             <div
                 id="window-system-menu"
@@ -157,16 +139,6 @@
                                 aria-hidden="true"
                             ></span>
                         </button>
-                        <div id="all-programs-panel" hidden>
-                            <div class="start-menu-search">
-                                <input
-                                    type="text"
-                                    id="game-search"
-                                    placeholder="Search games..."
-                                />
-                            </div>
-                            <div id="start-menu-programs"></div>
-                        </div>
                     </div>
                     <div class="start-menu-right" id="start-menu-places"></div>
                 </div>
@@ -179,9 +151,9 @@
                         <span class="xp-power-icon" aria-hidden="true"></span>
                         Turn Off Computer
                     </button>
-                    <h6>v26.07.27-2</h6>
                 </div>
             </div>
+            <div id="start-menu-flyouts" aria-label="All Programs" hidden></div>
         </div>
 
         <!-- Taskbar -->
@@ -232,6 +204,20 @@
                 </label>
             </div>
         </div>
+
+        <div id="taskbar-context-menu" class="xp-context-menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-taskbar-action="toolbars" disabled>Toolbars</button>
+            <span class="context-separator" aria-hidden="true"></span>
+            <button type="button" role="menuitem" data-taskbar-action="cascade">Cascade Windows</button>
+            <button type="button" role="menuitem" data-taskbar-action="tile-horizontal">Tile Windows Horizontally</button>
+            <button type="button" role="menuitem" data-taskbar-action="tile-vertical">Tile Windows Vertically</button>
+            <button type="button" role="menuitem" data-taskbar-action="show-desktop">Show the Desktop</button>
+            <button type="button" role="menuitem" data-taskbar-action="task-manager">Task Manager</button>
+            <span class="context-separator" aria-hidden="true"></span>
+            <button type="button" role="menuitemcheckbox" aria-checked="true" data-taskbar-action="lock" disabled title="The taskbar position is fixed">Lock the Taskbar</button>
+            <button type="button" role="menuitem" data-taskbar-action="properties">Properties</button>
+        </div>
+        <div id="taskbar-overflow-menu" class="xp-context-menu" role="menu" hidden></div>
 
         <!-- Log Off Windows -->
         <div id="logoff-dialog" class="system-dialog-overlay" hidden>
@@ -323,6 +309,15 @@
             <img src="assets/xp/wordmark.png" alt="Microsoft Windows" />
             <p>It is now safe to turn off your computer.</p>
             <span class="turn-off-hint">Click anywhere to restart</span>
+        </div>
+
+        <!-- Stand By blocks the shell without ending the current session. -->
+        <div id="standby-screen" hidden>
+            <div role="dialog" aria-modal="true" aria-labelledby="standby-title">
+                <p id="standby-title">Windows is standing by.</p>
+                <button id="standby-resume" type="button">Resume</button>
+                <span>Move the pointer, click, or press a key to return to your session.</span>
+            </div>
         </div>
     </body>
 </html>
