@@ -1784,8 +1784,6 @@ html[data-xp-appearance="silver"] {
     width: 18px;
     height: 18px;
     cursor: se-resize;
-    background:
-        linear-gradient(135deg, transparent 0 50%, #a8a494 50% 58%, transparent 58% 66%, #a8a494 66% 74%, transparent 74% 82%, #a8a494 82% 90%, transparent 90%);
 }
 
 .xp-window.move-mode {
@@ -2038,6 +2036,16 @@ html[data-xp-appearance="silver"] {
 }
 
 /* Astro Flash project settings */
+
+.project-settings-content {
+    flex: 1;
+    min-height: 0;
+    padding: 12px;
+    overflow: auto;
+    background: var(--xp-beige);
+    color: #111;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+}
 
 .project-offline-setting {
     display: block;

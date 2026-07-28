@@ -1690,6 +1690,11 @@ const createSystemWindowContent = (shortcutId, win) => {
   const content = document.createElement("div");
   content.className = "explorer-content";
 
+  if (shortcutId === "__astro-settings") {
+    content.className = "project-settings-content";
+    return content;
+  }
+
   if (shortcutId === "__display-properties") {
     content.className = "display-properties-content";
     content.innerHTML = `
@@ -3946,8 +3951,12 @@ const openSystemWindow = (shortcutId) => {
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
-  const windowWidth = Math.min(700, desktopWidth - 16);
-  const windowHeight = Math.min(500, desktopHeight - 16);
+  const isProjectSettings = shortcutId === "__astro-settings";
+  const windowWidth = Math.min(isProjectSettings ? 440 : 700, desktopWidth - 16);
+  const windowHeight = Math.min(
+    isProjectSettings ? 320 : 500,
+    desktopHeight - 16,
+  );
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
   el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
@@ -3982,6 +3991,7 @@ const openSystemWindow = (shortcutId) => {
   if (win.currentFolderId) renderExplorerItems(win);
   wireSystemWindowControls(win);
   if (shortcutId === "__display-properties") wireDisplayProperties(win);
+  if (shortcutId === "__astro-settings") wireProjectSettings(win);
   if (shortcutId === "__search") wireSearchCompanion(win);
   focusWindow(shortcutId);
 };
@@ -4626,11 +4636,8 @@ const initializeOfflineMode = () => {
   });
 };
 
-const openProjectSettings = () => {
-  const dialog = XPDialogs.createDialog({
-    title: "Astro Flash Collection",
-  });
-
+const wireProjectSettings = (win) => {
+  const content = win.el.querySelector(".project-settings-content");
   const details = document.createElement("dl");
   details.className = "dlg-props-table";
   const detailValues = {};
@@ -4724,7 +4731,10 @@ const openProjectSettings = () => {
       !state.enabled || !state.online || transientPhases.has(state.phase);
   };
   const unsubscribe = offlineManager.subscribe(render);
-  dialog.onResult(unsubscribe);
+  win.beforeClose = () => {
+    unsubscribe();
+    return true;
+  };
 
   offlineToggle.addEventListener("change", async () => {
     offlineToggle.disabled = true;
@@ -4765,7 +4775,7 @@ const openProjectSettings = () => {
   suggestions.rel = "noopener noreferrer";
   suggestions.textContent = "Send suggestions or report a problem";
 
-  dialog.body.append(
+  content.append(
     details,
     offlineLabel,
     status,
@@ -4773,10 +4783,9 @@ const openProjectSettings = () => {
     actions,
     suggestions,
   );
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
 };
+
+const openProjectSettings = () => openSystemWindow("__astro-settings");
 
 const MONTH_NAMES = [
   "January",

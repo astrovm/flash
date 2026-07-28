@@ -553,9 +553,13 @@ class ShellSourceTests(unittest.TestCase):
         ):
             self.assertIn(token, self.javascript)
 
-    def test_project_controls_live_in_a_separate_dialog(self):
+    def test_project_controls_live_in_a_taskbar_window(self):
         self.assertJavascriptContains(
-            'title: "Astro Flash Collection"',
+            'shortcutId === "__astro-settings"',
+            'content.className = "project-settings-content"',
+            'openSystemWindow("__astro-settings")',
+            "wireProjectSettings(win)",
+            "isProjectSettings ? 320 : 500",
             "offlineManager.checkForUpdates()",
             "offlineManager.applyUpdate()",
             "offlineManager.repair()",
@@ -568,6 +572,13 @@ class ShellSourceTests(unittest.TestCase):
             '"https://github.com/astrovm/flash/issues"',
             'case "project": openProjectSettings();',
         )
+        self.assertIn(".project-settings-content", self.css)
+        self.assertNotIn(
+            'XPDialogs.createDialog({\n    title: "Astro Flash Collection"',
+            self.javascript,
+        )
+        self.assertNotIn('closeRow.className = "dlg-buttons"', self.javascript)
+        self.assertNotIn("linear-gradient(135deg, transparent", self.css)
         self.assertNotIn(
             'heading.textContent = "Astro Flash Collection"', self.javascript
         )
