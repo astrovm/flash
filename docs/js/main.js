@@ -9,7 +9,7 @@ const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
 const MOVE_SIZE_STEP = 8;
 const BOOT_DURATION_MS = 2600;
 const WELCOME_DURATION_MS = 1200;
-const APP_VERSION = "26.07.28-4";
+const APP_VERSION = "26.07.28";
 
 let bootTimeout = null;
 let shutdownTimeout = null;
@@ -2032,17 +2032,9 @@ const createSystemWindowContent = (shortcutId, win) => {
       edit: [
         ["Cut", "cut", !selected.length || protectedSelection],
         ["Copy", "copy", !selected.length],
-        [
-          "Paste",
-          "paste",
-          !writable || !fileOps.canPaste(win.currentFolderId),
-        ],
+        ["Paste", "paste", !writable || !fileOps.canPaste(win.currentFolderId)],
         ["Delete", "delete", !selected.length || protectedSelection],
-        [
-          "Rename",
-          "rename",
-          selected.length !== 1 || protectedSelection,
-        ],
+        ["Rename", "rename", selected.length !== 1 || protectedSelection],
       ],
       view: [
         ["Thumbnails", "thumbnails"],
