@@ -128,6 +128,7 @@
         content: "",
         app: null,
         originalParent: null,
+        originalName: null,
       };
     };
 
@@ -242,6 +243,9 @@
     getChildren(parentId).find(
       (child) => child.name.toLowerCase() === String(name).toLowerCase(),
     ) || null;
+
+  const findByApp = (appId) =>
+    Object.values(nodes).filter((node) => node.app === appId);
 
   const getPath = (id) => {
     const node = nodes[id];
@@ -398,6 +402,7 @@
       content: type === "file" ? String(options.content ?? "") : "",
       app: options.app || null,
       originalParent: null,
+      originalName: null,
     };
     if (type === "file") {
       node.size = Number.isFinite(options.size)
@@ -518,6 +523,7 @@
     const originalParent = node.parent;
     detach(node);
     node.originalParent = originalParent;
+    node.originalName = node.name;
     node.parent = WELL_KNOWN.RECYCLE_BIN;
     node.name = dedupeName(WELL_KNOWN.RECYCLE_BIN, node.name);
     bin.children.push(id);
@@ -532,13 +538,17 @@
       throw new Error("Only items in the Recycle Bin can be restored");
     }
     const targetId =
-      node.originalParent && isFolder(nodes[node.originalParent])
+      node.originalParent &&
+      isFolder(nodes[node.originalParent]) &&
+      !isInRecycleBin(node.originalParent)
         ? node.originalParent
         : WELL_KNOWN.DESKTOP;
+    const restoredName = node.originalName || node.name;
     detach(node);
     node.originalParent = null;
+    node.originalName = null;
     node.parent = targetId;
-    node.name = dedupeName(targetId, node.name);
+    node.name = dedupeName(targetId, restoredName);
     nodes[targetId].children.push(id);
     touch(id);
     touch(targetId);
@@ -616,6 +626,7 @@
     getParent,
     getChildren,
     findChild,
+    findByApp,
     getPath,
     resolvePath,
     isDescendantOf,

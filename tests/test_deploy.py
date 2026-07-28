@@ -22,6 +22,8 @@ class DeployTests(unittest.TestCase):
             mock.patch.object(deploy, "PROJECT_DIR", self.project_dir),
             mock.patch.object(deploy, "DOCS_DIR", self.docs_dir),
             mock.patch.object(deploy, "JS_DIR", self.js_dir),
+            mock.patch.object(deploy, "HTML_PATH", self.docs_dir / "index.html"),
+            mock.patch.object(deploy, "MAIN_JS_PATH", self.js_dir / "main.js"),
             mock.patch.object(
                 deploy,
                 "RUFFLE_MANIFEST_PATH",
@@ -46,7 +48,9 @@ class DeployTests(unittest.TestCase):
             )
             raise subprocess.CalledProcessError(1, "workbox")
 
-        with mock.patch.object(deploy.subprocess, "run", side_effect=fail_after_writing):
+        with mock.patch.object(
+            deploy.subprocess, "run", side_effect=fail_after_writing
+        ):
             with self.assertRaises(subprocess.CalledProcessError):
                 deploy.generate_service_worker()
 
@@ -122,6 +126,92 @@ class DeployTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "network failed"):
                 deploy.deploy()
 
+    def test_deploy_failure_restores_all_managed_files(self):
+        html = self.docs_dir / "index.html"
+        main = self.js_dir / "main.js"
+        manifest = self.js_dir / "ruffle-manifest.json"
+        old_runtime = self.js_dir / "core.ruffle.old.js"
+        old_worker = self.docs_dir / "sw.js"
+        old_workbox = self.docs_dir / "workbox-old.js"
+        originals = {
+            html: b"old html",
+            main: b'const APP_VERSION = "26.07.27";',
+            manifest: b'{"files":["core.ruffle.old.js"]}',
+            old_runtime: b"old runtime",
+            old_worker: b"old worker",
+            old_workbox: b"old workbox",
+        }
+        for path, content in originals.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+
+        new_runtime = self.js_dir / "core.ruffle.new.js"
+        new_workbox = self.docs_dir / "workbox-new.js"
+
+        def download():
+            new_runtime.write_bytes(b"new runtime")
+            return {"core.ruffle.new.js"}
+
+        def update():
+            html.write_text("new html", encoding="utf-8")
+            main.write_text(
+                'const APP_VERSION = "26.07.28";',
+                encoding="utf-8",
+            )
+
+        def fail_workbox():
+            old_worker.write_text("partial worker", encoding="utf-8")
+            new_workbox.write_text("new workbox", encoding="utf-8")
+            raise RuntimeError("workbox failed")
+
+        with (
+            mock.patch.object(deploy, "download_ruffle", side_effect=download),
+            mock.patch.object(deploy, "update_html", side_effect=update),
+            mock.patch.object(
+                deploy,
+                "generate_service_worker",
+                side_effect=fail_workbox,
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "workbox failed"):
+                deploy.deploy()
+
+        for path, content in originals.items():
+            self.assertEqual(path.read_bytes(), content)
+        self.assertFalse(new_runtime.exists())
+        self.assertFalse(new_workbox.exists())
+
+    def test_workbox_ignores_cache_busting_version_parameter(self):
+        project_dir = Path(__file__).resolve().parents[1]
+        config = (project_dir / "workbox-config.js").read_text(encoding="utf-8")
+        self.assertRegex(
+            config,
+            r"ignoreURLParametersMatching:\s*\[[^\]]*/\^v\$/",
+        )
+        generated_worker = (project_dir / "docs" / "sw.js").read_text(
+            encoding="utf-8",
+        )
+        self.assertIn(
+            "ignoreURLParametersMatching:[/^utm_/,/^fbclid$/,/^v$/]",
+            generated_worker,
+        )
+
+    def test_checked_in_asset_hashes_match_sources(self):
+        project_dir = Path(__file__).resolve().parents[1]
+        html = (project_dir / "docs" / "index.html").read_text(encoding="utf-8")
+        asset_urls = {
+            "ruffle": "js/ruffle.js",
+            "games_js": "js/games.js",
+            "filesystem_js": "js/filesystem.js",
+            "file_operations_js": "js/file-operations.js",
+            "dialogs_js": "js/dialogs.js",
+            "main_js": "js/main.js",
+            "main_css": "css/main.css",
+        }
+        for name, url in asset_urls.items():
+            expected_hash = deploy.get_short_hash(deploy.ASSET_PATHS[name])
+            self.assertIn(f'{url}?v={expected_hash}"', html, name)
+
     def test_update_html_updates_app_version_before_hashing_main(self):
         html_path = self.docs_dir / "index.html"
         css_dir = self.docs_dir / "css"
@@ -138,9 +228,7 @@ class DeployTests(unittest.TestCase):
         }
         for name, path in assets.items():
             content = (
-                'const APP_VERSION = "26.07.27-2";\n'
-                if name == "main_js"
-                else name
+                'const APP_VERSION = "26.07.27-2";\n' if name == "main_js" else name
             )
             path.write_text(content, encoding="utf-8")
 
@@ -175,9 +263,7 @@ class DeployTests(unittest.TestCase):
             deployed_html,
             rf'<script src="js/main\.js\?v={re.escape(expected_hash)}"></script>',
         )
-        file_operations_hash = deploy.get_short_hash(
-            assets["file_operations_js"]
-        )
+        file_operations_hash = deploy.get_short_hash(assets["file_operations_js"])
         self.assertRegex(
             deployed_html,
             (

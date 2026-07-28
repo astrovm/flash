@@ -317,13 +317,23 @@
   const restore = (ids) => {
     const topLevelIds = getTopLevelIds(ids);
     topLevelIds.forEach((id) => {
-      if (!fs.isInRecycleBin(id)) {
+      if (fs.getParent(id)?.id !== fs.RECYCLE_BIN) {
         throw new Error(
-          "FileOperations: only Recycle Bin items can be restored",
+          "FileOperations: only top-level Recycle Bin items can be restored",
         );
       }
     });
-    return topLevelIds.map((id) => fs.restore(id));
+    const pending = new Set(topLevelIds);
+    const orderedIds = [];
+    while (pending.size) {
+      const nextId =
+        [...pending].find(
+          (id) => !pending.has(fs.getNode(id)?.originalParent),
+        ) || pending.values().next().value;
+      pending.delete(nextId);
+      orderedIds.push(nextId);
+    }
+    return orderedIds.map((id) => fs.restore(id));
   };
 
   const emptyRecycleBin = () => fs.emptyRecycleBin();

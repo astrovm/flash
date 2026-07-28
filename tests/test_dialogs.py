@@ -1,3 +1,4 @@
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -32,27 +33,32 @@ class ReusableDialogTests(unittest.TestCase):
         main = (PROJECT_DIR / "docs" / "js" / "main.js").read_text(encoding="utf-8")
         index = (PROJECT_DIR / "docs" / "index.html").read_text(encoding="utf-8")
 
-        self.assertIn('const switchUser = () =>', main)
-        self.assertIn('const logOff = () =>', main)
-        self.assertIn('const restart = () =>', main)
-        self.assertIn('const turnOff = () =>', main)
-        self.assertIn('const setSuspended = (value) =>', main)
-        self.assertIn('const closeCurrentSession = () =>', main)
-        self.assertIn('Array.from(openWindows.keys()).forEach(closeGameWindow);', main)
-        self.assertIn('setSuspended(true);', main)
-        self.assertIn('startShutdown(true);', main)
-        self.assertIn('startShutdown(false);', main)
-        self.assertIn(
-            'document.getElementById("shutdown-confirm")\n'
-            '        .addEventListener("click", turnOff);',
+        self.assertIn("const switchUser = () =>", main)
+        self.assertIn("const logOff = () =>", main)
+        self.assertIn("const restart = () =>", main)
+        self.assertIn("const turnOff = () =>", main)
+        self.assertIn("const setSuspended = (value) =>", main)
+        self.assertIn("const closeCurrentSession = () =>", main)
+        self.assertIn("Array.from(openWindows.keys()).forEach(closeGameWindow);", main)
+        self.assertIn("setSuspended(true);", main)
+        self.assertIn("startShutdown(true);", main)
+        self.assertIn("startShutdown(false);", main)
+        self.assertRegex(
             main,
+            re.compile(
+                r'document\s*\.getElementById\("shutdown-confirm"\)\s*'
+                r'\.addEventListener\("click", turnOff\);'
+            ),
         )
         self.assertIn('id="standby-screen"', index)
         self.assertIn('id="standby-resume"', index)
-        self.assertIn(
-            'document.getElementById("standby-screen")\n'
-            '        .addEventListener("pointerdown", () => setSuspended(false));',
+        self.assertRegex(
             main,
+            re.compile(
+                r'document\s*\.getElementById\("standby-screen"\)\s*'
+                r'\.addEventListener\("pointerdown", \(\) => '
+                r"setSuspended\(false\)\);"
+            ),
         )
         self.assertIn("showDesktopSnapshot = null;", main)
         self.assertIn("closeTaskbarMenus();", main)

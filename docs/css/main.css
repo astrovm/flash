@@ -126,6 +126,11 @@ iframe {
     cursor: var(--xp-cursor);
 }
 
+#boot-screen:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+}
+
 .boot-center {
     position: absolute;
     top: 50%;
@@ -854,6 +859,12 @@ html[data-xp-appearance="silver"] {
     border-bottom: 1px solid #aca899;
     color: #111;
     font: 11px Tahoma, "Segoe UI", sans-serif;
+}
+
+.game-menu-items {
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 
 .game-menu-button {

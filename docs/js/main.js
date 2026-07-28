@@ -9,7 +9,7 @@ const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
 const MOVE_SIZE_STEP = 8;
 const BOOT_DURATION_MS = 2600;
 const WELCOME_DURATION_MS = 1200;
-const APP_VERSION = "26.07.28";
+const APP_VERSION = "26.07.28-2";
 
 let bootTimeout = null;
 let shutdownTimeout = null;
@@ -724,8 +724,13 @@ const createWindowElement = (gameId) => {
 
   const menuBar = document.createElement("div");
   menuBar.className = "game-menu-bar";
-  menuBar.setAttribute("role", "menubar");
-  menuBar.setAttribute("aria-label", "Game menu");
+  menuBar.setAttribute("role", "toolbar");
+  menuBar.setAttribute("aria-label", "Game controls");
+
+  const menuItems = document.createElement("div");
+  menuItems.className = "game-menu-items";
+  menuItems.setAttribute("role", "menubar");
+  menuItems.setAttribute("aria-label", "Game menu");
 
   const makeMenuButton = (label) => {
     const { text, key } = XPDialogs.parseAccessKey(label);
@@ -846,7 +851,8 @@ const createWindowElement = (gameId) => {
     volumeSlider,
     fullscreenBtn,
   );
-  menuBar.append(fileButton, helpButton, quickActions);
+  menuItems.append(fileButton, helpButton);
+  menuBar.append(menuItems, quickActions);
 
   const content = document.createElement("div");
   content.className = "window-content";
@@ -1780,7 +1786,7 @@ const createSystemWindowContent = (shortcutId, win) => {
 
   const tasksSection = document.createElement("section");
   const tasksTitle = document.createElement("h3");
-  tasksTitle.innerHTML = `<button type="button" class="explorer-section-toggle" aria-expanded="true">${taskTitles[shortcutId]}<span aria-hidden="true">⌃</span></button>`;
+  tasksTitle.innerHTML = `<button type="button" class="explorer-section-toggle" aria-expanded="true"><span class="explorer-section-label">${taskTitles[shortcutId]}</span><span aria-hidden="true">⌃</span></button>`;
   const tasksBody = document.createElement("div");
   tasksBody.className = "explorer-section-body";
   tasksSection.append(tasksTitle, tasksBody);
@@ -1948,7 +1954,7 @@ const createSystemWindowContent = (shortcutId, win) => {
       const section = toggle.closest("section");
       const collapsed = section.classList.toggle("collapsed");
       toggle.setAttribute("aria-expanded", String(!collapsed));
-      toggle.querySelector("span").textContent = collapsed ? "⌄" : "⌃";
+      toggle.querySelector("[aria-hidden]").textContent = collapsed ? "⌄" : "⌃";
     });
   });
   const main = document.createElement("main");
@@ -1965,7 +1971,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   chrome.className = "explorer-chrome";
   chrome.innerHTML = `
         <div class="explorer-menu-row">
-            <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
+            <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
             <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/ms.png" alt=""></div>
         </div>
         <div class="explorer-toolbar">
@@ -1993,6 +1999,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   chrome.appendChild(explorerMenu);
   const explorerMenuLabels = {
     file: "&File",
+    edit: "&Edit",
     view: "&View",
     favorites: "F&avorites",
     tools: "&Tools",
@@ -2013,6 +2020,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   });
   const showExplorerMenu = (name, button) => {
     const selected = selectedExplorerNodes(win);
+    const protectedSelection = selected.some((id) => fs.isProtected(id));
     const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
       win.currentFolderId,
     );
@@ -2020,6 +2028,21 @@ const createSystemWindowContent = (shortcutId, win) => {
       file: [
         ["New Folder", "new", !writable],
         ["Close", "close"],
+      ],
+      edit: [
+        ["Cut", "cut", !selected.length || protectedSelection],
+        ["Copy", "copy", !selected.length],
+        [
+          "Paste",
+          "paste",
+          !writable || !fileOps.canPaste(win.currentFolderId),
+        ],
+        ["Delete", "delete", !selected.length || protectedSelection],
+        [
+          "Rename",
+          "rename",
+          selected.length !== 1 || protectedSelection,
+        ],
       ],
       view: [
         ["Thumbnails", "thumbnails"],
@@ -2052,12 +2075,14 @@ const createSystemWindowContent = (shortcutId, win) => {
     explorerMenu.querySelector("button:not(:disabled)")?.focus();
   };
   chrome.addEventListener("click", (event) => {
-    const menuName = event.target.dataset.explorerMenu;
+    const menuButton = event.target.closest("[data-explorer-menu]");
+    const menuName = menuButton?.dataset.explorerMenu;
     if (menuName) {
-      showExplorerMenu(menuName, event.target);
+      showExplorerMenu(menuName, menuButton);
       return;
     }
-    const command = event.target.dataset.explorerCommand;
+    const commandButton = event.target.closest("[data-explorer-command]");
+    const command = commandButton?.dataset.explorerCommand;
     if (command) {
       const selected = selectedExplorerNodes(win);
       if (
@@ -2987,6 +3012,80 @@ const selectedExplorerNodes = (win) =>
     .map((item) => item.dataset.nodeId)
     .filter((id) => !!fs.getNode(id));
 
+const renderExplorerTaskPane = (win) => {
+  if (win.currentFolderId === fs.RECYCLE_BIN) return;
+  const title = win.el.querySelector(
+    ".explorer-sidebar > section:first-child .explorer-section-label",
+  );
+  const body = win.el.querySelector(
+    ".explorer-sidebar > section:first-child .explorer-section-body",
+  );
+  if (!title || !body) return;
+
+  const isComputer = win.currentFolderId === fs.MY_COMPUTER;
+  const isPictures = win.currentFolderId === fs.MY_PICTURES;
+  const isMusic = win.currentFolderId === fs.MY_MUSIC;
+  title.textContent = isComputer
+    ? "System Tasks"
+    : isPictures
+      ? "Picture Tasks"
+      : isMusic
+        ? "Music Tasks"
+        : "File and Folder Tasks";
+  body.replaceChildren();
+
+  const addTask = (label, icon, action, disabled = false) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.disabled = disabled;
+    const image = document.createElement("img");
+    image.src = `assets/xp/icons/${icon}`;
+    image.alt = "";
+    const text = document.createElement("span");
+    text.textContent = label;
+    button.append(image, text);
+    if (action) button.addEventListener("click", action);
+    body.appendChild(button);
+  };
+
+  if (isComputer) {
+    addTask(
+      "View System Information",
+      "explorerproperties.png",
+      openProjectSettings,
+    );
+    addTask("Add or remove programs", "Programs.png", openControlPanel);
+    addTask("Change a setting", "ControlPanel.png", openControlPanel);
+    return;
+  }
+
+  if (isPictures) {
+    addTask("View as a slide show", "MyPictures.png", null, true);
+    addTask("Order prints online", "MyPictures.png", null, true);
+    addTask("Print pictures", "PrintersandFaxes.png", null, true);
+    return;
+  }
+
+  if (isMusic) {
+    addTask("Play all", "MyMusic.png", null, true);
+    addTask("Shop for music online", "MyMusic.png", null, true);
+    addTask("Copy all items to audio CD", "MyMusic.png", null, true);
+    return;
+  }
+
+  const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
+    win.currentFolderId,
+  );
+  addTask(
+    "Make a new folder",
+    "NewFolder.png",
+    () => fileOps.createFolder(win.currentFolderId, "New Folder"),
+    !writable,
+  );
+  addTask("Publish this folder to the Web", "Publishtoweb.png", null, true);
+  addTask("Share this folder", "SharedFolder.png", null, true);
+};
+
 const renderExplorerTree = (win) => {
   const tree = win.el.querySelector(".explorer-tree");
   if (!tree) return;
@@ -3215,6 +3314,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     titleIcon.appendChild(image);
   }
   renderExplorerTree(win);
+  renderExplorerTaskPane(win);
 
   const explorerContent = main.closest(".explorer-content");
   const chrome = explorerContent?.querySelector(".explorer-chrome");
@@ -3398,33 +3498,12 @@ const gameFileName = (gameId) =>
     .trim()}.game`;
 
 const syncGameFiles = () => {
-  fs.getChildren(fs.DESKTOP)
-    .filter((node) => node.ext === ".game" && !gamesList[node.app])
-    .forEach((stale) => {
-      try {
-        fs.destroy(stale.id);
-      } catch (error) {
-        console.error(error);
-      }
-    });
-
   Object.keys(gamesList).forEach((gameId) => {
-    const fileName = gameFileName(gameId);
-    const existing = fs
-      .getChildren(fs.DESKTOP)
-      .find((node) => node.ext === ".game" && node.app === gameId);
-    if (existing) {
-      if (existing.name !== fileName) {
-        try {
-          fs.rename(existing.id, fileName);
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      return;
-    }
+    // Managed shortcuts remain valid after the user renames, moves, or
+    // recycles them. Only recreate one after it has been destroyed.
+    if (fs.findByApp(gameId).length) return;
     try {
-      fs.createFile(fs.DESKTOP, fileName, { app: gameId });
+      fs.createFile(fs.DESKTOP, gameFileName(gameId), { app: gameId });
     } catch (error) {
       console.error(error);
     }
@@ -4489,12 +4568,22 @@ const getDesktopIconMetrics = (container) =>
     ? DESKTOP_ICON_METRICS.compact
     : DESKTOP_ICON_METRICS.regular;
 
-const getDesktopIconPositions = () =>
-  readJsonStorage(
+const getDesktopIconPositions = () => {
+  const positions = readJsonStorage(
     "desktopIconPositions",
     {},
     (positions) => positions && typeof positions === "object",
   );
+  let migrated = false;
+  fs.getChildren(fs.DESKTOP).forEach((node) => {
+    if (!node.app || !gamesList[node.app] || !positions[node.app]) return;
+    if (!positions[node.id]) positions[node.id] = positions[node.app];
+    delete positions[node.app];
+    migrated = true;
+  });
+  if (migrated) writeJsonStorage("desktopIconPositions", positions);
+  return positions;
+};
 
 const saveDesktopIconPosition = (icon) => {
   const positions = getDesktopIconPositions();
@@ -5875,6 +5964,7 @@ const showBootScreen = () => {
   clearTimeout(shutdownTimeout);
   muteAllWindows();
   setScreen("boot-screen");
+  document.getElementById("boot-screen").focus({ preventScroll: true });
   startupSoundPending = true;
   clearTimeout(bootTimeout);
   bootTimeout = setTimeout(() => showWelcomeScreen(true), BOOT_DURATION_MS);
@@ -5889,6 +5979,7 @@ const showWelcomeScreen = (autoLogin = false) => {
     .getElementById("welcome-screen")
     .classList.toggle("auto-login", autoLogin);
   setScreen("welcome-screen");
+  document.getElementById("login-user").focus({ preventScroll: true });
   if (startupSoundPending) {
     startupSoundPending = false;
     playXPSound("startup");
@@ -5997,9 +6088,14 @@ const login = (playSound = true) => {
 };
 
 const setupScreenFlow = () => {
-  document
-    .getElementById("boot-screen")
-    .addEventListener("click", () => showWelcomeScreen(true));
+  const bootScreen = document.getElementById("boot-screen");
+  const skipBootScreen = () => showWelcomeScreen(true);
+  bootScreen.addEventListener("click", skipBootScreen);
+  bootScreen.addEventListener("keydown", (event) => {
+    if (!["Enter", " "].includes(event.key)) return;
+    event.preventDefault();
+    skipBootScreen();
+  });
   document
     .getElementById("welcome-screen")
     .addEventListener("click", (event) => {

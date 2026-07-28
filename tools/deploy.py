@@ -19,19 +19,22 @@ CSS_DIR = DOCS_DIR / "css"
 HTML_PATH = DOCS_DIR / "index.html"
 MAIN_JS_PATH = JS_DIR / "main.js"
 RUFFLE_MANIFEST_PATH = JS_DIR / "ruffle-manifest.json"
-RUFFLE_LATEST_RELEASE_URL = "https://api.github.com/repos/ruffle-rs/ruffle/releases/latest"
+RUFFLE_LATEST_RELEASE_URL = (
+    "https://api.github.com/repos/ruffle-rs/ruffle/releases/latest"
+)
 RUFFLE_ASSET_SUFFIX = "-web-selfhosted.zip"
 RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
 
 ASSET_PATHS = {
-    'ruffle': JS_DIR / "ruffle.js",
-    'games_js': JS_DIR / "games.js",
-    'filesystem_js': JS_DIR / "filesystem.js",
-    'file_operations_js': JS_DIR / "file-operations.js",
-    'dialogs_js': JS_DIR / "dialogs.js",
-    'main_js': JS_DIR / "main.js",
-    'main_css': CSS_DIR / "main.css"
+    "ruffle": JS_DIR / "ruffle.js",
+    "games_js": JS_DIR / "games.js",
+    "filesystem_js": JS_DIR / "filesystem.js",
+    "file_operations_js": JS_DIR / "file-operations.js",
+    "dialogs_js": JS_DIR / "dialogs.js",
+    "main_js": JS_DIR / "main.js",
+    "main_css": CSS_DIR / "main.css",
 }
+
 
 def download_ruffle():
     """Download and install the latest stable self-hosted Ruffle web package."""
@@ -43,7 +46,8 @@ def download_ruffle():
     release = release_response.json()
     asset = next(
         (
-            item for item in release.get("assets", [])
+            item
+            for item in release.get("assets", [])
             if item.get("name", "").endswith(RUFFLE_ASSET_SUFFIX)
         ),
         None,
@@ -72,7 +76,9 @@ def download_ruffle():
 
     if (
         "ruffle.js" not in files
-        or not any(name.startswith("core.ruffle.") and name.endswith(".js") for name in files)
+        or not any(
+            name.startswith("core.ruffle.") and name.endswith(".js") for name in files
+        )
         or not any(name.endswith(".wasm") for name in files)
     ):
         raise ValueError("Downloaded Ruffle package is missing required runtime files")
@@ -122,7 +128,7 @@ def get_next_version():
         return today
 
     if current.startswith(today):
-        build_match = re.search(r'-(\d+)$', current)
+        build_match = re.search(r"-(\d+)$", current)
         build_num = int(build_match.group(1)) + 1 if build_match else 1
         return f"{today}-{build_num}"
 
@@ -148,20 +154,13 @@ def update_html():
     content = HTML_PATH.read_text(encoding="utf-8")
 
     replacements = {
-        r'<script src="js/ruffle\.[^"]+" ?[^>]*></script>': 
-            f'<script src="js/ruffle.js?v={short_hashes["ruffle"]}"></script>',
-        r'<script src="js/games\.[^"]+" ?[^>]*></script>':
-            f'<script src="js/games.js?v={short_hashes["games_js"]}"></script>',
-        r'<script src="js/filesystem\.[^"]+" ?[^>]*></script>':
-            f'<script src="js/filesystem.js?v={short_hashes["filesystem_js"]}"></script>',
-        r'<script src="js/file-operations\.[^"]+" ?[^>]*></script>':
-            f'<script src="js/file-operations.js?v={short_hashes["file_operations_js"]}"></script>',
-        r'<script src="js/dialogs\.[^"]+" ?[^>]*></script>':
-            f'<script src="js/dialogs.js?v={short_hashes["dialogs_js"]}"></script>',
-        r'<script src="js/main\.[^"]+" ?[^>]*></script>':
-            f'<script src="js/main.js?v={short_hashes["main_js"]}"></script>',
-        r'<link rel="stylesheet" href="css/main\.[^"]+" ?[^>]*>':
-            f'<link rel="stylesheet" href="css/main.css?v={short_hashes["main_css"]}">'
+        r'<script src="js/ruffle\.[^"]+" ?[^>]*></script>': f'<script src="js/ruffle.js?v={short_hashes["ruffle"]}"></script>',
+        r'<script src="js/games\.[^"]+" ?[^>]*></script>': f'<script src="js/games.js?v={short_hashes["games_js"]}"></script>',
+        r'<script src="js/filesystem\.[^"]+" ?[^>]*></script>': f'<script src="js/filesystem.js?v={short_hashes["filesystem_js"]}"></script>',
+        r'<script src="js/file-operations\.[^"]+" ?[^>]*></script>': f'<script src="js/file-operations.js?v={short_hashes["file_operations_js"]}"></script>',
+        r'<script src="js/dialogs\.[^"]+" ?[^>]*></script>': f'<script src="js/dialogs.js?v={short_hashes["dialogs_js"]}"></script>',
+        r'<script src="js/main\.[^"]+" ?[^>]*></script>': f'<script src="js/main.js?v={short_hashes["main_js"]}"></script>',
+        r'<link rel="stylesheet" href="css/main\.[^"]+" ?[^>]*>': f'<link rel="stylesheet" href="css/main.css?v={short_hashes["main_css"]}">',
     }
 
     for pattern, replacement in replacements.items():
@@ -212,6 +211,38 @@ def get_workbox_files():
     return files
 
 
+def get_ruffle_runtime_files():
+    if not JS_DIR.exists():
+        return set()
+    return {
+        path
+        for path in JS_DIR.iterdir()
+        if path.is_file() and path.name.endswith(RUFFLE_FILE_SUFFIXES)
+    }
+
+
+def snapshot_deployment_files():
+    paths = (
+        get_ruffle_runtime_files()
+        | get_workbox_files()
+        | {HTML_PATH, MAIN_JS_PATH, RUFFLE_MANIFEST_PATH}
+    )
+    return {path: path.read_bytes() for path in paths if path.is_file()}
+
+
+def restore_deployment_files(backups):
+    managed_paths = (
+        get_ruffle_runtime_files()
+        | get_workbox_files()
+        | {HTML_PATH, MAIN_JS_PATH, RUFFLE_MANIFEST_PATH}
+    )
+    for path in managed_paths - backups.keys():
+        if path.is_file():
+            path.unlink()
+    for path, content in backups.items():
+        write_bytes_atomic(path, content)
+
+
 def generate_service_worker():
     print("Generating service worker...")
     previous_files = get_workbox_files()
@@ -243,7 +274,9 @@ def generate_service_worker():
         if not referenced_runtime_names:
             raise RuntimeError("Generated service worker references no Workbox runtime")
         if not all((DOCS_DIR / name).is_file() for name in referenced_runtime_names):
-            raise RuntimeError("Generated service worker references a missing Workbox runtime")
+            raise RuntimeError(
+                "Generated service worker references a missing Workbox runtime"
+            )
 
         for path in previous_files - current_files:
             path.unlink()
@@ -261,13 +294,20 @@ def generate_service_worker():
         raise
     print("  - Service worker generated successfully")
 
+
 def deploy():
     print("\nStarting deployment...")
-    ruffle_files = download_ruffle()
-    cleanup_old_files(ruffle_files)
-    update_html()
-    generate_service_worker()
+    backups = snapshot_deployment_files()
+    try:
+        ruffle_files = download_ruffle()
+        cleanup_old_files(ruffle_files)
+        update_html()
+        generate_service_worker()
+    except Exception:
+        restore_deployment_files(backups)
+        raise
     print("\nDeployment completed successfully!")
+
 
 if __name__ == "__main__":
     try:

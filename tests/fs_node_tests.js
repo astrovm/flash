@@ -150,6 +150,15 @@ fs.registerFileType(".game", (node) => {
 const gameFile = fs.createFile(fs.DESKTOP, "Doom.game", { app: "doom" });
 assert.strictEqual(fs.open(gameFile.id), true);
 assert.strictEqual(openedWith.id, gameFile.id);
+assert.deepStrictEqual(fs.findByApp("doom").map((node) => node.id), [gameFile.id]);
+fs.move(gameFile.id, fs.MY_DOCUMENTS);
+fs.rename(gameFile.id, "My Doom Shortcut.game");
+assert.deepStrictEqual(
+    fs.findByApp("doom").map((node) => node.id),
+    [gameFile.id],
+    "managed files remain discoverable after move and rename"
+);
+assert.deepStrictEqual(fs.findByApp("missing-game"), []);
 const unknownFile = fs.createFile(fs.DESKTOP, "readme.xyz");
 assert.strictEqual(fs.open(unknownFile.id), false);
 

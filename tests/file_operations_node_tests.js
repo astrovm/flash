@@ -163,6 +163,53 @@ assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 0);
     assert.strictEqual(sameCut.results[0].id, atomicB.id);
     assert.deepStrictEqual(operations.getClipboard(), { mode: "cut", ids: [atomicB.id] });
 
+    // Restore preflights every selection and accepts only items directly in
+    // the Recycle Bin. A nested item cannot cause a partial mixed restore.
+    const recycledFolder = operations.createFolder(fs.MY_DOCUMENTS, "Recycled Folder");
+    const recycledChild = operations.createFile(recycledFolder.id, "nested.txt");
+    const recycledDirect = operations.createFile(fs.MY_DOCUMENTS, "direct.txt");
+    operations.removeToBin([recycledFolder.id, recycledDirect.id]);
+    assert.throws(
+        () => operations.restore([recycledDirect.id, recycledChild.id]),
+        /top-level Recycle Bin items/
+    );
+    assert.strictEqual(fs.getNode(recycledDirect.id).parent, fs.RECYCLE_BIN);
+    assert.strictEqual(fs.getNode(recycledChild.id).parent, recycledFolder.id);
+
+    // If an item's original parent is still recycled, restoring only the item
+    // uses Desktop rather than leaving it hidden inside the Recycle Bin.
+    const fallbackFolder = operations.createFolder(fs.MY_DOCUMENTS, "Fallback Folder");
+    const fallbackChild = operations.createFile(fallbackFolder.id, "fallback.txt");
+    operations.removeToBin([fallbackChild.id]);
+    operations.removeToBin([fallbackFolder.id]);
+    operations.restore([fallbackChild.id]);
+    assert.strictEqual(fs.getNode(fallbackChild.id).parent, fs.DESKTOP);
+    assert.strictEqual(fs.isInRecycleBin(fallbackChild.id), false);
+
+    // When both are selected, restore the ancestor first so the child can
+    // return to its original folder in the same operation.
+    const selectedFolder = operations.createFolder(fs.MY_DOCUMENTS, "Selected Folder");
+    const selectedChild = operations.createFile(selectedFolder.id, "selected.txt");
+    operations.removeToBin([selectedChild.id]);
+    operations.removeToBin([selectedFolder.id]);
+    operations.restore([selectedChild.id, selectedFolder.id]);
+    assert.strictEqual(fs.getNode(selectedFolder.id).parent, fs.MY_DOCUMENTS);
+    assert.strictEqual(fs.getNode(selectedChild.id).parent, selectedFolder.id);
+
+    // Bin-level conflict names are temporary. Files with the same name from
+    // different folders recover their original names on restore.
+    const nameFolderA = operations.createFolder(fs.MY_DOCUMENTS, "Name A");
+    const nameFolderB = operations.createFolder(fs.MY_DOCUMENTS, "Name B");
+    const sameNameA = operations.createFile(nameFolderA.id, "same-name.txt");
+    const sameNameB = operations.createFile(nameFolderB.id, "same-name.txt");
+    operations.removeToBin([sameNameA.id, sameNameB.id]);
+    assert.notStrictEqual(fs.getNode(sameNameA.id).name, fs.getNode(sameNameB.id).name);
+    operations.restore([sameNameA.id, sameNameB.id]);
+    assert.strictEqual(fs.getNode(sameNameA.id).name, "same-name.txt");
+    assert.strictEqual(fs.getNode(sameNameB.id).name, "same-name.txt");
+    assert.strictEqual(fs.getNode(sameNameA.id).originalName, null);
+    assert.strictEqual(fs.getNode(sameNameB.id).originalName, null);
+
     // Progress cancellation after one item documents partial move behavior;
     // the cut clipboard remains available for the unprocessed source.
     operations.cut([atomicA.id, atomicB.id]);
