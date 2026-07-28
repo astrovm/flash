@@ -41,6 +41,32 @@ assert.strictEqual(fs.resolvePath("c:\\documents and settings\\ASTRO\\desktop"),
 assert.strictEqual(fs.resolvePath("C:\\does\\not\\exist"), null);
 assert.strictEqual(fs.resolvePath("My Computer"), fs.MY_COMPUTER);
 
+// ---- Windows-compatible name validation ----
+assert.strictEqual(fs.validateName("notes.txt"), "notes.txt");
+assert.strictEqual(fs.validateName("  notes.txt"), "notes.txt");
+[
+    "",
+    "   ",
+    ".",
+    "..",
+    "trailing.",
+    "trailing ",
+    "bad/name.txt",
+    "bad:name.txt",
+    "bad\u0000name.txt",
+    "CON",
+    "nul.txt",
+    "COM1.log",
+    "LPT9"
+].forEach((name) => {
+    assert.throws(() => fs.validateName(name), /VirtualFS:/, `rejects ${JSON.stringify(name)}`);
+});
+
+assert.throws(
+    () => fs.createFolder(fs.MY_DOCUMENTS, "invalid?folder"),
+    /invalid characters/
+);
+
 // ---- Create, timestamps, sizes ----
 const folder = fs.createFolder(fs.MY_DOCUMENTS, "Test Folder");
 assert.strictEqual(folder.type, "folder");
@@ -58,6 +84,8 @@ assert.strictEqual(fs.getSize(folder.id), 11);
 // ---- Rename and name deduplication ----
 fs.rename(file.id, "todo.txt");
 assert.strictEqual(fs.getNode(file.id).name, "todo.txt");
+assert.throws(() => fs.rename(file.id, "AUX.txt"), /reserved device name/);
+assert.strictEqual(fs.getNode(file.id).name, "todo.txt", "invalid rename leaves node unchanged");
 const duplicate = fs.createFile(folder.id, "todo.txt");
 assert.strictEqual(duplicate.name, "todo (2).txt");
 

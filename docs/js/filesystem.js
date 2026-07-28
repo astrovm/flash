@@ -71,6 +71,39 @@
         return dot > 0 ? String(name).slice(dot).toLowerCase() : "";
     };
 
+    // Windows disallows these characters in file and folder names, along
+    // with DOS device names (even when they have an extension). Keep this
+    // check in the filesystem rather than duplicating it in each shell view.
+    const INVALID_NAME_CHARACTERS = /[<>:"/\\\\|?*\u0000-\u001f]/;
+    const RESERVED_DEVICE_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
+    const validateName = (name) => {
+        if (typeof name !== "string" && typeof name !== "number") {
+            throw new Error("VirtualFS: a name is required");
+        }
+
+        const rawName = String(name);
+        const normalizedName = rawName.trim();
+        if (!normalizedName) {
+            throw new Error("VirtualFS: a name is required");
+        }
+        if (INVALID_NAME_CHARACTERS.test(rawName)) {
+            throw new Error(`VirtualFS: "${rawName}" contains invalid characters`);
+        }
+        if (/[.\s]$/.test(rawName)) {
+            throw new Error(`VirtualFS: "${rawName}" cannot end with a period or space`);
+        }
+        if (normalizedName === "." || normalizedName === "..") {
+            throw new Error(`VirtualFS: "${rawName}" is a reserved name`);
+        }
+
+        const baseName = normalizedName.split(".")[0].trimEnd();
+        if (RESERVED_DEVICE_NAMES.test(baseName)) {
+            throw new Error(`VirtualFS: "${rawName}" is a reserved device name`);
+        }
+        return normalizedName;
+    };
+
     // ---- Seed ----
 
     const seedNodes = () => {
@@ -340,13 +373,11 @@
 
     const createNode = (parentId, name, type, options = {}) => {
         const parent = requireFolder(parentId);
-        if (!name || !String(name).trim()) {
-            throw new Error("VirtualFS: a name is required");
-        }
+        const validName = validateName(name);
         const timestamp = now();
         const node = {
             id: generateId(),
-            name: dedupeName(parentId, String(name).trim()),
+            name: dedupeName(parentId, validName),
             type,
             parent: parentId,
             children: [],
@@ -355,7 +386,7 @@
             size: 0,
             protected: !!options.protected,
             ext: type === "file"
-                ? (options.ext || extractExtension(name))
+                ? (options.ext || extractExtension(validName))
                 : "",
             content: type === "file" ? String(options.content ?? "") : "",
             app: options.app || null,
@@ -386,12 +417,10 @@
         if (node.protected) {
             throw new Error(`Cannot rename "${node.name}": access is denied`);
         }
-        if (!newName || !String(newName).trim()) {
-            throw new Error("VirtualFS: a name is required");
-        }
+        const validName = validateName(newName);
         node.name = node.parent
-            ? dedupeName(node.parent, String(newName).trim())
-            : String(newName).trim();
+            ? dedupeName(node.parent, validName)
+            : validName;
         if (node.type === "file") {
             node.ext = extractExtension(node.name);
         }
@@ -587,6 +616,7 @@
         isInRecycleBin,
         isProtected,
         getSize,
+        validateName,
         createFolder,
         createFile,
         rename,
