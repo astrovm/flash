@@ -67,6 +67,11 @@ class ShellSourceTests(unittest.TestCase):
         self.assertNotIn("MAX_OPEN_WINDOWS", self.javascript)
         self.assertNotIn("ensureWindowCapacity", self.javascript)
 
+    def test_boot_screen_uses_attributed_win32_run_artwork(self):
+        self.assertIn('src="assets/xp/loading-logo.jpg"', self.html)
+        self.assertIn('src="assets/xp/loading-microsoft.jpg"', self.html)
+        self.assertIn(".boot-footer", self.css)
+
     def test_game_windows_use_xp_menus_for_their_controls(self):
         self.assertIn('menuBar.className = "game-menu-bar"', self.javascript)
         self.assertIn('menuBar.setAttribute("role", "menubar")', self.javascript)
@@ -77,7 +82,7 @@ class ShellSourceTests(unittest.TestCase):
         self.assertNotIn('makeMenuButton("&Sound")', self.javascript)
         self.assertIn('el.querySelector(".favorite-btn")', self.javascript)
         self.assertIn('el.querySelector(".volume-btn")', self.javascript)
-        self.assertIn('el.querySelector(".game-quick-volume-popup")', self.javascript)
+        self.assertIn('el.querySelector(".volume-slider")', self.javascript)
         self.assertIn('makeMenuItem("Add to &Favorites", "favorite", { checkbox: true })', self.javascript)
         self.assertIn('makeMenuItem("&Mute", "mute", { checkbox: true })', self.javascript)
         self.assertNotIn("Aavorites", self.javascript)
@@ -247,6 +252,28 @@ class ShellSourceTests(unittest.TestCase):
         ):
             self.assertIn(token, self.javascript)
 
+    def test_explorer_matches_xp_task_pane_toolbar_and_drive_groups(self):
+        for token in (
+            'class="explorer-section-toggle"',
+            'class="explorer-section-body"',
+            'content.classList.toggle("folders-visible")',
+            'aria-pressed="false"',
+            'data-explorer-action="go"',
+            '"Hard Disk Drives"',
+            '"Devices with Removable Storage"',
+            "a.id === fs.DRIVE_C ? -1",
+            'className = "explorer-group-heading"',
+        ):
+            self.assertIn(token, self.javascript)
+        for token in (
+            '.explorer-toolbar-separator',
+            '.explorer-content:not(.folders-visible) .explorer-tree-section',
+            '.explorer-content.folders-visible .explorer-sidebar > section:not(.explorer-tree-section)',
+            '.explorer-section-toggle',
+            '.explorer-group-heading',
+        ):
+            self.assertIn(token, self.css)
+
     def test_shell_paste_uses_one_conflict_aware_progress_helper(self):
         for token in (
             'const pasteIntoFolder = async (destinationId)',
@@ -376,15 +403,18 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn('quickFavoriteBtn.className = "quick-access-btn favorite-btn"', self.javascript)
         self.assertIn('quickVolumeBtn.className = "quick-access-btn volume-btn"', self.javascript)
         self.assertIn('fullscreenBtn.className = "quick-access-btn fullscreen-btn"', self.javascript)
-        self.assertIn('volumePopup.className = "game-quick-volume-popup"', self.javascript)
-        self.assertIn("toggleQuickVolumePopup", self.javascript)
-        self.assertIn('item.setAttribute("role", "menuitemcheckbox")', self.javascript)
-        self.assertIn("item.setAttribute(\"aria-checked\"", self.javascript)
-        self.assertIn('item.setAttribute("aria-current", "true")', self.javascript)
-        self.assertIn('item.textContent = isMute ? (muted ? "Unmute" : "Mute")', self.javascript)
-        self.assertIn(".game-quick-volume-popup .game-menu-item.checked::before", self.css)
         self.assertNotIn("window-toolbar", self.javascript)
-        self.assertNotIn(".volume-slider", self.javascript)
+        self.assertIn('volumeSlider.className = "volume-slider game-volume-slider"', self.javascript)
+        self.assertIn('volumeSlider.type = "range"', self.javascript)
+        self.assertIn('win.volumeSlider.addEventListener("input"', self.javascript)
+        self.assertIn(".game-volume-slider", self.css)
+
+    def test_welcome_screen_click_skips_auto_login_delay(self):
+        self.assertIn(
+            'document.getElementById("welcome-screen").addEventListener("click"',
+            self.javascript,
+        )
+        self.assertIn('event.target.closest("#welcome-turn-off")', self.javascript)
 
     def test_display_properties_has_a_validated_persisted_pending_model(self):
         self.assertIn('const DISPLAY_SETTINGS_KEY = "displaySettings"', self.javascript)
@@ -451,6 +481,16 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn("#desktop-icons.desktop-icons-overflow", self.css)
         self.assertIn("@media (max-width: 480px)", self.css)
         self.assertIn("width: 60px", self.css)
+
+    def test_desktop_game_labels_hide_virtual_extension(self):
+        self.assertIn('node.ext === ".game"', self.javascript)
+        self.assertIn("node.name.slice(0, -node.ext.length)", self.javascript)
+
+    def test_anchored_recycle_bin_does_not_consume_an_early_grid_slot(self):
+        entries = self.javascript.index("const entries = [")
+        files = self.javascript.index("...fs.getChildren(fs.DESKTOP)", entries)
+        recycle = self.javascript.index("...recycleBinItems.map", entries)
+        self.assertLess(files, recycle)
 
     def test_taskbar_keeps_overflow_windows_reachable(self):
         self.assertIn('id="taskbar-overflow-menu"', self.html)

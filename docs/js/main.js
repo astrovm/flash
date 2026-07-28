@@ -534,16 +534,13 @@ const syncWindowVolumeUI = (win) => {
         win.volumeMenuItem.dataset.accessKey = XPDialogs.parseAccessKey(menuLabel).key;
         setAccessKeyText(label, menuLabel);
     }
-    win.volumePopup?.querySelectorAll("[data-volume-action]").forEach((item) => {
-        const action = item.dataset.volumeAction;
-        const isMute = action === "mute";
-        const isCurrentPreset = !isMute && !muted && numericVolume === Number(action);
-        item.textContent = isMute ? (muted ? "Unmute" : "Mute") : `Volume ${action}%`;
-        item.classList.toggle("checked", isMute ? muted : isCurrentPreset);
-        item.setAttribute("aria-checked", String(isMute ? muted : isCurrentPreset));
-        if (isCurrentPreset) item.setAttribute("aria-current", "true");
-        else item.removeAttribute("aria-current");
-    });
+    if (win.volumeSlider) {
+        win.volumeSlider.value = String(numericVolume);
+        win.volumeSlider.setAttribute(
+            "aria-valuetext",
+            muted ? `Muted, volume ${numericVolume}%` : `${numericVolume}%`,
+        );
+    }
 };
 
 const setWindowVolume = (win, value) => {
@@ -787,31 +784,22 @@ const createWindowElement = (gameId) => {
     const quickVolumeBtn = document.createElement("button");
     quickVolumeBtn.type = "button";
     quickVolumeBtn.className = "quick-access-btn volume-btn";
-    quickVolumeBtn.title = "Mute / Volume";
-    quickVolumeBtn.setAttribute("aria-label", "Mute / Volume");
-    quickVolumeBtn.setAttribute("aria-haspopup", "menu");
-    quickVolumeBtn.setAttribute("aria-expanded", "false");
+    quickVolumeBtn.title = "Mute";
+    quickVolumeBtn.setAttribute("aria-label", "Mute");
     quickVolumeBtn.textContent = "🔊";
     quickVolumeBtn.setAttribute("aria-pressed", "false");
 
-    const volumePopup = document.createElement("div");
-    volumePopup.className = "game-quick-volume-popup";
-    volumePopup.setAttribute("role", "menu");
-    volumePopup.setAttribute("aria-label", "Game volume");
-    volumePopup.hidden = true;
-    [["Mute", "mute"], ["Volume 25%", "25"], ["Volume 50%", "50"], ["Volume 75%", "75"], ["Volume 100%", "100"]].forEach(([label, value]) => {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.className = "game-menu-item";
-        item.setAttribute("role", "menuitemcheckbox");
-        item.setAttribute("aria-checked", "false");
-        item.dataset.volumeAction = value;
-        item.textContent = label;
-        volumePopup.appendChild(item);
-    });
+    const volumeSlider = document.createElement("input");
+    volumeSlider.className = "volume-slider game-volume-slider";
+    volumeSlider.type = "range";
+    volumeSlider.min = "0";
+    volumeSlider.max = "100";
+    volumeSlider.step = "1";
+    volumeSlider.value = "100";
+    volumeSlider.setAttribute("aria-label", "Game volume");
 
-    quickActions.append(quickFavoriteBtn, quickVolumeBtn, fullscreenBtn);
-    menuBar.append(fileButton, helpButton, quickActions, volumePopup);
+    quickActions.append(quickFavoriteBtn, quickVolumeBtn, volumeSlider, fullscreenBtn);
+    menuBar.append(fileButton, helpButton, quickActions);
 
     const content = document.createElement("div");
     content.className = "window-content";
@@ -1454,27 +1442,13 @@ const wireWindowControls = (win) => {
     win.el.querySelector(".close-btn").addEventListener("click", () => closeGameWindow(gameId));
     win.el.querySelector(".minimize-btn").addEventListener("click", () => minimizeWindow(gameId));
     win.el.querySelector(".maximize-btn").addEventListener("click", () => toggleMaximize(gameId));
-    const closeQuickVolumePopup = () => {
-        win.volumePopup.hidden = true;
-        win.volumeBtn.setAttribute("aria-expanded", "false");
-    };
-    const toggleQuickVolumePopup = () => {
-        const opening = win.volumePopup.hidden;
-        win.volumePopup.hidden = !opening;
-        win.volumeBtn.setAttribute("aria-expanded", String(opening));
-        if (opening) win.volumePopup.querySelector("button")?.focus();
-    };
     win.el.querySelector(".fullscreen-btn").addEventListener("click", () => {
         if (win.player) toggleFullscreen(win.player);
     });
     win.favoriteBtn.addEventListener("click", () => toggleFavorite(gameId));
-    win.volumeBtn.addEventListener("click", toggleQuickVolumePopup);
-    win.volumePopup.addEventListener("click", (event) => {
-        const action = event.target.closest("[data-volume-action]")?.dataset.volumeAction;
-        if (!action) return;
-        if (action === "mute") toggleWindowMute(win);
-        else setWindowVolume(win, action);
-        closeQuickVolumePopup();
+    win.volumeBtn.addEventListener("click", () => toggleWindowMute(win));
+    win.volumeSlider.addEventListener("input", () => {
+        setWindowVolume(win, win.volumeSlider.value);
     });
 
     menuBar.addEventListener("click", (event) => {
@@ -1537,7 +1511,7 @@ const wireWindowControls = (win) => {
             if (!item || item.disabled) return;
             if (item.dataset.gameAction === "volume-popup") {
                 closeGameMenus();
-                toggleQuickVolumePopup();
+                win.volumeSlider.focus();
                 return;
             }
             switch (item.dataset.gameAction) {
@@ -1550,17 +1524,6 @@ const wireWindowControls = (win) => {
             closeGameMenus();
         });
     });
-    win.volumePopup.addEventListener("keydown", (event) => {
-        const items = [...win.volumePopup.querySelectorAll("button")];
-        const index = items.indexOf(document.activeElement);
-        if (event.key === "Escape") {
-            event.preventDefault(); closeQuickVolumePopup(); win.volumeBtn.focus();
-        } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-            event.preventDefault();
-            items[(index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
-        }
-    });
-
     syncWindowVolumeUI(win);
     updateFavoriteUI(win);
     updateMaximizeButton(win);
@@ -1687,8 +1650,10 @@ const createSystemWindowContent = (shortcutId, win) => {
 
     const tasksSection = document.createElement("section");
     const tasksTitle = document.createElement("h3");
-    tasksTitle.textContent = taskTitles[shortcutId];
-    tasksSection.appendChild(tasksTitle);
+    tasksTitle.innerHTML = `<button type="button" class="explorer-section-toggle" aria-expanded="true">${taskTitles[shortcutId]}<span aria-hidden="true">⌃</span></button>`;
+    const tasksBody = document.createElement("div");
+    tasksBody.className = "explorer-section-body";
+    tasksSection.append(tasksTitle, tasksBody);
 
     if (shortcutId === "__recycle-bin") {
         const emptyBin = document.createElement("button");
@@ -1729,7 +1694,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             });
         });
 
-        tasksSection.append(emptyBin, restoreAll);
+        tasksBody.append(emptyBin, restoreAll);
         const restoreSelected = document.createElement("button");
         restoreSelected.type = "button";
         restoreSelected.className = "recycle-task";
@@ -1748,23 +1713,25 @@ const createSystemWindowContent = (shortcutId, win) => {
             XPDialogs.confirm("Are you sure you want to permanently delete the selected items?", "Confirm File Delete", "warning")
                 .then((yes) => yes && fileOps.permanentlyDelete(ids));
         });
-        tasksSection.append(restoreSelected, deleteSelected);
+        tasksBody.append(restoreSelected, deleteSelected);
     } else {
         ["View system information", "Add or remove programs", "Change a setting"]
             .forEach((label) => {
                 const button = document.createElement("button");
                 button.type = "button";
                 button.textContent = label;
-                tasksSection.appendChild(button);
+                tasksBody.appendChild(button);
             });
     }
 
     const placesSection = document.createElement("section");
     placesSection.innerHTML = `
-        <h3>Other Places</h3>
-        <button type="button">My Network Places</button>
-        <button type="button">My Documents</button>
-        <button type="button">Control Panel</button>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true">Other Places<span aria-hidden="true">⌃</span></button></h3>
+        <div class="explorer-section-body">
+            <button type="button" data-place="network">My Network Places</button>
+            <button type="button" data-place="documents">My Documents</button>
+            <button type="button" data-place="control-panel">Control Panel</button>
+        </div>
     `;
 
     sidebar.append(tasksSection, placesSection);
@@ -1776,6 +1743,17 @@ const createSystemWindowContent = (shortcutId, win) => {
     tree.setAttribute("role", "tree");
     treeSection.appendChild(tree);
     sidebar.appendChild(treeSection);
+    sidebar.querySelectorAll(".explorer-section-toggle").forEach((toggle) => {
+        toggle.addEventListener("click", () => {
+            const section = toggle.closest("section");
+            const collapsed = section.classList.toggle("collapsed");
+            toggle.setAttribute("aria-expanded", String(!collapsed));
+            toggle.querySelector("span").textContent = collapsed ? "⌄" : "⌃";
+        });
+    });
+    sidebar.querySelector('[data-place="documents"]')?.addEventListener("click", () => navigateExplorer(win, fs.MY_DOCUMENTS));
+    sidebar.querySelector('[data-place="control-panel"]')?.addEventListener("click", openControlPanel);
+    sidebar.querySelector('[data-place="network"]')?.addEventListener("click", openNetworkStatus);
 
     const main = document.createElement("main");
     main.className = "explorer-main";
@@ -1791,8 +1769,17 @@ const createSystemWindowContent = (shortcutId, win) => {
     chrome.className = "explorer-chrome";
     chrome.innerHTML = `
         <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
-        <div class="explorer-toolbar"><button data-explorer-action="back">Back</button><button data-explorer-action="forward">Forward</button><button data-explorer-action="up">Up</button><button data-explorer-action="search">Search</button><button data-explorer-action="folders">Folders</button><button data-explorer-action="view">Views</button></div>
-        <label class="explorer-address">Address <input type="text" aria-label="Address"></label>
+        <div class="explorer-toolbar">
+            <button data-explorer-action="back"><span aria-hidden="true">←</span> Back</button>
+            <button data-explorer-action="forward" aria-label="Forward"><span aria-hidden="true">→</span></button>
+            <button data-explorer-action="up" aria-label="Up"><span aria-hidden="true">↟</span></button>
+            <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+            <button data-explorer-action="search"><span aria-hidden="true">🔍</span> Search</button>
+            <button data-explorer-action="folders" aria-pressed="false"><span aria-hidden="true">📁</span> Folders</button>
+            <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+            <button data-explorer-action="view"><span aria-hidden="true">▦</span> Views</button>
+        </div>
+        <label class="explorer-address"><span>Address</span><input type="text" aria-label="Address"><button type="button" data-explorer-action="go"><span aria-hidden="true">➜</span> Go</button></label>
     `;
     const body = document.createElement("div");
     body.className = "explorer-body";
@@ -1861,7 +1848,8 @@ const createSystemWindowContent = (shortcutId, win) => {
             explorerMenuButtons.forEach((button) => button.setAttribute("aria-expanded", "false"));
             return;
         }
-        const action = event.target.dataset.explorerAction;
+        const actionButton = event.target.closest("[data-explorer-action]");
+        const action = actionButton?.dataset.explorerAction;
         if (!action) return;
         if (action === "back") explorerBack(win);
         if (action === "forward") explorerForward(win);
@@ -1869,13 +1857,22 @@ const createSystemWindowContent = (shortcutId, win) => {
             const parent = fs.getParent(win.currentFolderId);
             if (parent) navigateExplorer(win, parent.id);
         }
-        if (action === "folders") content.classList.toggle("folders-hidden");
+        if (action === "folders") {
+            const foldersVisible = content.classList.toggle("folders-visible");
+            actionButton.setAttribute("aria-pressed", String(foldersVisible));
+        }
         if (action === "view") {
             const views = ["tiles", "thumbnails", "icons", "list", "details"];
             win.explorerView = views[(views.indexOf(win.explorerView || "tiles") + 1) % views.length];
             renderExplorerItems(win);
         }
         if (action === "search") openSearchDialog();
+        if (action === "go") {
+            const input = chrome.querySelector(".explorer-address input");
+            const destination = fs.resolvePath(input.value);
+            if (destination && fs.getNode(destination)?.type === "folder") navigateExplorer(win, destination);
+            else input.value = fs.getPath(win.currentFolderId);
+        }
     });
     chrome.querySelector("input").addEventListener("change", (event) => {
         const destination = fs.resolvePath(event.target.value);
@@ -2387,7 +2384,7 @@ const systemFolderShortcuts = {
 
 const explorerDescriptions = {
     "__my-documents": "Files stored on this computer",
-    "__my-computer": "Files Stored on This Computer",
+    "__my-computer": "",
     "__my-pictures": "Files stored in My Pictures",
     "__my-music": "Files stored in My Music"
 };
@@ -2601,6 +2598,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     } else {
         heading.textContent = folder.name;
     }
+    heading.hidden = !heading.textContent;
 
     const items = main.querySelector(".explorer-items");
     items.dataset.view = win.explorerView || "tiles";
@@ -2609,7 +2607,9 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     const children = fs.getChildren(folder.id)
         .slice()
         .sort((a, b) => (
-            a.type === b.type
+            folder.id === fs.MY_COMPUTER
+                ? (a.id === fs.DRIVE_C ? -1 : b.id === fs.DRIVE_C ? 1 : a.name.localeCompare(b.name))
+                : a.type === b.type
                 ? a.name.localeCompare(b.name)
                 : a.type === "folder" ? -1 : 1
         ));
@@ -2636,7 +2636,18 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
         items.appendChild(header);
     }
 
+    let currentGroup = "";
     children.forEach((node) => {
+        if (folder.id === fs.MY_COMPUTER) {
+            const group = node.id === fs.DRIVE_D ? "Devices with Removable Storage" : "Hard Disk Drives";
+            if (group !== currentGroup) {
+                const groupHeading = document.createElement("h3");
+                groupHeading.className = "explorer-group-heading";
+                groupHeading.textContent = group;
+                items.appendChild(groupHeading);
+                currentGroup = group;
+            }
+        }
         const item = document.createElement("button");
         item.type = "button";
         item.className = "explorer-item";
@@ -2811,7 +2822,6 @@ const openSystemWindow = (shortcutId) => {
         maximizeBtn: el.querySelector(".maximize-btn"),
         favoriteBtn: null,
         volumeBtn: null,
-        volumePopup: null
     };
     openWindows.set(shortcutId, win);
     const content = el.querySelector(".window-content");
@@ -2902,7 +2912,7 @@ const openGameWindow = (gameId) => {
         favoriteMenuItem: el.querySelector('[data-game-action="favorite"]'),
         volumeBtn: el.querySelector(".volume-btn"),
         volumeMenuItem: el.querySelector('[data-game-action="mute"]'),
-        volumePopup: el.querySelector(".game-quick-volume-popup")
+        volumeSlider: el.querySelector(".volume-slider")
     };
     openWindows.set(gameId, win);
     trackGamePlay(gameId);
@@ -3949,12 +3959,10 @@ const buildDesktopIcons = () => {
     container.replaceChildren();
     // System places stay available even though regular desktop files are
     // rendered directly from VirtualFS.DESKTOP.
-    const desktopItems = [
-        ...["__my-computer", "__my-documents", "__astro-settings"]
-            .filter((id) => systemShortcuts[id]?.desktop !== false),
-        ...["__recycle-bin"]
-            .filter((id) => systemShortcuts[id]?.desktop !== false)
-    ];
+    const desktopItems = ["__my-computer", "__my-documents", "__astro-settings"]
+        .filter((id) => systemShortcuts[id]?.desktop !== false);
+    const recycleBinItems = ["__recycle-bin"]
+        .filter((id) => systemShortcuts[id]?.desktop !== false);
     const desktopSort = getDesktopLayoutSettings().sort;
     const compareDesktopNodes = (a, b) => {
         if (desktopSort === "size") return a.size - b.size || a.name.localeCompare(b.name);
@@ -3967,7 +3975,10 @@ const buildDesktopIcons = () => {
         ...fs.getChildren(fs.DESKTOP)
             .slice()
             .sort(compareDesktopNodes)
-            .map((node) => ({ id: node.id, node }))
+            .map((node) => ({ id: node.id, node })),
+        // Recycle Bin is anchored independently, so keep it after flowing
+        // entries to avoid leaving an unused grid slot near the first game.
+        ...recycleBinItems.map((id) => ({ id, system: true }))
     ];
 
     entries.forEach(({ id, system, node }) => {
@@ -4001,7 +4012,11 @@ const buildDesktopIcons = () => {
 
         const label = document.createElement("span");
         label.className = "icon-label";
-        label.textContent = system ? formatGameTitle(id) : node.name;
+        label.textContent = system
+            ? formatGameTitle(id)
+            : node.ext === ".game"
+                ? node.name.slice(0, -node.ext.length)
+                : node.name;
 
         icon.append(glyph, label);
         icon.addEventListener("click", (event) => {
@@ -4939,7 +4954,10 @@ const setupScreenFlow = () => {
         "click",
         () => showWelcomeScreen(true),
     );
-    document.getElementById("login-user").addEventListener("click", () => login());
+    document.getElementById("welcome-screen").addEventListener("click", (event) => {
+        if (event.target.closest("#welcome-turn-off")) return;
+        login();
+    });
     document.getElementById("turn-off-screen").addEventListener("click", showBootScreen);
 
     document.getElementById("welcome-turn-off").addEventListener("click", () => {
@@ -5133,13 +5151,6 @@ document.addEventListener("pointerdown", (e) => {
                 ?.setAttribute("aria-expanded", "false");
         });
     }
-    if (!e.target.closest(".game-quick-actions") && !e.target.closest(".game-quick-volume-popup")) {
-        document.querySelectorAll(".game-quick-volume-popup:not([hidden])").forEach((popup) => {
-            popup.hidden = true;
-            popup.parentElement?.querySelector(".volume-btn")?.setAttribute("aria-expanded", "false");
-        });
-    }
-
     const startMenu = document.getElementById("start-menu");
     if (startMenu.hidden) return;
     if (!e.target.closest("#start-menu") && !e.target.closest("#start-menu-flyouts") && !e.target.closest("#start-button")) {
