@@ -1841,7 +1841,8 @@ const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const openDateTimeProperties = () => {
     const dialog = XPDialogs.createDialog({
-        title: "Date and Time Properties"
+        title: "Date and Time Properties",
+        wide: true
     });
 
     const shellNow = getShellTime();

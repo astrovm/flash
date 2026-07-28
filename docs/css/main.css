@@ -1254,6 +1254,11 @@ iframe {
     min-height: 0;
 }
 
+.xp-dialog > .title-bar {
+    cursor: move;
+    touch-action: none;
+}
+
 .xp-dialog-wide {
     width: min(520px, calc(100vw - 32px));
 }
@@ -1475,13 +1480,15 @@ iframe {
 /* Date and Time Properties */
 
 .dlg-datetime {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(190px, 1fr) minmax(0, 1.2fr);
     align-items: flex-start;
     gap: 10px;
     margin-bottom: 10px;
 }
 
 .dlg-group {
+    min-width: 0;
     margin: 0;
     padding: 8px 10px 10px;
     border: 1px solid #d4d0c8;
@@ -1549,13 +1556,21 @@ iframe {
 }
 
 .dlg-time-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 3px;
 }
 
 .dlg-time-input {
-    width: 42px;
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 460px) {
+    .dlg-datetime {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Node icons (Properties + file dialogs) */

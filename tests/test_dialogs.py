@@ -43,6 +43,18 @@ class ReusableDialogTests(unittest.TestCase):
         self.assertIn('id="standby-screen"', index)
         self.assertIn('id="standby-resume"', index)
 
+    def test_reusable_dialogs_are_draggable_and_viewport_clamped(self):
+        dialogs = (PROJECT_DIR / "docs" / "js" / "dialogs.js").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('titleBar.addEventListener("pointerdown"', dialogs)
+        self.assertIn('event.target.closest(".title-buttons")', dialogs)
+        self.assertIn("titleBar.setPointerCapture(event.pointerId)", dialogs)
+        self.assertIn('document.addEventListener("pointermove", move)', dialogs)
+        self.assertIn("overlay.clientWidth - el.offsetWidth", dialogs)
+        self.assertIn("overlay.clientHeight - el.offsetHeight", dialogs)
+
 
 if __name__ == "__main__":
     unittest.main()

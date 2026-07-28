@@ -232,6 +232,50 @@
         dialogStack.push(dialog);
         overlay.style.zIndex = BASE_Z_INDEX + dialogStack.length;
         document.body.appendChild(overlay);
+
+        // Dialogs start centered, then switch to explicit viewport-relative
+        // coordinates when dragged by their title bar.
+        titleBar.addEventListener("pointerdown", (event) => {
+            if (event.button !== 0 || event.target.closest(".title-buttons")) return;
+
+            const overlayRect = overlay.getBoundingClientRect();
+            const dialogRect = el.getBoundingClientRect();
+            const offsetX = event.clientX - dialogRect.left;
+            const offsetY = event.clientY - dialogRect.top;
+
+            el.style.position = "absolute";
+            el.style.left = `${dialogRect.left - overlayRect.left}px`;
+            el.style.top = `${dialogRect.top - overlayRect.top}px`;
+            try {
+                titleBar.setPointerCapture(event.pointerId);
+            } catch (error) { /* pointer capture unsupported */ }
+            event.preventDefault();
+
+            const move = (moveEvent) => {
+                const maxLeft = Math.max(0, overlay.clientWidth - el.offsetWidth);
+                const maxTop = Math.max(0, overlay.clientHeight - el.offsetHeight);
+                const left = Math.min(
+                    Math.max(moveEvent.clientX - overlayRect.left - offsetX, 0),
+                    maxLeft
+                );
+                const top = Math.min(
+                    Math.max(moveEvent.clientY - overlayRect.top - offsetY, 0),
+                    maxTop
+                );
+                el.style.left = `${left}px`;
+                el.style.top = `${top}px`;
+            };
+
+            const stop = () => {
+                document.removeEventListener("pointermove", move);
+                document.removeEventListener("pointerup", stop);
+                document.removeEventListener("pointercancel", stop);
+            };
+
+            document.addEventListener("pointermove", move);
+            document.addEventListener("pointerup", stop);
+            document.addEventListener("pointercancel", stop);
+        });
         return dialog;
     };
 

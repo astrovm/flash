@@ -149,6 +149,11 @@ class ShellSourceTests(unittest.TestCase):
         self.assertIn(
             'title: "Date and Time Properties"', self.javascript
         )
+        date_time_block = self.javascript[
+            self.javascript.index("const openDateTimeProperties = () =>"):
+            self.javascript.index("const setupSystemTray = () =>")
+        ]
+        self.assertIn("wide: true", date_time_block)
 
     def test_my_computer_is_the_first_desktop_icon(self):
         match = re.search(
