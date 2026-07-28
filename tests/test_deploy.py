@@ -131,6 +131,7 @@ class DeployTests(unittest.TestCase):
             "ruffle": self.js_dir / "ruffle.js",
             "games_js": self.js_dir / "games.js",
             "filesystem_js": self.js_dir / "filesystem.js",
+            "file_operations_js": self.js_dir / "file-operations.js",
             "dialogs_js": self.js_dir / "dialogs.js",
             "main_js": self.js_dir / "main.js",
             "main_css": css_dir / "main.css",
@@ -149,6 +150,7 @@ class DeployTests(unittest.TestCase):
                     '<script src="js/ruffle.js?v=old"></script>',
                     '<script src="js/games.js?v=old"></script>',
                     '<script src="js/filesystem.js?v=old"></script>',
+                    '<script src="js/file-operations.js?v=old"></script>',
                     '<script src="js/dialogs.js?v=old"></script>',
                     '<script src="js/main.js?v=old"></script>',
                     '<link rel="stylesheet" href="css/main.css?v=old">',
@@ -172,6 +174,16 @@ class DeployTests(unittest.TestCase):
         self.assertRegex(
             deployed_html,
             rf'<script src="js/main\.js\?v={re.escape(expected_hash)}"></script>',
+        )
+        file_operations_hash = deploy.get_short_hash(
+            assets["file_operations_js"]
+        )
+        self.assertRegex(
+            deployed_html,
+            (
+                r'<script src="js/file-operations\.js\?v='
+                rf'{re.escape(file_operations_hash)}"></script>'
+            ),
         )
 
     def test_get_current_version_reads_main_javascript(self):
