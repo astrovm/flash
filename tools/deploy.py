@@ -17,6 +17,7 @@ DOCS_DIR = PROJECT_DIR / "docs"
 JS_DIR = DOCS_DIR / "js"
 CSS_DIR = DOCS_DIR / "css"
 HTML_PATH = DOCS_DIR / "index.html"
+MAIN_JS_PATH = JS_DIR / "main.js"
 RUFFLE_MANIFEST_PATH = JS_DIR / "ruffle-manifest.json"
 RUFFLE_LATEST_RELEASE_URL = "https://api.github.com/repos/ruffle-rs/ruffle/releases/latest"
 RUFFLE_ASSET_SUFFIX = "-web-selfhosted.zip"
@@ -100,33 +101,49 @@ def get_short_hash(file_path):
     sha384.update(file_path.read_bytes())
     return sha384.hexdigest()[:8]
 
+
 def get_current_version():
-    if not HTML_PATH.exists():
+    if not MAIN_JS_PATH.exists():
         return None
-    content = HTML_PATH.read_text(encoding="utf-8")
-    version_match = re.search(r'<h6>v([0-9.]+(?:-\d+)?)</h6>', content)
+    content = MAIN_JS_PATH.read_text(encoding="utf-8")
+    version_match = re.search(
+        r'const APP_VERSION = "([0-9.]+(?:-\d+)?)";',
+        content,
+    )
     return version_match.group(1) if version_match else None
+
 
 def get_next_version():
     today = datetime.now().strftime("%y.%m.%d")
     current = get_current_version()
-    
+
     if not current:
         return today
-    
+
     if current.startswith(today):
         build_match = re.search(r'-(\d+)$', current)
         build_num = int(build_match.group(1)) + 1 if build_match else 1
         return f"{today}-{build_num}"
-    
+
     return today
+
 
 def update_html():
     version_str = get_next_version()
     print("Updating HTML with cache-busting hashes...")
-    
+
+    main_javascript = MAIN_JS_PATH.read_text(encoding="utf-8")
+    main_javascript, replacements = re.subn(
+        r'const APP_VERSION = "[0-9.]+(?:-\d+)?";',
+        f'const APP_VERSION = "{version_str}";',
+        main_javascript,
+    )
+    if replacements != 1:
+        raise RuntimeError("Could not update APP_VERSION in docs/js/main.js")
+    write_text_atomic(MAIN_JS_PATH, main_javascript)
+
     short_hashes = {name: get_short_hash(path) for name, path in ASSET_PATHS.items()}
-    
+
     content = HTML_PATH.read_text(encoding="utf-8")
 
     replacements = {
@@ -141,11 +158,9 @@ def update_html():
         r'<script src="js/main\.[^"]+" ?[^>]*></script>':
             f'<script src="js/main.js?v={short_hashes["main_js"]}"></script>',
         r'<link rel="stylesheet" href="css/main\.[^"]+" ?[^>]*>':
-            f'<link rel="stylesheet" href="css/main.css?v={short_hashes["main_css"]}">',
-        r'<h6>v[0-9.]+(?:-\d+)?</h6>':
-            f'<h6>v{version_str}</h6>'
+            f'<link rel="stylesheet" href="css/main.css?v={short_hashes["main_css"]}">'
     }
-    
+
     for pattern, replacement in replacements.items():
         content = re.sub(pattern, replacement, content)
 

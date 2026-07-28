@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import tempfile
 import unittest
@@ -120,6 +121,68 @@ class DeployTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(RuntimeError, "network failed"):
                 deploy.deploy()
+
+    def test_update_html_updates_app_version_before_hashing_main(self):
+        html_path = self.docs_dir / "index.html"
+        css_dir = self.docs_dir / "css"
+        css_dir.mkdir()
+
+        assets = {
+            "ruffle": self.js_dir / "ruffle.js",
+            "games_js": self.js_dir / "games.js",
+            "filesystem_js": self.js_dir / "filesystem.js",
+            "dialogs_js": self.js_dir / "dialogs.js",
+            "main_js": self.js_dir / "main.js",
+            "main_css": css_dir / "main.css",
+        }
+        for name, path in assets.items():
+            content = (
+                'const APP_VERSION = "26.07.27-2";\n'
+                if name == "main_js"
+                else name
+            )
+            path.write_text(content, encoding="utf-8")
+
+        html_path.write_text(
+            "\n".join(
+                [
+                    '<script src="js/ruffle.js?v=old"></script>',
+                    '<script src="js/games.js?v=old"></script>',
+                    '<script src="js/filesystem.js?v=old"></script>',
+                    '<script src="js/dialogs.js?v=old"></script>',
+                    '<script src="js/main.js?v=old"></script>',
+                    '<link rel="stylesheet" href="css/main.css?v=old">',
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        with (
+            mock.patch.object(deploy, "HTML_PATH", html_path),
+            mock.patch.object(deploy, "MAIN_JS_PATH", assets["main_js"]),
+            mock.patch.object(deploy, "ASSET_PATHS", assets),
+            mock.patch.object(deploy, "get_next_version", return_value="26.07.28"),
+        ):
+            deploy.update_html()
+
+        main_javascript = assets["main_js"].read_text(encoding="utf-8")
+        self.assertIn('const APP_VERSION = "26.07.28";', main_javascript)
+        expected_hash = deploy.get_short_hash(assets["main_js"])
+        deployed_html = html_path.read_text(encoding="utf-8")
+        self.assertRegex(
+            deployed_html,
+            rf'<script src="js/main\.js\?v={re.escape(expected_hash)}"></script>',
+        )
+
+    def test_get_current_version_reads_main_javascript(self):
+        main_javascript = self.js_dir / "main.js"
+        main_javascript.write_text(
+            'const APP_VERSION = "26.07.27-2";\n',
+            encoding="utf-8",
+        )
+
+        with mock.patch.object(deploy, "MAIN_JS_PATH", main_javascript):
+            self.assertEqual(deploy.get_current_version(), "26.07.27-2")
 
 
 if __name__ == "__main__":
