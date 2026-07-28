@@ -95,7 +95,7 @@ class ShellSourceTests(unittest.TestCase):
     def test_additive_marquee_preserves_initial_selection(self):
         self.assertIn("const initialSelection = new Set(", self.javascript)
         self.assertIn(
-            "additive && initialSelection.has(icon.dataset.game)",
+            "additive && initialSelection.has(icon.dataset.desktopId)",
             self.javascript,
         )
 
@@ -156,7 +156,7 @@ class ShellSourceTests(unittest.TestCase):
         ]
         self.assertIn("wide: true", date_time_block)
 
-    def test_my_computer_is_the_first_desktop_icon(self):
+    def test_desktop_renders_system_places_then_virtual_files(self):
         match = re.search(
             r"const desktopItems = \[(.*?)\];", self.javascript, re.S
         )
@@ -165,21 +165,43 @@ class ShellSourceTests(unittest.TestCase):
         my_computer = items.index('"__my-computer"')
         my_documents = items.index('"__my-documents"')
         recycle_bin = items.index('"__recycle-bin"')
-        sorted_games = items.index("sortedGames")
         self.assertLess(my_computer, my_documents)
-        self.assertLess(my_documents, sorted_games)
-        self.assertLess(sorted_games, recycle_bin)
+        self.assertLess(my_documents, recycle_bin)
+        self.assertIn("fs.getChildren(fs.DESKTOP)", self.javascript)
+        self.assertIn("fileOps = window.FileOperations", self.javascript)
 
     def test_recycle_bin_defaults_to_bottom_right(self):
-        match = re.search(
-            r'icon\.dataset\.game === "__recycle-bin"\) \{(.*?)\}',
-            self.javascript,
-            re.S,
-        )
+        match = re.search(r'icon\.dataset\.desktopId === "__recycle-bin"\) \{(.*?)\}', self.javascript, re.S)
         self.assertIsNotNone(match)
         block = match.group(1)
         self.assertIn("fallbackLeft = container.clientWidth", block)
         self.assertIn("fallbackTop = container.clientHeight", block)
+
+    def test_desktop_uses_shared_file_operations_and_keyboard_commands(self):
+        for command in (
+            'fileOps.copy(selectedFsIds)', 'fileOps.cut(selectedFsIds)',
+            'fileOps.paste(fs.DESKTOP)', 'fileOps.removeToBin(selectedFsIds)',
+            'beginDesktopRename(selectedFsIds[0])', 'e.key === "F2"',
+            'e.shiftKey && e.key === "F10"', 'action === "new-folder"',
+        ):
+            self.assertIn(command, self.javascript)
+
+    def test_desktop_context_menu_uses_real_submenus_and_safe_multiselection(self):
+        for token in (
+            'addDesktopSubmenu(menu, "Arrange Icons By"',
+            'addDesktopSubmenu(menu, "New"',
+            'child.style.left = `${-child.offsetWidth + 2}px`',
+            'event.key === "ArrowRight"',
+            'event.key === "ArrowLeft"',
+            'const clampedX = Math.max(-groupLeft',
+            'const clampedY = Math.max(-groupTop',
+            'const getDesktopSelectionEligibility = () =>',
+            'const movable = allFilesystem',
+            'if (finished) return;',
+        ):
+            self.assertIn(token, self.javascript)
+        self.assertIn('.context-parent.open > .context-submenu', self.css)
+        self.assertIn('#desktop-icons:not(:focus-within)', self.css)
 
     def test_start_menu_contains_only_xp_places(self):
         places = self.javascript[

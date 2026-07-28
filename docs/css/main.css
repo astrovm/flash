@@ -574,6 +574,26 @@ html[data-xp-appearance="silver"] {
     -webkit-line-clamp: unset;
 }
 
+.desktop-icon.selected:focus .icon-label {
+    outline: 1px dotted #fff;
+}
+
+#desktop-icons:not(:focus-within) .desktop-icon.selected .icon-label {
+    background: #7f7f7f;
+    outline-color: #fff;
+}
+
+.desktop-rename {
+    width: 74px;
+    margin-top: 1px;
+    border: 1px solid #fff;
+    outline: 1px solid #0b61ce;
+    background: #fff;
+    color: #000;
+    font: 11px Tahoma, "Segoe UI", sans-serif;
+    text-align: center;
+}
+
 #desktop-selection {
     position: absolute;
     z-index: 900;
@@ -639,6 +659,20 @@ html[data-xp-appearance="silver"] {
     border-top: 4px solid transparent;
     border-bottom: 4px solid transparent;
     border-left: 5px solid currentColor;
+}
+
+.context-parent {
+    position: relative;
+}
+
+.context-submenu {
+    position: absolute;
+    display: none;
+    z-index: 2501;
+}
+
+.context-parent.open > .context-submenu {
+    display: block;
 }
 
 /* ============ Windows ============ */

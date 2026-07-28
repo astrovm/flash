@@ -1716,6 +1716,7 @@ const wireDisplayProperties = (win) => {
 // ============================================
 
 const fs = window.VirtualFS;
+const fileOps = window.FileOperations;
 
 const systemFolderShortcuts = {
     "__my-documents": () => fs.MY_DOCUMENTS,
@@ -1901,6 +1902,15 @@ fs.registerFileType(".game", (file) => {
     }
 });
 
+fs.registerFolderHandler((folder) => {
+    openSystemWindow("__my-documents");
+    const win = openWindows.get("__my-documents");
+    if (win) {
+        win.currentFolderId = folder.id;
+        renderExplorerItems(win);
+    }
+});
+
 // Keep open explorer windows in sync with filesystem changes.
 fs.subscribe(() => {
     openWindows.forEach((win) => {
@@ -1910,6 +1920,7 @@ fs.subscribe(() => {
         }
         renderExplorerItems(win);
     });
+    if (iconsBuilt) buildDesktopIcons();
 });
 
 const wireSystemWindowControls = (win) => {
@@ -1968,7 +1979,14 @@ const openSystemWindow = (shortcutId) => {
 };
 
 const openDesktopItem = (itemId) => {
-    if (itemId === "__astro-settings") {
+    const node = fs.getNode(itemId);
+    if (node) {
+        try {
+            fs.open(itemId);
+        } catch (error) {
+            console.error(error);
+        }
+    } else if (itemId === "__astro-settings") {
         openProjectSettings();
     } else if (systemShortcuts[itemId]) {
         openSystemWindow(itemId);
@@ -2787,16 +2805,16 @@ const getDesktopIconPositions = () => (
 
 const saveDesktopIconPosition = (icon) => {
     const positions = getDesktopIconPositions();
-    positions[icon.dataset.game] = {
+    positions[icon.dataset.desktopId] = {
         left: icon.offsetLeft,
         top: icon.offsetTop
     };
     writeJsonStorage("desktopIconPositions", positions);
 };
 
-const selectDesktopIcon = (gameId, additive = false) => {
+const selectDesktopIcon = (desktopId, additive = false) => {
     document.querySelectorAll(".desktop-icon").forEach((el) => {
-        const shouldSelect = el.dataset.game === gameId;
+        const shouldSelect = el.dataset.desktopId === desktopId;
         el.classList.toggle(
             "selected",
             additive ? el.classList.contains("selected") || shouldSelect : shouldSelect
@@ -2810,6 +2828,20 @@ const clearDesktopSelection = () => {
     });
 };
 
+const getSelectedDesktopIds = () => [...document.querySelectorAll(".desktop-icon.selected")]
+    .map((icon) => icon.dataset.desktopId);
+
+const getSelectedFilesystemIds = () => getSelectedDesktopIds()
+    .filter((id) => !!fs.getNode(id));
+
+const getDesktopSelectionEligibility = () => {
+    const selectedIds = getSelectedDesktopIds();
+    const filesystemIds = selectedIds.filter((id) => !!fs.getNode(id));
+    const allFilesystem = filesystemIds.length > 0 && filesystemIds.length === selectedIds.length;
+    const movable = allFilesystem && filesystemIds.every((id) => !fs.isProtected(id));
+    return { selectedIds, filesystemIds, allFilesystem, movable };
+};
+
 const layoutDesktopIcons = (force = false) => {
     const container = document.getElementById("desktop-icons");
     if (!container) return;
@@ -2819,14 +2851,14 @@ const layoutDesktopIcons = (force = false) => {
     const rows = Math.max(1, Math.floor(usableHeight / (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP)));
 
     Array.from(container.querySelectorAll(".desktop-icon")).forEach((icon, index) => {
-        const saved = positions[icon.dataset.game];
+        const saved = positions[icon.dataset.desktopId];
         let fallbackLeft = DESKTOP_ICON_MARGIN
             + Math.floor(index / rows) * (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP);
         let fallbackTop = DESKTOP_ICON_MARGIN
             + (index % rows) * (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP);
         // The Recycle Bin anchors to the bottom-right corner unless the
         // user has dragged it somewhere else.
-        if (icon.dataset.game === "__recycle-bin") {
+        if (icon.dataset.desktopId === "__recycle-bin") {
             fallbackLeft = container.clientWidth - DESKTOP_ICON_WIDTH - DESKTOP_ICON_MARGIN;
             fallbackTop = container.clientHeight - DESKTOP_ICON_HEIGHT - DESKTOP_ICON_MARGIN;
         }
@@ -2847,13 +2879,16 @@ const wireDesktopIconDrag = (icon) => {
 
         const additive = event.ctrlKey || event.metaKey;
         if (!icon.classList.contains("selected")) {
-            selectDesktopIcon(icon.dataset.game, additive);
+            selectDesktopIcon(icon.dataset.desktopId, additive);
         }
 
         const startX = event.clientX;
         const startY = event.clientY;
-        const startLeft = icon.offsetLeft;
-        const startTop = icon.offsetTop;
+        const selected = [...document.querySelectorAll(".desktop-icon.selected")].map((item) => ({
+            item,
+            left: item.offsetLeft,
+            top: item.offsetTop
+        }));
         desktopDragged = false;
 
         const onMove = (moveEvent) => {
@@ -2863,16 +2898,18 @@ const wireDesktopIconDrag = (icon) => {
 
             desktopDragged = true;
             const container = document.getElementById("desktop-icons");
-            const left = Math.max(
-                0,
-                Math.min(startLeft + deltaX, container.clientWidth - icon.offsetWidth)
-            );
-            const top = Math.max(
-                0,
-                Math.min(startTop + deltaY, container.clientHeight - icon.offsetHeight)
-            );
-            icon.style.left = `${left}px`;
-            icon.style.top = `${top}px`;
+            const groupLeft = Math.min(...selected.map(({ left }) => left));
+            const groupTop = Math.min(...selected.map(({ top }) => top));
+            const groupRight = Math.max(...selected.map(({ item, left }) => left + item.offsetWidth));
+            const groupBottom = Math.max(...selected.map(({ item, top }) => top + item.offsetHeight));
+            const clampedX = Math.max(-groupLeft, Math.min(deltaX, container.clientWidth - groupRight));
+            const clampedY = Math.max(-groupTop, Math.min(deltaY, container.clientHeight - groupBottom));
+            selected.forEach(({ item, left: startLeft, top: startTop }) => {
+                const left = startLeft + clampedX;
+                const top = startTop + clampedY;
+                item.style.left = `${left}px`;
+                item.style.top = `${top}px`;
+            });
         };
 
         const onUp = () => {
@@ -2880,7 +2917,14 @@ const wireDesktopIconDrag = (icon) => {
             icon.removeEventListener("pointerup", onUp);
             icon.removeEventListener("pointercancel", onUp);
             if (desktopDragged) {
-                saveDesktopIconPosition(icon);
+                const { alignToGrid } = getDesktopLayoutSettings();
+                selected.forEach(({ item }) => {
+                    if (alignToGrid) {
+                        item.style.left = `${Math.round(item.offsetLeft / (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP)) * (DESKTOP_ICON_WIDTH + DESKTOP_ICON_GAP)}px`;
+                        item.style.top = `${Math.round(item.offsetTop / (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP)) * (DESKTOP_ICON_HEIGHT + DESKTOP_ICON_GAP)}px`;
+                    }
+                    saveDesktopIconPosition(item);
+                });
             }
         };
 
@@ -2905,7 +2949,7 @@ const wireDesktopSelectionRectangle = () => {
         const additive = event.ctrlKey || event.metaKey;
         const initialSelection = new Set(
             Array.from(document.querySelectorAll(".desktop-icon.selected"))
-                .map((icon) => icon.dataset.game)
+                .map((icon) => icon.dataset.desktopId)
         );
         if (!additive) {
             clearDesktopSelection();
@@ -2944,7 +2988,7 @@ const wireDesktopSelectionRectangle = () => {
                 );
                 icon.classList.toggle(
                     "selected",
-                    intersects || (additive && initialSelection.has(icon.dataset.game))
+                    intersects || (additive && initialSelection.has(icon.dataset.desktopId))
                 );
             });
         };
@@ -2968,58 +3012,75 @@ const wireDesktopSelectionRectangle = () => {
 };
 
 const buildDesktopIcons = () => {
-    if (iconsBuilt) return;
+    const wasBuilt = iconsBuilt;
     iconsBuilt = true;
 
     const container = document.getElementById("desktop-icons");
-    const sortedGames = Object.keys(gamesList).sort((a, b) =>
-        formatGameTitle(a).localeCompare(formatGameTitle(b))
-    );
-    // Windows XP order: My Computer first, My Documents next, then the
-    // games; the Recycle Bin comes last and anchors to the corner.
+    container.replaceChildren();
+    // System places stay available even though regular desktop files are
+    // rendered directly from VirtualFS.DESKTOP.
     const desktopItems = [
         ...["__my-computer", "__my-documents", "__astro-settings"]
             .filter((id) => systemShortcuts[id]?.desktop !== false),
-        ...sortedGames,
         ...["__recycle-bin"]
             .filter((id) => systemShortcuts[id]?.desktop !== false)
     ];
+    const desktopSort = getDesktopLayoutSettings().sort;
+    const compareDesktopNodes = (a, b) => {
+        if (desktopSort === "size") return a.size - b.size || a.name.localeCompare(b.name);
+        if (desktopSort === "type") return (a.ext || a.type).localeCompare(b.ext || b.type) || a.name.localeCompare(b.name);
+        if (desktopSort === "modified") return b.modified - a.modified || a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name);
+    };
+    const entries = [
+        ...desktopItems.map((id) => ({ id, system: true })),
+        ...fs.getChildren(fs.DESKTOP)
+            .slice()
+            .sort(compareDesktopNodes)
+            .map((node) => ({ id: node.id, node }))
+    ];
 
-    desktopItems.forEach((gameId) => {
+    entries.forEach(({ id, system, node }) => {
         const icon = document.createElement("button");
         icon.type = "button";
         icon.className = "desktop-icon";
-        icon.dataset.game = gameId;
+        icon.dataset.desktopId = id;
+        if (system) icon.dataset.systemId = id;
 
-        const glyph = createGameIconElement(gameId, "icon-glyph");
+        const glyph = system
+            ? createGameIconElement(id, "icon-glyph")
+            : (node.app && gamesList[node.app]
+                ? createGameIconElement(node.app, "icon-glyph")
+                : createExplorerIcon(node));
+        glyph.classList.add("icon-glyph");
 
         const label = document.createElement("span");
         label.className = "icon-label";
-        label.textContent = formatGameTitle(gameId);
+        label.textContent = system ? formatGameTitle(id) : node.name;
 
         icon.append(glyph, label);
         icon.addEventListener("click", (event) => {
             if (!desktopDragged) {
-                selectDesktopIcon(gameId, event.ctrlKey || event.metaKey);
+                selectDesktopIcon(id, event.ctrlKey || event.metaKey);
             }
         });
         icon.addEventListener("dblclick", () => {
             if (!desktopDragged) {
-                openDesktopItem(gameId);
+                openDesktopItem(id);
             }
         });
         icon.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
-                openDesktopItem(gameId);
+                openDesktopItem(id);
             }
         });
         wireDesktopIconDrag(icon);
         container.appendChild(icon);
     });
 
-    wireDesktopSelectionRectangle();
-    requestAnimationFrame(() => layoutDesktopIcons());
+    if (!wasBuilt) wireDesktopSelectionRectangle();
+    requestAnimationFrame(() => layoutDesktopIcons(getDesktopLayoutSettings().autoArrange));
 };
 
 const closeDesktopContextMenu = () => {
@@ -3027,12 +3088,161 @@ const closeDesktopContextMenu = () => {
     if (menu) menu.hidden = true;
 };
 
-const openDesktopContextMenu = (clientX, clientY) => {
+const getDesktopLayoutSettings = () => readJsonStorage("desktopLayoutSettings", {
+    sort: "name", autoArrange: false, alignToGrid: true
+});
+
+const saveDesktopLayoutSettings = (settings) => writeJsonStorage("desktopLayoutSettings", settings);
+
+const refreshDesktop = () => {
+    const icons = document.getElementById("desktop-icons");
+    icons.classList.remove("desktop-refresh");
+    requestAnimationFrame(() => icons.classList.add("desktop-refresh"));
+    buildDesktopIcons();
+};
+
+const beginDesktopRename = (id) => {
+    const icon = document.querySelector(`.desktop-icon[data-desktop-id="${CSS.escape(id)}"]`);
+    const node = fs.getNode(id);
+    if (!icon || !node || node.protected) return;
+    const label = icon.querySelector(".icon-label");
+    const input = document.createElement("input");
+    input.className = "desktop-rename";
+    input.value = node.name;
+    label.replaceWith(input);
+    input.focus();
+    input.select();
+    let finished = false;
+    const finish = (save) => {
+        if (finished) return;
+        finished = true;
+        if (save) {
+            try { fileOps.rename(id, input.value); } catch (error) { console.error(error); }
+        }
+        refreshDesktop();
+    };
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") finish(true);
+        if (event.key === "Escape") finish(false);
+    });
+    input.addEventListener("blur", () => finish(true), { once: true });
+};
+
+const addDesktopMenuItem = (menu, label, action, { disabled = false, checked = false } = {}) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.role = "menuitem";
+    button.dataset.action = action;
+    button.disabled = disabled;
+    button.textContent = `${checked ? "✓ " : ""}${label}`;
+    menu.appendChild(button);
+};
+
+const addDesktopSubmenu = (menu, label, buildItems) => {
+    const parent = document.createElement("div");
+    parent.className = "context-parent";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.role = "menuitem";
+    button.className = "context-submenu-button";
+    button.setAttribute("aria-haspopup", "menu");
+    button.setAttribute("aria-expanded", "false");
+    button.textContent = label;
+    const arrow = document.createElement("span");
+    arrow.className = "context-arrow";
+    button.appendChild(arrow);
+    const child = document.createElement("div");
+    child.className = "xp-context-menu context-submenu";
+    child.setAttribute("role", "menu");
+    buildItems(child);
+    const open = () => {
+        parent.classList.add("open");
+        button.setAttribute("aria-expanded", "true");
+        child.style.left = "100%";
+        child.style.top = "-2px";
+        const rect = child.getBoundingClientRect();
+        if (rect.right > window.innerWidth) child.style.left = `${-child.offsetWidth + 2}px`;
+    };
+    const close = () => {
+        parent.classList.remove("open");
+        button.setAttribute("aria-expanded", "false");
+    };
+    parent.addEventListener("pointerenter", open);
+    parent.addEventListener("pointerleave", close);
+    button.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight") {
+            event.preventDefault();
+            open();
+            child.querySelector("button:not(:disabled)")?.focus();
+        }
+    });
+    child.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            close();
+            button.focus();
+        }
+    });
+    parent.append(button, child);
+    menu.appendChild(parent);
+};
+
+const addDesktopSeparator = (menu) => {
+    const separator = document.createElement("span");
+    separator.className = "context-separator";
+    separator.setAttribute("aria-hidden", "true");
+    menu.appendChild(separator);
+};
+
+const renderDesktopContextMenu = (menu, itemId = null) => {
+    const selectedIds = itemId && document.querySelector(`.desktop-icon[data-desktop-id="${CSS.escape(itemId)}"]`)?.classList.contains("selected")
+        ? getSelectedDesktopIds()
+        : [];
+    const { filesystemIds: selectedFsIds, allFilesystem, movable } = getDesktopSelectionEligibility();
+    const settings = getDesktopLayoutSettings();
+    menu.replaceChildren();
+    menu.dataset.itemId = itemId || "";
+
+    if (itemId) {
+        addDesktopMenuItem(menu, "Open", "open");
+        addDesktopSeparator(menu);
+        addDesktopMenuItem(menu, "Cut", "cut", { disabled: !movable });
+        addDesktopMenuItem(menu, "Copy", "copy", { disabled: !allFilesystem });
+        addDesktopMenuItem(menu, "Delete", "delete", { disabled: !movable });
+        addDesktopMenuItem(menu, "Rename", "rename", { disabled: !movable || selectedFsIds.length !== 1 });
+        addDesktopSeparator(menu);
+        addDesktopMenuItem(menu, "Properties", "item-properties", { disabled: selectedFsIds.length !== 1 });
+    } else {
+        addDesktopSubmenu(menu, "Arrange Icons By", (submenu) => {
+            addDesktopMenuItem(submenu, "Name", "sort-name", { checked: settings.sort === "name" });
+            addDesktopMenuItem(submenu, "Size", "sort-size", { checked: settings.sort === "size" });
+            addDesktopMenuItem(submenu, "Type", "sort-type", { checked: settings.sort === "type" });
+            addDesktopMenuItem(submenu, "Modified", "sort-modified", { checked: settings.sort === "modified" });
+        });
+        addDesktopMenuItem(menu, "Auto Arrange", "auto-arrange", { checked: settings.autoArrange });
+        addDesktopMenuItem(menu, "Align to Grid", "align-grid", { checked: settings.alignToGrid });
+        addDesktopSeparator(menu);
+        addDesktopMenuItem(menu, "Refresh", "refresh");
+        addDesktopSeparator(menu);
+        addDesktopMenuItem(menu, "Paste", "paste", { disabled: !fileOps.canPaste(fs.DESKTOP) });
+        addDesktopMenuItem(menu, "Paste Shortcut", "paste-shortcut", { disabled: true });
+        addDesktopSeparator(menu);
+        addDesktopSubmenu(menu, "New", (submenu) => {
+            addDesktopMenuItem(submenu, "Folder", "new-folder");
+            addDesktopMenuItem(submenu, "Text Document", "new-text");
+        });
+        addDesktopSeparator(menu);
+        addDesktopMenuItem(menu, "Properties", "properties");
+    }
+};
+
+const openDesktopContextMenu = (clientX, clientY, itemId = null) => {
     const desktop = document.getElementById("desktop");
     const menu = document.getElementById("desktop-context-menu");
     const bounds = desktop.getBoundingClientRect();
 
     closeStartMenu();
+    renderDesktopContextMenu(menu, itemId);
     menu.hidden = false;
     menu.style.left = "0";
     menu.style.top = "0";
@@ -3057,27 +3267,73 @@ const setupDesktopContextMenu = () => {
     desktop.addEventListener("contextmenu", (event) => {
         if (event.target.closest(".xp-window, #start-menu")) return;
         event.preventDefault();
-        if (!event.target.closest(".desktop-icon")) {
+        const icon = event.target.closest(".desktop-icon");
+        if (!icon) {
             clearDesktopSelection();
+        } else if (!icon.classList.contains("selected")) {
+            selectDesktopIcon(icon.dataset.desktopId);
         }
-        openDesktopContextMenu(event.clientX, event.clientY);
+        openDesktopContextMenu(event.clientX, event.clientY, icon?.dataset.desktopId || null);
     });
 
     menu.addEventListener("click", (event) => {
         const action = event.target.closest("[data-action]")?.dataset.action;
         if (!action) return;
 
-        if (action === "arrange") {
+        const itemId = menu.dataset.itemId || null;
+        const selectedFsIds = getSelectedFilesystemIds();
+        if (action.startsWith("sort-")) {
+            saveDesktopLayoutSettings({ ...getDesktopLayoutSettings(), sort: action.slice(5), autoArrange: true });
             layoutDesktopIcons(true);
-            playXPSound("logon");
+        } else if (action === "auto-arrange") {
+            const settings = getDesktopLayoutSettings();
+            saveDesktopLayoutSettings({ ...settings, autoArrange: !settings.autoArrange });
+            if (!settings.autoArrange) layoutDesktopIcons(true);
+        } else if (action === "align-grid") {
+            const settings = getDesktopLayoutSettings();
+            saveDesktopLayoutSettings({ ...settings, alignToGrid: !settings.alignToGrid });
         } else if (action === "refresh") {
-            const icons = document.getElementById("desktop-icons");
-            icons.classList.remove("desktop-refresh");
-            requestAnimationFrame(() => icons.classList.add("desktop-refresh"));
+            refreshDesktop();
+        } else if (action === "new-folder" || action === "new-text") {
+            const node = action === "new-folder"
+                ? fileOps.createFolder(fs.DESKTOP, "New Folder")
+                : fileOps.createFile(fs.DESKTOP, "New Text Document.txt");
+            refreshDesktop();
+            selectDesktopIcon(node.id);
+            beginDesktopRename(node.id);
+        } else if (action === "paste") {
+            fileOps.paste(fs.DESKTOP);
+        } else if (action === "open" && itemId) {
+            openDesktopItem(itemId);
+        } else if (action === "cut") {
+            fileOps.cut(selectedFsIds);
+        } else if (action === "copy") {
+            fileOps.copy(selectedFsIds);
+        } else if (action === "delete") {
+            fileOps.removeToBin(selectedFsIds);
+        } else if (action === "rename" && selectedFsIds[0]) {
+            beginDesktopRename(selectedFsIds[0]);
+        } else if (action === "item-properties" && selectedFsIds[0]) {
+            XPDialogs.properties(selectedFsIds[0]);
         } else if (action === "properties") {
             openSystemWindow("__display-properties");
         }
         closeDesktopContextMenu();
+    });
+    menu.addEventListener("keydown", (event) => {
+        const items = [...menu.querySelectorAll("button:not(:disabled)")];
+        const current = items.indexOf(document.activeElement);
+        if (event.key === "Escape") {
+            closeDesktopContextMenu();
+            return;
+        }
+        if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+            event.preventDefault();
+            const target = event.key === "Home" ? items[0]
+                : event.key === "End" ? items.at(-1)
+                : items[(current + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length];
+            target?.focus();
+        }
     });
 };
 
@@ -3906,6 +4162,49 @@ document.addEventListener("keydown", (e) => {
             setSuspended(false);
         }
         return;
+    }
+
+    const desktopIcon = document.activeElement?.closest?.(".desktop-icon");
+    const desktopHasFocus = desktopIcon || document.activeElement?.id === "desktop-icons";
+    if (desktopHasFocus) {
+        const { filesystemIds: selectedFsIds, allFilesystem, movable } = getDesktopSelectionEligibility();
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+            e.preventDefault();
+            document.querySelectorAll(".desktop-icon").forEach((icon) => icon.classList.add("selected"));
+            return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && allFilesystem) {
+            e.preventDefault(); fileOps.copy(selectedFsIds); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x" && movable) {
+            e.preventDefault(); fileOps.cut(selectedFsIds); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && fileOps.canPaste(fs.DESKTOP)) {
+            e.preventDefault(); fileOps.paste(fs.DESKTOP); return;
+        }
+        if (e.key === "Delete" && movable) {
+            e.preventDefault(); fileOps.removeToBin(selectedFsIds); return;
+        }
+        if (e.key === "F2" && movable && selectedFsIds.length === 1) {
+            e.preventDefault(); beginDesktopRename(selectedFsIds[0]); return;
+        }
+        if (e.shiftKey && e.key === "F10") {
+            e.preventDefault();
+            const rect = desktopIcon?.getBoundingClientRect() || document.getElementById("desktop").getBoundingClientRect();
+            openDesktopContextMenu(rect.left + 8, rect.top + 8, desktopIcon?.dataset.desktopId || null);
+            return;
+        }
+        if (desktopIcon && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+            const icons = [...document.querySelectorAll(".desktop-icon")];
+            const current = icons.indexOf(desktopIcon);
+            const direction = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 1;
+            const target = icons[(current + direction + icons.length) % icons.length];
+            e.preventDefault();
+            if (!e.ctrlKey && !e.shiftKey) selectDesktopIcon(target.dataset.desktopId);
+            if (e.shiftKey) target.classList.add("selected");
+            target.focus();
+            return;
+        }
     }
 
     if (e.key === "F11" && focusedGameId) {
