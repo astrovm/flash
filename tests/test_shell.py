@@ -563,6 +563,8 @@ class ShellSourceTests(unittest.TestCase):
             '"Repair Offline Files"',
             '"Offline download progress"',
             "state.downloadBytes",
+            "state.downloadMetadataError",
+            "formatProjectState(",
             '"https://github.com/astrovm/flash/issues"',
             'case "project": openProjectSettings();',
         )

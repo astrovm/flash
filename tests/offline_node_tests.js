@@ -216,6 +216,12 @@ const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
     currentVersion: "26.07.28-aaaaaaa",
     environment: disabled.environment,
   });
+  await disabledManager.initialize();
+  assert.strictEqual(disabledManager.getSnapshot().downloadBytes, 172_000_000);
+  assert.strictEqual(
+    disabled.environment.localStorage.getItem("astroFlashDownloadVersion"),
+    "26.07.29-bbbbbbb",
+  );
   await disabledManager.checkForUpdates();
   assert.strictEqual(disabledManager.getSnapshot().phase, "update-available");
   await disabledManager.applyUpdate();
