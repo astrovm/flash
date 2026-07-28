@@ -3574,6 +3574,7 @@ const setSuspended = (value) => {
         closeStartMenu();
         closeDesktopContextMenu();
         closeWindowSystemMenu();
+        closeTaskbarMenus();
         closeTrayVolumePopup();
         muteAllWindows();
         document.getElementById("standby-resume").focus();
@@ -3658,6 +3659,12 @@ const closeCurrentSession = () => {
     clearTimeout(screenSaverTimeout);
     const saver = document.getElementById("screen-saver-overlay");
     if (saver) saver.hidden = true;
+    showDesktopSnapshot = null;
+    closeStartMenu();
+    closeDesktopContextMenu();
+    closeWindowSystemMenu();
+    closeTaskbarMenus();
+    closeTrayVolumePopup();
     Array.from(openWindows.keys()).forEach(closeGameWindow);
     focusedGameId = null;
     zIndexCounter = 100;
@@ -3758,6 +3765,8 @@ const setupScreenFlow = () => {
         });
     document.getElementById("standby-resume")
         .addEventListener("click", () => setSuspended(false));
+    document.getElementById("standby-screen")
+        .addEventListener("pointerdown", () => setSuspended(false));
 
     if (getHashGameId()) {
         startupSoundPending = false;
@@ -3890,7 +3899,7 @@ document.addEventListener("pointerdown", (e) => {
 
 document.addEventListener("keydown", (e) => {
     if (suspended) {
-        if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+        if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
             e.preventDefault();
             setSuspended(false);
         }

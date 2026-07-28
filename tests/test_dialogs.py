@@ -49,6 +49,13 @@ class ReusableDialogTests(unittest.TestCase):
         )
         self.assertIn('id="standby-screen"', index)
         self.assertIn('id="standby-resume"', index)
+        self.assertIn(
+            'document.getElementById("standby-screen")\n'
+            '        .addEventListener("pointerdown", () => setSuspended(false));',
+            main,
+        )
+        self.assertIn("showDesktopSnapshot = null;", main)
+        self.assertIn("closeTaskbarMenus();", main)
 
     def test_reusable_dialogs_are_draggable_and_viewport_clamped(self):
         dialogs = (PROJECT_DIR / "docs" / "js" / "dialogs.js").read_text(
