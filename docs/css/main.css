@@ -446,6 +446,14 @@ iframe {
     background-repeat: no-repeat;
 }
 
+#desktop[data-monitor-resolution]:not([data-monitor-resolution="auto"]) {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 8px 26px rgba(0, 0, 0, 0.55);
+}
+
+#desktop[data-monitor-limited="true"] {
+    box-shadow: 0 0 0 2px #f2c94c, 0 8px 26px rgba(0, 0, 0, 0.55);
+}
+
 #desktop[data-wallpaper-position="center"] {
     background-size: auto;
     background-repeat: no-repeat;

@@ -41,6 +41,12 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
     screenSaverWait: 10,
     resolution: "auto"
 });
+const SIMULATED_RESOLUTIONS = Object.freeze({
+    "800x600": { width: 800, height: 600 },
+    "1024x768": { width: 1024, height: 768 }
+});
+const TASKBAR_HEIGHT = 30;
+let activeMonitorResolution = "auto";
 
 const categoryIcons = {
     "Racing": "🏁",
@@ -213,6 +219,55 @@ const displayBackground = (settings) => (
         : DISPLAY_WALLPAPERS[settings.wallpaper]
 );
 
+const getSimulatedMonitorSize = (resolution = activeMonitorResolution) => {
+    const requested = SIMULATED_RESOLUTIONS[resolution];
+    if (!requested) return { width: window.innerWidth, height: window.innerHeight, limited: false };
+    return {
+        width: Math.min(requested.width, window.innerWidth),
+        height: Math.min(requested.height, window.innerHeight),
+        limited: requested.width > window.innerWidth || requested.height > window.innerHeight
+    };
+};
+
+// The selected XP resolution becomes a real, bounded monitor inside the
+// browser. On a smaller browser it is honestly limited to the available
+// viewport instead of pretending that off-screen space is usable.
+const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
+    activeMonitorResolution = resolution;
+    const desktop = document.getElementById("desktop");
+    const taskbar = document.getElementById("taskbar");
+    if (!desktop || !taskbar) return;
+    if (resolution === "auto") {
+        desktop.style.removeProperty("width");
+        desktop.style.removeProperty("height");
+        desktop.style.removeProperty("left");
+        desktop.style.removeProperty("top");
+        taskbar.style.removeProperty("width");
+        taskbar.style.removeProperty("left");
+        taskbar.style.removeProperty("bottom");
+        desktop.dataset.monitorResolution = "auto";
+        delete desktop.dataset.monitorLimited;
+    } else {
+        const monitor = getSimulatedMonitorSize(resolution);
+        const left = Math.max(0, Math.round((window.innerWidth - monitor.width) / 2));
+        const top = Math.max(0, Math.round((window.innerHeight - monitor.height) / 2));
+        desktop.style.width = `${monitor.width}px`;
+        desktop.style.height = `${Math.max(1, monitor.height - TASKBAR_HEIGHT)}px`;
+        desktop.style.left = `${left}px`;
+        desktop.style.top = `${top}px`;
+        taskbar.style.width = `${monitor.width}px`;
+        taskbar.style.left = `${left}px`;
+        taskbar.style.bottom = `${Math.max(0, window.innerHeight - top - monitor.height)}px`;
+        desktop.dataset.monitorResolution = resolution;
+        desktop.dataset.monitorLimited = String(monitor.limited);
+    }
+    if (reflow && iconsBuilt) layoutDesktopIcons();
+    if (reflow && loggedIn) {
+        keepWindowsInWorkArea();
+        renderTaskButtons();
+    }
+};
+
 const applyDisplaySettings = (settings) => {
     const desktop = document.getElementById("desktop");
     if (!desktop) return;
@@ -220,6 +275,7 @@ const applyDisplaySettings = (settings) => {
     desktop.style.setProperty("--desktop-color", settings.backgroundColor);
     desktop.dataset.wallpaperPosition = settings.position;
     document.documentElement.dataset.xpAppearance = settings.appearance;
+    applySimulatedMonitor(settings.resolution);
     scheduleScreenSaver(settings);
 };
 
@@ -402,6 +458,48 @@ const keepWindowsInWorkArea = () => {
         el.style.left = `${position.left}px`;
         el.style.top = `${position.top}px`;
     });
+};
+
+const snapshotWindowState = () => ({
+    focusedGameId,
+    zIndexCounter,
+    windows: [...openWindows.values()].map((win) => ({
+        gameId: win.gameId,
+        minimized: win.minimized,
+        maximized: win.maximized,
+        zIndex: win.zIndex,
+        lastUsed: win.lastUsed,
+        prevRect: win.prevRect ? { ...win.prevRect } : null,
+        styles: Object.fromEntries(["left", "top", "width", "height", "display", "zIndex"].map((name) => [name, win.el.style[name]]))
+    }))
+});
+
+const restoreWindowState = (snapshot) => {
+    if (!snapshot) return;
+    snapshot.windows.forEach((saved) => {
+        const win = openWindows.get(saved.gameId);
+        if (!win) return;
+        Object.assign(win, {
+            minimized: saved.minimized,
+            maximized: saved.maximized,
+            zIndex: saved.zIndex,
+            lastUsed: saved.lastUsed,
+            prevRect: saved.prevRect ? { ...saved.prevRect } : null
+        });
+        Object.assign(win.el.style, saved.styles);
+        win.el.classList.toggle("maximized", saved.maximized);
+    });
+    focusedGameId = openWindows.has(snapshot.focusedGameId) ? snapshot.focusedGameId : null;
+    zIndexCounter = Math.max(snapshot.zIndexCounter, ...[...openWindows.values()].map((win) => win.zIndex || 0));
+    openWindows.forEach((win, gameId) => win.el.classList.toggle("active", gameId === focusedGameId));
+    // A bounded selected monitor is not a physical viewport constraint. Only
+    // clamp a restored snapshot when the browser itself is the limiting edge.
+    const monitor = getSimulatedMonitorSize();
+    if (activeMonitorResolution === "auto" || monitor.limited) keepWindowsInWorkArea();
+    if (iconsBuilt) layoutDesktopIcons();
+    applyFocusVolumes();
+    renderTaskButtons();
+    updateDocumentTitle();
 };
 
 const updateDocumentTitle = () => {
@@ -933,6 +1031,7 @@ const closeGameWindow = (gameId) => {
     const win = openWindows.get(gameId);
     if (!win) return;
 
+    win.beforeClose?.();
     win.el.remove();
     openWindows.delete(gameId);
 
@@ -1478,7 +1577,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                     <select id="display-resolution"><option value="auto">Use browser size</option><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option></select>
                     <div class="display-resolution-preview" aria-label="Resolution preview"><span></span></div>
                     <p class="display-resolution-value"></p>
-                    <p class="display-settings-note">This changes the simulated monitor preview; browser windows keep their actual size.</p>
+                    <p class="display-settings-note">Changes are previewed on the simulated monitor. The monitor is limited to the available browser viewport when necessary.</p>
                 </fieldset>
             </div>
             <div class="display-dialog-buttons">
@@ -1771,6 +1870,8 @@ const wireDisplayProperties = (win) => {
 
     let current = getDisplaySettings();
     let pending = { ...current };
+    let resolutionPreviewActive = false;
+    let resolutionPreviewSnapshot = null;
     const tabs = [...content.querySelectorAll('[role="tab"]')];
     const panels = [...content.querySelectorAll('[role="tabpanel"]')];
     const controls = {
@@ -1813,9 +1914,10 @@ const wireDisplayProperties = (win) => {
         controls.saverPreview.dataset.saver = pending.screenSaver;
         controls.appearancePreview.dataset.appearance = pending.appearance;
         controls.resolutionPreview.dataset.resolution = pending.resolution;
+        const monitor = getSimulatedMonitorSize(pending.resolution);
         controls.resolutionValue.textContent = pending.resolution === "auto"
             ? `Current browser size: ${window.innerWidth} by ${window.innerHeight} pixels`
-            : `${pending.resolution.replace("x", " by ")} pixels`;
+            : `${pending.resolution.replace("x", " by ")} pixels${monitor.limited ? ` (limited to ${monitor.width} by ${monitor.height})` : ""}`;
         controls.apply.disabled = JSON.stringify(pending) === JSON.stringify(current);
     };
     const showTab = (tab) => {
@@ -1852,11 +1954,25 @@ const wireDisplayProperties = (win) => {
         pending = { ...pending, wallpaper: controls.wallpaper.value, customWallpaper: "" };
         sync();
     });
-    ["position", "appearance", "resolution", "saver"].forEach((name) => {
+    ["position", "appearance", "saver"].forEach((name) => {
         controls[name].addEventListener("change", () => {
             pending = { ...pending, [name === "saver" ? "screenSaver" : name]: controls[name].value };
             sync();
         });
+    });
+    controls.resolution.addEventListener("change", () => {
+        pending = { ...pending, resolution: controls.resolution.value };
+        if (pending.resolution === current.resolution) {
+            applySimulatedMonitor(current.resolution, { reflow: false });
+            restoreWindowState(resolutionPreviewSnapshot);
+            resolutionPreviewSnapshot = null;
+            resolutionPreviewActive = false;
+        } else {
+            resolutionPreviewSnapshot ||= snapshotWindowState();
+            resolutionPreviewActive = true;
+            applySimulatedMonitor(pending.resolution);
+        }
+        sync();
     });
     controls.color.addEventListener("input", () => {
         pending = { ...pending, backgroundColor: controls.color.value };
@@ -1898,6 +2014,8 @@ const wireDisplayProperties = (win) => {
         }
         current = { ...pending };
         applyDisplaySettings(current);
+        resolutionPreviewActive = false;
+        resolutionPreviewSnapshot = null;
         controls.status.textContent = "Settings applied.";
         sync();
     });
@@ -1905,6 +2023,15 @@ const wireDisplayProperties = (win) => {
         if (!controls.apply.disabled) controls.apply.click();
         if (controls.apply.disabled) closeGameWindow(win.gameId);
     });
+    const rollbackResolutionPreview = () => {
+        if (resolutionPreviewActive) {
+            applySimulatedMonitor(current.resolution, { reflow: false });
+            restoreWindowState(resolutionPreviewSnapshot);
+        }
+        resolutionPreviewActive = false;
+        resolutionPreviewSnapshot = null;
+    };
+    win.beforeClose = rollbackResolutionPreview;
     content.querySelector('[data-display-action="cancel"]').addEventListener("click", () => closeGameWindow(win.gameId));
     sync();
 };
@@ -4846,6 +4973,7 @@ window.addEventListener("load", () => {
 
 window.addEventListener("resize", () => {
     closeTrayVolumePopup();
+    applySimulatedMonitor(activeMonitorResolution);
     if (iconsBuilt) {
         layoutDesktopIcons();
     }

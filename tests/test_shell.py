@@ -405,6 +405,27 @@ class ShellSourceTests(unittest.TestCase):
             "controls.resolutionPreview.dataset.resolution = pending.resolution",
             self.javascript,
         )
+        self.assertIn("const applySimulatedMonitor = (resolution, { reflow = true } = {}) =>", self.javascript)
+        self.assertIn("const SIMULATED_RESOLUTIONS", self.javascript)
+        self.assertIn("desktop.dataset.monitorLimited", self.javascript)
+        self.assertIn("resolutionPreviewActive", self.javascript)
+        self.assertIn("let resolutionPreviewSnapshot = null", self.javascript)
+        self.assertIn("snapshotWindowState()", self.javascript)
+        self.assertIn("restoreWindowState(resolutionPreviewSnapshot)", self.javascript)
+        self.assertIn("rollbackResolutionPreview", self.javascript)
+        self.assertIn("applySimulatedMonitor(activeMonitorResolution)", self.javascript)
+        self.assertIn("#desktop[data-monitor-resolution]", self.css)
+
+    def test_simulated_monitor_bounds_common_resolutions_and_narrow_viewports(self):
+        self.assertIn('"800x600": { width: 800, height: 600 }', self.javascript)
+        self.assertIn('"1024x768": { width: 1024, height: 768 }', self.javascript)
+        self.assertIn("width: Math.min(requested.width, window.innerWidth)", self.javascript)
+        self.assertIn("height: Math.min(requested.height, window.innerHeight)", self.javascript)
+        self.assertIn("desktop.style.height = `${Math.max(1, monitor.height - TASKBAR_HEIGHT)}px`", self.javascript)
+        self.assertIn("taskbar.style.width = `${monitor.width}px`", self.javascript)
+        self.assertIn("keepWindowsInWorkArea();", self.javascript)
+        self.assertIn("layoutDesktopIcons();", self.javascript)
+        self.assertIn("delete desktop.dataset.monitorLimited", self.javascript)
 
     def test_taskbar_keeps_overflow_windows_reachable(self):
         self.assertIn('id="taskbar-overflow-menu"', self.html)
