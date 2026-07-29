@@ -22,6 +22,8 @@ a Windows XP desktop.
   display resolutions
 - Optional full-collection offline download with update checks, progress,
   storage reporting, and repair controls
+- Internet Games catalog for finding, installing, playing, and uninstalling
+  compatible Flashpoint GameZIP titles
 
 ## Development
 
@@ -49,7 +51,8 @@ python tools/dev_server.py --port 8000
 ```
 
 The server reads `dist/` by default and refuses to serve an unbuilt tree. Use
-`--directory` to serve another completed build.
+`--directory` to serve another completed build. It also provides the
+same-origin `/api/games` catalog proxy used by Internet Games.
 
 ### Deployment
 
@@ -78,6 +81,28 @@ state while the complete collection downloads. Astro Flash checks for updates
 at startup, when connectivity returns, and when a long-lived tab becomes
 visible again. An installed update waits for user confirmation before the
 worker activates and reloads the page.
+
+### Internet Games catalog
+
+The browser keeps installed game metadata in IndexedDB and extracted GameZIP
+files in a dedicated Cache Storage cache. These files are device-local and are
+not part of the generated offline collection.
+
+Production uses `worker/catalog-worker.mjs` as a same-origin `/api/games*`
+Cloudflare Worker route in front of the GitHub Pages origin. Deploy it with:
+
+```bash
+bunx wrangler deploy --config worker/wrangler.toml
+```
+
+Configure a route for `flash.4st.li/api/games*` so catalog requests are handled
+by the Worker while all other requests continue to GitHub Pages. The Worker
+normalizes Flashpoint search metadata and relays compatible GameZIPs because
+the upstream services do not permit direct browser downloads from this site.
+
+Internet Games intentionally supports only playable Flash GameZIP entries.
+Legacy entries and other platforms are shown as incompatible rather than being
+installed incorrectly.
 
 ### Game Support
 

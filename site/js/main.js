@@ -24,7 +24,12 @@ let placesBuilt = false;
 let screenSaverTimeout = null;
 let screenSaverWired = false;
 
-const gamesList = window.FLASH_GAMES;
+const gamesList = { ...window.FLASH_GAMES };
+const installedGameIds = new Set();
+let gameLibrary = null;
+let gameLibraryError = null;
+let gameLibraryReady = false;
+let gameLibraryInitialization = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
 const USER_STORAGE_KEYS = Object.freeze([
@@ -116,6 +121,10 @@ const systemShortcuts = {
   "__astro-settings": {
     title: "Astro Flash Settings",
     icon: "assets/xp/icons/ControlPanel.png",
+  },
+  "__internet-games": {
+    title: "Internet Games",
+    icon: "assets/xp/icons/Programs.png",
   },
 };
 
@@ -911,19 +920,20 @@ const loadRuffleSWF = (gameId, win) => {
   };
   player.addEventListener("loadedmetadata", applyVolume, { once: true });
 
+  const game = gamesList[gameId];
   const config = {
-    url: gamesList[gameId].spoofUrl
-      ? `${gamesList[gameId].spoofUrl}/main.swf`
-      : `swf/${gameId}/main.swf`,
-    base: gamesList[gameId].spoofUrl
-      ? `${gamesList[gameId].spoofUrl}/`
-      : `swf/${gameId}/`,
+    url:
+      game.url ||
+      (game.spoofUrl ? `${game.spoofUrl}/main.swf` : `swf/${gameId}/main.swf`),
+    base:
+      game.base ||
+      (game.spoofUrl ? `${game.spoofUrl}/` : `swf/${gameId}/`),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,
     openUrlMode: "confirm",
     showSwfDownload: true,
-    frameRate: gamesList[gameId].frameRate,
+    frameRate: game.frameRate,
     volume: gameId === focusedGameId ? normalizeGameVolume(gameId) : 0,
     allowScriptAccess: false,
     autoplay: "on",
@@ -1781,6 +1791,39 @@ const createSystemWindowContent = (shortcutId, win) => {
     return content;
   }
 
+  if (shortcutId === "__internet-games") {
+    content.className = "internet-games-content";
+    content.innerHTML = `
+      <header class="internet-games-header">
+        <div>
+          <h1>Internet Games</h1>
+          <p>Find and install playable Flash games from Flashpoint Archive.</p>
+        </div>
+        <img src="assets/xp/icons/Programs.png" alt="">
+      </header>
+      <div class="internet-games-tabs" role="tablist" aria-label="Internet Games">
+        <button type="button" role="tab" aria-selected="true" data-internet-tab="browse">Find Games</button>
+        <button type="button" role="tab" aria-selected="false" tabindex="-1" data-internet-tab="installed">Installed</button>
+      </div>
+      <section class="internet-games-panel" data-internet-panel="browse">
+        <form class="internet-games-search" role="search">
+          <label for="internet-games-query">Search Flashpoint:</label>
+          <span>
+            <input id="internet-games-query" class="xp-input" type="search" maxlength="100" autocomplete="off" placeholder="Try Bike Mania">
+            <button class="xp-btn default" type="submit">Search</button>
+          </span>
+        </form>
+        <p class="internet-games-status" aria-live="polite">Enter a game title to search the archive.</p>
+        <div class="internet-games-results" aria-label="Game results"></div>
+      </section>
+      <section class="internet-games-panel" data-internet-panel="installed" hidden>
+        <p class="internet-games-installed-status" aria-live="polite"></p>
+        <div class="internet-games-installed"></div>
+      </section>
+    `;
+    return content;
+  }
+
   if (shortcutId === "__search") {
     content.className = "search-companion-content";
     content.innerHTML = `
@@ -2504,6 +2547,42 @@ const wireDisplayProperties = (win) => {
 const fs = window.VirtualFS;
 const fileOps = window.FileOperations;
 
+const refreshInstalledGames = (installedGames) => {
+  const nextIds = new Set(Object.keys(installedGames));
+  installedGameIds.forEach((gameId) => {
+    if (nextIds.has(gameId)) return;
+    closeGameWindow(gameId);
+    fs.findByApp(gameId).forEach((node) => fs.destroy(node.id));
+    delete gamesList[gameId];
+    const favorites = getFavorites().filter((id) => id !== gameId);
+    setFavorites(favorites);
+  });
+  Object.entries(installedGames).forEach(([gameId, game]) => {
+    gamesList[gameId] = game;
+  });
+  installedGameIds.clear();
+  nextIds.forEach((gameId) => installedGameIds.add(gameId));
+
+  if (!shellInitialized) return;
+  syncGameFiles();
+  buildDesktopIcons();
+  if (!document.getElementById("start-menu").hidden) buildPinnedPrograms();
+  const internetWindow = openWindows.get("__internet-games");
+  if (internetWindow) renderInstalledInternetGames(internetWindow);
+};
+
+const initializeGameLibrary = async () => {
+  try {
+    gameLibrary = window.AstroGameLibrary.createManager();
+    gameLibrary.subscribe(refreshInstalledGames);
+    refreshInstalledGames(await gameLibrary.initialize());
+    gameLibraryReady = true;
+  } catch (error) {
+    console.error("Internet Games initialization failed:", error);
+    gameLibraryError = error;
+  }
+};
+
 // Shared names understood by Run, Search, and the shell. Keep these routes in
 // one place so adding a simulated application does not create another parser.
 const SHELL_COMMANDS = [
@@ -2560,6 +2639,12 @@ const SHELL_COMMANDS = [
     title: "Search",
     aliases: ["search"],
     run: () => openSystemWindow("__search"),
+  },
+  {
+    id: "internet-games",
+    title: "Internet Games",
+    aliases: ["internet games", "game store", "games online"],
+    run: () => openSystemWindow("__internet-games"),
   },
   { id: "run", title: "Run", aliases: ["run"], run: () => openRunDialog() },
 ];
@@ -2751,6 +2836,235 @@ const wireSearchCompanion = (win) => {
   );
   query.focus();
 };
+
+const findBundledGameByTitle = (title) => {
+  const wanted = String(title || "").trim().toLowerCase();
+  if (!wanted) return null;
+  return (
+    Object.keys(window.FLASH_GAMES).find(
+      (gameId) => formatGameTitle(gameId).toLowerCase() === wanted,
+    ) || null
+  );
+};
+
+const createInternetGameCard = (game, win, { installed = false } = {}) => {
+  const card = document.createElement("article");
+  card.className = "internet-game-card";
+
+  const artwork = document.createElement("div");
+  artwork.className = "internet-game-artwork";
+  const image = document.createElement("img");
+  image.src = game.icon || game.logoUrl || "";
+  image.alt = "";
+  image.loading = "lazy";
+  image.addEventListener("error", () => {
+    image.hidden = true;
+    artwork.classList.add("missing");
+  });
+  artwork.appendChild(image);
+
+  const body = document.createElement("div");
+  body.className = "internet-game-card-body";
+  const title = document.createElement("h2");
+  title.textContent = game.title || "Untitled game";
+  const developer = document.createElement("p");
+  developer.className = "internet-game-developer";
+  developer.textContent = game.developer || "Unknown developer";
+  const tags = document.createElement("p");
+  tags.className = "internet-game-tags";
+  tags.textContent = Array.isArray(game.tags)
+    ? game.tags.slice(0, 4).join(" · ")
+    : "Flash";
+  body.append(title, developer, tags);
+
+  const actions = document.createElement("div");
+  actions.className = "internet-game-actions";
+  const action = document.createElement("button");
+  action.type = "button";
+  action.className = "xp-btn";
+
+  if (installed) {
+    action.textContent = "Play";
+    action.addEventListener("click", () =>
+      openGameWindow(`flashpoint:${game.uuid}`),
+    );
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "xp-btn";
+    remove.textContent = "Uninstall";
+    remove.addEventListener("click", async () => {
+      const confirmed = await XPDialogs.confirm(
+        `Remove ${game.title || "this game"} from this computer?`,
+        "Uninstall Game",
+        "warning",
+      );
+      if (!confirmed) return;
+      action.disabled = true;
+      remove.disabled = true;
+      try {
+        await gameLibrary.uninstall(game.uuid);
+      } catch (error) {
+        XPDialogs.alert(
+          error.message || "The game could not be uninstalled.",
+          "Internet Games",
+          "error",
+        );
+        action.disabled = false;
+        remove.disabled = false;
+      }
+    });
+    actions.append(action, remove);
+  } else {
+    const gameId = `flashpoint:${game.uuid}`;
+    const includedGameId = findBundledGameByTitle(game.title);
+    let availableGameId = gamesList[gameId]
+      ? gameId
+      : includedGameId;
+    action.textContent = availableGameId
+      ? "Play"
+      : game.potentiallyCompatible === false
+        ? "Not compatible"
+        : "Install";
+    if (includedGameId && !gamesList[gameId]) {
+      action.title = "This game is already included with Astro Flash.";
+    }
+    action.disabled = game.potentiallyCompatible === false;
+    action.addEventListener("click", async () => {
+      if (availableGameId) {
+        openGameWindow(availableGameId);
+        return;
+      }
+      const status = win.el.querySelector(".internet-games-status");
+      action.disabled = true;
+      action.textContent = "Checking...";
+      try {
+        const details = await gameLibrary.details(game.uuid);
+        if (!details.compatible) {
+          throw new Error(
+            details.incompatibleReason || "This game is not compatible.",
+          );
+        }
+        action.textContent = "Downloading...";
+        await gameLibrary.install(details, {
+          onProgress: ({ loaded, total }) => {
+            if (total) {
+              const percent = Math.min(100, Math.round((loaded / total) * 100));
+              action.textContent = `Downloading ${percent}%`;
+            } else {
+              action.textContent = `Downloading ${XPDialogs.formatBytes(loaded)}`;
+            }
+          },
+        });
+        availableGameId = gameId;
+        action.textContent = "Play";
+        action.disabled = false;
+        status.textContent = `${details.title} was installed successfully.`;
+      } catch (error) {
+        action.textContent = "Install";
+        action.disabled = false;
+        status.textContent =
+          error.message || "The game could not be installed.";
+      }
+    });
+    actions.appendChild(action);
+  }
+
+  card.append(artwork, body, actions);
+  return card;
+};
+
+const renderInstalledInternetGames = (win) => {
+  if (!win?.el) return;
+  const container = win.el.querySelector(".internet-games-installed");
+  const status = win.el.querySelector(".internet-games-installed-status");
+  if (!container || !status) return;
+  container.replaceChildren();
+  const records = gameLibrary
+    ? [...installedGameIds]
+        .map((id) => gameLibrary.getRecord(id))
+        .filter(Boolean)
+        .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
+    : [];
+  status.textContent = records.length
+    ? `${records.length} installed game${records.length === 1 ? "" : "s"}.`
+    : "No internet games are installed yet.";
+  records.forEach((record) =>
+    container.appendChild(
+      createInternetGameCard(record, win, { installed: true }),
+    ),
+  );
+};
+
+const wireInternetGames = (win) => {
+  const content = win.el.querySelector(".internet-games-content");
+  if (!content) return;
+  const tabs = [...content.querySelectorAll("[data-internet-tab]")];
+  const panels = [...content.querySelectorAll("[data-internet-panel]")];
+  const query = content.querySelector("#internet-games-query");
+  const form = content.querySelector(".internet-games-search");
+  const status = content.querySelector(".internet-games-status");
+  const results = content.querySelector(".internet-games-results");
+
+  const selectTab = (name) => {
+    tabs.forEach((tab) => {
+      const active = tab.dataset.internetTab === name;
+      tab.setAttribute("aria-selected", String(active));
+      tab.tabIndex = active ? 0 : -1;
+    });
+    panels.forEach((panel) => {
+      panel.hidden = panel.dataset.internetPanel !== name;
+    });
+    if (name === "installed") renderInstalledInternetGames(win);
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectTab(tab.dataset.internetTab));
+    tab.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const offset = event.key === "ArrowRight" ? 1 : -1;
+      const next = tabs[(index + offset + tabs.length) % tabs.length];
+      selectTab(next.dataset.internetTab);
+      next.focus();
+    });
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const term = query.value.trim();
+    if (!term) {
+      status.textContent = "Enter a game title.";
+      query.focus();
+      return;
+    }
+    if (!gameLibrary || gameLibraryError) {
+      status.textContent =
+        gameLibraryError?.message || "The Internet Games service is unavailable.";
+      return;
+    }
+    const submit = form.querySelector("button");
+    submit.disabled = true;
+    status.textContent = `Searching for “${term}”...`;
+    results.replaceChildren();
+    try {
+      const games = await gameLibrary.search(term);
+      status.textContent = games.length
+        ? `${games.length} result${games.length === 1 ? "" : "s"} found.`
+        : "No games found.";
+      games.forEach((game) =>
+        results.appendChild(createInternetGameCard(game, win)),
+      );
+    } catch (error) {
+      status.textContent =
+        error.message || "The Flashpoint catalog could not be searched.";
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  renderInstalledInternetGames(win);
+  query.focus();
+};
+
 const confirmRecycleDelete = (ids) =>
   XPDialogs.confirm(
     ids.length === 1
@@ -3979,9 +4293,13 @@ const openSystemWindow = (shortcutId) => {
     node.remove(),
   );
   const isProjectSettings = shortcutId === "__astro-settings";
-  const windowWidth = Math.min(isProjectSettings ? 440 : 700, desktopWidth - 16);
+  const isInternetGames = shortcutId === "__internet-games";
+  const windowWidth = Math.min(
+    isProjectSettings ? 440 : isInternetGames ? 760 : 700,
+    desktopWidth - 16,
+  );
   const windowHeight = Math.min(
-    isProjectSettings ? 320 : 500,
+    isProjectSettings ? 320 : isInternetGames ? 540 : 500,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -4020,6 +4338,7 @@ const openSystemWindow = (shortcutId) => {
   if (shortcutId === "__display-properties") wireDisplayProperties(win);
   if (shortcutId === "__astro-settings") wireProjectSettings(win);
   if (shortcutId === "__search") wireSearchCompanion(win);
+  if (shortcutId === "__internet-games") wireInternetGames(win);
   focusWindow(shortcutId);
 };
 
@@ -5470,6 +5789,7 @@ const buildDesktopIcons = () => {
   const desktopItems = [
     "__my-computer",
     "__my-documents",
+    "__internet-games",
     "__astro-settings",
   ].filter((id) => systemShortcuts[id]?.desktop !== false);
   const recycleBinItems = ["__recycle-bin"].filter(
@@ -6041,6 +6361,7 @@ const openControlPanel = () => {
   const list = document.createElement("div");
   list.className = "shell-dialog-list";
   [
+    ["Internet Games", () => openSystemWindow("__internet-games")],
     ["Display", () => openSystemWindow("__display-properties")],
     ["Date and Time", openDateTimeProperties],
     ["Astro Flash Settings", openProjectSettings],
@@ -6258,6 +6579,23 @@ const buildPlaces = () => {
 const buildPinnedPrograms = () => {
   const container = document.getElementById("start-menu-pinned");
   container.innerHTML = "";
+
+  const internetGames = document.createElement("button");
+  internetGames.type = "button";
+  internetGames.className = "sm-game";
+  const internetIcon = createGameIconElement(
+    "__internet-games",
+    "sm-game-icon",
+  );
+  const internetTitle = document.createElement("span");
+  internetTitle.className = "sm-game-title";
+  internetTitle.textContent = "Internet Games";
+  internetGames.append(internetIcon, internetTitle);
+  internetGames.addEventListener("click", () => {
+    closeStartMenu();
+    openSystemWindow("__internet-games");
+  });
+  container.appendChild(internetGames);
 
   const gameStats = getGameStats();
   const recentGames = Object.entries(gameStats)
@@ -6652,34 +6990,42 @@ const turnOff = () => {
   startShutdown(false);
 };
 
+let loginPromise = null;
 const login = (playSound = true) => {
-  clearTimeout(bootTimeout);
-  loggedIn = true;
-  showDesktop();
-  applyDisplaySettings(getDisplaySettings());
-  applyFocusVolumes();
-  if (playSound) {
-    playXPSound("logon");
-  }
-
-  networkConnectedAt = Date.now();
-  if (!shellInitialized) {
-    shellInitialized = true;
-    syncGameFiles();
-    buildDesktopIcons();
-    buildPlaces();
-    setupSearch();
-    setupScreenSaver();
-    startClock();
-
-    // Deep link: #game-id opens that game's window
-    const gameId = getHashGameId();
-    if (gameId) {
-      openGameWindow(gameId);
+  if (loginPromise) return loginPromise;
+  loginPromise = (async () => {
+    await gameLibraryInitialization;
+    clearTimeout(bootTimeout);
+    loggedIn = true;
+    showDesktop();
+    applyDisplaySettings(getDisplaySettings());
+    applyFocusVolumes();
+    if (playSound) {
+      playXPSound("logon");
     }
-  }
-  maybePromptForUpdate(offlineManager.getSnapshot());
-  scheduleScreenSaver();
+
+    networkConnectedAt = Date.now();
+    if (!shellInitialized) {
+      shellInitialized = true;
+      syncGameFiles();
+      buildDesktopIcons();
+      buildPlaces();
+      setupSearch();
+      setupScreenSaver();
+      startClock();
+
+      // Deep link: #game-id opens that game's window
+      const gameId = getHashGameId();
+      if (gameId) {
+        openGameWindow(gameId);
+      }
+    }
+    maybePromptForUpdate(offlineManager.getSnapshot());
+    scheduleScreenSaver();
+  })().finally(() => {
+    loginPromise = null;
+  });
+  return loginPromise;
 };
 
 const setupScreenFlow = () => {
@@ -6789,13 +7135,27 @@ const changeUrl = (request) => {
 };
 
 const interceptResponse = (response, request) => {
-  Object.defineProperty(response, "url", { value: request.url });
+  const url =
+    typeof request === "string"
+      ? new URL(request, window.location.href).href
+      : request.url;
+  Object.defineProperty(response, "url", { value: url });
   return response;
 };
 
 const { fetch: originalFetch } = window;
 window.fetch = async (...args) => {
   const originalRequest = args[0];
+  if (gameLibraryReady && gameLibrary && !gameLibraryError) {
+    try {
+      const installedResponse = await gameLibrary.match(originalRequest);
+      if (installedResponse) {
+        return interceptResponse(installedResponse, originalRequest);
+      }
+    } catch (error) {
+      console.error("Installed game resource lookup failed:", error);
+    }
+  }
   args[0] = changeUrl(originalRequest);
 
   const response = await originalFetch(...args);
@@ -6856,8 +7216,11 @@ const confirmPermanentDelete = (ids) =>
     "warning",
   ).then((yes) => yes && ids.forEach((id) => fs.destroy(id)));
 
-window.addEventListener("load", () => {
+gameLibraryInitialization = initializeGameLibrary();
+
+window.addEventListener("load", async () => {
   initializeOfflineMode();
+  await gameLibraryInitialization;
   setupScreenFlow();
   setupDesktopContextMenu();
   setupWindowSystemMenu();

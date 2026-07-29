@@ -44,7 +44,10 @@ class DeployTests(unittest.TestCase):
             "index.html": "\n".join(
                 [
                     '<script src="js/ruffle.js?v=old"></script>',
+                    '<script src="vendor/fflate/0.8.3/index.js?v=old"></script>',
                     '<script src="js/games.js?v=old"></script>',
+                    '<script src="js/game-installer.js?v=old"></script>',
+                    '<script src="js/game-library.js?v=old"></script>',
                     '<script src="js/filesystem.js?v=old"></script>',
                     '<script src="js/file-operations.js?v=old"></script>',
                     '<script src="js/dialogs.js?v=old"></script>',
@@ -54,12 +57,15 @@ class DeployTests(unittest.TestCase):
                 ]
             ),
             "js/games.js": "games",
+            "js/game-installer.js": "game installer",
+            "js/game-library.js": "game library",
             "js/filesystem.js": "filesystem",
             "js/file-operations.js": "file operations",
             "js/dialogs.js": "dialogs",
             "js/offline.js": "offline",
             "js/main.js": 'const APP_VERSION = "old";\n',
             "css/main.css": "css",
+            "vendor/fflate/0.8.3/index.js": "fflate",
             "swf/bike-mania/main.swf": "swf",
             "iframe/doom/index.html": "doom",
             "iframe/inside-the-firewall/index.html": "firewall",
@@ -173,6 +179,16 @@ class DeployTests(unittest.TestCase):
         self.assertIn('const APP_VERSION = "26.07.28-abcdef1";', main)
         self.assertIn(
             f'js/main.js?v={deploy.get_short_hash(paths.main_js)}"',
+            html,
+        )
+        self.assertIn(
+            "js/game-installer.js?v="
+            f'{deploy.get_short_hash(paths.js / "game-installer.js")}"',
+            html,
+        )
+        self.assertIn(
+            "js/game-library.js?v="
+            f'{deploy.get_short_hash(paths.js / "game-library.js")}"',
             html,
         )
         self.assertIn(

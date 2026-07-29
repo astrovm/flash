@@ -1,0 +1,4 @@
+name = "astro-flash-catalog"
+main = "catalog-worker.mjs"
+compatibility_date = "2026-07-29"
+workers_dev = true
