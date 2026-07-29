@@ -169,6 +169,13 @@
 
       const readFile = (file) => file.arrayBuffer();
 
+      const cacheEngineForOfflineUse = () => {
+        window.parent.postMessage(
+          { event: "astro.offline-game-ready", gameId: "revcdos" },
+          location.origin,
+        );
+      };
+
       const startGame = (selectedFiles, message) => {
         files = selectedFiles;
         selection.textContent = message;
@@ -278,10 +285,7 @@
         });
         torrent.on("done", () => {
           localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
-          window.parent.postMessage(
-            { event: "astro.offline-game-ready", gameId: "revcdos" },
-            location.origin,
-          );
+          cacheEngineForOfflineUse();
           const downloadedFiles = new Map(
             torrent.files.map((file) => [file.path.toLowerCase(), file]),
           );
@@ -315,6 +319,7 @@
         );
         if (!selectedFiles.size) return;
 
+        cacheEngineForOfflineUse();
         startGame(
           selectedFiles,
           `${selectedFiles.size.toLocaleString()} files selected. Starting reVCDOS…`,

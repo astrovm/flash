@@ -71,9 +71,10 @@ test("offers a persistent WebTorrent download alongside manual selection", async
   ).toBe(true);
 });
 
-test("marks a completed persistent download as an offline game", () => {
+test("caches the engine after torrent completion or manual selection", () => {
   expect(host).toContain('event: "astro.offline-game-ready"');
   expect(host).toContain('gameId: "revcdos"');
+  expect(host.match(/cacheEngineForOfflineUse\(\)/g)).toHaveLength(2);
   expect(main).toContain('message?.event !== "astro.offline-game-ready"');
   expect(main).toContain("event.source !== win.player?.contentWindow");
   expect(main).toContain("offlineManager.downloadGame(message.gameId)");
