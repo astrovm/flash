@@ -447,7 +447,7 @@ test("explorer matches XP task pane toolbar and drive groups", () => {
     'src="assets/xp/ms.png"',
   );
   contains(
-    css,
+    compact(css),
     ".explorer-toolbar-separator",
     ".explorer-content:not(.folders-visible) .explorer-tree-section",
     ".explorer-content.folders-visible .explorer-sidebar > section:not(.explorer-tree-section)",
@@ -831,7 +831,7 @@ test("taskbar attention and fixed lock state are explicit", () => {
     ".task-button.needs-attention",
     ".taskbar-overflow-item.needs-attention",
   );
-  contains(html, 'data-taskbar-action="lock" disabled');
+  contains(compact(html), 'data-taskbar-action="lock" disabled');
 });
 test("taskbar supports window and taskbar context menus", () => {
   contains(

@@ -1,4 +1,3 @@
-/* global window */
 "use strict";
 
 (function exposeGameLibrary(root, factory) {
@@ -59,10 +58,8 @@
       return result;
     };
     return {
-      list: () =>
-        run("readonly", (store) => requestResult(store.getAll())),
-      get: (id) =>
-        run("readonly", (store) => requestResult(store.get(id))),
+      list: () => run("readonly", (store) => requestResult(store.getAll())),
+      get: (id) => run("readonly", (store) => requestResult(store.get(id))),
       put: (record) =>
         run("readwrite", (store) => requestResult(store.put(record))),
       delete: (id) =>
@@ -106,7 +103,9 @@
     if (!response.body?.getReader) {
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (bytes.byteLength > maxBytes) {
-        throw new Error("This game is larger than the supported download limit.");
+        throw new Error(
+          "This game is larger than the supported download limit.",
+        );
       }
       onProgress?.({ loaded: bytes.byteLength, total: expected });
       return bytes;
@@ -121,7 +120,9 @@
       loaded += value.byteLength;
       if (loaded > maxBytes) {
         await reader.cancel();
-        throw new Error("This game is larger than the supported download limit.");
+        throw new Error(
+          "This game is larger than the supported download limit.",
+        );
       }
       chunks.push(value);
       onProgress?.({ loaded, total: expected });
@@ -147,7 +148,9 @@
       } catch {
         // Upstream failure pages are not necessarily JSON.
       }
-      throw new Error(message || `The game catalog returned ${response.status}.`);
+      throw new Error(
+        message || `The game catalog returned ${response.status}.`,
+      );
     }
     return response.json();
   };
@@ -281,7 +284,9 @@
               ? estimate.quota - estimate.usage
               : null;
           if (available !== null && contentLength > available) {
-            throw new Error("There is not enough browser storage for this game.");
+            throw new Error(
+              "There is not enough browser storage for this game.",
+            );
           }
         }
         const bytes = await readDownload(response, { onProgress });

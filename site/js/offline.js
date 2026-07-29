@@ -53,7 +53,9 @@
     typeof file.url === "string" &&
     !file.url.startsWith("/") &&
     !file.url.includes("\\") &&
-    !file.url.split("/").some((part) => !part || part === "." || part === "..") &&
+    !file.url
+      .split("/")
+      .some((part) => !part || part === "." || part === "..") &&
     Number.isInteger(file.bytes) &&
     file.bytes >= 0;
 
@@ -131,7 +133,9 @@
       quota: null,
       error: null,
       bundledGames: [],
-      downloadedGameIds: Object.keys(records).filter((id) => id !== "__runtime__"),
+      downloadedGameIds: Object.keys(records).filter(
+        (id) => id !== "__runtime__",
+      ),
       downloadedGameBytes: Object.values(records).reduce(
         (total, record) => total + (Number(record.bytes) || 0),
         0,
@@ -269,7 +273,9 @@
 
     const registerAndWait = async () => {
       if (!navigatorObject.serviceWorker) {
-        throw new Error("Offline system files are not supported by this browser.");
+        throw new Error(
+          "Offline system files are not supported by this browser.",
+        );
       }
       const nextRegistration = await navigatorObject.serviceWorker.register(
         serviceWorkerUrl,
@@ -287,7 +293,11 @@
       }
       const worker = nextRegistration.installing || nextRegistration.waiting;
       if (worker) {
-        setState({ phase: "downloading", workerState: worker.state, error: null });
+        setState({
+          phase: "downloading",
+          workerState: worker.state,
+          error: null,
+        });
         await waitForWorker(worker);
       } else {
         await navigatorObject.serviceWorker.ready;
@@ -367,7 +377,9 @@
       const cache = await environment.caches.open(bundledCacheName);
       let loaded = 0;
       for (const file of entry.files) {
-        const response = await environment.fetch(file.url, { cache: "no-store" });
+        const response = await environment.fetch(file.url, {
+          cache: "no-store",
+        });
         if (!response.ok) {
           throw new Error(`Offline download failed (${response.status}).`);
         }
@@ -393,7 +405,9 @@
         Number.isFinite(estimate.usage) &&
         requiredBytes > estimate.quota - estimate.usage
       ) {
-        throw new Error("There is not enough browser storage for this download.");
+        throw new Error(
+          "There is not enough browser storage for this download.",
+        );
       }
     };
 
@@ -529,7 +543,9 @@
       for (const id of selectedIds) {
         if (!currentManifest.games[id]) {
           await deleteRecordFiles(id);
-        } else if (records[id].revision !== currentManifest.games[id].revision) {
+        } else if (
+          records[id].revision !== currentManifest.games[id].revision
+        ) {
           await downloadGame(id);
         }
       }
@@ -649,7 +665,8 @@
         setState({ online: false });
       });
       environment.document?.addEventListener("visibilitychange", () => {
-        if (environment.document.visibilityState === "visible") automaticCheck();
+        if (environment.document.visibilityState === "visible")
+          automaticCheck();
       });
     };
 

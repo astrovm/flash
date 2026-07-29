@@ -76,6 +76,7 @@
   // Windows disallows these characters in file and folder names, along
   // with DOS device names (even when they have an extension). Keep this
   // check in the filesystem rather than duplicating it in each shell view.
+  // eslint-disable-next-line no-control-regex -- Windows rejects ASCII control characters.
   const INVALID_NAME_CHARACTERS = /[<>:"/\\\\|?*\u0000-\u001f]/;
   const RESERVED_DEVICE_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
@@ -461,7 +462,7 @@
 
   const copy = (id, targetParentId) => {
     const node = requireNode(id);
-    const target = requireFolder(targetParentId);
+    requireFolder(targetParentId);
     if (id === targetParentId || isDescendantOf(id, targetParentId)) {
       throw new Error(`Cannot copy "${node.name}" into itself`);
     }
