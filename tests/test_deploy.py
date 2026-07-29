@@ -44,7 +44,10 @@ class DeployTests(unittest.TestCase):
             "index.html": "\n".join(
                 [
                     '<script src="js/ruffle.js?v=old"></script>',
+                    '<script src="vendor/fflate/0.8.3/index.js?v=old"></script>',
                     '<script src="js/games.js?v=old"></script>',
+                    '<script src="js/game-installer.js?v=old"></script>',
+                    '<script src="js/game-library.js?v=old"></script>',
                     '<script src="js/filesystem.js?v=old"></script>',
                     '<script src="js/file-operations.js?v=old"></script>',
                     '<script src="js/dialogs.js?v=old"></script>',
@@ -54,12 +57,17 @@ class DeployTests(unittest.TestCase):
                 ]
             ),
             "js/games.js": "games",
+            "js/game-installer.js": "game installer",
+            "js/game-library.js": "game library",
             "js/filesystem.js": "filesystem",
             "js/file-operations.js": "file operations",
             "js/dialogs.js": "dialogs",
             "js/offline.js": "offline",
+            "js/offline-worker.js": "offline worker",
             "js/main.js": 'const APP_VERSION = "old";\n',
             "css/main.css": "css",
+            "css/fonts/test.ttf": "font",
+            "vendor/fflate/0.8.3/index.js": "fflate",
             "swf/bike-mania/main.swf": "swf",
             "iframe/doom/index.html": "doom",
             "iframe/inside-the-firewall/index.html": "firewall",
@@ -166,6 +174,7 @@ class DeployTests(unittest.TestCase):
         paths = deploy.BuildPaths(self.source_dir)
 
         deploy.update_html(paths, "26.07.28-abcdef1")
+        deploy.write_offline_game_manifest(paths, "26.07.28-abcdef1")
         deploy.write_version_metadata(paths, "26.07.28-abcdef1")
 
         main = paths.main_js.read_text(encoding="utf-8")
@@ -173,6 +182,16 @@ class DeployTests(unittest.TestCase):
         self.assertIn('const APP_VERSION = "26.07.28-abcdef1";', main)
         self.assertIn(
             f'js/main.js?v={deploy.get_short_hash(paths.main_js)}"',
+            html,
+        )
+        self.assertIn(
+            "js/game-installer.js?v="
+            f'{deploy.get_short_hash(paths.js / "game-installer.js")}"',
+            html,
+        )
+        self.assertIn(
+            "js/game-library.js?v="
+            f'{deploy.get_short_hash(paths.js / "game-library.js")}"',
             html,
         )
         self.assertIn(
@@ -185,7 +204,30 @@ class DeployTests(unittest.TestCase):
             html,
         )
         metadata = json.loads(paths.version_json.read_text(encoding="utf-8"))
-        self.assertGreater(metadata.pop("offlineBytes"), 0)
+        self.assertIn(".ttf", deploy.PRECACHE_FILE_SUFFIXES)
+        self.assertGreater(metadata["offlineBytes"], 0)
+        self.assertGreater(metadata["bundledGameBytes"], 0)
+        offline_manifest = json.loads(
+            paths.offline_games_json.read_text(encoding="utf-8")
+        )
+        self.assertEqual(offline_manifest["version"], "26.07.28-abcdef1")
+        self.assertEqual(offline_manifest["games"]["bike-mania"]["type"], "swf")
+        self.assertEqual(offline_manifest["games"]["doom"]["type"], "iframe")
+        self.assertEqual(
+            {item["url"] for item in offline_manifest["games"]["doom"]["files"]},
+            {"iframe/doom/index.html", "dos/doom/doom.jsdos"},
+        )
+        self.assertTrue(offline_manifest["runtime"]["files"])
+        self.assertEqual(
+            metadata["bundledGameBytes"],
+            offline_manifest["runtime"]["bytes"]
+            + sum(
+                game["bytes"]
+                for game in offline_manifest["games"].values()
+            ),
+        )
+        metadata.pop("offlineBytes")
+        metadata.pop("bundledGameBytes")
         self.assertEqual(
             metadata,
             {"revision": "abcdef1", "version": "26.07.28-abcdef1"},
@@ -232,6 +274,10 @@ class DeployTests(unittest.TestCase):
         self.make_source()
         self.add_generated_runtime(self.source_dir)
         deploy.update_html(
+            deploy.BuildPaths(self.source_dir),
+            "26.07.28-abcdef1",
+        )
+        deploy.write_offline_game_manifest(
             deploy.BuildPaths(self.source_dir),
             "26.07.28-abcdef1",
         )
@@ -292,6 +338,7 @@ class DeployTests(unittest.TestCase):
             (self.output_dir / "version.json").read_text(encoding="utf-8")
         )
         self.assertGreater(metadata.pop("offlineBytes"), 0)
+        self.assertGreater(metadata.pop("bundledGameBytes"), 0)
         self.assertEqual(
             metadata,
             {"revision": "abcdef1", "version": "26.07.28-abcdef1"},

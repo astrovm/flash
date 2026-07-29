@@ -20,7 +20,10 @@ DEFAULT_OUTPUT_DIR = PROJECT_DIR / "dist"
 RUFFLE_RELEASE_PATH = PROJECT_DIR / "tools" / "ruffle-release.json"
 RUFFLE_DOWNLOAD_ROOT = "https://github.com/ruffle-rs/ruffle/releases/download"
 RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
+FFLATE_VERSION = "0.8.3"
+FFLATE_SOURCE = PROJECT_DIR / "node_modules" / "fflate"
 PRECACHE_FILE_SUFFIXES = {
+    ".ttf",
     ".woff",
     ".woff2",
     ".css",
@@ -70,10 +73,21 @@ class BuildPaths:
         return self.root / "version.json"
 
     @property
+    def offline_games_json(self):
+        return self.root / "offline-games.json"
+
+    @property
+    def fflate_js(self):
+        return self.root / "vendor" / "fflate" / FFLATE_VERSION / "index.js"
+
+    @property
     def asset_paths(self):
         return {
             "ruffle": self.js / "ruffle.js",
+            "fflate": self.fflate_js,
             "games_js": self.js / "games.js",
+            "game_installer_js": self.js / "game-installer.js",
+            "game_library_js": self.js / "game-library.js",
             "filesystem_js": self.js / "filesystem.js",
             "file_operations_js": self.js / "file-operations.js",
             "dialogs_js": self.js / "dialogs.js",
@@ -81,6 +95,17 @@ class BuildPaths:
             "main_js": self.main_js,
             "main_css": self.css / "main.css",
         }
+
+
+def install_fflate(output_dir, source_dir=FFLATE_SOURCE):
+    source_javascript = source_dir / "umd" / "index.js"
+    source_license = source_dir / "LICENSE"
+    if not source_javascript.is_file() or not source_license.is_file():
+        raise RuntimeError("fflate is not installed; run `bun install --frozen-lockfile`")
+    destination = Path(output_dir) / "vendor" / "fflate" / FFLATE_VERSION
+    destination.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_javascript, destination / "index.js")
+    shutil.copy2(source_license, destination / "LICENSE")
 
 
 def load_ruffle_release(path=RUFFLE_RELEASE_PATH):
@@ -199,8 +224,20 @@ def update_html(paths, version):
         r'<script src="js/ruffle\.[^"]+" ?[^>]*></script>': (
             f'<script src="js/ruffle.js?v={short_hashes["ruffle"]}"></script>'
         ),
+        r'<script src="vendor/fflate/0\.8\.3/index\.[^"]+" ?[^>]*></script>': (
+            '<script src="vendor/fflate/0.8.3/index.js?'
+            f'v={short_hashes["fflate"]}"></script>'
+        ),
         r'<script src="js/games\.[^"]+" ?[^>]*></script>': (
             f'<script src="js/games.js?v={short_hashes["games_js"]}"></script>'
+        ),
+        r'<script src="js/game-installer\.[^"]+" ?[^>]*></script>': (
+            '<script src="js/game-installer.js?'
+            f'v={short_hashes["game_installer_js"]}"></script>'
+        ),
+        r'<script src="js/game-library\.[^"]+" ?[^>]*></script>': (
+            '<script src="js/game-library.js?'
+            f'v={short_hashes["game_library_js"]}"></script>'
         ),
         r'<script src="js/filesystem\.[^"]+" ?[^>]*></script>': (
             f'<script src="js/filesystem.js?v={short_hashes["filesystem_js"]}"></script>'
@@ -238,10 +275,18 @@ def write_version_metadata(paths, version):
         if path.is_file()
         and path != paths.version_json
         and path.suffix.lower() in PRECACHE_FILE_SUFFIXES
+        and not is_optional_offline_path(path.relative_to(paths.root))
+    )
+    offline_manifest = json.loads(
+        paths.offline_games_json.read_text(encoding="utf-8")
+    )
+    bundled_game_bytes = offline_manifest["runtime"]["bytes"] + sum(
+        entry["bytes"] for entry in offline_manifest["games"].values()
     )
     paths.version_json.write_text(
         json.dumps(
             {
+                "bundledGameBytes": bundled_game_bytes,
                 "offlineBytes": offline_bytes,
                 "revision": revision,
                 "version": version,
@@ -250,6 +295,90 @@ def write_version_metadata(paths, version):
             separators=(",", ":"),
         )
         + "\n",
+        encoding="utf-8",
+    )
+
+
+def is_optional_offline_path(relative_path):
+    path = relative_path.as_posix()
+    return (
+        path.startswith(("swf/", "iframe/", "dos/"))
+        or (
+            path.startswith("js/")
+            and (
+                path.endswith(".wasm")
+                or Path(path).name.startswith("core.ruffle.")
+            )
+        )
+    )
+
+
+def offline_file_entry(root, path):
+    relative = path.relative_to(root).as_posix()
+    return {"bytes": path.stat().st_size, "url": relative}
+
+
+def offline_revision(root, files):
+    digest = hashlib.sha256()
+    for path in sorted(files):
+        digest.update(path.relative_to(root).as_posix().encode())
+        with path.open("rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()[:16]
+
+
+def write_offline_game_manifest(paths, version):
+    runtime_files = sorted(
+        path
+        for path in paths.js.iterdir()
+        if path.is_file()
+        and (
+            path.suffix == ".wasm"
+            or (
+                path.name.startswith("core.ruffle.")
+                and path.suffix == ".js"
+            )
+        )
+    )
+    games = {}
+    game_ids = {
+        path.name
+        for parent in (paths.root / "swf", paths.root / "iframe")
+        if parent.is_dir()
+        for path in parent.iterdir()
+        if path.is_dir()
+    }
+    for game_id in sorted(game_ids):
+        game_type = "swf" if (paths.root / "swf" / game_id).is_dir() else "iframe"
+        roots = [paths.root / game_type / game_id]
+        if game_id == "doom" and (paths.root / "dos" / "doom").is_dir():
+            roots.append(paths.root / "dos" / "doom")
+        files = sorted(
+            path
+            for game_root in roots
+            for path in game_root.rglob("*")
+            if path.is_file()
+        )
+        games[game_id] = {
+            "bytes": sum(path.stat().st_size for path in files),
+            "files": [offline_file_entry(paths.root, path) for path in files],
+            "revision": offline_revision(paths.root, files),
+            "type": game_type,
+        }
+    manifest = {
+        "games": games,
+        "runtime": {
+            "bytes": sum(path.stat().st_size for path in runtime_files),
+            "files": [
+                offline_file_entry(paths.root, path) for path in runtime_files
+            ],
+            "revision": offline_revision(paths.root, runtime_files),
+        },
+        "version": version,
+    }
+    paths.offline_games_json.write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
 
@@ -307,12 +436,14 @@ def validate_output(output_dir):
     paths = BuildPaths(output_dir)
     required = (
         paths.html,
+        paths.offline_games_json,
         paths.version_json,
         output_dir / "sw.js",
         output_dir / "swf" / "bike-mania" / "main.swf",
         output_dir / "iframe" / "doom" / "index.html",
         output_dir / "iframe" / "inside-the-firewall" / "index.html",
         output_dir / "dos" / "doom" / "doom.jsdos",
+        paths.fflate_js,
     )
     missing = [path.relative_to(output_dir) for path in required if not path.is_file()]
     if missing:
@@ -321,7 +452,10 @@ def validate_output(output_dir):
     html = paths.html.read_text(encoding="utf-8")
     for asset in (
         "js/ruffle.js",
+        "vendor/fflate/0.8.3/index.js",
         "js/games.js",
+        "js/game-installer.js",
+        "js/game-library.js",
         "js/filesystem.js",
         "js/file-operations.js",
         "js/dialogs.js",
@@ -339,13 +473,32 @@ def validate_output(output_dir):
         version_metadata = json.loads(paths.version_json.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as error:
         raise RuntimeError("Build output has invalid version metadata") from error
-    if set(version_metadata) != {"offlineBytes", "revision", "version"}:
+    if set(version_metadata) != {
+        "bundledGameBytes",
+        "offlineBytes",
+        "revision",
+        "version",
+    }:
         raise RuntimeError("Build output has invalid version metadata")
     if (
         not isinstance(version_metadata["offlineBytes"], int)
         or version_metadata["offlineBytes"] <= 0
+        or not isinstance(version_metadata["bundledGameBytes"], int)
+        or version_metadata["bundledGameBytes"] <= 0
     ):
         raise RuntimeError("Build output has invalid offline download size")
+    try:
+        offline_manifest = json.loads(
+            paths.offline_games_json.read_text(encoding="utf-8")
+        )
+    except (json.JSONDecodeError, OSError) as error:
+        raise RuntimeError("Build output has invalid offline game manifest") from error
+    if (
+        offline_manifest.get("version") != version_metadata["version"]
+        or not offline_manifest.get("games")
+        or not offline_manifest.get("runtime", {}).get("files")
+    ):
+        raise RuntimeError("Build output has invalid offline game manifest")
     if not version_metadata["version"].endswith(f"-{version_metadata['revision']}"):
         raise RuntimeError("Build output has inconsistent version metadata")
     print("Build output validated successfully")
@@ -379,8 +532,10 @@ def build(output_dir=DEFAULT_OUTPUT_DIR, revision="HEAD"):
         staging_dir = Path(temporary_directory) / "output"
         shutil.copytree(source_dir, staging_dir)
         paths = BuildPaths(staging_dir)
+        install_fflate(staging_dir)
         download_ruffle(paths.js)
         update_html(paths, version)
+        write_offline_game_manifest(paths, version)
         write_version_metadata(paths, version)
         generate_service_worker(staging_dir)
         validate_output(staging_dir)

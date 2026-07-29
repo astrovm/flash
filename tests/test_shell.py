@@ -81,6 +81,34 @@ class ShellSourceTests(unittest.TestCase):
         self.assertNotIn("MAX_OPEN_WINDOWS", self.javascript)
         self.assertNotIn("ensureWindowCapacity", self.javascript)
 
+    def test_internet_games_is_integrated_with_the_shell(self):
+        installer_path = PROJECT_DIR / "site" / "js" / "game-installer.js"
+        library_path = PROJECT_DIR / "site" / "js" / "game-library.js"
+        self.assertTrue(installer_path.is_file())
+        self.assertTrue(library_path.is_file())
+        installer_index = self.html.index('src="js/game-installer.js')
+        library_index = self.html.index('src="js/game-library.js')
+        main_index = self.html.index('src="js/main.js')
+        self.assertLess(installer_index, library_index)
+        self.assertLess(library_index, main_index)
+        self.assertJavascriptContains(
+            '"__internet-games": {',
+            'title: "Internet Games"',
+            'gameLibraryInitialization = initializeGameLibrary()',
+            'if (shortcutId === "__internet-games") wireInternetGames(win)',
+            "url: game.url ||",
+            "base: game.base ||",
+            "await gameLibrary.match(originalRequest)",
+            "const findBundledGameByTitle =",
+            'action.title = "This game is already included with Astro Flash."',
+            "let availableGameId =",
+            "availableGameId = gameId",
+            "if (gameLibraryReady && gameLibrary && !gameLibraryError)",
+        )
+        self.assertIn(".internet-games-content", self.css)
+        self.assertIn(".internet-game-card", self.css)
+        self.assertNotIn("astro-flash-installed", self.offline_javascript)
+
     def test_boot_screen_uses_xp_artwork(self):
         self.assertIn('src="assets/xp/loading-logo.jpg"', self.html)
         self.assertIn('src="assets/xp/loading-microsoft.jpg"', self.html)
@@ -606,12 +634,28 @@ class ShellSourceTests(unittest.TestCase):
             'content.className = "project-settings-content"',
             'openSystemWindow("__astro-settings")',
             "wireProjectSettings(win)",
-            "isProjectSettings ? 320 : 500",
+            "isProjectSettings ? 540 : isInternetGames ? 760 : 700",
+            "isProjectSettings ? 420 : isInternetGames ? 540 : 500",
+            'role="tablist" aria-label="Astro Flash Settings"',
+            ">General</button>",
+            ">Offline</button>",
+            ">Updates</button>",
+            ">Recovery</button>",
+            '"Connected to the internet"',
+            '"Ready for offline use"',
+            'data-project-action="manage-games"',
+            'data-internet-tab="installed"',
             "offlineManager.checkForUpdates()",
             "offlineManager.applyUpdate()",
             "offlineManager.repair()",
-            '"Check for Updates"',
-            '"Repair Offline Files"',
+            "offlineManager.downloadGame(",
+            "offlineManager.removeGame(",
+            "offlineManager.downloadAllGames()",
+            "offlineManager.removeAllGames()",
+            ">Check for Updates</button>",
+            ">Repair System Files</button>",
+            ">Download All Games</button>",
+            ">Remove Offline Games</button>",
             '"Offline download progress"',
             "state.downloadBytes",
             "state.downloadMetadataError",
@@ -640,7 +684,15 @@ class ShellSourceTests(unittest.TestCase):
             '"online"',
         ):
             self.assertIn(token, self.offline_javascript)
-        self.assertIn('globIgnores: ["version.json"]', self.workbox_config)
+        for optional_pattern in (
+            '"swf/**"',
+            '"iframe/**"',
+            '"dos/**"',
+            '"js/*.wasm"',
+            '"js/core.ruffle.*.js"',
+        ):
+            self.assertIn(optional_pattern, self.workbox_config)
+        self.assertIn('importScripts: ["js/offline-worker.js"]', self.workbox_config)
         self.assertIn("skipWaiting: false", self.workbox_config)
         self.assertIn("clientsClaim: true", self.workbox_config)
 

@@ -20,8 +20,10 @@ a Windows XP desktop.
   of unfocused games
 - Desktop themes, wallpapers, screen savers, appearance schemes, and simulated
   display resolutions
-- Optional full-collection offline download with update checks, progress,
-  storage reporting, and repair controls
+- Automatic offline Windows XP shell plus individual or full included-game
+  downloads with update checks, progress, storage reporting, and repair controls
+- Internet Games catalog for finding, installing, playing, and uninstalling
+  compatible Flashpoint GameZIP and Legacy titles
 
 ## Development
 
@@ -49,7 +51,8 @@ python tools/dev_server.py --port 8000
 ```
 
 The server reads `dist/` by default and refuses to serve an unbuilt tree. Use
-`--directory` to serve another completed build.
+`--directory` to serve another completed build. It also provides the
+same-origin `/api/games` catalog proxy used by Internet Games.
 
 ### Deployment
 
@@ -73,11 +76,38 @@ workflow checks for a newer stable release and opens a reviewable dependency PR.
 Repository settings must allow GitHub Actions to create pull requests for that
 automation to work. Ruffle update PRs are never auto-merged.
 
-When offline mode is enabled, the settings dialog reports the actual worker
-state while the complete collection downloads. Astro Flash checks for updates
-at startup, when connectivity returns, and when a long-lived tab becomes
-visible again. An installed update waits for user confirmation before the
-worker activates and reloads the page.
+The Windows XP application shell is cached automatically. Included games are
+kept out of that small default download and can be saved individually or all at
+once from Settings > Offline. The shared Ruffle runtime is downloaded once when
+the first Flash game is selected. Astro Flash checks for updates at startup,
+when connectivity returns, and when a long-lived tab becomes visible again. An
+installed update waits for user confirmation before the worker activates and
+reloads the page.
+
+### Internet Games catalog
+
+The browser keeps installed game metadata in IndexedDB and extracted GameZIP
+files in a dedicated Cache Storage cache. These files are device-local and are
+not part of the generated offline collection.
+
+Production uses `worker/catalog-worker.mjs` as a same-origin `/api/games*`
+Cloudflare Worker route in front of the GitHub Pages origin. The production
+route is declared in `worker/wrangler.toml`. Deploy it locally with:
+
+```bash
+bun run deploy:worker
+```
+
+Pushes to `main` deploy and smoke-test the Worker before GitHub Pages is
+released. The repository must define `CLOUDFLARE_ACCOUNT_ID` and a narrowly
+scoped `CLOUDFLARE_API_TOKEN` as GitHub Actions secrets. The Worker normalizes
+Flashpoint search metadata and relays supported game files because the upstream
+services do not permit direct browser downloads from this site.
+
+Internet Games supports playable Flash entries stored as either GameZIP or
+Legacy data. GameZIP installations are fully local. Legacy installations keep
+the launch SWF immediately and cache additional assets as the game requests
+them. Other platforms remain unsupported.
 
 ### Game Support
 

@@ -1,0 +1,8 @@
+name = "astro-flash-catalog"
+main = "catalog-worker.mjs"
+compatibility_date = "2026-07-29"
+workers_dev = false
+
+[[routes]]
+pattern = "flash.4st.li/api/games*"
+zone_name = "4st.li"
