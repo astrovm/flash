@@ -1,8 +1,9 @@
 {
   "packageManager": "bun@1.3.14",
   "scripts": {
-    "test": "bun run typecheck && bun test tests/deploy.test.ts && python -m unittest discover -s tests -p 'test_*.py' -v && node --check site/js/games.js && node --check site/js/game-installer.js && node --check site/js/game-library.js && node --check site/js/filesystem.js && node --check site/js/file-operations.js && node --check site/js/dialogs.js && node --check site/js/offline.js && node --check site/js/offline-worker.js && node --check site/js/main.js && node --check worker/catalog-worker.mjs && node tools/validate_icons.mjs",
+    "test": "bun run typecheck && bun test tests/deploy.test.ts tests/catalog.test.ts tests/dev-server.test.ts && python -m unittest discover -s tests -p 'test_*.py' -v && node --check site/js/games.js && node --check site/js/game-installer.js && node --check site/js/game-library.js && node --check site/js/filesystem.js && node --check site/js/file-operations.js && node --check site/js/dialogs.js && node --check site/js/offline.js && node --check site/js/offline-worker.js && node --check site/js/main.js && node tools/validate_icons.mjs",
     "build": "bun tools/deploy.ts",
+    "dev": "bun tools/dev-server.ts",
     "deploy:worker": "wrangler deploy --config worker/wrangler.toml",
     "typecheck": "tsc --noEmit",
     "validate:icons": "node tools/validate_icons.mjs --require-all"
