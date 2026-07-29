@@ -2,5 +2,11 @@ dist/
 node_modules/
 source-media/
 site/iframe/inside-the-firewall/
+site/iframe/revcdos/GamepadEmulator.js
+site/iframe/revcdos/game.html
+site/iframe/revcdos/game.js
+site/iframe/revcdos/idbfs.js
+site/iframe/revcdos/index.js
+site/iframe/revcdos/jsdos-cloud-sdk.js
 site/swf/
 site/vendor/

@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>reVCDOS</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #05070b;
+        color: #fff;
+        font:
+          13px Tahoma,
+          sans-serif;
+      }
+
+      #setup {
+        display: grid;
+        width: 100%;
+        height: 100%;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 25% 20%, #8f285d 0, transparent 36%),
+          radial-gradient(circle at 80% 75%, #125b81 0, transparent 42%),
+          #080a12;
+      }
+
+      .setup-card {
+        width: min(560px, 100%);
+        padding: 24px;
+        border: 1px solid #8995aa;
+        background: rgba(7, 10, 18, 0.94);
+        box-shadow: 0 12px 40px #000;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        color: #ff91c8;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 8px 0;
+        line-height: 1.45;
+      }
+
+      .notice {
+        margin: 18px 0;
+        padding: 12px;
+        border-left: 4px solid #f0b43c;
+        background: #202331;
+      }
+
+      .setup-action {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 7px 16px;
+        border: 1px solid #fff;
+        background: linear-gradient(#f8f8f8, #c8c8c8);
+        color: #111;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .setup-action:active {
+        background: linear-gradient(#bbb, #eee);
+      }
+
+      .setup-action:disabled {
+        color: #666;
+        cursor: wait;
+      }
+
+      #file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      #selection {
+        min-height: 18px;
+        color: #a9d8ff;
+      }
+
+      a {
+        color: #84c9ff;
+      }
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="setup">
+      <section class="setup-card">
+        <h1>reVCDOS</h1>
+        <p>
+          The reVCDOS browser engine is installed. Compatible game data is not
+          included with Astro Flash.
+        </p>
+        <div class="notice">
+          Download the compatible <strong>vc-assets</strong> package
+          automatically, or select one you already have. The automatic download
+          is about 860 MiB and uses peer-to-peer connections.
+        </div>
+        <button
+          id="download-button"
+          class="setup-action"
+          type="button"
+          disabled
+        >
+          Loading downloader…
+        </button>
+        <label class="setup-action" for="file-input"
+          >Select vc-assets folder…</label
+        >
+        <input id="file-input" type="file" webkitdirectory directory />
+        <p id="selection" role="status"></p>
+        <p>
+          Port by
+          <a href="https://dos.zone/revcdos/" target="_blank" rel="noreferrer"
+            >DOS.Zone Team</a
+          >. Cloud-save support and the original in-game attribution are
+          preserved.
+        </p>
+      </section>
+    </main>
+
+    <script type="module">
+      import WebTorrent from "../../vendor/webtorrent/3.0.21/webtorrent.min.js";
+
+      ("use strict");
+
+      const TORRENT_URL = "revcdoseng.torrent";
+      const DOWNLOAD_SIZE = 901786388;
+      const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
+      const WEB_TRACKERS = ["wss://cloud.dos.zone:8444/announce-ws"];
+      const input = document.getElementById("file-input");
+      const downloadButton = document.getElementById("download-button");
+      const setup = document.getElementById("setup");
+      const selection = document.getElementById("selection");
+      let files = new Map();
+      let initialFiles = [];
+      let currentFile = -1;
+      let gameFrame = null;
+
+      const readFile = (file) => file.arrayBuffer();
+
+      const cacheEngineForOfflineUse = () => {
+        window.parent.postMessage(
+          { event: "astro.offline-game-ready", gameId: "revcdos" },
+          location.origin,
+        );
+      };
+
+      const startGame = (selectedFiles, message) => {
+        files = selectedFiles;
+        selection.textContent = message;
+        gameFrame = document.createElement("iframe");
+        gameFrame.src = "game.html";
+        gameFrame.allow = "fullscreen";
+        gameFrame.title = "reVCDOS";
+        setup.replaceWith(gameFrame);
+      };
+
+      const formatBytes = (bytes) => {
+        if (!Number.isFinite(bytes) || bytes <= 0) return "0 MiB";
+        return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
+      };
+
+      const showProgress = (torrent) => {
+        const percent = (torrent.progress * 100).toFixed(1);
+        selection.textContent = `${percent}% · ${formatBytes(
+          torrent.downloaded,
+        )} of ${formatBytes(torrent.length)} · ${formatBytes(
+          torrent.downloadSpeed,
+        )}/s · ${torrent.numPeers} peer${torrent.numPeers === 1 ? "" : "s"}`;
+      };
+
+      const downloadGameData = async () => {
+        if (!navigator.storage?.getDirectory) {
+          throw new Error(
+            "Persistent browser storage is unavailable. Select a local vc-assets folder instead.",
+          );
+        }
+
+        const cached = localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true";
+        const estimate = await navigator.storage.estimate();
+        const available = (estimate.quota || 0) - (estimate.usage || 0);
+        if (!cached && estimate.quota && available < DOWNLOAD_SIZE) {
+          throw new Error(
+            `Not enough browser storage. ${formatBytes(DOWNLOAD_SIZE)} is required and ${formatBytes(
+              available,
+            )} is available.`,
+          );
+        }
+
+        downloadButton.disabled = true;
+        downloadButton.textContent = cached
+          ? "Opening downloaded copy…"
+          : "Connecting to peers…";
+        selection.textContent = cached
+          ? "Opening the downloaded game data…"
+          : "Connecting to peers. Your IP address is visible to torrent peers.";
+
+        await navigator.storage.persist?.();
+        const rootDir = await navigator.storage.getDirectory();
+        const rtcResponse = await fetch("/api/rtc", { cache: "no-store" });
+        if (!rtcResponse.ok) {
+          throw new Error(
+            "Peer connection service is unavailable. Try again in a moment.",
+          );
+        }
+        const { iceServers } = await rtcResponse.json();
+        if (!Array.isArray(iceServers) || iceServers.length === 0) {
+          throw new Error("Peer connection service returned no servers.");
+        }
+        const client = new WebTorrent({
+          dht: false,
+          lsd: false,
+          maxConns: 20,
+          tracker: {
+            rtcConfig: { iceServers },
+          },
+          uploadLimit: 262144,
+        });
+
+        client.on("error", (error) => {
+          selection.textContent = `Download failed: ${error.message}`;
+          downloadButton.disabled = false;
+        });
+
+        const torrent = client.add(new URL(TORRENT_URL, location.href).href, {
+          announce: WEB_TRACKERS,
+          storeOpts: { rootDir },
+          skipVerify: cached,
+          uploads: 2,
+        });
+
+        let lastProgressUpdate = 0;
+        torrent.on("download", () => {
+          const now = Date.now();
+          if (now - lastProgressUpdate < 250) return;
+          lastProgressUpdate = now;
+          showProgress(torrent);
+        });
+        torrent.on("wire", () => {
+          selection.textContent = "Peer connected. Starting download…";
+        });
+        torrent.on("noPeers", () => {
+          selection.textContent =
+            "No browser peers found yet. Retrying the trackers…";
+        });
+        torrent.on("warning", (warning) => {
+          if (warning.message.startsWith("Unsupported tracker protocol:")) {
+            return;
+          }
+          console.warn("reVCDOS torrent warning:", warning);
+        });
+        torrent.on("error", (error) => {
+          selection.textContent = `Download failed: ${error.message}`;
+          downloadButton.disabled = false;
+        });
+        torrent.on("done", () => {
+          localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
+          cacheEngineForOfflineUse();
+          const downloadedFiles = new Map(
+            torrent.files.map((file) => [file.path.toLowerCase(), file]),
+          );
+          startGame(
+            downloadedFiles,
+            `${downloadedFiles.size.toLocaleString()} files ready. Starting reVCDOS…`,
+          );
+        });
+      };
+
+      downloadButton.disabled = false;
+      downloadButton.textContent =
+        localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true"
+          ? "Use downloaded copy"
+          : "Download automatically (860 MiB)";
+
+      downloadButton.addEventListener("click", () => {
+        downloadGameData().catch((error) => {
+          selection.textContent = error.message;
+          downloadButton.disabled = false;
+          downloadButton.textContent = "Try automatic download again";
+        });
+      });
+
+      input.addEventListener("change", () => {
+        const selectedFiles = new Map(
+          Array.from(input.files).map((file) => [
+            file.webkitRelativePath.toLowerCase(),
+            file,
+          ]),
+        );
+        if (!selectedFiles.size) return;
+
+        cacheEngineForOfflineUse();
+        startGame(
+          selectedFiles,
+          `${selectedFiles.size.toLocaleString()} files selected. Starting reVCDOS…`,
+        );
+      });
+
+      window.addEventListener("message", async (event) => {
+        if (!gameFrame || event.source !== gameFrame.contentWindow) return;
+        const message = event.data;
+        if (!message || typeof message.event !== "string") return;
+
+        if (message.event === "module.initfs") {
+          const preload = await (await fetch("preload_files.list")).text();
+          const requested = new Set(
+            preload
+              .split("\n")
+              .map((line) => line.trim().toLowerCase())
+              .filter((line) => line && !line.startsWith("#")),
+          );
+          initialFiles = Array.from(requested).filter((path) =>
+            files.has(path),
+          );
+          currentFile = -1;
+          event.source.postMessage(
+            { event: ">module.initfs", files: initialFiles.length },
+            location.origin,
+          );
+          return;
+        }
+
+        if (message.event === "module.initfile") {
+          currentFile += 1;
+          if (currentFile >= initialFiles.length) return;
+          const path = initialFiles[currentFile];
+          const buffer = await readFile(files.get(path));
+          event.source.postMessage(
+            {
+              event: ">module.initfile",
+              path,
+              data: new Uint8Array(buffer),
+            },
+            location.origin,
+            [buffer],
+          );
+          return;
+        }
+
+        if (message.event === "module.getasyncurl" && message.file) {
+          const path = String(message.file).toLowerCase();
+          const file = files.get(path);
+          const buffer = file ? await readFile(file) : null;
+          event.source.postMessage(
+            {
+              event: ">module.getasyncurl",
+              file: message.file,
+              data: buffer ? new Uint8Array(buffer) : undefined,
+            },
+            location.origin,
+            buffer ? [buffer] : [],
+          );
+          return;
+        }
+
+        if (message.event === "request-fullscreen") {
+          gameFrame.requestFullscreen?.();
+        }
+      });
+    </script>
+  </body>
+</html>
