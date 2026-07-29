@@ -67,8 +67,102 @@
     if (typeof name !== "string" || !name || name.indexOf("\0") !== -1 || name.includes("\\") || name.startsWith("/") || /^[a-zA-Z]:/.test(name)) fail("Unsafe ZIP entry name");
     const isDirectory = name.endsWith("/");
     const parts = (isDirectory ? name.slice(0, -1) : name).split("/");
-    if (parts.some((part) => !part || part === "." || part === "..")) fail("Unsafe ZIP entry name");
+    if (
+      parts.some((part) => {
+        if (!part || part === "." || part === "..") return true;
+        let decoded;
+        try {
+          decoded = decodeURIComponent(part);
+        } catch (_) {
+          return true;
+        }
+        return (
+          decoded === "." ||
+          decoded === ".." ||
+          /[\\/?#]/.test(decoded)
+        );
+      })
+    )
+      fail("Unsafe ZIP entry name");
     return name;
+  }
+
+  function validateZipMetadata(zipBytes, limits = {}) {
+    if (!(zipBytes instanceof Uint8Array))
+      fail("Game archive must be a Uint8Array");
+    const max = Object.assign({}, DEFAULT_LIMITS, limits);
+    const view = new DataView(
+      zipBytes.buffer,
+      zipBytes.byteOffset,
+      zipBytes.byteLength,
+    );
+    const minimumEocdBytes = 22;
+    const maximumCommentBytes = 0xffff;
+    let eocd = -1;
+    for (
+      let offset = zipBytes.byteLength - minimumEocdBytes;
+      offset >=
+      Math.max(0, zipBytes.byteLength - minimumEocdBytes - maximumCommentBytes);
+      offset -= 1
+    ) {
+      if (
+        view.getUint32(offset, true) === 0x06054b50 &&
+        offset + minimumEocdBytes + view.getUint16(offset + 20, true) ===
+          zipBytes.byteLength
+      ) {
+        eocd = offset;
+        break;
+      }
+    }
+    if (eocd < 0) fail("ZIP metadata is invalid");
+    if (view.getUint16(eocd + 4, true) || view.getUint16(eocd + 6, true))
+      fail("Multi-disk ZIP files are not supported");
+    const entriesOnDisk = view.getUint16(eocd + 8, true);
+    const entryCount = view.getUint16(eocd + 10, true);
+    const directoryBytes = view.getUint32(eocd + 12, true);
+    const directoryOffset = view.getUint32(eocd + 16, true);
+    if (
+      entriesOnDisk !== entryCount ||
+      entryCount === 0xffff ||
+      directoryBytes === 0xffffffff ||
+      directoryOffset === 0xffffffff ||
+      entryCount > max.maxFiles ||
+      directoryOffset + directoryBytes > eocd
+    ) {
+      fail(
+        entryCount > max.maxFiles
+          ? "ZIP has too many files"
+          : "ZIP metadata is invalid",
+      );
+    }
+    let offset = directoryOffset;
+    let total = 0;
+    for (let index = 0; index < entryCount; index += 1) {
+      if (
+        offset + 46 > eocd ||
+        view.getUint32(offset, true) !== 0x02014b50
+      ) {
+        fail("ZIP metadata is invalid");
+      }
+      const fileBytes = view.getUint32(offset + 24, true);
+      const nameBytes = view.getUint16(offset + 28, true);
+      const extraBytes = view.getUint16(offset + 30, true);
+      const commentBytes = view.getUint16(offset + 32, true);
+      const next = offset + 46 + nameBytes + extraBytes + commentBytes;
+      if (fileBytes === 0xffffffff || next > eocd)
+        fail("ZIP metadata is invalid");
+      const isDirectory =
+        nameBytes > 0 && zipBytes[offset + 46 + nameBytes - 1] === 0x2f;
+      if (!isDirectory) {
+        if (fileBytes > max.maxFileBytes) fail("ZIP file is too large");
+        total += fileBytes;
+        if (total > max.maxTotalBytes) fail("ZIP is too large");
+      }
+      offset = next;
+    }
+    if (offset > directoryOffset + directoryBytes)
+      fail("ZIP metadata is invalid");
+    return { entryCount, totalBytes: total };
   }
 
   function entryBytes(entry) {
@@ -96,7 +190,13 @@
     });
   }
 
-  function cacheKey(origin, uuid, path) { return origin.replace(/\/$/, "") + "/__installed-games/" + uuid + "/" + path; }
+  function cacheKey(origin, uuid, path) {
+    const prefix =
+      origin.replace(/\/$/, "") + "/__installed-games/" + uuid + "/";
+    const key = new URL(path, prefix).href;
+    if (!key.startsWith(prefix)) fail("Unsafe ZIP entry name");
+    return key;
+  }
   function makeResponse(bytes, dependencies, path) {
     if (dependencies.responseFactory)
       return dependencies.responseFactory(bytes, path);
@@ -129,6 +229,7 @@
     if (game.packageType !== "gamezip")
       fail("Legacy games must be installed from their launch SWF");
     const launchPath = archiveLaunchPath(game.launchCommand);
+    validateZipMetadata(zipBytes, dependencies.limits);
     const files = validateZipEntries(
       dependencies.unzipSync(zipBytes),
       dependencies.limits,
@@ -217,5 +318,5 @@
     await deleteMetadata(dependencies.store, "flashpoint:" + uuid.toLowerCase());
   }
 
-  return { DEFAULT_LIMITS, validateCatalogRecord, archiveLaunchPath, safeArchivePath, validateZipEntries, install, installLegacy, uninstall };
+  return { DEFAULT_LIMITS, validateCatalogRecord, archiveLaunchPath, safeArchivePath, validateZipMetadata, validateZipEntries, install, installLegacy, uninstall };
 });

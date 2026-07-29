@@ -66,6 +66,7 @@ class DeployTests(unittest.TestCase):
             "js/offline-worker.js": "offline worker",
             "js/main.js": 'const APP_VERSION = "old";\n',
             "css/main.css": "css",
+            "css/fonts/test.ttf": "font",
             "vendor/fflate/0.8.3/index.js": "fflate",
             "swf/bike-mania/main.swf": "swf",
             "iframe/doom/index.html": "doom",
@@ -203,6 +204,7 @@ class DeployTests(unittest.TestCase):
             html,
         )
         metadata = json.loads(paths.version_json.read_text(encoding="utf-8"))
+        self.assertIn(".ttf", deploy.PRECACHE_FILE_SUFFIXES)
         self.assertGreater(metadata["offlineBytes"], 0)
         self.assertGreater(metadata["bundledGameBytes"], 0)
         offline_manifest = json.loads(

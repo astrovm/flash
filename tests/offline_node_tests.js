@@ -109,6 +109,7 @@ const manifest = {
 const makeEnvironment = ({
   registration = new Registration({ active: new Worker() }),
   remoteVersion = "26.07.29-aaaaaaa",
+  storageValues = {},
 } = {}) => {
   const serviceWorker = new Events();
   serviceWorker.controller = registration.active;
@@ -124,6 +125,7 @@ const makeEnvironment = ({
   const deletedCaches = [];
   const storage = new MemoryStorage({
     astroFlashLastUpdateCheck: "1800000000000",
+    ...storageValues,
   });
   let reloads = 0;
   const environment = new Events();
@@ -238,6 +240,43 @@ const makeEnvironment = ({
   await manager.removeAllGames();
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, []);
   assert(initial.deletedCaches.includes(BUNDLED_GAME_CACHE));
+
+  const staleRuntime = makeEnvironment({
+    storageValues: {
+      astroFlashOfflineGameRecords: JSON.stringify({
+        __runtime__: {
+          bytes: 10,
+          files: ["js/old-runtime.wasm"],
+          revision: "runtime-old",
+          type: "runtime",
+        },
+        "bike-mania": {
+          bytes: 4,
+          files: ["swf/bike-mania/main.swf"],
+          revision: "bike-1",
+          type: "swf",
+        },
+      }),
+    },
+  });
+  const staleRuntimeManager = createManager({
+    currentVersion: manifest.version,
+    environment: staleRuntime.environment,
+  });
+  await staleRuntimeManager.initialize();
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const saved = JSON.parse(
+      staleRuntime.storage.getItem("astroFlashOfflineGameRecords"),
+    );
+    if (saved.__runtime__?.revision === manifest.runtime.revision) break;
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  assert.strictEqual(
+    JSON.parse(
+      staleRuntime.storage.getItem("astroFlashOfflineGameRecords"),
+    ).__runtime__.revision,
+    manifest.runtime.revision,
+  );
 
   const updateRegistration = new Registration({ active: new Worker() });
   const update = makeEnvironment({

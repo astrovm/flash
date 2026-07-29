@@ -23,6 +23,7 @@ RUFFLE_FILE_SUFFIXES = (".js", ".js.map", ".wasm")
 FFLATE_VERSION = "0.8.3"
 FFLATE_SOURCE = PROJECT_DIR / "node_modules" / "fflate"
 PRECACHE_FILE_SUFFIXES = {
+    ".ttf",
     ".woff",
     ".woff2",
     ".css",

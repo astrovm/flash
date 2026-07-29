@@ -8,20 +8,27 @@ const MAX_LEGACY_ASSET_BYTES = 64 * 1024 * 1024;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const NAMED_ENTITIES = Object.freeze({
+  amp: "&",
+  apos: "'",
+  gt: ">",
+  lt: "<",
+  quot: '"',
+});
+
 const decodeHtml = (value = "") =>
-  value
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
-      String.fromCodePoint(Number.parseInt(code, 16)),
-    )
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;|&apos;/g, "'")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
+  value.replace(
+    /&(?:#(\d+)|#x([0-9a-f]+)|(amp|apos|gt|lt|quot));/gi,
+    (entity, decimal, hexadecimal, named) => {
+      if (decimal) return String.fromCodePoint(Number(decimal));
+      if (hexadecimal)
+        return String.fromCodePoint(Number.parseInt(hexadecimal, 16));
+      return NAMED_ENTITIES[named.toLowerCase()];
+    },
+  );
 
 const plainText = (value = "") =>
-  decodeHtml(value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+  decodeHtml(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 export function parseSearchResults(html) {
   const games = [];

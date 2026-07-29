@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("assert");
+const { unzipSync, zipSync } = require("fflate");
 const installer = require("../site/js/game-installer.js");
 const library = require("../site/js/game-library.js");
 
@@ -68,6 +69,10 @@ const legacyDetails = {
   logoUrl: `https://flash.example/api/games/${legacyUuid}/logo`,
   launchCommand: "http://localflash/bikemania3/bikemaniaonice.swf",
 };
+const gameZipBytes = zipSync({
+  "content/localflash/bikemaniaarena1/bike-mania-arena-1.swf":
+    new Uint8Array([4, 5]),
+});
 
 assert.equal(
   library.asGameConfig({
@@ -97,7 +102,7 @@ const fetchObject = async (url) => {
   if (url.endsWith("/download")) {
     const bytes = url.includes(legacyUuid)
       ? new Uint8Array([7, 8])
-      : new Uint8Array([1, 2, 3]);
+      : gameZipBytes;
     return new Response(bytes, {
       headers: { "Content-Length": String(bytes.byteLength) },
     });
@@ -112,10 +117,7 @@ const fetchObject = async (url) => {
   const store = new FakeStore();
   const manager = library.createManager({
     installer,
-    unzipSync: () => ({
-      "content/localflash/bikemaniaarena1/bike-mania-arena-1.swf":
-        new Uint8Array([4, 5]),
-    }),
+    unzipSync,
     fetchObject,
     cacheObject: cache,
     metadataStore: store,
@@ -152,7 +154,7 @@ const fetchObject = async (url) => {
   const legacyStore = new FakeStore();
   const legacyManager = library.createManager({
     installer,
-    unzipSync: () => ({}),
+    unzipSync,
     fetchObject,
     cacheObject: legacyCache,
     metadataStore: legacyStore,

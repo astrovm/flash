@@ -24,6 +24,24 @@ assert.equal(results[0].title, "Bike Mania Arena");
 assert.equal(results[0].developer, "Flash Games 247");
 assert.equal(results[0].platform, "Flash");
 assert.deepEqual(results[0].tags, ["Sports", "Motocross", "Auto-zipped"]);
+assert.equal(
+  parseSearchResults(
+    searchHtml.replace(
+      "Bike Mania Arena",
+      "&lt;b&gt;Bike Mania Arena&lt;/b&gt;",
+    ),
+  )[0].title,
+  "Bike Mania Arena",
+);
+assert.equal(
+  parseSearchResults(
+    searchHtml.replace(
+      "Bike Mania Arena",
+      "&amp;lt;b&amp;gt;Bike Mania Arena&amp;lt;/b&amp;gt;",
+    ),
+  )[0].title,
+  "&lt;b&gt;Bike Mania Arena&lt;/b&gt;",
+);
 
 const detailsHtml = `
 <div class="header-large">Bike Mania Arena</div>

@@ -18,7 +18,7 @@ USER_AGENT = "Astro-Flash-Catalog/1.0"
 
 
 def plain_text(value):
-    return html.unescape(re.sub(r"<[^>]*>", " ", value or "")).strip()
+    return re.sub(r"<[^>]*>", " ", html.unescape(value or "")).strip()
 
 
 def parse_search_results(source):

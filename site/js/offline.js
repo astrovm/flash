@@ -481,6 +481,15 @@
 
     const downloadAllGames = async () => {
       const currentManifest = await ensureManifest();
+      const firstSwfId = Object.keys(currentManifest.games).find(
+        (id) => currentManifest.games[id].type === "swf",
+      );
+      if (
+        firstSwfId &&
+        records.__runtime__?.revision !== currentManifest.runtime.revision
+      ) {
+        await downloadGame(firstSwfId);
+      }
       for (const id of Object.keys(currentManifest.games)) {
         if (records[id]?.revision !== currentManifest.games[id].revision) {
           await downloadGame(id);
@@ -505,7 +514,19 @@
 
     const syncDownloadedGames = async () => {
       const currentManifest = await ensureManifest();
-      for (const id of Object.keys(records).filter((key) => key !== "__runtime__")) {
+      const selectedIds = Object.keys(records).filter(
+        (key) => key !== "__runtime__",
+      );
+      const selectedSwfId = selectedIds.find(
+        (id) => currentManifest.games[id]?.type === "swf",
+      );
+      if (
+        selectedSwfId &&
+        records.__runtime__?.revision !== currentManifest.runtime.revision
+      ) {
+        await downloadGame(selectedSwfId);
+      }
+      for (const id of selectedIds) {
         if (!currentManifest.games[id]) {
           await deleteRecordFiles(id);
         } else if (records[id].revision !== currentManifest.games[id].revision) {
