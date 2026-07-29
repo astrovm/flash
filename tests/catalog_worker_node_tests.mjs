@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  default as catalogWorker,
   legacyAssetUrl,
   parseGameDetails,
   parseSearchResults,
@@ -83,5 +84,22 @@ assert.equal(
   "https://infinity.unstable.life/Flashpoint/Legacy/htdocs/localflash/game/main.swf",
 );
 assert.throws(() => legacyAssetUrl("content/localflash/../secret"), /Invalid Legacy/);
+
+const originalFetch = globalThis.fetch;
+try {
+  globalThis.fetch = async () =>
+    new Response(searchHtml, {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  const runtimeResponse = await catalogWorker.fetch(
+    new Request("https://flash.example/api/games?q=bike%20mania"),
+    { binding: "Cloudflare environment object" },
+    { waitUntil() {} },
+  );
+  assert.equal(runtimeResponse.status, 200);
+  assert.equal((await runtimeResponse.json()).games[0].title, "Bike Mania Arena");
+} finally {
+  globalThis.fetch = originalFetch;
+}
 
 console.log("catalog worker tests passed");

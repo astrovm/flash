@@ -330,4 +330,8 @@ export async function handleRequest(request, fetchObject = fetch) {
   }
 }
 
-export default { fetch: handleRequest };
+export default {
+  fetch(request) {
+    return handleRequest(request);
+  },
+};
