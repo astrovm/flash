@@ -145,7 +145,7 @@ async function loadGame() {
 
             if (!isMobile) {
                 if (window.top === window) {
-                    if (!window.location.href.includes('test.js-dos.com')) {
+                    if (window.location.hostname !== 'test.js-dos.com') {
                         document.body.requestFullscreen(document.documentElement);
                     }
                 } else {

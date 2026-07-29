@@ -36,6 +36,10 @@ test("hosts the file-selection protocol inside the Astro Flash iframe", () => {
   expect(host).toContain('message.event === "module.getasyncurl"');
   expect(game).toContain("window.parent.postMessage");
   expect(game).not.toContain("window.top.postMessage");
+  expect(game).toContain("window.location.hostname !== 'test.js-dos.com'");
+  expect(game).not.toContain(
+    "window.location.href.includes('test.js-dos.com')",
+  );
 });
 
 test("offers a persistent WebTorrent download alongside manual selection", async () => {
