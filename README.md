@@ -1,36 +1,22 @@
-# Astro Flash Collection
+# Astro Flash
 
-A browser-based collection of classic Flash, HTML5, and DOS games presented as
-a Windows XP desktop.
+A Windows XP-style desktop for playing classic Flash, HTML5, and DOS games in
+the browser.
 
-[Open Astro Flash Collection](https://flash.4st.li/)
+[Open Astro Flash](https://flash.4st.li/)
 
-## Features
+## Highlights
 
-- Windows XP shell with boot, login, shutdown, Start menu, taskbar, system tray,
-  desktop context menus, and keyboard navigation
-- Draggable and resizable game windows with minimize, maximize, fullscreen,
-  task switching, taskbar overflow, and window arrangement controls
-- Persistent virtual filesystem with Explorer windows, file operations, Recycle
-  Bin, search, and an editable Notepad
-- Game categories, favorites, recently played items, Run commands, and URL hash
-  deep links
-- Flash emulation through Ruffle and DOS emulation through js-dos
-- Master and per-game volume controls, persistent settings, and automatic muting
-  of unfocused games
-- Desktop themes, wallpapers, screen savers, appearance schemes, and simulated
-  display resolutions
-- Automatic offline Windows XP shell plus individual or full included-game
-  downloads with update checks, progress, storage reporting, and repair controls
-- Internet Games catalog for finding, installing, playing, and uninstalling
-  compatible Flashpoint GameZIP and Legacy titles
+- Authentic Windows XP shell, Explorer, Notepad, themes, and display settings
+- Flash emulation with Ruffle and DOS emulation with js-dos
+- Draggable game windows, task switching, fullscreen, and volume controls
+- Favorites, recently played games, categories, search, and deep links
+- Automatic offline support for the desktop and optional game downloads
+- Internet Games catalog backed by Flashpoint Archive
 
 ## Development
 
-The authored static site lives in `site/`. Deployment-only files are generated
-in the ignored `dist/` directory and must not be committed.
-
-### Tests
+Install dependencies and run the test suite:
 
 ```bash
 bun install --frozen-lockfile
@@ -38,109 +24,80 @@ python -m pip install -r requirements.txt
 bun run test
 ```
 
-The test command runs the Python suite, the Node-backed behavioral suites,
-JavaScript syntax checks, and icon validation.
-
-### Local site
-
-Build the deployable site and serve it locally:
+Build and serve the production site locally:
 
 ```bash
 bun run build
 python tools/dev_server.py --port 8000
 ```
 
-The server reads `dist/` by default and refuses to serve an unbuilt tree. Use
-`--directory` to serve another completed build. It also provides the
-same-origin `/api/games` catalog proxy used by Internet Games.
+Open <http://127.0.0.1:8000>. The development server also provides the local
+`/api/games` proxy used by Internet Games.
 
-### Deployment
+## Project layout
 
-Pushes to `main` are tested, built, and deployed to GitHub Pages by
-`.github/workflows/pages.yml`. Pull requests run the same tests and production
-build without deploying. The build:
+- `site/` — authored static site
+- `worker/` — Cloudflare Worker for the Internet Games catalog
+- `tools/` — build, validation, and asset maintenance scripts
+- `tests/` — Python and Node-based tests
+- `dist/` — generated production build; ignored by Git
 
-- Copies `site/` into a fresh `dist/`
-- Downloads the pinned self-hosted Ruffle release and verifies its SHA-256
-- Generates a date-plus-commit deployment version and asset hashes
-- Generates uncached `version.json` metadata for client update checks
-- Generates the Workbox service worker
-- Validates representative Flash, DOS, and HTML5 artifacts
+## Games and offline storage
 
-The Pages repository setting must use **GitHub Actions** as its source. The
-custom domain remains configured in the repository Pages settings; `site/CNAME`
-is retained for documentation and rollback compatibility.
+Included games are defined in `site/js/games.js`. Flash games use `type: "swf"`;
+DOS and HTML5 games use `type: "iframe"`.
 
-Ruffle release metadata is pinned in `tools/ruffle-release.json`. A weekly
-workflow checks for a newer stable release and opens a reviewable dependency PR.
-Repository settings must allow GitHub Actions to create pull requests for that
-automation to work. Ruffle update PRs are never auto-merged.
+```javascript
+{
+  type: "swf",
+  title: "Display Name",
+  icon: "assets/icons/game.png",
+  category: "Racing",
+  frameRate: 45,
+  aspectRatio: 480 / 360,
+  spoofUrl: "example.com",
+}
+```
 
-The Windows XP application shell is cached automatically. Included games are
-kept out of that small default download and can be saved individually or all at
-once from Settings > Offline. The shared Ruffle runtime is downloaded once when
-the first Flash game is selected. Astro Flash checks for updates at startup,
-when connectivity returns, and when a long-lived tab becomes visible again. An
-installed update waits for user confirmation before the worker activates and
-reloads the page.
+The Windows XP shell is cached automatically. Included games can be downloaded
+individually or all at once from **Settings > Offline**. The shared Ruffle
+runtime is downloaded when the first Flash game is selected.
 
-### Internet Games catalog
+Games installed through **Internet Games** are stored separately in IndexedDB
+and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
+additional files as they are requested.
 
-The browser keeps installed game metadata in IndexedDB and extracted GameZIP
-files in a dedicated Cache Storage cache. These files are device-local and are
-not part of the generated offline collection.
+Icon sources and checksums live in `site/assets/icons/SOURCES.json`. Validate
+them with:
 
-Production uses `worker/catalog-worker.mjs` as a same-origin `/api/games*`
-Cloudflare Worker route in front of the GitHub Pages origin. The production
-route is declared in `worker/wrangler.toml`. Deploy it locally with:
+```bash
+bun run validate:icons
+```
+
+## Deployment
+
+Pushes to `main` run tests, build the site, deploy and smoke-test the Cloudflare
+Worker, and then publish to GitHub Pages. Pull requests run the same validation
+without deploying.
+
+The repository requires these GitHub Actions secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+
+The API token needs **Workers Scripts: Edit** for the account and **Workers
+Routes: Edit** for the `4st.li` zone.
+
+To deploy the Worker manually:
 
 ```bash
 bun run deploy:worker
 ```
 
-Pushes to `main` deploy and smoke-test the Worker before GitHub Pages is
-released. The repository must define `CLOUDFLARE_ACCOUNT_ID` and a narrowly
-scoped `CLOUDFLARE_API_TOKEN` as GitHub Actions secrets. The Worker normalizes
-Flashpoint search metadata and relays supported game files because the upstream
-services do not permit direct browser downloads from this site.
+Ruffle is pinned in `tools/ruffle-release.json`. A weekly workflow checks for
+new stable releases and opens a reviewable pull request.
 
-Internet Games supports playable Flash entries stored as either GameZIP or
-Legacy data. GameZIP installations are fully local. Legacy installations keep
-the launch SWF immediately and cache additional assets as the game requests
-them. Other platforms remain unsupported.
+## Contributing
 
-### Game Support
-
-The collection supports two types of games:
-
-- SWF (Flash) games using Ruffle emulation
-- DOS and HTML5 games via iframe integration
-
-Each game can be configured with specific settings:
-
-```javascript
-{
-  type: "swf",               // "swf" or "iframe"
-  title: "Display Name",      // Optional display title
-  icon: "assets/icons/x.png", // Sourced PNG used throughout the shell
-  frameRate: 45,             // Optional frame rate
-  category: "Racing",
-  aspectRatio: 480 / 360,    // Optional forced aspect ratio
-  spoofUrl: "example.com",   // Optional URL spoofing for sitelock compatibility
-}
-```
-
-Game definitions live in `site/js/games.js`. Icon provenance and checksums live
-in `site/assets/icons/SOURCES.json`; run `bun run validate:icons` to ensure every
-game has a valid, source-documented PNG. `tools/sync_game_icons.py` contains the
-reviewed Flashpoint UUID mappings and can refresh those assets without fuzzy
-auto-matching.
-
-### Contributing
-
-Contributions are welcome! Please ensure that:
-
-- Games are tested for compatibility
-- Frame rates are optimized for performance
-- Proper categorization is maintained
-- Volume controls are working correctly
+Test game compatibility, controls, frame rate, and categorization before
+submitting a pull request. Run `bun run test` before pushing.
