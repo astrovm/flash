@@ -17,16 +17,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          python-version: "3.13.14"
+          bun-version: "1.3.14"
 
-      - name: Install updater dependency
-        run: python -m pip install requests
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Check latest stable release
-        run: python tools/update_ruffle.py
+        run: bun run update:ruffle
 
       - name: Detect pin change
         id: changes
@@ -44,7 +44,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          version="$(python -c 'import json; print(json.load(open("tools/ruffle-release.json"))["tag"])')"
+          version="$(bun -e 'console.log((await Bun.file("tools/ruffle-release.json").json()).tag)')"
           branch="deps/ruffle-${version}"
           if [ "$(gh pr list --state all --head "$branch" --json number --jq length)" -ne 0 ]; then
             echo "A pull request for ${version} already exists."

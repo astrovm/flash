@@ -10,18 +10,14 @@ import {
 	stat,
 	writeFile,
 } from "node:fs/promises";
-import { createRequire } from "node:module";
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { unzipSync } from "fflate";
 import { generateSW } from "workbox-build";
+import workboxConfig from "../workbox-config";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const require = createRequire(import.meta.url);
-const workboxConfig = require(join(PROJECT_DIR, "workbox-config.js")) as Parameters<
-	WorkboxGenerator
->[0];
 export const SOURCE_DIR = join(PROJECT_DIR, "site");
 export const DEFAULT_OUTPUT_DIR = join(PROJECT_DIR, "dist");
 export const RUFFLE_RELEASE_PATH = join(PROJECT_DIR, "tools", "ruffle-release.json");

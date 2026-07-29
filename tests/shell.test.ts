@@ -1,0 +1,918 @@
+import { expect, test } from "bun:test";
+
+const projectDir = new URL("..", import.meta.url);
+const path = (relative: string) => new URL(relative, projectDir);
+const [html, javascript, offlineJavascript, css, workboxConfig] =
+  await Promise.all([
+    Bun.file(path("site/index.html")).text(),
+    Bun.file(path("site/js/main.js")).text(),
+    Bun.file(path("site/js/offline.js")).text(),
+    Bun.file(path("site/css/main.css")).text(),
+    Bun.file(path("workbox-config.ts")).text(),
+  ]);
+const compact = (source: string) => source.replace(/\s+/g, " ");
+const javascriptCompact = compact(javascript);
+const js = (...tokens: string[]) =>
+  tokens.forEach((token) =>
+    expect(javascriptCompact).toContain(compact(token)),
+  );
+const contains = (source: string, ...tokens: string[]) =>
+  tokens.forEach((token) => expect(source).toContain(token));
+const absent = (source: string, ...tokens: string[]) =>
+  tokens.forEach((token) => expect(source).not.toContain(token));
+const between = (source: string, start: string, end: string) =>
+  source.slice(
+    source.indexOf(start),
+    source.indexOf(end, source.indexOf(start)),
+  );
+const iconPath = (name: string) => path(`site/assets/xp/icons/${name}`);
+const fontPath = (name: string) => path(`site/css/fonts/${name}`);
+const elementById = (id: string) => {
+  const match = html.match(
+    new RegExp(`<([\\w-]+)\\b([^>]*\\bid=["']${id}["'][^>]*)>`, "i"),
+  );
+  expect(match).not.toBeNull();
+  const attrs = Object.fromEntries(
+    [...match![2].matchAll(/([\w-]+)(?:=["']([^"']*)["'])?/g)].map(
+      ([, key, value]) => [key, value ?? ""],
+    ),
+  );
+  return { tag: match![1].toLowerCase(), attrs };
+};
+
+test("every enabled desktop menu action has a handler", () => {
+  const menu = html.slice(
+    html.indexOf('id="desktop-context-menu"'),
+    html.indexOf("</div>", html.indexOf('id="desktop-context-menu"')),
+  );
+  const actions = [...menu.matchAll(/<button\b([^>]*)>/g)]
+    .filter(([, attrs]) => !/\bdisabled(?:[\s=>]|$)/.test(attrs))
+    .map(([, attrs]) => attrs.match(/data-action="([^"]+)"/)?.[1])
+    .filter((action): action is string => Boolean(action));
+  const handled = new Set(
+    [...javascript.matchAll(/action === "([^"]+)"/g)].map(
+      ([, action]) => action,
+    ),
+  );
+  expect(actions.filter((action) => !handled.has(action))).toEqual([]);
+});
+test("window manager never discards windows silently", () =>
+  absent(javascript, "MAX_OPEN_WINDOWS", "ensureWindowCapacity"));
+test("internet games is integrated with the shell", async () => {
+  expect(await Bun.file(path("site/js/game-installer.js")).exists()).toBe(true);
+  expect(await Bun.file(path("site/js/game-library.js")).exists()).toBe(true);
+  expect(html.indexOf('src="js/game-installer.js')).toBeLessThan(
+    html.indexOf('src="js/game-library.js'),
+  );
+  expect(html.indexOf('src="js/game-library.js')).toBeLessThan(
+    html.indexOf('src="js/main.js'),
+  );
+  js(
+    '"__internet-games": {',
+    'title: "Internet Games"',
+    "gameLibraryInitialization = initializeGameLibrary()",
+    'if (shortcutId === "__internet-games") wireInternetGames(win)',
+    "url: game.url ||",
+    "base: game.base ||",
+    "await gameLibrary.match(originalRequest)",
+    "const findBundledGameByTitle =",
+    'action.title = "This game is already included with Astro Flash."',
+    "let availableGameId =",
+    "availableGameId = gameId",
+    "if (gameLibraryReady && gameLibrary && !gameLibraryError)",
+  );
+  contains(css, ".internet-games-content", ".internet-game-card");
+  absent(offlineJavascript, "astro-flash-installed");
+});
+test("boot screen uses XP artwork", () => {
+  contains(
+    html,
+    'src="assets/xp/loading-logo.jpg"',
+    'src="assets/xp/loading-microsoft.jpg"',
+  );
+  contains(css, ".boot-footer");
+});
+test("XP fonts have authentic faces", async () => {
+  const fonts: Record<string, Record<string, string>> = {
+    Tahoma: {
+      "tahoma.ttf":
+        "08f45bf539954d3252df97a2ae563362ed2ad5ebe05f2d1f2bc54b931e4d0550",
+      "tahomabd.ttf":
+        "4ba89e145ff39f208151ce269841899fc4e4a360189a4a31dc2359168dae27d0",
+    },
+    "Trebuchet MS": {
+      "trebuc.ttf":
+        "9cf5777ebf93e9193d25ec0697976bb2dcad1637b73e9e36cfbf18d26ef262a9",
+      "trebucbd.ttf":
+        "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e",
+    },
+    Arial: {
+      "arial.ttf":
+        "413c78f91bd39e134f3c0bb204b1d5a90f29df9efddc8fd26950a178058d5d74",
+      "arialbd.ttf":
+        "df70597f0bdf49da3af270138f8a34396e4f5618c671a1db3480e626f38aaece",
+      "arialbi.ttf":
+        "722c61a99c1af1413d762d0a3b185dd497fe55b873c8672a0c3c4bfe05d29d92",
+    },
+    "Lucida Console": {
+      "lucon.ttf":
+        "6ddf64ee896d24cf9908f115ae220a7cfa18dc034bc4a68e4db68dcd57c71512",
+    },
+    "Franklin Gothic Medium": {
+      "framdit.ttf":
+        "02bf3f5c3289f66a314e9758f48ad729e3995b26ad74887b04ebbf0d775b2492",
+    },
+  };
+  for (const [family, files] of Object.entries(fonts)) {
+    contains(css, `font-family: "${family}"`);
+    for (const [name, hash] of Object.entries(files)) {
+      const file = Bun.file(fontPath(name));
+      expect(await file.exists()).toBe(true);
+      contains(css, `url("fonts/${name}")`);
+      expect(
+        new Bun.CryptoHasher("sha256")
+          .update(await file.arrayBuffer())
+          .digest("hex"),
+      ).toBe(hash);
+    }
+  }
+  contains(workboxConfig, "**/*.{ttf,woff,woff2");
+  absent(css, 'url("trebuchet.ttf")');
+  expect(css).toMatch(
+    /\.welcome-message\s*\{[^}]*font-family: "Franklin Gothic Medium"/,
+  );
+  expect(css).toMatch(/\.start-menu-user\s*\{[^}]*font-family: "Tahoma"/);
+});
+test("game windows use XP menus for their controls", () => {
+  js(
+    'menuBar.className = "game-menu-bar"',
+    'menuBar.setAttribute("role", "toolbar")',
+    'menuItems.setAttribute("role", "menubar")',
+    "menuItems.append(fileButton, helpButton)",
+    "menuBar.append(menuItems, quickActions)",
+    'makeMenuItem("Add to &Favorites", "favorite", { checkbox: true })',
+    'makeMenuItem("&Mute", "mute", { checkbox: true })',
+  );
+  contains(
+    javascript,
+    'makeMenuButton("&File")',
+    'makeMenuButton("&Help")',
+    'el.querySelector(".favorite-btn")',
+    'el.querySelector(".volume-btn")',
+    'el.querySelector(".volume-slider")',
+  );
+  absent(
+    javascript,
+    'makeMenuButton("&View")',
+    'makeMenuButton("F&avorites")',
+    'makeMenuButton("&Sound")',
+    "Aavorites",
+  );
+});
+test("game menu supports access keys and keyboard navigation", () =>
+  contains(
+    javascript,
+    "event.altKey || event.ctrlKey || event.metaKey",
+    'event.key === "ArrowDown" || event.key === "ArrowUp"',
+    'event.key === "ArrowLeft" || event.key === "ArrowRight"',
+    'event.key === "Escape"',
+    'e.key === "F11" && focusedGameId',
+  ));
+test("game menu styles cover active and disabled states", () =>
+  contains(
+    css,
+    '.game-menu-button[aria-expanded="true"]',
+    ".game-menu-item:disabled",
+    ".game-menu-item.checked .menu-check",
+  ));
+test("additive marquee preserves initial selection", () =>
+  contains(
+    javascript,
+    "const initialSelection = new Set(",
+    "additive && initialSelection.has(icon.dataset.desktopId)",
+  ));
+test("desktop icon images are not natively draggable", () =>
+  contains(javascript, "image.draggable = false"));
+test("virtual folders use desktop sized folder icons", () => {
+  contains(javascript, 'return addImage("NewFolder.png")');
+  contains(css, ".desktop-icon .explorer-item-icon img");
+  expect(css).toMatch(
+    /\.desktop-icon \.explorer-item-icon img\s*\{[^}]*width:\s*38px/,
+  );
+});
+test("text files open in filesystem backed notepad", () => {
+  js(
+    'fs.registerFileType(".txt", (file) => openNotepad(file))',
+    "fs.setContent(node.id, editor.value)",
+    'XPDialogs.openFile({ title: "Open"',
+    'XPDialogs.saveFile({ title: "Save As"',
+    "win.beforeClose = confirmSaveChanges",
+  );
+  contains(javascript, "&File", "&Edit", "F&ormat", "&View", "&Help");
+  contains(css, ".notepad-editor");
+});
+test("selected desktop icon shows full label", () => {
+  const match = css.match(
+    /\.desktop-icon\.selected \.icon-label\s*\{([^}]*)\}/,
+  );
+  expect(match).not.toBeNull();
+  expect(match![1]).toContain("-webkit-line-clamp: unset");
+});
+test("tray icons and clock are focusable buttons", () => {
+  for (const id of [
+    "tray-network-button",
+    "tray-volume-button",
+    "taskbar-clock",
+  ]) {
+    const el = elementById(id);
+    expect(el.tag).toBe("button");
+    expect(el.attrs.type).toBe("button");
+  }
+  expect(elementById("tray-network-button").attrs.title).toBe(
+    "Local Area Connection",
+  );
+  expect(elementById("tray-volume-button").attrs.title).toBe("Volume");
+});
+test("tray volume popup has slider and mute", () => {
+  expect(elementById("tray-volume-popup")).toBeDefined();
+  expect(elementById("tray-volume-slider").attrs.type).toBe("range");
+  expect(elementById("tray-mute-checkbox").attrs.type).toBe("checkbox");
+});
+test("clock tooltip shows full date", () =>
+  contains(javascript, "clock.title", 'weekday: "long"'));
+test("clock click opens date time properties", () => {
+  contains(
+    javascript,
+    "openDateTimeProperties",
+    'title: "Date and Time Properties"',
+  );
+  contains(
+    between(
+      javascript,
+      "const openDateTimeProperties = () =>",
+      "const setupSystemTray = () =>",
+    ),
+    "wide: true",
+  );
+});
+test("desktop renders system places then virtual files", () => {
+  const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
+  const start = javascript.indexOf("const entries = [", desktop);
+  const entries = javascript.slice(
+    start,
+    javascript.indexOf("entries.forEach", start),
+  );
+  expect(entries.indexOf("desktopItems.map")).toBeLessThan(
+    entries.indexOf(".getChildren(fs.DESKTOP)"),
+  );
+  expect(entries.indexOf(".getChildren(fs.DESKTOP)")).toBeLessThan(
+    entries.indexOf("recycleBinItems.map"),
+  );
+  expect(javascript).toMatch(/fs\s*\.getChildren\(fs\.DESKTOP\)/);
+  contains(javascript, "fileOps = window.FileOperations");
+});
+test("game file sync preserves user files and moved shortcuts", () => {
+  const block = between(
+    javascript,
+    "const syncGameFiles = () =>",
+    'fs.registerFileType(".game"',
+  );
+  contains(block, "fs.findByApp(gameId)");
+  absent(block, "fs.destroy(", "fs.rename(");
+});
+test("legacy game icon positions migrate to VFS ids", () => {
+  const block = between(
+    javascript,
+    "const getDesktopIconPositions = () =>",
+    "const saveDesktopIconPosition",
+  );
+  contains(
+    block,
+    "positions[node.id] = positions[node.app]",
+    "delete positions[node.app]",
+    'writeJsonStorage("desktopIconPositions", positions)',
+  );
+});
+test("recycle bin defaults to bottom right", () => {
+  const match = javascript.match(
+    /icon\.dataset\.desktopId === "__recycle-bin"\) \{(.*?)\}/s,
+  );
+  expect(match).not.toBeNull();
+  contains(
+    match![1],
+    "fallbackLeft = container.clientWidth",
+    "fallbackTop = container.clientHeight",
+  );
+});
+test("desktop uses shared file operations and keyboard commands", () =>
+  contains(
+    javascript,
+    "fileOps.copy(selectedFsIds)",
+    "fileOps.cut(selectedFsIds)",
+    "pasteIntoFolder(fs.DESKTOP)",
+    "confirmRecycleDelete(selectedFsIds)",
+    "beginDesktopRename(selectedFsIds[0])",
+    'e.key === "F2"',
+    'e.shiftKey && e.key === "F10"',
+    'action === "new-folder"',
+  ));
+test("desktop context menu uses real submenus and safe multiselection", () => {
+  js(
+    'addDesktopSubmenu(menu, "Arrange Icons By"',
+    'addDesktopSubmenu(menu, "New"',
+    "child.style.left = `${-child.offsetWidth + 2}px`",
+    'event.key === "ArrowRight"',
+    'event.key === "ArrowLeft"',
+    "const clampedX = Math.max(",
+    "const clampedY = Math.max(",
+    "-groupLeft",
+    "-groupTop",
+    "const getDesktopSelectionEligibility = () =>",
+    "const movable = allFilesystem",
+    "if (finished) return;",
+  );
+  contains(
+    css,
+    ".context-parent.open > .context-submenu",
+    "#desktop-icons:not(:focus-within)",
+  );
+});
+test("explorer and recycle bin use shared filesystem controls", () => {
+  contains(
+    javascript,
+    "const navigateExplorer = (win, folderId",
+    "const explorerBack = (win) =>",
+    "const explorerForward = (win) =>",
+    'class="explorer-menu-bar"',
+    'data-explorer-action="back"',
+    'data-explorer-action="forward"',
+    'data-explorer-action="up"',
+    'class="explorer-address"',
+    'status.className = "explorer-status"',
+    "fileOps.restore(ids)",
+    "fileOps.permanentlyDelete(ids)",
+    "fileOps.emptyRecycleBin()",
+    'icon.classList.add("recycle-full")',
+  );
+  contains(
+    css,
+    ".explorer-body",
+    '.explorer-items[data-view="details"]',
+    ".recycle-full::before",
+  );
+});
+test("explorer item context menu supports normal and recycle commands", () =>
+  contains(
+    javascript,
+    "const openExplorerContextMenu = (win, clientX, clientY)",
+    'menu.setAttribute("role", "menu")',
+    'add("Restore", "restore"',
+    'add("Delete Permanently", "permanent"',
+    'add("Open", "open"',
+    'add("Cut", "cut"',
+    'add("Rename", "rename"',
+    'event.key === "Escape"',
+    'event.key === "Enter"',
+    '"ArrowUp", "ArrowDown", "Home", "End"',
+    "openExplorerContextMenu(win, event.clientX, event.clientY)",
+  ));
+test("explorer menu bar has access keys and keyboard navigation", () =>
+  contains(
+    javascript,
+    'file: "&File",',
+    'edit: "&Edit",',
+    "F&avorites",
+    "button.dataset.accessKey = key",
+    "event.altKey",
+    '"ArrowLeft", "ArrowRight", "ArrowDown", "Home", "End"',
+    'button.setAttribute("aria-expanded", "false")',
+  ));
+test("explorer menu clicks nested access key content and exposes edit commands", () =>
+  contains(
+    javascript,
+    'event.target.closest("[data-explorer-menu]")',
+    'event.target.closest("[data-explorer-command]")',
+    'data-explorer-menu="edit"',
+    "edit: [",
+    "const protectedSelection = selected.some((id) => fs.isProtected(id))",
+    '["Cut", "cut", !selected.length || protectedSelection]',
+    '["Copy", "copy", !selected.length]',
+    '["Delete", "delete", !selected.length || protectedSelection]',
+    "selected.length !== 1 || protectedSelection",
+  ));
+test("explorer task pane tracks current folder", async () => {
+  contains(
+    javascript,
+    'class="explorer-section-label"',
+    "const renderExplorerTaskPane = (win) =>",
+    "win.currentFolderId === fs.MY_COMPUTER",
+    "win.currentFolderId === fs.MY_PICTURES",
+    "win.currentFolderId === fs.MY_MUSIC",
+    '"System Tasks"',
+    '"Picture Tasks"',
+    '"Music Tasks"',
+    '"File and Folder Tasks"',
+    "body.replaceChildren()",
+    '"View as a slide show"',
+    '"Play all"',
+    '"Make a new folder"',
+    "renderExplorerTaskPane(win);",
+  );
+  for (const icon of [
+    "MyPictures.png",
+    "PrintersandFaxes.png",
+    "MyMusic.png",
+    "NewFolder.png",
+    "Publishtoweb.png",
+    "SharedFolder.png",
+  ])
+    expect(await Bun.file(iconPath(icon)).exists()).toBe(true);
+});
+test("explorer matches XP task pane toolbar and drive groups", () => {
+  contains(
+    javascript,
+    'class="explorer-section-toggle"',
+    'placesBody.className = "explorer-section-body"',
+    'content.classList.toggle("folders-visible")',
+    'aria-pressed="false"',
+    'data-explorer-action="go"',
+    '"Files Stored on This Computer"',
+    '"Hard Disk Drives"',
+    '"Devices with Removable Storage"',
+    "node.id === fs.DRIVE_F",
+    'className = "explorer-group-heading"',
+    '"My Pictures",',
+    '"MyPictures.png",',
+    'src="assets/xp/icons/Back.png"',
+    'src="assets/xp/ms.png"',
+  );
+  contains(
+    css,
+    ".explorer-toolbar-separator",
+    ".explorer-content:not(.folders-visible) .explorer-tree-section",
+    ".explorer-content.folders-visible .explorer-sidebar > section:not(.explorer-tree-section)",
+    ".explorer-section-toggle",
+    ".explorer-group-heading",
+  );
+});
+test("shell paste uses one conflict aware progress helper", () =>
+  js(
+    "const pasteIntoFolder = async (destinationId)",
+    "fileOps.pasteWithConflicts(",
+    'clipboard.mode === "cut" ? "Moving..." : "Copying..."',
+    "Confirm File Replace",
+    "pasteIntoFolder(win.currentFolderId)",
+    "pasteIntoFolder(fs.DESKTOP)",
+  ));
+test("desktop alt drag uses internal filesystem payload", () =>
+  contains(
+    javascript,
+    'icon.title = "Alt+drag to move this item to a folder"',
+    "icon.draggable = event.altKey",
+    "application/x-astro-vfs-ids",
+    'event.dataTransfer.effectAllowed = "move"',
+    "if (!event.altKey || !eligibility.movable)",
+  ));
+test("start menu contains only XP places", () => {
+  const places = between(
+    javascript,
+    "const buildPlaces = () =>",
+    "const buildPinnedPrograms = () =>",
+  );
+  absent(
+    places,
+    "Astro Flash Settings",
+    'id: "settings"',
+    "Send suggestions",
+    "games installed",
+    "separatorTwo",
+  );
+  contains(
+    javascript,
+    '"__astro-settings"',
+    'if (itemId === "__astro-settings")',
+  );
+});
+test("every start destination has a functional route", () => {
+  const places = between(
+    javascript,
+    "const startDestinationActions = {",
+    "const buildPinnedPrograms = () =>",
+  );
+  for (const action of [
+    "documents",
+    "recent",
+    "pictures",
+    "music",
+    "computer",
+    "controlPanel",
+    "printers",
+    "help",
+    "search",
+    "run",
+  ])
+    expect(places).toMatch(new RegExp(`${action}: .+(?:,|\\n)`));
+  contains(
+    places,
+    "item.dataset.startAction = id",
+    "item.title = XPDialogs.parseAccessKey(title).text",
+    "setAccessKeyText(text, label)",
+    "closeStartMenu();",
+    "startDestinationActions[id]();",
+    "MyDocuments.png",
+    "RecentDocuments.png",
+    "MyPictures.png",
+    "MyMusic.png",
+    "MyComputer.png",
+    "ControlPanel.png",
+    "PrintersandFaxes.png",
+    "HelpandSupport.png",
+    "Search.png",
+    "Run.png",
+  );
+});
+test("start search and run open their own dialogs", () => {
+  const places = between(
+    javascript,
+    "const openSearchDialog = () =>",
+    "const buildPinnedPrograms = () =>",
+  );
+  contains(
+    places,
+    'openSystemWindow("__search")',
+    'title: "Run"',
+    'XPDialogs.openFile({ title: "Browse" })',
+    "resolveShellCommand(input.value)",
+    "rememberRunCommand(input.value)",
+    'setAccessKeyText(prompt, "&Open:")',
+    'dialog.accessKeys.set("o"',
+    "XPDialogs.parseAccessKey(label)",
+  );
+  contains(javascript, "const openAllPrograms");
+  absent(
+    places,
+    'search.addEventListener("click", () => {\n        openAllPrograms()',
+  );
+});
+test("game files use Windows compatible names", () =>
+  js(
+    "const gameFileName = (gameId) =>",
+    '.replace(/[<>:"/',
+    ".trim()}.game",
+    "fs.createFile(fs.DESKTOP, gameFileName(gameId)",
+  ));
+test("all programs uses separate cascading flyouts", () => {
+  contains(html, 'id="start-menu-flyouts"');
+  absent(html, 'id="game-search"');
+  contains(
+    javascript,
+    "const getProgramGroups = () =>",
+    "const positionStartFlyout =",
+    'document.getElementById("taskbar")?.getBoundingClientRect().top',
+    "const openProgramsFolder =",
+    "start-program-flyout",
+    "start-program-folder",
+    "setTimeout(open, 220)",
+    'event.key === "ArrowRight"',
+    'event.key === "Escape"',
+    'e.target.closest("#start-menu-flyouts")',
+    "const getUniqueCategoryMnemonics =",
+    "setAccessKeyText(label, mnemonic)",
+  );
+});
+test("favorite refresh does not depend on removed start search", () => {
+  const block = between(
+    javascript,
+    "const toggleFavorite =",
+    "const trackGamePlay =",
+  );
+  contains(block, "buildPinnedPrograms();", "openAllPrograms();");
+  absent(block, "game-search");
+});
+test("search companion uses virtual filesystem filters and open actions", () =>
+  contains(
+    javascript,
+    '"__search"',
+    "const searchVirtualNodes =",
+    "fs.MY_COMPUTER",
+    'id="search-filename"',
+    'id="search-location"',
+    'id="search-type"',
+    'value="files"',
+    'value="folders"',
+    'value="games"',
+    'value="applications"',
+    "wireSearchCompanion(win)",
+    "fs.open(result.node.id)",
+    "const representedGameIds = new Set()",
+    "!representedGameIds.has(id)",
+  ));
+test("project controls live in a taskbar window", () => {
+  js(
+    'shortcutId === "__astro-settings"',
+    'content.className = "project-settings-content"',
+    'openSystemWindow("__astro-settings")',
+    "wireProjectSettings(win)",
+    "isProjectSettings ? 540 : isInternetGames ? 760 : 700",
+    "isProjectSettings ? 420 : isInternetGames ? 540 : 500",
+    'role="tablist" aria-label="Astro Flash Settings"',
+    ">General</button>",
+    ">Offline</button>",
+    ">Updates</button>",
+    ">Recovery</button>",
+    '"Connected to the internet"',
+    '"Ready for offline use"',
+    'data-project-action="manage-games"',
+    'data-internet-tab="installed"',
+    "offlineManager.checkForUpdates()",
+    "offlineManager.applyUpdate()",
+    "offlineManager.repair()",
+    "offlineManager.downloadGame(",
+    "offlineManager.removeGame(",
+    "offlineManager.downloadAllGames()",
+    "offlineManager.removeAllGames()",
+    ">Check for Updates</button>",
+    ">Repair System Files</button>",
+    ">Download All Games</button>",
+    ">Remove Offline Games</button>",
+    '"Offline download progress"',
+    "state.downloadBytes",
+    "state.downloadMetadataError",
+    "formatProjectState(",
+    '"https://github.com/astrovm/flash/issues"',
+    'case "project": openProjectSettings();',
+  );
+  contains(css, ".project-settings-content");
+  absent(
+    javascript,
+    'XPDialogs.createDialog({\n    title: "Astro Flash Collection"',
+    'closeRow.className = "dlg-buttons"',
+    'heading.textContent = "Astro Flash Collection"',
+  );
+  absent(css, "linear-gradient(135deg, transparent");
+  contains(
+    offlineJavascript,
+    "navigatorObject.serviceWorker.register(",
+    '{ updateViaCache: "none" }',
+    '"updatefound"',
+    '"controllerchange"',
+    '{ type: "SKIP_WAITING" }',
+    'cache: "no-store"',
+    '"visibilitychange"',
+    '"online"',
+  );
+  contains(
+    workboxConfig,
+    '"swf/**"',
+    '"iframe/**"',
+    '"dos/**"',
+    '"js/*.wasm"',
+    '"js/core.ruffle.*.js"',
+    'importScripts: ["js/offline-worker.js"]',
+    "skipWaiting: false",
+    "clientsClaim: true",
+  );
+});
+test("game controls share one compact menu row", () => {
+  js(
+    'quickActions.className = "game-quick-actions"',
+    'quickFavoriteBtn.className = "quick-access-btn favorite-btn"',
+    'quickVolumeBtn.className = "quick-access-btn volume-btn"',
+    'fullscreenBtn.className = "quick-access-btn fullscreen-btn"',
+    'menuBar.setAttribute("role", "toolbar")',
+    'menuItems.setAttribute("role", "menubar")',
+    'volumeSlider.className = "volume-slider game-volume-slider"',
+    'volumeSlider.type = "range"',
+    'win.volumeSlider.addEventListener("input"',
+  );
+  absent(javascript, "window-toolbar");
+  contains(css, ".game-volume-slider");
+});
+test("startup screens have pointer and keyboard skip paths", () => {
+  expect(elementById("boot-screen").attrs.role).toBe("button");
+  expect(elementById("boot-screen").attrs.tabindex).toBe("0");
+  js(
+    'bootScreen.addEventListener("click", skipBootScreen)',
+    'bootScreen.addEventListener("keydown"',
+    '["Enter", " "].includes(event.key)',
+    'getElementById("welcome-screen")',
+    'addEventListener("click", (event)',
+    'event.target.closest("#welcome-turn-off")',
+    'addEventListener("keydown", (event)',
+    "event.target !== event.currentTarget",
+    'welcomeScreen.setAttribute("role", "button")',
+    'welcomeScreen.setAttribute("tabindex", "0")',
+    "const focusTarget = autoLogin ? welcomeScreen : loginUser",
+    "focusTarget.focus({ preventScroll: true })",
+    "requestAnimationFrame(() =>",
+    "if (!welcomeScreen.hidden) focusTarget.focus",
+  );
+  expect(elementById("login-user").tag).toBe("button");
+});
+test("display properties has a validated persisted pending model", () => {
+  js(
+    'const DISPLAY_SETTINGS_KEY = "displaySettings"',
+    "const isDisplaySettings = (value) =>",
+    "const getDisplaySettings = () =>",
+    "const saveDisplaySettings = (settings) =>",
+    "const applyDisplaySettings = (settings) =>",
+    "const wireDisplayProperties = (win) =>",
+    "let pending = { ...current };",
+    "controls.apply.disabled = JSON.stringify(pending) === JSON.stringify(current);",
+  );
+  contains(
+    javascript,
+    'data-display-action="apply"',
+    'data-display-action="ok"',
+    'data-display-action="cancel"',
+  );
+});
+test("display properties exposes all tabs and safe wallpaper controls", () => {
+  for (const tab of ["themes", "desktop", "saver", "appearance", "settings"])
+    contains(javascript, `display-tab-${tab}`, `display-panel-${tab}`);
+  contains(
+    javascript,
+    'accept="image/png,image/jpeg,image/gif,image/webp"',
+    "MAX_CUSTOM_WALLPAPER_BYTES",
+    'reader.result.startsWith("data:image/")',
+    "const scheduleScreenSaver =",
+    'id = "screen-saver-overlay"',
+    "settings.screenSaverWait * 60 * 1000",
+    'event.key === "Home"',
+    'event.key === "End"',
+    "display-resolution-preview",
+    "controls.resolutionPreview.dataset.resolution = pending.resolution",
+    "const applySimulatedMonitor = (resolution, { reflow = true } = {}) =>",
+    "const SIMULATED_RESOLUTIONS",
+    "desktop.dataset.monitorLimited",
+    "resolutionPreviewActive",
+    "let resolutionPreviewSnapshot = null",
+    "snapshotWindowState()",
+    "restoreWindowState(resolutionPreviewSnapshot)",
+    "rollbackResolutionPreview",
+    "applySimulatedMonitor(activeMonitorResolution)",
+  );
+  contains(
+    css,
+    '#desktop[data-wallpaper-position="tile"]',
+    'html[data-xp-appearance="olive"]',
+    "#desktop[data-monitor-resolution]",
+  );
+});
+test("simulated monitor bounds common resolutions and narrow viewports", () =>
+  contains(
+    javascript,
+    '"800x600": { width: 800, height: 600 }',
+    '"1024x768": { width: 1024, height: 768 }',
+    "width: Math.min(requested.width, window.innerWidth)",
+    "height: Math.min(requested.height, window.innerHeight)",
+    "desktop.style.height = `${Math.max(1, monitor.height - TASKBAR_HEIGHT)}px`",
+    "taskbar.style.width = `${monitor.width}px`",
+    "keepWindowsInWorkArea();",
+    "layoutDesktopIcons();",
+    "delete desktop.dataset.monitorLimited",
+  ));
+test("desktop icons use compact metrics and non-overlapping overflow", () => {
+  js(
+    "compact: { width: 60, height: 58, gap: 4, margin: 4 }",
+    "const getDesktopIconMetrics",
+    "container.clientWidth <= 480",
+    "const overflowsViewport = icons.length > columns * rows",
+    'container.classList.toggle("desktop-icons-overflow"',
+    "overflowsViewport ? index % columns",
+    "getDesktopIconMetrics(container)",
+  );
+  contains(
+    css,
+    "#desktop-icons.desktop-icons-overflow",
+    "@media (max-width: 480px)",
+    "width: 60px",
+  );
+});
+test("desktop game labels hide virtual extension", () =>
+  contains(
+    javascript,
+    'node.ext === ".game"',
+    "node.name.slice(0, -node.ext.length)",
+  ));
+test("anchored recycle bin does not consume an early grid slot", () => {
+  const entries = javascript.indexOf("const entries = [");
+  const files = javascript.indexOf(".getChildren(fs.DESKTOP)", entries);
+  const recycle = javascript.indexOf("...recycleBinItems.map", entries);
+  expect(files).toBeLessThan(recycle);
+});
+test("taskbar keeps overflow windows reachable", () => {
+  contains(html, 'id="taskbar-overflow-menu"');
+  js(
+    "--task-button-min-width",
+    "const contentWidth = Math.max(",
+    "container.clientWidth -",
+    "const overflowMinWidth",
+    "contentWidth - overflowMinWidth - taskGap",
+    "const appendTaskButton = ([gameId, win]) =>",
+    "const appendWindowItem = ([gameId, win]) =>",
+    'overflow.className = "task-button task-button-grouped"',
+    'overflow.setAttribute("aria-haspopup", "menu")',
+    "Windows Explorer (${explorerWindows.length})",
+  );
+  absent(javascript, "const appendTaskButton = ([win, gameId]) =>");
+});
+test("taskbar attention and fixed lock state are explicit", () => {
+  contains(
+    javascript,
+    "const setWindowAttention =",
+    "window.XPShell = Object.assign",
+    "win.needsAttention = false",
+    "hiddenNeedsAttention",
+    "taskbar-overflow-item",
+  );
+  contains(
+    css,
+    ".task-button.needs-attention",
+    ".taskbar-overflow-item.needs-attention",
+  );
+  contains(html, 'data-taskbar-action="lock" disabled');
+});
+test("taskbar supports window and taskbar context menus", () => {
+  contains(
+    javascript,
+    'btn.addEventListener("contextmenu"',
+    "openWindowSystemMenu(win, event.clientX, event.clientY)",
+    "const setupTaskbarContextMenu = () =>",
+    "const toggleShowDesktop = () =>",
+    "let showDesktopSnapshot = null",
+  );
+  contains(
+    html,
+    "Cascade Windows",
+    "Tile Windows Horizontally",
+    "Tile Windows Vertically",
+    "Show the Desktop",
+    "Task Manager",
+    "Lock the Taskbar",
+    "Properties",
+  );
+});
+test("taskbar keyboard and state styles are present", () => {
+  js('taskButton && ["ArrowLeft", "ArrowRight", "Home", "End"]');
+  contains(javascript, "const wireTaskbarMenuKeyboard = (menu) =>");
+  contains(
+    css,
+    ".task-button:focus-visible",
+    '.task-button[aria-pressed="true"]',
+  );
+});
+test("shell keyboard router covers window switching and file shortcuts", () =>
+  js(
+    "const cycleShellWindow =",
+    "const getMruWindows =",
+    "window-switcher",
+    'e.altKey && e.key === "Tab"',
+    'e.altKey && e.key === "Escape"',
+    'e.altKey && e.key === "F4" && !focusedGameId',
+    'e.shiftKey && e.key === "F10"',
+    "isEditableTarget",
+    "xp-dialog-overlay",
+    "fileOps.permanentlyDelete(selected)",
+    "pasteIntoFolder(explorerWin.currentFolderId)",
+    ".system-dialog-overlay:not([hidden])",
+    "altTabIndex = windows.findIndex",
+    "if (!showSwitcher) altTabIndex = order.findIndex",
+    "altTabIndex = 0;",
+  ));
+test("show desktop restores focus and resize reflows tasks", () => {
+  contains(javascript, "focusedGameId,", "showDesktopSnapshot.windows.forEach");
+  contains(
+    between(
+      javascript,
+      'window.addEventListener("resize"',
+      'window.addEventListener("hashchange"',
+    ),
+    "renderTaskButtons();",
+  );
+});
+test("screen saver is rescheduled for every login", () => {
+  const login = between(
+    javascript,
+    "const login = (playSound = true) =>",
+    "const setupScreenFlow = () =>",
+  );
+  expect(login.indexOf("loggedIn = true")).toBeLessThan(
+    login.indexOf("applyDisplaySettings"),
+  );
+  expect(login.lastIndexOf("scheduleScreenSaver();")).toBeGreaterThan(
+    login.indexOf("if (!shellInitialized)"),
+  );
+});
+test("start destinations have working access keys", () =>
+  contains(
+    javascript,
+    "item.dataset.accessKey = key",
+    '`[data-access-key="${event.key.toLowerCase()}"]`',
+  ));
+test("start menu footer has only XP power actions", () => {
+  const footer = html.match(/<div class="start-menu-footer">(.*?)<\/div>/s);
+  expect(footer).not.toBeNull();
+  contains(footer![1], 'id="log-off-button"', 'id="turn-off-button"');
+  absent(footer![1], "<h6");
+});
