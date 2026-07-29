@@ -152,12 +152,7 @@
       const TORRENT_URL = "revcdoseng.torrent";
       const DOWNLOAD_SIZE = 901786388;
       const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
-      const WEB_TRACKERS = [
-        "wss://cloud.dos.zone:8444/announce-ws",
-        "wss://tracker.btorrent.xyz",
-        "wss://tracker.openwebtorrent.com",
-        "wss://tracker.webtorrent.dev",
-      ];
+      const WEB_TRACKERS = ["wss://cloud.dos.zone:8444/announce-ws"];
       const input = document.getElementById("file-input");
       const downloadButton = document.getElementById("download-button");
       const setup = document.getElementById("setup");
@@ -227,22 +222,23 @@
           : "Connecting to peers. Your IP address is visible to torrent peers.";
 
         await navigator.storage.persist?.();
-        const rootDir = navigator.storage.getDirectory();
+        const rootDir = await navigator.storage.getDirectory();
+        const rtcResponse = await fetch("/api/rtc", { cache: "no-store" });
+        if (!rtcResponse.ok) {
+          throw new Error(
+            "Peer connection service is unavailable. Try again in a moment.",
+          );
+        }
+        const { iceServers } = await rtcResponse.json();
+        if (!Array.isArray(iceServers) || iceServers.length === 0) {
+          throw new Error("Peer connection service returned no servers.");
+        }
         const client = new WebTorrent({
           dht: false,
           lsd: false,
           maxConns: 20,
           tracker: {
-            rtcConfig: {
-              iceServers: [
-                {
-                  urls: [
-                    "stun:stun.l.google.com:19302",
-                    "stun:global.stun.twilio.com:3478",
-                  ],
-                },
-              ],
-            },
+            rtcConfig: { iceServers },
           },
           uploadLimit: 262144,
         });
@@ -254,7 +250,7 @@
 
         const torrent = client.add(new URL(TORRENT_URL, location.href).href, {
           announce: WEB_TRACKERS,
-          rootDir,
+          storeOpts: { rootDir },
           skipVerify: cached,
           uploads: 2,
         });

@@ -11,6 +11,7 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { type CatalogFetcher, handleCatalogRequest } from "../catalog/catalog";
+import { handleRtcRequest } from "../rtc/rtc";
 import type { BuildOptions } from "./deploy";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -311,6 +312,9 @@ export function createRequestHandler(
     const path = new URL(request.url).pathname;
     if (path === "/api/games" || path.startsWith("/api/games/")) {
       return handleCatalogRequest(request, fetcher);
+    }
+    if (path === "/api/rtc") {
+      return handleRtcRequest(request, fetcher);
     }
     return staticResponse(request, directory);
   };

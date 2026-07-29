@@ -138,4 +138,40 @@ describe("Bun request handler", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).games[0].title).toBe("Bike Mania");
   });
+
+  test("routes RTC credentials through the local origin", async () => {
+    const root = await makeTemporaryDirectory();
+    const handler = createRequestHandler(
+      root,
+      async () =>
+        new Response(
+          JSON.stringify([
+            {
+              iceservers: [
+                { urls: ["stun:rtc.example:3478"] },
+                {
+                  urls: ["turn:rtc.example:3478"],
+                  username: "temporary-user",
+                  credential: "temporary-password",
+                },
+              ],
+            },
+          ]),
+        ),
+    );
+    const response = await handler(new Request("http://localhost/api/rtc"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      iceServers: [
+        { urls: ["stun:rtc.example:3478"] },
+        {
+          urls: ["turn:rtc.example:3478"],
+          username: "temporary-user",
+          credential: "temporary-password",
+        },
+      ],
+    });
+  });
 });
