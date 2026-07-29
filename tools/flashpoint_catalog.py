@@ -9,6 +9,7 @@ SEARCH_ORIGIN = "https://flashpointarchive.org"
 PLAYER_ORIGIN = "https://ooooooooo.ooo"
 DOWNLOAD_ORIGIN = "https://download.unstable.life"
 IMAGE_ORIGIN = "https://infinity.unstable.life"
+LEGACY_SERVER = "https://infinity.unstable.life/Flashpoint/Legacy/htdocs"
 UUID_PATTERN = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.I,
@@ -113,6 +114,7 @@ def parse_game_details(source, request_origin, uuid):
         else []
     )
     game_zip_url = _attribute(source, "data-game-zip")
+    legacy_server = _attribute(source, "data-legacy-server").rstrip("/")
     launch_command = _attribute(source, "data-launch-command")
     parsed_zip = urlparse(game_zip_url)
     safe_zip = bool(
@@ -128,14 +130,16 @@ def parse_game_details(source, request_origin, uuid):
     library = rows.get("Library", "")
     status = rows.get("Status", "")
     application_path = rows.get("Application Path", "")
-    compatible = bool(
-        safe_zip
-        and platform.lower() == "flash"
+    safe_legacy = legacy_server == LEGACY_SERVER
+    playable_flash = bool(
+        platform.lower() == "flash"
         and library.lower() == "games"
         and status.lower() == "playable"
         and re.search(r"(?:flash\s*player|flashplayer)", application_path, re.I)
         and re.search(r"\.swf(?:$|[?#])", launch_command, re.I)
     )
+    compatible = playable_flash and (safe_zip or safe_legacy)
+    package_type = "gamezip" if safe_zip else "legacy" if safe_legacy else None
     return {
         "uuid": uuid,
         "title": plain_text(title_match[1] if title_match else ""),
@@ -149,19 +153,41 @@ def parse_game_details(source, request_origin, uuid):
         "tags": tags,
         "logoUrl": f"{request_origin}/api/games/{uuid}/logo",
         "downloadUrl": f"{request_origin}/api/games/{uuid}/download",
+        "packageType": package_type,
+        "legacyFallback": safe_legacy,
         "compatible": compatible,
         "incompatibleReason": (
             None
             if compatible
             else (
-                "This entry does not have a supported GameZIP."
-                if not safe_zip
-                else "This entry is not a playable Flash game."
+                "This entry is not a playable Flash game."
+                if not playable_flash
+                else "This entry does not have supported Flashpoint game data."
             )
         ),
         "upstreamUrl": f"{SEARCH_ORIGIN}/view?id={uuid}",
         "_gameZipUrl": game_zip_url if safe_zip else None,
+        "_legacyServerUrl": LEGACY_SERVER if safe_legacy else None,
     }
+
+
+def legacy_asset_url(archive_path):
+    archive_path = str(archive_path or "")
+    if (
+        len(archive_path) > 2048
+        or not archive_path.startswith("content/")
+        or "\\" in archive_path
+        or "\0" in archive_path
+    ):
+        raise ValueError("Invalid Legacy asset path.")
+    parts = archive_path.split("/")
+    if (
+        len(parts) < 3
+        or any(part in ("", ".", "..") for part in parts)
+        or not re.fullmatch(r"[a-z0-9.-]+", parts[1], re.I)
+    ):
+        raise ValueError("Invalid Legacy asset path.")
+    return f"{LEGACY_SERVER}/{'/'.join(quote(part, safe='') for part in parts[1:])}"
 
 
 class CatalogClient:
@@ -192,10 +218,30 @@ class CatalogClient:
 
     def download(self, uuid, request_origin):
         details = self.details(uuid, request_origin)
-        if not details["compatible"] or not details["_gameZipUrl"]:
+        if not details["compatible"]:
             raise ValueError(details["incompatibleReason"])
+        if details["packageType"] == "gamezip":
+            upstream_url = details["_gameZipUrl"]
+        else:
+            launch = urlparse(details["launchCommand"])
+            upstream_url = legacy_asset_url(
+                f"content/{launch.hostname}{launch.path}"
+            )
         response = self.session.get(
-            details["_gameZipUrl"],
+            upstream_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=120,
+            stream=True,
+        )
+        response.raise_for_status()
+        return response
+
+    def asset(self, uuid, request_origin, archive_path):
+        details = self.details(uuid, request_origin)
+        if not details["compatible"] or not details["_legacyServerUrl"]:
+            raise ValueError("Legacy assets are not available for this game.")
+        response = self.session.get(
+            legacy_asset_url(archive_path),
             headers={"User-Agent": USER_AGENT},
             timeout=120,
             stream=True,

@@ -35,6 +35,9 @@
       fail("Game does not use the Flash player");
     const downloadUrl = field(record, "downloadUrl", "gameZipUrl", "gameZIP");
     const launchCommand = field(record, "launchCommand", "launch", "command");
+    const packageType = text(field(record, "packageType") || "gamezip").toLowerCase();
+    if (!["gamezip", "legacy"].includes(packageType))
+      fail("Unsupported game package type");
     let download, launch;
     try { download = new URL(downloadUrl, options.origin || "https://astro.local"); } catch (_) { fail("Invalid download URL"); }
     try { launch = new URL(launchCommand); } catch (_) { fail("Invalid launch command"); }
@@ -45,7 +48,14 @@
     if (!trustedUpstream && download.origin !== ownOrigin)
       fail("Download URL is not allowed");
     if (!/^https?:$/.test(launch.protocol) || !/\.swf$/i.test(launch.pathname)) fail("Launch command must point to an SWF");
-    return Object.assign({}, record, { uuid: uuid.toLowerCase(), downloadUrl: download.href, launchCommand: launch.href, applicationPath });
+    return Object.assign({}, record, {
+      uuid: uuid.toLowerCase(),
+      downloadUrl: download.href,
+      launchCommand: launch.href,
+      applicationPath,
+      packageType,
+      legacyFallback: Boolean(record.legacyFallback),
+    });
   }
 
   function archiveLaunchPath(launchCommand) {
@@ -116,6 +126,8 @@
     if (!dependencies.store || (typeof dependencies.store.put !== "function" && typeof dependencies.store.set !== "function")) fail("Metadata store dependency is required");
     const origin = dependencies.origin || (typeof location !== "undefined" ? location.origin : "https://astro.local");
     const game = validateCatalogRecord(record, { origin });
+    if (game.packageType !== "gamezip")
+      fail("Legacy games must be installed from their launch SWF");
     const launchPath = archiveLaunchPath(game.launchCommand);
     const files = validateZipEntries(
       dependencies.unzipSync(zipBytes),
@@ -155,6 +167,45 @@
     }
   }
 
+  async function installLegacy(record, swfBytes, dependencies = {}) {
+    if (!(swfBytes instanceof Uint8Array))
+      fail("Game file must be a Uint8Array");
+    if (swfBytes.byteLength === 0)
+      fail("Game file is empty");
+    const maxFileBytes =
+      dependencies.limits?.maxFileBytes || DEFAULT_LIMITS.maxFileBytes;
+    if (swfBytes.byteLength > maxFileBytes)
+      fail("Game file is too large");
+    if (!dependencies.cache || typeof dependencies.cache.put !== "function" || typeof dependencies.cache.delete !== "function")
+      fail("Cache dependency is required");
+    if (!dependencies.store || (typeof dependencies.store.put !== "function" && typeof dependencies.store.set !== "function"))
+      fail("Metadata store dependency is required");
+    const origin = dependencies.origin || (typeof location !== "undefined" ? location.origin : "https://astro.local");
+    const game = validateCatalogRecord(record, { origin });
+    if (game.packageType !== "legacy")
+      fail("Only Legacy games can be installed from a launch SWF");
+    const launchPath = archiveLaunchPath(game.launchCommand);
+    const resolvedLaunchPath = cacheKey(origin, game.uuid, launchPath);
+    try {
+      await dependencies.cache.put(
+        resolvedLaunchPath,
+        makeResponse(swfBytes, dependencies, launchPath),
+      );
+      const metadata = Object.assign({}, game, {
+        id: "flashpoint:" + game.uuid,
+        type: "swf",
+        source: "Flashpoint Archive",
+        launchPath: resolvedLaunchPath,
+        basePath: resolvedLaunchPath.slice(0, resolvedLaunchPath.lastIndexOf("/") + 1),
+      });
+      await putMetadata(dependencies.store, metadata);
+      return metadata;
+    } catch (error) {
+      await dependencies.cache.delete(resolvedLaunchPath).catch(() => {});
+      throw error;
+    }
+  }
+
   async function uninstall(uuid, dependencies = {}) {
     if (typeof uuid !== "string" || !UUID.test(uuid)) fail("Invalid game UUID");
     if (!dependencies.cache || typeof dependencies.cache.keys !== "function" || typeof dependencies.cache.delete !== "function") fail("Cache dependency is required");
@@ -166,5 +217,5 @@
     await deleteMetadata(dependencies.store, "flashpoint:" + uuid.toLowerCase());
   }
 
-  return { DEFAULT_LIMITS, validateCatalogRecord, archiveLaunchPath, safeArchivePath, validateZipEntries, install, uninstall };
+  return { DEFAULT_LIMITS, validateCatalogRecord, archiveLaunchPath, safeArchivePath, validateZipEntries, install, installLegacy, uninstall };
 });

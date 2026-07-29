@@ -1,6 +1,11 @@
 import unittest
 
-from tools.flashpoint_catalog import parse_game_details, parse_search_results
+from tools.flashpoint_catalog import (
+    LEGACY_SERVER,
+    legacy_asset_url,
+    parse_game_details,
+    parse_search_results,
+)
 
 
 UUID = "a2fb012a-b14c-6921-b688-403571e42bb0"
@@ -34,19 +39,33 @@ class FlashpointCatalogTests(unittest.TestCase):
         """
         details = parse_game_details(source, "http://localhost:8000", UUID)
         self.assertTrue(details["compatible"])
+        self.assertEqual(details["packageType"], "gamezip")
         self.assertEqual(
             details["downloadUrl"],
             f"http://localhost:8000/api/games/{UUID}/download",
         )
 
-    def test_rejects_legacy_entry(self):
-        details = parse_game_details(
-            '<div data-game-zip="" data-launch-command="http://localflash/main.swf"></div>',
-            "http://localhost:8000",
-            UUID,
+    def test_accepts_legacy_entry(self):
+        source = f"""
+        <div data-game-zip="" data-legacy-server="{LEGACY_SERVER}"
+             data-launch-command="http://localflash/game/main.swf"></div>
+        <div class="row"><div class="field">Library:</div><div class="value">Games</div></div>
+        <div class="row"><div class="field">Platform:</div><div class="value">Flash</div></div>
+        <div class="row"><div class="field">Status:</div><div class="value">Playable</div></div>
+        <div class="row"><div class="field">Application Path:</div><div class="value">FPSoftware\\Flash\\flashplayer_32_sa.exe</div></div>
+        """
+        details = parse_game_details(source, "http://localhost:8000", UUID)
+        self.assertTrue(details["compatible"])
+        self.assertEqual(details["packageType"], "legacy")
+        self.assertTrue(details["legacyFallback"])
+        self.assertEqual(
+            legacy_asset_url("content/localflash/game/main.swf"),
+            f"{LEGACY_SERVER}/localflash/game/main.swf",
         )
-        self.assertFalse(details["compatible"])
-        self.assertIn("GameZIP", details["incompatibleReason"])
+
+    def test_rejects_unsafe_legacy_path(self):
+        with self.assertRaisesRegex(ValueError, "Invalid Legacy"):
+            legacy_asset_url("content/localflash/../secret")
 
 
 if __name__ == "__main__":

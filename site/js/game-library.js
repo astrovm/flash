@@ -12,6 +12,7 @@
   const CACHE_NAME = "astro-installed-games-v1";
   const DEFAULT_API_BASE = "/api/games";
   const MAX_DOWNLOAD_BYTES = 128 * 1024 * 1024;
+  const MAX_LEGACY_ASSET_BYTES = 64 * 1024 * 1024;
 
   const requestResult = (request) =>
     new Promise((resolve, reject) => {
@@ -198,6 +199,36 @@
       if (!initialized) throw new Error("The game library is still starting.");
     };
 
+    const installedAssetKey = (record, archivePath) =>
+      `${origin}/__installed-games/${record.uuid}/${archivePath}`;
+
+    const fetchLegacyAsset = async (record, archivePath) => {
+      if (!record.legacyFallback) return null;
+      let safePath;
+      try {
+        safePath = installer.safeArchivePath(archivePath);
+      } catch {
+        return null;
+      }
+      if (!safePath.startsWith("content/")) return null;
+      const key = installedAssetKey(record, safePath);
+      const cached = await cache.match(key);
+      if (cached) return cached;
+      const response = await fetchObject(
+        `${apiBase}/${encodeURIComponent(record.uuid)}/asset?path=${encodeURIComponent(safePath)}`,
+      );
+      if (!response.ok) return null;
+      const bytes = await readDownload(response, {
+        maxBytes: MAX_LEGACY_ASSET_BYTES,
+      });
+      const stored = new Response(bytes, {
+        status: 200,
+        headers: response.headers,
+      });
+      await cache.put(key, stored.clone());
+      return stored;
+    };
+
     const manager = {
       initialize,
       subscribe(listener) {
@@ -254,12 +285,19 @@
           }
         }
         const bytes = await readDownload(response, { onProgress });
-        let metadata = await installer.install(checked, bytes, {
-          cache,
-          store,
-          unzipSync,
-          origin,
-        });
+        let metadata =
+          checked.packageType === "legacy"
+            ? await installer.installLegacy(checked, bytes, {
+                cache,
+                store,
+                origin,
+              })
+            : await installer.install(checked, bytes, {
+                cache,
+                store,
+                unzipSync,
+                origin,
+              });
 
         if (checked.logoUrl) {
           try {
@@ -299,10 +337,33 @@
           return null;
         }
         if (!/^https?:$/.test(requested.protocol)) return null;
+
+        const syntheticPrefix = "/__installed-games/";
+        if (requested.origin === new URL(origin).origin) {
+          if (!requested.pathname.startsWith(syntheticPrefix)) return null;
+          const remainder = requested.pathname.slice(syntheticPrefix.length);
+          const slash = remainder.indexOf("/");
+          if (slash < 1) return null;
+          const uuid = remainder.slice(0, slash).toLowerCase();
+          const record = installed.get(`flashpoint:${uuid}`);
+          if (!record) return null;
+          let archivePath;
+          try {
+            archivePath = decodeURIComponent(remainder.slice(slash + 1));
+          } catch {
+            return null;
+          }
+          return fetchLegacyAsset(record, archivePath);
+        }
+
         const archivePath = installer.archiveLaunchPath(requested.href);
         for (const record of installed.values()) {
-          const key = `${origin}/__installed-games/${record.uuid}/${archivePath}`;
+          const key = installedAssetKey(record, archivePath);
           const response = await cache.match(key);
+          if (response) return response;
+        }
+        for (const record of installed.values()) {
+          const response = await fetchLegacyAsset(record, archivePath);
           if (response) return response;
         }
         return null;
@@ -319,6 +380,7 @@
     DB_NAME,
     STORE_NAME,
     MAX_DOWNLOAD_BYTES,
+    MAX_LEGACY_ASSET_BYTES,
     asGameConfig,
     readDownload,
     createMetadataStore,

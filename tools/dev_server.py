@@ -51,7 +51,7 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
                 self._json({"games": self.catalog.search(query)})
                 return
             match = re.fullmatch(
-                r"/api/games/([0-9a-f-]{36})(?:/(download|logo))?",
+                r"/api/games/([0-9a-f-]{36})(?:/(download|logo|asset))?",
                 path,
                 re.I,
             )
@@ -61,11 +61,15 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
             uuid, action = match.groups()
             if action == "download":
                 self._proxy(self.catalog.download(uuid, origin))
+            elif action == "asset":
+                archive_path = parse_qs(parsed.query).get("path", [""])[0]
+                self._proxy(self.catalog.asset(uuid, origin, archive_path))
             elif action == "logo":
                 self._proxy(self.catalog.logo(uuid))
             else:
                 details = self.catalog.details(uuid, origin)
                 details.pop("_gameZipUrl", None)
+                details.pop("_legacyServerUrl", None)
                 self._json(details)
         except ValueError as error:
             self._json({"error": str(error)}, 400)

@@ -2,6 +2,9 @@ const SEARCH_ORIGIN = "https://flashpointarchive.org";
 const PLAYER_ORIGIN = "https://ooooooooo.ooo";
 const DOWNLOAD_ORIGIN = "https://download.unstable.life";
 const IMAGE_ORIGIN = "https://infinity.unstable.life";
+const LEGACY_SERVER =
+  "https://infinity.unstable.life/Flashpoint/Legacy/htdocs";
+const MAX_LEGACY_ASSET_BYTES = 64 * 1024 * 1024;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -77,6 +80,7 @@ export function parseGameDetails(html, requestOrigin, uuid) {
   if (!UUID_PATTERN.test(uuid)) throw new Error("Invalid game UUID");
   const rows = detailRows(html);
   const gameZipUrl = attribute(html, "data-game-zip");
+  const legacyServer = attribute(html, "data-legacy-server");
   const launchCommand = attribute(html, "data-launch-command");
   const title = plainText(
     html.match(/<div class="header-large">([\s\S]*?)<\/div>/i)?.[1] || "",
@@ -107,13 +111,21 @@ export function parseGameDetails(html, requestOrigin, uuid) {
   const library = rows.get("Library") || "";
   const status = rows.get("Status") || "";
   const applicationPath = rows.get("Application Path") || "";
-  const compatible =
-    hasSafeGameZip &&
+  const hasSafeLegacyServer =
+    legacyServer.replace(/\/+$/, "") === LEGACY_SERVER;
+  const playableFlash =
     platform.toLowerCase() === "flash" &&
     library.toLowerCase() === "games" &&
     status.toLowerCase() === "playable" &&
     /(?:flash\s*player|flashplayer)/i.test(applicationPath) &&
     /\.swf(?:$|[?#])/i.test(launchCommand);
+  const compatible =
+    playableFlash && (hasSafeGameZip || hasSafeLegacyServer);
+  const packageType = hasSafeGameZip
+    ? "gamezip"
+    : hasSafeLegacyServer
+      ? "legacy"
+      : null;
 
   return {
     uuid: normalizedUuid,
@@ -128,15 +140,39 @@ export function parseGameDetails(html, requestOrigin, uuid) {
     tags,
     logoUrl: `${requestOrigin}/api/games/${normalizedUuid}/logo`,
     downloadUrl: `${requestOrigin}/api/games/${normalizedUuid}/download`,
+    packageType,
+    legacyFallback: hasSafeLegacyServer,
     compatible,
     incompatibleReason: compatible
       ? null
-      : !hasSafeGameZip
-        ? "This entry does not have a supported GameZIP."
-        : "This entry is not a playable Flash game.",
+      : !playableFlash
+        ? "This entry is not a playable Flash game."
+        : "This entry does not have supported Flashpoint game data.",
     upstreamUrl: `${SEARCH_ORIGIN}/view?id=${normalizedUuid}`,
     gameZipUrl: hasSafeGameZip ? gameZipUrl : null,
+    legacyServerUrl: hasSafeLegacyServer ? LEGACY_SERVER : null,
   };
+}
+
+export function legacyAssetUrl(archivePath) {
+  const decoded = decodeURIComponent(String(archivePath || ""));
+  if (
+    decoded.length > 2048 ||
+    !decoded.startsWith("content/") ||
+    decoded.includes("\\") ||
+    decoded.includes("\0")
+  ) {
+    throw new Error("Invalid Legacy asset path.");
+  }
+  const parts = decoded.split("/");
+  if (
+    parts.length < 3 ||
+    parts.some((part) => !part || part === "." || part === "..") ||
+    !/^[a-z0-9.-]+$/i.test(parts[1])
+  ) {
+    throw new Error("Invalid Legacy asset path.");
+  }
+  return `${LEGACY_SERVER}/${parts.slice(1).map(encodeURIComponent).join("/")}`;
 }
 
 const json = (value, status = 200, extraHeaders = {}) =>
@@ -187,6 +223,14 @@ const proxyResponse = (upstream, cacheSeconds) => {
   return new Response(upstream.body, { status: upstream.status, headers });
 };
 
+const checkedAssetResponse = (upstream, cacheSeconds) => {
+  const length = Number(upstream.headers.get("content-length")) || null;
+  if (length && length > MAX_LEGACY_ASSET_BYTES) {
+    return json({ error: "Legacy asset exceeds the supported size limit." }, 413);
+  }
+  return proxyResponse(upstream, cacheSeconds);
+};
+
 export async function handleRequest(request, fetchObject = fetch) {
   if (request.method === "OPTIONS") {
     return new Response(null, {
@@ -218,7 +262,7 @@ export async function handleRequest(request, fetchObject = fetch) {
   }
 
   const match = path.match(
-    /^\/api\/games\/([0-9a-f-]{36})(?:\/(download|logo))?$/i,
+    /^\/api\/games\/([0-9a-f-]{36})(?:\/(download|logo|asset))?$/i,
   );
   if (!match || !UUID_PATTERN.test(match[1])) {
     return json({ error: "Not found." }, 404);
@@ -236,18 +280,43 @@ export async function handleRequest(request, fetchObject = fetch) {
     }
     const details = await fetchPlayerDetails(fetchObject, uuid, url.origin);
     if (action === "download") {
-      if (!details.compatible || !details.gameZipUrl) {
+      if (!details.compatible) {
         return json({ error: details.incompatibleReason }, 422);
       }
-      const upstream = await fetchObject(details.gameZipUrl, {
+      const upstreamUrl =
+        details.packageType === "gamezip"
+          ? details.gameZipUrl
+          : legacyAssetUrl(
+              `content/${new URL(details.launchCommand).hostname}${new URL(details.launchCommand).pathname}`,
+            );
+      const upstream = await fetchObject(upstreamUrl, {
         headers: { "User-Agent": "Astro-Flash-Catalog/1.0" },
       });
       if (!upstream.ok) {
         return json({ error: `Game download returned ${upstream.status}.` }, 502);
       }
-      return proxyResponse(upstream, 3600);
+      return details.packageType === "legacy"
+        ? checkedAssetResponse(upstream, 3600)
+        : proxyResponse(upstream, 3600);
     }
-    const { gameZipUrl: _privateUpstreamUrl, ...publicDetails } = details;
+    if (action === "asset") {
+      if (!details.compatible || !details.legacyServerUrl) {
+        return json({ error: "Legacy assets are not available for this game." }, 422);
+      }
+      const upstream = await fetchObject(
+        legacyAssetUrl(url.searchParams.get("path")),
+        { headers: { "User-Agent": "Astro-Flash-Catalog/1.0" } },
+      );
+      if (!upstream.ok) {
+        return json({ error: `Legacy asset returned ${upstream.status}.` }, 404);
+      }
+      return checkedAssetResponse(upstream, 86400);
+    }
+    const {
+      gameZipUrl: _privateUpstreamUrl,
+      legacyServerUrl: _privateLegacyServer,
+      ...publicDetails
+    } = details;
     return json(publicDetails);
   } catch (error) {
     return json({ error: error.message || "Game lookup failed." }, 502);

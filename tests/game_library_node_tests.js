@@ -55,6 +55,18 @@ const details = {
     "http://localflash/bikemaniaarena1/bike-mania-arena-1.swf",
   tags: ["Sports", "Racing"],
   compatible: true,
+  packageType: "gamezip",
+  legacyFallback: true,
+};
+const legacyUuid = "6ad53148-33c7-0fd0-9c7b-5baa815b752d";
+const legacyDetails = {
+  ...details,
+  uuid: legacyUuid,
+  title: "Bike Mania 3 on Ice",
+  packageType: "legacy",
+  downloadUrl: `https://flash.example/api/games/${legacyUuid}/download`,
+  logoUrl: `https://flash.example/api/games/${legacyUuid}/logo`,
+  launchCommand: "http://localflash/bikemania3/bikemaniaonice.swf",
 };
 
 assert.equal(
@@ -77,9 +89,17 @@ const fetchObject = async (url) => {
       headers: { "Content-Type": "image/jpeg" },
     });
   }
+  if (url.includes("/asset?")) {
+    return new Response(new Uint8Array([6, 7]), {
+      headers: { "Content-Type": "application/octet-stream" },
+    });
+  }
   if (url.endsWith("/download")) {
-    return new Response(new Uint8Array([1, 2, 3]), {
-      headers: { "Content-Length": "3" },
+    const bytes = url.includes(legacyUuid)
+      ? new Uint8Array([7, 8])
+      : new Uint8Array([1, 2, 3]);
+    return new Response(bytes, {
+      headers: { "Content-Length": String(bytes.byteLength) },
     });
   }
   return new Response(JSON.stringify(details), {
@@ -127,6 +147,45 @@ const fetchObject = async (url) => {
   assert.deepEqual(manager.getGames(), {});
   assert.equal(cache.values.size, 0);
   assert.equal(store.values.size, 0);
+
+  const legacyCache = new FakeCache();
+  const legacyStore = new FakeStore();
+  const legacyManager = library.createManager({
+    installer,
+    unzipSync: () => ({}),
+    fetchObject,
+    cacheObject: legacyCache,
+    metadataStore: legacyStore,
+    storageManager: { persist: async () => true },
+    origin: "https://flash.example",
+  });
+  await legacyManager.initialize();
+  const legacyInstalled = await legacyManager.install(legacyDetails);
+  assert.equal(legacyInstalled.id, `flashpoint:${legacyUuid}`);
+  assert.deepEqual(
+    [
+      ...new Uint8Array(
+        await (await legacyManager.match(legacyInstalled.url)).arrayBuffer(),
+      ),
+    ],
+    [7, 8],
+  );
+  const lazyAsset = await legacyManager.match(
+    "http://localflash/bikemania3/data/config.bin",
+  );
+  assert(lazyAsset);
+  assert.deepEqual([...new Uint8Array(await lazyAsset.arrayBuffer())], [6, 7]);
+  assert(
+    legacyCache.values.has(
+      `https://flash.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/config.bin`,
+    ),
+  );
+  const fetchCountBeforeAppRequest = legacyCache.values.size;
+  assert.equal(
+    await legacyManager.match("https://flash.example/js/runtime.wasm"),
+    null,
+  );
+  assert.equal(legacyCache.values.size, fetchCountBeforeAppRequest);
 
   await assert.rejects(
     library.readDownload(

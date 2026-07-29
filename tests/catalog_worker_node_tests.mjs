@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  legacyAssetUrl,
   parseGameDetails,
   parseSearchResults,
 } from "../worker/catalog-worker.mjs";
@@ -28,6 +29,7 @@ const detailsHtml = `
 <div class="header-large">Bike Mania Arena</div>
 <div class="player-container"
   data-game-zip="https://download.unstable.life/gib-roms/Games/${uuid}-1651457108151.zip"
+  data-legacy-server="https://infinity.unstable.life/Flashpoint/Legacy/htdocs"
   data-launch-command="http://localflash/bikemaniaarena1/bike-mania-arena-1.swf"
   data-id="${uuid}"></div>
 <div class="row"><div class="field">Developer:</div><div class="value">Flash Games 247</div></div>
@@ -38,15 +40,30 @@ const detailsHtml = `
 <div class="row"><div class="field">Application Path:</div><div class="value">FPSoftware\\Flash\\flashplayer_32_sa.exe</div></div>`;
 const details = parseGameDetails(detailsHtml, "https://flash.example", uuid);
 assert.equal(details.compatible, true);
+assert.equal(details.packageType, "gamezip");
+assert.equal(details.legacyFallback, true);
 assert.equal(details.downloadUrl, `https://flash.example/api/games/${uuid}/download`);
 assert.deepEqual(details.tags, ["Sports", "Motocross"]);
 
 const legacy = parseGameDetails(
-  detailsHtml.replace(/data-game-zip="[^"]+"/, 'data-game-zip=""'),
+  detailsHtml
+    .replace(/data-game-zip="[^"]+"/, 'data-game-zip=""')
+    .replace(/data-legacy-server="[^"]+"/, 'data-legacy-server=""'),
   "https://flash.example",
   uuid,
 );
 assert.equal(legacy.compatible, false);
-assert.match(legacy.incompatibleReason, /GameZIP/);
+const supportedLegacy = parseGameDetails(
+  detailsHtml.replace(/data-game-zip="[^"]+"/, 'data-game-zip=""'),
+  "https://flash.example",
+  uuid,
+);
+assert.equal(supportedLegacy.compatible, true);
+assert.equal(supportedLegacy.packageType, "legacy");
+assert.equal(
+  legacyAssetUrl("content/localflash/game/main.swf"),
+  "https://infinity.unstable.life/Flashpoint/Legacy/htdocs/localflash/game/main.swf",
+);
+assert.throws(() => legacyAssetUrl("content/localflash/../secret"), /Invalid Legacy/);
 
 console.log("catalog worker tests passed");

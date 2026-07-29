@@ -27,6 +27,18 @@ class Cache { constructor() { this.data = new Map(); } async put(k, v) { if (k.i
   assert.strictEqual(result.basePath, "https://flash.example/__installed-games/" + uuid + "/content/localflash/game/");
   assert.strictEqual(cache.data.size, 2); assert.strictEqual(stored.size, 1);
   await installer.uninstall(uuid, deps); assert.strictEqual(cache.data.size, 0); assert.strictEqual(stored.size, 0);
+  const legacy = await installer.installLegacy(
+    { ...record, packageType: "legacy", legacyFallback: true },
+    new Uint8Array([7, 8]),
+    deps,
+  );
+  assert.strictEqual(legacy.packageType, "legacy");
+  assert.strictEqual(cache.data.size, 1);
+  assert.deepStrictEqual(
+    [...cache.data.get(legacy.launchPath)],
+    [7, 8],
+  );
+  await installer.uninstall(uuid, deps);
   const failing = new Cache();
   await assert.rejects(installer.install(record, new Uint8Array([0]), { ...deps, cache: failing, unzipSync: () => ({ "content/localflash/game/main.swf": new Uint8Array([1]), "content/fail": new Uint8Array([2]) }) }), /put failed/);
   assert.strictEqual(failing.data.size, 0);
