@@ -23,7 +23,7 @@ const BUILD_INPUTS = [
 	"site",
 	"tools/deploy.ts",
 	"tools/ruffle-release.json",
-	"workbox-config.js",
+	"workbox-config.ts",
 	"package.json",
 	"bun.lock",
 ];

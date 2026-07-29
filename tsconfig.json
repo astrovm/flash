@@ -10,5 +10,11 @@
     "target": "ES2024",
     "types": ["bun"]
   },
-  "include": ["catalog/**/*.ts", "tools/**/*.ts", "tests/**/*.ts", "worker/**/*.ts"]
+  "include": [
+    "catalog/**/*.ts",
+    "tools/**/*.ts",
+    "tests/**/*.ts",
+    "worker/**/*.ts",
+    "workbox-config.ts"
+  ]
 }

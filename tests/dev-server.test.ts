@@ -34,7 +34,7 @@ describe("development build synchronization", () => {
 		await writeFile(join(project, "site", "index.html"), "one");
 		await writeFile(join(project, "tools", "deploy.ts"), "build");
 		await writeFile(join(project, "tools", "ruffle-release.json"), "{}");
-		await writeFile(join(project, "workbox-config.js"), "config");
+		await writeFile(join(project, "workbox-config.ts"), "config");
 		await writeFile(join(project, "package.json"), "{}");
 		await writeFile(join(project, "bun.lock"), "lock");
 		Bun.spawnSync(["git", "init"], { cwd: project });

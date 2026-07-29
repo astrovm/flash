@@ -20,7 +20,6 @@ Install dependencies and run the test suite:
 
 ```bash
 bun install --frozen-lockfile
-python -m pip install -r requirements.txt
 bun run test
 ```
 
@@ -41,7 +40,7 @@ existing output unchanged.
 - `site/` — authored static site
 - `worker/` — Cloudflare Worker for the Internet Games catalog
 - `tools/` — build, validation, and asset maintenance scripts
-- `tests/` — Bun/TypeScript and Python tests
+- `tests/` — Bun/TypeScript tests
 - `dist/` — generated production build; ignored by Git
 
 ## Games and offline storage
