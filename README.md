@@ -1,9 +1,9 @@
-# Astro Flash
+# Astro Flash Collection
 
 A Windows XP-style desktop for playing classic Flash, HTML5, and DOS games in
 the browser.
 
-[Open Astro Flash](https://flash.4st.li/)
+[Open Astro Flash Collection](https://flash.4st.li/)
 
 ## Highlights
 

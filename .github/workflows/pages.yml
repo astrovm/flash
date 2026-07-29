@@ -2,9 +2,19 @@ name: Test and deploy GitHub Pages
 
 on:
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "**/LICENSE"
+      - "**/LICENSE.*"
+      - "**/LICENSE-*"
   push:
     branches:
       - main
+    paths-ignore:
+      - "**/*.md"
+      - "**/LICENSE"
+      - "**/LICENSE.*"
+      - "**/LICENSE-*"
   workflow_dispatch:
 
 permissions:
