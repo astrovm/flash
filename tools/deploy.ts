@@ -662,7 +662,7 @@ export async function replaceOutput(stagingDir: string, outputDir: string): Prom
 	}
 }
 
-interface BuildOptions {
+export interface BuildOptions {
 	outputDir?: string;
 	revision?: string;
 	sourceDir?: string;

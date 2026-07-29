@@ -27,12 +27,14 @@ bun run test
 Build and serve the production site locally:
 
 ```bash
-bun run build
-python tools/dev_server.py --port 8000
+bun run dev
 ```
 
 Open <http://127.0.0.1:8000>. The development server also provides the local
-`/api/games` proxy used by Internet Games.
+`/api/games` proxy used by Internet Games. It builds automatically when source
+files change and starts immediately when `dist/` is already current. Use
+`bun run dev -- --rebuild` to force a rebuild or `--no-sync` to serve the
+existing output unchanged.
 
 ## Project layout
 

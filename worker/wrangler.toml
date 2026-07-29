@@ -1,5 +1,5 @@
 name = "astro-flash-catalog"
-main = "catalog-worker.mjs"
+main = "catalog-worker.ts"
 compatibility_date = "2026-07-29"
 workers_dev = false
 
