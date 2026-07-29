@@ -108,7 +108,7 @@ const systemShortcuts = {
     icon: "assets/xp/icons/mycomputer.png",
     desktop: false,
   },
-  "__notepad": {
+  __notepad: {
     title: "Notepad",
     glyph: "notepad",
     desktop: false,
@@ -925,9 +925,7 @@ const loadRuffleSWF = (gameId, win) => {
     url:
       game.url ||
       (game.spoofUrl ? `${game.spoofUrl}/main.swf` : `swf/${gameId}/main.swf`),
-    base:
-      game.base ||
-      (game.spoofUrl ? `${game.spoofUrl}/` : `swf/${gameId}/`),
+    base: game.base || (game.spoofUrl ? `${game.spoofUrl}/` : `swf/${gameId}/`),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,
@@ -2275,7 +2273,6 @@ const createSystemWindowContent = (shortcutId, win) => {
       }
       return;
     }
-    const item = explorerMenu.querySelector("button:not(:disabled)");
     const menuItems = [
       ...explorerMenu.querySelectorAll("button:not(:disabled)"),
     ];
@@ -2838,7 +2835,9 @@ const wireSearchCompanion = (win) => {
 };
 
 const findBundledGameByTitle = (title) => {
-  const wanted = String(title || "").trim().toLowerCase();
+  const wanted = String(title || "")
+    .trim()
+    .toLowerCase();
   if (!wanted) return null;
   return (
     Object.keys(window.FLASH_GAMES).find(
@@ -2917,9 +2916,7 @@ const createInternetGameCard = (game, win, { installed = false } = {}) => {
   } else {
     const gameId = `flashpoint:${game.uuid}`;
     const includedGameId = findBundledGameByTitle(game.title);
-    let availableGameId = gamesList[gameId]
-      ? gameId
-      : includedGameId;
+    let availableGameId = gamesList[gameId] ? gameId : includedGameId;
     action.textContent = availableGameId
       ? "Play"
       : game.potentiallyCompatible === false
@@ -3038,7 +3035,8 @@ const wireInternetGames = (win) => {
     }
     if (!gameLibrary || gameLibraryError) {
       status.textContent =
-        gameLibraryError?.message || "The Internet Games service is unavailable.";
+        gameLibraryError?.message ||
+        "The Internet Games service is unavailable.";
       return;
     }
     const submit = form.querySelector("button");
@@ -3262,11 +3260,7 @@ const importDroppedFiles = async (destinationId, dataTransfer) => {
     progress.close();
   }
 };
-const wireFolderDropTarget = (
-  element,
-  destinationId,
-  selectedIds = () => [],
-) => {
+const wireFolderDropTarget = (element, destinationId) => {
   element.addEventListener("dragover", (event) => {
     const internal = event.dataTransfer?.types?.includes(
       "application/x-astro-vfs-ids",
@@ -3823,8 +3817,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
       item.click();
       openExplorerContextMenu(win, event.clientX, event.clientY);
     });
-    if (node.type === "folder")
-      wireFolderDropTarget(item, node.id, () => selectedExplorerNodes(win));
+    if (node.type === "folder") wireFolderDropTarget(item, node.id);
     items.appendChild(item);
   });
   const status = explorerContent?.querySelector(".explorer-status");
@@ -3841,6 +3834,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
 // opened through the registered file association.
 const gameFileName = (gameId) =>
   `${formatGameTitle(gameId)
+    // eslint-disable-next-line no-control-regex -- Windows rejects ASCII control characters.
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
     .replace(/\s+/g, " ")
     .trim()}.game`;
@@ -4105,11 +4099,7 @@ const openNotepad = (file = null) => {
       item.setAttribute("aria-checked", String(!status.hidden));
     },
     about: () =>
-      XPDialogs.alert(
-        "Microsoft Windows XP\nNotepad",
-        "About Notepad",
-        "info",
-      ),
+      XPDialogs.alert("Microsoft Windows XP\nNotepad", "About Notepad", "info"),
   };
 
   const menuDefinitions = [
@@ -4177,10 +4167,7 @@ const openNotepad = (file = null) => {
       item.type = "button";
       item.className = "notepad-menu-item";
       item.dataset.command = command;
-      item.setAttribute(
-        "role",
-        checked ? "menuitemcheckbox" : "menuitem",
-      );
+      item.setAttribute("role", checked ? "menuitemcheckbox" : "menuitem");
       if (checked) {
         item.classList.add("checked");
         item.setAttribute("aria-checked", "true");
@@ -5086,12 +5073,8 @@ const wireProjectSettings = (win) => {
   const offlineGamesList = content.querySelector(
     "[data-project-offline-games]",
   );
-  const updateStatus = content.querySelector(
-    '[data-project-status="updates"]',
-  );
-  const downloadProgress = content.querySelector(
-    ".project-settings-progress",
-  );
+  const updateStatus = content.querySelector('[data-project-status="updates"]');
+  const downloadProgress = content.querySelector(".project-settings-progress");
   const gameDownloadProgress = content.querySelector(
     "[data-project-game-progress]",
   );
@@ -5189,8 +5172,7 @@ const wireProjectSettings = (win) => {
       checkbox.disabled = busy;
       checkbox.dataset.offlineGame = game.id;
       const title = document.createElement("span");
-      title.textContent =
-        gamesList[game.id]?.title || formatGameTitle(game.id);
+      title.textContent = gamesList[game.id]?.title || formatGameTitle(game.id);
       const size = document.createElement("span");
       size.className = "project-offline-game-size";
       size.textContent = formatProjectBytes(game.bytes);
@@ -5238,9 +5220,7 @@ const wireProjectSettings = (win) => {
       state.downloadedGameBytes,
     );
     value("storage").textContent = projectStorageText(state);
-    value("lastChecked").textContent = formatUpdateCheckTime(
-      state.lastChecked,
-    );
+    value("lastChecked").textContent = formatUpdateCheckTime(state.lastChecked);
     offlineStatus.textContent = offlineStatusText(state);
     const activeGameTitle = state.activeGameId
       ? gamesList[state.activeGameId]?.title ||
@@ -5281,13 +5261,12 @@ const wireProjectSettings = (win) => {
     } else {
       gameDownloadProgress.removeAttribute("value");
     }
-    checkButton.disabled =
-      !state.online || transientPhases.has(state.phase);
+    checkButton.disabled = !state.online || transientPhases.has(state.phase);
     applyButton.hidden = !state.availableVersion;
-    applyButton.disabled =
-      state.enabled ? !state.updateReady : transientPhases.has(state.phase);
-    repairButton.disabled =
-      !state.online || transientPhases.has(state.phase);
+    applyButton.disabled = state.enabled
+      ? !state.updateReady
+      : transientPhases.has(state.phase);
+    repairButton.disabled = !state.online || transientPhases.has(state.phase);
     const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     downloadAllGamesButton.disabled =
       !state.online ||
@@ -5373,7 +5352,6 @@ const wireProjectSettings = (win) => {
     resetAstroFlash();
     window.location.reload();
   });
-
 };
 
 const openProjectSettings = () => openSystemWindow("__astro-settings");
@@ -5834,6 +5812,7 @@ const wireDesktopIconDrag = (icon) => {
       left: item.offsetLeft,
       top: item.offsetTop,
     }));
+    const container = document.getElementById("desktop-icons");
     desktopDragged = false;
 
     const onMove = (moveEvent) => {
@@ -5842,7 +5821,6 @@ const wireDesktopIconDrag = (icon) => {
       if (!desktopDragged && Math.hypot(deltaX, deltaY) < 4) return;
 
       desktopDragged = true;
-      const container = document.getElementById("desktop-icons");
       const groupLeft = Math.min(...selected.map(({ left }) => left));
       const groupTop = Math.min(...selected.map(({ top }) => top));
       const groupRight = Math.max(
@@ -6092,8 +6070,7 @@ const buildDesktopIcons = () => {
   });
 
   if (!wasBuilt) wireDesktopSelectionRectangle();
-  if (!wasBuilt)
-    wireFolderDropTarget(container, fs.DESKTOP, getSelectedFilesystemIds);
+  if (!wasBuilt) wireFolderDropTarget(container, fs.DESKTOP);
   requestAnimationFrame(() =>
     layoutDesktopIcons(getDesktopLayoutSettings().autoArrange),
   );
@@ -6227,13 +6204,6 @@ const addDesktopSeparator = (menu) => {
 };
 
 const renderDesktopContextMenu = (menu, itemId = null) => {
-  const selectedIds =
-    itemId &&
-    document
-      .querySelector(`.desktop-icon[data-desktop-id="${CSS.escape(itemId)}"]`)
-      ?.classList.contains("selected")
-      ? getSelectedDesktopIds()
-      : [];
   const {
     filesystemIds: selectedFsIds,
     allFilesystem,

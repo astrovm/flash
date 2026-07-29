@@ -1,4 +1,3 @@
-/* global window */
 "use strict";
 
 // This module deliberately knows nothing about the UI.  Supplying the ZIP reader,
@@ -9,45 +8,70 @@
   if (root) root.AstroGameInstaller = api;
 })(typeof window !== "undefined" ? window : globalThis, function () {
   // Flashpoint UUIDs are not necessarily RFC 4122 version 1-5 UUIDs.
-  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const UUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const DEFAULT_LIMITS = Object.freeze({
     maxFiles: 2000,
     maxFileBytes: 64 * 1024 * 1024,
     maxTotalBytes: 512 * 1024 * 1024,
   });
 
-  function fail(message) { throw new Error(message); }
+  function fail(message) {
+    throw new Error(message);
+  }
   function field(record, ...names) {
-    for (const name of names) if (record[name] !== undefined) return record[name];
+    for (const name of names)
+      if (record[name] !== undefined) return record[name];
     return undefined;
   }
-  function text(value) { return Array.isArray(value) ? value.join(" ") : String(value || ""); }
+  function text(value) {
+    return Array.isArray(value) ? value.join(" ") : String(value || "");
+  }
 
   function validateCatalogRecord(record, options = {}) {
-    if (!record || typeof record !== "object") fail("A game record is required");
+    if (!record || typeof record !== "object")
+      fail("A game record is required");
     const uuid = field(record, "uuid", "id");
     if (typeof uuid !== "string" || !UUID.test(uuid)) fail("Invalid game UUID");
-    if (text(field(record, "library", "libraryName")).toLowerCase() !== "games") fail("Only Games library records are supported");
-    if (text(field(record, "platform", "platformName")).toLowerCase() !== "flash") fail("Only Flash games are supported");
-    if (text(field(record, "status")).toLowerCase() !== "playable") fail("Only playable games are supported");
-    const applicationPath = text(field(record, "applicationPath", "application", "applicationPaths"));
+    if (text(field(record, "library", "libraryName")).toLowerCase() !== "games")
+      fail("Only Games library records are supported");
+    if (
+      text(field(record, "platform", "platformName")).toLowerCase() !== "flash"
+    )
+      fail("Only Flash games are supported");
+    if (text(field(record, "status")).toLowerCase() !== "playable")
+      fail("Only playable games are supported");
+    const applicationPath = text(
+      field(record, "applicationPath", "application", "applicationPaths"),
+    );
     if (!/(?:flash\s*player|flashplayer)/i.test(applicationPath))
       fail("Game does not use the Flash player");
     const downloadUrl = field(record, "downloadUrl", "gameZipUrl", "gameZIP");
     const launchCommand = field(record, "launchCommand", "launch", "command");
-    const packageType = text(field(record, "packageType") || "gamezip").toLowerCase();
+    const packageType = text(
+      field(record, "packageType") || "gamezip",
+    ).toLowerCase();
     if (!["gamezip", "legacy"].includes(packageType))
       fail("Unsupported game package type");
     let download, launch;
-    try { download = new URL(downloadUrl, options.origin || "https://astro.local"); } catch (_) { fail("Invalid download URL"); }
-    try { launch = new URL(launchCommand); } catch (_) { fail("Invalid launch command"); }
+    try {
+      download = new URL(downloadUrl, options.origin || "https://astro.local");
+    } catch (_) {
+      fail("Invalid download URL");
+    }
+    try {
+      launch = new URL(launchCommand);
+    } catch (_) {
+      fail("Invalid launch command");
+    }
     const ownOrigin = new URL(options.origin || "https://astro.local").origin;
     const trustedUpstream =
       download.protocol === "https:" &&
       download.host === "download.unstable.life";
     if (!trustedUpstream && download.origin !== ownOrigin)
       fail("Download URL is not allowed");
-    if (!/^https?:$/.test(launch.protocol) || !/\.swf$/i.test(launch.pathname)) fail("Launch command must point to an SWF");
+    if (!/^https?:$/.test(launch.protocol) || !/\.swf$/i.test(launch.pathname))
+      fail("Launch command must point to an SWF");
     return Object.assign({}, record, {
       uuid: uuid.toLowerCase(),
       downloadUrl: download.href,
@@ -64,7 +88,15 @@
   }
 
   function safeArchivePath(name) {
-    if (typeof name !== "string" || !name || name.indexOf("\0") !== -1 || name.includes("\\") || name.startsWith("/") || /^[a-zA-Z]:/.test(name)) fail("Unsafe ZIP entry name");
+    if (
+      typeof name !== "string" ||
+      !name ||
+      name.indexOf("\0") !== -1 ||
+      name.includes("\\") ||
+      name.startsWith("/") ||
+      /^[a-zA-Z]:/.test(name)
+    )
+      fail("Unsafe ZIP entry name");
     const isDirectory = name.endsWith("/");
     const parts = (isDirectory ? name.slice(0, -1) : name).split("/");
     if (
@@ -76,11 +108,7 @@
         } catch (_) {
           return true;
         }
-        return (
-          decoded === "." ||
-          decoded === ".." ||
-          /[\\/?#]/.test(decoded)
-        );
+        return decoded === "." || decoded === ".." || /[\\/?#]/.test(decoded);
       })
     )
       fail("Unsafe ZIP entry name");
@@ -138,10 +166,7 @@
     let offset = directoryOffset;
     let total = 0;
     for (let index = 0; index < entryCount; index += 1) {
-      if (
-        offset + 46 > eocd ||
-        view.getUint32(offset, true) !== 0x02014b50
-      ) {
+      if (offset + 46 > eocd || view.getUint32(offset, true) !== 0x02014b50) {
         fail("ZIP metadata is invalid");
       }
       const fileBytes = view.getUint32(offset + 24, true);
@@ -174,7 +199,10 @@
 
   function validateZipEntries(entries, limits = {}) {
     const max = Object.assign({}, DEFAULT_LIMITS, limits);
-    const pairs = entries instanceof Map ? Array.from(entries.entries()) : Object.entries(entries || {});
+    const pairs =
+      entries instanceof Map
+        ? Array.from(entries.entries())
+        : Object.entries(entries || {});
     if (pairs.length > max.maxFiles) fail("ZIP has too many files");
     let total = 0;
     return pairs.flatMap(([name, entry]) => {
@@ -210,7 +238,8 @@
   }
   async function putMetadata(store, metadata) {
     if (typeof store.put === "function") return store.put(metadata);
-    if (typeof store.set === "function") return store.set(metadata.id, metadata);
+    if (typeof store.set === "function")
+      return store.set(metadata.id, metadata);
     fail("Metadata store dependency is required");
   }
   async function deleteMetadata(store, id) {
@@ -220,11 +249,27 @@
   }
 
   async function install(record, zipBytes, dependencies = {}) {
-    if (!(zipBytes instanceof Uint8Array)) fail("Game archive must be a Uint8Array");
-    if (typeof dependencies.unzipSync !== "function") fail("unzipSync dependency is required");
-    if (!dependencies.cache || typeof dependencies.cache.put !== "function" || typeof dependencies.cache.delete !== "function") fail("Cache dependency is required");
-    if (!dependencies.store || (typeof dependencies.store.put !== "function" && typeof dependencies.store.set !== "function")) fail("Metadata store dependency is required");
-    const origin = dependencies.origin || (typeof location !== "undefined" ? location.origin : "https://astro.local");
+    if (!(zipBytes instanceof Uint8Array))
+      fail("Game archive must be a Uint8Array");
+    if (typeof dependencies.unzipSync !== "function")
+      fail("unzipSync dependency is required");
+    if (
+      !dependencies.cache ||
+      typeof dependencies.cache.put !== "function" ||
+      typeof dependencies.cache.delete !== "function"
+    )
+      fail("Cache dependency is required");
+    if (
+      !dependencies.store ||
+      (typeof dependencies.store.put !== "function" &&
+        typeof dependencies.store.set !== "function")
+    )
+      fail("Metadata store dependency is required");
+    const origin =
+      dependencies.origin ||
+      (typeof location !== "undefined"
+        ? location.origin
+        : "https://astro.local");
     const game = validateCatalogRecord(record, { origin });
     if (game.packageType !== "gamezip")
       fail("Legacy games must be installed from their launch SWF");
@@ -248,22 +293,23 @@
         );
         written.push(key);
       }
-      const resolvedLaunchPath = cacheKey(
-        origin,
-        game.uuid,
-        launchFile.path,
-      );
+      const resolvedLaunchPath = cacheKey(origin, game.uuid, launchFile.path);
       const metadata = Object.assign({}, game, {
         id: "flashpoint:" + game.uuid,
         type: "swf",
         source: "Flashpoint Archive",
         launchPath: resolvedLaunchPath,
-        basePath: resolvedLaunchPath.slice(0, resolvedLaunchPath.lastIndexOf("/") + 1),
+        basePath: resolvedLaunchPath.slice(
+          0,
+          resolvedLaunchPath.lastIndexOf("/") + 1,
+        ),
       });
       await putMetadata(dependencies.store, metadata);
       return metadata;
     } catch (error) {
-      await Promise.all(written.map((key) => dependencies.cache.delete(key).catch(() => {})));
+      await Promise.all(
+        written.map((key) => dependencies.cache.delete(key).catch(() => {})),
+      );
       throw error;
     }
   }
@@ -271,17 +317,27 @@
   async function installLegacy(record, swfBytes, dependencies = {}) {
     if (!(swfBytes instanceof Uint8Array))
       fail("Game file must be a Uint8Array");
-    if (swfBytes.byteLength === 0)
-      fail("Game file is empty");
+    if (swfBytes.byteLength === 0) fail("Game file is empty");
     const maxFileBytes =
       dependencies.limits?.maxFileBytes || DEFAULT_LIMITS.maxFileBytes;
-    if (swfBytes.byteLength > maxFileBytes)
-      fail("Game file is too large");
-    if (!dependencies.cache || typeof dependencies.cache.put !== "function" || typeof dependencies.cache.delete !== "function")
+    if (swfBytes.byteLength > maxFileBytes) fail("Game file is too large");
+    if (
+      !dependencies.cache ||
+      typeof dependencies.cache.put !== "function" ||
+      typeof dependencies.cache.delete !== "function"
+    )
       fail("Cache dependency is required");
-    if (!dependencies.store || (typeof dependencies.store.put !== "function" && typeof dependencies.store.set !== "function"))
+    if (
+      !dependencies.store ||
+      (typeof dependencies.store.put !== "function" &&
+        typeof dependencies.store.set !== "function")
+    )
       fail("Metadata store dependency is required");
-    const origin = dependencies.origin || (typeof location !== "undefined" ? location.origin : "https://astro.local");
+    const origin =
+      dependencies.origin ||
+      (typeof location !== "undefined"
+        ? location.origin
+        : "https://astro.local");
     const game = validateCatalogRecord(record, { origin });
     if (game.packageType !== "legacy")
       fail("Only Legacy games can be installed from a launch SWF");
@@ -297,7 +353,10 @@
         type: "swf",
         source: "Flashpoint Archive",
         launchPath: resolvedLaunchPath,
-        basePath: resolvedLaunchPath.slice(0, resolvedLaunchPath.lastIndexOf("/") + 1),
+        basePath: resolvedLaunchPath.slice(
+          0,
+          resolvedLaunchPath.lastIndexOf("/") + 1,
+        ),
       });
       await putMetadata(dependencies.store, metadata);
       return metadata;
@@ -309,14 +368,45 @@
 
   async function uninstall(uuid, dependencies = {}) {
     if (typeof uuid !== "string" || !UUID.test(uuid)) fail("Invalid game UUID");
-    if (!dependencies.cache || typeof dependencies.cache.keys !== "function" || typeof dependencies.cache.delete !== "function") fail("Cache dependency is required");
-    if (!dependencies.store || (typeof dependencies.store.delete !== "function" && typeof dependencies.store.remove !== "function")) fail("Metadata store dependency is required");
-    const origin = dependencies.origin || (typeof location !== "undefined" ? location.origin : "https://astro.local");
+    if (
+      !dependencies.cache ||
+      typeof dependencies.cache.keys !== "function" ||
+      typeof dependencies.cache.delete !== "function"
+    )
+      fail("Cache dependency is required");
+    if (
+      !dependencies.store ||
+      (typeof dependencies.store.delete !== "function" &&
+        typeof dependencies.store.remove !== "function")
+    )
+      fail("Metadata store dependency is required");
+    const origin =
+      dependencies.origin ||
+      (typeof location !== "undefined"
+        ? location.origin
+        : "https://astro.local");
     const prefix = cacheKey(origin, uuid.toLowerCase(), "");
     const keys = await dependencies.cache.keys();
-    await Promise.all(keys.filter((key) => String(key.url || key).startsWith(prefix)).map((key) => dependencies.cache.delete(key)));
-    await deleteMetadata(dependencies.store, "flashpoint:" + uuid.toLowerCase());
+    await Promise.all(
+      keys
+        .filter((key) => String(key.url || key).startsWith(prefix))
+        .map((key) => dependencies.cache.delete(key)),
+    );
+    await deleteMetadata(
+      dependencies.store,
+      "flashpoint:" + uuid.toLowerCase(),
+    );
   }
 
-  return { DEFAULT_LIMITS, validateCatalogRecord, archiveLaunchPath, safeArchivePath, validateZipMetadata, validateZipEntries, install, installLegacy, uninstall };
+  return {
+    DEFAULT_LIMITS,
+    validateCatalogRecord,
+    archiveLaunchPath,
+    safeArchivePath,
+    validateZipMetadata,
+    validateZipEntries,
+    install,
+    installLegacy,
+    uninstall,
+  };
 });
