@@ -4295,11 +4295,11 @@ const openSystemWindow = (shortcutId) => {
   const isProjectSettings = shortcutId === "__astro-settings";
   const isInternetGames = shortcutId === "__internet-games";
   const windowWidth = Math.min(
-    isProjectSettings ? 440 : isInternetGames ? 760 : 700,
+    isProjectSettings ? 540 : isInternetGames ? 760 : 700,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
-    isProjectSettings ? 320 : isInternetGames ? 540 : 500,
+    isProjectSettings ? 420 : isInternetGames ? 540 : 500,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -4940,12 +4940,12 @@ const offlineStatusText = (state) => {
 const formatUpdateCheckTime = (timestamp) =>
   timestamp ? new Date(timestamp).toLocaleString() : "Never";
 
+const formatProjectBytes = (bytes) =>
+  XPDialogs.formatBytes(bytes).replace(/\s+\([^)]*\)$/, "");
+
 const projectStorageText = (state) => {
   if (state.usage === null) return "Unavailable";
-  const usage = XPDialogs.formatBytes(state.usage);
-  return state.quota === null
-    ? usage
-    : `${usage} of ${XPDialogs.formatBytes(state.quota)}`;
+  return formatProjectBytes(state.usage);
 };
 
 const formatProjectState = (value) =>
@@ -4984,76 +4984,141 @@ const initializeOfflineMode = () => {
 
 const wireProjectSettings = (win) => {
   const content = win.el.querySelector(".project-settings-content");
-  const details = document.createElement("dl");
-  details.className = "dlg-props-table";
-  const detailValues = {};
-  const addDetail = (label, id) => {
-    const term = document.createElement("dt");
-    term.textContent = label;
-    const description = document.createElement("dd");
-    detailValues[id] = description;
-    details.append(term, description);
-  };
-  addDetail("Installed version:", "version");
-  addDetail("Available version:", "availableVersion");
-  addDetail("Installed games:", "games");
-  addDetail("Offline download:", "downloadSize");
-  addDetail("Connection:", "connection");
-  addDetail("Offline files:", "offlineFiles");
-  addDetail("Site storage:", "storage");
-  addDetail("Last update check:", "lastChecked");
+  const bundledGameCount = Object.keys(window.FLASH_GAMES).length;
+  content.innerHTML = `
+    <div class="project-settings-tabs" role="tablist" aria-label="Astro Flash Settings">
+      <button type="button" role="tab" class="active" id="project-tab-general" aria-controls="project-panel-general" aria-selected="true">General</button>
+      <button type="button" role="tab" id="project-tab-offline" aria-controls="project-panel-offline" aria-selected="false" tabindex="-1">Offline</button>
+      <button type="button" role="tab" id="project-tab-updates" aria-controls="project-panel-updates" aria-selected="false" tabindex="-1">Updates</button>
+      <button type="button" role="tab" id="project-tab-recovery" aria-controls="project-panel-recovery" aria-selected="false" tabindex="-1">Recovery</button>
+    </div>
+    <section class="project-settings-panel active" id="project-panel-general" role="tabpanel" aria-labelledby="project-tab-general">
+      <div class="project-settings-product">
+        <img src="assets/xp/icons/ControlPanel.png" alt="">
+        <div>
+          <h2>Astro Flash</h2>
+          <p data-project-value="connection"></p>
+        </div>
+      </div>
+      <fieldset>
+        <legend>Game library</legend>
+        <dl class="dlg-props-table project-settings-details">
+          <dt>Included games:</dt><dd data-project-value="includedGames"></dd>
+          <dt>Downloaded games:</dt><dd data-project-value="downloadedGames"></dd>
+        </dl>
+        <button type="button" class="xp-btn" data-project-action="manage-games">Manage Games...</button>
+      </fieldset>
+      <fieldset>
+        <legend>Storage</legend>
+        <p>Astro Flash is using <strong data-project-value="storage"></strong> of browser storage.</p>
+      </fieldset>
+      <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send suggestions or report a problem</a>
+    </section>
+    <section class="project-settings-panel" id="project-panel-offline" role="tabpanel" aria-labelledby="project-tab-offline" hidden>
+      <fieldset>
+        <legend>Offline availability</legend>
+        <label class="project-offline-setting">
+          <input type="checkbox" data-project-control="offline">
+          Make Astro Flash available offline
+        </label>
+        <p class="project-settings-description">Downloads the application and all ${bundledGameCount} included games so they work without an internet connection.</p>
+        <dl class="dlg-props-table project-settings-details">
+          <dt>Required download:</dt><dd data-project-value="downloadSize"></dd>
+          <dt>Offline status:</dt><dd data-project-value="offlineFiles"></dd>
+        </dl>
+        <p class="project-settings-status" data-project-status="offline" aria-live="polite"></p>
+        <progress class="project-settings-progress" aria-label="Offline download progress" hidden></progress>
+        <div class="project-settings-actions">
+          <button type="button" class="xp-btn" data-project-action="repair">Repair Offline Files</button>
+        </div>
+      </fieldset>
+    </section>
+    <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
+      <fieldset>
+        <legend>Astro Flash updates</legend>
+        <dl class="dlg-props-table project-settings-details">
+          <dt>Installed version:</dt><dd data-project-value="version"></dd>
+          <dt>Available version:</dt><dd data-project-value="availableVersion"></dd>
+          <dt>Last checked:</dt><dd data-project-value="lastChecked"></dd>
+        </dl>
+        <p class="project-settings-status" data-project-status="updates" aria-live="polite"></p>
+        <div class="project-settings-actions">
+          <button type="button" class="xp-btn" data-project-action="check">Check for Updates</button>
+          <button type="button" class="xp-btn" data-project-action="apply">Restart to Update</button>
+        </div>
+      </fieldset>
+    </section>
+    <section class="project-settings-panel" id="project-panel-recovery" role="tabpanel" aria-labelledby="project-tab-recovery" hidden>
+      <fieldset class="project-recovery-group">
+        <legend>Restore the desktop</legend>
+        <p>Restore all game shortcuts and their default positions. Personal files, downloaded games, and preferences are preserved.</p>
+        <button type="button" class="xp-btn" data-project-action="restore-desktop">Restore Default Desktop</button>
+      </fieldset>
+      <fieldset class="project-recovery-group project-recovery-danger">
+        <legend>Reset Astro Flash</legend>
+        <p>Permanently delete personal files and reset all preferences. Downloaded games and offline files are preserved.</p>
+        <button type="button" class="xp-btn" data-project-action="reset">Reset Astro Flash</button>
+      </fieldset>
+    </section>
+  `;
 
-  const offlineLabel = document.createElement("label");
-  offlineLabel.className = "project-offline-setting";
-  const offlineToggle = document.createElement("input");
-  offlineToggle.type = "checkbox";
-  offlineLabel.append(offlineToggle, " Download all files for offline use");
-
-  const status = document.createElement("p");
-  status.className = "project-settings-status";
-  const downloadProgress = document.createElement("progress");
-  downloadProgress.className = "project-settings-progress";
-  downloadProgress.setAttribute("aria-label", "Offline download progress");
-
-  const actions = document.createElement("div");
-  actions.className = "project-settings-actions";
-  const checkButton = document.createElement("button");
-  checkButton.type = "button";
-  checkButton.className = "xp-btn";
-  checkButton.textContent = "Check for Updates";
-  const applyButton = document.createElement("button");
-  applyButton.type = "button";
-  applyButton.className = "xp-btn";
-  applyButton.textContent = "Restart to Update";
-  const repairButton = document.createElement("button");
-  repairButton.type = "button";
-  repairButton.className = "xp-btn";
-  repairButton.textContent = "Repair Offline Files";
-  actions.append(checkButton, applyButton, repairButton);
-
-  const recoveryGroup = document.createElement("fieldset");
-  recoveryGroup.className = "project-recovery-group";
-  const recoveryLegend = document.createElement("legend");
-  recoveryLegend.textContent = "Recovery";
-  const recoveryDescription = document.createElement("p");
-  recoveryDescription.textContent =
-    "Restore the original desktop or erase personal files and preferences. Offline files are preserved.";
-  const recoveryActions = document.createElement("div");
-  recoveryActions.className = "project-settings-actions";
-  const restoreDesktopButton = document.createElement("button");
-  restoreDesktopButton.type = "button";
-  restoreDesktopButton.className = "xp-btn";
-  restoreDesktopButton.textContent = "Restore Default Desktop";
-  const resetButton = document.createElement("button");
-  resetButton.type = "button";
-  resetButton.className = "xp-btn";
-  resetButton.textContent = "Reset Astro Flash";
-  recoveryActions.append(restoreDesktopButton, resetButton);
-  recoveryGroup.append(
-    recoveryLegend,
-    recoveryDescription,
-    recoveryActions,
+  const tabs = [...content.querySelectorAll('[role="tab"]')];
+  const panels = [...content.querySelectorAll('[role="tabpanel"]')];
+  const value = (name) =>
+    content.querySelector(`[data-project-value="${name}"]`);
+  const offlineToggle = content.querySelector(
+    '[data-project-control="offline"]',
   );
+  const offlineStatus = content.querySelector(
+    '[data-project-status="offline"]',
+  );
+  const updateStatus = content.querySelector(
+    '[data-project-status="updates"]',
+  );
+  const downloadProgress = content.querySelector(
+    ".project-settings-progress",
+  );
+  const checkButton = content.querySelector('[data-project-action="check"]');
+  const applyButton = content.querySelector('[data-project-action="apply"]');
+  const repairButton = content.querySelector('[data-project-action="repair"]');
+  const restoreDesktopButton = content.querySelector(
+    '[data-project-action="restore-desktop"]',
+  );
+  const resetButton = content.querySelector('[data-project-action="reset"]');
+
+  const showTab = (tab) => {
+    const panelId = tab.getAttribute("aria-controls");
+    tabs.forEach((item) => {
+      const active = item === tab;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-selected", String(active));
+      item.tabIndex = active ? 0 : -1;
+    });
+    panels.forEach((panel) => {
+      const active = panel.id === panelId;
+      panel.hidden = !active;
+      panel.classList.toggle("active", active);
+    });
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => showTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+        return;
+      event.preventDefault();
+      const target =
+        event.key === "Home"
+          ? tabs[0]
+          : event.key === "End"
+            ? tabs.at(-1)
+            : tabs[
+                (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+                  tabs.length
+              ];
+      showTab(target);
+      target.focus();
+    });
+  });
 
   const transientPhases = new Set([
     "starting",
@@ -5064,28 +5129,49 @@ const wireProjectSettings = (win) => {
     "repairing",
   ]);
   const render = (state) => {
-    detailValues.version.textContent = APP_VERSION;
-    detailValues.availableVersion.textContent =
-      state.availableVersion || "None";
-    detailValues.games.textContent = String(Object.keys(gamesList).length);
-    detailValues.downloadSize.textContent =
+    value("version").textContent = APP_VERSION;
+    value("availableVersion").textContent = state.availableVersion
+      ? state.availableVersion
+      : state.lastChecked
+        ? "Up to date"
+        : "Not checked";
+    value("includedGames").textContent = String(bundledGameCount);
+    value("downloadedGames").textContent = String(installedGameIds.size);
+    value("downloadSize").textContent =
       state.downloadBytes === null
         ? state.downloadMetadataError
           ? "Unavailable"
           : "Checking..."
-        : XPDialogs.formatBytes(state.downloadBytes);
-    detailValues.connection.textContent = state.online ? "Online" : "Offline";
-    detailValues.offlineFiles.textContent = formatProjectState(
-      state.workerState,
-    );
-    detailValues.storage.textContent = projectStorageText(state);
-    detailValues.lastChecked.textContent = formatUpdateCheckTime(
+        : formatProjectBytes(state.downloadBytes);
+    value("connection").textContent = state.online
+      ? "Connected to the internet"
+      : "Working offline";
+    value("offlineFiles").textContent = state.enabled
+      ? state.workerState === "active"
+        ? "Ready for offline use"
+        : formatProjectState(state.workerState)
+      : "Not downloaded";
+    value("storage").textContent = projectStorageText(state);
+    value("lastChecked").textContent = formatUpdateCheckTime(
       state.lastChecked,
     );
     offlineToggle.checked = state.enabled;
     offlineToggle.disabled =
       !("serviceWorker" in navigator) || transientPhases.has(state.phase);
-    status.textContent = offlineStatusText(state);
+    offlineStatus.textContent = offlineStatusText(state);
+    updateStatus.textContent =
+      state.phase === "checking"
+        ? "Checking for updates..."
+        : state.updateReady
+          ? `Astro Flash ${state.availableVersion || "update"} is ready to install.`
+          : state.availableVersion
+            ? `Astro Flash ${state.availableVersion} is available.`
+            : state.lastChecked
+              ? "Astro Flash is up to date."
+              : "Updates have not been checked yet.";
+    if (state.error) {
+      updateStatus.textContent = state.error;
+    }
     downloadProgress.hidden = ![
       "starting",
       "downloading",
@@ -5099,10 +5185,16 @@ const wireProjectSettings = (win) => {
       state.enabled ? !state.updateReady : transientPhases.has(state.phase);
     repairButton.disabled =
       !state.enabled || !state.online || transientPhases.has(state.phase);
+    repairButton.hidden = !state.enabled;
   };
   const unsubscribe = offlineManager.subscribe(render);
+  const unsubscribeGames = gameLibrary?.subscribe(() => {
+    render(offlineManager.getSnapshot());
+    void offlineManager.refreshStorageEstimate();
+  });
   win.beforeClose = () => {
     unsubscribe();
+    unsubscribeGames?.();
     return true;
   };
 
@@ -5114,7 +5206,7 @@ const wireProjectSettings = (win) => {
         await offlineManager.checkForUpdates();
       }
     } catch (error) {
-      status.textContent = error.message;
+      offlineStatus.textContent = error.message;
     }
   });
 
@@ -5123,7 +5215,7 @@ const wireProjectSettings = (win) => {
   });
   applyButton.addEventListener("click", () => {
     offlineManager.applyUpdate().catch((error) => {
-      status.textContent = error.message;
+      updateStatus.textContent = error.message;
     });
   });
   repairButton.addEventListener("click", async () => {
@@ -5134,9 +5226,18 @@ const wireProjectSettings = (win) => {
     );
     if (!accepted) return;
     offlineManager.repair().catch((error) => {
-      status.textContent = error.message;
+      offlineStatus.textContent = error.message;
     });
   });
+  content
+    .querySelector('[data-project-action="manage-games"]')
+    .addEventListener("click", () => {
+      openSystemWindow("__internet-games");
+      openWindows
+        .get("__internet-games")
+        ?.el.querySelector('[data-internet-tab="installed"]')
+        ?.click();
+    });
   restoreDesktopButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
       "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
@@ -5158,22 +5259,6 @@ const wireProjectSettings = (win) => {
     window.location.reload();
   });
 
-  const suggestions = document.createElement("a");
-  suggestions.className = "project-suggestions-link";
-  suggestions.href = "https://github.com/astrovm/flash/issues";
-  suggestions.target = "_blank";
-  suggestions.rel = "noopener noreferrer";
-  suggestions.textContent = "Send suggestions or report a problem";
-
-  content.append(
-    details,
-    offlineLabel,
-    status,
-    downloadProgress,
-    actions,
-    recoveryGroup,
-    suggestions,
-  );
 };
 
 const openProjectSettings = () => openSystemWindow("__astro-settings");

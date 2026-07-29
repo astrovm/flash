@@ -217,13 +217,17 @@ const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
     environment: disabled.environment,
   });
   await disabledManager.initialize();
+  await flushPromises();
   assert.strictEqual(disabledManager.getSnapshot().downloadBytes, 172_000_000);
   assert.strictEqual(
     disabled.environment.localStorage.getItem("astroFlashDownloadVersion"),
     "26.07.29-bbbbbbb",
   );
-  await disabledManager.checkForUpdates();
   assert.strictEqual(disabledManager.getSnapshot().phase, "update-available");
+  assert.strictEqual(
+    disabled.environment.localStorage.getItem("astroFlashLastUpdateCheck"),
+    "1800000000000",
+  );
   await disabledManager.applyUpdate();
   assert.strictEqual(disabled.getReloads(), 1);
 

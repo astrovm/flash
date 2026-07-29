@@ -369,7 +369,6 @@
 
     const automaticCheck = () => {
       if (
-        !state.enabled ||
         navigatorObject.onLine === false ||
         (state.lastChecked &&
           environment.Date.now() - state.lastChecked < checkInterval)
@@ -403,14 +402,10 @@
     const initialize = async () => {
       attachLifecycleListeners();
       await refreshStorageEstimate();
-      if (state.downloadBytes === null && navigatorObject.onLine !== false) {
-        try {
-          rememberVersionMetadata(await fetchVersion());
-        } catch {
-          setState({ downloadMetadataError: true });
-        }
+      if (!state.enabled) {
+        automaticCheck();
+        return snapshot();
       }
-      if (!state.enabled) return snapshot();
       try {
         await registerAndWait();
         automaticCheck();
