@@ -186,6 +186,13 @@ window.FLASH_GAMES = Object.freeze({
     category: "Action",
     icon: "assets/icons/doom.png",
   },
+  revcdos: {
+    title: "reVCDOS",
+    aspectRatio: 16 / 9,
+    type: "iframe",
+    category: "Action",
+    icon: "assets/icons/revcdos.png",
+  },
   "sugar-sugar": {
     icon: "assets/icons/sugar-sugar.png",
     title: "Sugar, Sugar",

@@ -139,6 +139,13 @@
     "sha256": "9f3e3f9f1d7dee08094ccda971a94c1e2f7fbc7196097c0b425c4b15848e67dc",
     "notes": "Classic installed-game Cacodemon icon supplied by the repository owner."
   },
+  "revcdos": {
+    "file": "revcdos.png",
+    "source": "https://cdn.dos.zone/vcsky/revcdos.jpg",
+    "retrieved": "2026-07-29",
+    "sha256": "d1cbb54445e2a38688d5d63fdfdb7294d9671dc09778aa837e63a897cdab4652",
+    "notes": "Cropped from the official reVCDOS artwork referenced by the v9 runtime."
+  },
   "eds-candy-machine": {
     "file": "eds-candy-machine.png",
     "source": "https://infinity.unstable.life/images/Logos/34/21/3421a170-8008-8f7a-90b9-f52629627b01.png",
