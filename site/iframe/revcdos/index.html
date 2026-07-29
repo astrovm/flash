@@ -152,6 +152,12 @@
       const TORRENT_URL = "revcdoseng.torrent";
       const DOWNLOAD_SIZE = 901786388;
       const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
+      const WEB_TRACKERS = [
+        "wss://cloud.dos.zone:8444/announce-ws",
+        "wss://tracker.btorrent.xyz",
+        "wss://tracker.openwebtorrent.com",
+        "wss://tracker.webtorrent.dev",
+      ];
       const input = document.getElementById("file-input");
       const downloadButton = document.getElementById("download-button");
       const setup = document.getElementById("setup");
@@ -219,6 +225,18 @@
           dht: false,
           lsd: false,
           maxConns: 20,
+          tracker: {
+            rtcConfig: {
+              iceServers: [
+                {
+                  urls: [
+                    "stun:stun.l.google.com:19302",
+                    "stun:global.stun.twilio.com:3478",
+                  ],
+                },
+              ],
+            },
+          },
           uploadLimit: 262144,
         });
 
@@ -227,10 +245,11 @@
           downloadButton.disabled = false;
         });
 
-        const torrent = client.add(TORRENT_URL, {
+        const torrent = client.add(new URL(TORRENT_URL, location.href).href, {
+          announce: WEB_TRACKERS,
           rootDir,
           skipVerify: cached,
-          uploads: 0,
+          uploads: 2,
         });
 
         let lastProgressUpdate = 0;
@@ -240,7 +259,17 @@
           lastProgressUpdate = now;
           showProgress(torrent);
         });
+        torrent.on("wire", () => {
+          selection.textContent = "Peer connected. Starting download…";
+        });
+        torrent.on("noPeers", () => {
+          selection.textContent =
+            "No browser peers found yet. Retrying the trackers…";
+        });
         torrent.on("warning", (warning) => {
+          if (warning.message.startsWith("Unsupported tracker protocol:")) {
+            return;
+          }
           console.warn("reVCDOS torrent warning:", warning);
         });
         torrent.on("error", (error) => {

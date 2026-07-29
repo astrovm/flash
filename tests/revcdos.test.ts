@@ -44,6 +44,11 @@ test("offers a persistent WebTorrent download alongside manual selection", async
   );
   expect(host).toContain("revcdoseng.torrent");
   expect(host).toContain("navigator.storage.getDirectory()");
+  expect(host).toContain("new URL(TORRENT_URL, location.href).href");
+  expect(host).toContain("wss://tracker.openwebtorrent.com");
+  expect(host).toContain("announce: WEB_TRACKERS");
+  expect(host).toContain("stun:stun.l.google.com:19302");
+  expect(host).toContain("uploads: 2");
   expect(host).toContain("skipVerify: cached");
   expect(host).toContain("torrent.files.map");
   const torrent = Bun.file(
