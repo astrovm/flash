@@ -6,12 +6,14 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 test("offline updates", async () => {
+  const offlinePath = require.resolve("../site/js/offline.js");
+  delete require.cache[offlinePath];
   const {
     BUNDLED_GAME_CACHE,
     createManager,
     validateGameManifest,
     waitForWorker,
-  } = require("../site/js/offline.js");
+  } = require(offlinePath);
 
   class Events {
     constructor() {

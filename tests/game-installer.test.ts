@@ -7,7 +7,9 @@ const require = createRequire(import.meta.url);
 
 test("game installer", async () => {
   const { unzipSync, zipSync } = require("fflate");
-  const installer = require("../site/js/game-installer.js");
+  const installerPath = require.resolve("../site/js/game-installer.js");
+  delete require.cache[installerPath];
+  const installer = require(installerPath);
   const uuid = "a2fb012a-b14c-4921-b688-403571e42bb0";
   const record = {
     uuid,

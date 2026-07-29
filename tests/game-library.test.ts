@@ -7,8 +7,12 @@ const require = createRequire(import.meta.url);
 
 test("game library", async () => {
   const { unzipSync, zipSync } = require("fflate");
-  const installer = require("../site/js/game-installer.js");
-  const library = require("../site/js/game-library.js");
+  const installerPath = require.resolve("../site/js/game-installer.js");
+  const libraryPath = require.resolve("../site/js/game-library.js");
+  delete require.cache[installerPath];
+  delete require.cache[libraryPath];
+  const installer = require(installerPath);
+  const library = require(libraryPath);
 
   class FakeCache {
     constructor() {

@@ -6,7 +6,9 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 test("dialog definitions", () => {
-  const dialogs = require("../site/js/dialogs.js");
+  const dialogsPath = require.resolve("../site/js/dialogs.js");
+  delete require.cache[dialogsPath];
+  const dialogs = require(dialogsPath);
 
   // ---- DOM-free exports only under Node ----
   assert.strictEqual(

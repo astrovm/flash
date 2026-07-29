@@ -16,6 +16,7 @@ test("virtual filesystem", () => {
   };
 
   const fsPath = require.resolve("../site/js/filesystem.js");
+  delete require.cache[fsPath];
   const fs = require(fsPath);
 
   // ---- Seed structure and well-known locations ----
