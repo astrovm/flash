@@ -47,7 +47,7 @@ jobs:
         run: bun run test
 
       - name: Build production site
-        run: python tools/deploy.py --revision "${{ github.sha }}"
+        run: bun run build --revision "${{ github.sha }}"
 
       - name: Confirm source tree was not modified
         shell: bash

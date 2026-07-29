@@ -39,7 +39,7 @@ Open <http://127.0.0.1:8000>. The development server also provides the local
 - `site/` — authored static site
 - `worker/` — Cloudflare Worker for the Internet Games catalog
 - `tools/` — build, validation, and asset maintenance scripts
-- `tests/` — Python and Node-based tests
+- `tests/` — Bun/TypeScript and Python tests
 - `dist/` — generated production build; ignored by Git
 
 ## Games and offline storage
