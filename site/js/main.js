@@ -3852,6 +3852,22 @@ const syncGameFiles = () => {
   });
 };
 
+window.addEventListener("message", (event) => {
+  if (event.origin !== location.origin) return;
+  const message = event.data;
+  if (
+    message?.event !== "astro.offline-game-ready" ||
+    message.gameId !== "revcdos"
+  ) {
+    return;
+  }
+  const win = openWindows.get(message.gameId);
+  if (!win || event.source !== win.player?.contentWindow) return;
+  offlineManager.downloadGame(message.gameId).catch((error) => {
+    console.error("Could not add reVCDOS to Offline Games:", error);
+  });
+});
+
 fs.registerFileType(".game", (file) => {
   if (file.app && gamesList[file.app]) {
     openGameWindow(file.app);

@@ -4,8 +4,9 @@ const projectDirectory = new URL("..", import.meta.url);
 const read = (relativePath: string) =>
   Bun.file(new URL(relativePath, projectDirectory)).text();
 
-const [games, host, game, source, preloadFiles] = await Promise.all([
+const [games, main, host, game, source, preloadFiles] = await Promise.all([
   read("site/js/games.js"),
+  read("site/js/main.js"),
   read("site/iframe/revcdos/index.html"),
   read("site/iframe/revcdos/game.js"),
   read("site/iframe/revcdos/SOURCE.md"),
@@ -68,6 +69,14 @@ test("offers a persistent WebTorrent download alongside manual selection", async
       ),
     ).exists(),
   ).toBe(true);
+});
+
+test("marks a completed persistent download as an offline game", () => {
+  expect(host).toContain('event: "astro.offline-game-ready"');
+  expect(host).toContain('gameId: "revcdos"');
+  expect(main).toContain('message?.event !== "astro.offline-game-ready"');
+  expect(main).toContain("event.source !== win.player?.contentWindow");
+  expect(main).toContain("offlineManager.downloadGame(message.gameId)");
 });
 
 test("preserves required reVCDOS attribution and cloud saves", () => {

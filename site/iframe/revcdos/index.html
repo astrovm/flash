@@ -278,6 +278,10 @@
         });
         torrent.on("done", () => {
           localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
+          window.parent.postMessage(
+            { event: "astro.offline-game-ready", gameId: "revcdos" },
+            location.origin,
+          );
           const downloadedFiles = new Map(
             torrent.files.map((file) => [file.path.toLowerCase(), file]),
           );
