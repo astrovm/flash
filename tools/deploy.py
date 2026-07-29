@@ -72,6 +72,10 @@ class BuildPaths:
         return self.root / "version.json"
 
     @property
+    def offline_games_json(self):
+        return self.root / "offline-games.json"
+
+    @property
     def fflate_js(self):
         return self.root / "vendor" / "fflate" / FFLATE_VERSION / "index.js"
 
@@ -270,10 +274,18 @@ def write_version_metadata(paths, version):
         if path.is_file()
         and path != paths.version_json
         and path.suffix.lower() in PRECACHE_FILE_SUFFIXES
+        and not is_optional_offline_path(path.relative_to(paths.root))
+    )
+    offline_manifest = json.loads(
+        paths.offline_games_json.read_text(encoding="utf-8")
+    )
+    bundled_game_bytes = offline_manifest["runtime"]["bytes"] + sum(
+        entry["bytes"] for entry in offline_manifest["games"].values()
     )
     paths.version_json.write_text(
         json.dumps(
             {
+                "bundledGameBytes": bundled_game_bytes,
                 "offlineBytes": offline_bytes,
                 "revision": revision,
                 "version": version,
@@ -282,6 +294,90 @@ def write_version_metadata(paths, version):
             separators=(",", ":"),
         )
         + "\n",
+        encoding="utf-8",
+    )
+
+
+def is_optional_offline_path(relative_path):
+    path = relative_path.as_posix()
+    return (
+        path.startswith(("swf/", "iframe/", "dos/"))
+        or (
+            path.startswith("js/")
+            and (
+                path.endswith(".wasm")
+                or Path(path).name.startswith("core.ruffle.")
+            )
+        )
+    )
+
+
+def offline_file_entry(root, path):
+    relative = path.relative_to(root).as_posix()
+    return {"bytes": path.stat().st_size, "url": relative}
+
+
+def offline_revision(root, files):
+    digest = hashlib.sha256()
+    for path in sorted(files):
+        digest.update(path.relative_to(root).as_posix().encode())
+        with path.open("rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest()[:16]
+
+
+def write_offline_game_manifest(paths, version):
+    runtime_files = sorted(
+        path
+        for path in paths.js.iterdir()
+        if path.is_file()
+        and (
+            path.suffix == ".wasm"
+            or (
+                path.name.startswith("core.ruffle.")
+                and path.suffix == ".js"
+            )
+        )
+    )
+    games = {}
+    game_ids = {
+        path.name
+        for parent in (paths.root / "swf", paths.root / "iframe")
+        if parent.is_dir()
+        for path in parent.iterdir()
+        if path.is_dir()
+    }
+    for game_id in sorted(game_ids):
+        game_type = "swf" if (paths.root / "swf" / game_id).is_dir() else "iframe"
+        roots = [paths.root / game_type / game_id]
+        if game_id == "doom" and (paths.root / "dos" / "doom").is_dir():
+            roots.append(paths.root / "dos" / "doom")
+        files = sorted(
+            path
+            for game_root in roots
+            for path in game_root.rglob("*")
+            if path.is_file()
+        )
+        games[game_id] = {
+            "bytes": sum(path.stat().st_size for path in files),
+            "files": [offline_file_entry(paths.root, path) for path in files],
+            "revision": offline_revision(paths.root, files),
+            "type": game_type,
+        }
+    manifest = {
+        "games": games,
+        "runtime": {
+            "bytes": sum(path.stat().st_size for path in runtime_files),
+            "files": [
+                offline_file_entry(paths.root, path) for path in runtime_files
+            ],
+            "revision": offline_revision(paths.root, runtime_files),
+        },
+        "version": version,
+    }
+    paths.offline_games_json.write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
 
@@ -339,6 +435,7 @@ def validate_output(output_dir):
     paths = BuildPaths(output_dir)
     required = (
         paths.html,
+        paths.offline_games_json,
         paths.version_json,
         output_dir / "sw.js",
         output_dir / "swf" / "bike-mania" / "main.swf",
@@ -375,13 +472,32 @@ def validate_output(output_dir):
         version_metadata = json.loads(paths.version_json.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as error:
         raise RuntimeError("Build output has invalid version metadata") from error
-    if set(version_metadata) != {"offlineBytes", "revision", "version"}:
+    if set(version_metadata) != {
+        "bundledGameBytes",
+        "offlineBytes",
+        "revision",
+        "version",
+    }:
         raise RuntimeError("Build output has invalid version metadata")
     if (
         not isinstance(version_metadata["offlineBytes"], int)
         or version_metadata["offlineBytes"] <= 0
+        or not isinstance(version_metadata["bundledGameBytes"], int)
+        or version_metadata["bundledGameBytes"] <= 0
     ):
         raise RuntimeError("Build output has invalid offline download size")
+    try:
+        offline_manifest = json.loads(
+            paths.offline_games_json.read_text(encoding="utf-8")
+        )
+    except (json.JSONDecodeError, OSError) as error:
+        raise RuntimeError("Build output has invalid offline game manifest") from error
+    if (
+        offline_manifest.get("version") != version_metadata["version"]
+        or not offline_manifest.get("games")
+        or not offline_manifest.get("runtime", {}).get("files")
+    ):
+        raise RuntimeError("Build output has invalid offline game manifest")
     if not version_metadata["version"].endswith(f"-{version_metadata['revision']}"):
         raise RuntimeError("Build output has inconsistent version metadata")
     print("Build output validated successfully")
@@ -418,6 +534,7 @@ def build(output_dir=DEFAULT_OUTPUT_DIR, revision="HEAD"):
         install_fflate(staging_dir)
         download_ruffle(paths.js)
         update_html(paths, version)
+        write_offline_game_manifest(paths, version)
         write_version_metadata(paths, version)
         generate_service_worker(staging_dir)
         validate_output(staging_dir)

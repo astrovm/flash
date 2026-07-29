@@ -1,12 +1,14 @@
 {
   "packageManager": "bun@1.3.14",
   "scripts": {
-    "test": "python -m unittest discover -s tests -v && node --check site/js/games.js && node --check site/js/game-installer.js && node --check site/js/game-library.js && node --check site/js/filesystem.js && node --check site/js/file-operations.js && node --check site/js/dialogs.js && node --check site/js/offline.js && node --check site/js/main.js && node --check worker/catalog-worker.mjs && node tools/validate_icons.mjs",
+    "test": "python -m unittest discover -s tests -v && node --check site/js/games.js && node --check site/js/game-installer.js && node --check site/js/game-library.js && node --check site/js/filesystem.js && node --check site/js/file-operations.js && node --check site/js/dialogs.js && node --check site/js/offline.js && node --check site/js/offline-worker.js && node --check site/js/main.js && node --check worker/catalog-worker.mjs && node tools/validate_icons.mjs",
     "build": "python tools/deploy.py",
+    "deploy:worker": "wrangler deploy --config worker/wrangler.toml",
     "validate:icons": "node tools/validate_icons.mjs --require-all"
   },
   "devDependencies": {
-    "workbox-cli": "^7.4.1"
+    "workbox-cli": "^7.4.1",
+    "wrangler": "4.114.0"
   },
   "dependencies": {
     "fflate": "0.8.3"

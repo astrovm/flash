@@ -2334,6 +2334,32 @@ html[data-xp-appearance="silver"] {
     font-weight: 700;
 }
 
+.project-offline-game-list {
+    max-height: 156px;
+    margin: 0 0 10px;
+    overflow: auto;
+    border: 1px solid #7f9db9;
+    background: #fff;
+}
+
+.project-offline-game {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    padding: 1px 5px;
+}
+
+.project-offline-game:nth-child(even) {
+    background: #f3f6fb;
+}
+
+.project-offline-game-size {
+    color: #555;
+    white-space: nowrap;
+}
+
 .project-settings-description {
     margin-left: 20px !important;
 }

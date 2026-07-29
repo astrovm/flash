@@ -642,14 +642,20 @@ class ShellSourceTests(unittest.TestCase):
             ">Updates</button>",
             ">Recovery</button>",
             '"Connected to the internet"',
-            '"Not downloaded"',
+            '"Ready for offline use"',
             'data-project-action="manage-games"',
             'data-internet-tab="installed"',
             "offlineManager.checkForUpdates()",
             "offlineManager.applyUpdate()",
             "offlineManager.repair()",
+            "offlineManager.downloadGame(",
+            "offlineManager.removeGame(",
+            "offlineManager.downloadAllGames()",
+            "offlineManager.removeAllGames()",
             ">Check for Updates</button>",
-            ">Repair Offline Files</button>",
+            ">Repair System Files</button>",
+            ">Download All Games</button>",
+            ">Remove Offline Games</button>",
             '"Offline download progress"',
             "state.downloadBytes",
             "state.downloadMetadataError",
@@ -678,7 +684,15 @@ class ShellSourceTests(unittest.TestCase):
             '"online"',
         ):
             self.assertIn(token, self.offline_javascript)
-        self.assertIn('globIgnores: ["version.json"]', self.workbox_config)
+        for optional_pattern in (
+            '"swf/**"',
+            '"iframe/**"',
+            '"dos/**"',
+            '"js/*.wasm"',
+            '"js/core.ruffle.*.js"',
+        ):
+            self.assertIn(optional_pattern, self.workbox_config)
+        self.assertIn('importScripts: ["js/offline-worker.js"]', self.workbox_config)
         self.assertIn("skipWaiting: false", self.workbox_config)
         self.assertIn("clientsClaim: true", self.workbox_config)
 

@@ -4919,10 +4919,9 @@ let promptedUpdateVersion = null;
 
 const offlineStatusText = (state) => {
   const messages = {
-    disabled: "Offline caching is disabled.",
-    starting: "Preparing the offline download...",
-    downloading: "Downloading all files for offline use...",
-    ready: "All files are available offline.",
+    starting: "Preparing Windows XP system files...",
+    downloading: "Downloading Windows XP system files...",
+    ready: "Windows XP system files are available offline.",
     checking: "Checking for updates...",
     updating: "Downloading the latest update...",
     "update-available": state.enabled
@@ -4930,8 +4929,8 @@ const offlineStatusText = (state) => {
       : "An update is available.",
     "update-ready": "An update is ready. Restart Astro Flash to apply it.",
     applying: "Applying the update...",
-    repairing: "Clearing and downloading all offline files again...",
-    error: "Offline files are incomplete.",
+    repairing: "Clearing and downloading system files again...",
+    error: "Offline system files are incomplete.",
   };
   const message = messages[state.phase] || "Offline status is unavailable.";
   return state.error ? `${message} ${state.error}` : message;
@@ -5016,22 +5015,34 @@ const wireProjectSettings = (win) => {
     </section>
     <section class="project-settings-panel" id="project-panel-offline" role="tabpanel" aria-labelledby="project-tab-offline" hidden>
       <fieldset>
-        <legend>Offline availability</legend>
-        <label class="project-offline-setting">
-          <input type="checkbox" data-project-control="offline">
-          Make Astro Flash available offline
-        </label>
-        <p class="project-settings-description">Downloads the application and all ${bundledGameCount} included games so they work without an internet connection.</p>
+        <legend>Windows XP system files</legend>
+        <p class="project-settings-description">The desktop, settings, artwork, fonts, and sounds are saved automatically for offline use.</p>
         <dl class="dlg-props-table project-settings-details">
-          <dt>Required download:</dt><dd data-project-value="downloadSize"></dd>
+          <dt>System download:</dt><dd data-project-value="downloadSize"></dd>
           <dt>Offline status:</dt><dd data-project-value="offlineFiles"></dd>
         </dl>
         <p class="project-settings-status" data-project-status="offline" aria-live="polite"></p>
         <progress class="project-settings-progress" aria-label="Offline download progress" hidden></progress>
         <div class="project-settings-actions">
-          <button type="button" class="xp-btn" data-project-action="repair">Repair Offline Files</button>
+          <button type="button" class="xp-btn" data-project-action="repair">Repair System Files</button>
         </div>
       </fieldset>
+      <fieldset>
+        <legend>Included games</legend>
+        <p class="project-settings-description">Choose which of the ${bundledGameCount} included games should work offline. The shared Flash runtime is downloaded once when needed.</p>
+        <dl class="dlg-props-table project-settings-details">
+          <dt>Downloaded:</dt><dd data-project-value="offlineGames"></dd>
+          <dt>Game storage:</dt><dd data-project-value="offlineGameStorage"></dd>
+        </dl>
+        <div class="project-offline-game-list" data-project-offline-games role="group" aria-label="Included games available offline"></div>
+        <progress class="project-settings-progress" data-project-game-progress aria-label="Included game download progress" hidden></progress>
+        <p class="project-settings-status" data-project-status="offline-games" aria-live="polite"></p>
+        <div class="project-settings-actions">
+          <button type="button" class="xp-btn" data-project-action="download-all-games">Download All Games</button>
+          <button type="button" class="xp-btn" data-project-action="remove-all-games">Remove Offline Games</button>
+        </div>
+      </fieldset>
+      <p class="project-settings-description">Games installed from Internet Games use separate storage and remain available after installation. Legacy games may fetch additional files the first time they are used.</p>
     </section>
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
@@ -5066,11 +5077,14 @@ const wireProjectSettings = (win) => {
   const panels = [...content.querySelectorAll('[role="tabpanel"]')];
   const value = (name) =>
     content.querySelector(`[data-project-value="${name}"]`);
-  const offlineToggle = content.querySelector(
-    '[data-project-control="offline"]',
-  );
   const offlineStatus = content.querySelector(
     '[data-project-status="offline"]',
+  );
+  const offlineGamesStatus = content.querySelector(
+    '[data-project-status="offline-games"]',
+  );
+  const offlineGamesList = content.querySelector(
+    "[data-project-offline-games]",
   );
   const updateStatus = content.querySelector(
     '[data-project-status="updates"]',
@@ -5078,9 +5092,18 @@ const wireProjectSettings = (win) => {
   const downloadProgress = content.querySelector(
     ".project-settings-progress",
   );
+  const gameDownloadProgress = content.querySelector(
+    "[data-project-game-progress]",
+  );
   const checkButton = content.querySelector('[data-project-action="check"]');
   const applyButton = content.querySelector('[data-project-action="apply"]');
   const repairButton = content.querySelector('[data-project-action="repair"]');
+  const downloadAllGamesButton = content.querySelector(
+    '[data-project-action="download-all-games"]',
+  );
+  const removeAllGamesButton = content.querySelector(
+    '[data-project-action="remove-all-games"]',
+  );
   const restoreDesktopButton = content.querySelector(
     '[data-project-action="restore-desktop"]',
   );
@@ -5128,6 +5151,65 @@ const wireProjectSettings = (win) => {
     "applying",
     "repairing",
   ]);
+  let offlineListSignature = "";
+  const renderOfflineGameList = (state) => {
+    const downloaded = new Set(state.downloadedGameIds);
+    const busy = ["downloading", "removing"].includes(state.gamePhase);
+    const signature = JSON.stringify([
+      state.bundledGames.map((game) => [
+        game.id,
+        game.bytes,
+        downloaded.has(game.id),
+      ]),
+      busy,
+      state.activeGameId,
+    ]);
+    if (signature === offlineListSignature) return;
+    offlineListSignature = signature;
+    offlineGamesList.replaceChildren();
+    if (!state.bundledGames.length) {
+      const empty = document.createElement("p");
+      empty.className = "project-settings-description";
+      empty.textContent = "Loading the included-game catalog...";
+      offlineGamesList.appendChild(empty);
+      return;
+    }
+    const games = [...state.bundledGames].sort((left, right) => {
+      const leftTitle = gamesList[left.id]?.title || formatGameTitle(left.id);
+      const rightTitle =
+        gamesList[right.id]?.title || formatGameTitle(right.id);
+      return leftTitle.localeCompare(rightTitle);
+    });
+    games.forEach((game) => {
+      const label = document.createElement("label");
+      label.className = "project-offline-game";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = downloaded.has(game.id);
+      checkbox.disabled = busy;
+      checkbox.dataset.offlineGame = game.id;
+      const title = document.createElement("span");
+      title.textContent =
+        gamesList[game.id]?.title || formatGameTitle(game.id);
+      const size = document.createElement("span");
+      size.className = "project-offline-game-size";
+      size.textContent = formatProjectBytes(game.bytes);
+      label.append(checkbox, title, size);
+      offlineGamesList.appendChild(label);
+    });
+  };
+
+  offlineGamesList.addEventListener("change", (event) => {
+    const control = event.target.closest("[data-offline-game]");
+    if (!control) return;
+    const action = control.checked
+      ? offlineManager.downloadGame(control.dataset.offlineGame)
+      : offlineManager.removeGame(control.dataset.offlineGame);
+    action.catch((error) => {
+      offlineGamesStatus.textContent = error.message;
+    });
+  });
+
   const render = (state) => {
     value("version").textContent = APP_VERSION;
     value("availableVersion").textContent = state.availableVersion
@@ -5146,19 +5228,33 @@ const wireProjectSettings = (win) => {
     value("connection").textContent = state.online
       ? "Connected to the internet"
       : "Working offline";
-    value("offlineFiles").textContent = state.enabled
-      ? state.workerState === "active"
+    value("offlineFiles").textContent =
+      state.workerState === "active"
         ? "Ready for offline use"
-        : formatProjectState(state.workerState)
-      : "Not downloaded";
+        : formatProjectState(state.workerState);
+    value("offlineGames").textContent =
+      `${state.downloadedGameIds.length} of ${state.bundledGames.length || bundledGameCount}`;
+    value("offlineGameStorage").textContent = formatProjectBytes(
+      state.downloadedGameBytes,
+    );
     value("storage").textContent = projectStorageText(state);
     value("lastChecked").textContent = formatUpdateCheckTime(
       state.lastChecked,
     );
-    offlineToggle.checked = state.enabled;
-    offlineToggle.disabled =
-      !("serviceWorker" in navigator) || transientPhases.has(state.phase);
     offlineStatus.textContent = offlineStatusText(state);
+    const activeGameTitle = state.activeGameId
+      ? gamesList[state.activeGameId]?.title ||
+        formatGameTitle(state.activeGameId)
+      : "included games";
+    offlineGamesStatus.textContent = state.gameError
+      ? state.gameError
+      : state.gamePhase === "downloading"
+        ? `Downloading ${activeGameTitle}...`
+        : state.gamePhase === "removing"
+          ? "Removing offline game files..."
+          : state.downloadedGameIds.length
+            ? "Selected games are ready for offline use."
+            : "No included games are downloaded for offline use.";
     updateStatus.textContent =
       state.phase === "checking"
         ? "Checking for updates..."
@@ -5178,14 +5274,29 @@ const wireProjectSettings = (win) => {
       "updating",
       "repairing",
     ].includes(state.phase);
+    gameDownloadProgress.hidden = state.gamePhase !== "downloading";
+    if (state.gameProgressTotal > 0) {
+      gameDownloadProgress.max = state.gameProgressTotal;
+      gameDownloadProgress.value = state.gameProgressLoaded;
+    } else {
+      gameDownloadProgress.removeAttribute("value");
+    }
     checkButton.disabled =
       !state.online || transientPhases.has(state.phase);
     applyButton.hidden = !state.availableVersion;
     applyButton.disabled =
       state.enabled ? !state.updateReady : transientPhases.has(state.phase);
     repairButton.disabled =
-      !state.enabled || !state.online || transientPhases.has(state.phase);
-    repairButton.hidden = !state.enabled;
+      !state.online || transientPhases.has(state.phase);
+    const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
+    downloadAllGamesButton.disabled =
+      !state.online ||
+      gameBusy ||
+      !state.bundledGames.length ||
+      state.downloadedGameIds.length === state.bundledGames.length;
+    removeAllGamesButton.disabled =
+      gameBusy || state.downloadedGameIds.length === 0;
+    renderOfflineGameList(state);
   };
   const unsubscribe = offlineManager.subscribe(render);
   const unsubscribeGames = gameLibrary?.subscribe(() => {
@@ -5198,18 +5309,6 @@ const wireProjectSettings = (win) => {
     return true;
   };
 
-  offlineToggle.addEventListener("change", async () => {
-    offlineToggle.disabled = true;
-    try {
-      await offlineManager.setEnabled(offlineToggle.checked);
-      if (offlineToggle.checked) {
-        await offlineManager.checkForUpdates();
-      }
-    } catch (error) {
-      offlineStatus.textContent = error.message;
-    }
-  });
-
   checkButton.addEventListener("click", () => {
     offlineManager.checkForUpdates().catch(() => {});
   });
@@ -5220,13 +5319,29 @@ const wireProjectSettings = (win) => {
   });
   repairButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
-      "Clear and download all offline files again?",
-      "Repair Offline Files",
+      "Clear and download the Windows XP system files again?",
+      "Repair System Files",
       "question",
     );
     if (!accepted) return;
     offlineManager.repair().catch((error) => {
       offlineStatus.textContent = error.message;
+    });
+  });
+  downloadAllGamesButton.addEventListener("click", () => {
+    offlineManager.downloadAllGames().catch((error) => {
+      offlineGamesStatus.textContent = error.message;
+    });
+  });
+  removeAllGamesButton.addEventListener("click", async () => {
+    const accepted = await XPDialogs.confirm(
+      "Remove the offline copies of all included games? Internet Games installations will be preserved.",
+      "Remove Offline Games",
+      "question",
+    );
+    if (!accepted) return;
+    offlineManager.removeAllGames().catch((error) => {
+      offlineGamesStatus.textContent = error.message;
     });
   });
   content
