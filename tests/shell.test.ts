@@ -330,6 +330,9 @@ test("desktop context menu uses real submenus and safe multiselection", () => {
     "const getDesktopSelectionEligibility = () =>",
     "const movable = allFilesystem",
     "if (finished) return;",
+    '"Show Desktop Icons", "show-icons"',
+    '"Bitmap Image", "new-bitmap"',
+    '"Upload from Computer...", "upload"',
   );
   contains(
     css,
@@ -613,8 +616,10 @@ test("project controls live in a taskbar window", () => {
     'content.className = "project-settings-content"',
     'openSystemWindow("__astro-settings")',
     "wireProjectSettings(win)",
-    "isProjectSettings ? 540 : isInternetGames ? 760 : 700",
-    "isProjectSettings ? 420 : isInternetGames ? 540 : 500",
+    'const isProjectSettings = shortcutId === "__astro-settings"',
+    'const isInternetGames = shortcutId === "__internet-games"',
+    "? 540",
+    "? 760",
     'role="tablist" aria-label="Astro Flash Settings"',
     ">General</button>",
     ">Offline</button>",
@@ -726,6 +731,10 @@ test("display properties has a validated persisted pending model", () => {
     'data-display-action="apply"',
     'data-display-action="ok"',
     'data-display-action="cancel"',
+    'class="display-wallpaper-list"',
+    'class="display-color-button"',
+    'el.classList.add("display-properties-window")',
+    'helpBtn.className = "tb-btn help-btn"',
   );
 });
 test("display properties exposes all tabs and safe wallpaper controls", () => {

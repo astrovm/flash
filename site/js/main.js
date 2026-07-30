@@ -46,9 +46,13 @@ const USER_STORAGE_KEYS = Object.freeze([
 ]);
 const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
 const DISPLAY_WALLPAPERS = {
+  none: "none",
   bliss: 'url("../assets/xp/bliss.jpg")',
-  blue: "linear-gradient(135deg, #1e5799, #7db9e8)",
-  olive: "linear-gradient(135deg, #586b2f, #b7c878)",
+  ascent: "linear-gradient(135deg, #1e5799, #7db9e8)",
+  autumn: "linear-gradient(135deg, #7a431c, #d7a35d)",
+  azul: "linear-gradient(135deg, #1b5c9f, #8dc6e9)",
+  "blue-lace": "linear-gradient(135deg, #849cc7, #dfe8f8)",
+  coffee: "linear-gradient(135deg, #4c2d1d, #a37a55)",
 };
 const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   theme: "windows-xp",
@@ -1766,24 +1770,49 @@ const createSystemWindowContent = (shortcutId, win) => {
             </div>
             <div class="display-panel active" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop">
                 <div class="display-preview" aria-label="Desktop preview">
-                    <div class="display-preview-surface"><span>start</span></div>
+                    <img src="assets/xp/displaysettings.png" alt="">
+                    <div class="display-preview-surface"></div>
                 </div>
-                <label class="display-wallpaper-label" for="display-wallpaper">Background:</label>
-                <select id="display-wallpaper" aria-label="Desktop background">
-                    <option value="bliss">Bliss</option>
-                    <option value="blue">Windows Blue</option>
-                    <option value="olive">Olive Green</option>
-                </select>
-                <div class="display-form-row">
-                    <label for="display-position">Position:</label>
-                    <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
+                <div class="display-desktop-controls">
+                    <div class="display-background-column">
+                        <label class="display-wallpaper-label" for="display-wallpaper">Background:</label>
+                        <select id="display-wallpaper" aria-label="Desktop background" hidden>
+                            <option value="none">None</option>
+                            <option value="ascent">Ascent</option>
+                            <option value="autumn">Autumn</option>
+                            <option value="azul">Azul</option>
+                            <option value="bliss">Bliss</option>
+                            <option value="blue-lace">Blue Lace 16</option>
+                            <option value="coffee">Coffee Bean</option>
+                        </select>
+                        <div class="display-wallpaper-list" role="listbox" aria-label="Desktop background">
+                            <div class="display-wallpaper-items">
+                                <button type="button" role="option" data-wallpaper="none"><span class="wallpaper-icon none"></span>None</button>
+                                <button type="button" role="option" data-wallpaper="ascent"><span class="wallpaper-icon"></span>Ascent</button>
+                                <button type="button" role="option" data-wallpaper="autumn"><span class="wallpaper-icon"></span>Autumn</button>
+                                <button type="button" role="option" data-wallpaper="azul"><span class="wallpaper-icon"></span>Azul</button>
+                                <button type="button" role="option" data-wallpaper="bliss"><span class="wallpaper-icon"></span>Bliss</button>
+                                <button type="button" role="option" data-wallpaper="blue-lace"><span class="wallpaper-icon"></span>Blue Lace 16</button>
+                                <button type="button" role="option" data-wallpaper="coffee"><span class="wallpaper-icon"></span>Coffee Bean</button>
+                            </div>
+                            <div class="display-scrollbar" aria-hidden="true">
+                                <span class="scroll-arrow up"></span>
+                                <span class="scroll-thumb"><i></i><i></i><i></i></span>
+                                <span class="scroll-arrow down"></span>
+                            </div>
+                        </div>
+                        <button type="button" class="display-customize" disabled>Customize Desktop...</button>
+                    </div>
+                    <div class="display-background-actions">
+                        <label class="display-browse" for="display-image">Browse...</label>
+                        <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                        <label for="display-position">Position:</label>
+                        <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
+                        <label for="display-color">Color:</label>
+                        <label class="display-color-button" for="display-color"><span></span><b>▼</b></label>
+                        <input id="display-color" type="color" value="#3a6ea5" hidden>
+                    </div>
                 </div>
-                <div class="display-form-row">
-                    <label for="display-color">Color:</label>
-                    <input id="display-color" type="color" value="#3a6ea5">
-                </div>
-                <label class="display-upload" for="display-image">Browse for a picture…</label>
-                <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
                 <button type="button" class="display-clear-image" hidden>Remove custom picture</button>
                 <p class="display-status" aria-live="polite"></p>
             </div>
@@ -2385,18 +2414,23 @@ const wireDisplayProperties = (win) => {
     },
     classic: {
       appearance: "silver",
-      wallpaper: "blue",
+      wallpaper: "ascent",
       backgroundColor: "#4b6f8f",
     },
     olive: {
       appearance: "olive",
-      wallpaper: "olive",
+      wallpaper: "autumn",
       backgroundColor: "#586b2f",
     },
   };
   const sync = () => {
     controls.theme.value = pending.theme;
     controls.wallpaper.value = pending.wallpaper;
+    content.querySelectorAll("[data-wallpaper]").forEach((item) => {
+      const selected = item.dataset.wallpaper === pending.wallpaper;
+      item.classList.toggle("selected", selected);
+      item.setAttribute("aria-selected", String(selected));
+    });
     controls.position.value = pending.position;
     controls.color.value = pending.backgroundColor;
     controls.saver.value = pending.screenSaver;
@@ -2407,6 +2441,8 @@ const wireDisplayProperties = (win) => {
     controls.preview.style.backgroundColor = pending.backgroundColor;
     controls.preview.style.backgroundImage = displayBackground(pending);
     controls.preview.dataset.position = pending.position;
+    content.querySelector(".display-color-button span").style.backgroundColor =
+      pending.backgroundColor;
     controls.saverPreview.dataset.saver = pending.screenSaver;
     controls.appearancePreview.dataset.appearance = pending.appearance;
     controls.resolutionPreview.dataset.resolution = pending.resolution;
@@ -2468,6 +2504,18 @@ const wireDisplayProperties = (win) => {
     };
     sync();
   });
+  content
+    .querySelector(".display-wallpaper-list")
+    .addEventListener("click", (event) => {
+      const item = event.target.closest("[data-wallpaper]");
+      if (!item) return;
+      pending = {
+        ...pending,
+        wallpaper: item.dataset.wallpaper,
+        customWallpaper: "",
+      };
+      sync();
+    });
   ["position", "appearance", "saver"].forEach((name) => {
     controls[name].addEventListener("change", () => {
       pending = {
@@ -4336,12 +4384,26 @@ const openSystemWindow = (shortcutId) => {
   );
   const isProjectSettings = shortcutId === "__astro-settings";
   const isInternetGames = shortcutId === "__internet-games";
+  const isDisplayProperties = shortcutId === "__display-properties";
+  if (isDisplayProperties) el.classList.add("display-properties-window");
   const windowWidth = Math.min(
-    isProjectSettings ? 540 : isInternetGames ? 760 : 700,
+    isProjectSettings
+      ? 540
+      : isInternetGames
+        ? 760
+        : isDisplayProperties
+          ? 532
+          : 700,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
-    isProjectSettings ? 420 : isInternetGames ? 540 : 500,
+    isProjectSettings
+      ? 420
+      : isInternetGames
+        ? 540
+        : isDisplayProperties
+          ? 603
+          : 500,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -4377,6 +4439,16 @@ const openSystemWindow = (shortcutId) => {
   content.replaceWith(createSystemWindowContent(shortcutId, win));
   if (win.currentFolderId) renderExplorerItems(win);
   wireSystemWindowControls(win);
+  if (isDisplayProperties) {
+    const helpBtn = document.createElement("button");
+    helpBtn.type = "button";
+    helpBtn.className = "tb-btn help-btn";
+    helpBtn.title = "Help";
+    helpBtn.setAttribute("aria-label", "Help");
+    el.querySelector(".title-buttons").prepend(helpBtn);
+    el.querySelector(".minimize-btn").remove();
+    el.querySelector(".maximize-btn").remove();
+  }
   if (shortcutId === "__display-properties") wireDisplayProperties(win);
   if (shortcutId === "__astro-settings") wireProjectSettings(win);
   if (shortcutId === "__search") wireSearchCompanion(win);
@@ -6018,6 +6090,7 @@ const buildDesktopIcons = () => {
   iconsBuilt = true;
 
   const container = document.getElementById("desktop-icons");
+  container.hidden = getDesktopLayoutSettings().showIcons === false;
   container.replaceChildren();
   // System places stay available even though regular desktop files are
   // rendered directly from VirtualFS.DESKTOP.
@@ -6143,6 +6216,7 @@ const getDesktopLayoutSettings = () =>
     sort: "name",
     autoArrange: false,
     alignToGrid: true,
+    showIcons: true,
   });
 
 const saveDesktopLayoutSettings = (settings) =>
@@ -6199,7 +6273,15 @@ const addDesktopMenuItem = (
   button.role = "menuitem";
   button.dataset.action = action;
   button.disabled = disabled;
-  button.textContent = `${checked ? "✓ " : ""}${label}`;
+  button.setAttribute("role", checked ? "menuitemcheckbox" : "menuitem");
+  if (checked) button.setAttribute("aria-checked", "true");
+  const gutter = document.createElement("span");
+  gutter.className = "context-check";
+  gutter.textContent = checked ? "✓" : "";
+  const text = document.createElement("span");
+  text.className = "context-label";
+  text.textContent = label;
+  button.append(gutter, text);
   menu.appendChild(button);
 };
 
@@ -6212,7 +6294,12 @@ const addDesktopSubmenu = (menu, label, buildItems) => {
   button.className = "context-submenu-button";
   button.setAttribute("aria-haspopup", "menu");
   button.setAttribute("aria-expanded", "false");
-  button.textContent = label;
+  const gutter = document.createElement("span");
+  gutter.className = "context-check";
+  const text = document.createElement("span");
+  text.className = "context-label";
+  text.textContent = label;
+  button.append(gutter, text);
   const arrow = document.createElement("span");
   arrow.className = "context-arrow";
   button.appendChild(arrow);
@@ -6297,14 +6384,18 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
       addDesktopMenuItem(submenu, "Modified", "sort-modified", {
         checked: settings.sort === "modified",
       });
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Auto Arrange", "auto-arrange", {
+        checked: settings.autoArrange,
+      });
+      addDesktopMenuItem(submenu, "Align to Grid", "align-grid", {
+        checked: settings.alignToGrid,
+      });
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Show Desktop Icons", "show-icons", {
+        checked: settings.showIcons !== false,
+      });
     });
-    addDesktopMenuItem(menu, "Auto Arrange", "auto-arrange", {
-      checked: settings.autoArrange,
-    });
-    addDesktopMenuItem(menu, "Align to Grid", "align-grid", {
-      checked: settings.alignToGrid,
-    });
-    addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Refresh", "refresh");
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Paste", "paste", {
@@ -6317,6 +6408,9 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
     addDesktopSubmenu(menu, "New", (submenu) => {
       addDesktopMenuItem(submenu, "Folder", "new-folder");
       addDesktopMenuItem(submenu, "Text Document", "new-text");
+      addDesktopMenuItem(submenu, "Bitmap Image", "new-bitmap");
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Upload from Computer...", "upload");
     });
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Properties", "properties");
@@ -6393,16 +6487,48 @@ const setupDesktopContextMenu = () => {
         ...settings,
         alignToGrid: !settings.alignToGrid,
       });
+    } else if (action === "show-icons") {
+      const settings = getDesktopLayoutSettings();
+      const showIcons = settings.showIcons === false;
+      saveDesktopLayoutSettings({ ...settings, showIcons });
+      document.getElementById("desktop-icons").hidden = !showIcons;
     } else if (action === "refresh") {
       refreshDesktop();
-    } else if (action === "new-folder" || action === "new-text") {
+    } else if (
+      action === "new-folder" ||
+      action === "new-text" ||
+      action === "new-bitmap"
+    ) {
       const node =
         action === "new-folder"
           ? fileOps.createFolder(fs.DESKTOP, "New Folder")
-          : fileOps.createFile(fs.DESKTOP, "New Text Document.txt");
+          : fileOps.createFile(
+              fs.DESKTOP,
+              action === "new-bitmap"
+                ? "New Bitmap Image.bmp"
+                : "New Text Document.txt",
+            );
       refreshDesktop();
       selectDesktopIcon(node.id);
       beginDesktopRename(node.id);
+    } else if (action === "upload") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.multiple = true;
+      input.addEventListener(
+        "change",
+        async () => {
+          for (const file of input.files) {
+            fileOps.createFile(fs.DESKTOP, file.name, {
+              content: file.type.startsWith("text/") ? await file.text() : "",
+              size: file.size,
+            });
+          }
+          refreshDesktop();
+        },
+        { once: true },
+      );
+      input.click();
     } else if (action === "paste") {
       pasteIntoFolder(fs.DESKTOP);
     } else if (action === "open" && itemId) {

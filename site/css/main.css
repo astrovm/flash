@@ -848,7 +848,7 @@ html[data-xp-appearance="silver"] {
 .xp-context-menu {
   position: absolute;
   z-index: 2500;
-  min-width: 178px;
+  min-width: 170px;
   padding: 2px;
   background: #fff;
   border: 1px solid #aca899;
@@ -866,14 +866,28 @@ html[data-xp-appearance="silver"] {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 22px;
-  padding: 3px 26px 3px 25px;
+  min-height: 20px;
+  padding: 2px 24px 2px 2px;
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
   white-space: nowrap;
+}
+
+.context-check {
+  display: inline-block;
+  width: 23px;
+  color: currentColor;
+  font-size: 15px;
+  line-height: 14px;
+  text-align: center;
+}
+
+.context-label {
+  display: inline-block;
+  line-height: 16px;
 }
 
 .xp-context-menu button:not(:disabled):hover,
@@ -891,7 +905,7 @@ html[data-xp-appearance="silver"] {
 .context-separator {
   display: block;
   height: 1px;
-  margin: 3px 2px 3px 24px;
+  margin: 3px 2px;
   background: #aca899;
   box-shadow: 0 1px #fff;
 }
@@ -899,7 +913,7 @@ html[data-xp-appearance="silver"] {
 .context-arrow {
   position: absolute;
   right: 7px;
-  top: 8px;
+  top: 6px;
   width: 0;
   height: 0;
   border-top: 4px solid transparent;
@@ -2338,8 +2352,8 @@ html[data-xp-appearance="silver"] {
 }
 
 .display-dialog-buttons button {
-  min-width: 72px;
-  height: 23px;
+  min-width: 95px;
+  height: 27px;
   border: 1px solid #003c74;
   border-radius: 3px;
   background: linear-gradient(#fff, #ece9d8);
@@ -2349,6 +2363,294 @@ html[data-xp-appearance="silver"] {
 .display-dialog-buttons button:disabled {
   color: #aca899;
   border-color: #aaa;
+}
+
+/* Windows XP Display Properties desktop tab */
+.display-properties-content {
+  overflow: hidden;
+  padding: 38px 14px 48px;
+}
+
+.display-panel {
+  position: absolute;
+  z-index: 0;
+  inset: 31px 13px 54px;
+  min-height: 0;
+  padding: 4px 15px;
+  border: 1px solid #919b9c;
+  background: #fff;
+}
+
+.display-panel[hidden] {
+  display: none;
+}
+
+.display-tabs {
+  z-index: 2;
+  top: 7px;
+  left: 14px;
+  right: auto;
+  gap: 0;
+  border-bottom: 0;
+}
+
+.display-tabs button {
+  height: 23px;
+  margin-right: -1px;
+  padding: 2px 9px;
+  border-radius: 3px 3px 0 0;
+}
+
+.display-tabs button.active {
+  height: 25px;
+  margin-top: -2px;
+  border-top: 2px solid #e68b2c;
+  background: #fff;
+}
+
+.display-preview {
+  position: relative;
+  box-sizing: border-box;
+  width: 236px;
+  height: 212px;
+  aspect-ratio: auto;
+  margin: 12px auto 23px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.display-preview > img {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 236px;
+  height: 212px;
+  border: 0;
+}
+
+.display-preview > .display-preview-surface {
+  position: absolute;
+  top: 20px;
+  left: 33px;
+  z-index: 1;
+  width: 203px;
+  height: 149px;
+  border: 0;
+}
+
+.display-desktop-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 99px;
+  gap: 8px;
+  width: 470px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.display-background-column,
+.display-background-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.display-wallpaper-label {
+  width: auto;
+  margin: 0 0 4px;
+}
+
+.display-properties-content .display-wallpaper-list {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: 150px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  overflow: hidden;
+}
+
+.display-wallpaper-items {
+  flex: 1;
+  min-width: 0;
+  padding: 1px;
+}
+
+.display-wallpaper-items button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 20px;
+  padding: 0 4px;
+  border: 0;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  text-align: left;
+}
+
+.display-wallpaper-items button.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.wallpaper-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-right: 4px;
+  background: url("../assets/xp/icons/wallpaper-image.png") center/16px 16px
+    no-repeat;
+}
+
+.wallpaper-icon.none {
+  background-image: url("../assets/xp/icons/wallpaper-none.png");
+}
+
+.display-scrollbar {
+  position: relative;
+  width: 19px;
+  flex: none;
+  border-left: 1px solid #7f9db9;
+  background: #e7ecf5;
+}
+
+.scroll-arrow {
+  position: absolute;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1px solid #8ea8c8;
+  border-radius: 2px;
+  background: linear-gradient(135deg, #fff, #dbe5f2);
+}
+
+.scroll-arrow.up {
+  top: 0;
+}
+
+.scroll-arrow.down {
+  bottom: 0;
+}
+
+.scroll-arrow::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid #5d7290;
+  border-left: 4px solid transparent;
+}
+
+.scroll-arrow.down::after {
+  top: 7px;
+  border-top: 5px solid #5d7290;
+  border-bottom: 0;
+}
+
+.scroll-thumb {
+  position: absolute;
+  top: 22px;
+  left: 1px;
+  display: grid;
+  place-content: center;
+  width: 16px;
+  height: 22px;
+  border: 1px solid #8da6c6;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #f7fbff, #c8d9ed);
+}
+
+.scroll-thumb i {
+  width: 7px;
+  height: 1px;
+  margin: 1px;
+  background: #7187a3;
+}
+
+.display-background-actions {
+  padding-top: 19px;
+  gap: 5px;
+}
+
+.display-properties-content .display-background-actions select {
+  width: 99px;
+  margin: -2px 0 5px;
+}
+
+.display-browse,
+.display-customize,
+.display-color-button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  height: 27px;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(#fff, #ece9d8);
+  color: #111;
+  text-decoration: none;
+  cursor: var(--xp-cursor);
+}
+
+.display-customize {
+  width: 146px;
+  margin-top: 10px;
+  color: #aca899;
+  border-color: #aaa;
+}
+
+.display-color-button {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.display-color-button span {
+  width: 23px;
+  height: 15px;
+  border: 1px solid #111;
+}
+
+.display-color-button b {
+  font-size: 9px;
+  font-weight: normal;
+}
+
+.display-properties-window {
+  min-width: min(500px, calc(100% - 8px));
+  min-height: min(520px, calc(100% - 8px));
+}
+
+.display-properties-window .title-icon,
+.display-properties-window .resize-handle {
+  display: none;
+}
+
+.display-properties-window .title-bar {
+  gap: 0;
+  padding-left: 8px;
+}
+
+.help-btn {
+  border: 1px solid #fff;
+  background: linear-gradient(#6aaeff, #1664df);
+  box-shadow: inset 0 0 0 1px #0b4fc1;
+}
+
+.help-btn::after {
+  content: "?";
+  color: #fff;
+  font:
+    bold 17px Tahoma,
+    sans-serif;
+  text-shadow: 1px 1px #124ba0;
 }
 
 /* Resize handles on every edge and corner, with XP resize cursors */
