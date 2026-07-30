@@ -3390,6 +3390,7 @@ const importDroppedFiles = async (destinationId, dataTransfer) => {
   }
 };
 const wireFolderDropTarget = (element, destinationId) => {
+  element.dataset.dropDestinationId = destinationId;
   element.addEventListener("dragover", (event) => {
     const internal = event.dataTransfer?.types?.includes(
       "application/x-astro-vfs-ids",
@@ -5965,6 +5966,23 @@ const layoutDesktopIcons = (force = false) => {
   }
 };
 
+const findDesktopFolderDropTarget = (clientX, clientY, draggedIds) => {
+  for (const element of document.elementsFromPoint(clientX, clientY)) {
+    const target = element.closest?.("[data-drop-destination-id]");
+    if (!target) continue;
+    const destinationId = target.dataset.dropDestinationId;
+    if (
+      destinationId === fs.DESKTOP ||
+      draggedIds.has(destinationId) ||
+      fs.getNode(destinationId)?.type !== "folder"
+    ) {
+      continue;
+    }
+    return { element: target, destinationId };
+  }
+  return null;
+};
+
 const wireDesktopIconDrag = (icon) => {
   icon.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
@@ -5984,6 +6002,9 @@ const wireDesktopIconDrag = (icon) => {
       top: item.offsetTop,
     }));
     const container = document.getElementById("desktop-icons");
+    const eligibility = getDesktopSelectionEligibility();
+    const draggedIds = new Set(eligibility.filesystemIds);
+    let dropTarget = null;
     desktopDragged = false;
 
     const onMove = (moveEvent) => {
@@ -6014,22 +6035,46 @@ const wireDesktopIconDrag = (icon) => {
         item.style.left = `${left}px`;
         item.style.top = `${top}px`;
       });
+
+      dropTarget?.element.classList.remove("drop-target");
+      dropTarget = eligibility.movable
+        ? findDesktopFolderDropTarget(
+            moveEvent.clientX,
+            moveEvent.clientY,
+            draggedIds,
+          )
+        : null;
+      dropTarget?.element.classList.add("drop-target");
     };
 
-    const onUp = () => {
+    const onUp = async (upEvent) => {
       icon.removeEventListener("pointermove", onMove);
       icon.removeEventListener("pointerup", onUp);
       icon.removeEventListener("pointercancel", onUp);
+      dropTarget?.element.classList.remove("drop-target");
+      dropTarget =
+        eligibility.movable && upEvent.type === "pointerup"
+          ? findDesktopFolderDropTarget(
+              upEvent.clientX,
+              upEvent.clientY,
+              draggedIds,
+            )
+          : null;
       if (desktopDragged) {
-        const { alignToGrid } = getDesktopLayoutSettings();
-        selected.forEach(({ item }) => {
-          if (alignToGrid) {
-            const metrics = getDesktopIconMetrics(container);
-            item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
-            item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
-          }
-          saveDesktopIconPosition(item);
-        });
+        if (dropTarget) {
+          fileOps.cut(eligibility.filesystemIds);
+          await pasteIntoFolder(dropTarget.destinationId);
+        } else {
+          const { alignToGrid } = getDesktopLayoutSettings();
+          selected.forEach(({ item }) => {
+            if (alignToGrid) {
+              const metrics = getDesktopIconMetrics(container);
+              item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
+              item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
+            }
+            saveDesktopIconPosition(item);
+          });
+        }
       }
     };
 
@@ -6176,34 +6221,7 @@ const buildDesktopIcons = () => {
     icon.className = "desktop-icon";
     icon.dataset.desktopId = id;
     if (system) icon.dataset.systemId = id;
-    if (node && !node.protected) {
-      icon.title = "Alt+drag to move this item to a folder";
-      icon.setAttribute(
-        "aria-description",
-        "Hold Alt while dragging to move this file or folder.",
-      );
-      icon.addEventListener("pointerdown", (event) => {
-        icon.draggable = event.altKey;
-      });
-      icon.addEventListener("pointerup", () => {
-        icon.draggable = false;
-      });
-      icon.addEventListener("dragstart", (event) => {
-        const eligibility = getDesktopSelectionEligibility();
-        if (!event.altKey || !eligibility.movable) {
-          event.preventDefault();
-          return;
-        }
-        event.dataTransfer.setData(
-          "application/x-astro-vfs-ids",
-          JSON.stringify(eligibility.filesystemIds),
-        );
-        event.dataTransfer.effectAllowed = "move";
-      });
-      icon.addEventListener("dragend", () => {
-        icon.draggable = false;
-      });
-    }
+    if (node?.type === "folder") icon.dataset.dropDestinationId = node.id;
 
     const glyph = system
       ? createGameIconElement(id, "icon-glyph")
@@ -6285,9 +6303,10 @@ const beginDesktopRename = (id) => {
   input.focus();
   input.select();
   let finished = false;
-  const finish = (save) => {
+  function finish(save) {
     if (finished) return;
     finished = true;
+    document.removeEventListener("pointerdown", onOutsidePointerDown, true);
     if (save) {
       try {
         fileOps.rename(id, input.value);
@@ -6296,12 +6315,19 @@ const beginDesktopRename = (id) => {
       }
     }
     refreshDesktop();
-  };
+  }
+  function onOutsidePointerDown(event) {
+    if (!input.contains(event.target)) finish(true);
+  }
   input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") finish(true);
-    if (event.key === "Escape") finish(false);
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      finish(event.key === "Enter");
+    }
   });
   input.addEventListener("blur", () => finish(true), { once: true });
+  document.addEventListener("pointerdown", onOutsidePointerDown, true);
 };
 
 const addDesktopMenuItem = (

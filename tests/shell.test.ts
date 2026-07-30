@@ -490,15 +490,40 @@ test("shell paste uses one conflict aware progress helper", () =>
     "pasteIntoFolder(win.currentFolderId)",
     "pasteIntoFolder(fs.DESKTOP)",
   ));
-test("desktop alt drag uses internal filesystem payload", () =>
-  contains(
+test("desktop drag moves into folders without a modifier", () => {
+  const block = between(
     javascript,
-    'icon.title = "Alt+drag to move this item to a folder"',
-    "icon.draggable = event.altKey",
-    "application/x-astro-vfs-ids",
-    'event.dataTransfer.effectAllowed = "move"',
-    "if (!event.altKey || !eligibility.movable)",
-  ));
+    "const findDesktopFolderDropTarget = (clientX, clientY, draggedIds) =>",
+    "const wireDesktopSelectionRectangle = () =>",
+  );
+  contains(
+    block,
+    "const eligibility = getDesktopSelectionEligibility()",
+    'element.closest?.("[data-drop-destination-id]")',
+    "dropTarget = eligibility.movable",
+    'upEvent.type === "pointerup"',
+    "fileOps.cut(eligibility.filesystemIds)",
+    "await pasteIntoFolder(dropTarget.destinationId)",
+    "saveDesktopIconPosition(item)",
+  );
+  absent(block, "event.altKey", "Alt+drag");
+});
+test("desktop rename commits on an outside pointer press", () => {
+  const block = between(
+    javascript,
+    "const beginDesktopRename = (id) =>",
+    "const addDesktopMenuItem = (",
+  );
+  contains(
+    block,
+    "if (!input.contains(event.target)) finish(true)",
+    'document.addEventListener("pointerdown", onOutsidePointerDown, true)',
+    'document.removeEventListener("pointerdown", onOutsidePointerDown, true)',
+    'if (event.key === "Enter" || event.key === "Escape")',
+    "event.stopPropagation()",
+    'finish(event.key === "Enter")',
+  );
+});
 test("start menu contains only XP places", () => {
   const places = between(
     javascript,
