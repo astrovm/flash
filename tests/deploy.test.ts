@@ -105,7 +105,7 @@ async function makeSource(root: string): Promise<void> {
     "js/offline-worker.js": "offline worker",
     "js/main.js": [
       'const APP_VERSION = "old";',
-      'const sound = "assets/xp/sounds/startup.mp3";',
+      'const sound = "assets/xp/sounds/startup.wav";',
     ].join("\n"),
     "css/main.css": [
       '@font-face { src: url("fonts/test.ttf"); }',
@@ -115,7 +115,7 @@ async function makeSource(root: string): Promise<void> {
     "assets/icons/game.png": "icon",
     "assets/icons/SOURCES.json": "{}",
     "assets/xp/bliss.jpg": "wallpaper",
-    "assets/xp/sounds/startup.mp3": "sound",
+    "assets/xp/sounds/startup.wav": "sound",
     "favicon.ico": "favicon",
     "vendor/fflate/0.8.3/index.js": "fflate",
     "swf/bike-mania/main.swf": "swf",
@@ -259,7 +259,7 @@ describe("build metadata", () => {
       /assets\/icons\/game\.[a-f0-9]{8}\.png/,
     );
     expect(await readFile(join(root, hashedAssets.mainJs), "utf8")).toMatch(
-      /assets\/xp\/sounds\/startup\.[a-f0-9]{8}\.mp3/,
+      /assets\/xp\/sounds\/startup\.[a-f0-9]{8}\.wav/,
     );
     expect(await readFile(join(root, hashedAssets.mainCss), "utf8")).toMatch(
       /fonts\/test\.[a-f0-9]{8}\.ttf/,
@@ -270,6 +270,7 @@ describe("build metadata", () => {
     expect(await Bun.file(join(root, "js", "main.js")).exists()).toBeFalse();
     expect(await Bun.file(join(root, "css", "main.css")).exists()).toBeFalse();
     expect(PRECACHE_FILE_SUFFIXES.has(".ttf")).toBeTrue();
+    expect(PRECACHE_FILE_SUFFIXES.has(".bmp")).toBeTrue();
 
     const metadata = JSON.parse(await readFile(paths.versionJson, "utf8"));
     const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));

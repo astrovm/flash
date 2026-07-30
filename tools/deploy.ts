@@ -45,6 +45,7 @@ export const PRECACHE_FILE_SUFFIXES = new Set([
   ".css",
   ".ico",
   ".svg",
+  ".bmp",
   ".mp3",
   ".wav",
   ".png",

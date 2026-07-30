@@ -48,11 +48,11 @@ const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
 const DISPLAY_WALLPAPERS = {
   none: "none",
   bliss: 'url("../assets/xp/bliss.jpg")',
-  ascent: "linear-gradient(135deg, #1e5799, #7db9e8)",
-  autumn: "linear-gradient(135deg, #7a431c, #d7a35d)",
-  azul: "linear-gradient(135deg, #1b5c9f, #8dc6e9)",
-  "blue-lace": "linear-gradient(135deg, #849cc7, #dfe8f8)",
-  coffee: "linear-gradient(135deg, #4c2d1d, #a37a55)",
+  ascent: 'url("../assets/xp/wallpapers/ascent.jpg")',
+  autumn: 'url("../assets/xp/wallpapers/autumn.jpg")',
+  azul: 'url("../assets/xp/wallpapers/azul.jpg")',
+  "blue-lace": 'url("../assets/xp/wallpapers/blue-lace-16.bmp")',
+  coffee: 'url("../assets/xp/wallpapers/coffee-bean.bmp")',
 };
 const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   theme: "windows-xp",
@@ -106,6 +106,7 @@ const XP_ICON_PATHS = Object.freeze({
   "mycomputer.png": "assets/xp/icons/mycomputer.png",
   "mydocuments.png": "assets/xp/icons/mydocuments.png",
   "recycler-empty.png": "assets/xp/icons/recycler-empty.png",
+  "recycler-full.png": "assets/xp/icons/recycler-full.png",
   "shortcut.png": "assets/xp/icons/shortcut.png",
 });
 const TASKBAR_HEIGHT = 30;
@@ -186,11 +187,19 @@ const formatGameTitle = (gameId) =>
 const getGameIcon = (gameId) =>
   categoryIcons[gamesList[gameId]?.category] || categoryIcons["Other"];
 
+const getRecycleBinIconPath = () =>
+  window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length
+    ? XP_ICON_PATHS["recycler-full.png"]
+    : XP_ICON_PATHS["recycler-empty.png"];
+
 const createGameIconElement = (gameId, className) => {
   const icon = document.createElement("span");
   icon.className = className;
 
-  const imagePath = systemShortcuts[gameId]?.icon || gamesList[gameId]?.icon;
+  const imagePath =
+    gameId === "__recycle-bin"
+      ? getRecycleBinIconPath()
+      : systemShortcuts[gameId]?.icon || gamesList[gameId]?.icon;
   if (imagePath) {
     const image = document.createElement("img");
     image.className = "game-icon-image";
@@ -202,12 +211,6 @@ const createGameIconElement = (gameId, className) => {
     icon.classList.add("has-image");
     if (systemShortcuts[gameId]) {
       icon.classList.add("system-icon");
-    }
-    if (
-      gameId === "__recycle-bin" &&
-      window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length
-    ) {
-      icon.classList.add("recycle-full");
     }
     icon.appendChild(image);
   } else {
@@ -3775,13 +3778,15 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     titleIcon.replaceChildren();
     const image = document.createElement("img");
     image.src =
-      folder.id === fs.MY_COMPUTER
-        ? "assets/xp/icons/MyComputer.png"
-        : folder.id === fs.MY_MUSIC
-          ? "assets/xp/icons/MyMusic.png"
-          : folder.id === fs.MY_PICTURES
-            ? "assets/xp/icons/MyPictures.png"
-            : "assets/xp/icons/mydocuments.png";
+      folder.id === fs.RECYCLE_BIN
+        ? getRecycleBinIconPath()
+        : folder.id === fs.MY_COMPUTER
+          ? "assets/xp/icons/MyComputer.png"
+          : folder.id === fs.MY_MUSIC
+            ? "assets/xp/icons/MyMusic.png"
+            : folder.id === fs.MY_PICTURES
+              ? "assets/xp/icons/MyPictures.png"
+              : "assets/xp/icons/mydocuments.png";
     image.alt = "";
     titleIcon.appendChild(image);
   }
@@ -3792,6 +3797,19 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   const chrome = explorerContent?.querySelector(".explorer-chrome");
   if (chrome) {
     chrome.querySelector("input").value = fs.getPath(folder.id);
+    const addressIcon = chrome.querySelector(".explorer-address-field img");
+    if (addressIcon) {
+      addressIcon.src =
+        folder.id === fs.RECYCLE_BIN
+          ? getRecycleBinIconPath()
+          : folder.id === fs.MY_COMPUTER
+            ? XP_ICON_PATHS["MyComputer.png"]
+            : folder.id === fs.MY_MUSIC
+              ? XP_ICON_PATHS["MyMusic.png"]
+              : folder.id === fs.MY_PICTURES
+                ? XP_ICON_PATHS["MyPictures.png"]
+                : XP_ICON_PATHS["mydocuments.png"];
+    }
     chrome.querySelector('[data-explorer-action="back"]').disabled =
       (win.historyIndex ?? 0) <= 0;
     chrome.querySelector('[data-explorer-action="forward"]').disabled =
@@ -4393,6 +4411,7 @@ fs.subscribe(() => {
     renderExplorerItems(win);
   });
   if (iconsBuilt) buildDesktopIcons();
+  renderTaskButtons();
 });
 
 const wireSystemWindowControls = (win) => {
@@ -7246,11 +7265,11 @@ const setupSearch = () => {
 // Original Windows XP system sounds (playback is skipped if the
 // browser still blocks audio before the user's first interaction)
 const xpSoundPaths = {
-  error: "assets/xp/sounds/error.mp3",
-  logoff: "assets/xp/sounds/logoff.mp3",
-  logon: "assets/xp/sounds/logon.mp3",
-  shutdown: "assets/xp/sounds/shutdown.mp3",
-  startup: "assets/xp/sounds/startup.mp3",
+  error: "assets/xp/sounds/error.wav",
+  logoff: "assets/xp/sounds/logoff.wav",
+  logon: "assets/xp/sounds/logon.wav",
+  shutdown: "assets/xp/sounds/shutdown.wav",
+  startup: "assets/xp/sounds/startup.wav",
 };
 
 const playXPSound = (name) => {

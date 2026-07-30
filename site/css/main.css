@@ -733,18 +733,6 @@ html[data-xp-appearance="silver"] {
   pointer-events: none;
 }
 
-.recycle-full::before {
-  content: "";
-  position: absolute;
-  width: 21px;
-  height: 14px;
-  right: -3px;
-  bottom: 1px;
-  border: 1px solid #4d7f35;
-  background: repeating-linear-gradient(#fff 0 3px, #89c56e 3px 5px);
-  transform: rotate(-12deg);
-}
-
 .game-icon-image {
   display: block;
   width: 100%;

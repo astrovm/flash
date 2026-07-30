@@ -378,14 +378,11 @@ test("explorer and recycle bin use shared filesystem controls", () => {
     "fileOps.restore(ids)",
     "fileOps.permanentlyDelete(ids)",
     "fileOps.emptyRecycleBin()",
-    'icon.classList.add("recycle-full")',
+    'XP_ICON_PATHS["recycler-full.png"]',
+    "getRecycleBinIconPath()",
   );
-  contains(
-    css,
-    ".explorer-body",
-    '.explorer-items[data-view="details"]',
-    ".recycle-full::before",
-  );
+  contains(css, ".explorer-body", '.explorer-items[data-view="details"]');
+  absent(css, ".recycle-full::before");
 });
 test("explorer item context menu supports normal and recycle commands", () =>
   contains(
