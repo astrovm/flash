@@ -8,10 +8,14 @@
 
 The browser runtime, page, modules, and package manifest are vendored from that
 Lolendor commit. Original-game media from the upstream distribution is not
-bundled. Astro Flash does not bundle the compatible game-data package. A small
-local adapter assembles the upstream 135,355,111-byte preload from files
-selected or downloaded by the user and serves remaining assets from the same
-local file set instead of the upstream CDN.
+bundled. Astro Flash does not bundle the compatible game-data package.
+
+Files selected or downloaded by the user are streamed once into a single
+indexed OPFS file. The offline service worker serves slices of that file through
+same-origin HTTP-like requests, including byte ranges. The upstream
+135,355,111-byte preload and remaining runtime assets therefore use normal
+`fetch()`/XHR paths without per-file parent-frame messages. After a torrent is
+packed successfully, its peer connections and piece store are destroyed.
 
 The upstream MIT license is stored in `LOLENDOR-LICENSE`.
 

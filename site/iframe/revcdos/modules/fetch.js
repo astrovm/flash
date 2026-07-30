@@ -54,41 +54,7 @@ function fetchXHR(fetch, onsuccess, onerror, onprogress, onreadystatechange) {
   var fetchAttrSynchronous = !!(fetchAttributes & 64);
   var userNameStr = userName ? UTF8ToString(userName) : undefined;
   var passwordStr = password ? UTF8ToString(password) : undefined;
-  var isLocalAsset =
-    typeof Module["fetchLocalAsset"] === "function" &&
-    !/^(?:https?:)?\/\//.test(url_);
-  var xhr = isLocalAsset
-    ? {
-        readyState: 0,
-        status: 0,
-        statusText: "",
-        response: null,
-        responseURL: url_,
-        open() {
-          this.readyState = 1;
-        },
-        overrideMimeType() {},
-        setRequestHeader() {},
-        send() {
-          Module["fetchLocalAsset"](url_)
-            .then((data) => {
-              this.response = data;
-              this.status = 200;
-              this.statusText = "OK";
-              this.readyState = 4;
-              this.onreadystatechange?.({});
-              this.onload?.({});
-            })
-            .catch((error) => {
-              this.status = 404;
-              this.statusText = "Not Found";
-              this.readyState = 4;
-              this.onreadystatechange?.({});
-              this.onerror?.(error);
-            });
-        },
-      }
-    : new XMLHttpRequest();
+  var xhr = new XMLHttpRequest();
   xhr.withCredentials = !!HEAPU8[fetch_attr + 60];
   xhr.open(
     requestMethod,

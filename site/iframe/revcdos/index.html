@@ -145,6 +145,7 @@
 
     <script type="module">
       import WebTorrent from "../../vendor/webtorrent/3.0.21/webtorrent.min.js";
+      import { loadPackedManifest, packFiles } from "./packed-store.js";
 
       ("use strict");
 
@@ -158,24 +159,7 @@
       const downloadButton = document.getElementById("download-button");
       const setup = document.getElementById("setup");
       const selection = document.getElementById("selection");
-      let files = new Map();
       let gameFrame = null;
-
-      const readFile = (file) => file.arrayBuffer();
-      const normalizeAssetPath = (path) =>
-        String(path).replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
-
-      const findAssetFile = (requestedPath) => {
-        const path = normalizeAssetPath(requestedPath);
-        const candidates = [
-          path,
-          path.replace(/^fetched\//, "vc-assets/local/"),
-          path.replace(/^vcsky\/fetched\//, "vc-assets/local/"),
-        ];
-        return candidates
-          .map((candidate) => files.get(candidate))
-          .find(Boolean);
-      };
 
       const cacheEngineForOfflineUse = () => {
         window.parent.postMessage(
@@ -184,8 +168,7 @@
         );
       };
 
-      const startGame = (selectedFiles, message) => {
-        files = selectedFiles;
+      const startGame = (message) => {
         selection.textContent = message;
         gameFrame = document.createElement("iframe");
         gameFrame.src = "game.html";
@@ -197,6 +180,86 @@
       const formatBytes = (bytes) => {
         if (!Number.isFinite(bytes) || bytes <= 0) return "0 MiB";
         return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
+      };
+
+      const localAssetUrl = (path) =>
+        `local-assets/${path
+          .split("/")
+          .map((part) => encodeURIComponent(part))
+          .join("/")}`;
+
+      const waitForServiceWorkerController = async () => {
+        await navigator.serviceWorker.ready;
+        if (navigator.serviceWorker.controller) return;
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(
+            () =>
+              reject(
+                new Error(
+                  "The offline engine is not ready. Reload Astro Flash and try again.",
+                ),
+              ),
+            10000,
+          );
+          navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => {
+              clearTimeout(timeout);
+              resolve();
+            },
+            { once: true },
+          );
+        });
+      };
+
+      const verifyPackedAssets = async (manifest) => {
+        const firstPath = Object.keys(manifest.files)[0];
+        if (!firstPath) throw new Error("The selected folder is empty.");
+        await waitForServiceWorkerController();
+        navigator.serviceWorker.controller.postMessage({
+          type: "REVCDOS_PACK_UPDATED",
+        });
+        const response = await fetch(localAssetUrl(firstPath), {
+          cache: "no-store",
+          headers: { Range: "bytes=0-0" },
+        });
+        if (response.status !== 206) {
+          throw new Error(
+            "The offline data service is not ready. Install any pending Astro Flash update, reload, and try again.",
+          );
+        }
+      };
+
+      const destroyTorrent = (client, torrent) =>
+        new Promise((resolve) => {
+          client.remove(torrent.infoHash, { destroyStore: true }, () =>
+            client.destroy(resolve),
+          );
+        });
+
+      const packAndStart = async (entries, torrentSession) => {
+        downloadButton.disabled = true;
+        input.disabled = true;
+        let lastUpdate = 0;
+        const manifest = await packFiles(entries, (packed, total, path) => {
+          const now = Date.now();
+          if (now - lastUpdate < 100 && packed !== total) return;
+          lastUpdate = now;
+          selection.textContent = `Optimizing offline data… ${(
+            (packed / total) *
+            100
+          ).toFixed(1)}% · ${path}`;
+        });
+        await verifyPackedAssets(manifest);
+        if (torrentSession) {
+          selection.textContent = "Stopping peer connections…";
+          await destroyTorrent(torrentSession.client, torrentSession.torrent);
+          localStorage.removeItem(DOWNLOAD_COMPLETE_KEY);
+        }
+        cacheEngineForOfflineUse();
+        startGame(
+          `${Object.keys(manifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
+        );
       };
 
       const showProgress = (torrent) => {
@@ -312,11 +375,12 @@
         const cached = localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true";
         const estimate = await navigator.storage.estimate();
         const available = (estimate.quota || 0) - (estimate.usage || 0);
-        if (!cached && estimate.quota && available < DOWNLOAD_SIZE) {
+        const packingSpace = cached ? DOWNLOAD_SIZE : DOWNLOAD_SIZE * 2;
+        if (estimate.quota && available < packingSpace) {
           throw new Error(
-            `Not enough browser storage. ${formatBytes(DOWNLOAD_SIZE)} is required and ${formatBytes(
-              available,
-            )} is available.`,
+            `Not enough temporary browser storage. ${formatBytes(
+              packingSpace,
+            )} is required to download and optimize the offline copy, and ${formatBytes(available)} is available.`,
           );
         }
 
@@ -368,6 +432,7 @@
           client.destroy();
           selection.textContent = message;
           downloadButton.disabled = false;
+          input.disabled = false;
           downloadButton.textContent = "Try automatic download again";
         };
 
@@ -420,18 +485,22 @@
         torrent.on("error", (error) =>
           failDownload(`Download failed: ${error.message}`),
         );
-        torrent.on("done", () => {
+        torrent.on("done", async () => {
           if (failed) return;
           clearTimeout(connectionTimer);
           localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
-          cacheEngineForOfflineUse();
-          const downloadedFiles = new Map(
-            torrent.files.map((file) => [file.path.toLowerCase(), file]),
-          );
-          startGame(
-            downloadedFiles,
-            `${downloadedFiles.size.toLocaleString()} files ready. Starting reVCDOS…`,
-          );
+          selection.textContent =
+            "Download complete. Optimizing data for smooth offline play…";
+          try {
+            await packAndStart(
+              torrent.files.map((file) => [file.path, file]),
+              { client, torrent },
+            );
+          } catch (error) {
+            failDownload(
+              `Unable to optimize downloaded data: ${error.message}`,
+            );
+          }
         });
         if (!cached) {
           connectionTimer = setTimeout(() => {
@@ -443,12 +512,6 @@
         }
       };
 
-      downloadButton.disabled = false;
-      downloadButton.textContent =
-        localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true"
-          ? "Use downloaded copy"
-          : "Download automatically (860 MiB)";
-
       downloadButton.addEventListener("click", () => {
         downloadGameData().catch((error) => {
           selection.textContent = error.message;
@@ -457,20 +520,21 @@
         });
       });
 
-      input.addEventListener("change", () => {
-        const selectedFiles = new Map(
-          Array.from(input.files).map((file) => [
-            file.webkitRelativePath.toLowerCase(),
-            file,
-          ]),
-        );
-        if (!selectedFiles.size) return;
-
-        cacheEngineForOfflineUse();
-        startGame(
-          selectedFiles,
-          `${selectedFiles.size.toLocaleString()} files selected. Starting reVCDOS…`,
-        );
+      input.addEventListener("change", async () => {
+        const selectedFiles = Array.from(input.files).map((file) => [
+          file.webkitRelativePath,
+          file,
+        ]);
+        if (!selectedFiles.length) return;
+        try {
+          selection.textContent =
+            "Optimizing selected files for smooth offline play…";
+          await packAndStart(selectedFiles);
+        } catch (error) {
+          selection.textContent = `Unable to optimize selected files: ${error.message}`;
+          downloadButton.disabled = false;
+          input.disabled = false;
+        }
       });
 
       window.addEventListener("message", async (event) => {
@@ -478,75 +542,31 @@
         const message = event.data;
         if (!message || typeof message.event !== "string") return;
 
-        if (
-          message.event === "module.package" &&
-          Array.isArray(message.files)
-        ) {
-          try {
-            const packageData = new Uint8Array(message.size);
-            let nextFile = 0;
-            const workers = Array.from({ length: 8 }, async () => {
-              while (nextFile < message.files.length) {
-                const packageFile = message.files[nextFile++];
-                const file = findAssetFile(packageFile.path);
-                if (!file) {
-                  throw new Error(
-                    `Required file is missing: ${packageFile.path}`,
-                  );
-                }
-                const buffer = await readFile(file);
-                const expectedSize = packageFile.end - packageFile.start;
-                if (buffer.byteLength !== expectedSize) {
-                  throw new Error(
-                    `Unexpected size for ${packageFile.path}: expected ${expectedSize}, received ${buffer.byteLength}`,
-                  );
-                }
-                packageData.set(new Uint8Array(buffer), packageFile.start);
-              }
-            });
-            await Promise.all(workers);
-            event.source.postMessage(
-              {
-                event: ">module.package",
-                requestId: message.requestId,
-                data: packageData,
-              },
-              location.origin,
-              [packageData.buffer],
-            );
-          } catch (error) {
-            event.source.postMessage(
-              {
-                event: ">module.package",
-                requestId: message.requestId,
-                error: error.message,
-              },
-              location.origin,
-            );
-          }
-          return;
-        }
-
-        if (message.event === "module.getfile" && message.file) {
-          const file = findAssetFile(message.file);
-          const buffer = file ? await readFile(file) : null;
-          event.source.postMessage(
-            {
-              event: ">module.getfile",
-              requestId: message.requestId,
-              data: buffer || undefined,
-              error: buffer ? undefined : `File not found: ${message.file}`,
-            },
-            location.origin,
-            buffer ? [buffer] : [],
-          );
-          return;
-        }
-
         if (message.event === "request-fullscreen") {
           gameFrame.requestFullscreen?.();
         }
       });
+
+      const packedManifest = await loadPackedManifest();
+      if (packedManifest) {
+        try {
+          await verifyPackedAssets(packedManifest);
+          cacheEngineForOfflineUse();
+          startGame(
+            `${Object.keys(packedManifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
+          );
+        } catch (error) {
+          selection.textContent = error.message;
+          downloadButton.disabled = false;
+          downloadButton.textContent = "Retry offline copy";
+        }
+      } else {
+        downloadButton.disabled = false;
+        downloadButton.textContent =
+          localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true"
+            ? "Optimize downloaded copy"
+            : "Download automatically (860 MiB)";
+      }
     </script>
   </body>
 </html>
