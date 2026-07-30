@@ -4,16 +4,27 @@ const projectDirectory = new URL("..", import.meta.url);
 const read = (relativePath: string) =>
   Bun.file(new URL(relativePath, projectDirectory)).text();
 
-const [games, main, host, game, source, packageManifest, fetchModule] =
-  await Promise.all([
-    read("site/js/games.js"),
-    read("site/js/main.js"),
-    read("site/iframe/revcdos/index.html"),
-    read("site/iframe/revcdos/game.js"),
-    read("site/iframe/revcdos/SOURCE.md"),
-    read("site/iframe/revcdos/modules/packages/en.js"),
-    read("site/iframe/revcdos/modules/fetch.js"),
-  ]);
+const [
+  games,
+  main,
+  host,
+  game,
+  source,
+  packageManifest,
+  fetchModule,
+  packedStore,
+  offlineWorker,
+] = await Promise.all([
+  read("site/js/games.js"),
+  read("site/js/main.js"),
+  read("site/iframe/revcdos/index.html"),
+  read("site/iframe/revcdos/game.js"),
+  read("site/iframe/revcdos/SOURCE.md"),
+  read("site/iframe/revcdos/modules/packages/en.js"),
+  read("site/iframe/revcdos/modules/fetch.js"),
+  read("site/iframe/revcdos/packed-store.js"),
+  read("site/js/offline-worker.js"),
+]);
 
 test("registers reVCDOS as a bundled iframe application", () => {
   expect(games).toContain("revcdos: {");
@@ -51,17 +62,23 @@ test("ships the engine without bundled game data", async () => {
   ).toBe(false);
 });
 
-test("adapts the Lolendor package and streaming protocols to local files", async () => {
+test("serves the Lolendor runtime through a packed OPFS store", async () => {
   expect(host).toContain('type="file" webkitdirectory directory');
   expect(host).toContain('gameFrame.src = "game.html"');
-  expect(host).toContain('message.event === "module.package"');
-  expect(host).toContain('message.event === "module.getfile"');
-  expect(host).toContain("new Uint8Array(message.size)");
-  expect(host).toContain("Required file is missing");
-  expect(game).toContain("DATA_PACKAGE.files.map");
+  expect(host).toContain("loadPackedManifest");
+  expect(host).toContain("packFiles");
+  expect(host).toContain("destroyTorrent");
+  expect(host).toContain("{ destroyStore: true }");
+  expect(host).toContain("verifyPackedAssets");
+  expect(host).toContain('headers: { Range: "bytes=0-0" }');
+  expect(host).not.toContain('message.event === "module.package"');
+  expect(host).not.toContain('message.event === "module.getfile"');
+  expect(game).toContain("DATA_PACKAGE.files[nextFile++]");
   expect(game).toContain("getPreloadedPackage: () => {");
   expect(game).toContain("return data.buffer");
-  expect(game).toContain("fetchLocalAsset");
+  expect(game).toContain("local-assets/");
+  expect(game).toContain("await fetch(localAssetUrl(filename)");
+  expect(game).not.toContain("fetchLocalAsset");
   expect(game).toContain(`let cheatsEnabled = params.get("cheats") !== "0"`);
   expect(game).toContain("ownerShipConfirmed();");
   expect(
@@ -69,11 +86,23 @@ test("adapts the Lolendor package and streaming protocols to local files", async
       new URL("site/iframe/revcdos/modules/cheats.js", projectDirectory),
     ).exists(),
   ).toBe(true);
-  expect(fetchModule).toContain('Module["fetchLocalAsset"](url_)');
+  expect(fetchModule).toContain("var xhr = new XMLHttpRequest()");
+  expect(fetchModule).not.toContain('Module["fetchLocalAsset"]');
   expect(game).toContain("window.parent.postMessage");
   expect(game).not.toContain("window.top.postMessage");
   expect(game).not.toContain("vc-sky-en-v6.data");
   expect(host).not.toContain("preload_files.list");
+  expect(packedStore).toContain('"astro-flash-revcdos"');
+  expect(packedStore).toContain("createWritable()");
+  expect(packedStore).toContain("for await (const chunk of readChunks(file))");
+  expect(packedStore).toContain(
+    "manifestWriter.write(JSON.stringify(manifest))",
+  );
+  expect(offlineWorker).toContain(
+    'const REVCDOS_ROUTE = "/iframe/revcdos/local-assets/"',
+  );
+  expect(offlineWorker).toContain("data.slice(");
+  expect(offlineWorker).toContain('"Content-Range"');
 });
 
 test("offers a persistent WebTorrent download alongside manual selection", async () => {

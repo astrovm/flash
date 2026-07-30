@@ -7,7 +7,19 @@ var wasm_content = "index.wasm";
 const params = new URLSearchParams(window.location.search);
 
 // Base URLs
-const replaceFetch = (url) => url.replace("https://cdn.dos.zone/vcsky/", "");
+const localAssetUrl = (path) => {
+  const normalized = String(path)
+    .replace("https://cdn.dos.zone/vcsky/", "")
+    .replace(/^\/+/, "");
+  return new URL(
+    `local-assets/${normalized
+      .split("/")
+      .map((part) => encodeURIComponent(part))
+      .join("/")}`,
+    location.href,
+  ).href;
+};
+const replaceFetch = localAssetUrl;
 
 // Configurable mode - show settings UI before play
 const configurableMode = params.get("configurable") === "1";
@@ -185,44 +197,34 @@ function updateAllTranslations() {
     configMaxFpsUnlimited.textContent = t("configUnlimited");
 }
 
-function requestParent(event, payload, responseEvent) {
-  return new Promise((resolve, reject) => {
-    const requestId = crypto.randomUUID();
-    const listener = (messageEvent) => {
-      const data = messageEvent.data;
-      if (
-        messageEvent.source !== window.parent ||
-        messageEvent.origin !== location.origin ||
-        data?.event !== responseEvent ||
-        data.requestId !== requestId
-      ) {
-        return;
-      }
-      window.removeEventListener("message", listener);
-      if (data.error) reject(new Error(data.error));
-      else resolve(data.data);
-    };
-    window.addEventListener("message", listener);
-    window.parent.postMessage(
-      { event, requestId, ...payload },
-      location.origin,
-    );
-  });
-}
-
 async function loadData() {
   setStatus("Preparing local game data…");
-  const files = DATA_PACKAGE.files.map(({ filename, start, end }) => ({
-    path: filename.replace(/^\/+/, ""),
-    start,
-    end,
-  }));
-  const buffer = await requestParent(
-    "module.package",
-    { files, size: DATA_PACKAGE.remote_package_size },
-    ">module.package",
-  );
-  return new Uint8Array(buffer);
+  const packageData = new Uint8Array(DATA_PACKAGE.remote_package_size);
+  let nextFile = 0;
+  let loaded = 0;
+  const workers = Array.from({ length: 8 }, async () => {
+    while (nextFile < DATA_PACKAGE.files.length) {
+      const { filename, start, end } = DATA_PACKAGE.files[nextFile++];
+      const response = await fetch(localAssetUrl(filename), {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw new Error(`Unable to load ${filename}: HTTP ${response.status}`);
+      }
+      const buffer = await response.arrayBuffer();
+      const expectedSize = end - start;
+      if (buffer.byteLength !== expectedSize) {
+        throw new Error(
+          `Unexpected size for ${filename}: expected ${expectedSize}, received ${buffer.byteLength}`,
+        );
+      }
+      packageData.set(new Uint8Array(buffer), start);
+      loaded += buffer.byteLength;
+      setStatus(`Preparing... (${loaded}/${packageData.byteLength})`);
+    }
+  });
+  await Promise.all(workers);
+  return packageData;
 }
 
 async function startGame(e) {
@@ -326,8 +328,6 @@ async function loadGame(data) {
         throw new Error(t("cantContinuePlaying"));
       }
     },
-    fetchLocalAsset: (file) =>
-      requestParent("module.getfile", { file }, ">module.getfile"),
   };
   Module.log = Module.print;
   Module.instantiateWasm = async (info, receiveInstance) => {
