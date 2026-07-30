@@ -890,6 +890,10 @@ html[data-xp-appearance="silver"] {
   text-shadow: 1px 1px #fff;
 }
 
+.xp-context-menu button.context-default {
+  font-weight: 700;
+}
+
 .context-separator {
   display: block;
   height: 1px;

@@ -2000,25 +2000,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     emptyBin.type = "button";
     emptyBin.className = "recycle-task";
     emptyBin.textContent = "Empty Recycle Bin";
-    emptyBin.addEventListener("click", () => {
-      const count = fs.getChildren(fs.RECYCLE_BIN).length;
-      if (!count) return;
-      const single = count === 1;
-      XPDialogs.confirm(
-        single
-          ? "Are you sure you want to delete this item?"
-          : `Are you sure you want to delete these ${count} items?`,
-        single ? "Confirm File Delete" : "Confirm Multiple File Delete",
-        "warning",
-      ).then((yes) => {
-        if (!yes) return;
-        try {
-          fileOps.emptyRecycleBin();
-        } catch (error) {
-          console.error(error);
-        }
-      });
-    });
+    emptyBin.addEventListener("click", confirmEmptyRecycleBin);
 
     const restoreAll = document.createElement("button");
     restoreAll.type = "button";
@@ -3203,6 +3185,24 @@ const confirmRecycleDelete = (ids) =>
     "Confirm File Delete",
     "warning",
   ).then((yes) => yes && fileOps.removeToBin(ids));
+
+const confirmEmptyRecycleBin = () => {
+  const count = fs.getChildren(fs.RECYCLE_BIN).length;
+  if (!count) return Promise.resolve(false);
+  const single = count === 1;
+  return XPDialogs.confirm(
+    single
+      ? "Are you sure you want to delete this item?"
+      : `Are you sure you want to delete these ${count} items?`,
+    single ? "Confirm File Delete" : "Confirm Multiple File Delete",
+    "warning",
+  ).then((yes) => {
+    if (!yes) return false;
+    fileOps.emptyRecycleBin();
+    return true;
+  });
+};
+
 const choosePasteConflict = ({ existing }) =>
   new Promise((resolve) => {
     const dialog = XPDialogs.createDialog({
@@ -3722,6 +3722,11 @@ const createExplorerIcon = (node) => {
   if (node.id === fs.MY_MUSIC) return addImage("MyMusic.png");
   if (node.id === fs.MY_PICTURES) return addImage("MyPictures.png");
   if (node.id === fs.MY_COMPUTER) return addImage("MyComputer.png");
+  if (node.app && systemShortcuts[node.app]) {
+    const shortcut = createGameIconElement(node.app, "explorer-item-icon");
+    shortcut.classList.remove("system-icon");
+    return shortcut;
+  }
   if (node.type === "folder") {
     return addImage("NewFolder.png");
   }
@@ -4021,6 +4026,9 @@ fs.registerFileType(".game", (file) => {
     openGameWindow(file.app);
   }
 });
+fs.registerFileType("app:__recycle-bin", () =>
+  openSystemWindow("__recycle-bin"),
+);
 
 const restoreDefaultDesktop = () => {
   Object.keys(gamesList).forEach((gameId) => {
@@ -6359,13 +6367,14 @@ const addDesktopMenuItem = (
   menu,
   label,
   action,
-  { disabled = false, checked = false } = {},
+  { disabled = false, checked = false, defaultItem = false } = {},
 ) => {
   const button = document.createElement("button");
   button.type = "button";
   button.role = "menuitem";
   button.dataset.action = action;
   button.disabled = disabled;
+  button.classList.toggle("context-default", defaultItem);
   button.setAttribute("role", checked ? "menuitemcheckbox" : "menuitem");
   if (checked) button.setAttribute("aria-checked", "true");
   const gutter = document.createElement("span");
@@ -6450,7 +6459,17 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
   menu.replaceChildren();
   menu.dataset.itemId = itemId || "";
 
-  if (itemId) {
+  if (itemId === "__recycle-bin") {
+    addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
+    addDesktopMenuItem(menu, "Explore", "explore");
+    addDesktopMenuItem(menu, "Empty Recycle Bin", "empty-recycle-bin", {
+      disabled: !fs.getChildren(fs.RECYCLE_BIN).length,
+    });
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Create Shortcut", "create-recycle-shortcut");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "recycle-properties");
+  } else if (itemId) {
     addDesktopMenuItem(menu, "Open", "open");
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Cut", "cut", { disabled: !movable });
@@ -6626,6 +6645,19 @@ const setupDesktopContextMenu = () => {
       pasteIntoFolder(fs.DESKTOP);
     } else if (action === "open" && itemId) {
       openDesktopItem(itemId);
+    } else if (action === "explore" && itemId === "__recycle-bin") {
+      openDesktopItem(itemId);
+    } else if (action === "empty-recycle-bin") {
+      confirmEmptyRecycleBin();
+    } else if (action === "create-recycle-shortcut") {
+      const shortcut = fileOps.createFile(
+        fs.DESKTOP,
+        "Shortcut to Recycle Bin.game",
+        { app: "__recycle-bin" },
+      );
+      selectDesktopIcon(shortcut.id);
+    } else if (action === "recycle-properties") {
+      XPDialogs.properties(fs.RECYCLE_BIN);
     } else if (action === "cut") {
       fileOps.cut(selectedFsIds);
     } else if (action === "copy") {

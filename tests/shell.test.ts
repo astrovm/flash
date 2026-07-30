@@ -2,10 +2,11 @@ import { expect, test } from "bun:test";
 
 const projectDir = new URL("..", import.meta.url);
 const path = (relative: string) => new URL(relative, projectDir);
-const [html, javascript, offlineJavascript, css, workboxConfig] =
+const [html, javascript, dialogs, offlineJavascript, css, workboxConfig] =
   await Promise.all([
     Bun.file(path("site/index.html")).text(),
     Bun.file(path("site/js/main.js")).text(),
+    Bun.file(path("site/js/dialogs.js")).text(),
     Bun.file(path("site/js/offline.js")).text(),
     Bun.file(path("site/css/main.css")).text(),
     Bun.file(path("workbox-config.ts")).text(),
@@ -361,6 +362,30 @@ test("desktop context menu uses real submenus and safe multiselection", () => {
     css,
     ".context-parent.open > .context-submenu",
     "#desktop-icons:not(:focus-within)",
+  );
+});
+test("Recycle Bin desktop context menu matches Windows XP commands", () => {
+  contains(
+    javascript,
+    'if (itemId === "__recycle-bin")',
+    'addDesktopMenuItem(menu, "Open", "open", { defaultItem: true })',
+    'addDesktopMenuItem(menu, "Explore", "explore")',
+    '"Empty Recycle Bin", "empty-recycle-bin"',
+    "disabled: !fs.getChildren(fs.RECYCLE_BIN).length",
+    '"Create Shortcut", "create-recycle-shortcut"',
+    '"Properties", "recycle-properties"',
+    'fs.DESKTOP,\n        "Shortcut to Recycle Bin.game"',
+    '{ app: "__recycle-bin" }',
+    'fs.registerFileType("app:__recycle-bin"',
+    "confirmEmptyRecycleBin()",
+    "XPDialogs.properties(fs.RECYCLE_BIN)",
+  );
+  contains(css, ".xp-context-menu button.context-default");
+  contains(
+    dialogs,
+    "node.id === fs().RECYCLE_BIN",
+    '"assets/xp/icons/recycler-full.png"',
+    '"assets/xp/icons/recycler-empty.png"',
   );
 });
 test("explorer and recycle bin use shared filesystem controls", () => {
