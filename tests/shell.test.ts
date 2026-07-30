@@ -668,7 +668,8 @@ test("project controls live in a taskbar window", () => {
     '"dos/**"',
     '"js/*.wasm"',
     '"js/core.ruffle.*.js"',
-    'importScripts: ["js/offline-worker.js"]',
+    "dontCacheBustURLsMatching:",
+    "importScripts: []",
     "skipWaiting: false",
     "clientsClaim: true",
   );

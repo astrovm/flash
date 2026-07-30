@@ -12,6 +12,7 @@
   const DOWNLOAD_VERSION_KEY = "astroFlashDownloadVersion";
   const DOWNLOAD_BYTES_KEY = "astroFlashDownloadBytes";
   const GAME_RECORDS_KEY = "astroFlashOfflineGameRecords";
+  const ACTIVE_VERSION_RELOAD_KEY = "astroFlashActiveVersionReload";
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
 
@@ -102,6 +103,7 @@
   }) => {
     const navigatorObject = environment.navigator;
     const storage = environment.localStorage;
+    const sessionStorage = environment.sessionStorage || storage;
     const listeners = new Set();
     const trackedRegistrations = new WeakSet();
     const trackedWorkers = new WeakSet();
@@ -111,6 +113,33 @@
     let checkPromise = null;
     let reloadWhenControlled = false;
     let lifecycleListenersAttached = false;
+
+    const requestWorkerVersion = (worker) =>
+      new Promise((resolve) => {
+        const MessageChannelConstructor =
+          environment.MessageChannel || globalThis.MessageChannel;
+        if (!worker || !MessageChannelConstructor) {
+          resolve(null);
+          return;
+        }
+        const channel = new MessageChannelConstructor();
+        let settled = false;
+        const finish = (version = null) => {
+          if (settled) return;
+          settled = true;
+          channel.port1.close?.();
+          channel.port2.close?.();
+          resolve(typeof version === "string" ? version : null);
+        };
+        channel.port1.onmessage = (event) => finish(event.data?.version);
+        try {
+          worker.postMessage({ type: "GET_VERSION" }, [channel.port2]);
+        } catch {
+          finish();
+          return;
+        }
+        (environment.setTimeout || setTimeout)(() => finish(), 250);
+      });
 
     const cachedDownloadBytes =
       storage.getItem(DOWNLOAD_VERSION_KEY) === currentVersion
@@ -222,6 +251,35 @@
       });
     };
 
+    const reconcileActiveVersion = async (targetVersion) => {
+      if (!targetVersion || targetVersion === currentVersion) {
+        sessionStorage.removeItem?.(ACTIVE_VERSION_RELOAD_KEY);
+        return false;
+      }
+      const activeVersion = await requestWorkerVersion(registration?.active);
+      if (activeVersion !== targetVersion) return false;
+
+      setState({
+        availableVersion: targetVersion,
+        availableRevision: targetVersion.split("-").at(-1) || null,
+      });
+      if (sessionStorage.getItem(ACTIVE_VERSION_RELOAD_KEY) === targetVersion) {
+        setState({
+          phase: "repair-required",
+          updateReady: false,
+          workerState: "active",
+          error:
+            "The active update contains inconsistent system files. Repair System Files to download a clean copy.",
+        });
+        return true;
+      }
+
+      sessionStorage.setItem(ACTIVE_VERSION_RELOAD_KEY, targetVersion);
+      setState({ phase: "applying", error: null });
+      environment.location.reload();
+      return true;
+    };
+
     const trackInstallingWorker = (worker, isUpdate) => {
       if (!worker || trackedWorkers.has(worker)) return;
       trackedWorkers.add(worker);
@@ -232,16 +290,22 @@
       });
       worker.addEventListener("statechange", () => {
         setState({ workerState: worker.state });
-        if (worker.state === "installed" && registration?.waiting && isUpdate) {
-          void markWaitingUpdate(registration.waiting);
+        if (worker.state === "installed" && isUpdate) {
+          (environment.setTimeout || setTimeout)(() => {
+            if (registration?.waiting) {
+              void markWaitingUpdate(registration.waiting);
+            }
+          }, 0);
         } else if (worker.state === "activated" && !isUpdate) {
           setState({ phase: "ready", workerState: "active", error: null });
           void refreshStorageEstimate();
-        } else if (worker.state === "redundant" && !registration?.active) {
+        } else if (worker.state === "redundant") {
           setState({
             phase: "error",
             workerState: "failed",
-            error: "The system-file download did not complete.",
+            error: isUpdate
+              ? "The update download did not complete. Repair System Files and try again."
+              : "The system-file download did not complete.",
           });
         }
       });
@@ -561,9 +625,21 @@
           rememberVersionMetadata(metadata);
           if (!registration) await registerAndWait();
           await registration.update();
+          if (registration.waiting) {
+            await markWaitingUpdate(registration.waiting);
+          } else if (registration.installing) {
+            trackInstallingWorker(registration.installing, true);
+          }
           const checkedAt = environment.Date.now();
           storage.setItem(LAST_CHECKED_KEY, String(checkedAt));
           const updateAvailable = metadata.version !== currentVersion;
+          if (
+            updateAvailable &&
+            (await reconcileActiveVersion(metadata.version))
+          ) {
+            setState({ lastChecked: checkedAt });
+            return;
+          }
           setState({
             phase: updateAvailable
               ? registration?.waiting
@@ -624,6 +700,7 @@
       if (navigatorObject.onLine === false) {
         throw new Error("Connect to the internet to repair system files.");
       }
+      sessionStorage.removeItem?.(ACTIVE_VERSION_RELOAD_KEY);
       setState({ phase: "repairing", error: null });
       const currentRegistration =
         registration ||
@@ -676,6 +753,14 @@
       try {
         await registerAndWait();
         await loadGameManifest();
+        const knownVersion = storage.getItem(DOWNLOAD_VERSION_KEY);
+        if (
+          knownVersion &&
+          knownVersion !== currentVersion &&
+          (await reconcileActiveVersion(knownVersion))
+        ) {
+          return snapshot();
+        }
         automaticCheck();
         void syncDownloadedGames().catch((error) => {
           setState({ gamePhase: "error", gameError: error.message });

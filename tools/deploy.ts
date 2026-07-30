@@ -116,6 +116,10 @@ export class BuildPaths {
     return join(this.root, "index.html");
   }
 
+  get captureHtml() {
+    return join(this.root, "capture.html");
+  }
+
   get mainJs() {
     return join(this.js, "main.js");
   }
@@ -130,22 +134,6 @@ export class BuildPaths {
 
   get fflateJs() {
     return join(this.root, "vendor", "fflate", FFLATE_VERSION, "index.js");
-  }
-
-  get assetPaths(): Record<string, string> {
-    return {
-      ruffle: join(this.js, "ruffle.js"),
-      fflate: this.fflateJs,
-      gamesJs: join(this.js, "games.js"),
-      gameInstallerJs: join(this.js, "game-installer.js"),
-      gameLibraryJs: join(this.js, "game-library.js"),
-      filesystemJs: join(this.js, "filesystem.js"),
-      fileOperationsJs: join(this.js, "file-operations.js"),
-      dialogsJs: join(this.js, "dialogs.js"),
-      offlineJs: join(this.js, "offline.js"),
-      mainJs: this.mainJs,
-      mainCss: join(this.css, "main.css"),
-    };
   }
 }
 
@@ -335,8 +323,8 @@ export function getDeploymentVersion(
 export async function updateHtml(
   paths: BuildPaths,
   version: string,
-): Promise<void> {
-  console.log("Updating output with version and cache-busting hashes...");
+): Promise<Record<string, string>> {
+  console.log("Updating output with versioned asset filenames...");
   let mainJavaScript = await readFile(paths.mainJs, "utf8");
   mainJavaScript = await replaceExactlyOnce(
     mainJavaScript,
@@ -346,71 +334,71 @@ export async function updateHtml(
   );
   await writeFile(paths.mainJs, mainJavaScript);
 
-  const shortHashes = Object.fromEntries(
+  const mutableAssets = {
+    ruffle: "js/ruffle.js",
+    gamesJs: "js/games.js",
+    gameInstallerJs: "js/game-installer.js",
+    gameLibraryJs: "js/game-library.js",
+    filesystemJs: "js/filesystem.js",
+    fileOperationsJs: "js/file-operations.js",
+    dialogsJs: "js/dialogs.js",
+    offlineJs: "js/offline.js",
+    offlineWorkerJs: "js/offline-worker.js",
+    mainJs: "js/main.js",
+    mainCss: "css/main.css",
+  };
+  const hashedAssets = Object.fromEntries(
     await Promise.all(
-      Object.entries(paths.assetPaths).map(async ([name, path]) => [
-        name,
-        await getShortHash(path),
-      ]),
+      Object.entries(mutableAssets).map(async ([name, relativePath]) => {
+        const sourcePath = join(paths.root, relativePath);
+        const hash = await getShortHash(sourcePath);
+        const extension = extname(relativePath);
+        const hashedRelativePath = `${relativePath.slice(
+          0,
+          -extension.length,
+        )}.${hash}${extension}`;
+        await rename(sourcePath, join(paths.root, hashedRelativePath));
+        return [name, hashedRelativePath];
+      }),
     ),
-  );
+  ) as Record<string, string>;
+  const fflateHash = await getShortHash(paths.fflateJs);
+
   let content = await readFile(paths.html, "utf8");
-  const replacements: [RegExp, string][] = [
-    [
-      /<script src="js\/ruffle\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/ruffle.js?v=${shortHashes.ruffle}"></script>`,
-    ],
-    [
-      /<script src="vendor\/fflate\/0\.8\.3\/index\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="vendor/fflate/0.8.3/index.js?v=${shortHashes.fflate}"></script>`,
-    ],
-    [
-      /<script src="js\/games\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/games.js?v=${shortHashes.gamesJs}"></script>`,
-    ],
-    [
-      /<script src="js\/game-installer\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/game-installer.js?v=${shortHashes.gameInstallerJs}"></script>`,
-    ],
-    [
-      /<script src="js\/game-library\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/game-library.js?v=${shortHashes.gameLibraryJs}"></script>`,
-    ],
-    [
-      /<script src="js\/filesystem\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/filesystem.js?v=${shortHashes.filesystemJs}"></script>`,
-    ],
-    [
-      /<script src="js\/file-operations\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/file-operations.js?v=${shortHashes.fileOperationsJs}"></script>`,
-    ],
-    [
-      /<script src="js\/dialogs\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/dialogs.js?v=${shortHashes.dialogsJs}"></script>`,
-    ],
-    [
-      /<script src="js\/offline\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/offline.js?v=${shortHashes.offlineJs}"></script>`,
-    ],
-    [
-      /<script src="js\/main\.[^"]+" ?[^>]*><\/script>/g,
-      `<script src="js/main.js?v=${shortHashes.mainJs}"></script>`,
-    ],
-    [
-      /<link rel="stylesheet" href="css\/main\.[^"]+" ?[^>]*>/g,
-      `<link rel="stylesheet" href="css/main.css?v=${shortHashes.mainCss}">`,
-    ],
-  ];
-  for (const [pattern, replacement] of replacements) {
+  for (const [name, originalPath] of Object.entries(mutableAssets)) {
+    if (name === "offlineWorkerJs") continue;
+    const pattern = new RegExp(
+      originalPath.replaceAll(".", "\\.") + '(?:\\?v=[^"]+)?"',
+      "g",
+    );
     content = await replaceExactlyOnce(
       content,
       pattern,
-      replacement,
+      `${hashedAssets[name]}"`,
       `Could not update asset reference matching ${pattern.source}`,
     );
   }
+  const fflatePattern = /vendor\/fflate\/0\.8\.3\/index\.js(?:\?v=[^"]+)?"?/g;
+  content = await replaceExactlyOnce(
+    content,
+    fflatePattern,
+    `vendor/fflate/0.8.3/index.js?v=${fflateHash}"`,
+    "Could not update fflate asset reference",
+  );
   await writeFile(paths.html, content);
+
+  if (await isFile(paths.captureHtml)) {
+    let capture = await readFile(paths.captureHtml, "utf8");
+    capture = await replaceExactlyOnce(
+      capture,
+      /js\/ruffle\.js(?:\?v=[^"]+)?"?/g,
+      `${hashedAssets.ruffle}"`,
+      "Could not update capture Ruffle reference",
+    );
+    await writeFile(paths.captureHtml, capture);
+  }
   console.log(`  - Set deployment version to ${version}`);
+  return hashedAssets;
 }
 
 export function isOptionalOfflinePath(relativePath: string): boolean {
@@ -558,11 +546,21 @@ async function getWorkboxFiles(outputDir: string): Promise<string[]> {
 export async function generateServiceWorker(
   outputDir: string,
   generator: WorkboxGenerator = generateSW,
+  version?: string,
 ): Promise<void> {
   console.log("Generating service worker...");
+  const offlineWorkerNames = (await readdir(join(outputDir, "js"))).filter(
+    (name) => /^offline-worker\.[a-f0-9]{8}\.js$/.test(name),
+  );
+  if (offlineWorkerNames.length !== 1) {
+    throw new Error(
+      "Build output must contain exactly one hashed offline worker",
+    );
+  }
   await generator({
     ...workboxConfig,
     globDirectory: `${resolve(outputDir)}/`,
+    importScripts: [`js/${offlineWorkerNames[0]}`],
     swDest: join(resolve(outputDir), "sw.js"),
   });
 
@@ -570,7 +568,13 @@ export async function generateServiceWorker(
   if (!(await isFile(serviceWorker))) {
     throw new Error("Workbox did not generate output sw.js");
   }
-  const workerSource = await readFile(serviceWorker, "utf8");
+  let workerSource = await readFile(serviceWorker, "utf8");
+  if (version) {
+    workerSource += `\nself.__ASTRO_FLASH_VERSION__=${JSON.stringify(
+      version,
+    )};self.addEventListener("message",event=>{if(event.data?.type==="GET_VERSION")event.ports[0]?.postMessage({version:self.__ASTRO_FLASH_VERSION__})});\n`;
+    await writeFile(serviceWorker, workerSource);
+  }
   const referencedRuntimeNames = new Set(
     [...workerSource.matchAll(/workbox-[a-f0-9]+(?:\.js)?/g)].map((match) =>
       match[0].endsWith(".js") ? match[0] : `${match[0]}.js`,
@@ -630,7 +634,6 @@ export async function validateOutput(outputDir: string): Promise<void> {
   const html = await readFile(paths.html, "utf8");
   for (const asset of [
     "js/ruffle.js",
-    "vendor/fflate/0.8.3/index.js",
     "js/games.js",
     "js/game-installer.js",
     "js/game-library.js",
@@ -641,12 +644,33 @@ export async function validateOutput(outputDir: string): Promise<void> {
     "js/main.js",
     "css/main.css",
   ]) {
+    const [directory, filename] = asset.split("/");
+    const extension = extname(filename);
+    const stem = filename.slice(0, -extension.length);
     const pattern = new RegExp(
-      `${asset.replaceAll(".", "\\.")}\\?v=[a-f0-9]{8}"`,
+      `${directory}/${stem.replaceAll(".", "\\.")}\\.([a-f0-9]{8})\\${extension}"`,
     );
-    if (!pattern.test(html)) {
+    const match = html.match(pattern);
+    if (!match) {
       throw new Error(`Build output has no hashed reference for ${asset}`);
     }
+    const hashedPath = join(outputDir, match[0].slice(0, -1));
+    if (
+      !(await isFile(hashedPath)) ||
+      (await getShortHash(hashedPath)) !== match[1]
+    ) {
+      throw new Error(`Build output has an invalid content hash for ${asset}`);
+    }
+  }
+  if (!/vendor\/fflate\/0\.8\.3\/index\.js\?v=[a-f0-9]{8}"/.test(html)) {
+    throw new Error("Build output has no versioned fflate reference");
+  }
+  if (
+    (await readdir(paths.js)).filter((name) =>
+      /^offline-worker\.[a-f0-9]{8}\.js$/.test(name),
+    ).length !== 1
+  ) {
+    throw new Error("Build output has no uniquely hashed offline worker");
   }
   const jsEntries = await readdir(paths.js);
   if (!jsEntries.some((name) => /^core\.ruffle\..*\.js$/.test(name))) {
@@ -727,7 +751,7 @@ export interface BuildOptions {
   sourceDir?: string;
   version?: string;
   download?: (jsDir: string) => Promise<void>;
-  generate?: (outputDir: string) => Promise<void>;
+  generate?: (outputDir: string, version?: string) => Promise<void>;
 }
 
 export async function build({
@@ -736,7 +760,8 @@ export async function build({
   sourceDir = SOURCE_DIR,
   version,
   download = downloadRuffle,
-  generate = generateServiceWorker,
+  generate = (directory, buildVersion) =>
+    generateServiceWorker(directory, generateSW, buildVersion),
 }: BuildOptions = {}): Promise<void> {
   const resolvedOutput = resolve(outputDir);
   const resolvedSource = resolve(sourceDir);
@@ -767,7 +792,7 @@ export async function build({
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
     await writeVersionMetadata(paths, deploymentVersion);
-    await generate(stagingDir);
+    await generate(stagingDir, deploymentVersion);
     await validateOutput(stagingDir);
     await replaceOutput(stagingDir, resolvedOutput);
   } finally {
