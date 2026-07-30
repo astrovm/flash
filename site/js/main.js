@@ -1232,23 +1232,49 @@ const wireDrag = (win) => {
       focusWindow(win.gameId);
     }
 
-    const offsetX = win.el.offsetLeft - e.clientX;
-    const offsetY = win.el.offsetTop - e.clientY;
+    const start = {
+      x: e.clientX,
+      y: e.clientY,
+      left: win.el.offsetLeft,
+      top: win.el.offsetTop,
+      width: win.el.offsetWidth,
+      desktop: getDesktopSize(),
+    };
+    let frame = 0;
+    let nextPosition = { left: start.left, top: start.top };
 
-    const onMove = (ev) => {
-      const position = clampWindowPosition(
-        win,
-        ev.clientX + offsetX,
-        ev.clientY + offsetY,
-      );
-      win.el.style.left = `${position.left}px`;
-      win.el.style.top = `${position.top}px`;
+    const getPosition = (clientX, clientY) => ({
+      left: Math.min(
+        Math.max(start.left + clientX - start.x, 60 - start.width),
+        start.desktop.width - 60,
+      ),
+      top: Math.min(
+        Math.max(start.top + clientY - start.y, 0),
+        start.desktop.height - 28,
+      ),
+    });
+    const renderPosition = () => {
+      win.el.style.transform = `translate3d(${nextPosition.left - start.left}px, ${nextPosition.top - start.top}px, 0)`;
     };
 
-    const onUp = () => {
+    const onMove = (ev) => {
+      nextPosition = getPosition(ev.clientX, ev.clientY);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(renderPosition);
+    };
+
+    const onUp = (ev) => {
       bar.removeEventListener("pointermove", onMove);
       bar.removeEventListener("pointerup", onUp);
       bar.removeEventListener("pointercancel", onUp);
+      cancelAnimationFrame(frame);
+      if (ev.type === "pointerup") {
+        nextPosition = getPosition(ev.clientX, ev.clientY);
+      }
+      win.el.style.left = `${nextPosition.left}px`;
+      win.el.style.top = `${nextPosition.top}px`;
+      win.el.style.transform = "";
+      win.el.classList.remove("moving");
       if (restoredFromMaximized) {
         // The dragged position becomes the new restore geometry.
         win.prevRect = {
@@ -1266,6 +1292,8 @@ const wireDrag = (win) => {
       /* pointer capture unsupported */
     }
 
+    win.el.getAnimations().forEach((animation) => animation.cancel());
+    win.el.classList.add("moving");
     bar.addEventListener("pointermove", onMove);
     bar.addEventListener("pointerup", onUp);
     bar.addEventListener("pointercancel", onUp);
@@ -1296,8 +1324,8 @@ const wireDrag = (win) => {
   });
 };
 
-const applyResize = (win, direction, start, deltaX, deltaY) => {
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+const applyResize = (win, direction, start, deltaX, deltaY, desktopSize) => {
+  const { width: desktopWidth, height: desktopHeight } = desktopSize;
   const right = start.left + start.width;
   const bottom = start.top + start.height;
   let { left, top, width, height } = start;
@@ -1350,21 +1378,35 @@ const wireResize = (win) => {
         width: win.el.offsetWidth,
         height: win.el.offsetHeight,
       };
+      const desktopSize = getDesktopSize();
+      let frame = 0;
+      let nextPointer = { x: e.clientX, y: e.clientY };
 
-      const onMove = (ev) => {
+      const updateSize = () =>
         applyResize(
           win,
           direction,
           start,
-          ev.clientX - start.x,
-          ev.clientY - start.y,
+          nextPointer.x - start.x,
+          nextPointer.y - start.y,
+          desktopSize,
         );
+
+      const onMove = (ev) => {
+        nextPointer = { x: ev.clientX, y: ev.clientY };
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(updateSize);
       };
 
-      const onUp = () => {
+      const onUp = (ev) => {
         handle.removeEventListener("pointermove", onMove);
         handle.removeEventListener("pointerup", onUp);
         handle.removeEventListener("pointercancel", onUp);
+        cancelAnimationFrame(frame);
+        if (ev.type === "pointerup") {
+          nextPointer = { x: ev.clientX, y: ev.clientY };
+        }
+        updateSize();
       };
 
       try {

@@ -58,6 +58,29 @@ test("every enabled desktop menu action has a handler", () => {
 });
 test("window manager never discards windows silently", () =>
   absent(javascript, "MAX_OPEN_WINDOWS", "ensureWindowCapacity"));
+test("window dragging and resizing coalesce updates by animation frame", () => {
+  const drag = between(javascript, "const wireDrag =", "const applyResize =");
+  const resize = between(
+    javascript,
+    "const wireResize =",
+    "// ============================================\n// Window System Menu",
+  );
+
+  contains(
+    drag,
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "translate3d",
+    'classList.add("moving")',
+  );
+  contains(
+    resize,
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "const desktopSize = getDesktopSize()",
+  );
+  contains(css, ".xp-window.moving", "will-change: transform");
+});
 test("internet games is integrated with the shell", async () => {
   expect(await Bun.file(path("site/js/game-installer.js")).exists()).toBe(true);
   expect(await Bun.file(path("site/js/game-library.js")).exists()).toBe(true);

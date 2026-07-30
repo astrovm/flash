@@ -958,6 +958,10 @@ html[data-xp-appearance="silver"] {
     var(--window-frame);
 }
 
+.xp-window.moving {
+  will-change: transform;
+}
+
 .xp-window.maximized {
   left: 0 !important;
   top: 0 !important;
