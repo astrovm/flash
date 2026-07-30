@@ -91,9 +91,11 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/offline.js?v=old"></script>',
       '<script src="js/main.js?v=old"></script>',
       '<link rel="stylesheet" href="css/main.css?v=old">',
+      '<link rel="icon" href="favicon.ico">',
+      '<img src="assets/xp/bliss.jpg">',
     ].join("\n"),
     "capture.html": '<script src="js/ruffle.js?v=old"></script>',
-    "js/games.js": "games",
+    "js/games.js": 'const icon = "assets/icons/game.png";',
     "js/game-installer.js": "game installer",
     "js/game-library.js": "game library",
     "js/filesystem.js": "filesystem",
@@ -101,9 +103,20 @@ async function makeSource(root: string): Promise<void> {
     "js/dialogs.js": "dialogs",
     "js/offline.js": "offline",
     "js/offline-worker.js": "offline worker",
-    "js/main.js": 'const APP_VERSION = "old";\n',
-    "css/main.css": "css",
+    "js/main.js": [
+      'const APP_VERSION = "old";',
+      'const sound = "assets/xp/sounds/startup.mp3";',
+    ].join("\n"),
+    "css/main.css": [
+      '@font-face { src: url("fonts/test.ttf"); }',
+      'body { background: url("../assets/xp/bliss.jpg"); }',
+    ].join("\n"),
     "css/fonts/test.ttf": "font",
+    "assets/icons/game.png": "icon",
+    "assets/icons/SOURCES.json": "{}",
+    "assets/xp/bliss.jpg": "wallpaper",
+    "assets/xp/sounds/startup.mp3": "sound",
+    "favicon.ico": "favicon",
     "vendor/fflate/0.8.3/index.js": "fflate",
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom",
@@ -239,6 +252,20 @@ describe("build metadata", () => {
     expect(html).toContain(`${hashedAssets.mainCss}"`);
     expect(await readFile(paths.captureHtml, "utf8")).toContain(
       `${hashedAssets.ruffle}"`,
+    );
+    expect(html).toMatch(/favicon\.[a-f0-9]{8}\.ico"/);
+    expect(html).toMatch(/assets\/xp\/bliss\.[a-f0-9]{8}\.jpg"/);
+    expect(await readFile(join(root, hashedAssets.gamesJs), "utf8")).toMatch(
+      /assets\/icons\/game\.[a-f0-9]{8}\.png/,
+    );
+    expect(await readFile(join(root, hashedAssets.mainJs), "utf8")).toMatch(
+      /assets\/xp\/sounds\/startup\.[a-f0-9]{8}\.mp3/,
+    );
+    expect(await readFile(join(root, hashedAssets.mainCss), "utf8")).toMatch(
+      /fonts\/test\.[a-f0-9]{8}\.ttf/,
+    );
+    expect(await readFile(join(root, hashedAssets.mainCss), "utf8")).toMatch(
+      /\.\.\/assets\/xp\/bliss\.[a-f0-9]{8}\.jpg/,
     );
     expect(await Bun.file(join(root, "js", "main.js")).exists()).toBeFalse();
     expect(await Bun.file(join(root, "css", "main.css")).exists()).toBeFalse();

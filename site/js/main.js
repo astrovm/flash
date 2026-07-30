@@ -65,6 +65,45 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
   "800x600": { width: 800, height: 600 },
   "1024x768": { width: 1024, height: 768 },
 });
+const XP_ICON_PATHS = Object.freeze({
+  "Back.png": "assets/xp/icons/Back.png",
+  "ControlPanel.png": "assets/xp/icons/ControlPanel.png",
+  "Exit.png": "assets/xp/icons/Exit.png",
+  "FolderView-Classic.png": "assets/xp/icons/FolderView-Classic.png",
+  "FolderView.png": "assets/xp/icons/FolderView.png",
+  "Forward.png": "assets/xp/icons/Forward.png",
+  "Go.png": "assets/xp/icons/Go.png",
+  "HelpandSupport.png": "assets/xp/icons/HelpandSupport.png",
+  "LocalDisk.png": "assets/xp/icons/LocalDisk.png",
+  "Logout.png": "assets/xp/icons/Logout.png",
+  "Maximize.png": "assets/xp/icons/Maximize.png",
+  "Minimize.png": "assets/xp/icons/Minimize.png",
+  "Mute.png": "assets/xp/icons/Mute.png",
+  "MyComputer.png": "assets/xp/icons/MyComputer.png",
+  "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
+  "MyMusic.png": "assets/xp/icons/MyMusic.png",
+  "MyNetworkPlaces.png": "assets/xp/icons/MyNetworkPlaces.png",
+  "MyPictures.png": "assets/xp/icons/MyPictures.png",
+  "NetworkConnection.png": "assets/xp/icons/NetworkConnection.png",
+  "NewFolder.png": "assets/xp/icons/NewFolder.png",
+  "Power.png": "assets/xp/icons/Power.png",
+  "PrintersandFaxes.png": "assets/xp/icons/PrintersandFaxes.png",
+  "Programs.png": "assets/xp/icons/Programs.png",
+  "Publishtoweb.png": "assets/xp/icons/Publishtoweb.png",
+  "RecentDocuments.png": "assets/xp/icons/RecentDocuments.png",
+  "RemovableMedia.png": "assets/xp/icons/RemovableMedia.png",
+  "Restore.png": "assets/xp/icons/Restore.png",
+  "Run.png": "assets/xp/icons/Run.png",
+  "Search.png": "assets/xp/icons/Search.png",
+  "SharedFolder.png": "assets/xp/icons/SharedFolder.png",
+  "Up.png": "assets/xp/icons/Up.png",
+  "Volume.png": "assets/xp/icons/Volume.png",
+  "explorerproperties.png": "assets/xp/icons/explorerproperties.png",
+  "mycomputer.png": "assets/xp/icons/mycomputer.png",
+  "mydocuments.png": "assets/xp/icons/mydocuments.png",
+  "recycler-empty.png": "assets/xp/icons/recycler-empty.png",
+  "shortcut.png": "assets/xp/icons/shortcut.png",
+});
 const TASKBAR_HEIGHT = 30;
 let activeMonitorResolution = "auto";
 
@@ -1872,7 +1911,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     button.type = "button";
     if (place) button.dataset.place = place;
     const image = document.createElement("img");
-    image.src = `assets/xp/icons/${icon}`;
+    image.src = XP_ICON_PATHS[icon];
     image.alt = "";
     const text = document.createElement("span");
     text.textContent = label;
@@ -3381,7 +3420,7 @@ const renderExplorerTaskPane = (win) => {
     button.type = "button";
     button.disabled = disabled;
     const image = document.createElement("img");
-    image.src = `assets/xp/icons/${icon}`;
+    image.src = XP_ICON_PATHS[icon];
     image.alt = "";
     const text = document.createElement("span");
     text.textContent = label;
@@ -3577,7 +3616,7 @@ const createExplorerIcon = (node) => {
   icon.className = "explorer-item-icon";
   const addImage = (fileName) => {
     const image = document.createElement("img");
-    image.src = `assets/xp/icons/${fileName}`;
+    image.src = XP_ICON_PATHS[fileName];
     image.alt = "";
     icon.appendChild(image);
     return icon;
@@ -6707,7 +6746,7 @@ const buildPlaces = () => {
     glyph.className = "sm-place-icon";
     if (icon.endsWith(".png")) {
       const image = document.createElement("img");
-      image.src = `assets/xp/icons/${icon}`;
+      image.src = XP_ICON_PATHS[icon];
       image.alt = "";
       glyph.appendChild(image);
     } else {
@@ -7006,9 +7045,17 @@ const setupSearch = () => {
 
 // Original Windows XP system sounds (playback is skipped if the
 // browser still blocks audio before the user's first interaction)
+const xpSoundPaths = {
+  error: "assets/xp/sounds/error.mp3",
+  logoff: "assets/xp/sounds/logoff.mp3",
+  logon: "assets/xp/sounds/logon.mp3",
+  shutdown: "assets/xp/sounds/shutdown.mp3",
+  startup: "assets/xp/sounds/startup.mp3",
+};
+
 const playXPSound = (name) => {
   const { volume, isMuted } = getMasterVolume();
-  const audio = new Audio(`assets/xp/sounds/${name}.mp3`);
+  const audio = new Audio(xpSoundPaths[name]);
   audio.volume = isMuted ? 0 : Math.min(Math.max(volume, 0), 100) / 100;
   audio.play().catch(() => {});
 };
