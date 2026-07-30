@@ -1039,19 +1039,14 @@
       const address = document.createElement("span");
       address.style.color = "#ff00ff";
       address.textContent = `0x${res.addr.toString(16)}`;
-
       const value = document.createElement("span");
       value.style.color = "#0ff";
       value.textContent = String(currentVal);
-
-      const editButton = document.createElement("button");
-      editButton.className = "cheat-btn";
-      editButton.textContent = "Edit";
-      editButton.addEventListener("click", () =>
-        window.editAddr(res.addr, res.type),
-      );
-
-      div.append(address, value, editButton);
+      const edit = document.createElement("button");
+      edit.className = "cheat-btn";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", () => editAddr(res.addr, res.type));
+      div.append(address, value, edit);
       container.appendChild(div);
     }
   }
@@ -1185,11 +1180,16 @@
         div.style.display = "flex";
         div.style.justifyContent = "space-between";
         div.style.marginBottom = "2px";
-        div.innerHTML = `
-                    <span style="color: #0ff;">${type.toUpperCase()}:</span>
-                    <span>${val}</span>
-                    <button class="cheat-btn" onclick="editAddr(${addr}, '${type}')">Edit</button>
-                `;
+        const typeLabel = document.createElement("span");
+        typeLabel.style.color = "#0ff";
+        typeLabel.textContent = `${type.toUpperCase()}:`;
+        const value = document.createElement("span");
+        value.textContent = String(val);
+        const edit = document.createElement("button");
+        edit.className = "cheat-btn";
+        edit.textContent = "Edit";
+        edit.addEventListener("click", () => editAddr(addr, type));
+        div.append(typeLabel, value, edit);
         container.appendChild(div);
       } catch (e) {}
     });
@@ -1279,7 +1279,7 @@
 
   // ========== AIRBREAK FUNCTIONALITY ==========
 
-  // GTA VC structure offsets:
+  // Player structure offsets:
   // CPed +0x354 = health (f32)
   // Heading (rotation) = healthAddr + 0x24 (f32, radians)
   // CEntity +0x04 = CMatrix (embedded)
@@ -1301,7 +1301,7 @@
   let godModeEnabled = false;
   let moneyAddr = 0; // Money address
 
-  // Static addresses for GTA VC
+  // Static player addresses
   // Money handle: EN=0x361c50, RU=0x361c60
   // PED_ADDR = read_I32(money_handle - 0xA0)
   // HEALTH = PED_ADDR + 0x350

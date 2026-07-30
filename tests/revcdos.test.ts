@@ -36,7 +36,19 @@ test("ships the engine without bundled game data", async () => {
     'filename: "/vc-assets/local/anim/ped.ifp"',
   );
   expect(packageManifest).toContain("remote_package_size: 135355111");
-  expect(source).toContain("does not bundle the compatible game-data package");
+  expect(source).toContain("does not bundle the compatible");
+  expect(source).toContain("game-data package");
+  expect(source).toContain("Original-game media");
+  expect(
+    await Bun.file(
+      new URL("site/iframe/revcdos/cover.jpg", projectDirectory),
+    ).exists(),
+  ).toBe(false);
+  expect(
+    await Bun.file(
+      new URL("site/iframe/revcdos/intro.mp4", projectDirectory),
+    ).exists(),
+  ).toBe(false);
 });
 
 test("adapts the Lolendor package and streaming protocols to local files", async () => {
@@ -47,9 +59,11 @@ test("adapts the Lolendor package and streaming protocols to local files", async
   expect(host).toContain("new Uint8Array(message.size)");
   expect(host).toContain("Required file is missing");
   expect(game).toContain("DATA_PACKAGE.files.map");
-  expect(game).toContain("getPreloadedPackage: () => data.buffer");
+  expect(game).toContain("getPreloadedPackage: () => {");
+  expect(game).toContain("return data.buffer");
   expect(game).toContain("fetchLocalAsset");
-  expect(game).toContain("const cheatsEnabled = true");
+  expect(game).toContain(`let cheatsEnabled = params.get("cheats") !== "0"`);
+  expect(game).toContain("ownerShipConfirmed();");
   expect(
     await Bun.file(
       new URL("site/iframe/revcdos/modules/cheats.js", projectDirectory),
@@ -59,6 +73,7 @@ test("adapts the Lolendor package and streaming protocols to local files", async
   expect(game).toContain("window.parent.postMessage");
   expect(game).not.toContain("window.top.postMessage");
   expect(game).not.toContain("vc-sky-en-v6.data");
+  expect(host).not.toContain("preload_files.list");
 });
 
 test("offers a persistent WebTorrent download alongside manual selection", async () => {

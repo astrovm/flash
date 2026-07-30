@@ -141,10 +141,10 @@
   },
   "revcdos": {
     "file": "revcdos.png",
-    "source": "https://cdn.dos.zone/vcsky/revcdos.jpg",
-    "retrieved": "2026-07-29",
-    "sha256": "d1cbb54445e2a38688d5d63fdfdb7294d9671dc09778aa837e63a897cdab4652",
-    "notes": "Cropped from the official reVCDOS artwork referenced by the v9 runtime."
+    "source": "Original Astro Flash artwork",
+    "retrieved": "2026-07-30",
+    "sha256": "aad1b36cb0167a81302319e4697b4212bfd4567f97f9033bd5e19c1f9894362b",
+    "notes": "Original text-only reVCDOS icon created for Astro Flash."
   },
   "eds-candy-machine": {
     "file": "eds-candy-machine.png",

@@ -1,94 +1,90 @@
 "use strict";
 var CloudSDK;
 (function (CloudSDK) {
-  const v8Endpoint = "https://d5dn8hh4ivlobv6682ep.apigw.yandexcloud.net";
-  const storageEndpoint =
-    "https://storage.yandexcloud.net/doszone-uploads/personal-v2/cloud";
-  const presignPut = v8Endpoint + "/presign-put";
+  // Local backend endpoints
+  const API_PREFIX = ""; // Relative to current origin
+
   async function resolveToken(token) {
     if (token && token.length === 5) {
-      const response = await fetch(
-        "https://cloud.js-dos.com/token/get?id=" + token,
-      );
-      const data = await response.json();
-      if (data.token === token) {
-        return data;
+      try {
+        const response = await fetch(API_PREFIX + "/token/get?id=" + token);
+        const data = await response.json();
+        if (data.token === token) {
+          return data;
+        }
+      } catch (e) {
+        console.error("Token check failed", e);
       }
     }
-    // return {
-    //     premium: true,
-    //     token: "aaaa2",
-    //     email: "test@morgen.oleg"
-    // };
     return null;
   }
   CloudSDK.resolveToken = resolveToken;
+
   async function pushToStorage(token, fileName, payload) {
     const profile = await resolveToken(token);
     if (!profile || !profile.premium) {
       return false;
     }
+
+    // Compression logic from original SDK
     const boundSize = compressBound(payload.length);
     const compressed = new Uint8Array(boundSize + 4);
     writeUint32(compressed, payload.length, 0);
     const compressedSize = compress(payload, compressed, 4, compressed.length);
     const upload = compressed.slice(0, compressedSize);
-    const presign = await (
-      await fetch(
-        presignPut +
-          "?path=" +
-          encodeURIComponent(fileName) +
-          "&token=" +
-          token,
-      )
-    ).json();
-    if (!presign.success) {
-      console.error("Failed to generate presign put request", presign);
-      return false;
-    }
-    const post = presign.post;
+
     const formData = new FormData();
-    Object.entries(post.fields).forEach(([k, v]) => {
-      formData.append(k, v);
-    });
-    formData.append("acl", "public-read");
+    formData.append("token", token);
+    formData.append("fileName", fileName);
     formData.append("file", new Blob([upload]));
-    const response = await fetch(post.url, {
-      method: "post",
-      body: formData,
-    });
-    if (response.status !== 200 && response.status !== 204) {
-      console.error("Unable to put changes: " + response.statusText);
-      return false;
+
+    try {
+      const response = await fetch(API_PREFIX + "/saves/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (response.ok) {
+        return true;
+      }
+    } catch (e) {
+      console.error("Upload failed", e);
     }
-    return true;
+    return false;
   }
   CloudSDK.pushToStorage = pushToStorage;
+
   async function pullFromStorage(token, fileName) {
     const profile = await resolveToken(token);
-    if (profile && profile.email) {
-      const response = await fetch(
-        storageEndpoint +
-          "/" +
-          profile.email +
-          "/" +
-          encodeURIComponent(fileName),
-        {
-          cache: "no-cache",
-        },
-      );
-      if (response.status === 200) {
-        const compressed = new Uint8Array(await response.arrayBuffer());
-        const uncompressedSize = readUint32(compressed, 0);
-        const uncompressed = new Uint8Array(uncompressedSize);
-        if (uncompress(compressed, uncompressed, 4) === uncompressedSize) {
-          return uncompressed;
+    if (profile) {
+      try {
+        const response = await fetch(
+          API_PREFIX +
+            "/saves/download/" +
+            token +
+            "/" +
+            encodeURIComponent(fileName),
+          {
+            cache: "no-cache",
+          },
+        );
+        if (response.ok) {
+          const compressed = new Uint8Array(await response.arrayBuffer());
+          if (compressed.length < 4) return null;
+          const uncompressedSize = readUint32(compressed, 0);
+          const uncompressed = new Uint8Array(uncompressedSize);
+          if (uncompress(compressed, uncompressed, 4) === uncompressedSize) {
+            return uncompressed;
+          }
         }
+      } catch (e) {
+        console.error("Download failed", e);
       }
     }
     return null;
   }
   CloudSDK.pullFromStorage = pullFromStorage;
+
+  // LZ4 Implementation
   const lz4 = {};
   lz4.uncompress = function (input, output, sIdx, eIdx) {
     sIdx = sIdx || 0;
@@ -135,7 +131,7 @@ var CloudSDK;
     runBits = 8 - mlBits,
     runMask = (1 << runBits) - 1,
     hasher = 2654435761;
-  assert(hashShift === 16);
+  // assert(hashShift === 16);
   var hashTable = new Int16Array(1 << 16);
   var empty = new Int16Array(hashTable.length);
   lz4.compressBound = function (isize) {
@@ -232,11 +228,7 @@ var CloudSDK;
   const compressBound = lz4.compressBound;
   const compress = lz4.compress;
   const uncompress = lz4.uncompress;
-  function assert(condition, message) {
-    if (!condition) {
-      throw new Error(message || "Assertion failed");
-    }
-  }
+
   function writeUint32(container, value, offset) {
     container[offset] = value & 0xff;
     container[offset + 1] = (value & 0x0000ff00) >> 8;
@@ -253,6 +245,7 @@ var CloudSDK;
     );
   }
 })(CloudSDK || (CloudSDK = {}));
+
 var CloudSDKUI;
 (function (CloudSDKUI) {
   let v8Key = localStorage.getItem("js.cloud.sdk.v8.key");
@@ -371,7 +364,7 @@ var CloudSDKUI;
     return {
       html: `
             <div class="cloud-saves-no-key">
-                <span>${t.enter} <a href="https://v8.js-dos.com/key" target="_blank">js-dos ${t.key}</a> ${t.toenable}</span>
+                <span>${t.enter} <b>${t.key}</b> ${t.toenable}</span>
                 <input class="keyboard-input key-input" type="text" maxlength="5" minlength="5" placeholder="${t.key}" />
             </div>`,
       bind: (root) => {
@@ -393,9 +386,7 @@ var CloudSDKUI;
       localStorage.removeItem("js.cloud.sdk.v8.key");
       state = "nokey";
     }
-    const subscriptionLink = !premium
-      ? `<a href="https://v8.js-dos.com/key" class="cloud-saves-disabled" target="_blank">${t.subscription}</a>`
-      : "";
+    const subscriptionLink = "";
     return {
       html: `
             <div class="cloud-saves-key">
