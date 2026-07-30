@@ -5,7 +5,7 @@ var progressElement = document.getElementById("progress");
 var spinnerElement = document.getElementById('spinner');
 var wasm_content = params.get("wasm");
 const currentLanguage = "en";
-const cheatsEnabled = false;
+const cheatsEnabled = true;
 const maxFPS = 0;
 const haveOriginalGame = true;
 const replaceFetch = (url) => url.replace("https://cdn.dos.zone/vcsky/", "");

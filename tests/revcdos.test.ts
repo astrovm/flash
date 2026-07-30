@@ -39,7 +39,7 @@ test("ships the engine without bundled game data", async () => {
   expect(source).toContain("does not bundle the compatible game-data package");
 });
 
-test("adapts the Lolendor package and streaming protocols to local files", () => {
+test("adapts the Lolendor package and streaming protocols to local files", async () => {
   expect(host).toContain('type="file" webkitdirectory directory');
   expect(host).toContain('gameFrame.src = "game.html"');
   expect(host).toContain('message.event === "module.package"');
@@ -49,6 +49,12 @@ test("adapts the Lolendor package and streaming protocols to local files", () =>
   expect(game).toContain("DATA_PACKAGE.files.map");
   expect(game).toContain("getPreloadedPackage: () => data.buffer");
   expect(game).toContain("fetchLocalAsset");
+  expect(game).toContain("const cheatsEnabled = true");
+  expect(
+    await Bun.file(
+      new URL("site/iframe/revcdos/modules/cheats.js", projectDirectory),
+    ).exists(),
+  ).toBe(true);
   expect(fetchModule).toContain('Module["fetchLocalAsset"](url_)');
   expect(game).toContain("window.parent.postMessage");
   expect(game).not.toContain("window.top.postMessage");

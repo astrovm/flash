@@ -5,7 +5,7 @@
 - Runtime package: `vc-sky-en-v6`
 - Retrieved: 2026-07-29
 - WASM SHA-256: `db6aa7b9169a638e06b17f7bed5a6b3e473e00ae7bbb47354729fa94b971ebf2`
-- Vendored module-set SHA-256: `5285e9905e48e90152f336bc4345051025ddde924d2f506d6dcc7cc940617f2a`
+- Vendored module-set SHA-256: `ef6575ef7c15d6a545c79d91ae082f5385f42144a8c3c8f9c98028b8d68bfe7a`
 
 Only the public reVCDOS engine and browser runtime are bundled. Astro Flash
 does not bundle the compatible game-data package. The Lolendor package manifest
