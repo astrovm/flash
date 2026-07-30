@@ -820,6 +820,7 @@ test("display properties uses Windows XP desktop-tab geometry and labels", () =>
     'data-wallpaper="none"><span class="wallpaper-icon none"></span>(None)',
     'class="display-customize">Customize Desktop...</button>',
     'class="display-status" aria-live="polite" hidden',
+    "controls.status.hidden = !message",
     "isDisplayProperties\n          ? 426",
     "isDisplayProperties\n          ? 480",
   );

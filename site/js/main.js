@@ -2434,6 +2434,10 @@ const wireDisplayProperties = (win) => {
     customize: content.querySelector(".display-customize"),
     apply: content.querySelector('[data-display-action="apply"]'),
   };
+  const setStatus = (message = "") => {
+    controls.status.textContent = message;
+    controls.status.hidden = !message;
+  };
   const themes = {
     "windows-xp": {
       appearance: "blue",
@@ -2592,8 +2596,7 @@ const wireDisplayProperties = (win) => {
       !supportedTypes.includes(file.type) ||
       file.size > MAX_CUSTOM_WALLPAPER_BYTES
     ) {
-      controls.status.textContent =
-        "Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.";
+      setStatus("Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.");
       controls.image.value = "";
       return;
     }
@@ -2605,7 +2608,7 @@ const wireDisplayProperties = (win) => {
       )
         return;
       pending = { ...pending, customWallpaper: reader.result };
-      controls.status.textContent = `${file.name} will be used after you apply changes.`;
+      setStatus(`${file.name} will be used after you apply changes.`);
       sync();
     });
     reader.readAsDataURL(file);
@@ -2627,15 +2630,14 @@ const wireDisplayProperties = (win) => {
     .addEventListener("click", () => {
       if (!isDisplaySettings(pending)) return;
       if (!saveDisplaySettings(pending)) {
-        controls.status.textContent =
-          "Windows could not save this picture. Try a smaller image.";
+        setStatus("Windows could not save this picture. Try a smaller image.");
         return;
       }
       current = { ...pending };
       applyDisplaySettings(current);
       resolutionPreviewActive = false;
       resolutionPreviewSnapshot = null;
-      controls.status.textContent = "";
+      setStatus();
       sync();
     });
   content
