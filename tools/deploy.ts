@@ -334,6 +334,28 @@ export async function updateHtml(
   );
   await writeFile(paths.mainJs, mainJavaScript);
 
+  const staticPaths = [
+    ...(await walkFiles(join(paths.root, "assets"))),
+    ...(await walkFiles(join(paths.css, "fonts"))),
+    join(paths.root, "favicon.ico"),
+  ];
+  const staticAssets = new Map<string, string>();
+  await Promise.all(
+    staticPaths.map(async (sourcePath) => {
+      const relativePath = relative(paths.root, sourcePath)
+        .split(sep)
+        .join("/");
+      const extension = extname(relativePath);
+      const hash = await getShortHash(sourcePath);
+      const hashedRelativePath = `${relativePath.slice(
+        0,
+        -extension.length,
+      )}.${hash}${extension}`;
+      await rename(sourcePath, join(paths.root, hashedRelativePath));
+      staticAssets.set(relativePath, hashedRelativePath);
+    }),
+  );
+
   const mutableAssets = {
     ruffle: "js/ruffle.js",
     gamesJs: "js/games.js",
@@ -347,6 +369,29 @@ export async function updateHtml(
     mainJs: "js/main.js",
     mainCss: "css/main.css",
   };
+  const referenceFiles = [
+    ...Object.values(mutableAssets).filter(
+      (path) => path !== "js/ruffle.js" && path !== "js/offline-worker.js",
+    ),
+    "index.html",
+    ...((await isFile(paths.captureHtml)) ? ["capture.html"] : []),
+  ];
+  for (const referencePath of referenceFiles) {
+    const absolutePath = join(paths.root, referencePath);
+    let content = await readFile(absolutePath, "utf8");
+    for (const [originalPath, hashedPath] of staticAssets) {
+      content = content.replaceAll(originalPath, hashedPath);
+      if (referencePath.startsWith("css/")) {
+        const originalCssPath = relative("css", originalPath)
+          .split(sep)
+          .join("/");
+        const hashedCssPath = relative("css", hashedPath).split(sep).join("/");
+        content = content.replaceAll(originalCssPath, hashedCssPath);
+      }
+    }
+    await writeFile(absolutePath, content);
+  }
+
   const hashedAssets = Object.fromEntries(
     await Promise.all(
       Object.entries(mutableAssets).map(async ([name, relativePath]) => {
@@ -664,6 +709,72 @@ export async function validateOutput(outputDir: string): Promise<void> {
   }
   if (!/vendor\/fflate\/0\.8\.3\/index\.js\?v=[a-f0-9]{8}"/.test(html)) {
     throw new Error("Build output has no versioned fflate reference");
+  }
+  const staticFiles = [
+    ...(await walkFiles(join(outputDir, "assets"))),
+    ...(await walkFiles(join(outputDir, "css", "fonts"))),
+  ];
+  const favicons = (await readdir(outputDir))
+    .filter((name) => /^favicon\.[a-f0-9]{8}\.ico$/.test(name))
+    .map((name) => join(outputDir, name));
+  if (favicons.length !== 1) {
+    throw new Error("Build output has no uniquely hashed favicon");
+  }
+  for (const path of [...staticFiles, ...favicons]) {
+    const filename = path.split(sep).at(-1) ?? "";
+    const match = filename.match(/\.([a-f0-9]{8})\.[^./]+$/);
+    if (!match || (await getShortHash(path)) !== match[1]) {
+      throw new Error(
+        `Build output has an invalid static asset hash for ${relative(
+          outputDir,
+          path,
+        )}`,
+      );
+    }
+  }
+  const referenceDocuments = [
+    { content: html, path: paths.html },
+    ...((await isFile(paths.captureHtml))
+      ? [
+          {
+            content: await readFile(paths.captureHtml, "utf8"),
+            path: paths.captureHtml,
+          },
+        ]
+      : []),
+  ];
+  for (const match of html.matchAll(
+    /(?:src|href)="((?:js|css)\/[^"]+\.(?:js|css))"/g,
+  )) {
+    referenceDocuments.push({
+      content: await readFile(join(outputDir, match[1]), "utf8"),
+      path: join(outputDir, match[1]),
+    });
+  }
+  for (const document of referenceDocuments) {
+    for (const match of document.content.matchAll(
+      /(?:\.\.\/)?assets\/[^"'`()\s]+|fonts\/[^"'`()\s]+|favicon[^"'`()\s]+/g,
+    )) {
+      const reference = match[0];
+      if (!/\.[a-f0-9]{8}\.[^./]+$/.test(reference)) {
+        throw new Error(
+          `Build output has an unhashed static reference in ${relative(
+            outputDir,
+            document.path,
+          )}: ${reference}`,
+        );
+      }
+      const target = reference.startsWith("../")
+        ? join(outputDir, reference.slice(3))
+        : reference.startsWith("fonts/")
+          ? join(outputDir, "css", reference)
+          : join(outputDir, reference);
+      if (!(await isFile(target))) {
+        throw new Error(
+          `Build output references a missing static asset: ${reference}`,
+        );
+      }
+    }
   }
   if (
     (await readdir(paths.js)).filter((name) =>

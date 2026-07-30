@@ -17,7 +17,7 @@ export default {
   ],
   swDest: join(outputDirectory, "sw.js"),
   maximumFileSizeToCacheInBytes: 25_000_000,
-  dontCacheBustURLsMatching: /\.[a-f0-9]{8}\.(?:js|css)$/,
+  dontCacheBustURLsMatching: /\.[a-f0-9]{8}\.[^./]+$/,
   ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/],
   sourcemap: false,
   cacheId: "astro-flash",
