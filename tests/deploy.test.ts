@@ -21,7 +21,6 @@ import {
   downloadRuffle,
   generateServiceWorker,
   getDeploymentVersion,
-  getShortHash,
   loadRuffleRelease,
   updateHtml,
   validateOutput,
@@ -93,6 +92,7 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/main.js?v=old"></script>',
       '<link rel="stylesheet" href="css/main.css?v=old">',
     ].join("\n"),
+    "capture.html": '<script src="js/ruffle.js?v=old"></script>',
     "js/games.js": "games",
     "js/game-installer.js": "game installer",
     "js/game-library.js": "game library",
@@ -225,23 +225,23 @@ describe("build metadata", () => {
     await addGeneratedRuntime(root);
     const paths = new BuildPaths(root);
 
-    await updateHtml(paths, "26.07.28-abcdef1");
+    const hashedAssets = await updateHtml(paths, "26.07.28-abcdef1");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
 
-    const main = await readFile(paths.mainJs, "utf8");
+    const main = await readFile(join(root, hashedAssets.mainJs), "utf8");
     const html = await readFile(paths.html, "utf8");
     expect(main).toContain('const APP_VERSION = "26.07.28-abcdef1";');
-    expect(html).toContain(`js/main.js?v=${await getShortHash(paths.mainJs)}"`);
-    expect(html).toContain(
-      `js/game-installer.js?v=${await getShortHash(join(paths.js, "game-installer.js"))}"`,
+    expect(html).toContain(`${hashedAssets.mainJs}"`);
+    expect(html).toContain(`${hashedAssets.gameInstallerJs}"`);
+    expect(html).toContain(`${hashedAssets.gameLibraryJs}"`);
+    expect(html).toContain(`${hashedAssets.fileOperationsJs}"`);
+    expect(html).toContain(`${hashedAssets.mainCss}"`);
+    expect(await readFile(paths.captureHtml, "utf8")).toContain(
+      `${hashedAssets.ruffle}"`,
     );
-    expect(html).toContain(
-      `js/game-library.js?v=${await getShortHash(join(paths.js, "game-library.js"))}"`,
-    );
-    expect(html).toContain(
-      `js/file-operations.js?v=${await getShortHash(join(paths.js, "file-operations.js"))}"`,
-    );
+    expect(await Bun.file(join(root, "js", "main.js")).exists()).toBeFalse();
+    expect(await Bun.file(join(root, "css", "main.css")).exists()).toBeFalse();
     expect(PRECACHE_FILE_SUFFIXES.has(".ttf")).toBeTrue();
 
     const metadata = JSON.parse(await readFile(paths.versionJson, "utf8"));
@@ -287,23 +287,46 @@ describe("build metadata", () => {
       updateHtml(new BuildPaths(root), "26.07.28-abcdef1"),
     ).rejects.toThrow("Could not update asset reference");
   });
+
+  test("rejects a hashed filename that does not match its content", async () => {
+    const root = await makeTemporaryDirectory();
+    await makeSource(root);
+    await addGeneratedRuntime(root);
+    const paths = new BuildPaths(root);
+    const hashedAssets = await updateHtml(paths, "26.07.28-abcdef1");
+    await writeFile(join(root, hashedAssets.mainJs), "tampered");
+    await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
+    await writeVersionMetadata(paths, "26.07.28-abcdef1");
+    await expect(validateOutput(root)).rejects.toThrow(
+      "invalid content hash for js/main.js",
+    );
+  });
 });
 
 describe("Workbox and artifact validation", () => {
   test("accepts a generated worker with its runtime", async () => {
     const root = await makeTemporaryDirectory();
+    await writeFiles(root, {
+      "js/offline-worker.12345678.js": "offline worker",
+    });
     const generator = async () => {
       await addGeneratedRuntime(root);
       return { count: 1, size: 1, warnings: [], filePaths: [] };
     };
-    await generateServiceWorker(root, generator as any);
+    await generateServiceWorker(root, generator as any, "26.07.28-abcdef1");
     expect(
       await Bun.file(join(root, "workbox-f9030226.js")).exists(),
     ).toBeTrue();
+    expect(await readFile(join(root, "sw.js"), "utf8")).toContain(
+      'self.__ASTRO_FLASH_VERSION__="26.07.28-abcdef1"',
+    );
   });
 
   test("rejects a generated worker with a missing runtime", async () => {
     const root = await makeTemporaryDirectory();
+    await writeFiles(root, {
+      "js/offline-worker.12345678.js": "offline worker",
+    });
     const generator = async () => {
       await writeFile(
         join(root, "sw.js"),

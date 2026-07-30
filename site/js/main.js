@@ -4931,6 +4931,8 @@ const offlineStatusText = (state) => {
       ? "An update is downloading..."
       : "An update is available.",
     "update-ready": "An update is ready. Restart Astro Flash to apply it.",
+    "repair-required":
+      "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
     repairing: "Clearing and downloading system files again...",
     error: "Offline system files are incomplete.",

@@ -32,16 +32,21 @@ test("offline updates", async () => {
   }
 
   class Worker extends Events {
-    constructor(state = "activated") {
+    constructor(state = "activated", version = null) {
       super();
       this.state = state;
+      this.version = version;
       this.messages = [];
     }
     transition(state) {
       this.state = state;
       this.dispatch("statechange");
     }
-    postMessage(message) {
+    postMessage(message, ports = []) {
+      if (message.type === "GET_VERSION") {
+        if (this.version) ports[0]?.postMessage({ version: this.version });
+        return;
+      }
       this.messages.push(message);
     }
   }
@@ -72,6 +77,9 @@ test("offline updates", async () => {
     }
     setItem(key, value) {
       this.values.set(key, String(value));
+    }
+    removeItem(key) {
+      this.values.delete(key);
     }
   }
 
@@ -114,9 +122,12 @@ test("offline updates", async () => {
   };
 
   const makeEnvironment = ({
-    registration = new Registration({ active: new Worker() }),
+    registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    }),
     remoteVersion = "26.07.29-aaaaaaa",
     storageValues = {},
+    sessionValues = {},
   } = {}) => {
     const serviceWorker = new Events();
     serviceWorker.controller = registration.active;
@@ -134,6 +145,7 @@ test("offline updates", async () => {
       astroFlashLastUpdateCheck: "1800000000000",
       ...storageValues,
     });
+    const sessionStorage = new MemoryStorage(sessionValues);
     let reloads = 0;
     const environment = new Events();
     Object.assign(environment, {
@@ -145,6 +157,8 @@ test("offline updates", async () => {
         },
       },
       localStorage: storage,
+      sessionStorage,
+      MessageChannel,
       location: {
         href: "https://flash.example/",
         origin: "https://flash.example",
@@ -190,6 +204,7 @@ test("offline updates", async () => {
       registration,
       serviceWorker,
       storage,
+      sessionStorage,
     };
   };
 
@@ -283,7 +298,9 @@ test("offline updates", async () => {
     manifest.runtime.revision,
   );
 
-  const updateRegistration = new Registration({ active: new Worker() });
+  const updateRegistration = new Registration({
+    active: new Worker("activated", manifest.version),
+  });
   const update = makeEnvironment({
     registration: updateRegistration,
     remoteVersion: "26.07.30-bbbbbbb",
@@ -306,4 +323,58 @@ test("offline updates", async () => {
   assert.deepStrictEqual(waitingWorker.messages, [{ type: "SKIP_WAITING" }]);
   update.serviceWorker.dispatch("controllerchange");
   assert.strictEqual(update.getReloads(), 1);
+
+  const activatedUpdate = makeEnvironment({
+    registration: new Registration({
+      active: new Worker("activated", "26.07.30-bbbbbbb"),
+    }),
+    remoteVersion: "26.07.30-bbbbbbb",
+  });
+  const activatedManager = createManager({
+    currentVersion: manifest.version,
+    environment: activatedUpdate.environment,
+  });
+  await activatedManager.initialize();
+  await activatedManager.checkForUpdates();
+  assert.strictEqual(activatedUpdate.getReloads(), 1);
+
+  const inconsistentUpdate = makeEnvironment({
+    registration: new Registration({
+      active: new Worker("activated", "26.07.30-bbbbbbb"),
+    }),
+    remoteVersion: "26.07.30-bbbbbbb",
+    sessionValues: {
+      astroFlashActiveVersionReload: "26.07.30-bbbbbbb",
+    },
+  });
+  const inconsistentManager = createManager({
+    currentVersion: manifest.version,
+    environment: inconsistentUpdate.environment,
+  });
+  await inconsistentManager.initialize();
+  await inconsistentManager.checkForUpdates();
+  assert.strictEqual(inconsistentUpdate.getReloads(), 0);
+  assert.strictEqual(
+    inconsistentManager.getSnapshot().phase,
+    "repair-required",
+  );
+  assert.match(inconsistentManager.getSnapshot().error, /Repair System Files/);
+
+  const failedWorker = new Worker("installing");
+  const failedRegistration = new Registration({
+    active: new Worker("activated", manifest.version),
+    installing: failedWorker,
+  });
+  const failedUpdate = makeEnvironment({
+    registration: failedRegistration,
+    remoteVersion: "26.07.30-bbbbbbb",
+  });
+  const failedManager = createManager({
+    currentVersion: manifest.version,
+    environment: failedUpdate.environment,
+  });
+  await failedManager.initialize();
+  failedWorker.transition("redundant");
+  assert.strictEqual(failedManager.getSnapshot().phase, "error");
+  assert.match(failedManager.getSnapshot().error, /Repair System Files/);
 });
