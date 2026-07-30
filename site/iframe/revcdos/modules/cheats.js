@@ -1036,11 +1036,22 @@
         currentVal = "???";
       }
 
-      div.innerHTML = `
-                <span style="color: #ff00ff;">0x${res.addr.toString(16)}</span>
-                <span style="color: #0ff;">${currentVal}</span>
-                <button class="cheat-btn" onclick="editAddr(${res.addr}, '${res.type}')">Edit</button>
-            `;
+      const address = document.createElement("span");
+      address.style.color = "#ff00ff";
+      address.textContent = `0x${res.addr.toString(16)}`;
+
+      const value = document.createElement("span");
+      value.style.color = "#0ff";
+      value.textContent = String(currentVal);
+
+      const editButton = document.createElement("button");
+      editButton.className = "cheat-btn";
+      editButton.textContent = "Edit";
+      editButton.addEventListener("click", () =>
+        window.editAddr(res.addr, res.type),
+      );
+
+      div.append(address, value, editButton);
       container.appendChild(div);
     }
   }
