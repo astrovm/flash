@@ -6,12 +6,12 @@
 - Retrieved: 2026-07-29
 - WASM SHA-256: `db6aa7b9169a638e06b17f7bed5a6b3e473e00ae7bbb47354729fa94b971ebf2`
 
-The browser runtime, page, cover, intro, modules, and package manifest are
-vendored from that Lolendor commit. Astro Flash does not bundle the compatible
-game-data package. A small local adapter assembles the upstream
-135,355,111-byte preload from files selected or downloaded by the user and
-serves remaining assets from the same local file set instead of the upstream
-CDN.
+The browser runtime, page, modules, and package manifest are vendored from that
+Lolendor commit. Original-game media from the upstream distribution is not
+bundled. Astro Flash does not bundle the compatible game-data package. A small
+local adapter assembles the upstream 135,355,111-byte preload from files
+selected or downloaded by the user and serves remaining assets from the same
+local file set instead of the upstream CDN.
 
 The upstream MIT license is stored in `LOLENDOR-LICENSE`.
 

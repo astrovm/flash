@@ -150,17 +150,6 @@
         color: #fff;
       }
 
-      .intro {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        object-position: center;
-        background-color: black;
-      }
-
       .intro-container {
         position: absolute;
         top: 0;
@@ -194,15 +183,22 @@
         width: 256px;
         height: 325px;
         max-height: 50vh;
-        display: inline-block;
-        background-image: url(cover.jpg);
-        background-repeat: no-repeat;
-        background-position: 50% 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         box-shadow:
           inset 0 0 0.5em #249ef5aa,
           0 0 0.75em #249ef5aa;
         border-radius: 1em;
         backdrop-filter: blur(20px);
+      }
+
+      .cover::before {
+        content: "reVCDOS";
+        color: #ff91c8;
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 0 0 0.5em #249ef5;
       }
 
       .developed-by {
@@ -579,8 +575,6 @@
   >
     <div class="wasted-container" hidden></div>
     <div class="intro-container" hidden>
-      <video class="intro" src="intro.mp4"></video>
-
       <div class="loader-container">
         <div class="progress-bar-container" id="spinner">
           <div class="progress-bar-fill"></div>

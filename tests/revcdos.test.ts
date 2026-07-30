@@ -38,6 +38,17 @@ test("ships the engine without bundled game data", async () => {
   expect(packageManifest).toContain("remote_package_size: 135355111");
   expect(source).toContain("does not bundle the compatible");
   expect(source).toContain("game-data package");
+  expect(source).toContain("Original-game media");
+  expect(
+    await Bun.file(
+      new URL("site/iframe/revcdos/cover.jpg", projectDirectory),
+    ).exists(),
+  ).toBe(false);
+  expect(
+    await Bun.file(
+      new URL("site/iframe/revcdos/intro.mp4", projectDirectory),
+    ).exists(),
+  ).toBe(false);
 });
 
 test("adapts the Lolendor package and streaming protocols to local files", async () => {

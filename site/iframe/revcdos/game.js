@@ -232,29 +232,15 @@ async function startGame(e) {
   document.querySelector(".disclaimer").style.display = "none";
   document.querySelector(".developed-by").style.display = "none";
 
-  const intro = document.querySelector(".intro");
   const introContainer = document.querySelector(".intro-container");
   const loaderContainer = document.querySelector(".loader-container");
   document.querySelector(".click-to-play").style.display = "none";
   loaderContainer.style.display = "flex";
   introContainer.hidden = false;
-  intro.play();
 
   const dataBuffer = await loadData();
-  spinnerElement.hidden = true;
-  setStatus(t("clickToContinue"));
-  introContainer.hidden = false;
-  introContainer.style.cursor = "pointer";
-  const clickHandler = () => {
-    intro.pause();
-    introContainer.style.display = "none";
-    loadGame(dataBuffer);
-  };
-  if (isMobile) {
-    window.addEventListener("pointerup", clickHandler, { once: true });
-  } else {
-    window.addEventListener("click", clickHandler, { once: true });
-  }
+  introContainer.style.display = "none";
+  loadGame(dataBuffer);
 }
 
 function setStatus(text) {
