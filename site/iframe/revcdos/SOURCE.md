@@ -1,13 +1,19 @@
 # reVCDOS runtime
 
-- Project: https://github.com/Carter54git/revcdos
-- Release: v9
-- Archive: `vc-sky-9.zip`
+- Project: https://github.com/Lolendor/reVCDOS
+- Commit: `95f14ef3c1d0a872ecd0881544cc7e1f55cb1946`
+- Runtime package: `vc-sky-en-v6`
 - Retrieved: 2026-07-29
-- SHA-256: `e4a8147738304834624561a893182fd4555e75e75b6911ed2cc37c205f119bfa`
+- WASM SHA-256: `db6aa7b9169a638e06b17f7bed5a6b3e473e00ae7bbb47354729fa94b971ebf2`
+- Vendored module-set SHA-256: `5285e9905e48e90152f336bc4345051025ddde924d2f506d6dcc7cc940617f2a`
 
 Only the public reVCDOS engine and browser runtime are bundled. Astro Flash
-does not bundle the compatible game-data package.
+does not bundle the compatible game-data package. The Lolendor package manifest
+is used to assemble its 135,355,111-byte preload from the files selected or
+downloaded by the user. Remaining assets are read on demand from the same local
+file set instead of the upstream CDN.
+
+The upstream MIT license is stored in `LOLENDOR-LICENSE`.
 
 Automatic downloads use the torrent metadata published by DOS.Zone at
 `https://br.cdn.dos.zone/launcher/revcdoseng.2.torrent` (info hash

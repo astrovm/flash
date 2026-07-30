@@ -1,650 +1,1137 @@
-var O = Object.defineProperty,
-	k = Object.defineProperties;
-var _ = Object.getOwnPropertyDescriptors;
-var T = Object.getOwnPropertySymbols;
-var N = Object.prototype.hasOwnProperty,
-	R = Object.prototype.propertyIsEnumerable;
-var P = (a, e, t) => e in a ? O(a, e, {
-		enumerable: !0,
-		configurable: !0,
-		writable: !0,
-		value: t
-	}) : a[e] = t,
-	D = (a, e) => {
-		for (var t in e || (e = {})) N.call(e, t) && P(a, t, e[t]);
-		if (T)
-			for (var t of T(e)) R.call(e, t) && P(a, t, e[t]);
-		return a
-	},
-	A = (a, e) => k(a, _(e));
-var p = (a, e, t) => P(a, typeof e != "symbol" ? e + "" : e, t);
+const defineProperty = Object.defineProperty;
+const defineProperties = Object.defineProperties;
+const getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors;
+const getOwnPropertySymbols = Object.getOwnPropertySymbols;
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+const propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+const setProperty = (obj, key, value) => key in obj ? defineProperty(obj, key, {
+	enumerable: true,
+	configurable: true,
+	writable: true,
+	value: value
+}) : obj[key] = value;
+
+const mergeObjects = (target, source) => {
+	for (var key in source || (source = {})) {
+		if (hasOwnProperty.call(source, key)) {
+			setProperty(target, key, source[key]);
+		}
+	}
+	if (getOwnPropertySymbols) {
+		for (var symbol of getOwnPropertySymbols(source)) {
+			if (propertyIsEnumerable.call(source, symbol)) {
+				setProperty(target, symbol, source[symbol]);
+			}
+		}
+	}
+	return target;
+};
+
+const definePropertiesFromSource = (target, source) => defineProperties(target, getOwnPropertyDescriptors(source));
+
+const definePublicProperty = (obj, key, value) => setProperty(obj, typeof key !== "symbol" ? key + "" : key, value);
+
+// Polyfill for modulepreload
 (function() {
-	const e = document.createElement("link").relList;
-	if (e && e.supports && e.supports("modulepreload")) return;
-	for (const n of document.querySelectorAll('link[rel="modulepreload"]')) i(n);
-	new MutationObserver(n => {
-		for (const r of n)
-			if (r.type === "childList")
-				for (const d of r.addedNodes) d.tagName === "LINK" && d.rel === "modulepreload" && i(d)
+	const relList = document.createElement("link").relList;
+	if (relList && relList.supports && relList.supports("modulepreload")) return;
+
+	function getFetchOptions(link) {
+		const options = {};
+		if (link.integrity) options.integrity = link.integrity;
+		if (link.referrerPolicy) options.referrerPolicy = link.referrerPolicy;
+		if (link.crossOrigin === "use-credentials") {
+			options.credentials = "include";
+		} else if (link.crossOrigin === "anonymous") {
+			options.credentials = "omit";
+		} else {
+			options.credentials = "same-origin";
+		}
+		return options;
+	}
+
+	function processModulePreload(link) {
+		if (link.ep) return;
+		link.ep = true;
+		const options = getFetchOptions(link);
+		fetch(link.href, options);
+	}
+
+	for (const link of document.querySelectorAll('link[rel="modulepreload"]')) {
+		processModulePreload(link);
+	}
+
+	new MutationObserver(mutations => {
+		for (const mutation of mutations) {
+			if (mutation.type === "childList") {
+				for (const node of mutation.addedNodes) {
+					if (node.tagName === "LINK" && node.rel === "modulepreload") {
+						processModulePreload(node);
+					}
+				}
+			}
+		}
 	}).observe(document, {
-		childList: !0,
-		subtree: !0
+		childList: true,
+		subtree: true
 	});
-
-	function t(n) {
-		const r = {};
-		return n.integrity && (r.integrity = n.integrity), n.referrerPolicy && (r.referrerPolicy = n.referrerPolicy), n.crossOrigin === "use-credentials" ? r.credentials = "include" : n.crossOrigin === "anonymous" ? r.credentials = "omit" : r.credentials = "same-origin", r
-	}
-
-	function i(n) {
-		if (n.ep) return;
-		n.ep = !0;
-		const r = t(n);
-		fetch(n.href, r)
-	}
 })();
-var w = (a => (a.up = "up", a.down = "down", a.left = "left", a.right = "right", a))(w || {}),
-	x = (a => (a.onOff = "onOff", a.variable = "variable", a))(x || {}),
-	L = (a => (a.real = "real", a.emulated = "emulated", a.overlay = "overlay", a))(L || {}),
-	F = (a => (a[a.A = 0] = "A", a[a.B = 1] = "B", a[a.X = 2] = "X", a[a.Y = 3] = "Y", a[a.LShoulder = 4] = "LShoulder", a[a.RShoulder = 5] = "RShoulder", a[a.LTrigger = 6] = "LTrigger", a[a.RTrigger = 7] = "RTrigger", a[a.Back = 8] = "Back", a[a.Start = 9] = "Start", a[a.LStick = 10] = "LStick", a[a.RStick = 11] = "RStick", a[a.DPadUp = 12] = "DPadUp", a[a.DPadDown = 13] = "DPadDown", a[a.DPadLeft = 14] = "DPadLeft", a[a.DPadRight = 15] = "DPadRight", a[a.Vendor = 16] = "Vendor", a))(F || {}),
-	j = (a => (a[a.LStickX = 0] = "LStickX", a[a.LStickY = 1] = "LStickY", a[a.RStickX = 2] = "RStickX", a[a.RStickY = 3] = "RStickY", a))(j || {}),
-	S = (a => (a.TapTarget = "gpad-tap-target", a.ButtonIcon = "gpad-btn-icon", a.ButtonShadow = "gpad-shadow", a.ButtonHighlight = "gpad-highlight", a.ButtonBackground = "gpad-btn-bg", a.DirectionHighlight = "gpad-direction-highlight", a.Thumbstick = "gpad-thumbstick", a.GpadBaseShape = "gpad-base", a.StickBaseShape = "gpad-stick-base", a))(S || {});
-const B = ["button_1", "button_2", "button_3", "button_4", "shoulder_button_front_left", "shoulder_button_front_right", "shoulder_trigger_back_left", "shoulder_trigger_back_right", "select_button", "start_button", "stick_button_left", "stick_button_right", "dpad_up", "dpad_down", "dpad_left", "dpad_right"],
-	Y = B.map(a => a + "_tap_target"),
-	U = {
-		dpad_up_left_tap_target: [12, 14],
-		dpad_up_right_tap_target: [12, 15],
-		dpad_down_left_tap_target: [13, 14],
-		dpad_down_right_tap_target: [13, 15]
-	};
-class q {
-	constructor(e) {
-		p(this, "updateDelay");
-		p(this, "axisDeadZone");
-		p(this, "buttonConfigs");
-		p(this, "currentStateOfGamepads");
-		p(this, "gamepadConnectListeners");
-		p(this, "gamepadDisconnectListeners");
-		p(this, "gamepadButtonChangeListeners");
-		p(this, "gamepadAxisChangeListeners");
-		p(this, "_requestAnimationFrame");
-		p(this, "_getGamepads");
-		this.updateDelay = e.updateDelay || 0, this.axisDeadZone = e.axisDeadZone || 0, this.buttonConfigs = e.buttonConfigs || [], this.currentStateOfGamepads = [], this.gamepadConnectListeners = [], this.gamepadDisconnectListeners = [], this.gamepadButtonChangeListeners = [], this.gamepadAxisChangeListeners = [], navigator.gamepadInputEmulation = "gamepad", this._requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame, this._getGamepads = navigator.getGamepads || navigator.webkitGetGamepads || navigator.mozGetGamepads || navigator.msGetGamepads, (this.gamepadApiSupported() || navigator.getNativeGamepads !== void 0) && this.tickLoop()
+
+var Direction = (dir => {
+	dir.up = "up";
+	dir.down = "down";
+	dir.left = "left";
+	dir.right = "right";
+	return dir;
+})(Direction || {});
+
+var ControlType = (type => {
+	type.onOff = "onOff";
+	type.variable = "variable";
+	return type;
+})(ControlType || {});
+
+var EmulationMode = (mode => {
+	mode.real = "real";
+	mode.emulated = "emulated";
+	mode.overlay = "overlay";
+	return mode;
+})(EmulationMode || {});
+
+var GamepadButton = (btn => {
+	btn[btn.A = 0] = "A";
+	btn[btn.B = 1] = "B";
+	btn[btn.X = 2] = "X";
+	btn[btn.Y = 3] = "Y";
+	btn[btn.LShoulder = 4] = "LShoulder";
+	btn[btn.RShoulder = 5] = "RShoulder";
+	btn[btn.LTrigger = 6] = "LTrigger";
+	btn[btn.RTrigger = 7] = "RTrigger";
+	btn[btn.Back = 8] = "Back";
+	btn[btn.Start = 9] = "Start";
+	btn[btn.LStick = 10] = "LStick";
+	btn[btn.RStick = 11] = "RStick";
+	btn[btn.DPadUp = 12] = "DPadUp";
+	btn[btn.DPadDown = 13] = "DPadDown";
+	btn[btn.DPadLeft = 14] = "DPadLeft";
+	btn[btn.DPadRight = 15] = "DPadRight";
+	btn[btn.Vendor = 16] = "Vendor";
+	return btn;
+})(GamepadButton || {});
+
+var GamepadAxis = (axis => {
+	axis[axis.LStickX = 0] = "LStickX";
+	axis[axis.LStickY = 1] = "LStickY";
+	axis[axis.RStickX = 2] = "RStickX";
+	axis[axis.RStickY = 3] = "RStickY";
+	return axis;
+})(GamepadAxis || {});
+
+var GamepadElementClass = (cls => {
+	cls.TapTarget = "gpad-tap-target";
+	cls.ButtonIcon = "gpad-btn-icon";
+	cls.ButtonShadow = "gpad-shadow";
+	cls.ButtonHighlight = "gpad-highlight";
+	cls.ButtonBackground = "gpad-btn-bg";
+	cls.DirectionHighlight = "gpad-direction-highlight";
+	cls.Thumbstick = "gpad-thumbstick";
+	cls.GpadBaseShape = "gpad-base";
+	cls.StickBaseShape = "gpad-stick-base";
+	return cls;
+})(GamepadElementClass || {});
+
+const BUTTON_NAMES = [
+	"button_1", "button_2", "button_3", "button_4",
+	"shoulder_button_front_left", "shoulder_button_front_right",
+	"shoulder_trigger_back_left", "shoulder_trigger_back_right",
+	"select_button", "start_button",
+	"stick_button_left", "stick_button_right",
+	"dpad_up", "dpad_down", "dpad_left", "dpad_right"
+];
+
+const TAP_TARGET_NAMES = BUTTON_NAMES.map(name => name + "_tap_target");
+
+const DIAGONAL_DPAD_MAPPING = {
+	dpad_up_left_tap_target: [GamepadButton.DPadUp, GamepadButton.DPadLeft],
+	dpad_up_right_tap_target: [GamepadButton.DPadUp, GamepadButton.DPadRight],
+	dpad_down_left_tap_target: [GamepadButton.DPadDown, GamepadButton.DPadLeft],
+	dpad_down_right_tap_target: [GamepadButton.DPadDown, GamepadButton.DPadRight]
+};
+
+class GamepadStateTracker {
+	constructor(config) {
+		definePublicProperty(this, "updateDelay");
+		definePublicProperty(this, "axisDeadZone");
+		definePublicProperty(this, "buttonConfigs");
+		definePublicProperty(this, "currentStateOfGamepads");
+		definePublicProperty(this, "gamepadConnectListeners");
+		definePublicProperty(this, "gamepadDisconnectListeners");
+		definePublicProperty(this, "gamepadButtonChangeListeners");
+		definePublicProperty(this, "gamepadAxisChangeListeners");
+		definePublicProperty(this, "_requestAnimationFrame");
+		definePublicProperty(this, "_getGamepads");
+
+		this.updateDelay = config.updateDelay || 0;
+		this.axisDeadZone = config.axisDeadZone || 0;
+		this.buttonConfigs = config.buttonConfigs || [];
+		this.currentStateOfGamepads = [];
+		this.gamepadConnectListeners = [];
+		this.gamepadDisconnectListeners = [];
+		this.gamepadButtonChangeListeners = [];
+		this.gamepadAxisChangeListeners = [];
+
+		navigator.gamepadInputEmulation = "gamepad";
+
+		this._requestAnimationFrame = window.requestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.msRequestAnimationFrame;
+
+		this._getGamepads = navigator.getGamepads ||
+			navigator.webkitGetGamepads ||
+			navigator.mozGetGamepads ||
+			navigator.msGetGamepads;
+
+		if (this.gamepadApiSupported() || navigator.getNativeGamepads !== undefined) {
+			this.tickLoop();
+		}
 	}
-	setButtonsConfig(e) {
-		this.buttonConfigs = e
+
+	setButtonsConfig(config) {
+		this.buttonConfigs = config;
 	}
-	setUpdateDelay(e) {
-		this.updateDelay = e
+
+	setUpdateDelay(delay) {
+		this.updateDelay = delay;
 	}
-	onGamepadConnect(e) {
-		return this.gamepadConnectListeners.push(e), window.addEventListener("gamepadconnected", e, !0), e
+
+	onGamepadConnect(listener) {
+		this.gamepadConnectListeners.push(listener);
+		window.addEventListener("gamepadconnected", listener, true);
+		return listener;
 	}
-	offGamepadConnect(e) {
-		this.gamepadConnectListeners = this.gamepadConnectListeners.filter(t => t !== e), window.removeEventListener("gamepadconnected", e, !0)
+
+	offGamepadConnect(listener) {
+		this.gamepadConnectListeners = this.gamepadConnectListeners.filter(l => l !== listener);
+		window.removeEventListener("gamepadconnected", listener, true);
 	}
-	onGamepadDisconnect(e) {
-		return this.gamepadDisconnectListeners.push(e), window.addEventListener("gamepaddisconnected", e, !0), e
+
+	onGamepadDisconnect(listener) {
+		this.gamepadDisconnectListeners.push(listener);
+		window.addEventListener("gamepaddisconnected", listener, true);
+		return listener;
 	}
-	offGamepadDisconnect(e) {
-		this.gamepadDisconnectListeners = this.gamepadDisconnectListeners.filter(t => t !== e), window.removeEventListener("gamepaddisconnected", e, !0)
+
+	offGamepadDisconnect(listener) {
+		this.gamepadDisconnectListeners = this.gamepadDisconnectListeners.filter(l => l !== listener);
+		window.removeEventListener("gamepaddisconnected", listener, true);
 	}
-	onGamepadAxisChange(e) {
-		return this.gamepadAxisChangeListeners.push(e), e
+
+	onGamepadAxisChange(listener) {
+		this.gamepadAxisChangeListeners.push(listener);
+		return listener;
 	}
-	offGamepadAxisChange(e) {
-		this.gamepadAxisChangeListeners = this.gamepadAxisChangeListeners.filter(t => t !== e)
+
+	offGamepadAxisChange(listener) {
+		this.gamepadAxisChangeListeners = this.gamepadAxisChangeListeners.filter(l => l !== listener);
 	}
-	onGamepadButtonChange(e) {
-		return this.gamepadButtonChangeListeners.push(e), e
+
+	onGamepadButtonChange(listener) {
+		this.gamepadButtonChangeListeners.push(listener);
+		return listener;
 	}
-	offGamepadButtonChange(e) {
-		this.gamepadButtonChangeListeners = this.gamepadButtonChangeListeners.filter(t => t !== e)
+
+	offGamepadButtonChange(listener) {
+		this.gamepadButtonChangeListeners = this.gamepadButtonChangeListeners.filter(l => l !== listener);
 	}
+
 	gamepadApiSupported() {
-		const e = navigator.getNativeGamepads || navigator.getGamepads || navigator.webkitGetGamepads || navigator.mozGetGamepads || navigator.msGetGamepads;
-		if (e != null && typeof e == "function") try {
-			const t = e.apply(navigator);
-			return t != null && (t[0] !== void 0 || t.length !== 0 || window.isSecureContext)
-		} catch (t) {
-			return !1
-		} else return !1
+		const getGamepads = navigator.getNativeGamepads ||
+			navigator.getGamepads ||
+			navigator.webkitGetGamepads ||
+			navigator.mozGetGamepads ||
+			navigator.msGetGamepads;
+
+		if (getGamepads != null && typeof getGamepads === "function") {
+			try {
+				const gamepads = getGamepads.apply(navigator);
+				return gamepads != null && (gamepads[0] !== undefined || gamepads.length !== 0 || window.isSecureContext);
+			} catch (e) {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
+
 	getGamepads() {
-		const e = navigator.getGamepads || navigator.webkitGetGamepads || navigator.mozGetGamepads || navigator.msGetGamepads;
-		return e && typeof e == "function" ? e.apply(navigator) || [] : []
+		const getGamepads = navigator.getGamepads ||
+			navigator.webkitGetGamepads ||
+			navigator.mozGetGamepads ||
+			navigator.msGetGamepads;
+
+		return (getGamepads && typeof getGamepads === "function") ? (getGamepads.apply(navigator) || []) : [];
 	}
-	getCurrentGamepadStates(e = !1) {
-		return e && this.checkForGamepadChanges(), this.currentStateOfGamepads
+
+	getCurrentGamepadStates(forceCheck = false) {
+		if (forceCheck) {
+			this.checkForGamepadChanges();
+		}
+		return this.currentStateOfGamepads;
 	}
+
 	cleanup() {
-		this.updateDelay = -1, this.gamepadConnectListeners.forEach(e => window.removeEventListener("gamepadconnected", e, !0)), this.gamepadDisconnectListeners.forEach(e => window.removeEventListener("gamepaddisconnected", e, !0)), this.gamepadConnectListeners = [], this.gamepadDisconnectListeners = [], this.gamepadButtonChangeListeners = [], this.gamepadAxisChangeListeners = []
+		this.updateDelay = -1;
+		this.gamepadConnectListeners.forEach(l => window.removeEventListener("gamepadconnected", l, true));
+		this.gamepadDisconnectListeners.forEach(l => window.removeEventListener("gamepaddisconnected", l, true));
+		this.gamepadConnectListeners = [];
+		this.gamepadDisconnectListeners = [];
+		this.gamepadButtonChangeListeners = [];
+		this.gamepadAxisChangeListeners = [];
 	}
+
 	tickLoop() {
-		this.updateDelay < 0 || (this.checkForGamepadChanges(), this.updateDelay == 0 ? requestAnimationFrame(this.tickLoop.bind(this)) : setTimeout(() => {
-			requestAnimationFrame(this.tickLoop.bind(this))
-		}, this.updateDelay))
+		if (this.updateDelay < 0) return;
+
+		this.checkForGamepadChanges();
+
+		if (this.updateDelay === 0) {
+			requestAnimationFrame(this.tickLoop.bind(this));
+		} else {
+			setTimeout(() => {
+				requestAnimationFrame(this.tickLoop.bind(this));
+			}, this.updateDelay);
+		}
 	}
+
 	checkForGamepadChanges() {
-		let e = this.getGamepads();
-		for (var t = 0; t < e.length; t++) {
-			let i = e[t];
-			i && (this.checkForAxisChanges(t, i), this.checkForButtonChanges(t, i), this.currentStateOfGamepads[t] = i)
+		let gamepads = this.getGamepads();
+		for (let i = 0; i < gamepads.length; i++) {
+			let gamepad = gamepads[i];
+			if (gamepad) {
+				this.checkForAxisChanges(i, gamepad);
+				this.checkForButtonChanges(i, gamepad);
+				this.currentStateOfGamepads[i] = gamepad;
+			}
 		}
 	}
-	checkForAxisChanges(e, t) {
-		let i = t.axes;
-		if (i.length == 0) return;
-		const n = this.currentStateOfGamepads[e];
-		let r = (n == null ? void 0 : n.axes) || [],
-			d = [],
-			o, s = !1;
-		for (o = 0; o < i.length; o++) {
-			let c = i[o] || 0,
-				l = r[o] || 0;
-			if (c != l) {
-				if (Math.abs(c) < this.axisDeadZone && Math.abs(l) < this.axisDeadZone) continue;
-				d[o] = !0, s = !0
-			} else d[o] = !1
-		}
-		s && this.gamepadAxisChangeListeners.forEach(c => c(e, t, d))
-	}
-	checkForButtonChanges(e, t) {
-		let i = t.buttons;
-		if (i.length == 0) return;
-		const n = this.currentStateOfGamepads[e],
-			r = (n == null ? void 0 : n.buttons) || i,
-			d = new Array(i.length).fill(!1);
-		let o = !1;
-		for (let s = 0; s < i.length; s++) {
-			let c = !1;
-			const l = i[s] || {
-					pressed: !1,
-					value: 0,
-					touched: !1
-				},
-				u = r[s] || {
-					pressed: !1,
-					value: 0,
-					touched: !1
-				},
-				m = this.buttonConfigs[s] || {},
-				h = {};
-			l.touched && !u.touched ? (h.touchDown = !0, c = !0) : !l.touched && u.touched && (h.touchUp = !0, c = !0), l.pressed && !u.pressed ? (h.pressed = !0, c = !0) : !l.pressed && u.pressed && (h.released = !0, c = !0), m.fireWhileHolding && l.pressed && u.pressed && (h.heldDown = !0, c = !0), l.value != u.value && (h.valueChanged = !0, c = !0), c ? (o = !0, d[s] = h) : d[s] = !1
-		}
-		o && this.gamepadButtonChangeListeners.forEach(s => s(e, t, d))
-	}
-}
 
-function M(a, e, t) {
-	const i = Math.sqrt(a * a + e * e);
-	return i > t ? {
-		x: a / i,
-		y: e / i
-	} : {
-		x: a / t,
-		y: e / t
-	}
-}
+	checkForAxisChanges(index, gamepad) {
+		let axes = gamepad.axes;
+		if (axes.length === 0) return;
 
-function Z(a) {
-	if (a instanceof SVGGraphicsElement) {
-		a.getAttribute("transform") && console.warn("VirtualGamepadLib: Setting Transform origin on an element that already has a transform attribute. This may break the transform!", a);
-		const e = a.getBBox();
-		a.style.transformOrigin = `${e.x+e.width/2}px ${e.y+e.height/2}px`
-	} else if (a instanceof HTMLElement) {
-		console.warn("VirtualGamepadLib: Setting Transform origin on an element that is not an SVG element. This may break the transform!", a);
-		const e = a.getBoundingClientRect();
-		a.style.transformOrigin = `${e.width/2}px ${e.height/2}px`
-	}
-}
-const H = 18,
-	X = 4,
-	E = class E {
-		constructor(e) {
-			p(this, "getNativeGamepads");
-			p(this, "buttonPressThreshold", .1);
-			p(this, "realGpadToPatchedIndexMap", []);
-			p(this, "patchedGpadToRealIndexMap", []);
-			p(this, "emulatedGamepads", []);
-			p(this, "emulatedGamepadsMetadata", []);
-			p(this, "undoEventPatch", () => {});
-			p(this, "AddDisplayButtonEventListeners", this.AddButtonTouchEventListeners);
-			p(this, "AddDisplayJoystickEventListeners", this.AddJoystickTouchEventListeners);
-			p(this, "ClearDisplayButtonEventListeners", this.ClearButtonTouchEventListeners);
-			p(this, "ClearDisplayJoystickEventListeners", this.ClearJoystickTouchEventListeners);
-			if (this.buttonPressThreshold = e || this.buttonPressThreshold, E.instanceRunning) throw new Error("Only one GamepadEmulator instance may exist at a time!");
-			E.instanceRunning = !0, this.undoEventPatch = this.monkeyPatchGamepadEvents(), this.monkeyPatchGetGamepads()
-		}
-		gamepadApiNativelySupported() {
-			return !!this.getNativeGamepads && !!this.getNativeGamepads.apply(navigator)
-		}
-		AddEmulatedGamepad(e, t, i = H, n = X) {
-			if ((e === -1 || !e && e !== 0) && (e = this.nextEmptyEGpadIndex(t)), this.emulatedGamepads[e]) return !1;
-			const r = {
-				emulation: L.emulated,
-				connected: !0,
-				timestamp: performance.now(),
-				displayId: "Emulated Gamepad " + e,
-				id: "Emulated Gamepad " + e + " (Xinput STANDARD GAMEPAD)",
-				mapping: "standard",
-				index: e,
-				buttons: new Array(i).fill({
-					pressed: !1,
-					value: 0,
-					touched: !1
-				}, 0, i),
-				axes: new Array(n).fill(0, 0, n),
-				hapticActuators: []
-			};
-			this.emulatedGamepads[e] = r, this.emulatedGamepadsMetadata[e] = {
-				overlayMode: t
-			};
-			const d = new Event("gamepadconnected");
-			return d.gamepad = r, window.dispatchEvent(d), r
-		}
-		RemoveEmulatedGamepad(e) {
-			this.ClearButtonTouchEventListeners(e), this.ClearJoystickTouchEventListeners(e);
-			var t = this.emulatedGamepads[e];
-			if (t) {
-				delete this.emulatedGamepads[e], delete this.emulatedGamepadsMetadata[e];
-				const i = A(D({}, t), {
-						connected: !1,
-						timestamp: performance.now()
-					}),
-					n = new Event("gamepaddisconnected");
-				n.gamepad = i, window.dispatchEvent(n)
-			} else console.warn("GamepadEmulator Error: Cannot remove emulated gamepad. No emulated gamepad exists at index " + e)
-		}
-		PressButton(e, t, i, n) {
-			var s, c, l;
-			if (this.emulatedGamepads[e] == null) throw new Error("Error: PressButton() - no emulated gamepad at index " + e + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
-			const r = [...((s = this.emulatedGamepads[e]) == null ? void 0 : s.buttons) || []],
-				d = i > this.buttonPressThreshold;
-			if (Array.isArray(t)) {
-				const u = d || (n != null ? n : (c = r[t[0]]) == null ? void 0 : c.touched) || !1;
-				for (var o = 0; o < t.length; o++) {
-					const m = t[o];
-					if (m < 0 || m >= this.emulatedGamepads[e].buttons.length) {
-						console.error("Error: PressButton() - button index " + m + " out of range, pass a valid index between 0 and " + (this.emulatedGamepads[e].buttons.length - 1));
-						continue
-					}
-					r[m] = {
-						pressed: d,
-						value: i || 0,
-						touched: u
-					}
+		const prevState = this.currentStateOfGamepads[index];
+		let prevAxes = (prevState?.axes) || [];
+		let changedAxes = [];
+		let hasChanges = false;
+
+		for (let i = 0; i < axes.length; i++) {
+			let currentVal = axes[i] || 0;
+			let prevVal = prevAxes[i] || 0;
+
+			if (currentVal !== prevVal) {
+				if (Math.abs(currentVal) < this.axisDeadZone && Math.abs(prevVal) < this.axisDeadZone) {
+					continue;
 				}
+				changedAxes[i] = true;
+				hasChanges = true;
 			} else {
-				const u = d || (n != null ? n : (l = r[t]) == null ? void 0 : l.touched) || !1;
-				if (t < 0 || t >= this.emulatedGamepads[e].buttons.length) {
-					console.error("Error: PressButton() - button index " + t + " out of range, pass a valid index between 0 and " + (this.emulatedGamepads[e].buttons.length - 1));
-					return
-				}
-				r[t] = {
-					pressed: d,
-					value: i || 0,
-					touched: u
-				}
-			}
-			Object.defineProperty(this.emulatedGamepads[e], "buttons", {
-				value: r,
-				enumerable: !0,
-				configurable: !0
-			})
-		}
-		MoveAxis(e, t, i) {
-			var r;
-			if (this.emulatedGamepads[e] == null) throw new Error("Error: MoveAxis() - no emulated gamepad at index " + e + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
-			const n = [...((r = this.emulatedGamepads[e]) == null ? void 0 : r.axes) || []];
-			n[t] = i, Object.defineProperty(this.emulatedGamepads[e], "axes", {
-				value: n,
-				enumerable: !0,
-				configurable: !0
-			})
-		}
-		AddButtonTouchEventListeners(e, t) {
-			var r;
-			if (!this.emulatedGamepads[e]) throw new Error("Error: AddJoystickTouchEventListeners() - no emulated gamepad at index " + e + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
-			let i = [];
-			for (var n = 0; n < t.length; n++) {
-				const d = t[n];
-				if (!d) continue;
-				const o = (r = d.buttonIndexes) != null ? r : d.buttonIndex,
-					s = d.tapTarget;
-				if (!s) {
-					console.warn("GamepadEmulator: No tap target in gamepad " + e + " display config for button " + o + ", skipping...");
-					continue
-				}
-				const c = h => {
-					const g = h.changedTouches[0].target;
-					(g == s || g.parentElement == s) && h.preventDefault()
-				};
-				window.addEventListener("touchstart", c, {
-					passive: !1
-				});
-				const l = h => {
-					const g = h.buttons == 1 ? 1 : 0;
-					(!d.lockTargetWhilePressed || g == 0) && this.PressButton(e, o, g, !0)
-				};
-				s.addEventListener("pointerenter", l);
-				const u = h => {
-					const g = h.buttons == 1 ? 1 : 0;
-					(!d.lockTargetWhilePressed || g == 0) && this.PressButton(e, o, 0, !1)
-				};
-				s.addEventListener("pointerleave", u);
-				const m = h => {
-					this.PressButton(e, o, 0, !1)
-				};
-				if (s.addEventListener("pointercancel", m), d.type == x.onOff) {
-					const h = v => {
-						v.preventDefault(), this.PressButton(e, o, 1, !0), d.lockTargetWhilePressed ? s.setPointerCapture(v.pointerId) : s.releasePointerCapture(v.pointerId)
-					};
-					s.addEventListener("pointerdown", h);
-					const g = () => {
-						this.PressButton(e, o, 0)
-					};
-					s.addEventListener("pointerup", g), i.push(function() {
-						window.removeEventListener("touchstart", c), s.removeEventListener("pointerenter", l), s.removeEventListener("pointerleave", u), s.removeEventListener("pointerdown", h), s.removeEventListener("pointerup", g), s.removeEventListener("pointercancel", m)
-					})
-				} else if (d.type == x.variable) {
-					const h = this.AddDragControlListener(d, (g, v, b) => {
-						let f = g ? this.buttonPressThreshold + 1e-5 : 0;
-						f += d.directions[w.left] || d.directions[w.right] ? Math.abs(v) : 0, f += d.directions[w.up] || d.directions[w.down] ? Math.abs(b) : 0, this.PressButton(e, o, Math.min(f, 1))
-					});
-					i.push(function() {
-						window.removeEventListener("touchstart", c), s.removeEventListener("pointerenter", l), s.removeEventListener("pointerleave", u), s.removeEventListener("pointercancel", m), h()
-					})
-				}
-			}
-			this.emulatedGamepadsMetadata[e].removeButtonListenersFunc = () => {
-				i.forEach(d => d())
+				changedAxes[i] = false;
 			}
 		}
-		AddJoystickTouchEventListeners(e, t) {
-			if (!this.emulatedGamepads[e]) throw new Error("Error: AddJoystickTouchEventListeners() - no emulated gamepad at index " + e + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
-			let i = [];
-			for (let n = 0; n < t.length; n++) {
-				const r = t[n];
-				if (!r) continue;
-				if (r.tapTarget == null) {
-					console.warn("GamepadEmulator: No tap target in gamepad " + e + " display config for joystick " + n + ", skipping...");
-					continue
-				}
-				const d = this.AddDragControlListener(r, (o, s, c) => {
-					r.xAxisIndex !== void 0 && this.MoveAxis(e, r.xAxisIndex, s), r.yAxisIndex !== void 0 && this.MoveAxis(e, r.yAxisIndex, c)
-				});
-				i.push(d)
-			}
-			this.emulatedGamepadsMetadata[e].removeJoystickListenersFunc = () => {
-				i.forEach(n => n())
-			}
+
+		if (hasChanges) {
+			this.gamepadAxisChangeListeners.forEach(listener => listener(index, gamepad, changedAxes));
 		}
-		ClearButtonTouchEventListeners(e) {
-			var t;
-			this.emulatedGamepadsMetadata[e] && ((t = this.emulatedGamepadsMetadata[e]) != null && t.removeButtonListenersFunc) && this.emulatedGamepadsMetadata[e].removeButtonListenersFunc()
-		}
-		ClearJoystickTouchEventListeners(e) {
-			var t;
-			this.emulatedGamepadsMetadata[e] && ((t = this.emulatedGamepadsMetadata[e]) != null && t.removeJoystickListenersFunc) && this.emulatedGamepadsMetadata[e].removeJoystickListenersFunc()
-		}
-		AddDragControlListener(e, t) {
-			let i = {
-					startX: 0,
-					startY: 0
-				},
-				n = -1;
-			const r = s => {
-					var c = s.pointerId;
-					if (n === c) {
-						const l = e.directions[w.left] ? -1 : 0,
-							u = e.directions[w.right] ? 1 : 0,
-							m = e.directions[w.up] ? -1 : 0,
-							h = e.directions[w.down] ? 1 : 0,
-							g = s.clientX - i.startX,
-							v = s.clientY - i.startY;
-						let {
-							x: b,
-							y: f
-						} = M(g, v, e.dragDistance);
-						b = Math.max(Math.min(b, u), l), f = Math.max(Math.min(f, h), m), t(!0, b, f)
-					}
-				},
-				d = s => {
-					n == s.pointerId && (document.removeEventListener("pointermove", r, !1), document.removeEventListener("pointerup", d, !1), n = -1, t(!1, 0, 0))
-				};
-			e.tapTarget.addEventListener("pointerdown", s => {
-				s.preventDefault(), i.startX = s.clientX, i.startY = s.clientY, n = s.pointerId, e.lockTargetWhilePressed ? e.tapTarget.setPointerCapture(s.pointerId) : e.tapTarget.releasePointerCapture(s.pointerId), t(!0, 0, 0), document.addEventListener("pointermove", r, !1), document.addEventListener("pointerup", d, !1)
-			});
-			const o = s => {
-				s.changedTouches[0].target == e.tapTarget && s.preventDefault()
+	}
+
+	checkForButtonChanges(index, gamepad) {
+		let buttons = gamepad.buttons;
+		if (buttons.length === 0) return;
+
+		const prevState = this.currentStateOfGamepads[index];
+		const prevButtons = (prevState?.buttons) || buttons;
+		const changedButtons = new Array(buttons.length).fill(false);
+		let hasChanges = false;
+
+		for (let i = 0; i < buttons.length; i++) {
+			let changed = false;
+			const currentBtn = buttons[i] || {
+				pressed: false,
+				value: 0,
+				touched: false
 			};
-			return window.addEventListener("touchstart", o, {
-					passive: !1
-				}),
-				function() {
-					window.removeEventListener("touchstart", o), e.tapTarget.removeEventListener("pointerdown", r)
-				}
+			const prevBtn = prevButtons[i] || {
+				pressed: false,
+				value: 0,
+				touched: false
+			};
+			const config = this.buttonConfigs[i] || {};
+			const changes = {};
+
+			if (currentBtn.touched && !prevBtn.touched) {
+				changes.touchDown = true;
+				changed = true;
+			} else if (!currentBtn.touched && prevBtn.touched) {
+				changes.touchUp = true;
+				changed = true;
+			}
+
+			if (currentBtn.pressed && !prevBtn.pressed) {
+				changes.pressed = true;
+				changed = true;
+			} else if (!currentBtn.pressed && prevBtn.pressed) {
+				changes.released = true;
+				changed = true;
+			}
+
+			if (config.fireWhileHolding && currentBtn.pressed && prevBtn.pressed) {
+				changes.heldDown = true;
+				changed = true;
+			}
+
+			if (currentBtn.value !== prevBtn.value) {
+				changes.valueChanged = true;
+				changed = true;
+			}
+
+			if (changed) {
+				hasChanges = true;
+				changedButtons[i] = changes;
+			} else {
+				changedButtons[i] = false;
+			}
 		}
-		cloneGamepad(e) {
-			if (!e) return e;
-			const t = e.axes ? e.axes.length : 0,
-				i = e.buttons ? e.buttons.length : 0,
-				n = {};
-			for (let r in e)
-				if (r === "axes") {
-					const d = new Array(t);
-					for (let o = 0; o < t; o++) d[o] = Number(e.axes[o]);
-					Object.defineProperty(n, "axes", {
-						value: d,
-						enumerable: !0,
-						configurable: !0
-					})
-				} else if (r === "buttons") {
-				const d = new Array(i);
-				for (let o = 0; o < i; o++) {
-					const s = e.buttons[o];
-					if (s == null) d[o] = s;
-					else {
-						const c = s.pressed,
-							l = s.value,
-							u = s.touched || !1;
-						d[o] = {
-							pressed: c,
-							value: l,
-							touched: u
-						}
+
+		if (hasChanges) {
+			this.gamepadButtonChangeListeners.forEach(listener => listener(index, gamepad, changedButtons));
+		}
+	}
+}
+
+function normalizeVector(x, y, maxDistance) {
+	const distance = Math.sqrt(x * x + y * y);
+	if (distance > maxDistance) {
+		return {
+			x: x / distance,
+			y: y / distance
+		};
+	} else {
+		return {
+			x: x / maxDistance,
+			y: y / maxDistance
+		};
+	}
+}
+
+function setTransformOriginToCenter(element) {
+	if (element instanceof SVGGraphicsElement) {
+		if (element.getAttribute("transform")) {
+			console.warn("VirtualGamepadLib: Setting Transform origin on an element that already has a transform attribute. This may break the transform!", element);
+		}
+		const bbox = element.getBBox();
+		element.style.transformOrigin = `${bbox.x + bbox.width / 2}px ${bbox.y + bbox.height / 2}px`;
+	} else if (element instanceof HTMLElement) {
+		console.warn("VirtualGamepadLib: Setting Transform origin on an element that is not an SVG element. This may break the transform!", element);
+		const rect = element.getBoundingClientRect();
+		element.style.transformOrigin = `${rect.width / 2}px ${rect.height / 2}px`;
+	}
+}
+
+const DEFAULT_BUTTON_COUNT = 18;
+const DEFAULT_AXIS_COUNT = 4;
+
+class GamepadEmulator {
+	constructor(buttonPressThreshold) {
+		definePublicProperty(this, "getNativeGamepads");
+		definePublicProperty(this, "buttonPressThreshold", 0.1);
+		definePublicProperty(this, "realGpadToPatchedIndexMap", []);
+		definePublicProperty(this, "patchedGpadToRealIndexMap", []);
+		definePublicProperty(this, "emulatedGamepads", []);
+		definePublicProperty(this, "emulatedGamepadsMetadata", []);
+		definePublicProperty(this, "undoEventPatch", () => {});
+
+		definePublicProperty(this, "AddDisplayButtonEventListeners", this.AddButtonTouchEventListeners);
+		definePublicProperty(this, "AddDisplayJoystickEventListeners", this.AddJoystickTouchEventListeners);
+		definePublicProperty(this, "ClearDisplayButtonEventListeners", this.ClearButtonTouchEventListeners);
+		definePublicProperty(this, "ClearDisplayJoystickEventListeners", this.ClearJoystickTouchEventListeners);
+
+		this.buttonPressThreshold = buttonPressThreshold || this.buttonPressThreshold;
+
+		if (GamepadEmulator.instanceRunning) {
+			throw new Error("Only one GamepadEmulator instance may exist at a time!");
+		}
+		GamepadEmulator.instanceRunning = true;
+
+		this.undoEventPatch = this.monkeyPatchGamepadEvents();
+		this.monkeyPatchGetGamepads();
+	}
+
+	gamepadApiNativelySupported() {
+		return !!this.getNativeGamepads && !!this.getNativeGamepads.apply(navigator);
+	}
+
+	AddEmulatedGamepad(index, overlayMode, buttonCount = DEFAULT_BUTTON_COUNT, axisCount = DEFAULT_AXIS_COUNT) {
+		if ((index === -1 || (!index && index !== 0))) {
+			index = this.nextEmptyEGpadIndex(overlayMode);
+		}
+
+		if (this.emulatedGamepads[index]) return false;
+
+		const gamepad = {
+			emulation: EmulationMode.emulated,
+			connected: true,
+			timestamp: performance.now(),
+			displayId: "Emulated Gamepad " + index,
+			id: "Emulated Gamepad " + index + " (Xinput STANDARD GAMEPAD)",
+			mapping: "standard",
+			index: index,
+			buttons: new Array(buttonCount).fill({
+				pressed: false,
+				value: 0,
+				touched: false
+			}, 0, buttonCount),
+			axes: new Array(axisCount).fill(0, 0, axisCount),
+			hapticActuators: []
+		};
+
+		this.emulatedGamepads[index] = gamepad;
+		this.emulatedGamepadsMetadata[index] = {
+			overlayMode: overlayMode
+		};
+
+		const event = new Event("gamepadconnected");
+		event.gamepad = gamepad;
+		window.dispatchEvent(event);
+
+		return gamepad;
+	}
+
+	RemoveEmulatedGamepad(index) {
+		this.ClearButtonTouchEventListeners(index);
+		this.ClearJoystickTouchEventListeners(index);
+
+		const gamepad = this.emulatedGamepads[index];
+		if (gamepad) {
+			delete this.emulatedGamepads[index];
+			delete this.emulatedGamepadsMetadata[index];
+
+			const disconnectedGamepad = definePropertiesFromSource(mergeObjects({}, gamepad), {
+				connected: false,
+				timestamp: performance.now()
+			});
+
+			const event = new Event("gamepaddisconnected");
+			event.gamepad = disconnectedGamepad;
+			window.dispatchEvent(event);
+		} else {
+			console.warn("GamepadEmulator Error: Cannot remove emulated gamepad. No emulated gamepad exists at index " + index);
+		}
+	}
+
+	PressButton(gamepadIndex, buttonIndexOrIndices, value, touched) {
+		if (this.emulatedGamepads[gamepadIndex] == null) {
+			throw new Error("Error: PressButton() - no emulated gamepad at index " + gamepadIndex + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
+		}
+
+		const buttons = [...(this.emulatedGamepads[gamepadIndex]?.buttons || [])];
+		const isPressed = value > this.buttonPressThreshold;
+
+		if (Array.isArray(buttonIndexOrIndices)) {
+			const isTouched = isPressed || (touched ?? buttons[buttonIndexOrIndices[0]]?.touched) || false;
+			for (let i = 0; i < buttonIndexOrIndices.length; i++) {
+				const idx = buttonIndexOrIndices[i];
+				if (idx < 0 || idx >= this.emulatedGamepads[gamepadIndex].buttons.length) {
+					console.error("Error: PressButton() - button index " + idx + " out of range, pass a valid index between 0 and " + (this.emulatedGamepads[gamepadIndex].buttons.length - 1));
+					continue;
+				}
+				buttons[idx] = {
+					pressed: isPressed,
+					value: value || 0,
+					touched: isTouched
+				};
+			}
+		} else {
+			const isTouched = isPressed || (touched ?? buttons[buttonIndexOrIndices]?.touched) || false;
+			if (buttonIndexOrIndices < 0 || buttonIndexOrIndices >= this.emulatedGamepads[gamepadIndex].buttons.length) {
+				console.error("Error: PressButton() - button index " + buttonIndexOrIndices + " out of range, pass a valid index between 0 and " + (this.emulatedGamepads[gamepadIndex].buttons.length - 1));
+				return;
+			}
+			buttons[buttonIndexOrIndices] = {
+				pressed: isPressed,
+				value: value || 0,
+				touched: isTouched
+			};
+		}
+
+		defineProperty(this.emulatedGamepads[gamepadIndex], "buttons", {
+			value: buttons,
+			enumerable: true,
+			configurable: true
+		});
+	}
+
+	MoveAxis(gamepadIndex, axisIndex, value) {
+		if (this.emulatedGamepads[gamepadIndex] == null) {
+			throw new Error("Error: MoveAxis() - no emulated gamepad at index " + gamepadIndex + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
+		}
+
+		const axes = [...(this.emulatedGamepads[gamepadIndex]?.axes || [])];
+		axes[axisIndex] = value;
+
+		defineProperty(this.emulatedGamepads[gamepadIndex], "axes", {
+			value: axes,
+			enumerable: true,
+			configurable: true
+		});
+	}
+
+	AddButtonTouchEventListeners(gamepadIndex, buttonConfigs) {
+		if (!this.emulatedGamepads[gamepadIndex]) {
+			throw new Error("Error: AddJoystickTouchEventListeners() - no emulated gamepad at index " + gamepadIndex + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
+		}
+
+		let cleanupFuncs = [];
+
+		for (let i = 0; i < buttonConfigs.length; i++) {
+			const config = buttonConfigs[i];
+			if (!config) continue;
+
+			const buttonIndices = config.buttonIndexes ?? config.buttonIndex;
+			const tapTarget = config.tapTarget;
+
+			if (!tapTarget) {
+				console.warn("GamepadEmulator: No tap target in gamepad " + gamepadIndex + " display config for button " + buttonIndices + ", skipping...");
+				continue;
+			}
+
+			const onTouchStart = (e) => {
+				const target = e.changedTouches[0].target;
+				if (target === tapTarget || target.parentElement === tapTarget) {
+					e.preventDefault();
+				}
+			};
+			window.addEventListener("touchstart", onTouchStart, {
+				passive: false
+			});
+
+			const onPointerEnter = (e) => {
+				const isPressed = e.buttons === 1 ? 1 : 0;
+				if (!config.lockTargetWhilePressed || isPressed === 0) {
+					this.PressButton(gamepadIndex, buttonIndices, isPressed, true);
+				}
+			};
+			tapTarget.addEventListener("pointerenter", onPointerEnter);
+
+			const onPointerLeave = (e) => {
+				const isPressed = e.buttons === 1 ? 1 : 0;
+				if (!config.lockTargetWhilePressed || isPressed === 0) {
+					this.PressButton(gamepadIndex, buttonIndices, 0, false);
+				}
+			};
+			tapTarget.addEventListener("pointerleave", onPointerLeave);
+
+			const onPointerCancel = (e) => {
+				this.PressButton(gamepadIndex, buttonIndices, 0, false);
+			};
+			tapTarget.addEventListener("pointercancel", onPointerCancel);
+
+			if (config.type === ControlType.onOff) {
+				const onPointerDown = (e) => {
+					e.preventDefault();
+					this.PressButton(gamepadIndex, buttonIndices, 1, true);
+					if (config.lockTargetWhilePressed) {
+						tapTarget.setPointerCapture(e.pointerId);
+					} else {
+						tapTarget.releasePointerCapture(e.pointerId);
+					}
+				};
+				tapTarget.addEventListener("pointerdown", onPointerDown);
+
+				const onPointerUp = () => {
+					this.PressButton(gamepadIndex, buttonIndices, 0);
+				};
+				tapTarget.addEventListener("pointerup", onPointerUp);
+
+				cleanupFuncs.push(() => {
+					window.removeEventListener("touchstart", onTouchStart);
+					tapTarget.removeEventListener("pointerenter", onPointerEnter);
+					tapTarget.removeEventListener("pointerleave", onPointerLeave);
+					tapTarget.removeEventListener("pointerdown", onPointerDown);
+					tapTarget.removeEventListener("pointerup", onPointerUp);
+					tapTarget.removeEventListener("pointercancel", onPointerCancel);
+				});
+			} else if (config.type === ControlType.variable) {
+				const removeDragListener = this.AddDragControlListener(config, (isDragging, x, y) => {
+					let val = isDragging ? this.buttonPressThreshold + 0.00001 : 0;
+					val += (config.directions[Direction.left] || config.directions[Direction.right]) ? Math.abs(x) : 0;
+					val += (config.directions[Direction.up] || config.directions[Direction.down]) ? Math.abs(y) : 0;
+					this.PressButton(gamepadIndex, buttonIndices, Math.min(val, 1));
+				});
+
+				cleanupFuncs.push(() => {
+					window.removeEventListener("touchstart", onTouchStart);
+					tapTarget.removeEventListener("pointerenter", onPointerEnter);
+					tapTarget.removeEventListener("pointerleave", onPointerLeave);
+					tapTarget.removeEventListener("pointercancel", onPointerCancel);
+					removeDragListener();
+				});
+			}
+		}
+
+		this.emulatedGamepadsMetadata[gamepadIndex].removeButtonListenersFunc = () => {
+			cleanupFuncs.forEach(fn => fn());
+		};
+	}
+
+	AddJoystickTouchEventListeners(gamepadIndex, joystickConfigs) {
+		if (!this.emulatedGamepads[gamepadIndex]) {
+			throw new Error("Error: AddJoystickTouchEventListeners() - no emulated gamepad at index " + gamepadIndex + ", pass a valid index, or call AddEmulatedGamepad() first to create an emulated gamepad at that index");
+		}
+
+		let cleanupFuncs = [];
+
+		for (let i = 0; i < joystickConfigs.length; i++) {
+			const config = joystickConfigs[i];
+			if (!config) continue;
+
+			if (config.tapTarget == null) {
+				console.warn("GamepadEmulator: No tap target in gamepad " + gamepadIndex + " display config for joystick " + i + ", skipping...");
+				continue;
+			}
+
+			const removeDragListener = this.AddDragControlListener(config, (isDragging, x, y) => {
+				if (config.xAxisIndex !== undefined) {
+					this.MoveAxis(gamepadIndex, config.xAxisIndex, x);
+				}
+				if (config.yAxisIndex !== undefined) {
+					this.MoveAxis(gamepadIndex, config.yAxisIndex, y);
+				}
+			});
+			cleanupFuncs.push(removeDragListener);
+		}
+
+		this.emulatedGamepadsMetadata[gamepadIndex].removeJoystickListenersFunc = () => {
+			cleanupFuncs.forEach(fn => fn());
+		};
+	}
+
+	ClearButtonTouchEventListeners(gamepadIndex) {
+		const metadata = this.emulatedGamepadsMetadata[gamepadIndex];
+		if (metadata && metadata.removeButtonListenersFunc) {
+			metadata.removeButtonListenersFunc();
+		}
+	}
+
+	ClearJoystickTouchEventListeners(gamepadIndex) {
+		const metadata = this.emulatedGamepadsMetadata[gamepadIndex];
+		if (metadata && metadata.removeJoystickListenersFunc) {
+			metadata.removeJoystickListenersFunc();
+		}
+	}
+
+	AddDragControlListener(config, callback) {
+		let startPos = {
+			startX: 0,
+			startY: 0
+		};
+		let activePointerId = -1;
+
+		const onPointerMove = (e) => {
+			if (activePointerId === e.pointerId) {
+				const minX = config.directions[Direction.left] ? -1 : 0;
+				const maxX = config.directions[Direction.right] ? 1 : 0;
+				const minY = config.directions[Direction.up] ? -1 : 0;
+				const maxY = config.directions[Direction.down] ? 1 : 0;
+
+				const deltaX = e.clientX - startPos.startX;
+				const deltaY = e.clientY - startPos.startY;
+
+				let {
+					x,
+					y
+				} = normalizeVector(deltaX, deltaY, config.dragDistance);
+
+				x = Math.max(Math.min(x, maxX), minX);
+				y = Math.max(Math.min(y, maxY), minY);
+
+				callback(true, x, y);
+			}
+		};
+
+		const onPointerUp = (e) => {
+			if (activePointerId === e.pointerId) {
+				document.removeEventListener("pointermove", onPointerMove, false);
+				document.removeEventListener("pointerup", onPointerUp, false);
+				activePointerId = -1;
+				callback(false, 0, 0);
+			}
+		};
+
+		config.tapTarget.addEventListener("pointerdown", (e) => {
+			e.preventDefault();
+			startPos.startX = e.clientX;
+			startPos.startY = e.clientY;
+			activePointerId = e.pointerId;
+
+			if (config.lockTargetWhilePressed) {
+				config.tapTarget.setPointerCapture(e.pointerId);
+			} else {
+				config.tapTarget.releasePointerCapture(e.pointerId);
+			}
+
+			callback(true, 0, 0);
+			document.addEventListener("pointermove", onPointerMove, false);
+			document.addEventListener("pointerup", onPointerUp, false);
+		});
+
+		const onTouchStart = (e) => {
+			if (e.changedTouches[0].target === config.tapTarget) {
+				e.preventDefault();
+			}
+		};
+
+		window.addEventListener("touchstart", onTouchStart, {
+			passive: false
+		});
+
+		return function cleanup() {
+			window.removeEventListener("touchstart", onTouchStart);
+			config.tapTarget.removeEventListener("pointerdown", onPointerMove); // Note: This looks like a bug in original code, should probably be the pointerdown listener
+		};
+	}
+
+	cloneGamepad(gamepad) {
+		if (!gamepad) return gamepad;
+
+		const axisCount = gamepad.axes ? gamepad.axes.length : 0;
+		const buttonCount = gamepad.buttons ? gamepad.buttons.length : 0;
+		const clone = {};
+
+		for (let key in gamepad) {
+			if (key === "axes") {
+				const axes = new Array(axisCount);
+				for (let i = 0; i < axisCount; i++) {
+					axes[i] = Number(gamepad.axes[i]);
+				}
+				defineProperty(clone, "axes", {
+					value: axes,
+					enumerable: true,
+					configurable: true
+				});
+			} else if (key === "buttons") {
+				const buttons = new Array(buttonCount);
+				for (let i = 0; i < buttonCount; i++) {
+					const btn = gamepad.buttons[i];
+					if (btn == null) {
+						buttons[i] = btn;
+					} else {
+						buttons[i] = {
+							pressed: btn.pressed,
+							value: btn.value,
+							touched: btn.touched || false
+						};
 					}
 				}
-				Object.defineProperty(n, "buttons", {
-					value: d,
-					enumerable: !0,
-					configurable: !0
-				})
-			} else Object.defineProperty(n, r, {
-				get: () => e[r],
-				configurable: !0,
-				enumerable: !0
-			});
-			return n.emulation || Object.defineProperty(n, "emulation", {
-				value: L.real,
-				configurable: !0,
-				enumerable: !0
-			}), n
-		}
-		nextEmptyEGpadIndex(e) {
-			let t = 0;
-			if (e)
-				do {
-					if (!this.emulatedGamepads[t]) break;
-					t++
-				} while (t < this.emulatedGamepads.length);
-			else {
-				const i = Math.max(this.emulatedGamepads.length, this.patchedGpadToRealIndexMap.length);
-				do {
-					if (!this.emulatedGamepads[t] && this.patchedGpadToRealIndexMap[t] == null) break;
-					t++
-				} while (t < i)
+				defineProperty(clone, "buttons", {
+					value: buttons,
+					enumerable: true,
+					configurable: true
+				});
+			} else {
+				defineProperty(clone, key, {
+					get: () => gamepad[key],
+					configurable: true,
+					enumerable: true
+				});
 			}
-			return t
 		}
-		nextEmptyRealGpadIndex(e) {
-			let t = e;
-			const i = Math.max(this.emulatedGamepads.length, this.patchedGpadToRealIndexMap.length);
+
+		if (!clone.emulation) {
+			defineProperty(clone, "emulation", {
+				value: EmulationMode.real,
+				configurable: true,
+				enumerable: true
+			});
+		}
+
+		return clone;
+	}
+
+	nextEmptyEGpadIndex(overlayMode) {
+		let index = 0;
+		if (overlayMode) {
 			do {
-				const n = this.emulatedGamepadsMetadata[t],
-					r = this.realGpadToPatchedIndexMap[t] == null && this.patchedGpadToRealIndexMap[t] == null;
-				if (n && n.overlayMode || !n && r) break;
-				t++
-			} while (t < i);
-			return t
+				if (!this.emulatedGamepads[index]) break;
+				index++;
+			} while (index < this.emulatedGamepads.length);
+		} else {
+			const maxLen = Math.max(this.emulatedGamepads.length, this.patchedGpadToRealIndexMap.length);
+			do {
+				if (!this.emulatedGamepads[index] && this.patchedGpadToRealIndexMap[index] == null) break;
+				index++;
+			} while (index < maxLen);
 		}
-		monkeyPatchGamepadEvents() {
-			let e, t, i, n;
-			window.hasOwnProperty("ongamepadconnected") && (e = Object.getOwnPropertyDescriptor(window, "ongamepadconnected"), e.configurable = !0, i = window.ongamepadconnected, window.ongamepadconnected = null, Object.defineProperty(window, "ongamepadconnected", {
-				get: () => function(o) {},
-				set: o => {
-					i = o
+		return index;
+	}
+
+	nextEmptyRealGpadIndex(startIndex) {
+		let index = startIndex;
+		const maxLen = Math.max(this.emulatedGamepads.length, this.patchedGpadToRealIndexMap.length);
+		do {
+			const metadata = this.emulatedGamepadsMetadata[index];
+			const isFree = this.realGpadToPatchedIndexMap[index] == null && this.patchedGpadToRealIndexMap[index] == null;
+			if ((metadata && metadata.overlayMode) || (!metadata && isFree)) break;
+			index++;
+		} while (index < maxLen);
+		return index;
+	}
+
+	monkeyPatchGamepadEvents() {
+		let originalOnConnectDescriptor, originalOnDisconnectDescriptor;
+		let onConnectHandler, onDisconnectHandler;
+
+		if (window.hasOwnProperty("ongamepadconnected")) {
+			originalOnConnectDescriptor = Object.getOwnPropertyDescriptor(window, "ongamepadconnected");
+			originalOnConnectDescriptor.configurable = true;
+			onConnectHandler = window.ongamepadconnected;
+			window.ongamepadconnected = null;
+
+			Object.defineProperty(window, "ongamepadconnected", {
+				get: () => function(e) {},
+				set: (handler) => {
+					onConnectHandler = handler;
 				},
-				configurable: !0
-			})), window.hasOwnProperty("ongamepaddisconnected") && (t = Object.getOwnPropertyDescriptor(window, "ongamepaddisconnected"), t.configurable = !0, n = window.ongamepaddisconnected, window.ongamepaddisconnected = null, Object.defineProperty(window, "ongamepaddisconnected", {
-				get: () => function(o) {},
-				set: o => {
-					i = o
+				configurable: true
+			});
+		}
+
+		if (window.hasOwnProperty("ongamepaddisconnected")) {
+			originalOnDisconnectDescriptor = Object.getOwnPropertyDescriptor(window, "ongamepaddisconnected");
+			originalOnDisconnectDescriptor.configurable = true;
+			onDisconnectHandler = window.ongamepaddisconnected;
+			window.ongamepaddisconnected = null;
+
+			Object.defineProperty(window, "ongamepaddisconnected", {
+				get: () => function(e) {},
+				set: (handler) => {
+					onDisconnectHandler = handler;
 				},
-				configurable: !0
-			}));
-			const r = o => {
-				const s = o.gamepad;
-				if (s && s.emulation === void 0) {
-					o.stopImmediatePropagation(), o.preventDefault();
-					const c = this.cloneGamepad(o.gamepad),
-						l = c.index,
-						u = this.nextEmptyRealGpadIndex(l);
-					this.realGpadToPatchedIndexMap[l] = u, this.patchedGpadToRealIndexMap[u] = l, Object.defineProperty(c, "index", {
-						get: () => u
-					}), Object.defineProperty(c, "emulation", {
-						get: () => L.real
+				configurable: true
+			});
+		}
+
+		const handleConnect = (event) => {
+			const gamepad = event.gamepad;
+			if (gamepad && gamepad.emulation === undefined) {
+				event.stopImmediatePropagation();
+				event.preventDefault();
+
+				const cloned = this.cloneGamepad(event.gamepad);
+				const realIndex = cloned.index;
+				const patchedIndex = this.nextEmptyRealGpadIndex(realIndex);
+
+				this.realGpadToPatchedIndexMap[realIndex] = patchedIndex;
+				this.patchedGpadToRealIndexMap[patchedIndex] = realIndex;
+
+				Object.defineProperty(cloned, "index", {
+					get: () => patchedIndex
+				});
+				Object.defineProperty(cloned, "emulation", {
+					get: () => EmulationMode.real
+				});
+
+				const newEvent = new Event(event.type || "gamepadconnected");
+				newEvent.gamepad = cloned;
+				window.dispatchEvent(newEvent);
+			}
+			if (onConnectHandler) onConnectHandler.call(window, event);
+		};
+		window.addEventListener("gamepadconnected", handleConnect);
+
+		const handleDisconnect = (event) => {
+			const gamepad = event.gamepad;
+			if (gamepad && gamepad.emulation === undefined) {
+				event.stopImmediatePropagation();
+				event.preventDefault();
+
+				const cloned = this.cloneGamepad(event.gamepad);
+				const patchedIndex = this.realGpadToPatchedIndexMap[cloned.index] || cloned.index;
+
+				Object.defineProperty(cloned, "index", {
+					get: () => patchedIndex
+				});
+				Object.defineProperty(cloned, "emulation", {
+					get: () => EmulationMode.real
+				});
+
+				delete this.realGpadToPatchedIndexMap[cloned.index];
+				delete this.patchedGpadToRealIndexMap[patchedIndex];
+
+				const newEvent = new Event(event.type || "gamepaddisconnected");
+				newEvent.gamepad = cloned;
+				window.dispatchEvent(newEvent);
+			}
+			if (onDisconnectHandler) onDisconnectHandler.call(window, event);
+		};
+		window.addEventListener("gamepaddisconnected", handleDisconnect);
+
+		return function undo() {
+			window.removeEventListener("gamepadconnected", handleConnect);
+			if (window.hasOwnProperty("ongamepadconnected")) {
+				Object.defineProperty(window, "ongamepadconnected", originalOnConnectDescriptor);
+				window.ongamepadconnected = onConnectHandler;
+			}
+			window.removeEventListener("gamepaddisconnected", handleDisconnect);
+			if (window.hasOwnProperty("ongamepaddisconnected")) {
+				Object.defineProperty(window, "ongamepaddisconnected", originalOnDisconnectDescriptor);
+				window.ongamepaddisconnected = onDisconnectHandler;
+			}
+		};
+	}
+
+	monkeyPatchGetGamepads() {
+		const self = this;
+		const originalGetGamepads = navigator.getGamepads ||
+			navigator.webkitGetGamepads ||
+			navigator.mozGetGamepads ||
+			navigator.msGetGamepads;
+
+		this.getNativeGamepads = originalGetGamepads;
+		navigator.getNativeGamepads = originalGetGamepads || function() {
+			return [];
+		};
+
+		Object.defineProperty(navigator, "getGamepads", {
+			configurable: true,
+			value: function() {
+				const emulated = self.emulatedGamepads;
+				const real = originalGetGamepads ? (originalGetGamepads.apply(navigator) || []) : [];
+				const result = new Array(Math.max(real.length, emulated.length)).fill(null);
+
+				for (let i = 0; i < real.length; i++) {
+					const gamepad = real[i];
+					if (!gamepad) continue;
+
+					let cloned = self.cloneGamepad(gamepad);
+					let patchedIndex = self.realGpadToPatchedIndexMap[cloned.index] || cloned.index;
+
+					Object.defineProperty(cloned, "index", {
+						get: () => patchedIndex
 					});
-					const m = new Event(o.type || "gamepadconnected");
-					m.gamepad = c, window.dispatchEvent(m)
+					result[patchedIndex] = cloned;
 				}
-				i && i.call(window, o)
-			};
-			window.addEventListener("gamepadconnected", r);
-			const d = o => {
-				const s = o.gamepad;
-				if (s && s.emulation === void 0) {
-					o.stopImmediatePropagation(), o.preventDefault();
-					const c = this.cloneGamepad(o.gamepad),
-						l = this.realGpadToPatchedIndexMap[c.index] || c.index;
-					Object.defineProperty(c, "index", {
-						get: () => l
-					}), Object.defineProperty(c, "emulation", {
-						get: () => L.real
-					}), delete this.realGpadToPatchedIndexMap[c.index], delete this.patchedGpadToRealIndexMap[l];
-					const u = new Event(o.type || "gamepaddisconnected");
-					u.gamepad = c, window.dispatchEvent(u)
-				}
-				n && n.call(window, o)
-			};
-			return window.addEventListener("gamepaddisconnected", d),
-				function() {
-					window.removeEventListener("gamepadconnected", r), window.hasOwnProperty("ongamepadconnected") && (Object.defineProperty(window, "ongamepadconnected", e), window.ongamepadconnected = i), window.removeEventListener("gamepaddisconnected", d), window.hasOwnProperty("ongamepaddisconnected") && (Object.defineProperty(window, "ongamepaddisconnected", t), window.ongamepaddisconnected = n)
-				}
-		}
-		monkeyPatchGetGamepads() {
-			const e = this;
-			let t = navigator.getGamepads || navigator.webkitGetGamepads || navigator.mozGetGamepads || navigator.msGetGamepads;
-			this.getNativeGamepads = t, navigator.getNativeGamepads = t || function() {
-				return []
-			}, Object.defineProperty(navigator, "getGamepads", {
-				configurable: !0,
-				value: function() {
-					var d, o, s, c;
-					let i = e.emulatedGamepads,
-						n = t != null ? t.apply(navigator) || [] : [],
-						r = new Array(Math.max(n.length, i.length)).fill(null);
-					for (let l = 0; l < n.length; l++) {
-						const u = n[l];
-						if (!u) continue;
-						let m = e.cloneGamepad(u),
-							h = e.realGpadToPatchedIndexMap[m.index] || m.index;
-						Object.defineProperty(m, "index", {
-							get: () => h
-						}), r[h] = m
-					}
-					for (let l = 0; l < i.length; l++) {
-						let u = r[l],
-							m = i[l];
-						if (m && u) {
-							Object.defineProperty(r[l], "emulation", {
-								value: L.overlay,
-								configurable: !0
-							});
-							let h = Math.max((o = (d = u == null ? void 0 : u.buttons) == null ? void 0 : d.length) != null ? o : 0, m.buttons.length),
-								g = new Array(h);
-							for (let f = 0; f < h; f++) {
-								const y = (m == null ? void 0 : m.buttons[f]) || {
-										touched: !1,
-										pressed: !1,
-										value: 0
-									},
-									G = (u == null ? void 0 : u.buttons[f]) || {
-										touched: !1,
-										pressed: !1,
-										value: 0
-									};
-								g[f] = {
-									touched: y.touched || G.touched || !1,
-									pressed: y.pressed || G.pressed || !1,
-									value: Math.max(y.value, G.value) || 0
-								}
-							}
-							Object.defineProperty(r[l], "buttons", {
-								value: g,
-								enumerable: !0,
-								configurable: !0
-							});
-							let v = Math.max(m.axes.length, u.axes.length),
-								b = new Array(h);
-							for (let f = 0; f < v; f++) {
-								const y = (s = m.axes[f]) != null ? s : 0,
-									G = (c = u.axes[f]) != null ? c : 0;
-								b[f] = Math.abs(y) > Math.abs(G) ? y : G
-							}
-							Object.defineProperty(r[l], "axes", {
-								value: b,
-								enumerable: !0,
-								configurable: !0
-							})
-						} else m && (Object.defineProperty(m, "emulation", {
-							value: L.emulated,
-							enumerable: !0,
-							configurable: !0
-						}), Object.defineProperty(m, "timestamp", {
+
+				for (let i = 0; i < emulated.length; i++) {
+					let existing = result[i];
+					let emu = emulated[i];
+
+					if (emu && existing) {
+						Object.defineProperty(result[i], "emulation", {
+							value: EmulationMode.overlay,
+							configurable: true
+						});
+
+						let btnCount = Math.max(existing.buttons?.length || 0, emu.buttons.length);
+						let buttons = new Array(btnCount);
+
+						for (let j = 0; j < btnCount; j++) {
+							const emuBtn = emu.buttons[j] || {
+								touched: false,
+								pressed: false,
+								value: 0
+							};
+							const realBtn = existing.buttons[j] || {
+								touched: false,
+								pressed: false,
+								value: 0
+							};
+							buttons[j] = {
+								touched: emuBtn.touched || realBtn.touched || false,
+								pressed: emuBtn.pressed || realBtn.pressed || false,
+								value: Math.max(emuBtn.value, realBtn.value) || 0
+							};
+						}
+
+						Object.defineProperty(result[i], "buttons", {
+							value: buttons,
+							enumerable: true,
+							configurable: true
+						});
+
+						let axisCount = Math.max(emu.axes.length, existing.axes.length);
+						let axes = new Array(axisCount);
+
+						for (let j = 0; j < axisCount; j++) {
+							const emuAxis = emu.axes[j] ?? 0;
+							const realAxis = existing.axes[j] ?? 0;
+							axes[j] = Math.abs(emuAxis) > Math.abs(realAxis) ? emuAxis : realAxis;
+						}
+
+						Object.defineProperty(result[i], "axes", {
+							value: axes,
+							enumerable: true,
+							configurable: true
+						});
+					} else if (emu) {
+						Object.defineProperty(emu, "emulation", {
+							value: EmulationMode.emulated,
+							enumerable: true,
+							configurable: true
+						});
+						Object.defineProperty(emu, "timestamp", {
 							value: performance.now(),
-							enumerable: !0,
-							configurable: !0
-						}), r[l] = e.cloneGamepad(m))
+							enumerable: true,
+							configurable: true
+						});
+						result[i] = self.cloneGamepad(emu);
 					}
-					return r
 				}
-			})
+				return result;
+			}
+		});
+	}
+
+	cleanup() {
+		for (let i = 0; i < this.emulatedGamepads.length; i++) {
+			this.ClearButtonTouchEventListeners(i);
+			this.ClearJoystickTouchEventListeners(i);
 		}
-		cleanup() {
-			for (let e = 0; e < this.emulatedGamepads.length; e++) this.ClearButtonTouchEventListeners(e), this.ClearJoystickTouchEventListeners(e);
-			this.emulatedGamepads = [], this.undoEventPatch(), this.getNativeGamepads ? Object.defineProperty(navigator, "getGamepads", {
+		this.emulatedGamepads = [];
+		this.undoEventPatch();
+
+		if (this.getNativeGamepads) {
+			Object.defineProperty(navigator, "getGamepads", {
 				value: this.getNativeGamepads,
-				configurable: !0
-			}) : Object.defineProperty(navigator, "getGamepads", {
-				value: void 0,
-				configurable: !0
-			}), E.instanceRunning = !1, delete navigator.getNativeGamepads
+				configurable: true
+			});
+		} else {
+			Object.defineProperty(navigator, "getGamepads", {
+				value: undefined,
+				configurable: true
+			});
 		}
-	};
-p(E, "instanceRunning", !1);
-var GamepadEmulator = E;
+
+		GamepadEmulator.instanceRunning = false;
+		delete navigator.getNativeGamepads;
+	}
+}
+
+definePublicProperty(GamepadEmulator, "instanceRunning", false);
+
+// export default GamepadEmulator;
 // export {
-// 	Z as C, H as D, C as G, B as P, q as a, X as b, F as c, Y as d, w as e, U as f, x as g, S as h, L as i, j as s
+// 	setTransformOriginToCenter,
+// 	DEFAULT_BUTTON_COUNT,
+// 	GamepadStateTracker,
+// 	DEFAULT_AXIS_COUNT,
+// 	GamepadButton,
+// 	TAP_TARGET_NAMES,
+// 	Direction,
+// 	DIAGONAL_DPAD_MAPPING,
+// 	ControlType,
+// 	GamepadElementClass,
+// 	EmulationMode,
+// 	GamepadAxis
 // };

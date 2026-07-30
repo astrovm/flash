@@ -4,14 +4,16 @@ const projectDirectory = new URL("..", import.meta.url);
 const read = (relativePath: string) =>
   Bun.file(new URL(relativePath, projectDirectory)).text();
 
-const [games, main, host, game, source, preloadFiles] = await Promise.all([
-  read("site/js/games.js"),
-  read("site/js/main.js"),
-  read("site/iframe/revcdos/index.html"),
-  read("site/iframe/revcdos/game.js"),
-  read("site/iframe/revcdos/SOURCE.md"),
-  read("site/iframe/revcdos/preload_files.list"),
-]);
+const [games, main, host, game, source, packageManifest, fetchModule] =
+  await Promise.all([
+    read("site/js/games.js"),
+    read("site/js/main.js"),
+    read("site/iframe/revcdos/index.html"),
+    read("site/iframe/revcdos/game.js"),
+    read("site/iframe/revcdos/SOURCE.md"),
+    read("site/iframe/revcdos/modules/packages/en.js"),
+    read("site/iframe/revcdos/modules/fetch.js"),
+  ]);
 
 test("registers reVCDOS as a bundled iframe application", () => {
   expect(games).toContain("revcdos: {");
@@ -25,21 +27,32 @@ test("ships the engine without bundled game data", async () => {
     new URL("site/iframe/revcdos/index.wasm", projectDirectory),
   );
   expect(await runtime.exists()).toBe(true);
-  expect(preloadFiles).toContain("vc-assets/local/models/gta3.dir");
+  expect(
+    new Bun.CryptoHasher("sha256")
+      .update(await runtime.arrayBuffer())
+      .digest("hex"),
+  ).toBe("db6aa7b9169a638e06b17f7bed5a6b3e473e00ae7bbb47354729fa94b971ebf2");
+  expect(packageManifest).toContain(
+    'filename: "/vc-assets/local/anim/ped.ifp"',
+  );
+  expect(packageManifest).toContain("remote_package_size: 135355111");
   expect(source).toContain("does not bundle the compatible game-data package");
 });
 
-test("hosts the file-selection protocol inside the Astro Flash iframe", () => {
+test("adapts the Lolendor package and streaming protocols to local files", () => {
   expect(host).toContain('type="file" webkitdirectory directory');
   expect(host).toContain('gameFrame.src = "game.html"');
-  expect(host).toContain('message.event === "module.initfs"');
-  expect(host).toContain('message.event === "module.getasyncurl"');
+  expect(host).toContain('message.event === "module.package"');
+  expect(host).toContain('message.event === "module.getfile"');
+  expect(host).toContain("new Uint8Array(message.size)");
+  expect(host).toContain("Required file is missing");
+  expect(game).toContain("DATA_PACKAGE.files.map");
+  expect(game).toContain("getPreloadedPackage: () => data.buffer");
+  expect(game).toContain("fetchLocalAsset");
+  expect(fetchModule).toContain('Module["fetchLocalAsset"](url_)');
   expect(game).toContain("window.parent.postMessage");
   expect(game).not.toContain("window.top.postMessage");
-  expect(game).toContain("window.location.hostname !== 'test.js-dos.com'");
-  expect(game).not.toContain(
-    "window.location.href.includes('test.js-dos.com')",
-  );
+  expect(game).not.toContain("vc-sky-en-v6.data");
 });
 
 test("offers a persistent WebTorrent download alongside manual selection", async () => {
