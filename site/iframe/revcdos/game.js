@@ -4,6 +4,11 @@ var statusElement = document.getElementById("status");
 var progressElement = document.getElementById("progress");
 var spinnerElement = document.getElementById('spinner');
 var wasm_content = params.get("wasm");
+const currentLanguage = "en";
+const cheatsEnabled = true;
+const maxFPS = 0;
+const haveOriginalGame = true;
+const replaceFetch = (url) => url.replace("https://cdn.dos.zone/vcsky/", "");
 
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 let isTouch = isMobile && window.matchMedia('(pointer: coarse)').matches;
@@ -80,8 +85,35 @@ const textDecoder = new TextDecoder();
     }
 })();
 
+function requestParent(event, payload, responseEvent) {
+    return new Promise((resolve, reject) => {
+        const requestId = crypto.randomUUID();
+        const listener = (messageEvent) => {
+            const data = messageEvent.data;
+            if (data?.event !== responseEvent || data.requestId !== requestId) return;
+            window.removeEventListener("message", listener);
+            if (data.error) reject(new Error(data.error));
+            else resolve(data.data);
+        };
+        window.addEventListener("message", listener);
+        window.parent.postMessage({ event, requestId, ...payload }, location.origin);
+    });
+}
+
 async function loadData() {
-};
+    setStatus("Preparing local game data…");
+    const files = DATA_PACKAGE.files.map(({ filename, start, end }) => ({
+        path: filename.replace(/^\/+/, ""),
+        start,
+        end,
+    }));
+    const buffer = await requestParent(
+        "module.package",
+        { files, size: DATA_PACKAGE.remote_package_size },
+        ">module.package",
+    );
+    return new Uint8Array(buffer);
+}
 
 async function startGame(e) {
     e.stopPropagation();
@@ -90,121 +122,33 @@ async function startGame(e) {
     document.querySelector('.developed-by').style.display = 'none';
     document.querySelector('.click-to-play').style.display = 'none';
 
-    loadGame();
+    loadData().then(loadGame).catch((error) => {
+        console.error("Unable to prepare local game data:", error);
+        setStatus(`Unable to prepare local game data: ${error.message}`);
+    });
 }
 
 function setStatus(text) {
     console.log(text);
+    if (statusElement) statusElement.textContent = text || "";
 };
 
-async function loadGame() {
+async function loadGame(data) {
     var Module = {
-        initFS: async () => {
-            await new Promise((resolve, reject) => {
-                let files = 0;
-                window.addEventListener('message', (event) => {
-                    const data = event.data;
-                    if (data.event === '>module.initfs') {
-                        files = data.files;
-                    }
-
-                    if (data.event === '>module.initfile' || data.event === '>module.initfs') {
-                        if (data.event === '>module.initfile') {
-                            try {
-                                const parts = data.path.split('/');
-                                let path = '';
-                                for (let i = 0; i < parts.length - 1; i++) {
-                                    path += '/' + parts[i];
-                                    try {
-                                        Module.FS.mkdir(path);
-                                    } catch (e) {
-                                        // Directory already exists, ignore error
-                                    }
-                                }
-                                Module.FS.createDataFile(data.path, 0, data.data, data.data.length);
-                            } catch (e) {
-                                reject(new Error('Failed to create file: ' + data.path));
-                                return;
-                            }
-                            files--;
-                        }
-                        if (files > 0) {
-                            window.parent.postMessage({
-                                event: 'module.initfile',
-                            }, '*');
-                        } else {
-                            resolve();
-                        }
-                    }
-                });
-
-                window.parent.postMessage({
-                    event: 'module.initfs',
-                }, '*');
-            });
-
-            if (!isMobile) {
-                if (window.top === window) {
-                    if (window.location.hostname !== 'test.js-dos.com') {
-                        document.body.requestFullscreen(document.documentElement);
-                    }
-                } else {
-                    window.parent.postMessage({
-                        event: 'request-fullscreen',
-                    }, '*');
-                }
-                function lockMouseIfNeeded() {
-                    if (!document.pointerLockElement && typeof Module !== 'undefined' && Module.canvas) {
-                        Module.canvas.requestPointerLock({
-                            unadjustedMovement: true,
-                        }).catch(() => {
-                            console.warn('Failed to lock in unadjusted movement mode');
-                            Module.canvas.requestPointerLock().catch(() => {
-                                console.error('Failed to lock in default mode');
-                            });
-                        });
-                    }
-                }
-                document.addEventListener("mousedown", lockMouseIfNeeded, { capture: true });
-                if (navigator.keyboard && navigator.keyboard.lock) {
-                    navigator.keyboard.lock(["Escape", "KeyW"]);
-                }
-            }
-        },
-        getAsyncUrl: (file) => new Promise((resolve, reject) => {
-            file = file.replaceAll("\\", "/").replaceAll("//", "/");
-            const listener = (event) => {
-                const data = event.data;
-                if (data.event === '>module.getasyncurl' && data.file === file) {
-                    window.removeEventListener('message', listener);
-                    if (data.data) {
-                        const url = URL.createObjectURL(new Blob([data.data.buffer]));
-                        resolve(url);
-                    } else {
-                        reject(new Error("File not found: " + file));
-                    }
-                }
-            }
-            window.addEventListener('message', listener);
-            window.parent.postMessage({
-                event: 'module.getasyncurl',
-                file,
-            }, '*');
-        }),
-        mainCalled: async () => {
+        getPreloadedPackage: () => data.buffer,
+        fetchLocalAsset: (file) => requestParent(
+            "module.getfile",
+            { file: file.replaceAll("\\", "/").replace(/^\/+/, "") },
+            ">module.getfile",
+        ),
+        mainCalled: () => {
             try {
-                Module.FS.mkdir("/vc-assets");
-                Module.FS.mkdir("/vc-assets/local");
-
-                await Module.initFS();
-
                 try {
                     Module.FS.unlink("/vc-assets/local/revc.ini");
                 } catch (e) {
                     // ignore
                 }
                 Module.FS.createDataFile("/vc-assets/local/revc.ini", 0, revc_ini, revc_ini.length);
-                Module['_async_main']();
             } catch (e) {
                 console.error('mainCalled error:', e);
             }

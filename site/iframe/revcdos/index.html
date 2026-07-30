@@ -165,6 +165,20 @@
       let gameFrame = null;
 
       const readFile = (file) => file.arrayBuffer();
+      const normalizeAssetPath = (path) =>
+        String(path).replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
+
+      const findAssetFile = (requestedPath) => {
+        const path = normalizeAssetPath(requestedPath);
+        const candidates = [
+          path,
+          path.replace(/^fetched\//, "vc-assets/local/"),
+          path.replace(/^vcsky\/fetched\//, "vc-assets/local/"),
+        ];
+        return candidates
+          .map((candidate) => files.get(candidate))
+          .find(Boolean);
+      };
 
       const cacheEngineForOfflineUse = () => {
         window.parent.postMessage(
@@ -466,6 +480,71 @@
         if (!gameFrame || event.source !== gameFrame.contentWindow) return;
         const message = event.data;
         if (!message || typeof message.event !== "string") return;
+
+        if (
+          message.event === "module.package" &&
+          Array.isArray(message.files)
+        ) {
+          try {
+            const packageData = new Uint8Array(message.size);
+            let nextFile = 0;
+            const workers = Array.from({ length: 8 }, async () => {
+              while (nextFile < message.files.length) {
+                const packageFile = message.files[nextFile++];
+                const file = findAssetFile(packageFile.path);
+                if (!file) {
+                  throw new Error(
+                    `Required file is missing: ${packageFile.path}`,
+                  );
+                }
+                const buffer = await readFile(file);
+                const expectedSize = packageFile.end - packageFile.start;
+                if (buffer.byteLength !== expectedSize) {
+                  throw new Error(
+                    `Unexpected size for ${packageFile.path}: expected ${expectedSize}, received ${buffer.byteLength}`,
+                  );
+                }
+                packageData.set(new Uint8Array(buffer), packageFile.start);
+              }
+            });
+            await Promise.all(workers);
+            event.source.postMessage(
+              {
+                event: ">module.package",
+                requestId: message.requestId,
+                data: packageData,
+              },
+              location.origin,
+              [packageData.buffer],
+            );
+          } catch (error) {
+            event.source.postMessage(
+              {
+                event: ">module.package",
+                requestId: message.requestId,
+                error: error.message,
+              },
+              location.origin,
+            );
+          }
+          return;
+        }
+
+        if (message.event === "module.getfile" && message.file) {
+          const file = findAssetFile(message.file);
+          const buffer = file ? await readFile(file) : null;
+          event.source.postMessage(
+            {
+              event: ">module.getfile",
+              requestId: message.requestId,
+              data: buffer || undefined,
+              error: buffer ? undefined : `File not found: ${message.file}`,
+            },
+            location.origin,
+            buffer ? [buffer] : [],
+          );
+          return;
+        }
 
         if (message.event === "module.initfs") {
           const preload = await (await fetch("preload_files.list")).text();
