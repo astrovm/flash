@@ -160,8 +160,6 @@
       const setup = document.getElementById("setup");
       const selection = document.getElementById("selection");
       let files = new Map();
-      let initialFiles = [];
-      let currentFile = -1;
       let gameFrame = null;
 
       const readFile = (file) => file.arrayBuffer();
@@ -539,58 +537,6 @@
               requestId: message.requestId,
               data: buffer || undefined,
               error: buffer ? undefined : `File not found: ${message.file}`,
-            },
-            location.origin,
-            buffer ? [buffer] : [],
-          );
-          return;
-        }
-
-        if (message.event === "module.initfs") {
-          const preload = await (await fetch("preload_files.list")).text();
-          const requested = new Set(
-            preload
-              .split("\n")
-              .map((line) => line.trim().toLowerCase())
-              .filter((line) => line && !line.startsWith("#")),
-          );
-          initialFiles = Array.from(requested).filter((path) =>
-            files.has(path),
-          );
-          currentFile = -1;
-          event.source.postMessage(
-            { event: ">module.initfs", files: initialFiles.length },
-            location.origin,
-          );
-          return;
-        }
-
-        if (message.event === "module.initfile") {
-          currentFile += 1;
-          if (currentFile >= initialFiles.length) return;
-          const path = initialFiles[currentFile];
-          const buffer = await readFile(files.get(path));
-          event.source.postMessage(
-            {
-              event: ">module.initfile",
-              path,
-              data: new Uint8Array(buffer),
-            },
-            location.origin,
-            [buffer],
-          );
-          return;
-        }
-
-        if (message.event === "module.getasyncurl" && message.file) {
-          const path = String(message.file).toLowerCase();
-          const file = files.get(path);
-          const buffer = file ? await readFile(file) : null;
-          event.source.postMessage(
-            {
-              event: ">module.getasyncurl",
-              file: message.file,
-              data: buffer ? new Uint8Array(buffer) : undefined,
             },
             location.origin,
             buffer ? [buffer] : [],

@@ -141,10 +141,10 @@
   },
   "revcdos": {
     "file": "revcdos.png",
-    "source": "https://cdn.dos.zone/vcsky/revcdos.jpg",
+    "source": "https://github.com/Lolendor/reVCDOS/blob/95f14ef3c1d0a872ecd0881544cc7e1f55cb1946/dist/cover.jpg",
     "retrieved": "2026-07-29",
-    "sha256": "d1cbb54445e2a38688d5d63fdfdb7294d9671dc09778aa837e63a897cdab4652",
-    "notes": "Cropped from the official reVCDOS artwork referenced by the v9 runtime."
+    "sha256": "3d2225ff6dfe5b158814cfdfd2cb1de435526d9a53199fe4c5e94066e7cbb017",
+    "notes": "Center-cropped from the cover artwork in Lolendor/reVCDOS."
   },
   "eds-candy-machine": {
     "file": "eds-candy-machine.png",

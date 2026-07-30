@@ -1,427 +1,749 @@
-const params = new URLSearchParams(window.location.search);
-const cloudSavesStatus = document.getElementById('cloud-saves-status');
+const cloudSavesStatus = document.getElementById("cloud-saves-status");
 var statusElement = document.getElementById("status");
 var progressElement = document.getElementById("progress");
-var spinnerElement = document.getElementById('spinner');
-var wasm_content = params.get("wasm");
-const currentLanguage = "en";
-const cheatsEnabled = true;
-const maxFPS = 0;
-const haveOriginalGame = true;
+var spinnerElement = document.getElementById("spinner");
+var wasm_content = "index.wasm";
+
+const params = new URLSearchParams(window.location.search);
+
+// Base URLs
 const replaceFetch = (url) => url.replace("https://cdn.dos.zone/vcsky/", "");
 
+// Configurable mode - show settings UI before play
+const configurableMode = params.get("configurable") === "1";
+
+// Settings that can be configured via URL or UI
+let autoFullScreen = params.get("fullscreen") !== "0";
+let cheatsEnabled = params.get("cheats") !== "0";
+let maxFPS = parseInt(params.get("max_fps")) || 0;
+
+// full game access
+if (params.get("request_original_game") !== "1")
+  localStorage.setItem("vcsky.haveOriginalGame", "true");
+
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-let isTouch = isMobile && window.matchMedia('(pointer: coarse)').matches;
+let isTouch = isMobile && window.matchMedia("(pointer: coarse)").matches;
 
 document.body.dataset.isTouch = isTouch ? 1 : 0;
 
 const dataSize = 130 * 1024 * 1024;
 const textDecoder = new TextDecoder();
-(function () {
-    const translations = {
-        en: {
-            clickToPlayDemo: "Click to play demo",
-            clickToPlayFull: "Click to play",
-            invalidKey: "invalid key",
-            checking: "checking...",
-            cloudSaves: "Cloud saves:",
-            enabled: "enabled",
-            disabled: "disabled",
-            playDemoText: "You can play the DEMO version, or provide the original game files to play the full version.",
-            disclaimer: "DISCLAIMER:",
-            disclaimerSources: "This game uses the open source reVCDOS engine. It is not a commercial release.",
-            disclaimerCheckbox: "I own the original game",
-            disclaimerPrompt: "You need to provide a file from the original game to confirm ownership of the original game.",
-            cantContinuePlaying: "You can't continue playing in DEMO version. Please provide the original game files to continue playing.",
-            demoAlert: "The demo version is intended only for familiarizing yourself with the game technology. All features are available, but you won’t be able to progress through the game’s storyline. Please provide the original game files to launch the full version.",
-            downloading: "Downloading",
-            enterKey: "enter your key",
-            clickToContinue: "Click to continue...",
-            enterJsDosKey: "Enter js-dos key",
-            portBy: "HTML5 port by:",
-            ruTranslate: "",
-            demoOffDisclaimer: "Due to the unexpectedly high popularity of the project, resulting in significant traffic costs, and in order to avoid any risk of the project being shut down due to rights holder claims, we have disabled the demo version. You can still run the full version by providing the original game resources.",
-        },
-        ru: {
-            clickToPlayDemo: "Играть в демо версию",
-            clickToPlayFull: "Играть",
-            invalidKey: "неверный ключ",
-            checking: "проверка...",
-            cloudSaves: "Облачные сохранения:",
-            enabled: "включены",
-            disabled: "выключены",
-            playDemoText: "Вы можете играть в демо версию, или предоставить оригинальные файлы игры для полной версии.",
-            disclaimer: "ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ:",
-            disclaimerSources: "Эта игра использует движок reVCDOS с открытым исходным кодом. Это не коммерческий выпуск.",
-            disclaimerCheckbox: "Я владею оригинальной игрой",
-            disclaimerPrompt: "Вам потребуется приложить какой-либо файл из оригинальной игры для подтверждения владения оригинальной игрой.",
-            cantContinuePlaying: "Вы не можете продолжить игру в демо версии. Пожалуйста, предоставьте оригинальные файлы игры для продолжения игры.",
-            demoAlert: "Демо версия предназначена только для ознакомления с технологией игры. Все функции доступны, но вы не сможете продолжить игру по сюжету. Пожалуйста, предоставьте оригинальные файлы игры для запуска полной версии.",
-            downloading: "Загрузка",
-            enterKey: "введите ваш ключ",
-            clickToContinue: "Нажмите для продолжения...",
-            enterJsDosKey: "Введите ключ js-dos",
-            portBy: "Авторы HTML5 порта:",
-            ruTranslate: `
+let haveOriginalGame = true;
+const translations = {
+  en: {
+    clickToPlayDemo: "Click to play demo",
+    clickToPlayFull: "Click to play",
+    invalidKey: "invalid key",
+    checking: "checking...",
+    cloudSaves: "Cloud saves:",
+    enabled: "enabled",
+    disabled: "disabled",
+    playDemoText:
+      "You can play the DEMO version, or provide the original game files to play the full version.",
+    disclaimer: "DISCLAIMER:",
+    disclaimerSources:
+      "This game uses the open source reVCDOS engine. It is not a commercial release.",
+    disclaimerCheckbox: "I own the original game",
+    disclaimerPrompt:
+      "You need to provide a file from the original game to confirm ownership of the original game.",
+    cantContinuePlaying:
+      "You can't continue playing in DEMO version. Please provide the original game files to continue playing.",
+    demoAlert:
+      "The demo version is intended only for familiarizing yourself with the game technology. All features are available, but you won't be able to progress through the game's storyline. Please provide the original game files to launch the full version.",
+    downloading: "Downloading",
+    enterKey: "enter your key",
+    clickToContinue: "Click to continue...",
+    enterJsDosKey: "Enter js-dos key (5 len)",
+    portBy: "HTML5 port by:",
+    ruTranslate: "",
+    demoOffDisclaimer:
+      "Due to the unexpectedly high popularity of the project, resulting in significant traffic costs, and in order to avoid any risk of the project being shut down due to rights holder claims, we have disabled the demo version. You can still run the full version by providing the original game resources.",
+    configLanguage: "Language:",
+    configCheats: "Cheats (F3)",
+    configFullscreen: "Fullscreen",
+    configMaxFps: "Max FPS:",
+    configUnlimited: "(0 = unlimited)",
+  },
+  ru: {
+    clickToPlayDemo: "Играть в демо версию",
+    clickToPlayFull: "Играть",
+    invalidKey: "неверный ключ",
+    checking: "проверка...",
+    cloudSaves: "Облачные сохранения:",
+    enabled: "включены",
+    disabled: "выключены",
+    playDemoText:
+      "Вы можете играть в демо версию, или предоставить оригинальные файлы игры для полной версии.",
+    disclaimer: "ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ:",
+    disclaimerSources:
+      "Эта игра использует движок reVCDOS с открытым исходным кодом. Это не коммерческий выпуск.",
+    disclaimerCheckbox: "Я владею оригинальной игрой",
+    disclaimerPrompt:
+      "Вам потребуется приложить какой-либо файл из оригинальной игры для подтверждения владения оригинальной игрой.",
+    cantContinuePlaying:
+      "Вы не можете продолжить игру в демо версии. Пожалуйста, предоставьте оригинальные файлы игры для продолжения игры.",
+    demoAlert:
+      "Демо версия предназначена только для ознакомления с технологией игры. Все функции доступны, но вы не сможете продолжить игру по сюжету. Пожалуйста, предоставьте оригинальные файлы игры для запуска полной версии.",
+    downloading: "Загрузка",
+    enterKey: "введите ваш ключ",
+    clickToContinue: "Нажмите для продолжения...",
+    enterJsDosKey: "Введите ключ js-dos (5 букв)",
+    portBy: "Авторы HTML5 порта:",
+    ruTranslate: `
 <div class="translated-by">
     <span>Переведено на русский студией</span>
     <a href="https://www.gamesvoice.ru/" target="_blank">GamesVoice</a>
 </div>
 `,
-            demoOffDisclaimer: "В связи с неожиданно высокой популярностью проекта, как следствие — значительными расходами на трафик, а также во избежание рисков закрытия проекта из-за претензий правообладателей, мы отключили возможность запуска демо-версии. При этом вы по-прежнему можете запустить полную версию, предоставив оригинальные ресурсы.",
-        },
-    };
+    demoOffDisclaimer:
+      "В связи с неожиданно высокой популярностью проекта, как следствие — значительными расходами на трафик, а также во избежание рисков закрытия проекта из-за претензий правообладателей, мы отключили возможность запуска демо-версии. При этом вы по-прежнему можете запустить полную версию, предоставив оригинальные ресурсы.",
+    configLanguage: "Язык:",
+    configCheats: "Читы (F3)",
+    configFullscreen: "Полный экран",
+    configMaxFps: "Макс. FPS:",
+    configUnlimited: "(0 = без ограничений)",
+  },
+};
 
-    let currentLanguage = navigator.language.split("-")[0] === "ru" ? "ru" : "en";
-    if (params.get("lang") === "ru") {
-        currentLanguage = "ru";
-    }
-    if (params.get("lang") === "en") {
-        currentLanguage = "en";
-    }
+var currentLanguage = "en";
 
-    window.t = function (key) {
-        return translations[currentLanguage][key];
-    }
-})();
+window.t = function (key) {
+  return translations[currentLanguage][key];
+};
+
+// Function to update all translated texts on the page
+function updateAllTranslations() {
+  const keyInput = document.querySelector(".jsdos-key-input");
+  if (keyInput) keyInput.setAttribute("placeholder", t("enterJsDosKey"));
+
+  const clickToPlayButton = document.getElementById("click-to-play-button");
+  if (clickToPlayButton) {
+    clickToPlayButton.textContent = haveOriginalGame
+      ? t("clickToPlayFull")
+      : t("clickToPlayDemo");
+  }
+
+  const demoOffDisclaimer = document.getElementById("demo-off-disclaimer");
+  if (demoOffDisclaimer) {
+    demoOffDisclaimer.textContent = haveOriginalGame
+      ? ""
+      : "* " + t("demoOffDisclaimer");
+  }
+
+  const cloudSavesLink = document.getElementById("cloud-saves-link");
+  if (cloudSavesLink) cloudSavesLink.textContent = t("cloudSaves");
+
+  const cloudSavesStatus = document.getElementById("cloud-saves-status");
+  if (cloudSavesStatus) cloudSavesStatus.textContent = t("enterKey");
+
+  const playDemoText = document.getElementById("play-demo-text");
+  if (playDemoText) playDemoText.textContent = t("playDemoText");
+
+  const disclaimerText = document.getElementById("disclaimer-text");
+  if (disclaimerText) disclaimerText.textContent = t("disclaimer");
+
+  const disclaimerSources = document.getElementById("disclaimer-sources");
+  if (disclaimerSources) disclaimerSources.textContent = t("disclaimerSources");
+
+  const disclaimerCheckboxLabel = document.getElementById(
+    "disclaimer-checkbox-label",
+  );
+  if (disclaimerCheckboxLabel)
+    disclaimerCheckboxLabel.textContent = t("disclaimerCheckbox");
+
+  const portBy = document.getElementById("port-by");
+  if (portBy) portBy.textContent = t("portBy");
+
+  // Update developed-by section for ruTranslate
+  const developedBy = document.querySelector(".developed-by");
+  const existingTranslatedBy = developedBy?.querySelector(".translated-by");
+  if (existingTranslatedBy) existingTranslatedBy.remove();
+  if (developedBy && t("ruTranslate")) {
+    developedBy.insertAdjacentHTML("beforeend", t("ruTranslate"));
+  }
+
+  // Update config panel labels if present
+  const configLangLabel = document.getElementById("config-lang-label");
+  if (configLangLabel) configLangLabel.textContent = t("configLanguage");
+
+  const configCheatsLabel = document.getElementById("config-cheats-label");
+  if (configCheatsLabel) configCheatsLabel.textContent = t("configCheats");
+
+  const configFullscreenLabel = document.getElementById(
+    "config-fullscreen-label",
+  );
+  if (configFullscreenLabel)
+    configFullscreenLabel.textContent = t("configFullscreen");
+
+  const configMaxFpsLabel = document.getElementById("config-max-fps-label");
+  if (configMaxFpsLabel) configMaxFpsLabel.textContent = t("configMaxFps");
+
+  const configMaxFpsUnlimited = document.getElementById(
+    "config-max-fps-unlimited",
+  );
+  if (configMaxFpsUnlimited)
+    configMaxFpsUnlimited.textContent = t("configUnlimited");
+}
 
 function requestParent(event, payload, responseEvent) {
-    return new Promise((resolve, reject) => {
-        const requestId = crypto.randomUUID();
-        const listener = (messageEvent) => {
-            const data = messageEvent.data;
-            if (data?.event !== responseEvent || data.requestId !== requestId) return;
-            window.removeEventListener("message", listener);
-            if (data.error) reject(new Error(data.error));
-            else resolve(data.data);
-        };
-        window.addEventListener("message", listener);
-        window.parent.postMessage({ event, requestId, ...payload }, location.origin);
-    });
+  return new Promise((resolve, reject) => {
+    const requestId = crypto.randomUUID();
+    const listener = (messageEvent) => {
+      const data = messageEvent.data;
+      if (
+        messageEvent.source !== window.parent ||
+        messageEvent.origin !== location.origin ||
+        data?.event !== responseEvent ||
+        data.requestId !== requestId
+      ) {
+        return;
+      }
+      window.removeEventListener("message", listener);
+      if (data.error) reject(new Error(data.error));
+      else resolve(data.data);
+    };
+    window.addEventListener("message", listener);
+    window.parent.postMessage(
+      { event, requestId, ...payload },
+      location.origin,
+    );
+  });
 }
 
 async function loadData() {
-    setStatus("Preparing local game data…");
-    const files = DATA_PACKAGE.files.map(({ filename, start, end }) => ({
-        path: filename.replace(/^\/+/, ""),
-        start,
-        end,
-    }));
-    const buffer = await requestParent(
-        "module.package",
-        { files, size: DATA_PACKAGE.remote_package_size },
-        ">module.package",
-    );
-    return new Uint8Array(buffer);
+  setStatus("Preparing local game data…");
+  const files = DATA_PACKAGE.files.map(({ filename, start, end }) => ({
+    path: filename.replace(/^\/+/, ""),
+    start,
+    end,
+  }));
+  const buffer = await requestParent(
+    "module.package",
+    { files, size: DATA_PACKAGE.remote_package_size },
+    ">module.package",
+  );
+  return new Uint8Array(buffer);
 }
 
 async function startGame(e) {
-    e.stopPropagation();
+  e.stopPropagation();
 
-    document.querySelector('.start-container').style.display = 'none';
-    document.querySelector('.developed-by').style.display = 'none';
-    document.querySelector('.click-to-play').style.display = 'none';
+  document.querySelector(".start-container").style.display = "none";
+  document.querySelector(".disclaimer").style.display = "none";
+  document.querySelector(".developed-by").style.display = "none";
 
-    loadData().then(loadGame).catch((error) => {
-        console.error("Unable to prepare local game data:", error);
-        setStatus(`Unable to prepare local game data: ${error.message}`);
-    });
+  const intro = document.querySelector(".intro");
+  const introContainer = document.querySelector(".intro-container");
+  const loaderContainer = document.querySelector(".loader-container");
+  document.querySelector(".click-to-play").style.display = "none";
+  loaderContainer.style.display = "flex";
+  introContainer.hidden = false;
+  intro.play();
+
+  const dataBuffer = await loadData();
+  spinnerElement.hidden = true;
+  setStatus(t("clickToContinue"));
+  introContainer.hidden = false;
+  introContainer.style.cursor = "pointer";
+  const clickHandler = () => {
+    intro.pause();
+    introContainer.style.display = "none";
+    loadGame(dataBuffer);
+  };
+  if (isMobile) {
+    window.addEventListener("pointerup", clickHandler, { once: true });
+  } else {
+    window.addEventListener("click", clickHandler, { once: true });
+  }
 }
 
 function setStatus(text) {
-    console.log(text);
-    if (statusElement) statusElement.textContent = text || "";
-};
-
-async function loadGame(data) {
-    var Module = {
-        getPreloadedPackage: () => data.buffer,
-        fetchLocalAsset: (file) => requestParent(
-            "module.getfile",
-            { file: file.replaceAll("\\", "/").replace(/^\/+/, "") },
-            ">module.getfile",
-        ),
-        mainCalled: () => {
-            try {
-                try {
-                    Module.FS.unlink("/vc-assets/local/revc.ini");
-                } catch (e) {
-                    // ignore
-                }
-                Module.FS.createDataFile("/vc-assets/local/revc.ini", 0, revc_ini, revc_ini.length);
-            } catch (e) {
-                console.error('mainCalled error:', e);
-            }
-        },
-        syncRevcIni: () => {
-            try {
-                const path = Module.FS.lookupPath("/vc-assets/local/revc.ini");
-                if (path && path.node && path.node.contents) {
-                    localStorage.setItem('vcsky.revc.ini', textDecoder.decode(path.node.contents));
-                }
-            } catch (e) {
-                console.error('syncRevcIni error:', e);
-            }
-        },
-        preRun: [],
-        postRun: [],
-        print: (...args) => console.log(args.join(' ')),
-        printErr: (...args) => console.error(args.join(' ')),
-        canvas: function () {
-            const canvas = document.getElementById('canvas');
-            canvas.addEventListener('webglcontextlost', (e) => {
-                statusElement.textContent = 'WebGL context lost. Please reload the page.';
-                e.preventDefault();
-            });
-            return canvas;
-        }(),
-        setStatus,
-        totalDependencies: 0,
-        monitorRunDependencies: (num) => {
-            Module.totalDependencies = Math.max(Module.totalDependencies, num);
-            Module.setStatus(`Preparing... (${Module.totalDependencies - num}/${Module.totalDependencies})`);
-        },
-        hotelMission: () => {
-            if (!haveOriginalGame) {
-                showWasted();
-                alert(t("cantContinuePlaying"));
-                throw new Error(t("cantContinuePlaying"));
-            }
-        },
-    };
-    Module.log = Module.print;
-    Module.instantiateWasm = async (
-        info,
-        receiveInstance,
-    ) => {
-        const wasm = await (await fetch(wasm_content ? wasm_content : "index.wasm")).arrayBuffer();
-        const module = await WebAssembly.instantiate(wasm, info);
-        return receiveInstance(module.instance, module);
-    };
-    Module.arguments = window.location.search
-        .slice(1)
-        .split('&')
-        .filter(Boolean)
-        .map(decodeURIComponent);
-    window.onbeforeunload = function (event) {
-        event.preventDefault();
-        return '';
-    };
-
-    window.Module = Module;
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = 'index.js';
-    document.body.appendChild(script);
-
-    document.body.classList.add('gameIsStarted');
-
-    const emulator = new GamepadEmulator();
-    const gamepad = emulator.AddEmulatedGamepad(null, true);
-    const gamepadEmulatorConfig = {
-        directions: { up: true, down: true, left: true, right: true },
-        dragDistance: 100,
-        tapTarget: move,
-        lockTargetWhilePressed: true,
-        xAxisIndex: 0,
-        yAxisIndex: 1,
-        swapAxes: false,
-        invertX: false,
-        invertY: false,
-    };
-    emulator.AddDisplayJoystickEventListeners(0, [gamepadEmulatorConfig]);
-    const gamepadEmulatorConfig1 = {
-        directions: { up: true, down: true, left: true, right: true },
-        dragDistance: 100,
-        tapTarget: look,
-        lockTargetWhilePressed: true,
-        xAxisIndex: 2,
-        yAxisIndex: 3,
-        swapAxes: false,
-        invertX: false,
-        invertY: false,
-    };
-    emulator.AddDisplayJoystickEventListeners(0, [gamepadEmulatorConfig1]);
-
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 9,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.menu'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 3,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.car.getIn'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 0,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.run'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 1,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.fist'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 5,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.drift'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 2,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.jump'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 4,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.mobile'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 11,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.job'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 4,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.radio'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 7,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.weapon'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 8,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.camera'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 10,
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.horn'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 7,
-        buttonIndexes: [1, 7],
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.fireRight'),
-    }]);
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 6,
-        buttonIndexes: [1, 6],
-        lockTargetWhilePressed: false,
-        tapTarget: document.querySelector('.touch-control.fireLeft'),
-    }]);
+  if (!text) {
+    progressElement.hidden = true;
+    spinnerElement.hidden = true;
+    return;
+  }
+  const match = text.match(/(.+)\((\d+\.?\d*)\/(\d+)\)/);
+  if (match) {
+    const [current, total] = match.slice(2, 4).map(Number);
+    const percent = ((current / total) * 100).toFixed(0);
+    statusElement.textContent = t("downloading") + ` ${percent}%`;
+    progressElement.value = current;
+    progressElement.max = total;
+    progressElement.hidden = false;
+    spinnerElement.hidden = false;
+    const progressBarFill = spinnerElement.querySelector(".progress-bar-fill");
+    if (progressBarFill) {
+      progressBarFill.style.width = percent + "%";
+    }
+  } else {
+    statusElement.textContent = text;
+  }
 }
 
-const clickToPlay = document.querySelector('.click-to-play');
-const clickLink = clickToPlay.querySelector('button');
-clickToPlay.addEventListener('click', (e) => {
-    if (e.target === clickToPlay || e.target === clickLink) {
-        startGame(e);
-    } else if (window.top !== window) {
-        window.parent.postMessage({
-            event: 'request-fullscreen',
-        }, '*');
+async function loadGame(data) {
+  var Module = {
+    mainCalled: () => {
+      try {
+        Module.FS.unlink("/vc-assets/local/revc.ini");
+        Module.FS.createDataFile(
+          "/vc-assets/local/revc.ini",
+          0,
+          revc_ini,
+          revc_ini.length,
+        );
+      } catch (e) {
+        console.error("mainCalled error:", e);
+      }
+    },
+    syncRevcIni: () => {
+      try {
+        const path = Module.FS.lookupPath("/vc-assets/local/revc.ini");
+        if (path && path.node && path.node.contents) {
+          localStorage.setItem(
+            "vcsky.revc.ini",
+            textDecoder.decode(path.node.contents),
+          );
+        }
+      } catch (e) {
+        console.error("syncRevcIni error:", e);
+      }
+    },
+    preRun: [],
+    postRun: [],
+    print: (...args) => console.log(args.join(" ")),
+    printErr: (...args) => console.error(args.join(" ")),
+    getPreloadedPackage: () => {
+      return data.buffer;
+    },
+    canvas: (function () {
+      const canvas = document.getElementById("canvas");
+      canvas.addEventListener("webglcontextlost", (e) => {
+        statusElement.textContent =
+          "WebGL context lost. Please reload the page.";
+        e.preventDefault();
+      });
+      return canvas;
+    })(),
+    setStatus,
+    totalDependencies: 0,
+    monitorRunDependencies: (num) => {
+      Module.totalDependencies = Math.max(Module.totalDependencies, num);
+      Module.setStatus(
+        `Preparing... (${Module.totalDependencies - num}/${Module.totalDependencies})`,
+      );
+    },
+    hotelMission: () => {
+      if (!haveOriginalGame) {
+        showWasted();
+        alert(t("cantContinuePlaying"));
+        throw new Error(t("cantContinuePlaying"));
+      }
+    },
+    fetchLocalAsset: (file) =>
+      requestParent("module.getfile", { file }, ">module.getfile"),
+  };
+  Module.log = Module.print;
+  Module.instantiateWasm = async (info, receiveInstance) => {
+    const wasm = await (await fetch(wasm_content)).arrayBuffer();
+    const module = await WebAssembly.instantiate(wasm, info);
+    return receiveInstance(module.instance, module);
+  };
+  window.onerror = (message) => {
+    Module.setStatus(`Error: ${message}`);
+    spinnerElement.hidden = true;
+  };
+  Module.arguments = window.location.search
+    .slice(1)
+    .split("&")
+    .filter(Boolean)
+    .map(decodeURIComponent);
+  window.onbeforeunload = function (event) {
+    event.preventDefault();
+    return "";
+  };
+
+  window.Module = Module;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = "index.js";
+  document.body.appendChild(script);
+
+  document.body.classList.add("gameIsStarted");
+
+  const emulator = new GamepadEmulator();
+  const gamepad = emulator.AddEmulatedGamepad(null, true);
+  const gamepadEmulatorConfig = {
+    directions: { up: true, down: true, left: true, right: true },
+    dragDistance: 100,
+    tapTarget: move,
+    lockTargetWhilePressed: true,
+    xAxisIndex: 0,
+    yAxisIndex: 1,
+    swapAxes: false,
+    invertX: false,
+    invertY: false,
+  };
+  emulator.AddDisplayJoystickEventListeners(0, [gamepadEmulatorConfig]);
+  const gamepadEmulatorConfig1 = {
+    directions: { up: true, down: true, left: true, right: true },
+    dragDistance: 100,
+    tapTarget: look,
+    lockTargetWhilePressed: true,
+    xAxisIndex: 2,
+    yAxisIndex: 3,
+    swapAxes: false,
+    invertX: false,
+    invertY: false,
+  };
+  emulator.AddDisplayJoystickEventListeners(0, [gamepadEmulatorConfig1]);
+
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 9,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.menu"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 3,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.car.getIn"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 0,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.run"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 1,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.fist"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 5,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.drift"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 2,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.jump"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 4,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.mobile"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 11,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.job"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 4,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.radio"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 7,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.weapon"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 8,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.camera"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 10,
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.horn"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 7,
+      buttonIndexes: [1, 7],
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.fireRight"),
+    },
+  ]);
+  emulator.AddDisplayButtonEventListeners(0, [
+    {
+      buttonIndex: 6,
+      buttonIndexes: [1, 6],
+      lockTargetWhilePressed: false,
+      tapTarget: document.querySelector(".touch-control.fireLeft"),
+    },
+  ]);
+}
+
+const clickToPlay = document.querySelector(".click-to-play");
+const clickLink = clickToPlay.querySelector("button");
+clickToPlay.addEventListener("click", (e) => {
+  if (!haveOriginalGame) {
+    //     alert(t('demoAlert'));
+    alert(t("demoOffDisclaimer"));
+    return;
+  }
+  if (e.target === clickToPlay || e.target === clickLink) {
+    startGame(e);
+    if (!isMobile && autoFullScreen) {
+      if (window.top === window) {
+        document.body.requestFullscreen(document.documentElement);
+      } else {
+        window.parent.postMessage(
+          {
+            event: "request-fullscreen",
+          },
+          "*",
+        );
+      }
+      function lockMouseIfNeeded() {
+        if (
+          !document.pointerLockElement &&
+          typeof Module !== "undefined" &&
+          Module.canvas
+        ) {
+          Module.canvas
+            .requestPointerLock({
+              unadjustedMovement: true,
+            })
+            .catch(() => {
+              console.warn("Failed to lock in unadjusted movement mode");
+              Module.canvas.requestPointerLock().catch(() => {
+                console.error("Failed to lock in default mode");
+              });
+            });
+        }
+      }
+      document.addEventListener("mousedown", lockMouseIfNeeded, {
+        capture: true,
+      });
+      if (navigator.keyboard && navigator.keyboard.lock) {
+        navigator.keyboard.lock(["Escape", "KeyW"]);
+      }
     }
+  } else if (window.top !== window) {
+    window.parent.postMessage(
+      {
+        event: "request-fullscreen",
+      },
+      "*",
+    );
+  }
 });
 
 const savesMountPoint = "/vc-assets/local/userfiles";
 const savesFile = "vcsky.saves";
 wrapIDBFS(console.log).addListener({
-    onLoad: (_, mount) => {
-        if (mount.mountpoint !== savesMountPoint) {
-            return null;
+  onLoad: (_, mount) => {
+    if (mount.mountpoint !== savesMountPoint) {
+      return null;
+    }
+    const token = localStorage.getItem("vcsky.key");
+    if (token && token.length === 5) {
+      const promise = CloudSDK.pullFromStorage(token, savesFile);
+      promise.then((payload) => {
+        console.log(
+          "[IDBFS] onLoad",
+          token,
+          payload ? payload.length / 1024 : 0,
+          "kb",
+        );
+      });
+      return promise;
+    }
+    return null;
+  },
+  onSave: (getData, _, mount) => {
+    if (mount.mountpoint !== savesMountPoint) {
+      return;
+    }
+    const token = localStorage.getItem("vcsky.key");
+    if (token && token.length === 5) {
+      getData().then((payload) => {
+        if (payload.length > 0) {
+          console.log("[IDBFS] onSave", token, payload.length / 1024, "kb");
+          return CloudSDK.pushToStorage(token, savesFile, payload);
         }
-        const token = localStorage.getItem('vcsky.key');
-        if (token && token.length === 5) {
-            const promise = CloudSDK.pullFromStorage(token, savesFile);
-            promise.then((payload) => {
-                console.log('[IDBFS] onLoad', token, payload ? payload.length / 1024 : 0, 'kb');
-            });
-            return promise;
-        }
-        return null;
-    },
-    onSave: (getData, _, mount) => {
-        if (mount.mountpoint !== savesMountPoint) {
-            return;
-        }
-        const token = localStorage.getItem('vcsky.key');
-        if (token && token.length === 5) {
-            getData().then((payload) => {
-                if (payload.length > 0) {
-                    console.log('[IDBFS] onSave', token, payload.length / 1024, 'kb');
-                    return CloudSDK.pushToStorage(token, savesFile, payload);
-                }
-            });
-        }
-    },
+      });
+    }
+  },
 });
-
 
 function updateToken(token) {
-    cloudSavesStatus.textContent = t('checking');
-    if (token.length === 5) {
-        CloudSDK.resolveToken(token).then((profile) => {
-            if (profile) {
-                console.log('[CloudSdk] resolveToken', profile);
-                localStorage.setItem('vcsky.key', profile.token);
-                if (profile.premium) {
-                    keyStatus.textContent = t('enabled');
-                    keyStatus.style.color = 'green';
-                    keyStatus.style.fontWeight = 'bold';
-                } else {
-                    keyStatus.textContent = t('disabled');
-                    keyStatus.style.color = 'red';
-                    keyStatus.style.fontWeight = 'bold';
-                }
-            } else {
-                keyStatus.textContent = t('invalidKey');
-                keyStatus.style.color = 'white';
-                keyStatus.style.fontWeight = 'normal';
-            }
-        });
-    } else {
-        cloudSavesStatus.textContent = t('enterKey');
-    }
+  cloudSavesStatus.textContent = t("checking");
+  if (token.length === 5) {
+    CloudSDK.resolveToken(token).then((profile) => {
+      if (profile) {
+        console.log("[CloudSdk] resolveToken", profile);
+        localStorage.setItem("vcsky.key", profile.token);
+        if (profile.premium) {
+          keyStatus.textContent = t("enabled");
+          keyStatus.style.color = "green";
+          keyStatus.style.fontWeight = "bold";
+        } else {
+          keyStatus.textContent = t("disabled");
+          keyStatus.style.color = "red";
+          keyStatus.style.fontWeight = "bold";
+        }
+      } else {
+        keyStatus.textContent = t("invalidKey");
+        keyStatus.style.color = "white";
+        keyStatus.style.fontWeight = "normal";
+      }
+    });
+  } else {
+    cloudSavesStatus.textContent = t("enterKey");
+  }
 }
 
-const keyInput = document.querySelector('.jsdos-key-input');
-keyInput.setAttribute('placeholder', t("enterJsDosKey"));
-const keyStatus = document.querySelector('.jsdos-key-status');
-keyInput.addEventListener('paste', (e) => {
-    setTimeout(() => {
-        updateToken(e.target.value);
-    }, 100);
-});
-
-keyInput.addEventListener('keyup', (e) => {
+const keyInput = document.querySelector(".jsdos-key-input");
+keyInput.setAttribute("placeholder", t("enterJsDosKey"));
+const keyStatus = document.querySelector(".jsdos-key-status");
+keyInput.addEventListener("paste", (e) => {
+  setTimeout(() => {
     updateToken(e.target.value);
+  }, 100);
 });
 
-if (localStorage.getItem('vcsky.key')) {
-    keyInput.value = localStorage.getItem('vcsky.key');
-    updateToken(keyInput.value);
+keyInput.addEventListener("keyup", (e) => {
+  updateToken(e.target.value);
+});
+
+if (localStorage.getItem("vcsky.key")) {
+  keyInput.value = localStorage.getItem("vcsky.key");
+  updateToken(keyInput.value);
 } else {
-    keyStatus.textContent = t('invalidKey');
-    keyStatus.style.color = 'shite';
-    keyStatus.style.fontWeight = 'normal';
+  keyStatus.textContent = t("invalidKey");
+  keyStatus.style.color = "shite";
+  keyStatus.style.fontWeight = "normal";
 }
 
-const clickToPlayButton = document.getElementById('click-to-play-button');
-clickToPlayButton.textContent = t('clickToPlayFull');
-const cloudSavesLink = document.getElementById('cloud-saves-link');
-cloudSavesLink.textContent = t('cloudSaves');
-cloudSavesStatus.textContent = t('enterKey');
-const developedBy = document.querySelector('.developed-by');
-developedBy.innerHTML += t('ruTranslate');
-const portBy = document.getElementById('port-by');
-portBy.textContent = t('portBy');
+const clickToPlayButton = document.getElementById("click-to-play-button");
+clickToPlayButton.textContent = t("clickToPlayDemo");
+clickToPlayButton.classList.add("disabled");
+const demoOffDisclaimer = document.getElementById("demo-off-disclaimer");
+demoOffDisclaimer.textContent = "* " + t("demoOffDisclaimer");
+const cloudSavesLink = document.getElementById("cloud-saves-link");
+cloudSavesLink.textContent = t("cloudSaves");
+cloudSavesStatus.textContent = t("enterKey");
+const playDemoText = document.getElementById("play-demo-text");
+playDemoText.textContent = t("playDemoText");
+const disclaimerText = document.getElementById("disclaimer-text");
+disclaimerText.textContent = t("disclaimer");
+const disclaimerSources = document.getElementById("disclaimer-sources");
+disclaimerSources.textContent = t("disclaimerSources");
+const disclaimerCheckboxLabel = document.getElementById(
+  "disclaimer-checkbox-label",
+);
+disclaimerCheckboxLabel.textContent = t("disclaimerCheckbox");
+const disclaimerCheckbox = document.getElementById("disclaimer-checkbox");
+const originalGameFile = document.getElementById("original-game-file");
+const developedBy = document.querySelector(".developed-by");
+developedBy.innerHTML += t("ruTranslate");
+const portBy = document.getElementById("port-by");
+portBy.textContent = t("portBy");
 
+function ownerShipConfirmed() {
+  localStorage.setItem("vcsky.haveOriginalGame", "true");
+  disclaimerCheckbox.checked = true;
+  clickToPlayButton.textContent = t("clickToPlayFull");
+  demoOffDisclaimer.textContent = "";
+  clickToPlayButton.classList.remove("disabled");
+  haveOriginalGame = true;
+}
+
+function ownerShipNotConfirmed() {
+  localStorage.removeItem("vcsky.haveOriginalGame");
+  disclaimerCheckbox.checked = false;
+  clickToPlayButton.textContent = t("clickToPlayDemo");
+  demoOffDisclaimer.textContent = "* " + t("demoOffDisclaimer");
+  haveOriginalGame = false;
+  clickToPlayButton.classList.add("disabled");
+}
+
+disclaimerCheckbox.addEventListener("change", async (inputEvent) => {
+  if (inputEvent.target.checked) {
+    if (confirm(t("disclaimerPrompt"))) {
+      originalGameFile.addEventListener(
+        "change",
+        async (e) => {
+          try {
+            const file = e.target.files[0];
+            if (file) {
+              const sha256sums = (
+                await (
+                  await fetch(
+                    replaceFetch("https://cdn.dos.zone/vcsky/sha256sums.txt"),
+                  )
+                ).text()
+              ).toLowerCase();
+              const arrayBuffer = await file.arrayBuffer();
+              if (window.crypto && window.crypto.subtle) {
+                const hashBuffer = await window.crypto.subtle.digest(
+                  "SHA-256",
+                  arrayBuffer,
+                );
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray
+                  .map((b) => b.toString(16).padStart(2, "0"))
+                  .join("");
+                if (sha256sums.indexOf(hashHex) !== -1) {
+                  ownerShipConfirmed();
+                } else {
+                  ownerShipNotConfirmed();
+                }
+              } else {
+                ownerShipNotConfirmed();
+              }
+            } else {
+              ownerShipNotConfirmed();
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            ownerShipNotConfirmed();
+          }
+        },
+        { once: true },
+      );
+      originalGameFile.click();
+      return;
+    }
+  }
+
+  ownerShipNotConfirmed();
+});
+
+ownerShipConfirmed();
+
+function showWasted() {
+  const wastedContainer = document.querySelector(".wasted-container");
+  wastedContainer.hidden = false;
+}
 
 const revc_iniDefault = `
 [VideoMode]
@@ -436,7 +758,7 @@ HorizantalMouseSens=0.002500
 InvertMouseVertically=1
 DisableMouseSteering=1
 Vibration=0
-Method=${isTouch ? '1' : '0'}
+Method=${isTouch ? "1" : "0"}
 InvertPad=0
 JoystickName=
 PadButtonsInited=0
@@ -542,9 +864,53 @@ UNKNOWN_ACTION=
 `;
 
 const revc_ini = (() => {
-    const cached = localStorage.getItem('vcsky.revc.ini');
-    if (cached) {
-        return cached;
-    }
-    return revc_iniDefault;
+  const cached = localStorage.getItem("vcsky.revc.ini");
+  if (cached) {
+    return cached;
+  }
+  return revc_iniDefault;
 })();
+
+// Configurable mode UI
+if (configurableMode) {
+  const configPanel = document.getElementById("config-panel");
+  const configLang = document.getElementById("config-lang");
+  const configCheats = document.getElementById("config-cheats");
+  const configFullscreen = document.getElementById("config-fullscreen");
+  const configMaxFps = document.getElementById("config-max-fps");
+
+  if (configPanel && configCheats && configFullscreen && configMaxFps) {
+    // Show config panel
+    configPanel.style.display = "block";
+
+    // Set initial values from URL params
+    if (configLang) configLang.value = currentLanguage;
+    configCheats.checked = cheatsEnabled;
+    configFullscreen.checked = autoFullScreen;
+    configMaxFps.value = maxFPS;
+
+    // Update config panel labels with current language
+    updateAllTranslations();
+
+    // Language selector handler
+    if (configLang) {
+      configLang.addEventListener("change", (e) => {
+        currentLanguage = e.target.value;
+        updateAllTranslations();
+      });
+    }
+
+    // Update settings when changed
+    configCheats.addEventListener("change", (e) => {
+      cheatsEnabled = e.target.checked;
+    });
+
+    configFullscreen.addEventListener("change", (e) => {
+      autoFullScreen = e.target.checked;
+    });
+
+    configMaxFps.addEventListener("input", (e) => {
+      maxFPS = parseInt(e.target.value) || 0;
+    });
+  }
+}
