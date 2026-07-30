@@ -149,7 +149,10 @@ async function hasRuffleRuntime(jsDir: string): Promise<boolean> {
   try {
     const names = await readdir(jsDir);
     return (
-      names.includes("ruffle.js") &&
+      names.some(
+        (name) =>
+          name === "ruffle.js" || /^ruffle\.[a-f0-9]{8}\.js$/.test(name),
+      ) &&
       names.some(
         (name) => name.startsWith("core.ruffle.") && name.endsWith(".js"),
       ) &&
@@ -164,21 +167,34 @@ async function copyRuffleRuntime(
   sourceJsDir: string,
   destinationJsDir: string,
 ): Promise<void> {
-  const names = (await readdir(sourceJsDir)).filter(
+  const sourceNames = await readdir(sourceJsDir);
+  const ruffleBootstrap = sourceNames.find(
+    (name) => name === "ruffle.js" || /^ruffle\.[a-f0-9]{8}\.js$/.test(name),
+  );
+  if (!ruffleBootstrap) {
+    throw new Error("Existing Ruffle runtime has no bootstrap script");
+  }
+  const names = sourceNames.filter(
     (name) =>
-      name === "ruffle.js" ||
       name === "ruffle.js.map" ||
       name.startsWith("core.ruffle.") ||
       name.endsWith(".wasm"),
   );
   await mkdir(destinationJsDir, { recursive: true });
-  await Promise.all(
-    names.map((name) =>
+  await Promise.all([
+    cp(
+      join(sourceJsDir, ruffleBootstrap),
+      join(destinationJsDir, "ruffle.js"),
+      {
+        preserveTimestamps: true,
+      },
+    ),
+    ...names.map((name) =>
       cp(join(sourceJsDir, name), join(destinationJsDir, name), {
         preserveTimestamps: true,
       }),
     ),
-  );
+  ]);
 }
 
 export async function ensureDevelopmentBuild({

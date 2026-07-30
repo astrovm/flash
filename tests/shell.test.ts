@@ -2,10 +2,11 @@ import { expect, test } from "bun:test";
 
 const projectDir = new URL("..", import.meta.url);
 const path = (relative: string) => new URL(relative, projectDir);
-const [html, javascript, offlineJavascript, css, workboxConfig] =
+const [html, javascript, dialogs, offlineJavascript, css, workboxConfig] =
   await Promise.all([
     Bun.file(path("site/index.html")).text(),
     Bun.file(path("site/js/main.js")).text(),
+    Bun.file(path("site/js/dialogs.js")).text(),
     Bun.file(path("site/js/offline.js")).text(),
     Bun.file(path("site/css/main.css")).text(),
     Bun.file(path("workbox-config.ts")).text(),
@@ -58,6 +59,29 @@ test("every enabled desktop menu action has a handler", () => {
 });
 test("window manager never discards windows silently", () =>
   absent(javascript, "MAX_OPEN_WINDOWS", "ensureWindowCapacity"));
+test("window dragging and resizing coalesce updates by animation frame", () => {
+  const drag = between(javascript, "const wireDrag =", "const applyResize =");
+  const resize = between(
+    javascript,
+    "const wireResize =",
+    "// ============================================\n// Window System Menu",
+  );
+
+  contains(
+    drag,
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "translate3d",
+    'classList.add("moving")',
+  );
+  contains(
+    resize,
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+    "const desktopSize = getDesktopSize()",
+  );
+  contains(css, ".xp-window.moving", "will-change: transform");
+});
 test("internet games is integrated with the shell", async () => {
   expect(await Bun.file(path("site/js/game-installer.js")).exists()).toBe(true);
   expect(await Bun.file(path("site/js/game-library.js")).exists()).toBe(true);
@@ -330,11 +354,38 @@ test("desktop context menu uses real submenus and safe multiselection", () => {
     "const getDesktopSelectionEligibility = () =>",
     "const movable = allFilesystem",
     "if (finished) return;",
+    '"Show Desktop Icons", "show-icons"',
+    '"Bitmap Image", "new-bitmap"',
+    '"Upload from Computer...", "upload"',
   );
   contains(
     css,
     ".context-parent.open > .context-submenu",
     "#desktop-icons:not(:focus-within)",
+  );
+});
+test("Recycle Bin desktop context menu matches Windows XP commands", () => {
+  contains(
+    javascript,
+    'if (itemId === "__recycle-bin")',
+    'addDesktopMenuItem(menu, "Open", "open", { defaultItem: true })',
+    'addDesktopMenuItem(menu, "Explore", "explore")',
+    '"Empty Recycle Bin", "empty-recycle-bin"',
+    "disabled: !fs.getChildren(fs.RECYCLE_BIN).length",
+    '"Create Shortcut", "create-recycle-shortcut"',
+    '"Properties", "recycle-properties"',
+    'fs.DESKTOP,\n        "Shortcut to Recycle Bin.game"',
+    '{ app: "__recycle-bin" }',
+    'fs.registerFileType("app:__recycle-bin"',
+    "confirmEmptyRecycleBin()",
+    "XPDialogs.properties(fs.RECYCLE_BIN)",
+  );
+  contains(css, ".xp-context-menu button.context-default");
+  contains(
+    dialogs,
+    "node.id === fs().RECYCLE_BIN",
+    '"assets/xp/icons/recycler-full.png"',
+    '"assets/xp/icons/recycler-empty.png"',
   );
 });
 test("explorer and recycle bin use shared filesystem controls", () => {
@@ -352,14 +403,11 @@ test("explorer and recycle bin use shared filesystem controls", () => {
     "fileOps.restore(ids)",
     "fileOps.permanentlyDelete(ids)",
     "fileOps.emptyRecycleBin()",
-    'icon.classList.add("recycle-full")',
+    'XP_ICON_PATHS["recycler-full.png"]',
+    "getRecycleBinIconPath()",
   );
-  contains(
-    css,
-    ".explorer-body",
-    '.explorer-items[data-view="details"]',
-    ".recycle-full::before",
-  );
+  contains(css, ".explorer-body", '.explorer-items[data-view="details"]');
+  absent(css, ".recycle-full::before");
 });
 test("explorer item context menu supports normal and recycle commands", () =>
   contains(
@@ -464,15 +512,47 @@ test("shell paste uses one conflict aware progress helper", () =>
     "pasteIntoFolder(win.currentFolderId)",
     "pasteIntoFolder(fs.DESKTOP)",
   ));
-test("desktop alt drag uses internal filesystem payload", () =>
+test("desktop drag moves into folders or the Recycle Bin without a modifier", () => {
+  const block = between(
+    javascript,
+    "const findDesktopDropTarget = (clientX, clientY, draggedIds) =>",
+    "const wireDesktopSelectionRectangle = () =>",
+  );
+  contains(
+    block,
+    "const eligibility = getDesktopSelectionEligibility()",
+    '"[data-drop-action], [data-drop-destination-id]"',
+    'target.dataset.dropAction === "recycle"',
+    "dropTarget = eligibility.movable",
+    'upEvent.type === "pointerup"',
+    'dropTarget.action === "recycle"',
+    "fileOps.removeToBin(eligibility.filesystemIds)",
+    "fileOps.cut(eligibility.filesystemIds)",
+    "await pasteIntoFolder(dropTarget.destinationId)",
+    "saveDesktopIconPosition(item)",
+  );
   contains(
     javascript,
-    'icon.title = "Alt+drag to move this item to a folder"',
-    "icon.draggable = event.altKey",
-    "application/x-astro-vfs-ids",
-    'event.dataTransfer.effectAllowed = "move"',
-    "if (!event.altKey || !eligibility.movable)",
-  ));
+    'if (id === "__recycle-bin") icon.dataset.dropAction = "recycle"',
+  );
+  absent(block, "event.altKey", "Alt+drag");
+});
+test("desktop rename commits on an outside pointer press", () => {
+  const block = between(
+    javascript,
+    "const beginDesktopRename = (id) =>",
+    "const addDesktopMenuItem = (",
+  );
+  contains(
+    block,
+    "if (!input.contains(event.target)) finish(true)",
+    'document.addEventListener("pointerdown", onOutsidePointerDown, true)',
+    'document.removeEventListener("pointerdown", onOutsidePointerDown, true)',
+    'if (event.key === "Enter" || event.key === "Escape")',
+    "event.stopPropagation()",
+    'finish(event.key === "Enter")',
+  );
+});
 test("start menu contains only XP places", () => {
   const places = between(
     javascript,
@@ -613,8 +693,10 @@ test("project controls live in a taskbar window", () => {
     'content.className = "project-settings-content"',
     'openSystemWindow("__astro-settings")',
     "wireProjectSettings(win)",
-    "isProjectSettings ? 540 : isInternetGames ? 760 : 700",
-    "isProjectSettings ? 420 : isInternetGames ? 540 : 500",
+    'const isProjectSettings = shortcutId === "__astro-settings"',
+    'const isInternetGames = shortcutId === "__internet-games"',
+    "? 540",
+    "? 760",
     'role="tablist" aria-label="Astro Flash Settings"',
     ">General</button>",
     ">Offline</button>",
@@ -726,6 +808,33 @@ test("display properties has a validated persisted pending model", () => {
     'data-display-action="apply"',
     'data-display-action="ok"',
     'data-display-action="cancel"',
+    'class="display-wallpaper-list"',
+    'class="display-color-button"',
+    'el.classList.add("display-properties-window")',
+    'helpBtn.className = "tb-btn help-btn"',
+  );
+});
+test("display properties uses Windows XP desktop-tab geometry and labels", () => {
+  contains(
+    javascript,
+    'data-wallpaper="none"><span class="wallpaper-icon none"></span>(None)',
+    'class="display-customize">Customize Desktop...</button>',
+    'class="display-status" aria-live="polite" hidden',
+    "controls.status.hidden = !message",
+    "isDisplayProperties\n          ? 426",
+    "isDisplayProperties\n          ? 480",
+  );
+  absent(javascript, 'controls.status.textContent = "Settings applied."');
+  contains(
+    css,
+    "grid-template-columns: minmax(0, 1fr) 82px",
+    "width: 376px",
+    "width: 189px",
+    "height: 170px",
+    "width: 162px",
+    "height: 120px",
+    "min-width: 75px",
+    "height: 23px",
   );
 });
 test("display properties exposes all tabs and safe wallpaper controls", () => {

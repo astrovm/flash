@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "source": {
+    "edition": "Windows XP Professional with Service Pack 3, x86, Volume License",
+    "iso": "source-media/en_windows_xp_professional_with_service_pack_3_x86_cd_vl_x14-73974.iso",
+    "sha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "language": 1033
+  },
+  "webAssets": [
+    {
+      "member": "ASCENT.JP_",
+      "output": "site/assets/xp/wallpapers/ascent.jpg"
+    },
+    {
+      "member": "AUTUMN.JP_",
+      "output": "site/assets/xp/wallpapers/autumn.jpg"
+    },
+    { "member": "AZUL.JP_", "output": "site/assets/xp/wallpapers/azul.jpg" },
+    { "member": "BLISS.JP_", "output": "site/assets/xp/bliss.jpg" },
+    {
+      "member": "BLULAC16.BM_",
+      "output": "site/assets/xp/wallpapers/blue-lace-16.bmp"
+    },
+    {
+      "member": "COFFEEBN.BM_",
+      "output": "site/assets/xp/wallpapers/coffee-bean.bmp"
+    },
+
+    { "member": "XPERROR.WA_", "output": "site/assets/xp/sounds/error.wav" },
+    { "member": "XPLOGOFF.WA_", "output": "site/assets/xp/sounds/logoff.wav" },
+    { "member": "XPLOGON.WA_", "output": "site/assets/xp/sounds/logon.wav" },
+    {
+      "member": "XPSHUTDN.WA_",
+      "output": "site/assets/xp/sounds/shutdown.wav"
+    },
+    { "member": "XPSTARTU.WA_", "output": "site/assets/xp/sounds/startup.wav" },
+
+    { "member": "ARIAL.TT_", "output": "site/css/fonts/arial.ttf" },
+    { "member": "ARIALBD.TT_", "output": "site/css/fonts/arialbd.ttf" },
+    { "member": "ARIALBI.TT_", "output": "site/css/fonts/arialbi.ttf" },
+    { "member": "FRAMDIT.TT_", "output": "site/css/fonts/framdit.ttf" },
+    { "member": "LUCON.TT_", "output": "site/css/fonts/lucon.ttf" },
+    { "member": "TAHOMA.TT_", "output": "site/css/fonts/tahoma.ttf" },
+    { "member": "TAHOMABD.TT_", "output": "site/css/fonts/tahomabd.ttf" },
+    { "member": "TREBUC.TT_", "output": "site/css/fonts/trebuc.ttf" },
+    { "member": "TREBUCBD.TT_", "output": "site/css/fonts/trebucbd.ttf" }
+  ],
+  "resourceIcons": [
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 32,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/recycler-empty.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 33,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/recycler-full.png"
+    }
+  ],
+  "auditFiles": [
+    { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
+    { "member": "EXPLORER.EX_", "output": "system/explorer.exe" },
+    { "member": "LUNA.MS_", "output": "themes/Luna.msstyles" },
+    { "member": "APPSTART.AN_", "output": "cursors/appstarting.ani" },
+    { "member": "HOURGLAS.AN_", "output": "cursors/busy.ani" },
+    { "member": "HAND.AN_", "output": "cursors/link-select.ani" },
+    { "member": "CROSS.CU_", "output": "cursors/crosshair.cur" },
+    { "member": "SIZENESW.AN_", "output": "cursors/resize-nesw.ani" },
+    { "member": "SIZENS.AN_", "output": "cursors/resize-ns.ani" },
+    { "member": "SIZENWSE.AN_", "output": "cursors/resize-nwse.ani" },
+    { "member": "SIZEWE.AN_", "output": "cursors/resize-ew.ani" }
+  ]
+}

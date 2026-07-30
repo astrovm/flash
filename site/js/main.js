@@ -46,9 +46,13 @@ const USER_STORAGE_KEYS = Object.freeze([
 ]);
 const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
 const DISPLAY_WALLPAPERS = {
+  none: "none",
   bliss: 'url("../assets/xp/bliss.jpg")',
-  blue: "linear-gradient(135deg, #1e5799, #7db9e8)",
-  olive: "linear-gradient(135deg, #586b2f, #b7c878)",
+  ascent: 'url("../assets/xp/wallpapers/ascent.jpg")',
+  autumn: 'url("../assets/xp/wallpapers/autumn.jpg")',
+  azul: 'url("../assets/xp/wallpapers/azul.jpg")',
+  "blue-lace": 'url("../assets/xp/wallpapers/blue-lace-16.bmp")',
+  coffee: 'url("../assets/xp/wallpapers/coffee-bean.bmp")',
 };
 const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   theme: "windows-xp",
@@ -102,6 +106,7 @@ const XP_ICON_PATHS = Object.freeze({
   "mycomputer.png": "assets/xp/icons/mycomputer.png",
   "mydocuments.png": "assets/xp/icons/mydocuments.png",
   "recycler-empty.png": "assets/xp/icons/recycler-empty.png",
+  "recycler-full.png": "assets/xp/icons/recycler-full.png",
   "shortcut.png": "assets/xp/icons/shortcut.png",
 });
 const TASKBAR_HEIGHT = 30;
@@ -182,11 +187,19 @@ const formatGameTitle = (gameId) =>
 const getGameIcon = (gameId) =>
   categoryIcons[gamesList[gameId]?.category] || categoryIcons["Other"];
 
+const getRecycleBinIconPath = () =>
+  window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length
+    ? XP_ICON_PATHS["recycler-full.png"]
+    : XP_ICON_PATHS["recycler-empty.png"];
+
 const createGameIconElement = (gameId, className) => {
   const icon = document.createElement("span");
   icon.className = className;
 
-  const imagePath = systemShortcuts[gameId]?.icon || gamesList[gameId]?.icon;
+  const imagePath =
+    gameId === "__recycle-bin"
+      ? getRecycleBinIconPath()
+      : systemShortcuts[gameId]?.icon || gamesList[gameId]?.icon;
   if (imagePath) {
     const image = document.createElement("img");
     image.className = "game-icon-image";
@@ -198,12 +211,6 @@ const createGameIconElement = (gameId, className) => {
     icon.classList.add("has-image");
     if (systemShortcuts[gameId]) {
       icon.classList.add("system-icon");
-    }
-    if (
-      gameId === "__recycle-bin" &&
-      window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length
-    ) {
-      icon.classList.add("recycle-full");
     }
     icon.appendChild(image);
   } else {
@@ -1228,23 +1235,49 @@ const wireDrag = (win) => {
       focusWindow(win.gameId);
     }
 
-    const offsetX = win.el.offsetLeft - e.clientX;
-    const offsetY = win.el.offsetTop - e.clientY;
+    const start = {
+      x: e.clientX,
+      y: e.clientY,
+      left: win.el.offsetLeft,
+      top: win.el.offsetTop,
+      width: win.el.offsetWidth,
+      desktop: getDesktopSize(),
+    };
+    let frame = 0;
+    let nextPosition = { left: start.left, top: start.top };
 
-    const onMove = (ev) => {
-      const position = clampWindowPosition(
-        win,
-        ev.clientX + offsetX,
-        ev.clientY + offsetY,
-      );
-      win.el.style.left = `${position.left}px`;
-      win.el.style.top = `${position.top}px`;
+    const getPosition = (clientX, clientY) => ({
+      left: Math.min(
+        Math.max(start.left + clientX - start.x, 60 - start.width),
+        start.desktop.width - 60,
+      ),
+      top: Math.min(
+        Math.max(start.top + clientY - start.y, 0),
+        start.desktop.height - 28,
+      ),
+    });
+    const renderPosition = () => {
+      win.el.style.transform = `translate3d(${nextPosition.left - start.left}px, ${nextPosition.top - start.top}px, 0)`;
     };
 
-    const onUp = () => {
+    const onMove = (ev) => {
+      nextPosition = getPosition(ev.clientX, ev.clientY);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(renderPosition);
+    };
+
+    const onUp = (ev) => {
       bar.removeEventListener("pointermove", onMove);
       bar.removeEventListener("pointerup", onUp);
       bar.removeEventListener("pointercancel", onUp);
+      cancelAnimationFrame(frame);
+      if (ev.type === "pointerup") {
+        nextPosition = getPosition(ev.clientX, ev.clientY);
+      }
+      win.el.style.left = `${nextPosition.left}px`;
+      win.el.style.top = `${nextPosition.top}px`;
+      win.el.style.transform = "";
+      win.el.classList.remove("moving");
       if (restoredFromMaximized) {
         // The dragged position becomes the new restore geometry.
         win.prevRect = {
@@ -1262,6 +1295,8 @@ const wireDrag = (win) => {
       /* pointer capture unsupported */
     }
 
+    win.el.getAnimations().forEach((animation) => animation.cancel());
+    win.el.classList.add("moving");
     bar.addEventListener("pointermove", onMove);
     bar.addEventListener("pointerup", onUp);
     bar.addEventListener("pointercancel", onUp);
@@ -1292,8 +1327,8 @@ const wireDrag = (win) => {
   });
 };
 
-const applyResize = (win, direction, start, deltaX, deltaY) => {
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+const applyResize = (win, direction, start, deltaX, deltaY, desktopSize) => {
+  const { width: desktopWidth, height: desktopHeight } = desktopSize;
   const right = start.left + start.width;
   const bottom = start.top + start.height;
   let { left, top, width, height } = start;
@@ -1346,21 +1381,35 @@ const wireResize = (win) => {
         width: win.el.offsetWidth,
         height: win.el.offsetHeight,
       };
+      const desktopSize = getDesktopSize();
+      let frame = 0;
+      let nextPointer = { x: e.clientX, y: e.clientY };
 
-      const onMove = (ev) => {
+      const updateSize = () =>
         applyResize(
           win,
           direction,
           start,
-          ev.clientX - start.x,
-          ev.clientY - start.y,
+          nextPointer.x - start.x,
+          nextPointer.y - start.y,
+          desktopSize,
         );
+
+      const onMove = (ev) => {
+        nextPointer = { x: ev.clientX, y: ev.clientY };
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(updateSize);
       };
 
-      const onUp = () => {
+      const onUp = (ev) => {
         handle.removeEventListener("pointermove", onMove);
         handle.removeEventListener("pointerup", onUp);
         handle.removeEventListener("pointercancel", onUp);
+        cancelAnimationFrame(frame);
+        if (ev.type === "pointerup") {
+          nextPointer = { x: ev.clientX, y: ev.clientY };
+        }
+        updateSize();
       };
 
       try {
@@ -1766,26 +1815,51 @@ const createSystemWindowContent = (shortcutId, win) => {
             </div>
             <div class="display-panel active" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop">
                 <div class="display-preview" aria-label="Desktop preview">
-                    <div class="display-preview-surface"><span>start</span></div>
+                    <img src="assets/xp/displaysettings.png" alt="">
+                    <div class="display-preview-surface"></div>
                 </div>
-                <label class="display-wallpaper-label" for="display-wallpaper">Background:</label>
-                <select id="display-wallpaper" aria-label="Desktop background">
-                    <option value="bliss">Bliss</option>
-                    <option value="blue">Windows Blue</option>
-                    <option value="olive">Olive Green</option>
-                </select>
-                <div class="display-form-row">
-                    <label for="display-position">Position:</label>
-                    <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
+                <div class="display-desktop-controls">
+                    <div class="display-background-column">
+                        <label class="display-wallpaper-label" for="display-wallpaper">Background:</label>
+                        <select id="display-wallpaper" aria-label="Desktop background" hidden>
+                            <option value="none">None</option>
+                            <option value="ascent">Ascent</option>
+                            <option value="autumn">Autumn</option>
+                            <option value="azul">Azul</option>
+                            <option value="bliss">Bliss</option>
+                            <option value="blue-lace">Blue Lace 16</option>
+                            <option value="coffee">Coffee Bean</option>
+                        </select>
+                        <div class="display-wallpaper-list" role="listbox" aria-label="Desktop background">
+                            <div class="display-wallpaper-items">
+                                <button type="button" role="option" data-wallpaper="none"><span class="wallpaper-icon none"></span>(None)</button>
+                                <button type="button" role="option" data-wallpaper="ascent"><span class="wallpaper-icon"></span>Ascent</button>
+                                <button type="button" role="option" data-wallpaper="autumn"><span class="wallpaper-icon"></span>Autumn</button>
+                                <button type="button" role="option" data-wallpaper="azul"><span class="wallpaper-icon"></span>Azul</button>
+                                <button type="button" role="option" data-wallpaper="bliss"><span class="wallpaper-icon"></span>Bliss</button>
+                                <button type="button" role="option" data-wallpaper="blue-lace"><span class="wallpaper-icon"></span>Blue Lace 16</button>
+                                <button type="button" role="option" data-wallpaper="coffee"><span class="wallpaper-icon"></span>Coffee Bean</button>
+                            </div>
+                            <div class="display-scrollbar" aria-hidden="true">
+                                <span class="scroll-arrow up"></span>
+                                <span class="scroll-thumb"><i></i><i></i><i></i></span>
+                                <span class="scroll-arrow down"></span>
+                            </div>
+                        </div>
+                        <button type="button" class="display-customize">Customize Desktop...</button>
+                    </div>
+                    <div class="display-background-actions">
+                        <label class="display-browse" for="display-image">Browse...</label>
+                        <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                        <label for="display-position">Position:</label>
+                        <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
+                        <label for="display-color">Color:</label>
+                        <label class="display-color-button" for="display-color"><span></span><b>▼</b></label>
+                        <input id="display-color" type="color" value="#3a6ea5" hidden>
+                    </div>
                 </div>
-                <div class="display-form-row">
-                    <label for="display-color">Color:</label>
-                    <input id="display-color" type="color" value="#3a6ea5">
-                </div>
-                <label class="display-upload" for="display-image">Browse for a picture…</label>
-                <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
                 <button type="button" class="display-clear-image" hidden>Remove custom picture</button>
-                <p class="display-status" aria-live="polite"></p>
+                <p class="display-status" aria-live="polite" hidden></p>
             </div>
             <div class="display-panel" id="display-panel-themes" role="tabpanel" aria-labelledby="display-tab-themes" hidden>
                 <fieldset><legend>Theme</legend>
@@ -1926,25 +2000,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     emptyBin.type = "button";
     emptyBin.className = "recycle-task";
     emptyBin.textContent = "Empty Recycle Bin";
-    emptyBin.addEventListener("click", () => {
-      const count = fs.getChildren(fs.RECYCLE_BIN).length;
-      if (!count) return;
-      const single = count === 1;
-      XPDialogs.confirm(
-        single
-          ? "Are you sure you want to delete this item?"
-          : `Are you sure you want to delete these ${count} items?`,
-        single ? "Confirm File Delete" : "Confirm Multiple File Delete",
-        "warning",
-      ).then((yes) => {
-        if (!yes) return;
-        try {
-          fileOps.emptyRecycleBin();
-        } catch (error) {
-          console.error(error);
-        }
-      });
-    });
+    emptyBin.addEventListener("click", confirmEmptyRecycleBin);
 
     const restoreAll = document.createElement("button");
     restoreAll.type = "button";
@@ -2375,7 +2431,12 @@ const wireDisplayProperties = (win) => {
     resolutionPreview: content.querySelector(".display-resolution-preview"),
     resolutionValue: content.querySelector(".display-resolution-value"),
     status: content.querySelector(".display-status"),
+    customize: content.querySelector(".display-customize"),
     apply: content.querySelector('[data-display-action="apply"]'),
+  };
+  const setStatus = (message = "") => {
+    controls.status.textContent = message;
+    controls.status.hidden = !message;
   };
   const themes = {
     "windows-xp": {
@@ -2385,18 +2446,23 @@ const wireDisplayProperties = (win) => {
     },
     classic: {
       appearance: "silver",
-      wallpaper: "blue",
+      wallpaper: "ascent",
       backgroundColor: "#4b6f8f",
     },
     olive: {
       appearance: "olive",
-      wallpaper: "olive",
+      wallpaper: "autumn",
       backgroundColor: "#586b2f",
     },
   };
   const sync = () => {
     controls.theme.value = pending.theme;
     controls.wallpaper.value = pending.wallpaper;
+    content.querySelectorAll("[data-wallpaper]").forEach((item) => {
+      const selected = item.dataset.wallpaper === pending.wallpaper;
+      item.classList.toggle("selected", selected);
+      item.setAttribute("aria-selected", String(selected));
+    });
     controls.position.value = pending.position;
     controls.color.value = pending.backgroundColor;
     controls.saver.value = pending.screenSaver;
@@ -2407,6 +2473,8 @@ const wireDisplayProperties = (win) => {
     controls.preview.style.backgroundColor = pending.backgroundColor;
     controls.preview.style.backgroundImage = displayBackground(pending);
     controls.preview.dataset.position = pending.position;
+    content.querySelector(".display-color-button span").style.backgroundColor =
+      pending.backgroundColor;
     controls.saverPreview.dataset.saver = pending.screenSaver;
     controls.appearancePreview.dataset.appearance = pending.appearance;
     controls.resolutionPreview.dataset.resolution = pending.resolution;
@@ -2468,6 +2536,18 @@ const wireDisplayProperties = (win) => {
     };
     sync();
   });
+  content
+    .querySelector(".display-wallpaper-list")
+    .addEventListener("click", (event) => {
+      const item = event.target.closest("[data-wallpaper]");
+      if (!item) return;
+      pending = {
+        ...pending,
+        wallpaper: item.dataset.wallpaper,
+        customWallpaper: "",
+      };
+      sync();
+    });
   ["position", "appearance", "saver"].forEach((name) => {
     controls[name].addEventListener("change", () => {
       pending = {
@@ -2516,8 +2596,7 @@ const wireDisplayProperties = (win) => {
       !supportedTypes.includes(file.type) ||
       file.size > MAX_CUSTOM_WALLPAPER_BYTES
     ) {
-      controls.status.textContent =
-        "Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.";
+      setStatus("Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.");
       controls.image.value = "";
       return;
     }
@@ -2529,7 +2608,7 @@ const wireDisplayProperties = (win) => {
       )
         return;
       pending = { ...pending, customWallpaper: reader.result };
-      controls.status.textContent = `${file.name} will be used after you apply changes.`;
+      setStatus(`${file.name} will be used after you apply changes.`);
       sync();
     });
     reader.readAsDataURL(file);
@@ -2539,20 +2618,26 @@ const wireDisplayProperties = (win) => {
     controls.image.value = "";
     sync();
   });
+  controls.customize.addEventListener("click", () => {
+    XPDialogs.alert(
+      "Choose which Windows system icons appear on the desktop.",
+      "Desktop Items",
+      "info",
+    );
+  });
   content
     .querySelector('[data-display-action="apply"]')
     .addEventListener("click", () => {
       if (!isDisplaySettings(pending)) return;
       if (!saveDisplaySettings(pending)) {
-        controls.status.textContent =
-          "Windows could not save this picture. Try a smaller image.";
+        setStatus("Windows could not save this picture. Try a smaller image.");
         return;
       }
       current = { ...pending };
       applyDisplaySettings(current);
       resolutionPreviewActive = false;
       resolutionPreviewSnapshot = null;
-      controls.status.textContent = "Settings applied.";
+      setStatus();
       sync();
     });
   content
@@ -3110,6 +3195,24 @@ const confirmRecycleDelete = (ids) =>
     "Confirm File Delete",
     "warning",
   ).then((yes) => yes && fileOps.removeToBin(ids));
+
+const confirmEmptyRecycleBin = () => {
+  const count = fs.getChildren(fs.RECYCLE_BIN).length;
+  if (!count) return Promise.resolve(false);
+  const single = count === 1;
+  return XPDialogs.confirm(
+    single
+      ? "Are you sure you want to delete this item?"
+      : `Are you sure you want to delete these ${count} items?`,
+    single ? "Confirm File Delete" : "Confirm Multiple File Delete",
+    "warning",
+  ).then((yes) => {
+    if (!yes) return false;
+    fileOps.emptyRecycleBin();
+    return true;
+  });
+};
+
 const choosePasteConflict = ({ existing }) =>
   new Promise((resolve) => {
     const dialog = XPDialogs.createDialog({
@@ -3300,6 +3403,7 @@ const importDroppedFiles = async (destinationId, dataTransfer) => {
   }
 };
 const wireFolderDropTarget = (element, destinationId) => {
+  element.dataset.dropDestinationId = destinationId;
   element.addEventListener("dragover", (event) => {
     const internal = event.dataTransfer?.types?.includes(
       "application/x-astro-vfs-ids",
@@ -3628,6 +3732,11 @@ const createExplorerIcon = (node) => {
   if (node.id === fs.MY_MUSIC) return addImage("MyMusic.png");
   if (node.id === fs.MY_PICTURES) return addImage("MyPictures.png");
   if (node.id === fs.MY_COMPUTER) return addImage("MyComputer.png");
+  if (node.app && systemShortcuts[node.app]) {
+    const shortcut = createGameIconElement(node.app, "explorer-item-icon");
+    shortcut.classList.remove("system-icon");
+    return shortcut;
+  }
   if (node.type === "folder") {
     return addImage("NewFolder.png");
   }
@@ -3684,13 +3793,15 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     titleIcon.replaceChildren();
     const image = document.createElement("img");
     image.src =
-      folder.id === fs.MY_COMPUTER
-        ? "assets/xp/icons/MyComputer.png"
-        : folder.id === fs.MY_MUSIC
-          ? "assets/xp/icons/MyMusic.png"
-          : folder.id === fs.MY_PICTURES
-            ? "assets/xp/icons/MyPictures.png"
-            : "assets/xp/icons/mydocuments.png";
+      folder.id === fs.RECYCLE_BIN
+        ? getRecycleBinIconPath()
+        : folder.id === fs.MY_COMPUTER
+          ? "assets/xp/icons/MyComputer.png"
+          : folder.id === fs.MY_MUSIC
+            ? "assets/xp/icons/MyMusic.png"
+            : folder.id === fs.MY_PICTURES
+              ? "assets/xp/icons/MyPictures.png"
+              : "assets/xp/icons/mydocuments.png";
     image.alt = "";
     titleIcon.appendChild(image);
   }
@@ -3701,6 +3812,19 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   const chrome = explorerContent?.querySelector(".explorer-chrome");
   if (chrome) {
     chrome.querySelector("input").value = fs.getPath(folder.id);
+    const addressIcon = chrome.querySelector(".explorer-address-field img");
+    if (addressIcon) {
+      addressIcon.src =
+        folder.id === fs.RECYCLE_BIN
+          ? getRecycleBinIconPath()
+          : folder.id === fs.MY_COMPUTER
+            ? XP_ICON_PATHS["MyComputer.png"]
+            : folder.id === fs.MY_MUSIC
+              ? XP_ICON_PATHS["MyMusic.png"]
+              : folder.id === fs.MY_PICTURES
+                ? XP_ICON_PATHS["MyPictures.png"]
+                : XP_ICON_PATHS["mydocuments.png"];
+    }
     chrome.querySelector('[data-explorer-action="back"]').disabled =
       (win.historyIndex ?? 0) <= 0;
     chrome.querySelector('[data-explorer-action="forward"]').disabled =
@@ -3912,6 +4036,9 @@ fs.registerFileType(".game", (file) => {
     openGameWindow(file.app);
   }
 });
+fs.registerFileType("app:__recycle-bin", () =>
+  openSystemWindow("__recycle-bin"),
+);
 
 const restoreDefaultDesktop = () => {
   Object.keys(gamesList).forEach((gameId) => {
@@ -4302,6 +4429,7 @@ fs.subscribe(() => {
     renderExplorerItems(win);
   });
   if (iconsBuilt) buildDesktopIcons();
+  renderTaskButtons();
 });
 
 const wireSystemWindowControls = (win) => {
@@ -4336,12 +4464,26 @@ const openSystemWindow = (shortcutId) => {
   );
   const isProjectSettings = shortcutId === "__astro-settings";
   const isInternetGames = shortcutId === "__internet-games";
+  const isDisplayProperties = shortcutId === "__display-properties";
+  if (isDisplayProperties) el.classList.add("display-properties-window");
   const windowWidth = Math.min(
-    isProjectSettings ? 540 : isInternetGames ? 760 : 700,
+    isProjectSettings
+      ? 540
+      : isInternetGames
+        ? 760
+        : isDisplayProperties
+          ? 426
+          : 700,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
-    isProjectSettings ? 420 : isInternetGames ? 540 : 500,
+    isProjectSettings
+      ? 420
+      : isInternetGames
+        ? 540
+        : isDisplayProperties
+          ? 480
+          : 500,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -4377,6 +4519,16 @@ const openSystemWindow = (shortcutId) => {
   content.replaceWith(createSystemWindowContent(shortcutId, win));
   if (win.currentFolderId) renderExplorerItems(win);
   wireSystemWindowControls(win);
+  if (isDisplayProperties) {
+    const helpBtn = document.createElement("button");
+    helpBtn.type = "button";
+    helpBtn.className = "tb-btn help-btn";
+    helpBtn.title = "Help";
+    helpBtn.setAttribute("aria-label", "Help");
+    el.querySelector(".title-buttons").prepend(helpBtn);
+    el.querySelector(".minimize-btn").remove();
+    el.querySelector(".maximize-btn").remove();
+  }
   if (shortcutId === "__display-properties") wireDisplayProperties(win);
   if (shortcutId === "__astro-settings") wireProjectSettings(win);
   if (shortcutId === "__search") wireSearchCompanion(win);
@@ -5851,6 +6003,28 @@ const layoutDesktopIcons = (force = false) => {
   }
 };
 
+const findDesktopDropTarget = (clientX, clientY, draggedIds) => {
+  for (const element of document.elementsFromPoint(clientX, clientY)) {
+    const target = element.closest?.(
+      "[data-drop-action], [data-drop-destination-id]",
+    );
+    if (!target) continue;
+    if (target.dataset.dropAction === "recycle") {
+      return { action: "recycle", element: target };
+    }
+    const destinationId = target.dataset.dropDestinationId;
+    if (
+      destinationId === fs.DESKTOP ||
+      draggedIds.has(destinationId) ||
+      fs.getNode(destinationId)?.type !== "folder"
+    ) {
+      continue;
+    }
+    return { action: "move", element: target, destinationId };
+  }
+  return null;
+};
+
 const wireDesktopIconDrag = (icon) => {
   icon.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
@@ -5870,6 +6044,9 @@ const wireDesktopIconDrag = (icon) => {
       top: item.offsetTop,
     }));
     const container = document.getElementById("desktop-icons");
+    const eligibility = getDesktopSelectionEligibility();
+    const draggedIds = new Set(eligibility.filesystemIds);
+    let dropTarget = null;
     desktopDragged = false;
 
     const onMove = (moveEvent) => {
@@ -5900,22 +6077,46 @@ const wireDesktopIconDrag = (icon) => {
         item.style.left = `${left}px`;
         item.style.top = `${top}px`;
       });
+
+      dropTarget?.element.classList.remove("drop-target");
+      dropTarget = eligibility.movable
+        ? findDesktopDropTarget(
+            moveEvent.clientX,
+            moveEvent.clientY,
+            draggedIds,
+          )
+        : null;
+      dropTarget?.element.classList.add("drop-target");
     };
 
-    const onUp = () => {
+    const onUp = async (upEvent) => {
       icon.removeEventListener("pointermove", onMove);
       icon.removeEventListener("pointerup", onUp);
       icon.removeEventListener("pointercancel", onUp);
+      dropTarget?.element.classList.remove("drop-target");
+      dropTarget =
+        eligibility.movable && upEvent.type === "pointerup"
+          ? findDesktopDropTarget(upEvent.clientX, upEvent.clientY, draggedIds)
+          : null;
       if (desktopDragged) {
-        const { alignToGrid } = getDesktopLayoutSettings();
-        selected.forEach(({ item }) => {
-          if (alignToGrid) {
-            const metrics = getDesktopIconMetrics(container);
-            item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
-            item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
+        if (dropTarget) {
+          if (dropTarget.action === "recycle") {
+            fileOps.removeToBin(eligibility.filesystemIds);
+          } else {
+            fileOps.cut(eligibility.filesystemIds);
+            await pasteIntoFolder(dropTarget.destinationId);
           }
-          saveDesktopIconPosition(item);
-        });
+        } else {
+          const { alignToGrid } = getDesktopLayoutSettings();
+          selected.forEach(({ item }) => {
+            if (alignToGrid) {
+              const metrics = getDesktopIconMetrics(container);
+              item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
+              item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
+            }
+            saveDesktopIconPosition(item);
+          });
+        }
       }
     };
 
@@ -6018,6 +6219,7 @@ const buildDesktopIcons = () => {
   iconsBuilt = true;
 
   const container = document.getElementById("desktop-icons");
+  container.hidden = getDesktopLayoutSettings().showIcons === false;
   container.replaceChildren();
   // System places stay available even though regular desktop files are
   // rendered directly from VirtualFS.DESKTOP.
@@ -6061,34 +6263,8 @@ const buildDesktopIcons = () => {
     icon.className = "desktop-icon";
     icon.dataset.desktopId = id;
     if (system) icon.dataset.systemId = id;
-    if (node && !node.protected) {
-      icon.title = "Alt+drag to move this item to a folder";
-      icon.setAttribute(
-        "aria-description",
-        "Hold Alt while dragging to move this file or folder.",
-      );
-      icon.addEventListener("pointerdown", (event) => {
-        icon.draggable = event.altKey;
-      });
-      icon.addEventListener("pointerup", () => {
-        icon.draggable = false;
-      });
-      icon.addEventListener("dragstart", (event) => {
-        const eligibility = getDesktopSelectionEligibility();
-        if (!event.altKey || !eligibility.movable) {
-          event.preventDefault();
-          return;
-        }
-        event.dataTransfer.setData(
-          "application/x-astro-vfs-ids",
-          JSON.stringify(eligibility.filesystemIds),
-        );
-        event.dataTransfer.effectAllowed = "move";
-      });
-      icon.addEventListener("dragend", () => {
-        icon.draggable = false;
-      });
-    }
+    if (node?.type === "folder") icon.dataset.dropDestinationId = node.id;
+    if (id === "__recycle-bin") icon.dataset.dropAction = "recycle";
 
     const glyph = system
       ? createGameIconElement(id, "icon-glyph")
@@ -6143,6 +6319,7 @@ const getDesktopLayoutSettings = () =>
     sort: "name",
     autoArrange: false,
     alignToGrid: true,
+    showIcons: true,
   });
 
 const saveDesktopLayoutSettings = (settings) =>
@@ -6169,9 +6346,10 @@ const beginDesktopRename = (id) => {
   input.focus();
   input.select();
   let finished = false;
-  const finish = (save) => {
+  function finish(save) {
     if (finished) return;
     finished = true;
+    document.removeEventListener("pointerdown", onOutsidePointerDown, true);
     if (save) {
       try {
         fileOps.rename(id, input.value);
@@ -6180,26 +6358,42 @@ const beginDesktopRename = (id) => {
       }
     }
     refreshDesktop();
-  };
+  }
+  function onOutsidePointerDown(event) {
+    if (!input.contains(event.target)) finish(true);
+  }
   input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") finish(true);
-    if (event.key === "Escape") finish(false);
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      finish(event.key === "Enter");
+    }
   });
   input.addEventListener("blur", () => finish(true), { once: true });
+  document.addEventListener("pointerdown", onOutsidePointerDown, true);
 };
 
 const addDesktopMenuItem = (
   menu,
   label,
   action,
-  { disabled = false, checked = false } = {},
+  { disabled = false, checked = false, defaultItem = false } = {},
 ) => {
   const button = document.createElement("button");
   button.type = "button";
   button.role = "menuitem";
   button.dataset.action = action;
   button.disabled = disabled;
-  button.textContent = `${checked ? "✓ " : ""}${label}`;
+  button.classList.toggle("context-default", defaultItem);
+  button.setAttribute("role", checked ? "menuitemcheckbox" : "menuitem");
+  if (checked) button.setAttribute("aria-checked", "true");
+  const gutter = document.createElement("span");
+  gutter.className = "context-check";
+  gutter.textContent = checked ? "✓" : "";
+  const text = document.createElement("span");
+  text.className = "context-label";
+  text.textContent = label;
+  button.append(gutter, text);
   menu.appendChild(button);
 };
 
@@ -6212,7 +6406,12 @@ const addDesktopSubmenu = (menu, label, buildItems) => {
   button.className = "context-submenu-button";
   button.setAttribute("aria-haspopup", "menu");
   button.setAttribute("aria-expanded", "false");
-  button.textContent = label;
+  const gutter = document.createElement("span");
+  gutter.className = "context-check";
+  const text = document.createElement("span");
+  text.className = "context-label";
+  text.textContent = label;
+  button.append(gutter, text);
   const arrow = document.createElement("span");
   arrow.className = "context-arrow";
   button.appendChild(arrow);
@@ -6270,7 +6469,17 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
   menu.replaceChildren();
   menu.dataset.itemId = itemId || "";
 
-  if (itemId) {
+  if (itemId === "__recycle-bin") {
+    addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
+    addDesktopMenuItem(menu, "Explore", "explore");
+    addDesktopMenuItem(menu, "Empty Recycle Bin", "empty-recycle-bin", {
+      disabled: !fs.getChildren(fs.RECYCLE_BIN).length,
+    });
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Create Shortcut", "create-recycle-shortcut");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "recycle-properties");
+  } else if (itemId) {
     addDesktopMenuItem(menu, "Open", "open");
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Cut", "cut", { disabled: !movable });
@@ -6297,14 +6506,18 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
       addDesktopMenuItem(submenu, "Modified", "sort-modified", {
         checked: settings.sort === "modified",
       });
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Auto Arrange", "auto-arrange", {
+        checked: settings.autoArrange,
+      });
+      addDesktopMenuItem(submenu, "Align to Grid", "align-grid", {
+        checked: settings.alignToGrid,
+      });
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Show Desktop Icons", "show-icons", {
+        checked: settings.showIcons !== false,
+      });
     });
-    addDesktopMenuItem(menu, "Auto Arrange", "auto-arrange", {
-      checked: settings.autoArrange,
-    });
-    addDesktopMenuItem(menu, "Align to Grid", "align-grid", {
-      checked: settings.alignToGrid,
-    });
-    addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Refresh", "refresh");
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Paste", "paste", {
@@ -6317,6 +6530,9 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
     addDesktopSubmenu(menu, "New", (submenu) => {
       addDesktopMenuItem(submenu, "Folder", "new-folder");
       addDesktopMenuItem(submenu, "Text Document", "new-text");
+      addDesktopMenuItem(submenu, "Bitmap Image", "new-bitmap");
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Upload from Computer...", "upload");
     });
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Properties", "properties");
@@ -6393,20 +6609,65 @@ const setupDesktopContextMenu = () => {
         ...settings,
         alignToGrid: !settings.alignToGrid,
       });
+    } else if (action === "show-icons") {
+      const settings = getDesktopLayoutSettings();
+      const showIcons = settings.showIcons === false;
+      saveDesktopLayoutSettings({ ...settings, showIcons });
+      document.getElementById("desktop-icons").hidden = !showIcons;
     } else if (action === "refresh") {
       refreshDesktop();
-    } else if (action === "new-folder" || action === "new-text") {
+    } else if (
+      action === "new-folder" ||
+      action === "new-text" ||
+      action === "new-bitmap"
+    ) {
       const node =
         action === "new-folder"
           ? fileOps.createFolder(fs.DESKTOP, "New Folder")
-          : fileOps.createFile(fs.DESKTOP, "New Text Document.txt");
+          : fileOps.createFile(
+              fs.DESKTOP,
+              action === "new-bitmap"
+                ? "New Bitmap Image.bmp"
+                : "New Text Document.txt",
+            );
       refreshDesktop();
       selectDesktopIcon(node.id);
       beginDesktopRename(node.id);
+    } else if (action === "upload") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.multiple = true;
+      input.addEventListener(
+        "change",
+        async () => {
+          for (const file of input.files) {
+            fileOps.createFile(fs.DESKTOP, file.name, {
+              content: file.type.startsWith("text/") ? await file.text() : "",
+              size: file.size,
+            });
+          }
+          refreshDesktop();
+        },
+        { once: true },
+      );
+      input.click();
     } else if (action === "paste") {
       pasteIntoFolder(fs.DESKTOP);
     } else if (action === "open" && itemId) {
       openDesktopItem(itemId);
+    } else if (action === "explore" && itemId === "__recycle-bin") {
+      openDesktopItem(itemId);
+    } else if (action === "empty-recycle-bin") {
+      confirmEmptyRecycleBin();
+    } else if (action === "create-recycle-shortcut") {
+      const shortcut = fileOps.createFile(
+        fs.DESKTOP,
+        "Shortcut to Recycle Bin.game",
+        { app: "__recycle-bin" },
+      );
+      selectDesktopIcon(shortcut.id);
+    } else if (action === "recycle-properties") {
+      XPDialogs.properties(fs.RECYCLE_BIN);
     } else if (action === "cut") {
       fileOps.cut(selectedFsIds);
     } else if (action === "copy") {
@@ -7046,11 +7307,11 @@ const setupSearch = () => {
 // Original Windows XP system sounds (playback is skipped if the
 // browser still blocks audio before the user's first interaction)
 const xpSoundPaths = {
-  error: "assets/xp/sounds/error.mp3",
-  logoff: "assets/xp/sounds/logoff.mp3",
-  logon: "assets/xp/sounds/logon.mp3",
-  shutdown: "assets/xp/sounds/shutdown.mp3",
-  startup: "assets/xp/sounds/startup.mp3",
+  error: "assets/xp/sounds/error.wav",
+  logoff: "assets/xp/sounds/logoff.wav",
+  logon: "assets/xp/sounds/logon.wav",
+  shutdown: "assets/xp/sounds/shutdown.wav",
+  startup: "assets/xp/sounds/startup.wav",
 };
 
 const playXPSound = (name) => {

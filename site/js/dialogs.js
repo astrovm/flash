@@ -450,6 +450,13 @@
       icon.classList.add("drive-icon");
     } else if (node.id === fs().DRIVE_F) {
       icon.classList.add("removable-icon");
+    } else if (node.id === fs().RECYCLE_BIN) {
+      const image = document.createElement("img");
+      image.src = fs().getChildren(fs().RECYCLE_BIN).length
+        ? "assets/xp/icons/recycler-full.png"
+        : "assets/xp/icons/recycler-empty.png";
+      image.alt = "";
+      icon.appendChild(image);
     } else if (node.type === "folder") {
       const image = document.createElement("img");
       image.src = "assets/xp/icons/mydocuments.png";
