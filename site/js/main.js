@@ -1832,7 +1832,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                         </select>
                         <div class="display-wallpaper-list" role="listbox" aria-label="Desktop background">
                             <div class="display-wallpaper-items">
-                                <button type="button" role="option" data-wallpaper="none"><span class="wallpaper-icon none"></span>None</button>
+                                <button type="button" role="option" data-wallpaper="none"><span class="wallpaper-icon none"></span>(None)</button>
                                 <button type="button" role="option" data-wallpaper="ascent"><span class="wallpaper-icon"></span>Ascent</button>
                                 <button type="button" role="option" data-wallpaper="autumn"><span class="wallpaper-icon"></span>Autumn</button>
                                 <button type="button" role="option" data-wallpaper="azul"><span class="wallpaper-icon"></span>Azul</button>
@@ -1846,7 +1846,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                                 <span class="scroll-arrow down"></span>
                             </div>
                         </div>
-                        <button type="button" class="display-customize" disabled>Customize Desktop...</button>
+                        <button type="button" class="display-customize">Customize Desktop...</button>
                     </div>
                     <div class="display-background-actions">
                         <label class="display-browse" for="display-image">Browse...</label>
@@ -1859,7 +1859,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                     </div>
                 </div>
                 <button type="button" class="display-clear-image" hidden>Remove custom picture</button>
-                <p class="display-status" aria-live="polite"></p>
+                <p class="display-status" aria-live="polite" hidden></p>
             </div>
             <div class="display-panel" id="display-panel-themes" role="tabpanel" aria-labelledby="display-tab-themes" hidden>
                 <fieldset><legend>Theme</legend>
@@ -2431,6 +2431,7 @@ const wireDisplayProperties = (win) => {
     resolutionPreview: content.querySelector(".display-resolution-preview"),
     resolutionValue: content.querySelector(".display-resolution-value"),
     status: content.querySelector(".display-status"),
+    customize: content.querySelector(".display-customize"),
     apply: content.querySelector('[data-display-action="apply"]'),
   };
   const themes = {
@@ -2614,6 +2615,13 @@ const wireDisplayProperties = (win) => {
     controls.image.value = "";
     sync();
   });
+  controls.customize.addEventListener("click", () => {
+    XPDialogs.alert(
+      "Choose which Windows system icons appear on the desktop.",
+      "Desktop Items",
+      "info",
+    );
+  });
   content
     .querySelector('[data-display-action="apply"]')
     .addEventListener("click", () => {
@@ -2627,7 +2635,7 @@ const wireDisplayProperties = (win) => {
       applyDisplaySettings(current);
       resolutionPreviewActive = false;
       resolutionPreviewSnapshot = null;
-      controls.status.textContent = "Settings applied.";
+      controls.status.textContent = "";
       sync();
     });
   content
@@ -4462,7 +4470,7 @@ const openSystemWindow = (shortcutId) => {
       : isInternetGames
         ? 760
         : isDisplayProperties
-          ? 532
+          ? 426
           : 700,
     desktopWidth - 16,
   );
@@ -4472,7 +4480,7 @@ const openSystemWindow = (shortcutId) => {
       : isInternetGames
         ? 540
         : isDisplayProperties
-          ? 603
+          ? 480
           : 500,
     desktopHeight - 16,
   );

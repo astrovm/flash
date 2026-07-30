@@ -814,6 +814,28 @@ test("display properties has a validated persisted pending model", () => {
     'helpBtn.className = "tb-btn help-btn"',
   );
 });
+test("display properties uses Windows XP desktop-tab geometry and labels", () => {
+  contains(
+    javascript,
+    'data-wallpaper="none"><span class="wallpaper-icon none"></span>(None)',
+    'class="display-customize">Customize Desktop...</button>',
+    'class="display-status" aria-live="polite" hidden',
+    "isDisplayProperties\n          ? 426",
+    "isDisplayProperties\n          ? 480",
+  );
+  absent(javascript, 'controls.status.textContent = "Settings applied."');
+  contains(
+    css,
+    "grid-template-columns: minmax(0, 1fr) 82px",
+    "width: 376px",
+    "width: 189px",
+    "height: 170px",
+    "width: 162px",
+    "height: 120px",
+    "min-width: 75px",
+    "height: 23px",
+  );
+});
 test("display properties exposes all tabs and safe wallpaper controls", () => {
   for (const tab of ["themes", "desktop", "saver", "appearance", "settings"])
     contains(javascript, `display-tab-${tab}`, `display-panel-${tab}`);

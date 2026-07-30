@@ -2341,15 +2341,15 @@ html[data-xp-appearance="silver"] {
 
 .display-dialog-buttons {
   position: absolute;
-  right: 10px;
+  right: 18px;
   bottom: 10px;
   display: flex;
   gap: 7px;
 }
 
 .display-dialog-buttons button {
-  min-width: 95px;
-  height: 27px;
+  min-width: 75px;
+  height: 23px;
   border: 1px solid #003c74;
   border-radius: 3px;
   background: linear-gradient(#fff, #ece9d8);
@@ -2370,7 +2370,7 @@ html[data-xp-appearance="silver"] {
 .display-panel {
   position: absolute;
   z-index: 0;
-  inset: 31px 13px 54px;
+  inset: 31px 7px 43px;
   min-height: 0;
   padding: 4px 15px;
   border: 1px solid #919b9c;
@@ -2384,7 +2384,7 @@ html[data-xp-appearance="silver"] {
 .display-tabs {
   z-index: 2;
   top: 7px;
-  left: 14px;
+  left: 8px;
   right: auto;
   gap: 0;
   border-bottom: 0;
@@ -2393,7 +2393,7 @@ html[data-xp-appearance="silver"] {
 .display-tabs button {
   height: 23px;
   margin-right: -1px;
-  padding: 2px 9px;
+  padding: 2px 7.5px;
   border-radius: 3px 3px 0 0;
 }
 
@@ -2402,15 +2402,16 @@ html[data-xp-appearance="silver"] {
   margin-top: -2px;
   border-top: 2px solid #e68b2c;
   background: #fff;
+  font-weight: 400;
 }
 
 .display-preview {
   position: relative;
   box-sizing: border-box;
-  width: 236px;
-  height: 212px;
+  width: 189px;
+  height: 170px;
   aspect-ratio: auto;
-  margin: 12px auto 23px;
+  margin: 12px auto 7px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -2422,26 +2423,26 @@ html[data-xp-appearance="silver"] {
   position: absolute;
   inset: 0;
   z-index: 2;
-  width: 236px;
-  height: 212px;
+  width: 189px;
+  height: 170px;
   border: 0;
 }
 
 .display-preview > .display-preview-surface {
   position: absolute;
-  top: 20px;
-  left: 33px;
+  top: 16px;
+  left: 12px;
   z-index: 1;
-  width: 203px;
-  height: 149px;
+  width: 162px;
+  height: 120px;
   border: 0;
 }
 
 .display-desktop-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 99px;
-  gap: 8px;
-  width: 470px;
+  grid-template-columns: minmax(0, 1fr) 82px;
+  gap: 10px;
+  width: 376px;
   max-width: 100%;
   margin: 0 auto;
 }
@@ -2454,7 +2455,7 @@ html[data-xp-appearance="silver"] {
 
 .display-wallpaper-label {
   width: auto;
-  margin: 0 0 4px;
+  margin: 0 0 7px;
 }
 
 .display-properties-content .display-wallpaper-list {
@@ -2462,7 +2463,7 @@ html[data-xp-appearance="silver"] {
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  height: 150px;
+  height: 120px;
   margin: 0;
   padding: 0;
   border: 1px solid #7f9db9;
@@ -2480,7 +2481,7 @@ html[data-xp-appearance="silver"] {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 20px;
+  height: 18px;
   padding: 0 4px;
   border: 0;
   background: #fff;
@@ -2571,13 +2572,22 @@ html[data-xp-appearance="silver"] {
 }
 
 .display-background-actions {
-  padding-top: 19px;
-  gap: 5px;
+  padding-top: 22px;
+  gap: 4px;
 }
 
 .display-properties-content .display-background-actions select {
-  width: 99px;
-  margin: -2px 0 5px;
+  width: 82px;
+  margin: -2px 0 4px;
+  padding: 0 20px 0 4px;
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, #4f6480 50%) calc(100% - 10px) 9px /
+      4px 4px no-repeat,
+    linear-gradient(135deg, #4f6480 50%, transparent 50%) calc(100% - 6px) 9px /
+      4px 4px no-repeat,
+    linear-gradient(#f8fbff, #c9d9ed) right / 18px 100% no-repeat,
+    #fff;
 }
 
 .display-browse,
@@ -2586,7 +2596,7 @@ html[data-xp-appearance="silver"] {
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  height: 27px;
+  height: 23px;
   border: 1px solid #003c74;
   border-radius: 3px;
   background: linear-gradient(#fff, #ece9d8);
@@ -2597,7 +2607,10 @@ html[data-xp-appearance="silver"] {
 
 .display-customize {
   width: 146px;
-  margin-top: 10px;
+  margin-top: 7px;
+}
+
+.display-customize:disabled {
   color: #aca899;
   border-color: #aaa;
 }
@@ -2605,12 +2618,12 @@ html[data-xp-appearance="silver"] {
 .display-color-button {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .display-color-button span {
-  width: 23px;
-  height: 15px;
+  width: 55px;
+  height: 13px;
   border: 1px solid #111;
 }
 
@@ -2620,8 +2633,8 @@ html[data-xp-appearance="silver"] {
 }
 
 .display-properties-window {
-  min-width: min(500px, calc(100% - 8px));
-  min-height: min(520px, calc(100% - 8px));
+  min-width: min(400px, calc(100% - 8px));
+  min-height: min(440px, calc(100% - 8px));
 }
 
 .display-properties-window .title-icon,
