@@ -490,21 +490,28 @@ test("shell paste uses one conflict aware progress helper", () =>
     "pasteIntoFolder(win.currentFolderId)",
     "pasteIntoFolder(fs.DESKTOP)",
   ));
-test("desktop drag moves into folders without a modifier", () => {
+test("desktop drag moves into folders or the Recycle Bin without a modifier", () => {
   const block = between(
     javascript,
-    "const findDesktopFolderDropTarget = (clientX, clientY, draggedIds) =>",
+    "const findDesktopDropTarget = (clientX, clientY, draggedIds) =>",
     "const wireDesktopSelectionRectangle = () =>",
   );
   contains(
     block,
     "const eligibility = getDesktopSelectionEligibility()",
-    'element.closest?.("[data-drop-destination-id]")',
+    '"[data-drop-action], [data-drop-destination-id]"',
+    'target.dataset.dropAction === "recycle"',
     "dropTarget = eligibility.movable",
     'upEvent.type === "pointerup"',
+    'dropTarget.action === "recycle"',
+    "fileOps.removeToBin(eligibility.filesystemIds)",
     "fileOps.cut(eligibility.filesystemIds)",
     "await pasteIntoFolder(dropTarget.destinationId)",
     "saveDesktopIconPosition(item)",
+  );
+  contains(
+    javascript,
+    'if (id === "__recycle-bin") icon.dataset.dropAction = "recycle"',
   );
   absent(block, "event.altKey", "Alt+drag");
 });

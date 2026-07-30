@@ -5966,10 +5966,15 @@ const layoutDesktopIcons = (force = false) => {
   }
 };
 
-const findDesktopFolderDropTarget = (clientX, clientY, draggedIds) => {
+const findDesktopDropTarget = (clientX, clientY, draggedIds) => {
   for (const element of document.elementsFromPoint(clientX, clientY)) {
-    const target = element.closest?.("[data-drop-destination-id]");
+    const target = element.closest?.(
+      "[data-drop-action], [data-drop-destination-id]",
+    );
     if (!target) continue;
+    if (target.dataset.dropAction === "recycle") {
+      return { action: "recycle", element: target };
+    }
     const destinationId = target.dataset.dropDestinationId;
     if (
       destinationId === fs.DESKTOP ||
@@ -5978,7 +5983,7 @@ const findDesktopFolderDropTarget = (clientX, clientY, draggedIds) => {
     ) {
       continue;
     }
-    return { element: target, destinationId };
+    return { action: "move", element: target, destinationId };
   }
   return null;
 };
@@ -6038,7 +6043,7 @@ const wireDesktopIconDrag = (icon) => {
 
       dropTarget?.element.classList.remove("drop-target");
       dropTarget = eligibility.movable
-        ? findDesktopFolderDropTarget(
+        ? findDesktopDropTarget(
             moveEvent.clientX,
             moveEvent.clientY,
             draggedIds,
@@ -6054,16 +6059,16 @@ const wireDesktopIconDrag = (icon) => {
       dropTarget?.element.classList.remove("drop-target");
       dropTarget =
         eligibility.movable && upEvent.type === "pointerup"
-          ? findDesktopFolderDropTarget(
-              upEvent.clientX,
-              upEvent.clientY,
-              draggedIds,
-            )
+          ? findDesktopDropTarget(upEvent.clientX, upEvent.clientY, draggedIds)
           : null;
       if (desktopDragged) {
         if (dropTarget) {
-          fileOps.cut(eligibility.filesystemIds);
-          await pasteIntoFolder(dropTarget.destinationId);
+          if (dropTarget.action === "recycle") {
+            fileOps.removeToBin(eligibility.filesystemIds);
+          } else {
+            fileOps.cut(eligibility.filesystemIds);
+            await pasteIntoFolder(dropTarget.destinationId);
+          }
         } else {
           const { alignToGrid } = getDesktopLayoutSettings();
           selected.forEach(({ item }) => {
@@ -6222,6 +6227,7 @@ const buildDesktopIcons = () => {
     icon.dataset.desktopId = id;
     if (system) icon.dataset.systemId = id;
     if (node?.type === "folder") icon.dataset.dropDestinationId = node.id;
+    if (id === "__recycle-bin") icon.dataset.dropAction = "recycle";
 
     const glyph = system
       ? createGameIconElement(id, "icon-glyph")
