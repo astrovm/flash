@@ -55,6 +55,13 @@ test("offers a persistent WebTorrent download alongside manual selection", async
   expect(host).toContain("announce: WEB_TRACKERS");
   expect(host).toContain('fetch("/api/rtc", { cache: "no-store" })');
   expect(host).toContain("rtcConfig: { iceServers }");
+  expect(host).toContain("verifyTrackerConnection()");
+  expect(host).toContain("verifyPeerConnections(iceServers)");
+  expect(host).toContain("globalThis.RTCPeerConnection");
+  expect(host).toContain("Checking peer connection support");
+  expect(host).toContain("No peer connection was established");
+  expect(host).toContain("Try automatic download again");
+  expect(host).toContain("destroyStoreOnDestroy: false");
   expect(host).toContain("uploads: 2");
   expect(host).toContain("skipVerify: cached");
   expect(host).toContain("torrent.files.map");
