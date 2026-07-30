@@ -153,6 +153,8 @@
       const DOWNLOAD_SIZE = 901786388;
       const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
       const WEB_TRACKERS = ["wss://cloud.dos.zone:8444/announce-ws"];
+      const CONNECTION_TIMEOUT = 20000;
+      const PREFLIGHT_TIMEOUT = 10000;
       const input = document.getElementById("file-input");
       const downloadButton = document.getElementById("download-button");
       const setup = document.getElementById("setup");
@@ -195,6 +197,100 @@
         )}/s · ${torrent.numPeers} peer${torrent.numPeers === 1 ? "" : "s"}`;
       };
 
+      const verifyTrackerConnection = () =>
+        new Promise((resolve, reject) => {
+          const socket = new WebSocket(WEB_TRACKERS[0]);
+          let finished = false;
+          const finish = (error) => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timeout);
+            socket.close();
+            error ? reject(error) : resolve();
+          };
+          const timeout = setTimeout(
+            () =>
+              finish(
+                new Error(
+                  "The peer tracker could not be reached. A content blocker, firewall, or temporary tracker outage may be responsible.",
+                ),
+              ),
+            PREFLIGHT_TIMEOUT,
+          );
+          socket.addEventListener("open", () => finish());
+          socket.addEventListener("error", () =>
+            finish(
+              new Error(
+                "The peer tracker was blocked. Allow privacy protections for this site, then try again.",
+              ),
+            ),
+          );
+        });
+
+      const verifyPeerConnections = (iceServers) =>
+        new Promise((resolve, reject) => {
+          if (!globalThis.RTCPeerConnection) {
+            reject(
+              new Error(
+                "Peer connections are unavailable. Enable WebRTC in your browser, then try again.",
+              ),
+            );
+            return;
+          }
+
+          let connection;
+          let finished = false;
+          const finish = (error) => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timeout);
+            connection?.close();
+            error ? reject(error) : resolve();
+          };
+          const timeout = setTimeout(
+            () =>
+              finish(
+                new Error(
+                  "Peer connections appear to be blocked. Enable WebRTC or allow privacy protections for this site, then try again.",
+                ),
+              ),
+            PREFLIGHT_TIMEOUT,
+          );
+
+          try {
+            connection = new globalThis.RTCPeerConnection({ iceServers });
+            connection.createDataChannel("astro-flash-preflight");
+            connection.addEventListener("icecandidate", (event) => {
+              if (event.candidate) finish();
+            });
+            connection.addEventListener("icegatheringstatechange", () => {
+              if (connection.iceGatheringState === "complete" && !finished) {
+                finish(
+                  new Error(
+                    "Peer connections appear to be blocked. Enable WebRTC or allow privacy protections for this site, then try again.",
+                  ),
+                );
+              }
+            });
+            connection
+              .createOffer()
+              .then((offer) => connection.setLocalDescription(offer))
+              .catch(() =>
+                finish(
+                  new Error(
+                    "Peer connections could not start. Enable WebRTC in your browser, then try again.",
+                  ),
+                ),
+              );
+          } catch {
+            finish(
+              new Error(
+                "Peer connections could not start. Enable WebRTC in your browser, then try again.",
+              ),
+            );
+          }
+        });
+
       const downloadGameData = async () => {
         if (!navigator.storage?.getDirectory) {
           throw new Error(
@@ -233,6 +329,15 @@
         if (!Array.isArray(iceServers) || iceServers.length === 0) {
           throw new Error("Peer connection service returned no servers.");
         }
+        if (!cached) {
+          selection.textContent = "Checking peer connection support…";
+          await Promise.all([
+            verifyTrackerConnection(),
+            verifyPeerConnections(iceServers),
+          ]);
+          selection.textContent =
+            "Connecting to peers. Your IP address is visible to torrent peers.";
+        }
         const client = new WebTorrent({
           dht: false,
           lsd: false,
@@ -243,13 +348,25 @@
           uploadLimit: 262144,
         });
 
-        client.on("error", (error) => {
-          selection.textContent = `Download failed: ${error.message}`;
+        let connectionTimer;
+        let failed = false;
+        const failDownload = (message) => {
+          if (failed) return;
+          failed = true;
+          clearTimeout(connectionTimer);
+          client.destroy();
+          selection.textContent = message;
           downloadButton.disabled = false;
-        });
+          downloadButton.textContent = "Try automatic download again";
+        };
+
+        client.on("error", (error) =>
+          failDownload(`Download failed: ${error.message}`),
+        );
 
         const torrent = client.add(new URL(TORRENT_URL, location.href).href, {
           announce: WEB_TRACKERS,
+          destroyStoreOnDestroy: false,
           storeOpts: { rootDir },
           skipVerify: cached,
           uploads: 2,
@@ -257,29 +374,44 @@
 
         let lastProgressUpdate = 0;
         torrent.on("download", () => {
+          if (failed) return;
           const now = Date.now();
           if (now - lastProgressUpdate < 250) return;
           lastProgressUpdate = now;
           showProgress(torrent);
         });
         torrent.on("wire", () => {
+          if (failed) return;
+          clearTimeout(connectionTimer);
           selection.textContent = "Peer connected. Starting download…";
         });
         torrent.on("noPeers", () => {
+          if (failed) return;
           selection.textContent =
             "No browser peers found yet. Retrying the trackers…";
         });
         torrent.on("warning", (warning) => {
+          if (failed) return;
           if (warning.message.startsWith("Unsupported tracker protocol:")) {
+            return;
+          }
+          if (
+            warning.message.includes("tracker") ||
+            warning.message.includes("WebSocket")
+          ) {
+            failDownload(
+              "The peer tracker connection failed. Check content blockers or privacy protections, then try again.",
+            );
             return;
           }
           console.warn("reVCDOS torrent warning:", warning);
         });
-        torrent.on("error", (error) => {
-          selection.textContent = `Download failed: ${error.message}`;
-          downloadButton.disabled = false;
-        });
+        torrent.on("error", (error) =>
+          failDownload(`Download failed: ${error.message}`),
+        );
         torrent.on("done", () => {
+          if (failed) return;
+          clearTimeout(connectionTimer);
           localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
           cacheEngineForOfflineUse();
           const downloadedFiles = new Map(
@@ -290,6 +422,14 @@
             `${downloadedFiles.size.toLocaleString()} files ready. Starting reVCDOS…`,
           );
         });
+        if (!cached) {
+          connectionTimer = setTimeout(() => {
+            if (torrent.numPeers > 0 || torrent.downloaded > 0) return;
+            failDownload(
+              "No peer connection was established. Enable WebRTC or allow privacy protections for this site, then try again. You can also select a local vc-assets folder.",
+            );
+          }, CONNECTION_TIMEOUT);
+        }
       };
 
       downloadButton.disabled = false;
