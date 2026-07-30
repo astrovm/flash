@@ -65,11 +65,26 @@ describe("development build synchronization", () => {
     const output = join(root, "dist");
     let sourceFingerprint = "first";
     let builds = 0;
-    const builder = async ({ outputDir }: { outputDir?: string }) => {
+    let reusedBootstrap = "";
+    const builder = async ({
+      outputDir,
+      download,
+    }: {
+      outputDir?: string;
+      download?: (jsDir: string) => Promise<void>;
+    }) => {
       builds += 1;
       await mkdir(join(outputDir as string, "js"), { recursive: true });
       await writeFile(join(outputDir as string, "index.html"), "built");
-      await writeFile(join(outputDir as string, "js", "ruffle.js"), "ruffle");
+      if (download) {
+        const stagingJs = join(root, "staging-js");
+        await download(stagingJs);
+        reusedBootstrap = await readFile(join(stagingJs, "ruffle.js"), "utf8");
+      }
+      await writeFile(
+        join(outputDir as string, "js", "ruffle.1234abcd.js"),
+        "ruffle",
+      );
       await writeFile(
         join(outputDir as string, "js", "core.ruffle.abc.js"),
         "core",
@@ -97,6 +112,7 @@ describe("development build synchronization", () => {
       reusedRuffle: true,
     });
     expect(builds).toBe(2);
+    expect(reusedBootstrap).toBe("ruffle");
     const state = JSON.parse(
       await readFile(join(output, DEV_BUILD_STATE), "utf8"),
     );
