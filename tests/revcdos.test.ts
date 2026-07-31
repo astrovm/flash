@@ -109,6 +109,11 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
 
 test("offers configurable persistent WebTorrent downloads alongside manual selection", async () => {
   expect(host).toContain('id="download-button"');
+  expect(host).toContain("Select your game files…");
+  expect(host).toContain("Download from torrent");
+  expect(host.indexOf('for="file-input"')).toBeLessThan(
+    host.indexOf('for="torrent-source"'),
+  );
   expect(host).toContain('id="torrent-source"');
   expect(host).toContain('value="revcdoseng.torrent"');
   expect(host).toContain('id="torrent-file-input"');
@@ -132,6 +137,7 @@ test("offers configurable persistent WebTorrent downloads alongside manual selec
   expect(host).toContain("No peer connection was established");
   expect(host).toContain("Try torrent download again");
   expect(host).not.toContain("Download automatically");
+  expect(host).not.toContain("Download and optimize");
   expect(host).toContain("destroyStoreOnDestroy: false");
   expect(host).toContain("uploads: 2");
   expect(host).toContain("skipVerify: cached");

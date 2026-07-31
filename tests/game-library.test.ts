@@ -5,6 +5,15 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 
+test("icon source registry contains only source metadata", async () => {
+  const sources = await Bun.file(
+    new URL("../site/assets/icons/SOURCES.json", import.meta.url),
+  ).json();
+  for (const source of Object.values(sources)) {
+    assert.equal("notes" in source, false);
+  }
+});
+
 test("game library", async () => {
   const { unzipSync, zipSync } = require("fflate");
   const installerPath = require.resolve("../site/js/game-installer.js");

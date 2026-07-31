@@ -93,15 +93,15 @@
     <body>
       <main id="disc-panel">
         <h1></h1>
-        <p>Use your authorized English CD image. Downloads are saved only in this browser; local images are read directly and never uploaded.</p>
+        <p>Select your own English CD image. Local images are read directly and never uploaded.</p>
+        <input id="disc-input" type="file" accept=".iso,application/x-iso9660-image">
+        <div class="divider">or download an ISO</div>
         <label class="source-label" for="disc-url">CD image URL</label>
         <div class="url-row">
           <input id="disc-url" type="url" inputmode="url" placeholder="https://example.com/game.iso" spellcheck="false">
           <button id="download-disc" type="button">Download</button>
         </div>
         <button id="saved-copy" type="button" hidden>Play downloaded copy</button>
-        <div class="divider">or select a local ISO</div>
-        <input id="disc-input" type="file" accept=".iso,application/x-iso9660-image">
         <p id="message" role="status"></p>
       </main>
       <progress id="progress" max="100" value="0" hidden></progress>

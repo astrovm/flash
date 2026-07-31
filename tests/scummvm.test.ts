@@ -56,6 +56,10 @@ test("supports optional verified URL downloads in persistent browser storage", (
   expect(launcher).toContain('id="disc-url"');
   expect(launcher).toContain('id="download-disc"');
   expect(launcher).toContain('id="saved-copy"');
+  expect(launcher.indexOf('id="disc-input"')).toBeLessThan(
+    launcher.indexOf('id="disc-url"'),
+  );
+  expect(launcher).toContain("or download an ISO");
   expect(launcher).toContain("z-index: 2");
   expect(launcher).toContain("navigator.storage.getDirectory()");
   expect(launcher).toContain("handle.createWritable()");

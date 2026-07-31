@@ -63,7 +63,6 @@ type IconSource = {
   source: string;
   retrieved: string;
   sha256: string;
-  notes: string;
 };
 function flashpointUrl(uuid: string): string {
   return `${FLASHPOINT_IMAGE_ROOT}/${uuid.slice(0, 2)}/${uuid.slice(2, 4)}/${uuid}.png`;
@@ -77,7 +76,6 @@ async function writeIcon(
   gameId: string,
   content: ArrayBuffer | Uint8Array,
   source: string,
-  notes: string,
 ): Promise<IconSource> {
   const normalized = await sharp(content)
     .ensureAlpha()
@@ -90,7 +88,6 @@ async function writeIcon(
     source,
     retrieved: today(),
     sha256: createHash("sha256").update(normalized).digest("hex"),
-    notes,
   };
 }
 
@@ -134,15 +131,7 @@ async function main() {
   let gameSource = await readFile(GAMES_PATH, "utf8");
   for (const [gameId, uuid] of Object.entries(FLASHPOINT_UUIDS)) {
     const source = flashpointUrl(uuid);
-    let notes = `Game logo archived by Flashpoint Archive (UUID ${uuid}).`;
-    if (gameId === "knd-operation-startup-final")
-      notes += " This packaged variant shares the canonical game artwork.";
-    sources[gameId] = await writeIcon(
-      gameId,
-      await fetchIcon(source),
-      source,
-      notes,
-    );
+    sources[gameId] = await writeIcon(gameId, await fetchIcon(source), source);
     gameSource = addIconMetadata(gameSource, gameId);
   }
   const gameId = "inside-the-firewall";
@@ -150,7 +139,6 @@ async function main() {
     gameId,
     await bundledFirewallIcon(),
     "iframe/inside-the-firewall/index.html#bundled-favicon",
-    "Original favicon embedded in the packaged TurboWarp game.",
   );
   gameSource = addIconMetadata(gameSource, gameId);
   await writeFile(
