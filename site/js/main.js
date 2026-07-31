@@ -2345,7 +2345,13 @@ const createSystemWindowContent = (shortcutId, win) => {
 
   const items = document.createElement("div");
   items.className = "explorer-items";
+  items.tabIndex = 0;
   main.appendChild(items);
+  main.addEventListener("pointerdown", (event) => {
+    if (!event.target.closest(".explorer-item")) {
+      items.focus({ preventScroll: true });
+    }
+  });
 
   const chrome = document.createElement("div");
   chrome.className = "explorer-chrome";
@@ -6474,6 +6480,7 @@ const wireDesktopSelectionRectangle = () => {
   container.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || event.target !== container) return;
 
+    container.focus({ preventScroll: true });
     closeDesktopContextMenu();
     const additive = event.ctrlKey || event.metaKey;
     const initialSelection = new Set(
@@ -6568,17 +6575,24 @@ const buildDesktopIcons = () => {
     (id) => systemShortcuts[id]?.desktop !== false,
   );
   const desktopSort = getDesktopLayoutSettings().sort;
+  const desktopNodeSortName = (node) =>
+    node.ext === ".game" ? node.name.slice(0, -node.ext.length) : node.name;
+  const compareDesktopNodeNames = (a, b) =>
+    desktopNodeSortName(a).localeCompare(desktopNodeSortName(b), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
   const compareDesktopNodes = (a, b) => {
     if (desktopSort === "size")
-      return a.size - b.size || a.name.localeCompare(b.name);
+      return a.size - b.size || compareDesktopNodeNames(a, b);
     if (desktopSort === "type")
       return (
         (a.ext || a.type).localeCompare(b.ext || b.type) ||
-        a.name.localeCompare(b.name)
+        compareDesktopNodeNames(a, b)
       );
     if (desktopSort === "modified")
-      return b.modified - a.modified || a.name.localeCompare(b.name);
-    return a.name.localeCompare(b.name);
+      return b.modified - a.modified || compareDesktopNodeNames(a, b);
+    return compareDesktopNodeNames(a, b);
   };
   const entries = [
     ...desktopItems.map((id) => ({ id, system: true })),
@@ -8008,6 +8022,48 @@ const finishAltTab = () => {
 const isEditableTarget = (target) =>
   /^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName || "") ||
   target?.isContentEditable;
+const typeaheadState = new WeakMap();
+const normalizeTypeaheadText = (value) =>
+  String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase();
+const cycleTypeaheadItem = (event, scope, items, getLabel) => {
+  if (
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.isComposing ||
+    Array.from(event.key).length !== 1
+  )
+    return null;
+
+  const key = normalizeTypeaheadText(event.key);
+  if (!key) return null;
+  const matches = items.filter((item) =>
+    normalizeTypeaheadText(getLabel(item)).startsWith(key),
+  );
+  if (!matches.length) return null;
+
+  const previous = typeaheadState.get(scope);
+  const repeated =
+    previous?.key === key &&
+    matches.includes(previous.target) &&
+    document.activeElement === previous.target;
+  const target = repeated
+    ? matches[(matches.indexOf(previous.target) + 1) % matches.length]
+    : matches[0];
+  typeaheadState.set(scope, { key, target });
+  event.preventDefault();
+  return target;
+};
+const typeaheadItemLabel = (item) =>
+  item.getAttribute("aria-label") ||
+  item.querySelector(
+    ".icon-label, .menu-item-label, .context-label, .sm-game-title, b",
+  )?.textContent ||
+  item.textContent;
 const confirmPermanentDelete = (ids) =>
   XPDialogs.confirm(
     ids.length === 1
@@ -8016,6 +8072,37 @@ const confirmPermanentDelete = (ids) =>
     "Confirm File Delete",
     "warning",
   ).then((yes) => yes && ids.forEach((id) => fs.destroy(id)));
+
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (event.defaultPrevented || isEditableTarget(event.target)) return;
+    const active = document.activeElement;
+    let scope = active?.closest?.('[role="menu"], [role="menubar"]');
+    const startMenu = document.getElementById("start-menu");
+    if (
+      !scope &&
+      !startMenu.hidden &&
+      (startMenu.contains(active) || active?.id === "start-button")
+    ) {
+      scope = startMenu;
+    }
+    if (!scope) return;
+
+    const items = [...scope.querySelectorAll("button:not(:disabled)")].filter(
+      (item) => {
+        if (!item.getClientRects().length) return false;
+        if (scope === startMenu) return startMenu.contains(item);
+        return item.closest('[role="menu"], [role="menubar"]') === scope;
+      },
+    );
+    const target = cycleTypeaheadItem(event, scope, items, typeaheadItemLabel);
+    if (!target) return;
+    target.focus();
+    event.stopImmediatePropagation();
+  },
+  true,
+);
 
 gameLibraryInitialization = initializeGameLibrary();
 
@@ -8142,6 +8229,18 @@ document.addEventListener("keydown", (e) => {
   const desktopHasFocus =
     desktopIcon || document.activeElement?.id === "desktop-icons";
   if (desktopHasFocus) {
+    const desktopIcons = [...document.querySelectorAll(".desktop-icon")];
+    const typeaheadTarget = cycleTypeaheadItem(
+      e,
+      document.getElementById("desktop-icons"),
+      desktopIcons,
+      typeaheadItemLabel,
+    );
+    if (typeaheadTarget) {
+      selectDesktopIcon(typeaheadTarget.dataset.desktopId);
+      typeaheadTarget.focus();
+      return;
+    }
     const {
       filesystemIds: selectedFsIds,
       allFilesystem,
@@ -8204,10 +8303,12 @@ document.addEventListener("keydown", (e) => {
       desktopIcon &&
       ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
     ) {
-      const icons = [...document.querySelectorAll(".desktop-icon")];
-      const current = icons.indexOf(desktopIcon);
+      const current = desktopIcons.indexOf(desktopIcon);
       const direction = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 1;
-      const target = icons[(current + direction + icons.length) % icons.length];
+      const target =
+        desktopIcons[
+          (current + direction + desktopIcons.length) % desktopIcons.length
+        ];
       e.preventDefault();
       if (!e.ctrlKey && !e.shiftKey)
         selectDesktopIcon(target.dataset.desktopId);
@@ -8217,11 +8318,27 @@ document.addEventListener("keydown", (e) => {
     }
   }
 
+  const explorerSurface = document.activeElement?.closest?.(".explorer-items");
   const explorerItem = document.activeElement?.closest?.(".explorer-item");
   const explorerWin =
-    explorerItem &&
-    [...openWindows.values()].find((win) => win.el.contains(explorerItem));
+    explorerSurface &&
+    [...openWindows.values()].find((win) => win.el.contains(explorerSurface));
   if (explorerWin) {
+    const explorerItems = [
+      ...explorerSurface.querySelectorAll(".explorer-item"),
+    ];
+    const typeaheadTarget = cycleTypeaheadItem(
+      e,
+      explorerSurface,
+      explorerItems,
+      typeaheadItemLabel,
+    );
+    if (typeaheadTarget) {
+      explorerItems.forEach((item) => item.classList.remove("selected"));
+      typeaheadTarget.classList.add("selected");
+      typeaheadTarget.focus();
+      return;
+    }
     const selected = selectedExplorerNodes(explorerWin);
     const protectedSelection = selected.some((id) => fs.isProtected(id));
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {

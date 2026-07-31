@@ -1,25 +1,25 @@
 # Astro Flash Collection
 
-A Windows XP-style desktop for playing classic Flash, HTML5, and DOS games in
-the browser.
+A Windows XP-style desktop for playing classic browser games with Ruffle,
+js-dos, ScummVM, and embedded web runtimes.
 
 [Open Astro Flash Collection](https://flash.4st.li/)
 
 ## Highlights
 
 - Authentic Windows XP shell, Explorer, Notepad, themes, and display settings
-- Flash emulation with Ruffle and DOS emulation with js-dos
 - Draggable game windows, task switching, fullscreen, and volume controls
 - Favorites, recently played games, categories, search, and deep links
-- Automatic offline support for the desktop and optional game downloads
+- Automatic offline support with optional per-game downloads
 - Internet Games catalog backed by Flashpoint Archive
 
 ## Development
 
-Install dependencies and run the test suite:
+Install dependencies and run the checks:
 
 ```bash
 bun install --frozen-lockfile
+bun run quality
 bun run test
 ```
 
@@ -43,42 +43,18 @@ existing output unchanged.
 - `tests/` — Bun/TypeScript tests
 - `dist/` — generated production build; ignored by Git
 
-## Games and offline storage
+## Games and offline support
 
-Included games are defined in `site/js/games.js`. Flash games use `type: "swf"`;
-DOS and HTML5 games use `type: "iframe"`.
-
-```javascript
-{
-  type: "swf",
-  title: "Display Name",
-  icon: "assets/icons/game.png",
-  category: "Racing",
-  frameRate: 45,
-  aspectRatio: 480 / 360,
-  archive: {
-    launchUrl: "https://example.com/game/main.swf",
-    routes: {
-      "https://example.com/game/main.swf": "swf/game/main.swf",
-    },
-  },
-}
-```
+Included games are defined in `site/js/games.js`. Ruffle games use `type: "swf"`;
+embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
 
 The Windows XP shell is cached automatically. Included games can be downloaded
 individually or all at once from **Settings > Offline**. The shared Ruffle
-runtime is downloaded when the first Flash game is selected.
+and ScummVM runtimes are downloaded only when needed.
 
 Games installed through **Internet Games** are stored separately in IndexedDB
 and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
 additional files as they are requested.
-
-Icon sources and checksums live in `site/assets/icons/SOURCES.json`. Validate
-them with:
-
-```bash
-bun run validate:icons
-```
 
 ## Deployment
 
@@ -94,7 +70,7 @@ The repository requires these GitHub Actions secrets:
 The API token needs **Workers Scripts: Edit** for the account and **Workers
 Routes: Edit** for the `4st.li` zone.
 
-To deploy the Worker manually:
+Deploy the Worker manually with:
 
 ```bash
 bun run deploy:worker
@@ -106,4 +82,4 @@ new stable releases and opens a reviewable pull request.
 ## Contributing
 
 Test game compatibility, controls, frame rate, and categorization before
-submitting a pull request. Run `bun run test` before pushing.
+submitting a pull request. Run `bun run quality && bun run test` before pushing.

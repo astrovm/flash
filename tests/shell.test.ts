@@ -968,6 +968,14 @@ test("desktop game labels hide virtual extension", () =>
     'node.ext === ".game"',
     "node.name.slice(0, -node.ext.length)",
   ));
+test("desktop games use natural title order", () =>
+  contains(
+    javascript,
+    "const desktopNodeSortName =",
+    'node.ext === ".game" ? node.name.slice(0, -node.ext.length) : node.name',
+    "numeric: true",
+    'sensitivity: "base"',
+  ));
 test("anchored recycle bin does not consume an early grid slot", () => {
   const entries = javascript.indexOf("const entries = [");
   const files = javascript.indexOf(".getChildren(fs.DESKTOP)", entries);
@@ -1053,6 +1061,21 @@ test("shell keyboard router covers window switching and file shortcuts", () =>
     "if (!showSwitcher) altTabIndex = order.findIndex",
     "altTabIndex = 0;",
   ));
+test("desktop folders and menus cycle matching items by first letter", () => {
+  contains(html, 'id="desktop-icons" tabindex="0"');
+  js(
+    "const typeaheadState = new WeakMap()",
+    "const cycleTypeaheadItem =",
+    "document.activeElement === previous.target",
+    "matches[(matches.indexOf(previous.target) + 1) % matches.length]",
+    "event.stopImmediatePropagation()",
+    "selectDesktopIcon(typeaheadTarget.dataset.desktopId)",
+    'document.activeElement?.closest?.(".explorer-items")',
+    'typeaheadTarget.classList.add("selected")',
+    "items.tabIndex = 0",
+  );
+  contains(css, "#desktop-icons", "outline: none", ".explorer-items:focus");
+});
 test("show desktop restores focus and resize reflows tasks", () => {
   contains(javascript, "focusedGameId,", "showDesktopSnapshot.windows.forEach");
   contains(

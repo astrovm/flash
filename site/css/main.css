@@ -675,6 +675,7 @@ html[data-xp-appearance="silver"] {
   inset: 0;
   z-index: 1;
   overflow: hidden;
+  outline: none;
 }
 
 #desktop-icons.desktop-icons-overflow {
@@ -804,6 +805,10 @@ html[data-xp-appearance="silver"] {
 
 .desktop-icon.selected:focus .icon-label {
   outline: 1px dotted #fff;
+}
+
+.explorer-items:focus {
+  outline: none;
 }
 
 #desktop-icons:not(:focus-within) .desktop-icon.selected .icon-label {
