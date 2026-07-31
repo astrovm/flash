@@ -66,7 +66,7 @@ test("lists and removes external game data without save databases", async () => 
   assert.deepEqual(await manager.list(), [
     {
       id: "revcdos",
-      title: "Grand Theft Auto: Vice City (reVCDOS)",
+      title: "reVCDOS",
       detail: "Game data",
       bytes: 1000,
     },

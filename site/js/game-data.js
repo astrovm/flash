@@ -52,7 +52,7 @@
       if (revcdosBytes > 0) {
         items.push({
           id: "revcdos",
-          title: "Grand Theft Auto: Vice City (reVCDOS)",
+          title: "reVCDOS",
           detail: "Game data",
           bytes: revcdosBytes,
         });
