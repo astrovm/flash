@@ -66,7 +66,7 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
   expect(host).toContain('id="file-input"');
   expect(host).toContain("webkitdirectory");
   expect(host).toContain("directory");
-  expect(host).toContain('gameFrame.src = "game.html"');
+  expect(host).toContain('"game.html?session=1"');
   expect(host).toContain("loadPackedManifest");
   expect(host).toContain("packFiles");
   expect(host).toContain("destroyTorrent");
@@ -80,6 +80,11 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
   expect(game).toContain("return data.buffer");
   expect(game).toContain("local-assets/");
   expect(game).toContain("await fetch(localAssetUrl(filename)");
+  expect(game).toContain('params.get("session") === "1"');
+  expect(game).toContain('event: "revcdos.asset-request"');
+  expect(host).toContain("setSessionFiles(entries)");
+  expect(host).toContain('message.event === "revcdos.asset-request"');
+  expect(host).toContain("const buffer = await file.arrayBuffer()");
   expect(game).not.toContain("fetchLocalAsset");
   expect(game).toContain(`let cheatsEnabled = params.get("cheats") !== "0"`);
   expect(game).toContain("ownerShipConfirmed();");
@@ -107,7 +112,7 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
   expect(offlineWorker).toContain('"Content-Range"');
 });
 
-test("offers configurable persistent WebTorrent downloads alongside manual selection", async () => {
+test("offers temporary or persistent WebTorrent downloads alongside manual selection", async () => {
   expect(host).toContain('id="download-button"');
   expect(host).toContain("Select your game files…");
   expect(host).toContain("Download from torrent");
@@ -124,7 +129,7 @@ test("offers configurable persistent WebTorrent downloads alongside manual selec
   );
   expect(host).toContain("revcdoseng.torrent");
   expect(host).toContain("await navigator.storage.getDirectory()");
-  expect(host).toContain("storeOpts: { rootDir }");
+  expect(host).toContain("torrentOptions.storeOpts = { rootDir }");
   expect(host).toContain("const torrent = client.add(torrentSource");
   expect(host).toContain("wss://cloud.dos.zone:8444/announce-ws");
   expect(host).toContain("announce: WEB_TRACKERS");
@@ -138,7 +143,10 @@ test("offers configurable persistent WebTorrent downloads alongside manual selec
   expect(host).toContain("Try torrent download again");
   expect(host).not.toContain("Download automatically");
   expect(host).not.toContain("Download and optimize");
-  expect(host).toContain("destroyStoreOnDestroy: false");
+  expect(host).toContain("destroyStoreOnDestroy: !keepBrowserCopy");
+  expect(host).toContain("if (keepBrowserCopy)");
+  expect(host).not.toContain("navigator.storage.estimate()");
+  expect(host).toContain('error?.name === "QuotaExceededError"');
   expect(host).toContain("uploads: 2");
   expect(host).toContain("skipVerify: cached");
   expect(host).toContain("torrent.files.map");
