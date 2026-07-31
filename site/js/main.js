@@ -33,6 +33,7 @@ let gameLibraryReady = false;
 let gameLibraryInitialization = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
+const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings";
 const USER_STORAGE_KEYS = Object.freeze([
   DISPLAY_SETTINGS_KEY,
   "clockOffsetMs",
@@ -40,6 +41,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   "desktopLayoutSettings",
   "favorites",
   "gameStats",
+  GAME_PLAYBACK_SETTINGS_KEY,
   "gameVolumes",
   "isMuted",
   "runHistory",
@@ -448,6 +450,48 @@ const setGameVolume = (gameId, volume, isMuted) => {
     isMuted: isMuted,
   };
   writeJsonStorage("gameVolumes", gameVolumes);
+};
+
+const normalizeFrameRate = (value) => {
+  const frameRate = Number(value);
+  return Number.isFinite(frameRate) && frameRate >= 1 && frameRate <= 240
+    ? frameRate
+    : null;
+};
+
+const getGameFrameRateSetting = (gameId) => {
+  const settings = readJsonStorage(
+    GAME_PLAYBACK_SETTINGS_KEY,
+    {},
+    (value) => value && typeof value === "object" && !Array.isArray(value),
+  );
+  const frameRate = settings[gameId]?.frameRate;
+  if (frameRate === "native") return "native";
+  return normalizeFrameRate(frameRate) ?? "default";
+};
+
+const setGameFrameRate = (gameId, frameRate) => {
+  const settings = readJsonStorage(
+    GAME_PLAYBACK_SETTINGS_KEY,
+    {},
+    (value) => value && typeof value === "object" && !Array.isArray(value),
+  );
+  if (frameRate === "default") {
+    delete settings[gameId];
+  } else if (frameRate === "native") {
+    settings[gameId] = { frameRate: "native" };
+  } else {
+    settings[gameId] = { frameRate: normalizeFrameRate(frameRate) };
+  }
+  writeJsonStorage(GAME_PLAYBACK_SETTINGS_KEY, settings);
+};
+
+const resolveGameFrameRate = (gameId) => {
+  const setting = getGameFrameRateSetting(gameId);
+  if (setting === "native") return null;
+  if (setting === "default")
+    return normalizeFrameRate(gamesList[gameId]?.frameRate);
+  return setting;
 };
 
 const normalizeGameVolume = (gameId) => {
@@ -880,7 +924,9 @@ const createWindowElement = (gameId) => {
     Object.assign(document.createElement("div"), {
       className: "game-menu-separator",
     }),
-    makeMenuItem("&Properties", "properties", { disabled: true }),
+    makeMenuItem("&Properties", "properties", {
+      disabled: gamesList[gameId]?.type !== "swf",
+    }),
   );
 
   const helpMenu = makeMenu("help");
@@ -969,6 +1015,7 @@ const loadRuffleSWF = (gameId, win) => {
 
   const game = gamesList[gameId];
   const archiveUrl = game.archive?.launchUrl;
+  const frameRate = resolveGameFrameRate(gameId);
   const config = {
     url: game.url || archiveUrl || `swf/${gameId}/main.swf`,
     base:
@@ -979,7 +1026,7 @@ const loadRuffleSWF = (gameId, win) => {
     forceScale: true,
     openUrlMode: "confirm",
     showSwfDownload: true,
-    frameRate: game.frameRate,
+    ...(frameRate === null ? {} : { frameRate }),
     volume: gameId === focusedGameId ? normalizeGameVolume(gameId) : 0,
     allowScriptAccess: false,
     autoplay: "on",
@@ -987,6 +1034,145 @@ const loadRuffleSWF = (gameId, win) => {
   };
 
   player.load(config);
+};
+
+const reloadRuffleSWF = (win) => {
+  win.player?.remove();
+  win.player = null;
+  loadRuffleSWF(win.gameId, win);
+};
+
+const getLoadedMovieFrameRate = (player) => {
+  try {
+    return (
+      player?.ruffle?.(1)?.metadata?.frameRate ?? player?.metadata?.frameRate
+    );
+  } catch {
+    return null;
+  }
+};
+
+const openGameProperties = (win) => {
+  if (win.type !== "swf") return;
+
+  const currentSetting = getGameFrameRateSetting(win.gameId);
+  const defaultFrameRate = normalizeFrameRate(gamesList[win.gameId]?.frameRate);
+  const nativeFrameRate = getLoadedMovieFrameRate(win.player);
+  const dialog = XPDialogs.createDialog({
+    title: `${formatGameTitle(win.gameId)} Properties`,
+    onCancel: () => dialog.close("cancel"),
+  });
+
+  const group = document.createElement("fieldset");
+  group.className = "dlg-group game-playback-settings";
+  const legend = document.createElement("legend");
+  legend.textContent = "Playback";
+
+  const row = document.createElement("div");
+  row.className = "game-playback-row";
+  const label = document.createElement("label");
+  label.htmlFor = "game-frame-rate";
+  label.textContent = "Frame rate:";
+  const select = document.createElement("select");
+  select.id = "game-frame-rate";
+  select.className = "xp-select";
+  [
+    [
+      "default",
+      defaultFrameRate === null
+        ? "Default (native)"
+        : `Default (${defaultFrameRate} FPS)`,
+    ],
+    ["native", "Native (from SWF)"],
+    ["30", "30 FPS"],
+    ["45", "45 FPS"],
+    ["60", "60 FPS"],
+    ["custom", "Custom"],
+  ].forEach(([value, text]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = text;
+    select.appendChild(option);
+  });
+
+  const customInput = document.createElement("input");
+  customInput.className = "xp-input game-fps-custom";
+  customInput.type = "number";
+  customInput.min = "1";
+  customInput.max = "240";
+  customInput.step = "0.01";
+  customInput.setAttribute("aria-label", "Custom frames per second");
+  customInput.value =
+    typeof currentSetting === "number" ? String(currentSetting) : "60";
+  const presetFrameRates = [30, 45, 60];
+  select.value =
+    typeof currentSetting === "number"
+      ? presetFrameRates.includes(currentSetting)
+        ? String(currentSetting)
+        : "custom"
+      : currentSetting;
+
+  const suffix = document.createElement("span");
+  suffix.textContent = "FPS";
+  const nativeDescription = document.createElement("p");
+  nativeDescription.className = "game-playback-note";
+  nativeDescription.textContent = Number.isFinite(nativeFrameRate)
+    ? `This movie's native frame rate is ${nativeFrameRate} FPS.`
+    : "Native uses the frame rate stored in the movie.";
+  const warning = document.createElement("p");
+  warning.className = "game-playback-note";
+  warning.textContent =
+    "Changing the frame rate may affect gameplay speed and audio timing.";
+  const status = document.createElement("p");
+  status.className = "game-playback-status";
+  status.setAttribute("role", "alert");
+
+  const syncCustomInput = () => {
+    const custom = select.value === "custom";
+    customInput.hidden = !custom;
+    suffix.hidden = !custom;
+    if (custom) customInput.focus();
+  };
+  select.addEventListener("change", syncCustomInput);
+  syncCustomInput();
+
+  row.append(label, select, customInput, suffix);
+  group.append(legend, row, nativeDescription, warning, status);
+
+  const buttons = document.createElement("div");
+  buttons.className = "dlg-buttons";
+  const okButton = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      const selectedSetting =
+        select.value === "default" || select.value === "native"
+          ? select.value
+          : normalizeFrameRate(
+              select.value === "custom" ? customInput.value : select.value,
+            );
+      if (
+        select.value !== "default" &&
+        select.value !== "native" &&
+        selectedSetting === null
+      ) {
+        status.textContent = "Enter a frame rate from 1 to 240 FPS.";
+        customInput.focus();
+        customInput.select();
+        return;
+      }
+      setGameFrameRate(win.gameId, selectedSetting);
+      dialog.close("ok");
+      if (selectedSetting !== currentSetting) reloadRuffleSWF(win);
+    },
+  );
+  const cancelButton = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  buttons.append(okButton, cancelButton);
+  dialog.body.append(group, buttons);
+  dialog.defaultButton = okButton;
+  select.focus();
 };
 
 const loadIframe = (gameId, win) => {
@@ -1801,6 +1987,9 @@ const wireWindowControls = (win) => {
           break;
         case "fullscreen":
           if (win.player) toggleFullscreen(win.player);
+          break;
+        case "properties":
+          openGameProperties(win);
           break;
       }
       closeGameMenus();

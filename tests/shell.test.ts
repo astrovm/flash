@@ -59,6 +59,24 @@ test("every enabled desktop menu action has a handler", () => {
 });
 test("window manager never discards windows silently", () =>
   absent(javascript, "MAX_OPEN_WINDOWS", "ensureWindowCapacity"));
+test("Flash games keep curated FPS defaults and allow user overrides", async () => {
+  const games = await Bun.file(path("site/js/games.js")).text();
+  contains(games, '"bike-mania": {', "frameRate: 60");
+  js(
+    'const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings"',
+    "const getGameFrameRateSetting =",
+    "const setGameFrameRate =",
+    "const resolveGameFrameRate =",
+    "...(frameRate === null ? {} : { frameRate })",
+    "title: `${formatGameTitle(win.gameId)} Properties`",
+    '"Default (native)"',
+    '["native", "Native (from SWF)"]',
+    'customInput.min = "1"',
+    'customInput.max = "240"',
+    "reloadRuffleSWF(win)",
+  );
+  contains(css, ".game-playback-settings", ".game-playback-row");
+});
 test("window dragging and resizing coalesce updates by animation frame", () => {
   const drag = between(javascript, "const wireDrag =", "const applyResize =");
   const resize = between(
