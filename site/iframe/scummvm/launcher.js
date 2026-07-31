@@ -5,12 +5,15 @@
   if (!game) throw new Error("Missing Pink Panther game configuration.");
 
   const SCUMMVM_ROOT = "../../vendor/scummvm/2026.3.0/";
+  const SCUMMVM_GAME_ROUTE = `/iframe/scummvm/local-games/${game.id}/`;
   const STORAGE_DIRECTORY = "astro-flash-scummvm";
   const metadataKey = `astro-flash.scummvm.${game.id}.iso.v1`;
   const runtimeManifestName = `${game.id}-manifest.json`;
   let currentVolume = 1;
   let outputGain = null;
   let savedIso = null;
+  let temporaryIso = null;
+  let temporaryGameFiles = null;
 
   document.documentElement.innerHTML = `
     <head>
@@ -141,6 +144,70 @@
 
   const formatBytes = (bytes) =>
     `${(bytes / 1024 / 1024).toFixed(bytes >= 100 * 1024 * 1024 ? 0 : 1)} MiB`;
+
+  const errorMessage = (error) =>
+    error?.name === "QuotaExceededError"
+      ? "The browser refused the storage write because its actual storage quota was reached."
+      : error?.message || String(error);
+
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    const requestUrl = new URL(
+      typeof input === "string" || input instanceof URL ? input : input.url,
+      location.href,
+    );
+    if (
+      !temporaryIso ||
+      !temporaryGameFiles ||
+      requestUrl.origin !== location.origin ||
+      !requestUrl.pathname.startsWith(SCUMMVM_GAME_ROUTE)
+    ) {
+      return nativeFetch(input, init);
+    }
+
+    const requestedName = decodeURIComponent(
+      requestUrl.pathname.slice(SCUMMVM_GAME_ROUTE.length),
+    );
+    if (requestedName === "index.json") {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify(
+            Object.fromEntries(
+              Object.entries(temporaryGameFiles).map(([name, entry]) => [
+                name,
+                entry.size,
+              ]),
+            ),
+          ),
+          {
+            headers: {
+              "Cache-Control": "no-store",
+              "Content-Type": "application/json",
+            },
+          },
+        ),
+      );
+    }
+
+    const entry = temporaryGameFiles[requestedName.toUpperCase()];
+    if (!entry) {
+      return Promise.resolve(
+        new Response("Game file not found", { status: 404 }),
+      );
+    }
+    return Promise.resolve(
+      new Response(
+        temporaryIso.slice(entry.offset, entry.offset + entry.size),
+        {
+          headers: {
+            "Cache-Control": "no-store",
+            "Content-Length": String(entry.size),
+            "Content-Type": "application/octet-stream",
+          },
+        },
+      ),
+    );
+  };
 
   const readMetadata = () => {
     try {
@@ -335,6 +402,13 @@
     notifyGameDataReady(keep, fileName);
   };
 
+  const activateTemporaryIso = (iso, gameFiles) => {
+    temporaryIso = iso;
+    temporaryGameFiles = Object.fromEntries(
+      gameFiles.map(({ name, offset, size }) => [name, { offset, size }]),
+    );
+  };
+
   const storeIso = async (iso, gameFiles, { keep, url = "" }) => {
     if (iso.size !== game.isoSize) {
       throw new Error(
@@ -342,13 +416,6 @@
       );
     }
     await navigator.storage.persist?.();
-    const estimate = await navigator.storage.estimate();
-    const available = (estimate.quota || 0) - (estimate.usage || 0);
-    if (estimate.quota && available < game.isoSize) {
-      throw new Error(
-        `Not enough browser storage. ${formatBytes(game.isoSize)} is required and ${formatBytes(available)} is available.`,
-      );
-    }
     const directory = await getStorageDirectory(true);
     const fileName = `${game.id}-${crypto.randomUUID()}.iso`;
     const handle = await directory.getFileHandle(fileName, { create: true });
@@ -387,7 +454,9 @@
       game.requiredFiles,
       game.title,
     );
-    return storeIso(iso, gameFiles, options);
+    if (options.keep) return storeIso(iso, gameFiles, options);
+    activateTemporaryIso(iso, gameFiles);
+    return { fileName: null, iso };
   };
 
   discInput.addEventListener("change", async () => {
@@ -403,7 +472,7 @@
       await startScummVm();
     } catch (error) {
       setControlsDisabled(false);
-      setMessage(error.message, true);
+      setMessage(errorMessage(error), true);
       discInput.value = "";
     }
   });
@@ -430,7 +499,7 @@
       await startScummVm();
     } catch (error) {
       setControlsDisabled(false);
-      setMessage(error.message, true);
+      setMessage(errorMessage(error), true);
     }
   });
 
@@ -456,15 +525,6 @@
     let writable;
     setControlsDisabled(true);
     try {
-      await navigator.storage.persist?.();
-      const estimate = await navigator.storage.estimate();
-      const available = (estimate.quota || 0) - (estimate.usage || 0);
-      if (estimate.quota && available < game.isoSize) {
-        throw new Error(
-          `Not enough browser storage. ${formatBytes(game.isoSize)} is required and ${formatBytes(available)} is available.`,
-        );
-      }
-
       setMessage("Connecting to CD image source…");
       let response;
       try {
@@ -490,12 +550,18 @@
         );
       }
 
-      directory = await getStorageDirectory(true);
-      fileName = `${game.id}-${crypto.randomUUID()}.iso`;
-      const handle = await directory.getFileHandle(fileName, { create: true });
-      writable = await handle.createWritable();
       const reader = response.body.getReader();
+      const chunks = [];
       let downloaded = 0;
+      if (keepCopy.checked) {
+        await navigator.storage.persist?.();
+        directory = await getStorageDirectory(true);
+        fileName = `${game.id}-${crypto.randomUUID()}.iso`;
+        const handle = await directory.getFileHandle(fileName, {
+          create: true,
+        });
+        writable = await handle.createWritable();
+      }
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -506,15 +572,23 @@
             "The downloaded file is larger than the expected CD image.",
           );
         }
-        await writable.write(value);
+        if (writable) {
+          await writable.write(value);
+        } else {
+          chunks.push(value);
+        }
         setMessage(
           `Downloading… ${formatBytes(downloaded)} of ${formatBytes(game.isoSize)} (${((downloaded / game.isoSize) * 100).toFixed(1)}%)`,
         );
       }
-      await writable.close();
-      writable = null;
-
-      const iso = await handle.getFile();
+      let iso;
+      if (writable) {
+        await writable.close();
+        writable = null;
+        iso = await (await directory.getFileHandle(fileName)).getFile();
+      } else {
+        iso = new Blob(chunks, { type: "application/x-iso9660-image" });
+      }
       if (iso.size !== game.isoSize) {
         throw new Error(
           `The download is ${formatBytes(iso.size)}, but this game requires ${formatBytes(game.isoSize)}.`,
@@ -526,10 +600,14 @@
         game.requiredFiles,
         game.title,
       );
-      await activateStoredIso(directory, fileName, iso, gameFiles, {
-        keep: keepCopy.checked,
-        url: url.href,
-      });
+      if (keepCopy.checked) {
+        await activateStoredIso(directory, fileName, iso, gameFiles, {
+          keep: true,
+          url: url.href,
+        });
+      } else {
+        activateTemporaryIso(iso, gameFiles);
+      }
       setMessage(
         keepCopy.checked
           ? "Download verified and saved. Starting ScummVM…"
@@ -544,7 +622,7 @@
         await directory.removeEntry(fileName).catch(() => {});
       }
       setControlsDisabled(false);
-      setMessage(error.message, true);
+      setMessage(errorMessage(error), true);
     }
   });
 

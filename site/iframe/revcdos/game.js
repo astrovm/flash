@@ -5,6 +5,7 @@ var spinnerElement = document.getElementById("spinner");
 var wasm_content = "index.wasm";
 
 const params = new URLSearchParams(window.location.search);
+const sessionAssets = params.get("session") === "1";
 
 // Base URLs
 const localAssetUrl = (path) => {
@@ -20,6 +21,26 @@ const localAssetUrl = (path) => {
   ).href;
 };
 const replaceFetch = localAssetUrl;
+
+const requestSessionAsset = (path) =>
+  new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (event) => {
+      channel.port1.close();
+      if (event.data?.error) {
+        reject(new Error(event.data.error));
+      } else if (event.data?.buffer instanceof ArrayBuffer) {
+        resolve(event.data.buffer);
+      } else {
+        reject(new Error(`Unable to read ${path} from this session.`));
+      }
+    };
+    window.parent.postMessage(
+      { event: "revcdos.asset-request", path },
+      location.origin,
+      [channel.port2],
+    );
+  });
 
 // Configurable mode - show settings UI before play
 const configurableMode = params.get("configurable") === "1";
@@ -205,13 +226,18 @@ async function loadData() {
   const workers = Array.from({ length: 8 }, async () => {
     while (nextFile < DATA_PACKAGE.files.length) {
       const { filename, start, end } = DATA_PACKAGE.files[nextFile++];
-      const response = await fetch(localAssetUrl(filename), {
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        throw new Error(`Unable to load ${filename}: HTTP ${response.status}`);
+      let buffer;
+      if (sessionAssets) {
+        buffer = await requestSessionAsset(filename);
+      } else {
+        const response = await fetch(localAssetUrl(filename), {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error(`Unable to load ${filename}: HTTP ${response.status}`);
+        }
+        buffer = await response.arrayBuffer();
       }
-      const buffer = await response.arrayBuffer();
       const expectedSize = end - start;
       if (buffer.byteLength !== expectedSize) {
         throw new Error(

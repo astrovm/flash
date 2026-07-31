@@ -55,7 +55,7 @@ const pokusWrapper = await Bun.file(
   ),
 ).text();
 
-test("supports optional verified URL downloads in persistent browser storage", () => {
+test("supports direct ISO sessions and optional persistent browser copies", () => {
   expect(passportWrapper).toContain("isoSize: 649084928");
   expect(pokusWrapper).toContain("isoSize: 526409728");
   expect(launcher).toContain('id="disc-url"');
@@ -69,6 +69,12 @@ test("supports optional verified URL downloads in persistent browser storage", (
   expect(launcher).toContain("navigator.storage.getDirectory()");
   expect(launcher).toContain("handle.createWritable()");
   expect(launcher).toContain("response.body.getReader()");
+  expect(launcher).toContain("activateTemporaryIso(iso, gameFiles)");
+  expect(launcher).toContain("if (options.keep) return storeIso");
+  expect(launcher).toContain("chunks.push(value)");
+  expect(launcher).toContain("window.fetch = (input, init)");
+  expect(launcher).toContain("temporaryIso.slice(");
+  expect(launcher).not.toContain("navigator.storage.estimate()");
   expect(launcher).toContain("downloaded > game.isoSize");
   expect(launcher).toContain("iso.size !== game.isoSize");
   expect(launcher).toContain("gameFilesFromIso(");
@@ -86,6 +92,7 @@ test("supports optional verified URL downloads in persistent browser storage", (
   expect(launcher).toContain("localStorage.setItem(");
   expect(launcher).toContain("directory.removeEntry(fileName)");
   expect(launcher).toContain("cross-origin browser downloads (CORS)");
+  expect(launcher).toContain('error?.name === "QuotaExceededError"');
   expect(launcher).not.toContain('value="http');
 });
 

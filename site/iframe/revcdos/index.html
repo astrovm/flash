@@ -202,7 +202,6 @@
       ("use strict");
 
       const DEFAULT_TORRENT_SOURCE = "revcdoseng.torrent";
-      const DOWNLOAD_SIZE = 901786388;
       const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
       const DOWNLOAD_SOURCE_KEY = "astro-flash.revcdos.download-source.v1";
       const WEB_TRACKERS = ["wss://cloud.dos.zone:8444/announce-ws"];
@@ -216,6 +215,8 @@
       const setup = document.getElementById("setup");
       const selection = document.getElementById("selection");
       let gameFrame = null;
+      let sessionFiles = new Map();
+      let activeTorrentSession = null;
 
       const cacheEngineForOfflineUse = () => {
         window.parent.postMessage(
@@ -224,10 +225,10 @@
         );
       };
 
-      const startGame = (message) => {
+      const startGame = (message, session = false) => {
         selection.textContent = message;
         gameFrame = document.createElement("iframe");
-        gameFrame.src = "game.html";
+        gameFrame.src = session ? "game.html?session=1" : "game.html";
         gameFrame.allow = "fullscreen";
         gameFrame.title = "reVCDOS";
         setup.replaceWith(gameFrame);
@@ -236,6 +237,37 @@
       const formatBytes = (bytes) => {
         if (!Number.isFinite(bytes) || bytes <= 0) return "0 MiB";
         return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
+      };
+
+      const errorMessage = (error) =>
+        error?.name === "QuotaExceededError"
+          ? "The browser refused the storage write because its actual storage quota was reached."
+          : error?.message || String(error);
+
+      const normalizeAssetPath = (path) =>
+        String(path).replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
+
+      const findSessionFile = (requestedPath) => {
+        const path = normalizeAssetPath(requestedPath);
+        const candidates = [
+          path,
+          path.replace(/^fetched\//, "vc-assets/local/"),
+          path.replace(/^vcsky\/fetched\//, "vc-assets/local/"),
+        ];
+        for (const candidate of candidates) {
+          const file = sessionFiles.get(candidate);
+          if (file) return file;
+        }
+        return null;
+      };
+
+      const setSessionFiles = (entries) => {
+        sessionFiles = new Map(
+          [...entries].map(([path, file]) => [normalizeAssetPath(path), file]),
+        );
+        if (!sessionFiles.size) {
+          throw new Error("The selected folder is empty.");
+        }
       };
 
       const selectedTorrentSource = async () => {
@@ -330,6 +362,16 @@
         torrentFileInput.disabled = true;
         torrentSourceInput.disabled = true;
         keepCopyInput.disabled = true;
+        if (!keepCopyInput.checked) {
+          setSessionFiles(entries);
+          activeTorrentSession = torrentSession || null;
+          startGame(
+            `${sessionFiles.size.toLocaleString()} files ready. Starting reVCDOS directly from this session…`,
+            true,
+          );
+          return;
+        }
+
         let lastUpdate = 0;
         const manifest = await packFiles(entries, (packed, total, path) => {
           const now = Date.now();
@@ -468,7 +510,8 @@
         });
 
       const downloadGameData = async () => {
-        if (!navigator.storage?.getDirectory) {
+        const keepBrowserCopy = keepCopyInput.checked;
+        if (keepBrowserCopy && !navigator.storage?.getDirectory) {
           throw new Error(
             "Persistent browser storage is unavailable. Select a local vc-assets folder instead.",
           );
@@ -477,18 +520,9 @@
         const { source: torrentSource, identity: sourceIdentity } =
           await selectedTorrentSource();
         const cached =
+          keepBrowserCopy &&
           localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true" &&
           localStorage.getItem(DOWNLOAD_SOURCE_KEY) === sourceIdentity;
-        const estimate = await navigator.storage.estimate();
-        const available = (estimate.quota || 0) - (estimate.usage || 0);
-        const packingSpace = cached ? DOWNLOAD_SIZE : DOWNLOAD_SIZE * 2;
-        if (estimate.quota && available < packingSpace) {
-          throw new Error(
-            `Not enough temporary browser storage. ${formatBytes(
-              packingSpace,
-            )} is required to download and optimize the offline copy, and ${formatBytes(available)} is available.`,
-          );
-        }
 
         downloadButton.disabled = true;
         downloadButton.textContent = cached
@@ -498,8 +532,11 @@
           ? "Opening the downloaded game data…"
           : "Connecting to peers. Your IP address is visible to torrent peers.";
 
-        await navigator.storage.persist?.();
-        const rootDir = await navigator.storage.getDirectory();
+        let rootDir = null;
+        if (keepBrowserCopy) {
+          await navigator.storage.persist?.();
+          rootDir = await navigator.storage.getDirectory();
+        }
         const rtcResponse = await fetch("/api/rtc", { cache: "no-store" });
         if (!rtcResponse.ok) {
           throw new Error(
@@ -549,13 +586,14 @@
           failDownload(`Download failed: ${error.message}`),
         );
 
-        const torrent = client.add(torrentSource, {
+        const torrentOptions = {
           announce: WEB_TRACKERS,
-          destroyStoreOnDestroy: false,
-          storeOpts: { rootDir },
+          destroyStoreOnDestroy: !keepBrowserCopy,
           skipVerify: cached,
           uploads: 2,
-        });
+        };
+        if (rootDir) torrentOptions.storeOpts = { rootDir };
+        const torrent = client.add(torrentSource, torrentOptions);
 
         let lastProgressUpdate = 0;
         torrent.on("download", () => {
@@ -597,10 +635,13 @@
         torrent.on("done", async () => {
           if (failed) return;
           clearTimeout(connectionTimer);
-          localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
-          localStorage.setItem(DOWNLOAD_SOURCE_KEY, sourceIdentity);
-          selection.textContent =
-            "Download complete. Optimizing data for smooth offline play…";
+          if (keepBrowserCopy) {
+            localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
+            localStorage.setItem(DOWNLOAD_SOURCE_KEY, sourceIdentity);
+          }
+          selection.textContent = keepBrowserCopy
+            ? "Download complete. Optimizing data for smooth offline play…"
+            : "Download complete. Starting directly from temporary memory…";
           try {
             await packAndStart(
               torrent.files.map((file) => [file.path, file]),
@@ -608,7 +649,7 @@
             );
           } catch (error) {
             failDownload(
-              `Unable to optimize downloaded data: ${error.message}`,
+              `Unable to prepare downloaded data: ${errorMessage(error)}`,
             );
           }
         });
@@ -624,7 +665,7 @@
 
       downloadButton.addEventListener("click", () => {
         downloadGameData().catch((error) => {
-          selection.textContent = error.message;
+          selection.textContent = errorMessage(error);
           downloadButton.disabled = false;
           torrentFileInput.disabled = false;
           torrentSourceInput.disabled = false;
@@ -651,11 +692,12 @@
         ]);
         if (!selectedFiles.length) return;
         try {
-          selection.textContent =
-            "Optimizing selected files for smooth offline play…";
+          selection.textContent = keepCopyInput.checked
+            ? "Optimizing selected files for smooth offline play…"
+            : "Checking selected files for direct play…";
           await packAndStart(selectedFiles);
         } catch (error) {
-          selection.textContent = `Unable to optimize selected files: ${error.message}`;
+          selection.textContent = `Unable to prepare selected files: ${errorMessage(error)}`;
           downloadButton.disabled = false;
           input.disabled = false;
           torrentFileInput.disabled = false;
@@ -669,10 +711,39 @@
         const message = event.data;
         if (!message || typeof message.event !== "string") return;
 
+        if (message.event === "revcdos.asset-request") {
+          const [port] = event.ports;
+          if (!port) return;
+          try {
+            const file = findSessionFile(message.path);
+            if (!file) {
+              throw new Error(`Game file not found: ${message.path}`);
+            }
+            const buffer = await file.arrayBuffer();
+            port.postMessage({ buffer }, [buffer]);
+          } catch (error) {
+            port.postMessage({ error: errorMessage(error) });
+          }
+          return;
+        }
+
         if (message.event === "request-fullscreen") {
           gameFrame.requestFullscreen?.();
         }
       });
+
+      window.addEventListener(
+        "pagehide",
+        () => {
+          if (!activeTorrentSession) return;
+          void destroyTorrent(
+            activeTorrentSession.client,
+            activeTorrentSession.torrent,
+          );
+          activeTorrentSession = null;
+        },
+        { once: true },
+      );
 
       const packedManifest = await loadPackedManifest();
       if (packedManifest) {
@@ -683,7 +754,7 @@
             `${Object.keys(packedManifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
           );
         } catch (error) {
-          selection.textContent = error.message;
+          selection.textContent = errorMessage(error);
           downloadButton.disabled = false;
           downloadButton.textContent = "Retry offline copy";
         }
