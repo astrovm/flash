@@ -234,6 +234,7 @@ window.FLASH_GAMES = Object.freeze({
     icon: "assets/icons/whack-a-kass.png",
     title: "Kass Basher",
     type: "swf",
+    externalHosts: ["images.neopets.com", "swf.neopets.com", "www.neopets.com"],
     category: "Arcade",
   },
   "eds-candy-machine": {
