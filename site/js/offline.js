@@ -1,13 +1,17 @@
 "use strict";
 
 (function exposeOfflineManager(root, factory) {
-  const api = factory();
+  const storagePolicy =
+    typeof module === "object" && module.exports
+      ? require("./storage-policy.js")
+      : root.AstroStoragePolicy;
+  const api = factory(storagePolicy);
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   } else {
     root.AstroOffline = api;
   }
-})(typeof globalThis !== "undefined" ? globalThis : this, () => {
+})(typeof globalThis !== "undefined" ? globalThis : this, (storagePolicy) => {
   const LAST_CHECKED_KEY = "astroFlashLastUpdateCheck";
   const DOWNLOAD_VERSION_KEY = "astroFlashDownloadVersion";
   const DOWNLOAD_BYTES_KEY = "astroFlashDownloadBytes";
@@ -224,16 +228,9 @@
     };
 
     const refreshStorageEstimate = async () => {
-      if (!navigatorObject.storage?.estimate) return snapshot();
-      try {
-        const estimate = await navigatorObject.storage.estimate();
-        setState({
-          usage: Number.isFinite(estimate.usage) ? estimate.usage : null,
-          quota: Number.isFinite(estimate.quota) ? estimate.quota : null,
-        });
-      } catch {
-        // Storage estimates are optional and should never break offline mode.
-      }
+      const estimate = await storagePolicy.estimate(navigatorObject.storage);
+      if (!estimate) return snapshot();
+      setState({ usage: estimate.usage, quota: estimate.quota });
       return snapshot();
     };
 
@@ -459,17 +456,34 @@
         return;
       }
       const cache = await environment.caches.open(bundledCacheName);
+      const previousFiles = records[id]?.files || [];
       let loaded = 0;
-      for (const file of entry.files) {
-        const response = await environment.fetch(file.url, {
-          cache: "no-store",
-        });
-        if (!response.ok) {
-          throw new Error(`Offline download failed (${response.status}).`);
+      const written = [];
+      try {
+        for (const file of entry.files) {
+          const response = await environment.fetch(file.url, {
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            throw new Error(`Offline download failed (${response.status}).`);
+          }
+          const url = absoluteUrl(file.url);
+          await cache.put(url, response);
+          written.push(url);
+          loaded += file.bytes;
+          progress(file.bytes);
         }
-        await cache.put(absoluteUrl(file.url), response);
-        loaded += file.bytes;
-        progress(file.bytes);
+      } catch (error) {
+        const cleanupUrls = new Set([
+          ...written,
+          ...previousFiles.map((url) => absoluteUrl(url)),
+        ]);
+        await Promise.all(
+          [...cleanupUrls].map((url) => cache.delete(url).catch(() => {})),
+        );
+        delete records[id];
+        persistRecords();
+        throw error;
       }
       records[id] = {
         bytes: entry.bytes,
@@ -480,20 +494,6 @@
       };
       persistRecords();
       return loaded;
-    };
-
-    const verifyAvailableStorage = async (requiredBytes) => {
-      if (!navigatorObject.storage?.estimate) return;
-      const estimate = await navigatorObject.storage.estimate();
-      if (
-        Number.isFinite(estimate.quota) &&
-        Number.isFinite(estimate.usage) &&
-        requiredBytes > estimate.quota - estimate.usage
-      ) {
-        throw new Error(
-          "There is not enough browser storage for this download.",
-        );
-      }
     };
 
     const downloadGame = async (id) => {
@@ -512,7 +512,7 @@
         runtimeEntry &&
         records[runtimeRecordId]?.revision !== runtimeEntry.revision;
       const total = entry.bytes + (needsRuntime ? runtimeEntry.bytes : 0);
-      await verifyAvailableStorage(total);
+      await storagePolicy.requestPersistence(navigatorObject.storage);
       let loaded = 0;
       setState({
         gamePhase: "downloading",
@@ -539,12 +539,13 @@
         await refreshStorageEstimate();
         return snapshot();
       } catch (error) {
+        const normalized = storagePolicy.normalizeError(error);
         setState({
           gamePhase: "error",
           activeGameId: null,
-          gameError: error.message,
+          gameError: normalized.message,
         });
-        throw error;
+        throw normalized;
       }
     };
 

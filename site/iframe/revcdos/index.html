@@ -195,12 +195,14 @@
       </section>
     </main>
 
+    <script src="../../js/storage-policy.js"></script>
     <script type="module">
       import WebTorrent from "../../vendor/webtorrent/3.0.21/webtorrent.min.js";
       import { loadPackedManifest, packFiles } from "./packed-store.js";
 
       ("use strict");
 
+      const storagePolicy = window.AstroStoragePolicy;
       const DEFAULT_TORRENT_SOURCE = "revcdoseng.torrent";
       const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
       const DOWNLOAD_SOURCE_KEY = "astro-flash.revcdos.download-source.v1";
@@ -238,11 +240,6 @@
         if (!Number.isFinite(bytes) || bytes <= 0) return "0 MiB";
         return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
       };
-
-      const errorMessage = (error) =>
-        error?.name === "QuotaExceededError"
-          ? "The browser refused the storage write because its actual storage quota was reached."
-          : error?.message || String(error);
 
       const normalizeAssetPath = (path) =>
         String(path).replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
@@ -534,7 +531,7 @@
 
         let rootDir = null;
         if (keepBrowserCopy) {
-          await navigator.storage.persist?.();
+          await storagePolicy.requestPersistence(navigator.storage);
           rootDir = await navigator.storage.getDirectory();
         }
         const rtcResponse = await fetch("/api/rtc", { cache: "no-store" });
@@ -649,7 +646,7 @@
             );
           } catch (error) {
             failDownload(
-              `Unable to prepare downloaded data: ${errorMessage(error)}`,
+              `Unable to prepare downloaded data: ${storagePolicy.errorMessage(error)}`,
             );
           }
         });
@@ -665,7 +662,7 @@
 
       downloadButton.addEventListener("click", () => {
         downloadGameData().catch((error) => {
-          selection.textContent = errorMessage(error);
+          selection.textContent = storagePolicy.errorMessage(error);
           downloadButton.disabled = false;
           torrentFileInput.disabled = false;
           torrentSourceInput.disabled = false;
@@ -697,7 +694,7 @@
             : "Checking selected files for direct play…";
           await packAndStart(selectedFiles);
         } catch (error) {
-          selection.textContent = `Unable to prepare selected files: ${errorMessage(error)}`;
+          selection.textContent = `Unable to prepare selected files: ${storagePolicy.errorMessage(error)}`;
           downloadButton.disabled = false;
           input.disabled = false;
           torrentFileInput.disabled = false;
@@ -722,7 +719,7 @@
             const buffer = await file.arrayBuffer();
             port.postMessage({ buffer }, [buffer]);
           } catch (error) {
-            port.postMessage({ error: errorMessage(error) });
+            port.postMessage({ error: storagePolicy.errorMessage(error) });
           }
           return;
         }
@@ -754,7 +751,7 @@
             `${Object.keys(packedManifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
           );
         } catch (error) {
-          selection.textContent = errorMessage(error);
+          selection.textContent = storagePolicy.errorMessage(error);
           downloadButton.disabled = false;
           downloadButton.textContent = "Retry offline copy";
         }

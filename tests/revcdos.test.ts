@@ -146,7 +146,12 @@ test("offers temporary or persistent WebTorrent downloads alongside manual selec
   expect(host).toContain("destroyStoreOnDestroy: !keepBrowserCopy");
   expect(host).toContain("if (keepBrowserCopy)");
   expect(host).not.toContain("navigator.storage.estimate()");
-  expect(host).toContain('error?.name === "QuotaExceededError"');
+  expect(host).toContain("../../js/storage-policy.js");
+  expect(host).toContain("storagePolicy.errorMessage(error)");
+  expect(packedStore).toContain(
+    "storagePolicy.requestPersistence(navigator.storage)",
+  );
+  expect(packedStore).toContain("directory.removeEntry(dataFile)");
   expect(host).toContain("uploads: 2");
   expect(host).toContain("skipVerify: cached");
   expect(host).toContain("torrent.files.map");

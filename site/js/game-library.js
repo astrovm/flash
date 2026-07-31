@@ -1,10 +1,14 @@
 "use strict";
 
 (function exposeGameLibrary(root, factory) {
+  if (typeof module === "object" && module.exports) {
+    require("./storage-policy.js");
+  }
   const api = factory(root);
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.AstroGameLibrary = api;
 })(typeof window !== "undefined" ? window : globalThis, function (root) {
+  const storagePolicy = root.AstroStoragePolicy;
   const DB_NAME = "astro-installed-games";
   const DB_VERSION = 1;
   const STORE_NAME = "games";
@@ -228,7 +232,11 @@
         status: 200,
         headers: response.headers,
       });
-      await cache.put(key, stored.clone());
+      try {
+        await cache.put(key, stored.clone());
+      } catch (error) {
+        if (!storagePolicy.isQuotaExceeded(error)) throw error;
+      }
       return stored;
     };
 
@@ -303,51 +311,45 @@
         if (installed.has(`flashpoint:${checked.uuid}`)) {
           return asGameConfig(installed.get(`flashpoint:${checked.uuid}`));
         }
-        try {
-          await storageManager?.persist?.();
-        } catch {
-          // Persistent storage is a best-effort browser capability.
-        }
+        await storagePolicy.requestPersistence(storageManager);
         const response = await fetchObject(checked.downloadUrl, { signal });
-        const contentLength =
-          Number(response.headers.get("content-length")) || null;
-        if (contentLength && storageManager?.estimate) {
-          const estimate = await storageManager.estimate();
-          const available =
-            Number.isFinite(estimate.quota) && Number.isFinite(estimate.usage)
-              ? estimate.quota - estimate.usage
-              : null;
-          if (available !== null && contentLength > available) {
-            throw new Error(
-              "There is not enough browser storage for this game.",
-            );
-          }
-        }
         const bytes = await readDownload(response, { onProgress });
-        let metadata =
-          checked.packageType === "legacy"
-            ? await installer.installLegacy(checked, bytes, {
-                cache,
-                store,
-                origin,
-              })
-            : await installer.install(checked, bytes, {
-                cache,
-                store,
-                unzipSync,
-                origin,
-              });
+        let metadata;
+        try {
+          metadata =
+            checked.packageType === "legacy"
+              ? await installer.installLegacy(checked, bytes, {
+                  cache,
+                  store,
+                  origin,
+                })
+              : await installer.install(checked, bytes, {
+                  cache,
+                  store,
+                  unzipSync,
+                  origin,
+                });
+        } catch (error) {
+          throw storagePolicy.normalizeError(error);
+        }
 
         if (checked.logoUrl) {
+          let iconPath = null;
+          let iconStored = false;
           try {
-            const logoResponse = await fetchObject(checked.logoUrl, { signal });
+            const logoResponse = await fetchObject(checked.logoUrl, {
+              signal,
+            });
             if (logoResponse.ok) {
-              const iconPath = `${origin}/__installed-games/${checked.uuid}/logo.jpg`;
+              iconPath = `${origin}/__installed-games/${checked.uuid}/logo.jpg`;
               await cache.put(iconPath, logoResponse);
-              metadata = { ...metadata, iconPath };
-              await store.put(metadata);
+              iconStored = true;
+              const metadataWithIcon = { ...metadata, iconPath };
+              await store.put(metadataWithIcon);
+              metadata = metadataWithIcon;
             }
           } catch {
+            if (iconStored) await cache.delete(iconPath).catch(() => {});
             // A missing logo should not undo a successfully installed game.
           }
         }
@@ -408,7 +410,7 @@
         return null;
       },
       async storageEstimate() {
-        return storageManager?.estimate ? storageManager.estimate() : null;
+        return storagePolicy.estimate(storageManager);
       },
     };
     return manager;
