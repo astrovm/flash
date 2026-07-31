@@ -102,6 +102,13 @@ test("offline updates", async () => {
       bytes: 10,
       files: [{ url: "js/runtime.wasm", bytes: 10 }],
     },
+    runtimes: {
+      scummvm: {
+        revision: "scummvm-1",
+        bytes: 8,
+        files: [{ url: "vendor/scummvm/scummvm.wasm", bytes: 8 }],
+      },
+    },
     games: {
       "bike-mania": {
         revision: "bike-1",
@@ -116,6 +123,30 @@ test("offline updates", async () => {
         files: [
           { url: "iframe/doom/index.html", bytes: 2 },
           { url: "dos/doom/doom.jsdos", bytes: 4 },
+        ],
+      },
+      "pink-panther-passport-to-peril": {
+        revision: "peril-1",
+        runtime: "scummvm",
+        type: "iframe",
+        bytes: 2,
+        files: [
+          {
+            url: "iframe/pink-panther-passport-to-peril/index.html",
+            bytes: 2,
+          },
+        ],
+      },
+      "pink-panther-hokus-pokus": {
+        revision: "pokus-1",
+        runtime: "scummvm",
+        type: "iframe",
+        bytes: 2,
+        files: [
+          {
+            url: "iframe/pink-panther-hokus-pokus/index.html",
+            bytes: 2,
+          },
         ],
       },
     },
@@ -236,7 +267,7 @@ test("offline updates", async () => {
     { updateViaCache: "none" },
   ]);
   assert.strictEqual(manager.getSnapshot().phase, "ready");
-  assert.strictEqual(manager.getSnapshot().bundledGames.length, 2);
+  assert.strictEqual(manager.getSnapshot().bundledGames.length, 4);
 
   await manager.downloadGame("bike-mania");
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, [
@@ -261,6 +292,25 @@ test("offline updates", async () => {
   await manager.removeAllGames();
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, []);
   assert(initial.deletedCaches.includes(BUNDLED_GAME_CACHE));
+
+  const sharedRuntime = makeEnvironment();
+  const sharedRuntimeManager = createManager({
+    currentVersion: manifest.version,
+    environment: sharedRuntime.environment,
+  });
+  await sharedRuntimeManager.initialize();
+  await sharedRuntimeManager.downloadGame("pink-panther-passport-to-peril");
+  await sharedRuntimeManager.downloadGame("pink-panther-hokus-pokus");
+  assert.strictEqual(sharedRuntime.bundledCache.values.size, 3);
+  await sharedRuntimeManager.removeGame("pink-panther-passport-to-peril");
+  assert.strictEqual(
+    sharedRuntime.bundledCache.values.has(
+      "https://flash.example/vendor/scummvm/scummvm.wasm",
+    ),
+    true,
+  );
+  await sharedRuntimeManager.removeGame("pink-panther-hokus-pokus");
+  assert.strictEqual(sharedRuntime.bundledCache.values.size, 0);
 
   const staleRuntime = makeEnvironment({
     storageValues: {

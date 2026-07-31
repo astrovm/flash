@@ -5,7 +5,7 @@
   // automatic application-shell precache; this handler serves only the
   // optional bundled games and shared Ruffle runtime selected by the user.
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
-  const OPTIONAL_PATHS = ["/swf/", "/iframe/", "/dos/"];
+  const OPTIONAL_PATHS = ["/swf/", "/iframe/", "/dos/", "/vendor/scummvm/"];
   const REVCDOS_ROUTE = "/iframe/revcdos/local-assets/";
   const REVCDOS_DIRECTORY = "astro-flash-revcdos";
   const REVCDOS_MANIFEST = "manifest.json";

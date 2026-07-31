@@ -79,11 +79,27 @@
     ) {
       throw new Error("The offline game catalog is invalid.");
     }
+    if (
+      manifest.runtimes !== undefined &&
+      (!manifest.runtimes ||
+        typeof manifest.runtimes !== "object" ||
+        Array.isArray(manifest.runtimes))
+    ) {
+      throw new Error("The offline game catalog is invalid.");
+    }
+    for (const [id, entry] of Object.entries(manifest.runtimes || {})) {
+      if (!/^[a-z0-9-]+$/.test(id) || !validateManifestEntry(entry)) {
+        throw new Error("The offline game catalog is invalid.");
+      }
+    }
     for (const [id, entry] of Object.entries(manifest.games)) {
       if (
         !/^[a-z0-9-]+$/.test(id) ||
         !validateManifestEntry(entry) ||
-        !["swf", "iframe"].includes(entry.type)
+        !["swf", "iframe"].includes(entry.type) ||
+        (entry.runtime !== undefined &&
+          (!/^[a-z0-9-]+$/.test(entry.runtime) ||
+            !manifest.runtimes?.[entry.runtime]))
       ) {
         throw new Error("The offline game catalog is invalid.");
       }
@@ -414,6 +430,10 @@
         })),
         bundledGameBytes:
           manifest.runtime.bytes +
+          Object.values(manifest.runtimes || {}).reduce(
+            (total, entry) => total + entry.bytes,
+            0,
+          ) +
           Object.values(manifest.games).reduce(
             (total, entry) => total + entry.bytes,
             0,
@@ -455,6 +475,7 @@
         bytes: entry.bytes,
         files: entry.files.map((file) => file.url),
         revision: entry.revision,
+        ...(entry.runtime ? { runtime: entry.runtime } : {}),
         type: entry.type || "runtime",
       };
       persistRecords();
@@ -479,11 +500,18 @@
       const currentManifest = await ensureManifest();
       const entry = currentManifest.games[id];
       if (!entry) throw new Error("This bundled game is unavailable.");
+      const runtimeEntry = entry.runtime
+        ? currentManifest.runtimes?.[entry.runtime]
+        : entry.type === "swf"
+          ? currentManifest.runtime
+          : null;
+      const runtimeRecordId = entry.runtime
+        ? `__runtime__:${entry.runtime}`
+        : "__runtime__";
       const needsRuntime =
-        entry.type === "swf" &&
-        records.__runtime__?.revision !== currentManifest.runtime.revision;
-      const total =
-        entry.bytes + (needsRuntime ? currentManifest.runtime.bytes : 0);
+        runtimeEntry &&
+        records[runtimeRecordId]?.revision !== runtimeEntry.revision;
+      const total = entry.bytes + (needsRuntime ? runtimeEntry.bytes : 0);
       await verifyAvailableStorage(total);
       let loaded = 0;
       setState({
@@ -498,8 +526,8 @@
         setState({ gameProgressLoaded: Math.min(loaded, total) });
       };
       try {
-        if (entry.type === "swf") {
-          await cacheEntry("__runtime__", currentManifest.runtime, progress);
+        if (runtimeEntry) {
+          await cacheEntry(runtimeRecordId, runtimeEntry, progress);
         }
         await cacheEntry(id, entry, progress);
         setState({
@@ -538,12 +566,22 @@
         gameError: null,
       });
       try {
+        const removedRecord = records[id];
         await deleteRecordFiles(id);
         const hasSwfGame = Object.entries(records).some(
           ([recordId, record]) =>
             recordId !== "__runtime__" && record.type === "swf",
         );
         if (!hasSwfGame) await deleteRecordFiles("__runtime__");
+        if (removedRecord?.runtime) {
+          const hasRuntimeConsumer = Object.entries(records).some(
+            ([recordId, record]) =>
+              !recordId.startsWith("__runtime__") &&
+              record.runtime === removedRecord.runtime,
+          );
+          if (!hasRuntimeConsumer)
+            await deleteRecordFiles(`__runtime__:${removedRecord.runtime}`);
+        }
         setState({ gamePhase: "idle", activeGameId: null });
         await refreshStorageEstimate();
         return snapshot();
@@ -559,15 +597,6 @@
 
     const downloadAllGames = async () => {
       const currentManifest = await ensureManifest();
-      const firstSwfId = Object.keys(currentManifest.games).find(
-        (id) => currentManifest.games[id].type === "swf",
-      );
-      if (
-        firstSwfId &&
-        records.__runtime__?.revision !== currentManifest.runtime.revision
-      ) {
-        await downloadGame(firstSwfId);
-      }
       for (const id of Object.keys(currentManifest.games)) {
         if (records[id]?.revision !== currentManifest.games[id].revision) {
           await downloadGame(id);
@@ -593,22 +622,26 @@
     const syncDownloadedGames = async () => {
       const currentManifest = await ensureManifest();
       const selectedIds = Object.keys(records).filter(
-        (key) => key !== "__runtime__",
+        (key) => !key.startsWith("__runtime__"),
       );
-      const selectedSwfId = selectedIds.find(
-        (id) => currentManifest.games[id]?.type === "swf",
-      );
-      if (
-        selectedSwfId &&
-        records.__runtime__?.revision !== currentManifest.runtime.revision
-      ) {
-        await downloadGame(selectedSwfId);
-      }
       for (const id of selectedIds) {
-        if (!currentManifest.games[id]) {
+        const entry = currentManifest.games[id];
+        if (!entry) {
           await deleteRecordFiles(id);
-        } else if (
-          records[id].revision !== currentManifest.games[id].revision
+          continue;
+        }
+        const runtimeEntry = entry.runtime
+          ? currentManifest.runtimes?.[entry.runtime]
+          : entry.type === "swf"
+            ? currentManifest.runtime
+            : null;
+        const runtimeRecordId = entry.runtime
+          ? `__runtime__:${entry.runtime}`
+          : "__runtime__";
+        if (
+          records[id].revision !== entry.revision ||
+          (runtimeEntry &&
+            records[runtimeRecordId]?.revision !== runtimeEntry.revision)
         ) {
           await downloadGame(id);
         }

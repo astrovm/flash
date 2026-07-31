@@ -83,7 +83,23 @@
         cursor: wait;
       }
 
-      #file-input {
+      .source-field {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        padding: 7px 9px;
+        border: 1px solid #8995aa;
+        background: #fff;
+        color: #111;
+        font: inherit;
+      }
+
+      .source-label {
+        display: block;
+        margin-top: 16px;
+      }
+
+      .hidden-input {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -117,10 +133,31 @@
           included with Astro Flash.
         </p>
         <div class="notice">
-          Download the compatible <strong>vc-assets</strong> package
-          automatically, or select one you already have. The automatic download
-          is about 860 MiB and uses peer-to-peer connections.
+          Select the compatible <strong>vc-assets</strong> game files you own,
+          or download them from an external torrent. Torrent downloads are about
+          860 MiB and expose your IP address to peers.
         </div>
+        <label class="setup-action" for="file-input"
+          >Select your game files…</label
+        >
+        <input
+          id="file-input"
+          class="hidden-input"
+          type="file"
+          webkitdirectory
+          directory
+        />
+        <label class="source-label" for="torrent-source"
+          >Torrent URL or magnet</label
+        >
+        <input
+          id="torrent-source"
+          class="source-field"
+          type="text"
+          value="revcdoseng.torrent"
+          spellcheck="false"
+          autocomplete="off"
+        />
         <button
           id="download-button"
           class="setup-action"
@@ -129,10 +166,15 @@
         >
           Loading downloader…
         </button>
-        <label class="setup-action" for="file-input"
-          >Select vc-assets folder…</label
+        <label class="setup-action" for="torrent-file-input"
+          >Select .torrent file…</label
         >
-        <input id="file-input" type="file" webkitdirectory directory />
+        <input
+          id="torrent-file-input"
+          class="hidden-input"
+          type="file"
+          accept=".torrent,application/x-bittorrent"
+        />
         <p id="selection" role="status"></p>
         <p>
           Port by
@@ -149,13 +191,16 @@
 
       ("use strict");
 
-      const TORRENT_URL = "revcdoseng.torrent";
+      const DEFAULT_TORRENT_SOURCE = "revcdoseng.torrent";
       const DOWNLOAD_SIZE = 901786388;
       const DOWNLOAD_COMPLETE_KEY = "astro-flash.revcdos.download-complete.v1";
+      const DOWNLOAD_SOURCE_KEY = "astro-flash.revcdos.download-source.v1";
       const WEB_TRACKERS = ["wss://cloud.dos.zone:8444/announce-ws"];
       const CONNECTION_TIMEOUT = 20000;
       const PREFLIGHT_TIMEOUT = 10000;
       const input = document.getElementById("file-input");
+      const torrentFileInput = document.getElementById("torrent-file-input");
+      const torrentSourceInput = document.getElementById("torrent-source");
       const downloadButton = document.getElementById("download-button");
       const setup = document.getElementById("setup");
       const selection = document.getElementById("selection");
@@ -180,6 +225,37 @@
       const formatBytes = (bytes) => {
         if (!Number.isFinite(bytes) || bytes <= 0) return "0 MiB";
         return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
+      };
+
+      const selectedTorrentSource = async () => {
+        const [torrentFile] = torrentFileInput.files;
+        if (torrentFile) {
+          return {
+            source: new Uint8Array(await torrentFile.arrayBuffer()),
+            identity: `file:${torrentFile.name}:${torrentFile.size}`,
+          };
+        }
+
+        const value = torrentSourceInput.value.trim();
+        if (!value) {
+          throw new Error(
+            "Enter a torrent URL or magnet, or select a .torrent file.",
+          );
+        }
+        if (value.startsWith("magnet:?")) {
+          return { source: value, identity: value };
+        }
+
+        let url;
+        try {
+          url = new URL(value, location.href);
+        } catch {
+          throw new Error("Enter a valid torrent URL or magnet.");
+        }
+        if (!["http:", "https:"].includes(url.protocol)) {
+          throw new Error("Torrent URLs must use HTTP or HTTPS.");
+        }
+        return { source: url.href, identity: value };
       };
 
       const localAssetUrl = (path) =>
@@ -240,6 +316,8 @@
       const packAndStart = async (entries, torrentSession) => {
         downloadButton.disabled = true;
         input.disabled = true;
+        torrentFileInput.disabled = true;
+        torrentSourceInput.disabled = true;
         let lastUpdate = 0;
         const manifest = await packFiles(entries, (packed, total, path) => {
           const now = Date.now();
@@ -372,7 +450,11 @@
           );
         }
 
-        const cached = localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true";
+        const { source: torrentSource, identity: sourceIdentity } =
+          await selectedTorrentSource();
+        const cached =
+          localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true" &&
+          localStorage.getItem(DOWNLOAD_SOURCE_KEY) === sourceIdentity;
         const estimate = await navigator.storage.estimate();
         const available = (estimate.quota || 0) - (estimate.usage || 0);
         const packingSpace = cached ? DOWNLOAD_SIZE : DOWNLOAD_SIZE * 2;
@@ -433,14 +515,16 @@
           selection.textContent = message;
           downloadButton.disabled = false;
           input.disabled = false;
-          downloadButton.textContent = "Try automatic download again";
+          torrentFileInput.disabled = false;
+          torrentSourceInput.disabled = false;
+          downloadButton.textContent = "Try torrent download again";
         };
 
         client.on("error", (error) =>
           failDownload(`Download failed: ${error.message}`),
         );
 
-        const torrent = client.add(new URL(TORRENT_URL, location.href).href, {
+        const torrent = client.add(torrentSource, {
           announce: WEB_TRACKERS,
           destroyStoreOnDestroy: false,
           storeOpts: { rootDir },
@@ -489,6 +573,7 @@
           if (failed) return;
           clearTimeout(connectionTimer);
           localStorage.setItem(DOWNLOAD_COMPLETE_KEY, "true");
+          localStorage.setItem(DOWNLOAD_SOURCE_KEY, sourceIdentity);
           selection.textContent =
             "Download complete. Optimizing data for smooth offline play…";
           try {
@@ -516,8 +601,21 @@
         downloadGameData().catch((error) => {
           selection.textContent = error.message;
           downloadButton.disabled = false;
-          downloadButton.textContent = "Try automatic download again";
+          torrentFileInput.disabled = false;
+          torrentSourceInput.disabled = false;
+          downloadButton.textContent = "Try torrent download again";
         });
+      });
+
+      torrentSourceInput.addEventListener("input", () => {
+        torrentFileInput.value = "";
+      });
+
+      torrentFileInput.addEventListener("change", () => {
+        const [torrentFile] = torrentFileInput.files;
+        if (!torrentFile) return;
+        torrentSourceInput.value = "";
+        selection.textContent = `Selected torrent: ${torrentFile.name}`;
       });
 
       input.addEventListener("change", async () => {
@@ -534,6 +632,8 @@
           selection.textContent = `Unable to optimize selected files: ${error.message}`;
           downloadButton.disabled = false;
           input.disabled = false;
+          torrentFileInput.disabled = false;
+          torrentSourceInput.disabled = false;
         }
       });
 
@@ -563,9 +663,10 @@
       } else {
         downloadButton.disabled = false;
         downloadButton.textContent =
-          localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true"
+          localStorage.getItem(DOWNLOAD_COMPLETE_KEY) === "true" &&
+          localStorage.getItem(DOWNLOAD_SOURCE_KEY) === DEFAULT_TORRENT_SOURCE
             ? "Optimize downloaded copy"
-            : "Download automatically (860 MiB)";
+            : "Download from torrent";
       }
     </script>
   </body>
