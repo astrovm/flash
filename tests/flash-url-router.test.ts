@@ -67,6 +67,34 @@ test("Flash URL router wraps fetch and restores the archived response URL", asyn
   expect(await response.text()).toBe("game");
 });
 
+test("Flash URL router reads archived responses with GET", () => {
+  const router = routerApi.create(
+    {
+      example: {
+        archive: {
+          routes: {
+            "https://media.example/translations.phtml":
+              "swf/example/translations.xml",
+          },
+        },
+      },
+    },
+    pageUrl,
+  );
+  const routed = router.rewrite(
+    new Request("https://media.example/translations.phtml", {
+      method: "POST",
+      body: "item_id=842&lang=en",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    }),
+  );
+
+  expect(routed?.request.method).toBe("GET");
+  expect(routed?.request.url).toBe(
+    "https://astro.example/app/swf/example/translations.xml",
+  );
+});
+
 test("Flash URL router rejects ambiguous and unsafe routes", () => {
   expect(() =>
     routerApi.create(

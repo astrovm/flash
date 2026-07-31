@@ -61,9 +61,23 @@
         request instanceof Request
           ? new Request(request, init)
           : new Request(match.originalUrl, init);
+      // Every archive route resolves to an immutable local file. Flash APIs
+      // such as LoadVars may POST to the original dynamic endpoint, but the
+      // archived response must be read from the static file with GET.
+      const method = originalRequest.method === "HEAD" ? "HEAD" : "GET";
       return {
         ...match,
-        request: new Request(match.localUrl, originalRequest),
+        request: new Request(match.localUrl, {
+          cache: originalRequest.cache,
+          credentials: originalRequest.credentials,
+          headers: originalRequest.headers,
+          integrity: originalRequest.integrity,
+          method,
+          redirect: originalRequest.redirect,
+          referrer: originalRequest.referrer,
+          referrerPolicy: originalRequest.referrerPolicy,
+          signal: originalRequest.signal,
+        }),
       };
     };
 
