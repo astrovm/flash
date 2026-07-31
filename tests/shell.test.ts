@@ -116,6 +116,22 @@ test("internet games is integrated with the shell", async () => {
   contains(css, ".internet-games-content", ".internet-game-card");
   absent(offlineJavascript, "astro-flash-installed");
 });
+test("Flash URL spoofing handles Kass Basher dependency requests", async () => {
+  const games = await Bun.file(path("site/js/games.js")).text();
+  contains(
+    games,
+    '"whack-a-kass": {',
+    '"images.neopets.com"',
+    '"swf.neopets.com"',
+    '"www.neopets.com"',
+  );
+  js(
+    "const getRequestUrl = (request) =>",
+    'typeof request === "string" || request instanceof URL',
+    "const parsedUrl = getRequestUrl(request)",
+    "const url = getRequestUrl(request).href",
+  );
+});
 test("boot screen uses XP artwork", () => {
   contains(
     html,

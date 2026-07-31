@@ -7761,10 +7761,13 @@ const getSpoofedGameId = (hostname) => {
   return null;
 };
 
-const changeUrl = (request) => {
-  if (!request.url) return request;
+const getRequestUrl = (request) =>
+  typeof request === "string" || request instanceof URL
+    ? new URL(request, window.location.href)
+    : new URL(request.url);
 
-  const parsedUrl = new URL(request.url);
+const changeUrl = (request) => {
+  const parsedUrl = getRequestUrl(request);
   if (parsedUrl.hostname !== window.location.hostname) {
     const gameId = getSpoofedGameId(parsedUrl.hostname);
     if (gameId && gamesList[gameId].type === "swf") {
@@ -7776,10 +7779,7 @@ const changeUrl = (request) => {
 };
 
 const interceptResponse = (response, request) => {
-  const url =
-    typeof request === "string"
-      ? new URL(request, window.location.href).href
-      : request.url;
+  const url = getRequestUrl(request).href;
   Object.defineProperty(response, "url", { value: url });
   return response;
 };
@@ -7801,7 +7801,7 @@ window.fetch = async (...args) => {
 
   const response = await originalFetch(...args);
   if (args[0] !== originalRequest) {
-    console.log(`URL spoofed: ${originalRequest.url} => ${args[0]}`);
+    console.log(`URL spoofed: ${getRequestUrl(originalRequest)} => ${args[0]}`);
     return interceptResponse(response, originalRequest);
   }
   return response;
