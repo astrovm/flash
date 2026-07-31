@@ -1200,7 +1200,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
     gameDataManager
       .removeTemporary(temporaryData.storageId, temporaryData.fileName)
       .catch((error) =>
-        console.error(`Could not remove temporary ${gameId} data:`, error),
+        console.error("Could not remove temporary %s data:", gameId, error),
       )
       .finally(() => {
         window.postMessage(
