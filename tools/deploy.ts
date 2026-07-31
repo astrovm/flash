@@ -364,6 +364,7 @@ export async function updateHtml(
   const mutableAssets = {
     ruffle: "js/ruffle.js",
     gamesJs: "js/games.js",
+    storagePolicyJs: "js/storage-policy.js",
     gameInstallerJs: "js/game-installer.js",
     gameLibraryJs: "js/game-library.js",
     gameDataJs: "js/game-data.js",
@@ -437,6 +438,23 @@ export async function updateHtml(
     "Could not update fflate asset reference",
   );
   await writeFile(paths.html, content);
+
+  for (const relativePath of [
+    "iframe/pink-panther-hokus-pokus/index.html",
+    "iframe/pink-panther-passport-to-peril/index.html",
+    "iframe/revcdos/index.html",
+  ]) {
+    const absolutePath = join(paths.root, relativePath);
+    if (!(await isFile(absolutePath))) continue;
+    let iframe = await readFile(absolutePath, "utf8");
+    iframe = await replaceExactlyOnce(
+      iframe,
+      /\.\.\/\.\.\/js\/storage-policy\.js(?:\?v=[^"]+)?"?/g,
+      `../../${hashedAssets.storagePolicyJs}"`,
+      `Could not update storage policy reference in ${relativePath}`,
+    );
+    await writeFile(absolutePath, iframe);
+  }
 
   if (await isFile(paths.captureHtml)) {
     let capture = await readFile(paths.captureHtml, "utf8");
@@ -739,6 +757,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
   for (const asset of [
     "js/ruffle.js",
     "js/games.js",
+    "js/storage-policy.js",
     "js/game-installer.js",
     "js/game-library.js",
     "js/game-data.js",

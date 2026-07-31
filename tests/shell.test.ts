@@ -83,9 +83,13 @@ test("window dragging and resizing coalesce updates by animation frame", () => {
   contains(css, ".xp-window.moving", "will-change: transform");
 });
 test("internet games is integrated with the shell", async () => {
+  expect(await Bun.file(path("site/js/storage-policy.js")).exists()).toBe(true);
   expect(await Bun.file(path("site/js/game-installer.js")).exists()).toBe(true);
   expect(await Bun.file(path("site/js/game-library.js")).exists()).toBe(true);
   expect(await Bun.file(path("site/js/game-data.js")).exists()).toBe(true);
+  expect(html.indexOf('src="js/storage-policy.js')).toBeLessThan(
+    html.indexOf('src="js/game-library.js'),
+  );
   expect(html.indexOf('src="js/game-installer.js')).toBeLessThan(
     html.indexOf('src="js/game-library.js'),
   );

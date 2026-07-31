@@ -2,7 +2,9 @@
 
 (() => {
   const game = window.PINK_GAME;
+  const storagePolicy = window.AstroStoragePolicy;
   if (!game) throw new Error("Missing Pink Panther game configuration.");
+  if (!storagePolicy) throw new Error("Missing browser storage policy.");
 
   const SCUMMVM_ROOT = "../../vendor/scummvm/2026.3.0/";
   const SCUMMVM_GAME_ROUTE = `/iframe/scummvm/local-games/${game.id}/`;
@@ -144,11 +146,6 @@
 
   const formatBytes = (bytes) =>
     `${(bytes / 1024 / 1024).toFixed(bytes >= 100 * 1024 * 1024 ? 0 : 1)} MiB`;
-
-  const errorMessage = (error) =>
-    error?.name === "QuotaExceededError"
-      ? "The browser refused the storage write because its actual storage quota was reached."
-      : error?.message || String(error);
 
   const nativeFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
@@ -388,10 +385,23 @@
     gameFiles,
     { keep, url = "" },
   ) => {
-    await writeRuntimeManifest(directory, fileName, gameFiles);
+    const previous = keep ? readMetadata() : null;
     if (keep) {
-      const previous = readMetadata();
       localStorage.setItem(metadataKey, JSON.stringify({ fileName, url }));
+    }
+    try {
+      await writeRuntimeManifest(directory, fileName, gameFiles);
+    } catch (error) {
+      if (keep) {
+        if (previous) {
+          localStorage.setItem(metadataKey, JSON.stringify(previous));
+        } else {
+          localStorage.removeItem(metadataKey);
+        }
+      }
+      throw error;
+    }
+    if (keep) {
       savedIso = iso;
       savedCopyButton.hidden = false;
       savedCopyButton.textContent = `Play browser copy (${formatBytes(iso.size)})`;
@@ -415,7 +425,7 @@
         `The CD image is ${formatBytes(iso.size)}, but this game requires ${formatBytes(game.isoSize)}.`,
       );
     }
-    await navigator.storage.persist?.();
+    await storagePolicy.requestPersistence(navigator.storage);
     const directory = await getStorageDirectory(true);
     const fileName = `${game.id}-${crypto.randomUUID()}.iso`;
     const handle = await directory.getFileHandle(fileName, { create: true });
@@ -438,12 +448,17 @@
       await directory.removeEntry(fileName).catch(() => {});
       throw error;
     }
-    const storedIso = await handle.getFile();
-    await activateStoredIso(directory, fileName, storedIso, gameFiles, {
-      keep,
-      url,
-    });
-    return { fileName, iso: storedIso };
+    try {
+      const storedIso = await handle.getFile();
+      await activateStoredIso(directory, fileName, storedIso, gameFiles, {
+        keep,
+        url,
+      });
+      return { fileName, iso: storedIso };
+    } catch (error) {
+      await directory.removeEntry(fileName).catch(() => {});
+      throw error;
+    }
   };
 
   const prepareIso = async (iso, options) => {
@@ -472,7 +487,7 @@
       await startScummVm();
     } catch (error) {
       setControlsDisabled(false);
-      setMessage(errorMessage(error), true);
+      setMessage(storagePolicy.errorMessage(error), true);
       discInput.value = "";
     }
   });
@@ -499,7 +514,7 @@
       await startScummVm();
     } catch (error) {
       setControlsDisabled(false);
-      setMessage(errorMessage(error), true);
+      setMessage(storagePolicy.errorMessage(error), true);
     }
   });
 
@@ -554,7 +569,7 @@
       const chunks = [];
       let downloaded = 0;
       if (keepCopy.checked) {
-        await navigator.storage.persist?.();
+        await storagePolicy.requestPersistence(navigator.storage);
         directory = await getStorageDirectory(true);
         fileName = `${game.id}-${crypto.randomUUID()}.iso`;
         const handle = await directory.getFileHandle(fileName, {
@@ -622,7 +637,7 @@
         await directory.removeEntry(fileName).catch(() => {});
       }
       setControlsDisabled(false);
-      setMessage(errorMessage(error), true);
+      setMessage(storagePolicy.errorMessage(error), true);
     }
   });
 

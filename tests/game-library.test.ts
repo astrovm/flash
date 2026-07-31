@@ -139,8 +139,10 @@ test("game library", async () => {
     cacheObject: cache,
     metadataStore: store,
     storageManager: {
-      persist: async () => true,
-      estimate: async () => ({ usage: 0, quota: 1024 }),
+      persist: async () => {
+        throw new Error("persistence unavailable");
+      },
+      estimate: async () => ({ usage: 1, quota: 1 }),
     },
     origin: "https://flash.example",
   });
@@ -171,6 +173,27 @@ test("game library", async () => {
   assert.deepEqual(manager.getGames(), {});
   assert.equal(cache.values.size, 0);
   assert.equal(store.values.size, 0);
+
+  const quotaCache = new FakeCache();
+  quotaCache.put = async () => {
+    throw new DOMException("full", "QuotaExceededError");
+  };
+  const quotaStore = new FakeStore();
+  const quotaManager = library.createManager({
+    installer,
+    unzipSync,
+    fetchObject,
+    cacheObject: quotaCache,
+    metadataStore: quotaStore,
+    storageManager: {
+      estimate: async () => ({ usage: 1, quota: 1 }),
+    },
+    origin: "https://flash.example",
+  });
+  await quotaManager.initialize();
+  await assert.rejects(quotaManager.install(details), /actual storage quota/);
+  assert.equal(quotaCache.values.size, 0);
+  assert.equal(quotaStore.values.size, 0);
 
   const legacyCache = new FakeCache();
   const legacyStore = new FakeStore();
@@ -204,6 +227,25 @@ test("game library", async () => {
       `https://flash.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/config.bin`,
     ),
   );
+  const originalLegacyPut = legacyCache.put.bind(legacyCache);
+  legacyCache.put = async () => {
+    throw new DOMException("full", "QuotaExceededError");
+  };
+  const uncachedAsset = await legacyManager.match(
+    "http://localflash/bikemania3/data/optional.bin",
+  );
+  assert(uncachedAsset);
+  assert.deepEqual(
+    [...new Uint8Array(await uncachedAsset.arrayBuffer())],
+    [6, 7],
+  );
+  assert.equal(
+    legacyCache.values.has(
+      `https://flash.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/optional.bin`,
+    ),
+    false,
+  );
+  legacyCache.put = originalLegacyPut;
   const fetchCountBeforeAppRequest = legacyCache.values.size;
   assert.equal(
     await legacyManager.match("https://flash.example/js/runtime.wasm"),

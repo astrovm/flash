@@ -2,6 +2,7 @@ const DIRECTORY_NAME = "astro-flash-revcdos";
 const MANIFEST_NAME = "manifest.json";
 const FORMAT_VERSION = 1;
 const DATA_PREFIX = "assets-";
+const storagePolicy = globalThis.AstroStoragePolicy;
 
 const normalizePath = (path) =>
   String(path).replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
@@ -57,7 +58,7 @@ export async function loadPackedManifest() {
 }
 
 export async function packFiles(entries, onProgress = () => {}) {
-  await navigator.storage.persist?.();
+  await storagePolicy.requestPersistence(navigator.storage);
   const files = [...entries]
     .map(([path, file]) => [normalizePath(path), file])
     .sort(([left], [right]) => left.localeCompare(right));
@@ -99,12 +100,22 @@ export async function packFiles(entries, onProgress = () => {}) {
     size: offset,
     files: index,
   };
-  const manifestHandle = await directory.getFileHandle(MANIFEST_NAME, {
-    create: true,
-  });
-  const manifestWriter = await manifestHandle.createWritable();
-  await manifestWriter.write(JSON.stringify(manifest));
-  await manifestWriter.close();
+  try {
+    const manifestHandle = await directory.getFileHandle(MANIFEST_NAME, {
+      create: true,
+    });
+    const manifestWriter = await manifestHandle.createWritable();
+    try {
+      await manifestWriter.write(JSON.stringify(manifest));
+      await manifestWriter.close();
+    } catch (error) {
+      await manifestWriter.abort().catch(() => {});
+      throw error;
+    }
+  } catch (error) {
+    await directory.removeEntry(dataFile).catch(() => {});
+    throw error;
+  }
 
   for await (const [name, handle] of directory.entries()) {
     if (

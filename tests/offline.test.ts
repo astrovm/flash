@@ -293,6 +293,54 @@ test("offline updates", async () => {
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, []);
   assert(initial.deletedCaches.includes(BUNDLED_GAME_CACHE));
 
+  const lowEstimate = makeEnvironment();
+  lowEstimate.environment.navigator.storage = {
+    estimate: async () => ({ usage: 100, quota: 100 }),
+    persist: async () => {
+      throw new Error("persistence unavailable");
+    },
+  };
+  const lowEstimateManager = createManager({
+    currentVersion: manifest.version,
+    environment: lowEstimate.environment,
+  });
+  await lowEstimateManager.initialize();
+  await lowEstimateManager.downloadGame("bike-mania");
+  assert.deepStrictEqual(lowEstimateManager.getSnapshot().downloadedGameIds, [
+    "bike-mania",
+  ]);
+
+  const quotaFailure = makeEnvironment();
+  const originalPut = quotaFailure.bundledCache.put.bind(
+    quotaFailure.bundledCache,
+  );
+  let putCount = 0;
+  quotaFailure.bundledCache.put = async (key, response) => {
+    putCount += 1;
+    if (putCount === 2) {
+      throw new DOMException("full", "QuotaExceededError");
+    }
+    return originalPut(key, response);
+  };
+  const quotaFailureManager = createManager({
+    currentVersion: manifest.version,
+    environment: quotaFailure.environment,
+  });
+  await quotaFailureManager.initialize();
+  await assert.rejects(
+    quotaFailureManager.downloadGame("doom"),
+    /actual storage quota/,
+  );
+  assert.strictEqual(quotaFailure.bundledCache.values.size, 0);
+  assert.deepStrictEqual(
+    quotaFailureManager.getSnapshot().downloadedGameIds,
+    [],
+  );
+  assert.match(
+    quotaFailureManager.getSnapshot().gameError,
+    /actual storage quota/,
+  );
+
   const sharedRuntime = makeEnvironment();
   const sharedRuntimeManager = createManager({
     currentVersion: manifest.version,

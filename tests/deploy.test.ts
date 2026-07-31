@@ -83,6 +83,7 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/ruffle.js?v=old"></script>',
       '<script src="vendor/fflate/0.8.3/index.js?v=old"></script>',
       '<script src="js/games.js?v=old"></script>',
+      '<script src="js/storage-policy.js?v=old"></script>',
       '<script src="js/game-installer.js?v=old"></script>',
       '<script src="js/game-library.js?v=old"></script>',
       '<script src="js/game-data.js?v=old"></script>',
@@ -97,6 +98,7 @@ async function makeSource(root: string): Promise<void> {
     ].join("\n"),
     "capture.html": '<script src="js/ruffle.js?v=old"></script>',
     "js/games.js": 'const icon = "assets/icons/game.png";',
+    "js/storage-policy.js": "storage policy",
     "js/game-installer.js": "game installer",
     "js/game-library.js": "game library",
     "js/game-data.js": "game data",
@@ -123,6 +125,12 @@ async function makeSource(root: string): Promise<void> {
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom",
     "iframe/inside-the-firewall/index.html": "firewall",
+    "iframe/pink-panther-hokus-pokus/index.html":
+      '<script src="../../js/storage-policy.js?v=old"></script>',
+    "iframe/pink-panther-passport-to-peril/index.html":
+      '<script src="../../js/storage-policy.js?v=old"></script>',
+    "iframe/revcdos/index.html":
+      '<script src="../../js/storage-policy.js?v=old"></script>',
     "dos/doom/doom.jsdos": "jsdos",
   });
 }
@@ -248,6 +256,7 @@ describe("build metadata", () => {
     const html = await readFile(paths.html, "utf8");
     expect(main).toContain('const APP_VERSION = "26.07.28-abcdef1";');
     expect(html).toContain(`${hashedAssets.mainJs}"`);
+    expect(html).toContain(`${hashedAssets.storagePolicyJs}"`);
     expect(html).toContain(`${hashedAssets.gameInstallerJs}"`);
     expect(html).toContain(`${hashedAssets.gameLibraryJs}"`);
     expect(html).toContain(`${hashedAssets.gameDataJs}"`);
@@ -256,6 +265,15 @@ describe("build metadata", () => {
     expect(await readFile(paths.captureHtml, "utf8")).toContain(
       `${hashedAssets.ruffle}"`,
     );
+    for (const iframe of [
+      "iframe/pink-panther-hokus-pokus/index.html",
+      "iframe/pink-panther-passport-to-peril/index.html",
+      "iframe/revcdos/index.html",
+    ]) {
+      expect(await readFile(join(root, iframe), "utf8")).toContain(
+        `../../${hashedAssets.storagePolicyJs}"`,
+      );
+    }
     expect(html).toMatch(/favicon\.[a-f0-9]{8}\.ico"/);
     expect(html).toMatch(/assets\/xp\/bliss\.[a-f0-9]{8}\.jpg"/);
     expect(await readFile(join(root, hashedAssets.gamesJs), "utf8")).toMatch(

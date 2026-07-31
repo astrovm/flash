@@ -58,6 +58,8 @@ const pokusWrapper = await Bun.file(
 test("supports direct ISO sessions and optional persistent browser copies", () => {
   expect(passportWrapper).toContain("isoSize: 649084928");
   expect(pokusWrapper).toContain("isoSize: 526409728");
+  expect(passportWrapper).toContain("../../js/storage-policy.js");
+  expect(pokusWrapper).toContain("../../js/storage-policy.js");
   expect(launcher).toContain('id="disc-url"');
   expect(launcher).toContain('id="download-disc"');
   expect(launcher).toContain('id="saved-copy"');
@@ -92,7 +94,10 @@ test("supports direct ISO sessions and optional persistent browser copies", () =
   expect(launcher).toContain("localStorage.setItem(");
   expect(launcher).toContain("directory.removeEntry(fileName)");
   expect(launcher).toContain("cross-origin browser downloads (CORS)");
-  expect(launcher).toContain('error?.name === "QuotaExceededError"');
+  expect(launcher).toContain("storagePolicy.errorMessage(error)");
+  expect(launcher).toContain(
+    "storagePolicy.requestPersistence(navigator.storage)",
+  );
   expect(launcher).not.toContain('value="http');
 });
 
