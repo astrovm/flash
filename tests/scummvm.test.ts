@@ -8,8 +8,13 @@ const { gameBlobsFromIso } = require("../site/iframe/scummvm/iso9660.js") as {
     iso: Blob,
     requiredFiles: Record<string, number>,
     gameTitle: string,
-  ) => Promise<Array<{ data: Blob; name: string }>>;
+  ) => Promise<
+    Array<{ data: Blob; name: string; offset: number; size: number }>
+  >;
 };
+const offlineWorker = await Bun.file(
+  new URL("../site/js/offline-worker.js", import.meta.url),
+).text();
 
 const sourceRoot = `${import.meta.dir}/../source-media/scummvm`;
 const games = [
@@ -66,7 +71,18 @@ test("supports optional verified URL downloads in persistent browser storage", (
   expect(launcher).toContain("response.body.getReader()");
   expect(launcher).toContain("downloaded > game.isoSize");
   expect(launcher).toContain("iso.size !== game.isoSize");
-  expect(launcher).toContain("gameBlobsFromIso(");
+  expect(launcher).toContain("gameFilesFromIso(");
+  expect(launcher).toContain("SCUMMVM_GAME_UPDATED");
+  expect(launcher).toContain('event: "astro.offline-game-ready"');
+  expect(launcher).toContain('id="keep-copy" type="checkbox" checked');
+  expect(launcher).toContain("data/${game.id}");
+  expect(launcher).toContain("--path=${gamePath}");
+  expect(launcher).not.toContain("WORKERFS");
+  expect(launcher).not.toContain("FS.mount");
+  expect(offlineWorker).toContain(
+    'const SCUMMVM_ROUTE = "/iframe/scummvm/local-games/"',
+  );
+  expect(offlineWorker).toContain("serveScummvmAsset(url)");
   expect(launcher).toContain("localStorage.setItem(");
   expect(launcher).toContain("directory.removeEntry(fileName)");
   expect(launcher).toContain("cross-origin browser downloads (CORS)");
@@ -84,6 +100,9 @@ test("mounts the required English files from both authorized CD images", async (
     expect(
       Object.fromEntries(blobs.map(({ data, name }) => [name, data.size])),
     ).toEqual(game.files);
+    expect(blobs.every(({ offset }) => Number.isSafeInteger(offset))).toBe(
+      true,
+    );
   }
 });
 

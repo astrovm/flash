@@ -85,6 +85,7 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/games.js?v=old"></script>',
       '<script src="js/game-installer.js?v=old"></script>',
       '<script src="js/game-library.js?v=old"></script>',
+      '<script src="js/game-data.js?v=old"></script>',
       '<script src="js/filesystem.js?v=old"></script>',
       '<script src="js/file-operations.js?v=old"></script>',
       '<script src="js/dialogs.js?v=old"></script>',
@@ -98,6 +99,7 @@ async function makeSource(root: string): Promise<void> {
     "js/games.js": 'const icon = "assets/icons/game.png";',
     "js/game-installer.js": "game installer",
     "js/game-library.js": "game library",
+    "js/game-data.js": "game data",
     "js/filesystem.js": "filesystem",
     "js/file-operations.js": "file operations",
     "js/dialogs.js": "dialogs",
@@ -248,6 +250,7 @@ describe("build metadata", () => {
     expect(html).toContain(`${hashedAssets.mainJs}"`);
     expect(html).toContain(`${hashedAssets.gameInstallerJs}"`);
     expect(html).toContain(`${hashedAssets.gameLibraryJs}"`);
+    expect(html).toContain(`${hashedAssets.gameDataJs}"`);
     expect(html).toContain(`${hashedAssets.fileOperationsJs}"`);
     expect(html).toContain(`${hashedAssets.mainCss}"`);
     expect(await readFile(paths.captureHtml, "utf8")).toContain(

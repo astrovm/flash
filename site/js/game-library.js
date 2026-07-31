@@ -249,6 +249,40 @@
       getRecord(id) {
         return installed.get(id) || null;
       },
+      async getInstallations() {
+        requireReady();
+        const keys = await cache.keys();
+        const totals = new Map(
+          [...installed.values()].map((record) => [record.uuid, 0]),
+        );
+        for (const key of keys) {
+          const url = String(key.url || key);
+          for (const record of installed.values()) {
+            const prefix = installedAssetKey(record, "");
+            if (!url.startsWith(prefix)) continue;
+            const response = await cache.match(key);
+            if (response) {
+              const lengthHeader =
+                response.headers?.get("content-length") ?? null;
+              const length = Number(lengthHeader);
+              const bytes =
+                lengthHeader !== null && Number.isFinite(length) && length >= 0
+                  ? length
+                  : (await response.blob()).size;
+              totals.set(record.uuid, (totals.get(record.uuid) || 0) + bytes);
+            }
+            break;
+          }
+        }
+        return [...installed.values()]
+          .map((record) => ({
+            id: record.id,
+            uuid: record.uuid,
+            title: record.title,
+            bytes: totals.get(record.uuid) || 0,
+          }))
+          .sort((left, right) => left.title.localeCompare(right.title));
+      },
       async search(query, { signal } = {}) {
         const normalized = String(query || "").trim();
         if (!normalized) return [];

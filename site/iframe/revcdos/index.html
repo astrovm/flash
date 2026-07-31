@@ -99,6 +99,12 @@
         margin-top: 16px;
       }
 
+      .keep-copy {
+        display: block;
+        margin: 12px 0 2px;
+        text-align: left;
+      }
+
       .hidden-input {
         position: absolute;
         width: 1px;
@@ -147,6 +153,10 @@
           webkitdirectory
           directory
         />
+        <label class="keep-copy"
+          ><input id="keep-copy" type="checkbox" checked /> Keep the optimized
+          game data in this browser for next time</label
+        >
         <label class="source-label" for="torrent-source"
           >Torrent URL or magnet</label
         >
@@ -201,6 +211,7 @@
       const input = document.getElementById("file-input");
       const torrentFileInput = document.getElementById("torrent-file-input");
       const torrentSourceInput = document.getElementById("torrent-source");
+      const keepCopyInput = document.getElementById("keep-copy");
       const downloadButton = document.getElementById("download-button");
       const setup = document.getElementById("setup");
       const selection = document.getElementById("selection");
@@ -318,6 +329,7 @@
         input.disabled = true;
         torrentFileInput.disabled = true;
         torrentSourceInput.disabled = true;
+        keepCopyInput.disabled = true;
         let lastUpdate = 0;
         const manifest = await packFiles(entries, (packed, total, path) => {
           const now = Date.now();
@@ -335,6 +347,18 @@
           localStorage.removeItem(DOWNLOAD_COMPLETE_KEY);
         }
         cacheEngineForOfflineUse();
+        window.parent.postMessage(
+          {
+            event: "astro.game-data-retention",
+            gameId: "revcdos",
+            keep: keepCopyInput.checked,
+          },
+          location.origin,
+        );
+        window.parent.postMessage(
+          { event: "astro.game-data-changed" },
+          location.origin,
+        );
         startGame(
           `${Object.keys(manifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
         );
@@ -517,6 +541,7 @@
           input.disabled = false;
           torrentFileInput.disabled = false;
           torrentSourceInput.disabled = false;
+          keepCopyInput.disabled = false;
           downloadButton.textContent = "Try torrent download again";
         };
 
@@ -603,6 +628,7 @@
           downloadButton.disabled = false;
           torrentFileInput.disabled = false;
           torrentSourceInput.disabled = false;
+          keepCopyInput.disabled = false;
           downloadButton.textContent = "Try torrent download again";
         });
       });
@@ -634,6 +660,7 @@
           input.disabled = false;
           torrentFileInput.disabled = false;
           torrentSourceInput.disabled = false;
+          keepCopyInput.disabled = false;
         }
       });
 
