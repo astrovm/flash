@@ -126,3 +126,28 @@ test("every bundled archive route targets a committed file", async () => {
 
   expect(routeCount).toBe(router.routeCount);
 });
+
+test("Kass Basher routes its archived menu translations", async () => {
+  const gamesSource = await Bun.file(
+    new URL("../site/js/games.js", import.meta.url),
+  ).text();
+  const browserGlobal: { FLASH_GAMES?: Record<string, any> } = {};
+  new Function("window", gamesSource)(browserGlobal);
+  const router = routerApi.create(browserGlobal.FLASH_GAMES || {}, pageUrl);
+  const translation = router.resolve(
+    "http://www.neopets.com/transcontent/gettranslationxml.phtml?item_id=842&lang=en",
+  );
+
+  expect(translation?.gameId).toBe("whack-a-kass");
+  expect(translation?.localUrl.pathname).toEndWith(
+    "/swf/whack-a-kass/gettranslationxml.phtml",
+  );
+  const xml = await Bun.file(
+    new URL(
+      "../site/swf/whack-a-kass/gettranslationxml.phtml",
+      import.meta.url,
+    ),
+  ).text();
+  expect(xml).toContain('resname="IDS_PLAYEASY"');
+  expect(xml).toContain("Play%20Game%20With%20BREAD");
+});

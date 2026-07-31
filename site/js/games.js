@@ -270,6 +270,8 @@ window.FLASH_GAMES = Object.freeze({
           "swf/whack-a-kass/content/swf.neopets.com/games/utilities/flash_bios/bios.swf",
         "http://images.neopets.com/games/utilities/flash_bios/bios.swf":
           "swf/whack-a-kass/content/swf.neopets.com/games/utilities/flash_bios/bios.swf",
+        "https://www.neopets.com/transcontent/gettranslationxml.phtml":
+          "swf/whack-a-kass/gettranslationxml.phtml",
       },
     },
     category: "Arcade",

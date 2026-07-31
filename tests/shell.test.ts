@@ -142,6 +142,8 @@ test("Flash URL routing is shared and uses exact archived assets", async () => {
     'flashpointId: "00d4f9a7-1453-4da3-a5d9-3c980abd9f17"',
     '"http://images.neopets.com/games/g381_v58_67047.swf"',
     '"http://swf.neopets.com/games/utilities/flash_bios/bios.swf"',
+    '"https://www.neopets.com/transcontent/gettranslationxml.phtml"',
+    '"swf/whack-a-kass/gettranslationxml.phtml"',
     'flashpointId: "9fb4b4ae-a0bc-4c49-9be1-8b776b8151bf"',
     '"http://simpsonsgames.ru/flash/wreckscore.swf"',
   );
