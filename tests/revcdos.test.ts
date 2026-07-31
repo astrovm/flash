@@ -63,7 +63,9 @@ test("ships the engine without bundled game data", async () => {
 });
 
 test("serves the Lolendor runtime through a packed OPFS store", async () => {
-  expect(host).toContain('type="file" webkitdirectory directory');
+  expect(host).toContain('id="file-input"');
+  expect(host).toContain("webkitdirectory");
+  expect(host).toContain("directory");
   expect(host).toContain('gameFrame.src = "game.html"');
   expect(host).toContain("loadPackedManifest");
   expect(host).toContain("packFiles");
@@ -105,15 +107,20 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
   expect(offlineWorker).toContain('"Content-Range"');
 });
 
-test("offers a persistent WebTorrent download alongside manual selection", async () => {
+test("offers configurable persistent WebTorrent downloads alongside manual selection", async () => {
   expect(host).toContain('id="download-button"');
+  expect(host).toContain('id="torrent-source"');
+  expect(host).toContain('value="revcdoseng.torrent"');
+  expect(host).toContain('id="torrent-file-input"');
+  expect(host).toContain("magnet:?");
+  expect(host).toContain("new Uint8Array(await torrentFile.arrayBuffer())");
   expect(host).toContain(
     'import WebTorrent from "../../vendor/webtorrent/3.0.21/webtorrent.min.js"',
   );
   expect(host).toContain("revcdoseng.torrent");
   expect(host).toContain("await navigator.storage.getDirectory()");
   expect(host).toContain("storeOpts: { rootDir }");
-  expect(host).toContain("new URL(TORRENT_URL, location.href).href");
+  expect(host).toContain("const torrent = client.add(torrentSource");
   expect(host).toContain("wss://cloud.dos.zone:8444/announce-ws");
   expect(host).toContain("announce: WEB_TRACKERS");
   expect(host).toContain('fetch("/api/rtc", { cache: "no-store" })');
@@ -123,7 +130,8 @@ test("offers a persistent WebTorrent download alongside manual selection", async
   expect(host).toContain("globalThis.RTCPeerConnection");
   expect(host).toContain("Checking peer connection support");
   expect(host).toContain("No peer connection was established");
-  expect(host).toContain("Try automatic download again");
+  expect(host).toContain("Try torrent download again");
+  expect(host).not.toContain("Download automatically");
   expect(host).toContain("destroyStoreOnDestroy: false");
   expect(host).toContain("uploads: 2");
   expect(host).toContain("skipVerify: cached");

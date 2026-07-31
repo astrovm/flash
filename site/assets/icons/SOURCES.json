@@ -216,6 +216,20 @@
     "sha256": "bed49f269d66d61a181a479ea8d221ab9cfc1a3beb3fd93c4a74f8799c568ac1",
     "notes": "Game logo archived by Flashpoint Archive (UUID 71044857-0aff-479e-afba-60d4dd45e16a)."
   },
+  "pink-panther-hokus-pokus": {
+    "file": "pink-panther-hokus-pokus.png",
+    "source": "source-media/scummvm/hokus-pokus-pink-english.iso#HPP.EXE",
+    "retrieved": "2026-07-30",
+    "sha256": "332e7cb43d299ad0896dbc24d3662d432cff793bbe59e2d991d365cdc98cbb8d",
+    "notes": "48 px application icon extracted from the owner's authorized English CD."
+  },
+  "pink-panther-passport-to-peril": {
+    "file": "pink-panther-passport-to-peril.png",
+    "source": "source-media/scummvm/passport-to-peril-english.iso#PPTP.EXE",
+    "retrieved": "2026-07-30",
+    "sha256": "5723d6a1f5e86998932d07433cc0369b3785b7aefd1a114a0449f86e458ddaa0",
+    "notes": "48 px application icon extracted from the owner's authorized English CD."
+  },
   "portal-flash": {
     "file": "portal-flash.png",
     "source": "https://infinity.unstable.life/images/Logos/b0/d2/b0d2b9a9-ab00-465e-b5a3-56031b92f070.png",

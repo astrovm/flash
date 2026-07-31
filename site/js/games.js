@@ -133,6 +133,20 @@ window.FLASH_GAMES = Object.freeze({
     type: "iframe",
     category: "Adventure",
   },
+  "pink-panther-passport-to-peril": {
+    icon: "assets/icons/pink-panther-passport-to-peril.png",
+    title: "The Pink Panther: Passport to Peril",
+    aspectRatio: 4 / 3,
+    type: "iframe",
+    category: "Adventure",
+  },
+  "pink-panther-hokus-pokus": {
+    icon: "assets/icons/pink-panther-hokus-pokus.png",
+    title: "The Pink Panther: Hokus Pokus Pink",
+    aspectRatio: 4 / 3,
+    type: "iframe",
+    category: "Adventure",
+  },
   "knd-operation-startup": {
     icon: "assets/icons/knd-operation-startup.png",
     title: "KND: Operation S.T.A.R.T.U.P.",

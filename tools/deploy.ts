@@ -85,16 +85,20 @@ interface OfflineGame {
   bytes: number;
   files: OfflineFile[];
   revision: string;
+  runtime?: string;
   type: "iframe" | "swf";
+}
+
+interface OfflineRuntime {
+  bytes: number;
+  files: OfflineFile[];
+  revision: string;
 }
 
 interface OfflineManifest {
   games: Record<string, OfflineGame>;
-  runtime: {
-    bytes: number;
-    files: OfflineFile[];
-    revision: string;
-  };
+  runtime: OfflineRuntime;
+  runtimes?: Record<string, OfflineRuntime>;
   version: string;
 }
 
@@ -453,6 +457,7 @@ export function isOptionalOfflinePath(relativePath: string): boolean {
     path.startsWith("swf/") ||
     path.startsWith("iframe/") ||
     path.startsWith("dos/") ||
+    path.startsWith("vendor/scummvm/") ||
     (path.startsWith("js/") &&
       (path.endsWith(".wasm") ||
         Boolean(path.split("/").at(-1)?.startsWith("core.ruffle."))))
@@ -500,6 +505,18 @@ export async function writeOfflineGameManifest(
       if (entry.isDirectory()) gameIds.add(entry.name);
     }
   }
+  gameIds.delete("scummvm");
+
+  const sharedRuntimes = {
+    scummvm: [
+      join(paths.root, "iframe", "scummvm"),
+      join(paths.root, "vendor", "scummvm", "2026.3.0"),
+    ],
+  };
+  const gameRuntimes: Record<string, keyof typeof sharedRuntimes> = {
+    "pink-panther-hokus-pokus": "scummvm",
+    "pink-panther-passport-to-peril": "scummvm",
+  };
 
   const games: Record<string, OfflineGame> = {};
   for (const gameId of [...gameIds].sort()) {
@@ -511,6 +528,7 @@ export async function writeOfflineGameManifest(
     if (gameId === "doom" && (await isDirectory(doomRoot)))
       roots.push(doomRoot);
     const files = (await Promise.all(roots.map(walkFiles))).flat().sort();
+    const sharedRuntime = gameRuntimes[gameId];
     games[gameId] = {
       bytes: (
         await Promise.all(files.map(async (path) => (await stat(path)).size))
@@ -519,10 +537,44 @@ export async function writeOfflineGameManifest(
         files.map((path) => offlineFileEntry(paths.root, path)),
       ),
       revision: await offlineRevision(paths.root, files),
+      ...(sharedRuntime ? { runtime: sharedRuntime } : {}),
       type: gameType,
     };
   }
 
+  const runtimes = Object.fromEntries(
+    await Promise.all(
+      (
+        await Promise.all(
+          Object.entries(sharedRuntimes).map(async ([id, roots]) => ({
+            id,
+            roots,
+            available: (await Promise.all(roots.map(isDirectory))).every(
+              Boolean,
+            ),
+          })),
+        )
+      )
+        .filter(({ available }) => available)
+        .map(async ({ id, roots }) => {
+          const files = (await Promise.all(roots.map(walkFiles))).flat().sort();
+          return [
+            id,
+            {
+              bytes: (
+                await Promise.all(
+                  files.map(async (path) => (await stat(path)).size),
+                )
+              ).reduce((total, bytes) => total + bytes, 0),
+              files: await Promise.all(
+                files.map((path) => offlineFileEntry(paths.root, path)),
+              ),
+              revision: await offlineRevision(paths.root, files),
+            },
+          ];
+        }),
+    ),
+  );
   const manifest: OfflineManifest = {
     games,
     runtime: {
@@ -536,6 +588,7 @@ export async function writeOfflineGameManifest(
       ),
       revision: await offlineRevision(paths.root, runtimeFiles),
     },
+    runtimes,
     version,
   };
   await writeFile(paths.offlineGamesJson, `${JSON.stringify(manifest)}\n`);
@@ -562,6 +615,10 @@ export async function writeVersionMetadata(
   ) as OfflineManifest;
   const bundledGameBytes =
     offlineManifest.runtime.bytes +
+    Object.values(offlineManifest.runtimes ?? {}).reduce(
+      (total, runtime) => total + runtime.bytes,
+      0,
+    ) +
     Object.values(offlineManifest.games).reduce(
       (total, game) => total + game.bytes,
       0,

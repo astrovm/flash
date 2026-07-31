@@ -12,6 +12,7 @@ export default {
     "swf/**",
     "iframe/**",
     "dos/**",
+    "vendor/scummvm/**",
     "js/*.wasm",
     "js/core.ruffle.*.js",
   ],
