@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 
 const projectDirectory = new URL("..", import.meta.url);
+const projectPath = fileURLToPath(projectDirectory);
 const read = (relativePath: string) =>
   Bun.file(new URL(relativePath, projectDirectory)).text();
 
@@ -31,6 +33,45 @@ test("registers reVCDOS as a bundled iframe application", () => {
   expect(games).toContain('title: "reVCDOS"');
   expect(games).toContain('icon: "assets/icons/revcdos.png"');
   expect(games).toContain('type: "iframe"');
+});
+
+test("keeps restricted product names out of tracked files", () => {
+  const patterns = [
+    ["grand", "theft", "auto"].join("[[:space:]-]+"),
+    ["vice", "city"].join("[[:space:]-]+"),
+    ["rock", "star"].join(""),
+    ["take", "two"].join("[[:space:]-]*"),
+  ];
+  const pattern = patterns.join("|");
+  const contents = Bun.spawnSync(
+    ["git", "grep", "-I", "-n", "-i", "-E", pattern, "--", "."],
+    {
+      cwd: projectPath,
+      stderr: "pipe",
+      stdout: "pipe",
+    },
+  );
+  const paths = Bun.spawnSync(["git", "ls-files", "-z"], {
+    cwd: projectPath,
+    stderr: "pipe",
+    stdout: "pipe",
+  })
+    .stdout.toString()
+    .split("\0")
+    .filter(Boolean);
+  const pathPattern = new RegExp(
+    [
+      ["grand", "theft", "auto"].join("[\\s-]+"),
+      ["vice", "city"].join("[\\s-]+"),
+      ["rock", "star"].join(""),
+      ["take", "two"].join("[\\s-]*"),
+    ].join("|"),
+    "i",
+  );
+
+  expect(contents.exitCode).toBe(1);
+  expect(contents.stdout.toString()).toBe("");
+  expect(paths.filter((path) => pathPattern.test(path))).toEqual([]);
 });
 
 test("ships the engine without bundled game data", async () => {
