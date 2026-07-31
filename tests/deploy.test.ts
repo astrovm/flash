@@ -386,6 +386,20 @@ describe("Workbox and artifact validation", () => {
 });
 
 describe("atomic build", () => {
+  test("keeps temporary build directories out of git status", async () => {
+    const result = Bun.spawnSync(
+      ["git", "check-ignore", ".dist-build-example/output/index.html"],
+      {
+        cwd: join(import.meta.dir, ".."),
+        stderr: "pipe",
+        stdout: "pipe",
+      },
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.stdout.toString()).toContain(".dist-build-example");
+  });
+
   test("does not mutate source and replaces old output", async () => {
     const project = await makeTemporaryDirectory();
     const source = join(project, "site");
