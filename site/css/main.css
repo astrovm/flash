@@ -3212,6 +3212,31 @@ html[data-xp-appearance="silver"] {
   padding: 0 3px;
 }
 
+.game-playback-settings {
+  width: 330px;
+}
+
+.game-playback-row {
+  display: grid;
+  grid-template-columns: 72px minmax(150px, 1fr) 66px auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-fps-custom {
+  width: 66px;
+}
+
+.game-playback-note,
+.game-playback-status {
+  margin: 8px 0 0;
+}
+
+.game-playback-status {
+  min-height: 14px;
+  color: #c00;
+}
+
 .dlg-month-year {
   display: flex;
   gap: 4px;

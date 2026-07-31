@@ -56,7 +56,12 @@ DOS and HTML5 games use `type: "iframe"`.
   category: "Racing",
   frameRate: 45,
   aspectRatio: 480 / 360,
-  spoofUrl: "example.com",
+  archive: {
+    launchUrl: "https://example.com/game/main.swf",
+    routes: {
+      "https://example.com/game/main.swf": "swf/game/main.swf",
+    },
+  },
 }
 ```
 

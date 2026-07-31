@@ -83,6 +83,7 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/ruffle.js?v=old"></script>',
       '<script src="vendor/fflate/0.8.3/index.js?v=old"></script>',
       '<script src="js/games.js?v=old"></script>',
+      '<script src="js/flash-url-router.js?v=old"></script>',
       '<script src="js/storage-policy.js?v=old"></script>',
       '<script src="js/game-installer.js?v=old"></script>',
       '<script src="js/game-library.js?v=old"></script>',
@@ -96,8 +97,13 @@ async function makeSource(root: string): Promise<void> {
       '<link rel="icon" href="favicon.ico">',
       '<img src="assets/xp/bliss.jpg">',
     ].join("\n"),
-    "capture.html": '<script src="js/ruffle.js?v=old"></script>',
+    "capture.html": [
+      '<script src="js/ruffle.js?v=old"></script>',
+      '<script src="js/games.js?v=old"></script>',
+      '<script src="js/flash-url-router.js?v=old"></script>',
+    ].join("\n"),
     "js/games.js": 'const icon = "assets/icons/game.png";',
+    "js/flash-url-router.js": "flash url router",
     "js/storage-policy.js": "storage policy",
     "js/game-installer.js": "game installer",
     "js/game-library.js": "game library",
@@ -256,15 +262,17 @@ describe("build metadata", () => {
     const html = await readFile(paths.html, "utf8");
     expect(main).toContain('const APP_VERSION = "26.07.28-abcdef1";');
     expect(html).toContain(`${hashedAssets.mainJs}"`);
+    expect(html).toContain(`${hashedAssets.flashUrlRouterJs}"`);
     expect(html).toContain(`${hashedAssets.storagePolicyJs}"`);
     expect(html).toContain(`${hashedAssets.gameInstallerJs}"`);
     expect(html).toContain(`${hashedAssets.gameLibraryJs}"`);
     expect(html).toContain(`${hashedAssets.gameDataJs}"`);
     expect(html).toContain(`${hashedAssets.fileOperationsJs}"`);
     expect(html).toContain(`${hashedAssets.mainCss}"`);
-    expect(await readFile(paths.captureHtml, "utf8")).toContain(
-      `${hashedAssets.ruffle}"`,
-    );
+    const capture = await readFile(paths.captureHtml, "utf8");
+    expect(capture).toContain(`${hashedAssets.ruffle}"`);
+    expect(capture).toContain(`${hashedAssets.gamesJs}"`);
+    expect(capture).toContain(`${hashedAssets.flashUrlRouterJs}"`);
     for (const iframe of [
       "iframe/pink-panther-hokus-pokus/index.html",
       "iframe/pink-panther-passport-to-peril/index.html",
