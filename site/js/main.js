@@ -13,6 +13,7 @@ const APP_VERSION = "26.07.28-2";
 const offlineManager = window.AstroOffline.createManager({
   currentVersion: APP_VERSION,
 });
+const gameDataManager = window.AstroGameData.createManager();
 
 let bootTimeout = null;
 let shutdownTimeout = null;
@@ -1192,6 +1193,23 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
       return;
     }
     if (result === false) return;
+  }
+  if (!skipBeforeClose && win.removeGameDataOnClose) {
+    const temporaryData = win.removeGameDataOnClose;
+    win.removeGameDataOnClose = false;
+    gameDataManager
+      .removeTemporary(temporaryData.storageId, temporaryData.fileName)
+      .catch((error) =>
+        console.error("Could not remove temporary %s data:", gameId, error),
+      )
+      .finally(() => {
+        window.postMessage(
+          { event: "astro.game-data-changed" },
+          location.origin,
+        );
+        closeGameWindow(gameId, { skipBeforeClose: true });
+      });
+    return;
   }
   win.el.remove();
   openWindows.delete(gameId);
@@ -4018,12 +4036,28 @@ const syncGameFiles = () => {
 window.addEventListener("message", (event) => {
   if (event.origin !== location.origin) return;
   const message = event.data;
-  if (
-    message?.event !== "astro.offline-game-ready" ||
-    message.gameId !== "revcdos"
-  ) {
+  if (message?.event === "astro.game-data-retention") {
+    const win = openWindows.get(message.gameId);
+    if (win && event.source === win.player?.contentWindow) {
+      win.removeGameDataOnClose =
+        message.keep === false
+          ? {
+              storageId: message.storageId || message.gameId,
+              fileName: message.fileName,
+            }
+          : false;
+    }
     return;
   }
+  if (message?.event !== "astro.offline-game-ready") {
+    return;
+  }
+  const offlineGameIds = new Set([
+    "revcdos",
+    "pink-panther-passport-to-peril",
+    "pink-panther-hokus-pokus",
+  ]);
+  if (!offlineGameIds.has(message.gameId)) return;
   const win = openWindows.get(message.gameId);
   if (!win || event.source !== win.player?.contentWindow) return;
   offlineManager.downloadGame(message.gameId).catch((error) => {
@@ -5184,6 +5218,7 @@ const wireProjectSettings = (win) => {
     <div class="project-settings-tabs" role="tablist" aria-label="Astro Flash Settings">
       <button type="button" role="tab" class="active" id="project-tab-general" aria-controls="project-panel-general" aria-selected="true">General</button>
       <button type="button" role="tab" id="project-tab-offline" aria-controls="project-panel-offline" aria-selected="false" tabindex="-1">Offline</button>
+      <button type="button" role="tab" id="project-tab-game-data" aria-controls="project-panel-game-data" aria-selected="false" tabindex="-1">Game Data</button>
       <button type="button" role="tab" id="project-tab-updates" aria-controls="project-panel-updates" aria-selected="false" tabindex="-1">Updates</button>
       <button type="button" role="tab" id="project-tab-recovery" aria-controls="project-panel-recovery" aria-selected="false" tabindex="-1">Recovery</button>
     </div>
@@ -5240,6 +5275,14 @@ const wireProjectSettings = (win) => {
       </fieldset>
       <p class="project-settings-description">Games installed from Internet Games use separate storage and remain available after installation. Legacy games may fetch additional files the first time they are used.</p>
     </section>
+    <section class="project-settings-panel" id="project-panel-game-data" role="tabpanel" aria-labelledby="project-tab-game-data" hidden>
+      <fieldset>
+        <legend>Installed game data</legend>
+        <p class="project-settings-description">Remove games installed from Internet Games, reVCDOS game data, or saved Pink Panther CD images. Saved games are preserved.</p>
+        <div class="project-game-data-list" data-project-game-data aria-live="polite"></div>
+        <p class="project-settings-status" data-project-status="game-data" aria-live="polite"></p>
+      </fieldset>
+    </section>
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
         <legend>Astro Flash updates</legend>
@@ -5283,6 +5326,10 @@ const wireProjectSettings = (win) => {
     "[data-project-offline-games]",
   );
   const updateStatus = content.querySelector('[data-project-status="updates"]');
+  const gameDataList = content.querySelector("[data-project-game-data]");
+  const gameDataStatus = content.querySelector(
+    '[data-project-status="game-data"]',
+  );
   const downloadProgress = content.querySelector(".project-settings-progress");
   const gameDownloadProgress = content.querySelector(
     "[data-project-game-progress]",
@@ -5314,6 +5361,7 @@ const wireProjectSettings = (win) => {
       panel.hidden = !active;
       panel.classList.toggle("active", active);
     });
+    if (panelId === "project-panel-game-data") void renderGameData();
   };
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showTab(tab));
@@ -5344,6 +5392,89 @@ const wireProjectSettings = (win) => {
     "repairing",
   ]);
   let offlineListSignature = "";
+  let gameDataRefresh = 0;
+  const renderGameData = async () => {
+    const refresh = ++gameDataRefresh;
+    gameDataStatus.textContent = "Checking installed game data...";
+    try {
+      const [internetGames, externalGames] = await Promise.all([
+        gameLibrary?.getInstallations?.() || [],
+        gameDataManager.list(),
+      ]);
+      if (refresh !== gameDataRefresh) return;
+      const items = [
+        ...internetGames.map((item) => ({
+          ...item,
+          detail: "Internet Game",
+          removeId: item.id,
+          owner: "internet",
+        })),
+        ...externalGames.map((item) => ({
+          ...item,
+          removeId: item.id,
+          owner: "external",
+        })),
+      ];
+      gameDataList.replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement("p");
+        empty.className = "project-settings-description";
+        empty.textContent = "No downloaded or stored game data was found.";
+        gameDataList.appendChild(empty);
+      }
+      items.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "project-game-data";
+        const text = document.createElement("span");
+        const title = document.createElement("strong");
+        title.textContent = item.title;
+        const detail = document.createElement("small");
+        detail.textContent = `${item.detail} · ${formatProjectBytes(item.bytes)}`;
+        text.append(title, detail);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "xp-btn";
+        remove.textContent = "Remove";
+        remove.dataset.gameDataId = item.removeId;
+        remove.dataset.gameDataOwner = item.owner;
+        remove.dataset.gameDataTitle = item.title;
+        row.append(text, remove);
+        gameDataList.appendChild(row);
+      });
+      gameDataStatus.textContent = items.length
+        ? `${items.length} stored game ${items.length === 1 ? "item" : "items"} found.`
+        : "";
+    } catch (error) {
+      if (refresh !== gameDataRefresh) return;
+      gameDataStatus.textContent = error.message;
+    }
+  };
+
+  gameDataList.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-game-data-id]");
+    if (!button) return;
+    const accepted = await XPDialogs.confirm(
+      `Remove ${button.dataset.gameDataTitle} from browser storage?\n\nSaved games will be preserved.`,
+      "Remove Game Data",
+      "question",
+    );
+    if (!accepted) return;
+    button.disabled = true;
+    gameDataStatus.textContent = "Removing game data...";
+    try {
+      if (button.dataset.gameDataOwner === "internet") {
+        await gameLibrary.uninstall(button.dataset.gameDataId);
+      } else {
+        await gameDataManager.remove(button.dataset.gameDataId);
+      }
+      await offlineManager.refreshStorageEstimate();
+      await renderGameData();
+    } catch (error) {
+      button.disabled = false;
+      gameDataStatus.textContent = error.message;
+    }
+  });
+
   const renderOfflineGameList = (state) => {
     const downloaded = new Set(state.downloadedGameIds);
     const busy = ["downloading", "removing"].includes(state.gamePhase);
@@ -5490,10 +5621,24 @@ const wireProjectSettings = (win) => {
   const unsubscribeGames = gameLibrary?.subscribe(() => {
     render(offlineManager.getSnapshot());
     void offlineManager.refreshStorageEstimate();
+    void renderGameData();
   });
+  const refreshStoredGameData = (event) => {
+    if (
+      event.type === "storage" ||
+      (event.origin === window.location.origin &&
+        event.data?.event === "astro.game-data-changed")
+    ) {
+      void renderGameData();
+    }
+  };
+  window.addEventListener("storage", refreshStoredGameData);
+  window.addEventListener("message", refreshStoredGameData);
   win.beforeClose = () => {
     unsubscribe();
     unsubscribeGames?.();
+    window.removeEventListener("storage", refreshStoredGameData);
+    window.removeEventListener("message", refreshStoredGameData);
     return true;
   };
 

@@ -154,6 +154,14 @@ test("game library", async () => {
   assert.equal(installed.category, "Racing");
   assert.match(installed.base, /bikemaniaarena1\/$/);
   assert.equal(Object.keys(manager.getGames()).length, 1);
+  assert.deepEqual(await manager.getInstallations(), [
+    {
+      id: `flashpoint:${uuid}`,
+      uuid,
+      title: details.title,
+      bytes: 3,
+    },
+  ]);
 
   const response = await manager.match(installed.url);
   assert(response);

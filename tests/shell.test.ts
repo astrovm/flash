@@ -85,10 +85,14 @@ test("window dragging and resizing coalesce updates by animation frame", () => {
 test("internet games is integrated with the shell", async () => {
   expect(await Bun.file(path("site/js/game-installer.js")).exists()).toBe(true);
   expect(await Bun.file(path("site/js/game-library.js")).exists()).toBe(true);
+  expect(await Bun.file(path("site/js/game-data.js")).exists()).toBe(true);
   expect(html.indexOf('src="js/game-installer.js')).toBeLessThan(
     html.indexOf('src="js/game-library.js'),
   );
   expect(html.indexOf('src="js/game-library.js')).toBeLessThan(
+    html.indexOf('src="js/game-data.js'),
+  );
+  expect(html.indexOf('src="js/game-data.js')).toBeLessThan(
     html.indexOf('src="js/main.js'),
   );
   js(
@@ -700,11 +704,15 @@ test("project controls live in a taskbar window", () => {
     'role="tablist" aria-label="Astro Flash Settings"',
     ">General</button>",
     ">Offline</button>",
+    ">Game Data</button>",
     ">Updates</button>",
     ">Recovery</button>",
     '"Connected to the internet"',
     '"Ready for offline use"',
     'data-project-action="manage-games"',
+    "gameDataManager.list()",
+    "gameLibrary.uninstall(",
+    "gameDataManager.remove(",
     'data-internet-tab="installed"',
     "offlineManager.checkForUpdates()",
     "offlineManager.applyUpdate()",

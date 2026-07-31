@@ -9,7 +9,10 @@
   const REVCDOS_ROUTE = "/iframe/revcdos/local-assets/";
   const REVCDOS_DIRECTORY = "astro-flash-revcdos";
   const REVCDOS_MANIFEST = "manifest.json";
+  const SCUMMVM_ROUTE = "/iframe/scummvm/local-games/";
+  const SCUMMVM_DIRECTORY = "astro-flash-scummvm";
   let revcdosStorePromise;
+  const scummvmStores = new Map();
 
   const normalizeAssetPath = (path) =>
     decodeURIComponent(path)
@@ -109,9 +112,88 @@
     }
   };
 
+  const openScummvmStore = async (gameId) => {
+    const root = await navigator.storage.getDirectory();
+    const directory = await root.getDirectoryHandle(SCUMMVM_DIRECTORY);
+    const manifestHandle = await directory.getFileHandle(
+      `${gameId}-manifest.json`,
+    );
+    const manifest = JSON.parse(await (await manifestHandle.getFile()).text());
+    if (
+      manifest.version !== 1 ||
+      typeof manifest.isoFile !== "string" ||
+      typeof manifest.isoSize !== "number" ||
+      typeof manifest.files !== "object"
+    ) {
+      throw new Error("Invalid ScummVM game manifest");
+    }
+    const isoHandle = await directory.getFileHandle(manifest.isoFile);
+    const iso = await isoHandle.getFile();
+    if (iso.size !== manifest.isoSize) {
+      throw new Error("Incomplete ScummVM CD image");
+    }
+    return { files: manifest.files, iso };
+  };
+
+  const serveScummvmAsset = async (url) => {
+    const path = url.pathname.slice(
+      url.pathname.indexOf(SCUMMVM_ROUTE) + SCUMMVM_ROUTE.length,
+    );
+    const slash = path.indexOf("/");
+    if (slash < 1) return new Response("Game not found", { status: 404 });
+    const gameId = decodeURIComponent(path.slice(0, slash));
+    const requestedName = decodeURIComponent(path.slice(slash + 1));
+    try {
+      if (!scummvmStores.has(gameId)) {
+        scummvmStores.set(gameId, openScummvmStore(gameId));
+      }
+      const { files, iso } = await scummvmStores.get(gameId);
+      if (requestedName === "index.json") {
+        return new Response(
+          JSON.stringify(
+            Object.fromEntries(
+              Object.entries(files).map(([name, entry]) => [name, entry.size]),
+            ),
+          ),
+          {
+            headers: {
+              "Cache-Control": "no-store",
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+      const entry = files[requestedName.toUpperCase()];
+      if (
+        !entry ||
+        !Number.isSafeInteger(entry.offset) ||
+        !Number.isSafeInteger(entry.size) ||
+        entry.offset < 0 ||
+        entry.size < 0 ||
+        entry.offset + entry.size > iso.size
+      ) {
+        return new Response("Game file not found", { status: 404 });
+      }
+      return new Response(iso.slice(entry.offset, entry.offset + entry.size), {
+        headers: {
+          "Cache-Control": "no-store",
+          "Content-Length": String(entry.size),
+          "Content-Type": "application/octet-stream",
+        },
+      });
+    } catch (error) {
+      scummvmStores.delete(gameId);
+      return new Response(`ScummVM game data unavailable: ${error.message}`, {
+        status: 503,
+      });
+    }
+  };
+
   self.addEventListener("message", (event) => {
     if (event.data?.type === "REVCDOS_PACK_UPDATED") {
       revcdosStorePromise = undefined;
+    } else if (event.data?.type === "SCUMMVM_GAME_UPDATED") {
+      scummvmStores.delete(event.data.gameId);
     }
   });
 
@@ -121,6 +203,10 @@
     if (url.origin !== self.location.origin) return;
     if (url.pathname.startsWith(REVCDOS_ROUTE)) {
       event.respondWith(serveRevcdosAsset(event.request, url));
+      return;
+    }
+    if (url.pathname.startsWith(SCUMMVM_ROUTE)) {
+      event.respondWith(serveScummvmAsset(url));
       return;
     }
     const isGameFile = OPTIONAL_PATHS.some((prefix) =>

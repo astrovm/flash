@@ -179,7 +179,7 @@
       error: null,
       bundledGames: [],
       downloadedGameIds: Object.keys(records).filter(
-        (id) => id !== "__runtime__",
+        (id) => !id.startsWith("__runtime__"),
       ),
       downloadedGameBytes: Object.values(records).reduce(
         (total, record) => total + (Number(record.bytes) || 0),
@@ -212,7 +212,7 @@
     const persistRecords = () => {
       storage.setItem(GAME_RECORDS_KEY, JSON.stringify(records));
       const downloadedGameIds = Object.keys(records).filter(
-        (id) => id !== "__runtime__",
+        (id) => !id.startsWith("__runtime__"),
       );
       setState({
         downloadedGameIds,
@@ -570,7 +570,7 @@
         await deleteRecordFiles(id);
         const hasSwfGame = Object.entries(records).some(
           ([recordId, record]) =>
-            recordId !== "__runtime__" && record.type === "swf",
+            !recordId.startsWith("__runtime__") && record.type === "swf",
         );
         if (!hasSwfGame) await deleteRecordFiles("__runtime__");
         if (removedRecord?.runtime) {

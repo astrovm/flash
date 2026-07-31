@@ -3111,6 +3111,45 @@ html[data-xp-appearance="silver"] {
   white-space: nowrap;
 }
 
+.project-game-data-list {
+  max-height: 250px;
+  margin: 0 0 10px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.project-game-data {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 4px 6px;
+}
+
+.project-game-data:nth-child(even) {
+  background: #f3f6fb;
+}
+
+.project-game-data > span,
+.project-game-data small {
+  display: block;
+  min-width: 0;
+}
+
+.project-game-data strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-game-data small {
+  margin-top: 2px;
+  color: #555;
+}
+
 .project-settings-description {
   margin-left: 20px !important;
 }

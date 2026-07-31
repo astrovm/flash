@@ -7,6 +7,7 @@
   const SCUMMVM_ROOT = "../../vendor/scummvm/2026.3.0/";
   const STORAGE_DIRECTORY = "astro-flash-scummvm";
   const metadataKey = `astro-flash.scummvm.${game.id}.iso.v1`;
+  const runtimeManifestName = `${game.id}-manifest.json`;
   let currentVolume = 1;
   let outputGain = null;
   let savedIso = null;
@@ -59,6 +60,7 @@
           font: inherit;
         }
         #saved-copy { margin-top: .85rem; }
+        .keep-copy { display: block; margin: .85rem 0 0; text-align: left; color: #dce6fa; }
         .divider { margin: 1rem 0; color: #aebbd3; }
         #message { min-height: 1.4rem; margin: .75rem 0 0; color: #ffdf82; }
         #disc-input { display: block; max-width: 100%; margin: 0 auto; font: inherit; color: #dce6fa; }
@@ -95,13 +97,14 @@
         <h1></h1>
         <p>Select your own English CD image. Local images are read directly and never uploaded.</p>
         <input id="disc-input" type="file" accept=".iso,application/x-iso9660-image">
+        <label class="keep-copy"><input id="keep-copy" type="checkbox" checked> Keep a copy in this browser for next time</label>
         <div class="divider">or download an ISO</div>
         <label class="source-label" for="disc-url">CD image URL</label>
         <div class="url-row">
           <input id="disc-url" type="url" inputmode="url" placeholder="https://example.com/game.iso" spellcheck="false">
           <button id="download-disc" type="button">Download</button>
         </div>
-        <button id="saved-copy" type="button" hidden>Play downloaded copy</button>
+        <button id="saved-copy" type="button" hidden>Play browser copy</button>
         <p id="message" role="status"></p>
       </main>
       <progress id="progress" max="100" value="0" hidden></progress>
@@ -115,6 +118,7 @@
   const panel = document.querySelector("#disc-panel");
   const discInput = document.querySelector("#disc-input");
   const discUrl = document.querySelector("#disc-url");
+  const keepCopy = document.querySelector("#keep-copy");
   const downloadButton = document.querySelector("#download-disc");
   const savedCopyButton = document.querySelector("#saved-copy");
   const message = document.querySelector("#message");
@@ -132,6 +136,7 @@
     discUrl.disabled = disabled;
     downloadButton.disabled = disabled;
     savedCopyButton.disabled = disabled;
+    keepCopy.disabled = disabled;
   };
 
   const formatBytes = (bytes) =>
@@ -155,6 +160,50 @@
     return root.getDirectoryHandle(STORAGE_DIRECTORY, { create });
   };
 
+  const writeRuntimeManifest = async (directory, fileName, gameFiles) => {
+    const handle = await directory.getFileHandle(runtimeManifestName, {
+      create: true,
+    });
+    const writable = await handle.createWritable();
+    await writable.write(
+      JSON.stringify({
+        version: 1,
+        isoFile: fileName,
+        isoSize: game.isoSize,
+        files: Object.fromEntries(
+          gameFiles.map(({ name, offset, size }) => [name, { offset, size }]),
+        ),
+      }),
+    );
+    await writable.close();
+    const registration = await navigator.serviceWorker.ready;
+    (navigator.serviceWorker.controller || registration.active)?.postMessage({
+      type: "SCUMMVM_GAME_UPDATED",
+      gameId: game.id,
+    });
+  };
+
+  const notifyGameDataReady = (keep, fileName) => {
+    window.parent.postMessage(
+      {
+        event: "astro.game-data-retention",
+        gameId: game.shellId,
+        storageId: `scummvm:${game.id}`,
+        keep,
+        fileName,
+      },
+      location.origin,
+    );
+    window.parent.postMessage(
+      { event: "astro.game-data-changed" },
+      location.origin,
+    );
+    window.parent.postMessage(
+      { event: "astro.offline-game-ready", gameId: game.shellId },
+      location.origin,
+    );
+  };
+
   const loadSavedIso = async () => {
     const metadata = readMetadata();
     if (!metadata?.fileName) return;
@@ -168,7 +217,7 @@
       savedIso = iso;
       discUrl.value = metadata.url || "";
       savedCopyButton.hidden = false;
-      savedCopyButton.textContent = `Play downloaded copy (${formatBytes(iso.size)})`;
+      savedCopyButton.textContent = `Play browser copy (${formatBytes(iso.size)})`;
     } catch {
       localStorage.removeItem(metadataKey);
     }
@@ -203,31 +252,18 @@
     updateOutputVolume();
   });
 
-  const startScummVm = async (iso) => {
+  const startScummVm = async () => {
     setControlsDisabled(true);
-    setMessage("Checking CD image…");
-    const blobs = await window.AstroIso9660.gameBlobsFromIso(
-      iso,
-      game.requiredFiles,
-      game.title,
-    );
     setMessage("Starting ScummVM…");
 
-    const argumentsHash = encodeURI(
-      `--path=/games/${game.id} ${game.scummvmId}`,
-    );
+    const gamePath = `/vendor/scummvm/2026.3.0/data/${game.id}`;
+    const argumentsHash = encodeURI(`--path=${gamePath} ${game.scummvmId}`);
     history.replaceState(null, "", `${location.pathname}#${argumentsHash}`);
     panel.hidden = true;
     statusElement.hidden = false;
 
     window.Module = {
       canvas,
-      preRun: [
-        () => {
-          window.FS.mkdirTree(`/games/${game.id}`);
-          window.FS.mount(window.WORKERFS, { blobs }, `/games/${game.id}`);
-        },
-      ],
       print: (...values) => console.log(...values),
       printErr: (...values) => console.error(...values),
       setStatus(value) {
@@ -278,11 +314,93 @@
     document.body.append(script);
   };
 
+  const activateStoredIso = async (
+    directory,
+    fileName,
+    iso,
+    gameFiles,
+    { keep, url = "" },
+  ) => {
+    await writeRuntimeManifest(directory, fileName, gameFiles);
+    if (keep) {
+      const previous = readMetadata();
+      localStorage.setItem(metadataKey, JSON.stringify({ fileName, url }));
+      savedIso = iso;
+      savedCopyButton.hidden = false;
+      savedCopyButton.textContent = `Play browser copy (${formatBytes(iso.size)})`;
+      if (previous?.fileName && previous.fileName !== fileName) {
+        await directory.removeEntry(previous.fileName).catch(() => {});
+      }
+    }
+    notifyGameDataReady(keep, fileName);
+  };
+
+  const storeIso = async (iso, gameFiles, { keep, url = "" }) => {
+    if (iso.size !== game.isoSize) {
+      throw new Error(
+        `The CD image is ${formatBytes(iso.size)}, but this game requires ${formatBytes(game.isoSize)}.`,
+      );
+    }
+    await navigator.storage.persist?.();
+    const estimate = await navigator.storage.estimate();
+    const available = (estimate.quota || 0) - (estimate.usage || 0);
+    if (estimate.quota && available < game.isoSize) {
+      throw new Error(
+        `Not enough browser storage. ${formatBytes(game.isoSize)} is required and ${formatBytes(available)} is available.`,
+      );
+    }
+    const directory = await getStorageDirectory(true);
+    const fileName = `${game.id}-${crypto.randomUUID()}.iso`;
+    const handle = await directory.getFileHandle(fileName, { create: true });
+    const writable = await handle.createWritable();
+    let copied = 0;
+    try {
+      const reader = iso.stream().getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        copied += value.byteLength;
+        await writable.write(value);
+        setMessage(
+          `Saving browser copy… ${formatBytes(copied)} of ${formatBytes(game.isoSize)} (${((copied / game.isoSize) * 100).toFixed(1)}%)`,
+        );
+      }
+      await writable.close();
+    } catch (error) {
+      await writable.abort().catch(() => {});
+      await directory.removeEntry(fileName).catch(() => {});
+      throw error;
+    }
+    const storedIso = await handle.getFile();
+    await activateStoredIso(directory, fileName, storedIso, gameFiles, {
+      keep,
+      url,
+    });
+    return { fileName, iso: storedIso };
+  };
+
+  const prepareIso = async (iso, options) => {
+    setControlsDisabled(true);
+    setMessage("Checking CD image…");
+    const gameFiles = await window.AstroIso9660.gameFilesFromIso(
+      iso,
+      game.requiredFiles,
+      game.title,
+    );
+    return storeIso(iso, gameFiles, options);
+  };
+
   discInput.addEventListener("change", async () => {
     const [iso] = discInput.files;
     if (!iso) return;
     try {
-      await startScummVm(iso);
+      await prepareIso(iso, { keep: keepCopy.checked });
+      setMessage(
+        keepCopy.checked
+          ? "Browser copy saved. Starting ScummVM…"
+          : "Starting ScummVM…",
+      );
+      await startScummVm();
     } catch (error) {
       setControlsDisabled(false);
       setMessage(error.message, true);
@@ -293,7 +411,23 @@
   savedCopyButton.addEventListener("click", async () => {
     if (!savedIso) return;
     try {
-      await startScummVm(savedIso);
+      setControlsDisabled(true);
+      setMessage("Checking browser copy…");
+      const gameFiles = await window.AstroIso9660.gameFilesFromIso(
+        savedIso,
+        game.requiredFiles,
+        game.title,
+      );
+      const metadata = readMetadata();
+      const directory = await getStorageDirectory();
+      await activateStoredIso(
+        directory,
+        metadata.fileName,
+        savedIso,
+        gameFiles,
+        { keep: true, url: metadata.url || "" },
+      );
+      await startScummVm();
     } catch (error) {
       setControlsDisabled(false);
       setMessage(error.message, true);
@@ -387,27 +521,23 @@
         );
       }
       setMessage("Checking downloaded CD image…");
-      await window.AstroIso9660.gameBlobsFromIso(
+      const gameFiles = await window.AstroIso9660.gameFilesFromIso(
         iso,
         game.requiredFiles,
         game.title,
       );
-
-      const previous = readMetadata();
-      localStorage.setItem(
-        metadataKey,
-        JSON.stringify({ fileName, url: url.href }),
+      await activateStoredIso(directory, fileName, iso, gameFiles, {
+        keep: keepCopy.checked,
+        url: url.href,
+      });
+      setMessage(
+        keepCopy.checked
+          ? "Download verified and saved. Starting ScummVM…"
+          : "Download verified. Starting ScummVM…",
       );
-      savedIso = iso;
-      savedCopyButton.hidden = false;
-      savedCopyButton.textContent = `Play downloaded copy (${formatBytes(iso.size)})`;
-      if (previous?.fileName && previous.fileName !== fileName) {
-        directory.removeEntry(previous.fileName).catch(() => {});
-      }
-      setMessage("Download verified and saved. Starting ScummVM…");
       directory = null;
       fileName = null;
-      await startScummVm(iso);
+      await startScummVm();
     } catch (error) {
       if (writable) await writable.abort().catch(() => {});
       if (directory && fileName) {

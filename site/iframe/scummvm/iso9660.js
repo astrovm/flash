@@ -98,9 +98,9 @@
     return files;
   };
 
-  const gameBlobsFromIso = async (iso, requiredFiles, gameTitle) => {
+  const gameFilesFromIso = async (iso, requiredFiles, gameTitle) => {
     const files = await indexIsoFiles(iso);
-    const blobs = [];
+    const gameFiles = [];
     for (const [name, expectedSize] of Object.entries(requiredFiles)) {
       const entry = files.get(name);
       if (!entry || entry.size !== expectedSize) {
@@ -109,10 +109,18 @@
         );
       }
       const start = entry.extent * ISO_SECTOR_SIZE;
-      blobs.push({ name, data: iso.slice(start, start + entry.size) });
+      gameFiles.push({
+        name,
+        offset: start,
+        size: entry.size,
+        data: iso.slice(start, start + entry.size),
+      });
     }
-    return blobs;
+    return gameFiles;
   };
 
-  return { gameBlobsFromIso, indexIsoFiles };
+  const gameBlobsFromIso = async (iso, requiredFiles, gameTitle) =>
+    gameFilesFromIso(iso, requiredFiles, gameTitle);
+
+  return { gameBlobsFromIso, gameFilesFromIso, indexIsoFiles };
 });
