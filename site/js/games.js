@@ -113,7 +113,23 @@ window.FLASH_GAMES = Object.freeze({
     icon: "assets/icons/simpsons-wrecking-ball.png",
     title: "The Simpsons Movie: Wrecking Ball",
     type: "swf",
-    externalHosts: ["files.gamezhero.com"],
+    archive: {
+      flashpointId: "9fb4b4ae-a0bc-4c49-9be1-8b776b8151bf",
+      packageSha256:
+        "f11e0db8e9a54428c68337c646cf1f1d7d1cc2ec4389e2adef624f98ca5b03b8",
+      launchUrl:
+        "http://simpsonsgames.ru/flash/play-10.swf?username=%20&userid=100&",
+      routes: {
+        "http://simpsonsgames.ru/flash/play-10.swf":
+          "swf/simpsons-wrecking-ball/content/simpsonsgames.ru/flash/play-10.swf",
+        "http://simpsonsgames.ru/flash/language.xml":
+          "swf/simpsons-wrecking-ball/content/simpsonsgames.ru/flash/language.xml",
+        "http://simpsonsgames.ru/flash/wrecksnd.swf":
+          "swf/simpsons-wrecking-ball/content/simpsonsgames.ru/flash/wrecksnd.swf",
+        "http://simpsonsgames.ru/flash/wreckscore.swf":
+          "swf/simpsons-wrecking-ball/content/simpsonsgames.ru/flash/wreckscore.swf",
+      },
+    },
     category: "Action",
   },
   "super-smash-flash": {
@@ -211,7 +227,13 @@ window.FLASH_GAMES = Object.freeze({
     icon: "assets/icons/sugar-sugar.png",
     title: "Sugar, Sugar",
     type: "swf",
-    spoofUrl: "https://www.friv.com/z/games/sugarsugar",
+    archive: {
+      launchUrl: "https://www.friv.com/z/games/sugarsugar/main.swf",
+      routes: {
+        "https://www.friv.com/z/games/sugarsugar/main.swf":
+          "swf/sugar-sugar/main.swf",
+      },
+    },
     category: "Puzzle",
   },
   "learn-to-fly": {
@@ -234,7 +256,22 @@ window.FLASH_GAMES = Object.freeze({
     icon: "assets/icons/whack-a-kass.png",
     title: "Kass Basher",
     type: "swf",
-    externalHosts: ["images.neopets.com", "swf.neopets.com", "www.neopets.com"],
+    archive: {
+      flashpointId: "00d4f9a7-1453-4da3-a5d9-3c980abd9f17",
+      packageSha256:
+        "6bed841441e3070ce34482d62ff13bf0e01fc597bcb9381d2dfe9ecaa551f03a",
+      launchUrl: "http://images.neopets.com/games/g381_v58_67047.swf",
+      routes: {
+        "http://images.neopets.com/games/g381_v58_67047.swf":
+          "swf/whack-a-kass/content/images.neopets.com/games/g381_v58_67047.swf",
+        "http://images.neopets.com/games/gaming_system/np6_include_v1.swf":
+          "swf/whack-a-kass/content/images.neopets.com/games/gaming_system/np6_include_v1.swf",
+        "http://swf.neopets.com/games/utilities/flash_bios/bios.swf":
+          "swf/whack-a-kass/content/swf.neopets.com/games/utilities/flash_bios/bios.swf",
+        "http://images.neopets.com/games/utilities/flash_bios/bios.swf":
+          "swf/whack-a-kass/content/swf.neopets.com/games/utilities/flash_bios/bios.swf",
+      },
+    },
     category: "Arcade",
   },
   "eds-candy-machine": {

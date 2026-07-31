@@ -968,11 +968,12 @@ const loadRuffleSWF = (gameId, win) => {
   player.addEventListener("loadedmetadata", applyVolume, { once: true });
 
   const game = gamesList[gameId];
+  const archiveUrl = game.archive?.launchUrl;
   const config = {
-    url:
-      game.url ||
-      (game.spoofUrl ? `${game.spoofUrl}/main.swf` : `swf/${gameId}/main.swf`),
-    base: game.base || (game.spoofUrl ? `${game.spoofUrl}/` : `swf/${gameId}/`),
+    url: game.url || archiveUrl || `swf/${gameId}/main.swf`,
+    base:
+      game.base ||
+      (archiveUrl ? new URL(".", archiveUrl).href : `swf/${gameId}/`),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,
@@ -7746,65 +7747,35 @@ const setupScreenFlow = () => {
 };
 
 // ============================================
-// URL spoofing https://github.com/ruffle-rs/ruffle/issues/1486
+// Archived URL routing https://github.com/ruffle-rs/ruffle/issues/1486
 // ============================================
 
-const getSpoofedGameId = (hostname) => {
-  for (const [gameId, game] of Object.entries(gamesList)) {
-    const spoofHostname = game.spoofUrl
-      ? new URL(game.spoofUrl).hostname
-      : null;
-    if (spoofHostname === hostname || game.externalHosts?.includes(hostname)) {
-      return gameId;
-    }
-  }
-  return null;
-};
-
-const getRequestUrl = (request) =>
-  typeof request === "string" || request instanceof URL
-    ? new URL(request, window.location.href)
-    : new URL(request.url);
-
-const changeUrl = (request) => {
-  const parsedUrl = getRequestUrl(request);
-  if (parsedUrl.hostname !== window.location.hostname) {
-    const gameId = getSpoofedGameId(parsedUrl.hostname);
-    if (gameId && gamesList[gameId].type === "swf") {
-      const file = parsedUrl.pathname.split("/").pop();
-      return `swf/${gameId}/${file}`;
-    }
-  }
-  return request;
-};
-
-const interceptResponse = (response, request) => {
-  const url = getRequestUrl(request).href;
-  Object.defineProperty(response, "url", { value: url });
-  return response;
-};
+const flashUrlRouter = window.AstroFlashUrlRouter.create(
+  window.FLASH_GAMES,
+  window.location.href,
+);
 
 const { fetch: originalFetch } = window;
+const routedFetch = flashUrlRouter.wrapFetch(originalFetch, (routed) => {
+  console.log(`URL routed: ${routed.originalUrl} => ${routed.localUrl}`);
+});
 window.fetch = async (...args) => {
   const originalRequest = args[0];
   if (gameLibraryReady && gameLibrary && !gameLibraryError) {
     try {
       const installedResponse = await gameLibrary.match(originalRequest);
       if (installedResponse) {
-        return interceptResponse(installedResponse, originalRequest);
+        const originalUrl =
+          originalRequest instanceof Request
+            ? new URL(originalRequest.url)
+            : new URL(originalRequest, window.location.href);
+        return flashUrlRouter.spoofResponseUrl(installedResponse, originalUrl);
       }
     } catch (error) {
       console.error("Installed game resource lookup failed:", error);
     }
   }
-  args[0] = changeUrl(originalRequest);
-
-  const response = await originalFetch(...args);
-  if (args[0] !== originalRequest) {
-    console.log(`URL spoofed: ${getRequestUrl(originalRequest)} => ${args[0]}`);
-    return interceptResponse(response, originalRequest);
-  }
-  return response;
+  return routedFetch(...args);
 };
 
 // ============================================

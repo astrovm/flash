@@ -116,21 +116,36 @@ test("internet games is integrated with the shell", async () => {
   contains(css, ".internet-games-content", ".internet-game-card");
   absent(offlineJavascript, "astro-flash-installed");
 });
-test("Flash URL spoofing handles Kass Basher dependency requests", async () => {
+test("Flash URL routing is shared and uses exact archived assets", async () => {
   const games = await Bun.file(path("site/js/games.js")).text();
   contains(
     games,
     '"whack-a-kass": {',
-    '"images.neopets.com"',
-    '"swf.neopets.com"',
-    '"www.neopets.com"',
+    'flashpointId: "00d4f9a7-1453-4da3-a5d9-3c980abd9f17"',
+    '"http://images.neopets.com/games/g381_v58_67047.swf"',
+    '"http://swf.neopets.com/games/utilities/flash_bios/bios.swf"',
+    'flashpointId: "9fb4b4ae-a0bc-4c49-9be1-8b776b8151bf"',
+    '"http://simpsonsgames.ru/flash/wreckscore.swf"',
   );
   js(
-    "const getRequestUrl = (request) =>",
-    'typeof request === "string" || request instanceof URL',
-    "const parsedUrl = getRequestUrl(request)",
-    "const url = getRequestUrl(request).href",
+    "window.AstroFlashUrlRouter.create(",
+    "const routedFetch = flashUrlRouter.wrapFetch",
   );
+  contains(
+    html,
+    '<script src="js/games.js"></script>',
+    '<script src="js/flash-url-router.js"></script>',
+  );
+  const capture = await Bun.file(path("site/capture.html")).text();
+  contains(
+    capture,
+    '<script src="js/games.js"></script>',
+    '<script src="js/flash-url-router.js"></script>',
+    "window.FLASH_GAMES[gameId]",
+    "router.wrapFetch(window.fetch)",
+  );
+  absent(games, "spoofUrl", "externalHosts");
+  absent(capture, "spoofUrls", "externalHosts", "frameRates");
 });
 test("boot screen uses XP artwork", () => {
   contains(

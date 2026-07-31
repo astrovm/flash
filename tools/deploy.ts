@@ -364,6 +364,7 @@ export async function updateHtml(
   const mutableAssets = {
     ruffle: "js/ruffle.js",
     gamesJs: "js/games.js",
+    flashUrlRouterJs: "js/flash-url-router.js",
     storagePolicyJs: "js/storage-policy.js",
     gameInstallerJs: "js/game-installer.js",
     gameLibraryJs: "js/game-library.js",
@@ -458,12 +459,22 @@ export async function updateHtml(
 
   if (await isFile(paths.captureHtml)) {
     let capture = await readFile(paths.captureHtml, "utf8");
-    capture = await replaceExactlyOnce(
-      capture,
-      /js\/ruffle\.js(?:\?v=[^"]+)?"?/g,
-      `${hashedAssets.ruffle}"`,
-      "Could not update capture Ruffle reference",
-    );
+    for (const [name, originalPath] of [
+      ["ruffle", "js/ruffle.js"],
+      ["gamesJs", "js/games.js"],
+      ["flashUrlRouterJs", "js/flash-url-router.js"],
+    ] as const) {
+      const pattern = new RegExp(
+        originalPath.replaceAll(".", "\\.") + '(?:\\?v[^"]+)?"',
+        "g",
+      );
+      capture = await replaceExactlyOnce(
+        capture,
+        pattern,
+        `${hashedAssets[name]}"`,
+        `Could not update capture reference for ${originalPath}`,
+      );
+    }
     await writeFile(paths.captureHtml, capture);
   }
   console.log(`  - Set deployment version to ${version}`);
@@ -757,6 +768,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
   for (const asset of [
     "js/ruffle.js",
     "js/games.js",
+    "js/flash-url-router.js",
     "js/storage-policy.js",
     "js/game-installer.js",
     "js/game-library.js",
