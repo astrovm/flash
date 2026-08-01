@@ -101,6 +101,50 @@
         accent-color: rgb(255, 255, 192);
       }
 
+      .startup-error {
+        position: absolute;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5em;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        font: 12pt sans-serif;
+        text-align: center;
+      }
+
+      .startup-error[hidden] {
+        display: none;
+      }
+
+      .startup-error-content {
+        max-width: 560px;
+        padding: 1.5em;
+        border: 2px solid #ff4193;
+        border-radius: 1em;
+        background: #120b24;
+        box-shadow: 0 0 1.5em #ff419366;
+      }
+
+      .startup-error h1 {
+        margin: 0 0 0.75em;
+        font-size: 1.5em;
+      }
+
+      .startup-error button {
+        margin-top: 0.75em;
+        padding: 0.5em 1em;
+        border: 2px solid #ff4193;
+        border-radius: 0.5em;
+        background: transparent;
+        color: #ff4193;
+        cursor: pointer;
+        font: inherit;
+        font-weight: bold;
+      }
+
       .start-container {
         position: relative;
         z-index: 1000;
@@ -574,6 +618,19 @@
     data-state-scope-gun="0"
   >
     <div class="wasted-container" hidden></div>
+    <div
+      class="startup-error"
+      id="startup-error"
+      role="alert"
+      aria-live="assertive"
+      hidden
+    >
+      <div class="startup-error-content">
+        <h1 id="startup-error-title">Unable to start reVCDOS</h1>
+        <p id="startup-error-message"></p>
+        <button id="startup-error-retry" type="button">Retry</button>
+      </div>
+    </div>
     <div class="intro-container" hidden>
       <div class="loader-container">
         <div class="progress-bar-container" id="spinner">

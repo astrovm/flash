@@ -129,7 +129,7 @@ async function makeSource(root: string): Promise<void> {
     "favicon.ico": "favicon",
     "vendor/fflate/0.8.3/index.js": "fflate",
     "swf/bike-mania/main.swf": "swf",
-    "iframe/doom/index.html": "doom",
+    "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
     "iframe/pink-panther-hokus-pokus/index.html":
       '<script src="../../js/storage-policy.js?v=old"></script>',
@@ -273,14 +273,18 @@ describe("build metadata", () => {
     expect(capture).toContain(`${hashedAssets.ruffle}"`);
     expect(capture).toContain(`${hashedAssets.gamesJs}"`);
     expect(capture).toContain(`${hashedAssets.flashUrlRouterJs}"`);
-    for (const iframe of [
-      "iframe/pink-panther-hokus-pokus/index.html",
-      "iframe/pink-panther-passport-to-peril/index.html",
-      "iframe/revcdos/index.html",
+    const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    for (const gameId of [
+      "pink-panther-hokus-pokus",
+      "pink-panther-passport-to-peril",
+      "revcdos",
     ]) {
-      expect(await readFile(join(root, iframe), "utf8")).toContain(
-        `../../${hashedAssets.storagePolicyJs}"`,
-      );
+      expect(
+        await readFile(
+          join(root, manifest.games[gameId].root, "index.html"),
+          "utf8",
+        ),
+      ).toContain(`../../${hashedAssets.storagePolicyJs}"`);
     }
     expect(html).toMatch(/favicon\.[a-f0-9]{8}\.ico"/);
     expect(html).toMatch(/assets\/xp\/bliss\.[a-f0-9]{8}\.jpg"/);
@@ -302,7 +306,6 @@ describe("build metadata", () => {
     expect(PRECACHE_FILE_SUFFIXES.has(".bmp")).toBeTrue();
 
     const metadata = JSON.parse(await readFile(paths.versionJson, "utf8"));
-    const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
     expect(metadata.offlineBytes).toBeGreaterThan(0);
     expect(metadata.bundledGameBytes).toBeGreaterThan(0);
     expect(manifest.version).toBe("26.07.28-abcdef1");
@@ -310,7 +313,20 @@ describe("build metadata", () => {
     expect(manifest.games.doom.type).toBe("iframe");
     expect(
       manifest.games.doom.files.map(({ url }: { url: string }) => url),
-    ).toEqual(["dos/doom/doom.jsdos", "iframe/doom/index.html"]);
+    ).toEqual([
+      `${manifest.games.doom.root}dos/doom/doom.jsdos`,
+      `${manifest.games.doom.root}index.html`,
+    ]);
+    expect(html).toContain(
+      `window.ASTRO_GAME_ROOTS=Object.freeze(${JSON.stringify(
+        Object.fromEntries(
+          Object.entries(manifest.games).map(([id, game]: [string, any]) => [
+            id,
+            game.root,
+          ]),
+        ),
+      )})`,
+    );
     expect(manifest.runtime.files.length).toBeGreaterThan(0);
     expect(metadata.bundledGameBytes).toBe(
       manifest.runtime.bytes +
@@ -406,8 +422,9 @@ describe("Workbox and artifact validation", () => {
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
     await validateOutput(root);
 
-    await unlink(join(root, "swf", "bike-mania", "main.swf"));
-    expect(validateOutput(root)).rejects.toThrow("missing required files");
+    const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    await unlink(join(root, manifest.games["bike-mania"].root, "main.swf"));
+    expect(validateOutput(root)).rejects.toThrow("missing game file");
   });
 });
 

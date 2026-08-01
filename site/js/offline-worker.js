@@ -6,7 +6,7 @@
   // optional bundled games and shared Ruffle runtime selected by the user.
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
   const OPTIONAL_PATHS = ["/swf/", "/iframe/", "/dos/", "/vendor/scummvm/"];
-  const REVCDOS_ROUTE = "/iframe/revcdos/local-assets/";
+  const REVCDOS_ROUTE = /\/iframe\/revcdos(?:\.[a-f0-9]{16})?\/local-assets\//;
   const REVCDOS_DIRECTORY = "astro-flash-revcdos";
   const REVCDOS_MANIFEST = "manifest.json";
   const SCUMMVM_ROUTE = "/iframe/scummvm/local-games/";
@@ -75,8 +75,10 @@
     try {
       revcdosStorePromise ||= openRevcdosStore();
       const { data, files } = await revcdosStorePromise;
+      const route = url.pathname.match(REVCDOS_ROUTE)?.[0];
+      if (!route) return new Response("Asset not found", { status: 404 });
       const requestedPath = url.pathname.slice(
-        url.pathname.indexOf(REVCDOS_ROUTE) + REVCDOS_ROUTE.length,
+        url.pathname.indexOf(route) + route.length,
       );
       const asset = findPackedAsset(files, requestedPath);
       if (!asset) return new Response("Asset not found", { status: 404 });
@@ -201,7 +203,7 @@
     if (event.request.method !== "GET") return;
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
-    if (url.pathname.startsWith(REVCDOS_ROUTE)) {
+    if (REVCDOS_ROUTE.test(url.pathname)) {
       event.respondWith(serveRevcdosAsset(event.request, url));
       return;
     }

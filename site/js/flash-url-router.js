@@ -23,7 +23,11 @@
     return path;
   };
 
-  const create = (games, pageUrl = root.location?.href) => {
+  const create = (
+    games,
+    pageUrl = root.location?.href,
+    gameRoots = root.ASTRO_GAME_ROOTS || {},
+  ) => {
     if (!pageUrl) throw new Error("Flash URL routing requires a page URL.");
     const routes = new Map();
 
@@ -35,9 +39,24 @@
         if (routes.has(key)) {
           throw new Error(`Duplicate Flash route for ${key}`);
         }
+        const sourceRoot = `swf/${gameId}/`;
+        const validatedPath = validateLocalPath(localPath);
+        if (!validatedPath.startsWith(sourceRoot)) {
+          throw new Error(`Flash route escapes its game package: ${localPath}`);
+        }
+        const gameRoot = gameRoots[gameId] || sourceRoot;
+        if (
+          typeof gameRoot !== "string" ||
+          !gameRoot.startsWith("swf/") ||
+          !gameRoot.endsWith("/") ||
+          gameRoot.includes("\\") ||
+          gameRoot.split("/").includes("..")
+        ) {
+          throw new Error(`Invalid versioned Flash root: ${gameRoot}`);
+        }
         routes.set(key, {
           gameId,
-          localPath: validateLocalPath(localPath),
+          localPath: validatedPath.replace(sourceRoot, gameRoot),
         });
       }
     }

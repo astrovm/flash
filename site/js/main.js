@@ -33,12 +33,14 @@ let gameLibraryReady = false;
 let gameLibraryInitialization = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
+const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
 const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings";
 const USER_STORAGE_KEYS = Object.freeze([
   DISPLAY_SETTINGS_KEY,
   "clockOffsetMs",
   "desktopIconPositions",
   "desktopLayoutSettings",
+  DESKTOP_SYSTEM_ICONS_KEY,
   "favorites",
   "gameStats",
   GAME_PLAYBACK_SETTINGS_KEY,
@@ -47,7 +49,6 @@ const USER_STORAGE_KEYS = Object.freeze([
   "runHistory",
   "volume",
 ]);
-const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
 const DISPLAY_WALLPAPERS = {
   none: "none",
   bliss: 'url("../assets/xp/bliss.jpg")',
@@ -56,6 +57,25 @@ const DISPLAY_WALLPAPERS = {
   azul: 'url("../assets/xp/wallpapers/azul.jpg")',
   "blue-lace": 'url("../assets/xp/wallpapers/blue-lace-16.bmp")',
   coffee: 'url("../assets/xp/wallpapers/coffee-bean.bmp")',
+  crystal: 'url("../assets/xp/wallpapers/crystal.jpg")',
+  follow: 'url("../assets/xp/wallpapers/follow.jpg")',
+  friend: 'url("../assets/xp/wallpapers/friend.jpg")',
+  greenstone: 'url("../assets/xp/wallpapers/greenstone.bmp")',
+  home: 'url("../assets/xp/wallpapers/home.jpg")',
+  "moon-flower": 'url("../assets/xp/wallpapers/moon-flower.jpg")',
+  peace: 'url("../assets/xp/wallpapers/peace.jpg")',
+  power: 'url("../assets/xp/wallpapers/power.jpg")',
+  "prairie-wind": 'url("../assets/xp/wallpapers/prairie-wind.bmp")',
+  "purple-flower": 'url("../assets/xp/wallpapers/purple-flower.jpg")',
+  radiance: 'url("../assets/xp/wallpapers/radiance.jpg")',
+  "red-moon-desert": 'url("../assets/xp/wallpapers/red-moon-desert.jpg")',
+  ripple: 'url("../assets/xp/wallpapers/ripple.jpg")',
+  stonehenge: 'url("../assets/xp/wallpapers/stonehenge.jpg")',
+  tulips: 'url("../assets/xp/wallpapers/tulips.jpg")',
+  "vortec-space": 'url("../assets/xp/wallpapers/vortec-space.jpg")',
+  wind: 'url("../assets/xp/wallpapers/wind.jpg")',
+  "windows-xp": 'url("../assets/xp/wallpapers/windows-xp.jpg")',
+  zapotec: 'url("../assets/xp/wallpapers/zapotec.bmp")',
 };
 const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   theme: "windows-xp",
@@ -64,13 +84,22 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   position: "stretch",
   backgroundColor: "#3a6ea5",
   appearance: "blue",
-  screenSaver: "none",
+  fontSize: "normal",
+  screenSaver: "windows-xp",
   screenSaverWait: 10,
+  requireLoginOnResume: false,
+  transitionEffect: "fade",
+  fontSmoothing: "standard",
+  largeIcons: false,
+  menuShadows: true,
+  showWindowContents: true,
+  hideKeyboardCues: true,
   resolution: "auto",
 });
 const SIMULATED_RESOLUTIONS = Object.freeze({
   "800x600": { width: 800, height: 600 },
   "1024x768": { width: 1024, height: 768 },
+  "1440x900": { width: 1440, height: 900 },
 });
 const XP_ICON_PATHS = Object.freeze({
   "Back.png": "assets/xp/icons/Back.png",
@@ -266,23 +295,64 @@ const isDisplaySettings = (value) =>
   Object.hasOwn(DISPLAY_WALLPAPERS, value.wallpaper) &&
   typeof value.customWallpaper === "string" &&
   (value.customWallpaper === "" ||
-    (/^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(
+    /^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(
       value.customWallpaper,
-    ) &&
-      value.customWallpaper.length <= MAX_CUSTOM_WALLPAPER_BYTES * 1.4)) &&
+    )) &&
   ["center", "tile", "stretch"].includes(value.position) &&
   /^#[0-9a-f]{6}$/i.test(value.backgroundColor) &&
   ["blue", "olive", "silver"].includes(value.appearance) &&
-  ["none", "marquee", "stars"].includes(value.screenSaver) &&
+  (value.fontSize === undefined ||
+    ["normal", "large", "extra-large"].includes(value.fontSize)) &&
+  [
+    "none",
+    "flowerbox",
+    "flying-objects",
+    "pipes",
+    "text",
+    "beziers",
+    "blank",
+    "marquee",
+    "pictures",
+    "mystify",
+    "stars",
+    "windows-xp",
+  ].includes(value.screenSaver) &&
   Number.isInteger(value.screenSaverWait) &&
   value.screenSaverWait >= 1 &&
   value.screenSaverWait <= 60 &&
-  ["auto", "800x600", "1024x768"].includes(value.resolution);
+  (value.requireLoginOnResume === undefined ||
+    typeof value.requireLoginOnResume === "boolean") &&
+  (value.transitionEffect === undefined ||
+    ["none", "fade", "scroll"].includes(value.transitionEffect)) &&
+  (value.fontSmoothing === undefined ||
+    ["none", "standard", "cleartype"].includes(value.fontSmoothing)) &&
+  (value.largeIcons === undefined || typeof value.largeIcons === "boolean") &&
+  (value.menuShadows === undefined || typeof value.menuShadows === "boolean") &&
+  (value.showWindowContents === undefined ||
+    typeof value.showWindowContents === "boolean") &&
+  (value.hideKeyboardCues === undefined ||
+    typeof value.hideKeyboardCues === "boolean") &&
+  ["auto", "800x600", "1024x768", "1440x900"].includes(value.resolution);
 
 const getDisplaySettings = () => ({
   ...DEFAULT_DISPLAY_SETTINGS,
   ...readJsonStorage(DISPLAY_SETTINGS_KEY, {}, isDisplaySettings),
 });
+
+const DEFAULT_DESKTOP_SYSTEM_ICONS = Object.freeze({
+  "__my-computer": true,
+  "__my-documents": true,
+});
+
+const getDesktopSystemIcons = () => ({
+  ...DEFAULT_DESKTOP_SYSTEM_ICONS,
+  ...readJsonStorage(DESKTOP_SYSTEM_ICONS_KEY, {}, (value) =>
+    Object.values(value || {}).every((visible) => typeof visible === "boolean"),
+  ),
+});
+
+const saveDesktopSystemIcons = (settings) =>
+  writeJsonStorage(DESKTOP_SYSTEM_ICONS_KEY, settings);
 
 const saveDisplaySettings = (settings) => {
   try {
@@ -371,6 +441,12 @@ const applyDisplaySettings = (settings) => {
   desktop.style.setProperty("--desktop-color", settings.backgroundColor);
   desktop.dataset.wallpaperPosition = settings.position;
   document.documentElement.dataset.xpAppearance = settings.appearance;
+  document.documentElement.dataset.xpFontSize = settings.fontSize;
+  document.documentElement.dataset.xpLargeIcons = String(settings.largeIcons);
+  document.documentElement.dataset.xpMenuShadows = String(settings.menuShadows);
+  document.documentElement.dataset.xpKeyboardCues = String(
+    settings.hideKeyboardCues,
+  );
   applySimulatedMonitor(settings.resolution);
   scheduleScreenSaver(settings);
 };
@@ -1000,6 +1076,9 @@ const updateMaximizeButton = (win) => {
   button.setAttribute("aria-label", button.title);
 };
 
+const bundledGameRoot = (gameId, type) =>
+  window.ASTRO_GAME_ROOTS?.[gameId] || `${type}/${gameId}/`;
+
 const loadRuffleSWF = (gameId, win) => {
   const ruffle = window.RufflePlayer.newest();
   const player = ruffle.createPlayer();
@@ -1014,13 +1093,12 @@ const loadRuffleSWF = (gameId, win) => {
   player.addEventListener("loadedmetadata", applyVolume, { once: true });
 
   const game = gamesList[gameId];
+  const gameRoot = bundledGameRoot(gameId, "swf");
   const archiveUrl = game.archive?.launchUrl;
   const frameRate = resolveGameFrameRate(gameId);
   const config = {
-    url: game.url || archiveUrl || `swf/${gameId}/main.swf`,
-    base:
-      game.base ||
-      (archiveUrl ? new URL(".", archiveUrl).href : `swf/${gameId}/`),
+    url: game.url || archiveUrl || `${gameRoot}main.swf`,
+    base: game.base || (archiveUrl ? new URL(".", archiveUrl).href : gameRoot),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,
@@ -1178,7 +1256,7 @@ const openGameProperties = (win) => {
 const loadIframe = (gameId, win) => {
   const player = document.createElement("iframe");
   player.allow = "fullscreen";
-  player.src = `iframe/${gameId}/`;
+  player.src = bundledGameRoot(gameId, "iframe");
   player.id = `player-${gameId}`;
   win.content.appendChild(player);
   win.player = player;
@@ -2015,13 +2093,13 @@ const createSystemWindowContent = (shortcutId, win) => {
     content.className = "display-properties-content";
     content.innerHTML = `
             <div class="display-tabs" role="tablist" aria-label="Display Properties">
-                <button type="button" role="tab" id="display-tab-themes" aria-controls="display-panel-themes" aria-selected="false" tabindex="-1">Themes</button>
-                <button type="button" role="tab" id="display-tab-desktop" aria-controls="display-panel-desktop" aria-selected="true">Desktop</button>
+                <button type="button" role="tab" id="display-tab-themes" aria-controls="display-panel-themes" aria-selected="true">Themes</button>
+                <button type="button" role="tab" id="display-tab-desktop" aria-controls="display-panel-desktop" aria-selected="false" tabindex="-1">Desktop</button>
                 <button type="button" role="tab" id="display-tab-saver" aria-controls="display-panel-saver" aria-selected="false" tabindex="-1">Screen Saver</button>
                 <button type="button" role="tab" id="display-tab-appearance" aria-controls="display-panel-appearance" aria-selected="false" tabindex="-1">Appearance</button>
                 <button type="button" role="tab" id="display-tab-settings" aria-controls="display-panel-settings" aria-selected="false" tabindex="-1">Settings</button>
             </div>
-            <div class="display-panel active" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop">
+            <div class="display-panel" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop" hidden>
                 <div class="display-preview" aria-label="Desktop preview">
                     <img src="assets/xp/displaysettings.png" alt="">
                     <div class="display-preview-surface"></div>
@@ -2037,6 +2115,25 @@ const createSystemWindowContent = (shortcutId, win) => {
                             <option value="bliss">Bliss</option>
                             <option value="blue-lace">Blue Lace 16</option>
                             <option value="coffee">Coffee Bean</option>
+                            <option value="crystal">Crystal</option>
+                            <option value="follow">Follow</option>
+                            <option value="friend">Friend</option>
+                            <option value="greenstone">Greenstone</option>
+                            <option value="home">Home</option>
+                            <option value="moon-flower">Moon flower</option>
+                            <option value="peace">Peace</option>
+                            <option value="power">Power</option>
+                            <option value="prairie-wind">Prairie Wind</option>
+                            <option value="purple-flower">Purple flower</option>
+                            <option value="radiance">Radiance</option>
+                            <option value="red-moon-desert">Red moon desert</option>
+                            <option value="ripple">Ripple</option>
+                            <option value="stonehenge">Stonehenge</option>
+                            <option value="tulips">Tulips</option>
+                            <option value="vortec-space">Vortec space</option>
+                            <option value="wind">Wind</option>
+                            <option value="windows-xp">Windows XP</option>
+                            <option value="zapotec">Zapotec</option>
                         </select>
                         <div class="display-wallpaper-list" role="listbox" aria-label="Desktop background">
                             <div class="display-wallpaper-items">
@@ -2047,17 +2144,38 @@ const createSystemWindowContent = (shortcutId, win) => {
                                 <button type="button" role="option" data-wallpaper="bliss"><span class="wallpaper-icon"></span>Bliss</button>
                                 <button type="button" role="option" data-wallpaper="blue-lace"><span class="wallpaper-icon"></span>Blue Lace 16</button>
                                 <button type="button" role="option" data-wallpaper="coffee"><span class="wallpaper-icon"></span>Coffee Bean</button>
+                                <button type="button" role="option" data-wallpaper="crystal"><span class="wallpaper-icon"></span>Crystal</button>
+                                <button type="button" role="option" data-wallpaper="follow"><span class="wallpaper-icon"></span>Follow</button>
+                                <button type="button" role="option" data-wallpaper="friend"><span class="wallpaper-icon"></span>Friend</button>
+                                <button type="button" role="option" data-wallpaper="greenstone"><span class="wallpaper-icon"></span>Greenstone</button>
+                                <button type="button" role="option" data-wallpaper="home"><span class="wallpaper-icon"></span>Home</button>
+                                <button type="button" role="option" data-wallpaper="moon-flower"><span class="wallpaper-icon"></span>Moon flower</button>
+                                <button type="button" role="option" data-wallpaper="peace"><span class="wallpaper-icon"></span>Peace</button>
+                                <button type="button" role="option" data-wallpaper="power"><span class="wallpaper-icon"></span>Power</button>
+                                <button type="button" role="option" data-wallpaper="prairie-wind"><span class="wallpaper-icon"></span>Prairie Wind</button>
+                                <button type="button" role="option" data-wallpaper="purple-flower"><span class="wallpaper-icon"></span>Purple flower</button>
+                                <button type="button" role="option" data-wallpaper="radiance"><span class="wallpaper-icon"></span>Radiance</button>
+                                <button type="button" role="option" data-wallpaper="red-moon-desert"><span class="wallpaper-icon"></span>Red moon desert</button>
+                                <button type="button" role="option" data-wallpaper="ripple"><span class="wallpaper-icon"></span>Ripple</button>
+                                <button type="button" role="option" data-wallpaper="stonehenge"><span class="wallpaper-icon"></span>Stonehenge</button>
+                                <button type="button" role="option" data-wallpaper="tulips"><span class="wallpaper-icon"></span>Tulips</button>
+                                <button type="button" role="option" data-wallpaper="vortec-space"><span class="wallpaper-icon"></span>Vortec space</button>
+                                <button type="button" role="option" data-wallpaper="wind"><span class="wallpaper-icon"></span>Wind</button>
+                                <button type="button" role="option" data-wallpaper="windows-xp"><span class="wallpaper-icon"></span>Windows XP</button>
+                                <button type="button" role="option" data-wallpaper="zapotec"><span class="wallpaper-icon"></span>Zapotec</button>
                             </div>
                             <div class="display-scrollbar" aria-hidden="true">
                                 <span class="scroll-arrow up"></span>
-                                <span class="scroll-thumb"><i></i><i></i><i></i></span>
+                                <span class="scroll-track">
+                                    <span class="scroll-thumb"><i></i><i></i><i></i></span>
+                                </span>
                                 <span class="scroll-arrow down"></span>
                             </div>
                         </div>
                         <button type="button" class="display-customize">Customize Desktop...</button>
                     </div>
                     <div class="display-background-actions">
-                        <label class="display-browse" for="display-image">Browse...</label>
+                        <button type="button" class="display-browse">Browse...</button>
                         <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
                         <label for="display-position">Position:</label>
                         <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
@@ -2069,37 +2187,87 @@ const createSystemWindowContent = (shortcutId, win) => {
                 <button type="button" class="display-clear-image" hidden>Remove custom picture</button>
                 <p class="display-status" aria-live="polite" hidden></p>
             </div>
-            <div class="display-panel" id="display-panel-themes" role="tabpanel" aria-labelledby="display-tab-themes" hidden>
-                <fieldset><legend>Theme</legend>
-                    <label for="display-theme">Choose a theme:</label>
-                    <select id="display-theme"><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option><option value="olive">Windows XP Olive</option></select>
-                    <p>A theme changes the color scheme and suggested desktop background.</p>
-                </fieldset>
+            <div class="display-panel active" id="display-panel-themes" role="tabpanel" aria-labelledby="display-tab-themes">
+                <p class="display-theme-description">A theme is a background plus a set of sounds, icons, and other elements<br>to help you personalize your computer with one click.</p>
+                <label class="display-control-label" for="display-theme">Theme:</label>
+                <div class="display-theme-row">
+                    <select id="display-theme"><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option><option value="online">More themes online...</option><option value="browse">Browse...</option></select>
+                    <button type="button" class="xp-property-button display-theme-save">Save As...</button>
+                    <button type="button" class="xp-property-button" disabled>Delete</button>
+                </div>
+                <span class="display-sample-label">Sample:</span>
+                <div class="display-theme-sample" aria-label="Theme sample">
+                    <div class="display-sample-window">
+                        <strong>Active Window</strong><i>—</i><i>□</i><i>×</i>
+                        <span>Window Text</span>
+                        <b class="sample-scroll-up">▲</b><b class="sample-scroll-thumb">≡</b><b class="sample-scroll-down">▼</b>
+                    </div>
+                    <img src="assets/xp/icons/recycler-full.png" alt="">
+                </div>
             </div>
             <div class="display-panel" id="display-panel-saver" role="tabpanel" aria-labelledby="display-tab-saver" hidden>
-                <fieldset><legend>Screen saver</legend>
-                    <label for="display-saver">Screen saver:</label>
-                    <select id="display-saver"><option value="none">(None)</option><option value="marquee">Marquee</option><option value="stars">Starfield</option></select>
-                    <label class="display-form-row" for="display-saver-wait">Wait <input id="display-saver-wait" type="number" min="1" max="60"> minutes</label>
-                    <div class="screen-saver-preview" aria-label="Screen saver preview"></div>
+                <div class="display-saver-monitor" aria-label="Screen saver preview">
+                    <img src="assets/xp/displaysettings.png" alt="">
+                    <div class="screen-saver-preview"></div>
+                </div>
+                <fieldset class="display-saver-group"><legend>Screen saver</legend>
+                    <div class="display-saver-row">
+                        <select id="display-saver" aria-label="Screen saver"><option value="none">(None)</option><option value="flowerbox">3D FlowerBox</option><option value="flying-objects">3D Flying Objects</option><option value="pipes">3D Pipes</option><option value="text">3D Text</option><option value="beziers">Beziers</option><option value="blank">Blank</option><option value="marquee">Marquee</option><option value="pictures">My Pictures Slideshow</option><option value="mystify">Mystify</option><option value="stars">Starfield</option><option value="windows-xp">Windows XP</option></select>
+                        <button type="button" class="xp-property-button display-saver-settings">Settings</button>
+                        <button type="button" class="xp-property-button display-saver-preview-button">Preview</button>
+                    </div>
+                    <div class="display-saver-wait-row">
+                        <label for="display-saver-wait">Wait:</label>
+                        <input id="display-saver-wait" type="number" min="1" max="60">
+                        <span>minutes</span>
+                        <label><input type="checkbox" class="display-saver-login"> On resume, password protect</label>
+                    </div>
+                </fieldset>
+                <fieldset class="display-power-group"><legend>Monitor power</legend>
+                    <p>To adjust monitor power settings and save energy,<br>click <u>Power</u>.</p>
+                    <button type="button" class="xp-property-button display-power-button">Power...</button>
                 </fieldset>
             </div>
             <div class="display-panel" id="display-panel-appearance" role="tabpanel" aria-labelledby="display-tab-appearance" hidden>
-                <fieldset><legend>Windows and buttons</legend>
-                    <label for="display-appearance">Color scheme:</label>
-                    <select id="display-appearance"><option value="blue">Default (blue)</option><option value="olive">Olive green</option><option value="silver">Silver</option></select>
-                    <div class="appearance-preview"><span>Active Window</span><button type="button" tabindex="-1">×</button></div>
-                </fieldset>
+                <div class="appearance-preview" aria-label="Appearance sample">
+                    <div class="appearance-window inactive"><strong>Inactive Window</strong><i>—</i><i>□</i><i>×</i></div>
+                    <div class="appearance-window active"><strong>Active Window</strong><i>—</i><i>□</i><i>×</i><span>Window Text</span></div>
+                    <div class="appearance-message"><strong>Message Box</strong><i>×</i><button type="button" tabindex="-1">OK</button></div>
+                </div>
+                <label class="display-control-label" for="display-window-style">Windows and buttons:</label>
+                <select id="display-window-style" disabled><option>Windows XP style</option></select>
+                <label class="display-control-label" for="display-appearance">Color scheme:</label>
+                <select id="display-appearance"><option value="blue">Default (blue)</option><option value="olive">Olive green</option><option value="silver">Silver</option></select>
+                <label class="display-control-label" for="display-font-size">Font size:</label>
+                        <select id="display-font-size"><option value="normal">Normal</option><option value="large">Large Fonts</option><option value="extra-large">Extra Large Fonts</option></select>
+                <div class="display-appearance-actions">
+                    <button type="button" class="xp-property-button display-effects">Effects...</button>
+                    <button type="button" class="xp-property-button display-advanced-appearance">Advanced</button>
+                </div>
             </div>
             <div class="display-panel" id="display-panel-settings" role="tabpanel" aria-labelledby="display-tab-settings" hidden>
-                <fieldset><legend>Display</legend>
-                    <p>Monitor: Astro Flash Display</p>
-                    <label for="display-resolution">Screen resolution:</label>
-                    <select id="display-resolution"><option value="auto">Use browser size</option><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option></select>
-                    <div class="display-resolution-preview" aria-label="Resolution preview"><span></span></div>
-                    <p class="display-resolution-value"></p>
-                    <p class="display-settings-note">Changes are previewed on the simulated monitor. The monitor is limited to the available browser viewport when necessary.</p>
-                </fieldset>
+                <div class="display-settings-monitor" aria-label="Display preview">
+                    <img src="assets/xp/displaysettings.png" alt="">
+                    <div class="display-resolution-preview"><span></span></div>
+                </div>
+                <p class="display-device-label">Display:<br>(Default Monitor) on Astro Flash Display</p>
+                <div class="display-settings-groups">
+                    <fieldset class="display-resolution-group"><legend>Screen resolution</legend>
+                        <div class="resolution-endpoints"><span>Less</span><span>More</span></div>
+                        <input id="display-resolution-slider" type="range" min="0" max="3" step="1" aria-label="Screen resolution">
+                        <select id="display-resolution" hidden><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option><option value="1440x900">1440 by 900 pixels</option><option value="auto">Use browser size</option></select>
+                        <p class="display-resolution-value"></p>
+                    </fieldset>
+                    <fieldset class="display-color-quality"><legend>Color quality</legend>
+                        <select disabled><option>Highest (32 bit)</option></select>
+                        <div class="display-color-spectrum"></div>
+                    </fieldset>
+                </div>
+                <div class="display-settings-actions">
+                    <button type="button" class="xp-property-button display-troubleshoot">Troubleshoot...</button>
+                    <button type="button" class="xp-property-button display-monitor-advanced">Advanced</button>
+                </div>
+                <p class="display-settings-note" hidden>Changes are previewed on the simulated monitor and limited to the available browser viewport.</p>
             </div>
             <div class="display-dialog-buttons">
                 <button type="button" data-display-action="ok">OK</button>
@@ -2618,6 +2786,394 @@ const createSystemWindowContent = (shortcutId, win) => {
   return content;
 };
 
+const openDesktopItemsDialog = (ownerWindow) => {
+  const current = getDesktopSystemIcons();
+  const dialog = XPDialogs.createDialog({
+    title: "Desktop Items",
+    onCancel: () => dialog.close("cancel"),
+  });
+  dialog.el.classList.add("desktop-items-dialog");
+  ownerWindow.el.classList.remove("active");
+
+  const titleButtons = dialog.el.querySelector(".title-buttons");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  titleButtons.prepend(help);
+
+  const tabs = document.createElement("div");
+  tabs.className = "desktop-items-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.innerHTML = `
+    <button type="button" role="tab" aria-selected="true" data-desktop-items-tab="general">General</button>
+    <button type="button" role="tab" aria-selected="false" tabindex="-1" data-desktop-items-tab="web">Web</button>
+  `;
+  const panels = document.createElement("div");
+  panels.className = "desktop-items-panels";
+  panels.innerHTML = `
+    <section role="tabpanel" data-desktop-items-panel="general">
+      <fieldset class="desktop-icons-group"><legend>Desktop icons</legend>
+        <label><input type="checkbox" data-system-icon="__my-documents"> My Documents</label>
+        <label><input type="checkbox" data-system-icon="__my-computer"> My Computer</label>
+        <label><input type="checkbox" disabled> My Network Places</label>
+      </fieldset>
+      <div class="desktop-icon-choices" role="listbox" aria-label="Desktop icons">
+        <button type="button" class="selected"><img src="assets/xp/icons/mycomputer.png" alt=""><span>My Computer</span></button>
+        <button type="button"><img src="assets/xp/icons/mydocuments.png" alt=""><span>My Documents</span></button>
+        <button type="button"><img src="assets/xp/icons/MyNetworkPlaces.png" alt=""><span>My Network<br>Places</span></button>
+        <button type="button"><img src="assets/xp/icons/recycler-full.png" alt=""><span>Recycle Bin<br>(full)</span></button>
+        <button type="button"><img src="assets/xp/icons/recycler-empty.png" alt=""><span>Recycle Bin<br>(empty)</span></button>
+      </div>
+      <div class="desktop-icon-actions"><button type="button" class="xp-btn">Change Icon...</button><button type="button" class="xp-btn">Restore Default</button></div>
+      <fieldset class="desktop-cleanup-group"><legend>Desktop cleanup</legend>
+        <p>Desktop Cleanup moves unused desktop items to a folder.</p>
+        <label><input type="checkbox"> Run Desktop Cleanup Wizard every 60 days</label>
+        <button type="button" class="xp-btn">Clean Desktop Now</button>
+      </fieldset>
+    </section>
+    <section role="tabpanel" data-desktop-items-panel="web" hidden>
+      <p>Web pages can be shown directly on your desktop.</p>
+      <div class="desktop-web-empty">No Web pages are currently displayed.</div>
+    </section>
+  `;
+
+  panels.querySelectorAll("[data-system-icon]").forEach((checkbox) => {
+    checkbox.checked = current[checkbox.dataset.systemIcon] !== false;
+  });
+  tabs.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-desktop-items-tab]");
+    if (!tab) return;
+    tabs.querySelectorAll('[role="tab"]').forEach((item) => {
+      const active = item === tab;
+      item.setAttribute("aria-selected", String(active));
+      item.tabIndex = active ? 0 : -1;
+    });
+    panels.querySelectorAll('[role="tabpanel"]').forEach((panel) => {
+      panel.hidden =
+        panel.dataset.desktopItemsPanel !== tab.dataset.desktopItemsTab;
+    });
+    tab.focus();
+  });
+  panels
+    .querySelector(".desktop-icon-choices")
+    .addEventListener("click", (event) => {
+      const item = event.target.closest("button");
+      if (!item) return;
+      panels
+        .querySelectorAll(".desktop-icon-choices button")
+        .forEach((button) =>
+          button.classList.toggle("selected", button === item),
+        );
+    });
+
+  const buttons = document.createElement("div");
+  buttons.className = "dlg-buttons";
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      const next = { ...current };
+      panels.querySelectorAll("[data-system-icon]").forEach((checkbox) => {
+        next[checkbox.dataset.systemIcon] = checkbox.checked;
+      });
+      saveDesktopSystemIcons(next);
+      buildDesktopIcons();
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  buttons.append(ok, cancel);
+  dialog.body.append(tabs, panels, buttons);
+  dialog.defaultButton = ok;
+  dialog.onResult(() => {
+    ownerWindow.el.classList.add("active");
+    focusWindow(ownerWindow.gameId);
+  });
+  panels.querySelector("[data-system-icon]").focus();
+};
+
+const setDisplayDialogOwnerActive = (ownerWindow, active) => {
+  ownerWindow.el.classList.toggle("active", active);
+  if (active) focusWindow(ownerWindow.gameId);
+};
+
+const openDisplayNotice = (ownerWindow, title, message) => {
+  setDisplayDialogOwnerActive(ownerWindow, false);
+  XPDialogs.alert(message, title, "info").finally(() =>
+    setDisplayDialogOwnerActive(ownerWindow, true),
+  );
+};
+
+const addDisplayDialogHelpButton = (dialog) => {
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+};
+
+const openDisplayEffectsDialog = (ownerWindow, settings, onCommit) => {
+  const draft = { ...settings };
+  const dialog = XPDialogs.createDialog({
+    title: "Effects",
+    onCancel: () => dialog.close("cancel"),
+  });
+  dialog.el.classList.add("display-effects-dialog");
+  setDisplayDialogOwnerActive(ownerWindow, false);
+  addDisplayDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="effects-option"><label><input type="checkbox" data-effect-enabled="transition"> Use the following transition effect for menus and tooltips:</label><select class="xp-select" data-effect="transitionEffect"><option value="fade">Fade effect</option><option value="scroll">Scroll effect</option></select></div>
+    <div class="effects-option"><label><input type="checkbox" data-effect-enabled="smoothing"> Use the following method to smooth edges of screen fonts:</label><select class="xp-select" data-effect="fontSmoothing"><option value="standard">Standard</option><option value="cleartype">ClearType</option></select></div>
+    <label class="effects-check"><input type="checkbox" data-effect="largeIcons"> Use large icons</label>
+    <label class="effects-check"><input type="checkbox" data-effect="menuShadows"> Show shadows under menus</label>
+    <label class="effects-check"><input type="checkbox" data-effect="showWindowContents"> Show window contents while dragging</label>
+    <label class="effects-check"><input type="checkbox" data-effect="hideKeyboardCues"> Hide underlined letters for keyboard navigation until I press the Alt key</label>
+  `;
+  const transitionEnabled = dialog.body.querySelector(
+    '[data-effect-enabled="transition"]',
+  );
+  const smoothingEnabled = dialog.body.querySelector(
+    '[data-effect-enabled="smoothing"]',
+  );
+  const transition = dialog.body.querySelector(
+    '[data-effect="transitionEffect"]',
+  );
+  const smoothing = dialog.body.querySelector('[data-effect="fontSmoothing"]');
+  transitionEnabled.checked = draft.transitionEffect !== "none";
+  smoothingEnabled.checked = draft.fontSmoothing !== "none";
+  transition.value = draft.transitionEffect === "scroll" ? "scroll" : "fade";
+  smoothing.value =
+    draft.fontSmoothing === "cleartype" ? "cleartype" : "standard";
+  [
+    "largeIcons",
+    "menuShadows",
+    "showWindowContents",
+    "hideKeyboardCues",
+  ].forEach((key) => {
+    dialog.body.querySelector(`[data-effect="${key}"]`).checked = !!draft[key];
+  });
+  const syncEnabled = () => {
+    transition.disabled = !transitionEnabled.checked;
+    smoothing.disabled = !smoothingEnabled.checked;
+  };
+  transitionEnabled.addEventListener("change", syncEnabled);
+  smoothingEnabled.addEventListener("change", syncEnabled);
+  syncEnabled();
+
+  const buttons = document.createElement("div");
+  buttons.className = "dlg-buttons";
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      draft.transitionEffect = transitionEnabled.checked
+        ? transition.value
+        : "none";
+      draft.fontSmoothing = smoothingEnabled.checked ? smoothing.value : "none";
+      [
+        "largeIcons",
+        "menuShadows",
+        "showWindowContents",
+        "hideKeyboardCues",
+      ].forEach((key) => {
+        draft[key] = dialog.body.querySelector(
+          `[data-effect="${key}"]`,
+        ).checked;
+      });
+      onCommit(draft);
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  buttons.append(ok, cancel);
+  dialog.body.append(buttons);
+  dialog.defaultButton = ok;
+  dialog.onResult(() => setDisplayDialogOwnerActive(ownerWindow, true));
+  transitionEnabled.focus();
+};
+
+const openAdvancedAppearanceDialog = (ownerWindow, settings, onCommit) => {
+  const dialog = XPDialogs.createDialog({
+    title: "Advanced Appearance",
+    onCancel: () => dialog.close("cancel"),
+  });
+  dialog.el.classList.add("advanced-appearance-dialog");
+  setDisplayDialogOwnerActive(ownerWindow, false);
+  addDisplayDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="advanced-appearance-preview">
+      <div class="advanced-inactive">Inactive Window <b>_</b><b>□</b><b>×</b></div>
+      <div class="advanced-active">Active Window <b>_</b><b>□</b><b>×</b></div>
+      <div class="advanced-menu">Normal &nbsp;&nbsp; <span>Disabled</span> &nbsp;&nbsp; Selected</div>
+      <div class="advanced-window-text">Window Text</div>
+      <div class="advanced-message"><strong>Message Box</strong><b>×</b><span>Message Text</span><button type="button" tabindex="-1">OK</button></div>
+    </div>
+    <p class="advanced-appearance-copy">If you select a windows and buttons setting other than Windows Classic,<br>it will override the following settings, except in some older programs.</p>
+    <div class="advanced-controls">
+      <label>Item:<select class="xp-select" disabled><option>Desktop</option></select></label>
+      <label class="advanced-size">Size:<input class="xp-input" disabled></label>
+      <label>Color 1:<input type="color" data-advanced-color></label>
+      <label class="advanced-disabled">Color 2:<input disabled></label>
+      <label class="advanced-disabled">Font:<select class="xp-select" disabled></select></label>
+      <label class="advanced-disabled">Size:<input class="xp-input" disabled></label>
+      <label class="advanced-disabled">Color:<input disabled></label>
+    </div>
+  `;
+  dialog.body.querySelector(".advanced-appearance-preview").dataset.appearance =
+    settings.appearance;
+  dialog.body.querySelector("[data-advanced-color]").value =
+    settings.backgroundColor;
+  const buttons = document.createElement("div");
+  buttons.className = "dlg-buttons";
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      onCommit({
+        ...settings,
+        backgroundColor: dialog.body.querySelector("[data-advanced-color]")
+          .value,
+      });
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  buttons.append(ok, cancel);
+  dialog.body.append(buttons);
+  dialog.defaultButton = ok;
+  dialog.onResult(() => setDisplayDialogOwnerActive(ownerWindow, true));
+  dialog.body.querySelector("[data-advanced-color]").focus();
+};
+
+const openMonitorPropertiesDialog = (ownerWindow) => {
+  const dialog = XPDialogs.createDialog({
+    title: "(Default Monitor) and Properties",
+    onCancel: () => dialog.close("cancel"),
+  });
+  dialog.el.classList.add("monitor-properties-dialog");
+  setDisplayDialogOwnerActive(ownerWindow, false);
+  addDisplayDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="monitor-property-tabs" role="tablist" aria-label="Monitor properties">
+      <button type="button" class="selected" role="tab" aria-selected="true" aria-controls="monitor-general-panel" data-monitor-tab="general">General</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-adapter-panel" data-monitor-tab="adapter" tabindex="-1">Adapter</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-monitor-panel" data-monitor-tab="monitor" tabindex="-1">Monitor</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-troubleshoot-panel" data-monitor-tab="troubleshoot" tabindex="-1">Troubleshoot</button>
+    </div>
+    <section class="monitor-property-panel" id="monitor-general-panel" role="tabpanel" data-monitor-panel="general">
+      <fieldset><legend>Display</legend><p>If your screen resolution makes screen items too small to view<br>comfortably, you can increase the DPI to compensate. To change<br>font sizes only, click Cancel and go to the Appearance tab.</p><label>DPI setting:<select class="xp-select" disabled><option>Normal size (96 DPI)</option></select></label><p>Normal size (96 dpi)</p></fieldset>
+      <fieldset><legend>Compatibility</legend><p>Some programs might not operate properly unless you restart the<br>computer after changing display settings.</p><p>After I change display settings:</p><label><input type="radio" name="display-compatibility"> Restart the computer before applying the new display settings</label><label><input type="radio" name="display-compatibility" checked> Apply the new display settings without restarting</label><label><input type="radio" name="display-compatibility"> Ask me before applying the new display settings</label><p>Some games and other programs must be run in 256-color mode.<br>Learn more about <u>running programs in 256-color mode</u>.</p></fieldset>
+    </section>
+    <section class="monitor-property-panel" id="monitor-adapter-panel" role="tabpanel" data-monitor-panel="adapter" hidden>
+      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Astro Flash virtual display</p></fieldset>
+      <fieldset><legend>Adapter</legend><p>This desktop uses the browser's active graphics adapter.</p><button type="button" class="xp-property-button" disabled>List All Modes...</button></fieldset>
+    </section>
+    <section class="monitor-property-panel" id="monitor-monitor-panel" role="tabpanel" data-monitor-panel="monitor" hidden>
+      <fieldset><legend>Monitor type</legend><p>(Default Monitor)</p><button type="button" class="xp-property-button" disabled>Properties</button></fieldset>
+      <fieldset><legend>Monitor settings</legend><label>Screen refresh rate:<select class="xp-select" disabled><option>Use hardware default setting</option></select></label><label><input type="checkbox" checked disabled> Hide modes that this monitor cannot display</label></fieldset>
+    </section>
+    <section class="monitor-property-panel" id="monitor-troubleshoot-panel" role="tabpanel" data-monitor-panel="troubleshoot" hidden>
+      <fieldset><legend>Hardware acceleration</legend><p>If your computer is having problems with graphics, move the slider toward None.</p><label class="monitor-acceleration"><span>None</span><input type="range" min="0" max="5" value="5"><span>Full</span></label><p>All cursor and advanced drawing accelerations are enabled.</p></fieldset>
+      <label><input type="checkbox" checked> Enable write combining</label>
+    </section>
+  `;
+  const tabs = [...dialog.body.querySelectorAll("[data-monitor-tab]")];
+  const panels = [...dialog.body.querySelectorAll("[data-monitor-panel]")];
+  const selectTab = (tab) => {
+    tabs.forEach((candidate) => {
+      const selected = candidate === tab;
+      candidate.classList.toggle("selected", selected);
+      candidate.setAttribute("aria-selected", String(selected));
+      candidate.tabIndex = selected ? 0 : -1;
+    });
+    panels.forEach((panel) => {
+      panel.hidden = panel.dataset.monitorPanel !== tab.dataset.monitorTab;
+    });
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      const direction =
+        event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (!direction && event.key !== "Home" && event.key !== "End") return;
+      event.preventDefault();
+      const nextIndex =
+        event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? tabs.length - 1
+            : (index + direction + tabs.length) % tabs.length;
+      selectTab(tabs[nextIndex]);
+      tabs[nextIndex].focus();
+    });
+  });
+  const buttons = document.createElement("div");
+  buttons.className = "dlg-buttons";
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => dialog.close("ok"),
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  const apply = XPDialogs.createDialogButton(
+    { id: "apply", label: "Apply" },
+    () => {},
+  );
+  apply.disabled = true;
+  buttons.append(ok, cancel, apply);
+  dialog.body.append(buttons);
+  dialog.defaultButton = ok;
+  dialog.onResult(() => setDisplayDialogOwnerActive(ownerWindow, true));
+  tabs[0].focus();
+};
+
+const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {
+  const dialog = XPDialogs.createDialog({
+    title: "Browse",
+    onCancel: () => dialog.close("cancel"),
+  });
+  dialog.el.classList.add("wallpaper-browse-dialog");
+  setDisplayDialogOwnerActive(ownerWindow, false);
+  addDisplayDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="browse-location"><label>Look in:</label><span><img src="assets/xp/icons/MyPictures.png" alt="">My Pictures</span><button type="button" disabled>◀</button><button type="button" disabled>↥</button><button type="button" disabled>☆</button><button type="button" disabled>▦</button></div>
+    <div class="browse-body"><aside><button><img src="assets/xp/icons/RecentDocuments.png" alt="">My Recent<br>Documents</button><button><img src="assets/xp/icons/Programs.png" alt="">Desktop</button><button><img src="assets/xp/icons/mydocuments.png" alt="">My Documents</button><button><img src="assets/xp/icons/mycomputer.png" alt="">My Computer</button><button><img src="assets/xp/icons/MyNetworkPlaces.png" alt="">My Network</button></aside><main><button type="button" class="sample-pictures-folder"><span><i></i><i></i><i></i><i></i></span>Sample Pictures</button></main></div>
+    <div class="browse-fields"><label>File name:<input class="xp-input browse-file-name" readonly></label><label>Files of type:<select class="xp-select" disabled><option>Background Files</option></select></label></div>
+  `;
+  const buttons = document.createElement("div");
+  buttons.className = "browse-buttons";
+  const open = XPDialogs.createDialogButton(
+    { id: "open", label: "Open", isDefault: true },
+    () => fileInput.click(),
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  buttons.append(open, cancel);
+  dialog.body.append(buttons);
+  dialog.defaultButton = open;
+  dialog.onResult(() => setDisplayDialogOwnerActive(ownerWindow, true));
+  dialog.setChosenFile = (name) => {
+    if (!dialog.el.isConnected) return;
+    dialog.body.querySelector(".browse-file-name").value = name;
+    dialog.close("open");
+  };
+  dialog.body.querySelector(".sample-pictures-folder").focus();
+  return dialog;
+};
+
 const wireDisplayProperties = (win) => {
   const content = win.el.querySelector(".display-properties-content");
   if (!content) return;
@@ -2636,9 +3192,14 @@ const wireDisplayProperties = (win) => {
     image: content.querySelector("#display-image"),
     clearImage: content.querySelector(".display-clear-image"),
     saver: content.querySelector("#display-saver"),
+    saverSettings: content.querySelector(".display-saver-settings"),
+    saverPreviewButton: content.querySelector(".display-saver-preview-button"),
     saverWait: content.querySelector("#display-saver-wait"),
+    saverLogin: content.querySelector(".display-saver-login"),
     appearance: content.querySelector("#display-appearance"),
+    fontSize: content.querySelector("#display-font-size"),
     resolution: content.querySelector("#display-resolution"),
+    resolutionSlider: content.querySelector("#display-resolution-slider"),
     preview: content.querySelector(".display-preview-surface"),
     saverPreview: content.querySelector(".screen-saver-preview"),
     appearancePreview: content.querySelector(".appearance-preview"),
@@ -2646,6 +3207,7 @@ const wireDisplayProperties = (win) => {
     resolutionValue: content.querySelector(".display-resolution-value"),
     status: content.querySelector(".display-status"),
     customize: content.querySelector(".display-customize"),
+    browse: content.querySelector(".display-browse"),
     apply: content.querySelector('[data-display-action="apply"]'),
   };
   const setStatus = (message = "") => {
@@ -2676,13 +3238,21 @@ const wireDisplayProperties = (win) => {
       const selected = item.dataset.wallpaper === pending.wallpaper;
       item.classList.toggle("selected", selected);
       item.setAttribute("aria-selected", String(selected));
+      item.tabIndex = selected ? 0 : -1;
     });
     controls.position.value = pending.position;
     controls.color.value = pending.backgroundColor;
     controls.saver.value = pending.screenSaver;
+    controls.saverSettings.disabled = pending.screenSaver === "none";
+    controls.saverPreviewButton.disabled = pending.screenSaver === "none";
     controls.saverWait.value = String(pending.screenSaverWait);
+    controls.saverLogin.checked = pending.requireLoginOnResume;
     controls.appearance.value = pending.appearance;
+    controls.fontSize.value = pending.fontSize;
     controls.resolution.value = pending.resolution;
+    controls.resolutionSlider.value = String(
+      ["800x600", "1024x768", "1440x900", "auto"].indexOf(pending.resolution),
+    );
     controls.clearImage.hidden = !pending.customWallpaper;
     controls.preview.style.backgroundColor = pending.backgroundColor;
     controls.preview.style.backgroundImage = displayBackground(pending);
@@ -2713,6 +3283,8 @@ const wireDisplayProperties = (win) => {
       panel.hidden = !active;
       panel.classList.toggle("active", active);
     });
+    if (panelId === "display-panel-desktop")
+      requestAnimationFrame(syncWallpaperScrollbar);
   };
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showTab(tab));
@@ -2734,6 +3306,17 @@ const wireDisplayProperties = (win) => {
     });
   });
   controls.theme.addEventListener("change", () => {
+    if (!Object.hasOwn(themes, controls.theme.value)) {
+      openDisplayNotice(
+        win,
+        controls.theme.value === "online" ? "Windows Themes" : "Open Theme",
+        controls.theme.value === "online"
+          ? "More themes are not available in this offline desktop."
+          : "Select Windows XP or Windows Classic to change the current theme.",
+      );
+      controls.theme.value = pending.theme;
+      return;
+    }
     pending = {
       ...pending,
       theme: controls.theme.value,
@@ -2750,18 +3333,127 @@ const wireDisplayProperties = (win) => {
     };
     sync();
   });
-  content
-    .querySelector(".display-wallpaper-list")
-    .addEventListener("click", (event) => {
-      const item = event.target.closest("[data-wallpaper]");
-      if (!item) return;
-      pending = {
-        ...pending,
-        wallpaper: item.dataset.wallpaper,
-        customWallpaper: "",
-      };
-      sync();
+  const wallpaperList = content.querySelector(".display-wallpaper-list");
+  const wallpaperItems = [
+    ...wallpaperList.querySelectorAll("[data-wallpaper]"),
+  ];
+  const wallpaperScroller = wallpaperList.querySelector(
+    ".display-wallpaper-items",
+  );
+  const wallpaperScrollbar = wallpaperList.querySelector(".display-scrollbar");
+  const wallpaperScrollTrack =
+    wallpaperScrollbar.querySelector(".scroll-track");
+  const wallpaperScrollThumb =
+    wallpaperScrollbar.querySelector(".scroll-thumb");
+  const syncWallpaperScrollbar = () => {
+    const maxScroll = Math.max(
+      0,
+      wallpaperScroller.scrollHeight - wallpaperScroller.clientHeight,
+    );
+    const trackHeight = wallpaperScrollTrack.clientHeight;
+    const thumbHeight =
+      maxScroll === 0
+        ? trackHeight
+        : Math.max(
+            22,
+            Math.round(
+              trackHeight *
+                (wallpaperScroller.clientHeight /
+                  wallpaperScroller.scrollHeight),
+            ),
+          );
+    const thumbTravel = Math.max(0, trackHeight - thumbHeight);
+    const thumbTop =
+      maxScroll === 0
+        ? 0
+        : Math.round((wallpaperScroller.scrollTop / maxScroll) * thumbTravel);
+    wallpaperScrollThumb.style.height = `${thumbHeight}px`;
+    wallpaperScrollThumb.style.transform = `translateY(${thumbTop}px)`;
+    wallpaperScrollbar.classList.toggle("disabled", maxScroll === 0);
+  };
+  wallpaperScroller.addEventListener("scroll", syncWallpaperScrollbar);
+  wallpaperScrollbar
+    .querySelector(".scroll-arrow.up")
+    .addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      wallpaperScroller.scrollBy({ top: -18 });
     });
+  wallpaperScrollbar
+    .querySelector(".scroll-arrow.down")
+    .addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      wallpaperScroller.scrollBy({ top: 18 });
+    });
+  wallpaperScrollTrack.addEventListener("pointerdown", (event) => {
+    if (event.target === wallpaperScrollThumb) return;
+    event.preventDefault();
+    const thumbBounds = wallpaperScrollThumb.getBoundingClientRect();
+    const direction = event.clientY < thumbBounds.top ? -1 : 1;
+    wallpaperScroller.scrollBy({
+      top: direction * wallpaperScroller.clientHeight,
+    });
+  });
+  wallpaperScrollThumb.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const startY = event.clientY;
+    const startScrollTop = wallpaperScroller.scrollTop;
+    const maxScroll =
+      wallpaperScroller.scrollHeight - wallpaperScroller.clientHeight;
+    const thumbTravel =
+      wallpaperScrollTrack.clientHeight - wallpaperScrollThumb.offsetHeight;
+    wallpaperScrollThumb.setPointerCapture(event.pointerId);
+    const dragThumb = (moveEvent) => {
+      if (thumbTravel <= 0) return;
+      wallpaperScroller.scrollTop =
+        startScrollTop +
+        ((moveEvent.clientY - startY) / thumbTravel) * maxScroll;
+    };
+    const stopDragging = () => {
+      wallpaperScrollThumb.removeEventListener("pointermove", dragThumb);
+      wallpaperScrollThumb.removeEventListener("pointerup", stopDragging);
+      wallpaperScrollThumb.removeEventListener("pointercancel", stopDragging);
+    };
+    wallpaperScrollThumb.addEventListener("pointermove", dragThumb);
+    wallpaperScrollThumb.addEventListener("pointerup", stopDragging);
+    wallpaperScrollThumb.addEventListener("pointercancel", stopDragging);
+  });
+  requestAnimationFrame(syncWallpaperScrollbar);
+  const selectWallpaper = (item, { focus = false } = {}) => {
+    pending = {
+      ...pending,
+      wallpaper: item.dataset.wallpaper,
+      customWallpaper: "",
+    };
+    sync();
+    item.scrollIntoView({ block: "nearest" });
+    if (focus) item.focus();
+  };
+  wallpaperList.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-wallpaper]");
+    if (!item) return;
+    selectWallpaper(item);
+  });
+  wallpaperList.addEventListener("keydown", (event) => {
+    if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const selectedIndex = wallpaperItems.findIndex(
+      (item) => item.dataset.wallpaper === pending.wallpaper,
+    );
+    const targetIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? wallpaperItems.length - 1
+          : Math.max(
+              0,
+              Math.min(
+                wallpaperItems.length - 1,
+                selectedIndex + (event.key === "ArrowDown" ? 1 : -1),
+              ),
+            );
+    selectWallpaper(wallpaperItems[targetIndex], { focus: true });
+  });
   ["position", "appearance", "saver"].forEach((name) => {
     controls[name].addEventListener("change", () => {
       pending = {
@@ -2771,8 +3463,8 @@ const wireDisplayProperties = (win) => {
       sync();
     });
   });
-  controls.resolution.addEventListener("change", () => {
-    pending = { ...pending, resolution: controls.resolution.value };
+  const setPendingResolution = (resolution) => {
+    pending = { ...pending, resolution };
     if (pending.resolution === current.resolution) {
       applySimulatedMonitor(current.resolution, { reflow: false });
       restoreWindowState(resolutionPreviewSnapshot);
@@ -2784,6 +3476,16 @@ const wireDisplayProperties = (win) => {
       applySimulatedMonitor(pending.resolution);
     }
     sync();
+  };
+  controls.resolution.addEventListener("change", () => {
+    setPendingResolution(controls.resolution.value);
+  });
+  controls.resolutionSlider.addEventListener("input", () => {
+    setPendingResolution(
+      ["800x600", "1024x768", "1440x900", "auto"][
+        Number(controls.resolutionSlider.value)
+      ],
+    );
   });
   controls.color.addEventListener("input", () => {
     pending = { ...pending, backgroundColor: controls.color.value };
@@ -2797,6 +3499,21 @@ const wireDisplayProperties = (win) => {
     pending = { ...pending, screenSaverWait: wait };
     sync();
   });
+  controls.saverLogin.addEventListener("change", () => {
+    pending = {
+      ...pending,
+      requireLoginOnResume: controls.saverLogin.checked,
+    };
+    sync();
+  });
+  controls.fontSize.addEventListener("change", () => {
+    pending = { ...pending, fontSize: controls.fontSize.value };
+    sync();
+  });
+  let wallpaperBrowseDialog = null;
+  controls.browse.addEventListener("click", () => {
+    wallpaperBrowseDialog = openWallpaperBrowseDialog(win, controls.image);
+  });
   controls.image.addEventListener("change", () => {
     const [file] = controls.image.files;
     if (!file) return;
@@ -2806,11 +3523,8 @@ const wireDisplayProperties = (win) => {
       "image/gif",
       "image/webp",
     ];
-    if (
-      !supportedTypes.includes(file.type) ||
-      file.size > MAX_CUSTOM_WALLPAPER_BYTES
-    ) {
-      setStatus("Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.");
+    if (!supportedTypes.includes(file.type)) {
+      setStatus("Choose a PNG, JPEG, GIF, or WebP image.");
       controls.image.value = "";
       return;
     }
@@ -2824,6 +3538,8 @@ const wireDisplayProperties = (win) => {
       pending = { ...pending, customWallpaper: reader.result };
       setStatus(`${file.name} will be used after you apply changes.`);
       sync();
+      wallpaperBrowseDialog?.setChosenFile(file.name);
+      wallpaperBrowseDialog = null;
     });
     reader.readAsDataURL(file);
   });
@@ -2833,12 +3549,74 @@ const wireDisplayProperties = (win) => {
     sync();
   });
   controls.customize.addEventListener("click", () => {
-    XPDialogs.alert(
-      "Choose which Windows system icons appear on the desktop.",
-      "Desktop Items",
-      "info",
-    );
+    openDesktopItemsDialog(win);
   });
+  content.querySelector(".display-effects").addEventListener("click", () => {
+    openDisplayEffectsDialog(win, pending, (next) => {
+      pending = next;
+      sync();
+    });
+  });
+  content
+    .querySelector(".display-advanced-appearance")
+    .addEventListener("click", () => {
+      openAdvancedAppearanceDialog(win, pending, (next) => {
+        pending = next;
+        sync();
+      });
+    });
+  content
+    .querySelector(".display-monitor-advanced")
+    .addEventListener("click", () => openMonitorPropertiesDialog(win));
+  content
+    .querySelector(".display-theme-save")
+    .addEventListener("click", () =>
+      openDisplayNotice(
+        win,
+        "Save Theme",
+        "The current theme settings are already saved for this desktop.",
+      ),
+    );
+  controls.saverSettings.addEventListener("click", () =>
+    openDisplayNotice(
+      win,
+      "Screen Saver Settings",
+      "This screen saver has no options that you can set.",
+    ),
+  );
+  content
+    .querySelector(".display-power-button")
+    .addEventListener("click", () =>
+      openDisplayNotice(
+        win,
+        "Power Options Properties",
+        "Power management is controlled by your browser and operating system.",
+      ),
+    );
+  content
+    .querySelector(".display-troubleshoot")
+    .addEventListener("click", () =>
+      openDisplayNotice(
+        win,
+        "Display Troubleshooter",
+        "Use the screen resolution slider or restore Use browser size to return to the full desktop.",
+      ),
+    );
+  content
+    .querySelector(".display-saver-preview-button")
+    .addEventListener("click", () => {
+      const saver = document.getElementById("screen-saver-overlay");
+      if (!saver || pending.screenSaver === "none") return;
+      saver.dataset.saver = pending.screenSaver;
+      saver.hidden = false;
+      const closePreview = () => {
+        saver.hidden = true;
+        document.removeEventListener("keydown", closePreview);
+        saver.removeEventListener("pointerdown", closePreview);
+      };
+      document.addEventListener("keydown", closePreview, { once: true });
+      saver.addEventListener("pointerdown", closePreview, { once: true });
+    });
   content
     .querySelector('[data-display-action="apply"]')
     .addEventListener("click", () => {
@@ -6570,7 +7348,11 @@ const buildDesktopIcons = () => {
     "__my-documents",
     "__internet-games",
     "__astro-settings",
-  ].filter((id) => systemShortcuts[id]?.desktop !== false);
+  ].filter(
+    (id) =>
+      systemShortcuts[id]?.desktop !== false &&
+      getDesktopSystemIcons()[id] !== false,
+  );
   const recycleBinItems = ["__recycle-bin"].filter(
     (id) => systemShortcuts[id]?.desktop !== false,
   );

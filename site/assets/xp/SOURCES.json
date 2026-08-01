@@ -29,6 +29,101 @@
     "member": "I386/COFFEEBN.BM_",
     "sha256": "53d4299d2eb54d94328f461b02b4a6d37bc6ac1fc27354003e934ba07975436c"
   },
+  "assets/xp/wallpapers/crystal.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CRYSTAL.JP_",
+    "sha256": "8a4aa3b1764008de10d5d6073e44bea772c7848d549db0588320e926aedcb6f2"
+  },
+  "assets/xp/wallpapers/follow.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FOLLOW.JP_",
+    "sha256": "50e2837599f6d6d7a93c5d5d5235a0416760bc9c8b11c12047f603bd13e8a073"
+  },
+  "assets/xp/wallpapers/friend.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FRIEND.JP_",
+    "sha256": "36cdbf794361420a59673824fd9bbc4bf0c97eb1ba7917460fbeba5f97a76a9b"
+  },
+  "assets/xp/wallpapers/greenstone.bmp": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/GRNSTONE.BM_",
+    "sha256": "649e7ab53a1742a0d10fc6d9f718973727bca6c1b5e92dab5da9371698faa3b9"
+  },
+  "assets/xp/wallpapers/home.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HOME.JP_",
+    "sha256": "0b337b96eb63bf26eaa9bd3da9bd4344080c2d846b74f4c24c5a6c8b38f22271"
+  },
+  "assets/xp/wallpapers/moon-flower.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MOON.JP_",
+    "sha256": "f41d62dcc6b36aa3b2b813527cb5b4aa43ea50a272a6032d4a7c6c3896033330"
+  },
+  "assets/xp/wallpapers/peace.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PEACE.JP_",
+    "sha256": "c52887b2f24d78035e90169c97d5f613fc03aa615712779909932fba9580b9e6"
+  },
+  "assets/xp/wallpapers/power.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/POWER.JP_",
+    "sha256": "151982effaa897b0e4e1a609ae08304a8d16b1722d78830957e2daeb3cd71a11"
+  },
+  "assets/xp/wallpapers/prairie-wind.bmp": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PRAIRIE.BM_",
+    "sha256": "cf2f0e25c50fa0692642b7b16b5f454b969ba020c23f0eae5e2a2a26445304f2"
+  },
+  "assets/xp/wallpapers/purple-flower.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PURPLEF.JP_",
+    "sha256": "c2dadf25fc5e2c5b81c550a6b3bf028f311933c8e7ea3739f3d2ef6ab14645cd"
+  },
+  "assets/xp/wallpapers/radiance.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/RADIANCE.JP_",
+    "sha256": "e5a9b2254e517ab3d146e319d70f228f6dd3df793188d8d6ebb29cf46ff6e365"
+  },
+  "assets/xp/wallpapers/red-moon-desert.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/REDMOON.JP_",
+    "sha256": "21ca374199995341dcca037bae1dc18eed8a09801afd3217121851e2b638df58"
+  },
+  "assets/xp/wallpapers/ripple.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/RIPPLE.JP_",
+    "sha256": "dbc0aa795775190f396f9c91e8458762669c1d079e0d091b8f481f7cc6cbb9d4"
+  },
+  "assets/xp/wallpapers/stonehenge.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/STONEH.JP_",
+    "sha256": "95d26f5c67a6ec45dca6a0148d12d7801b7f4488177ca3dab662125095b40cc8"
+  },
+  "assets/xp/wallpapers/tulips.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TULIPS.JP_",
+    "sha256": "9a6924e743e56d164c8a83ecfd2a3aa18cac81beda65c8e5a2f213855ef74b9a"
+  },
+  "assets/xp/wallpapers/vortec-space.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/VORTEC.JP_",
+    "sha256": "7b4fd2a52b5caabd629df5c1424493d4a9189b008c09162b37bcaf3269dde147"
+  },
+  "assets/xp/wallpapers/wind.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WIND.JP_",
+    "sha256": "abf1dae685cd2f3aa585bb058cb59b2e30940da84814a9764a59e20ef94999f7"
+  },
+  "assets/xp/wallpapers/windows-xp.jpg": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINXP.JP_",
+    "sha256": "b8753e74c04ada4f3c5dba5eaee67cb14e82f1a567431153d63771352ba3e005"
+  },
+  "assets/xp/wallpapers/zapotec.bmp": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/ZAPOTEC.BM_",
+    "sha256": "678f6deb824cf400a065169148a5f1b08e0568bbd56d81fb65cbfad3ca938686"
+  },
   "assets/xp/sounds/error.wav": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/XPERROR.WA_",

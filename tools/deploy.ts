@@ -85,6 +85,7 @@ interface OfflineGame {
   bytes: number;
   files: OfflineFile[];
   revision: string;
+  root: string;
   runtime?: string;
   type: "iframe" | "swf";
 }
@@ -101,6 +102,8 @@ interface OfflineManifest {
   runtimes?: Record<string, OfflineRuntime>;
   version: string;
 }
+
+type VersionedGamePackages = Record<string, OfflineGame>;
 
 export class BuildPaths {
   readonly root: string;
@@ -497,10 +500,12 @@ export function isOptionalOfflinePath(relativePath: string): boolean {
 async function offlineFileEntry(
   root: string,
   path: string,
+  revision?: string,
 ): Promise<OfflineFile> {
+  const relativePath = relative(root, path).split(sep).join("/");
   return {
     bytes: (await stat(path)).size,
-    url: relative(root, path).split(sep).join("/"),
+    url: revision ? `${relativePath}?rev=${revision}` : relativePath,
   };
 }
 
@@ -511,6 +516,93 @@ async function offlineRevision(root: string, files: string[]): Promise<string> {
     digest.update(await readFile(path));
   }
   return digest.digest("hex").slice(0, 16);
+}
+
+async function prepareDoomPackage(paths: BuildPaths): Promise<void> {
+  const iframeRoot = join(paths.root, "iframe", "doom");
+  const dosRoot = join(paths.root, "dos", "doom");
+  if (!(await isDirectory(iframeRoot)) || !(await isDirectory(dosRoot))) return;
+
+  const bundledDosRoot = join(iframeRoot, "dos", "doom");
+  await mkdir(dirname(bundledDosRoot), { recursive: true });
+  await cp(dosRoot, bundledDosRoot, { recursive: true });
+  const indexPath = join(iframeRoot, "index.html");
+  const index = await replaceExactlyOnce(
+    await readFile(indexPath, "utf8"),
+    /\.\.\/\.\.\/dos\/doom\/doom\.jsdos/g,
+    "dos/doom/doom.jsdos",
+    "Could not package the Doom game data",
+  );
+  await writeFile(indexPath, index);
+  await rm(dosRoot, { recursive: true });
+}
+
+export async function versionGamePackages(
+  paths: BuildPaths,
+): Promise<VersionedGamePackages> {
+  await prepareDoomPackage(paths);
+  const gameIds = new Set<string>();
+  for (const parent of [join(paths.root, "swf"), join(paths.root, "iframe")]) {
+    if (!(await isDirectory(parent))) continue;
+    for (const entry of await readdir(parent, { withFileTypes: true })) {
+      if (entry.isDirectory()) gameIds.add(entry.name);
+    }
+  }
+  gameIds.delete("scummvm");
+
+  const gameRuntimes: Record<string, string> = {
+    "pink-panther-hokus-pokus": "scummvm",
+    "pink-panther-passport-to-peril": "scummvm",
+  };
+  const packages: VersionedGamePackages = {};
+  for (const gameId of [...gameIds].sort()) {
+    const type = (await isDirectory(join(paths.root, "swf", gameId)))
+      ? "swf"
+      : "iframe";
+    const sourceRoot = join(paths.root, type, gameId);
+    const files = (await walkFiles(sourceRoot)).sort();
+    const revision = await offlineRevision(paths.root, files);
+    const versionedName = `${gameId}.${revision}`;
+    const versionedRoot = join(paths.root, type, versionedName);
+    await rename(sourceRoot, versionedRoot);
+    const versionedFiles = (await walkFiles(versionedRoot)).sort();
+    packages[gameId] = {
+      bytes: (
+        await Promise.all(
+          versionedFiles.map(async (path) => (await stat(path)).size),
+        )
+      ).reduce((total, bytes) => total + bytes, 0),
+      files: await Promise.all(
+        versionedFiles.map((path) => offlineFileEntry(paths.root, path)),
+      ),
+      revision,
+      root: `${type}/${versionedName}/`,
+      ...(gameRuntimes[gameId] ? { runtime: gameRuntimes[gameId] } : {}),
+      type,
+    };
+  }
+  return packages;
+}
+
+async function injectGameRoots(
+  paths: BuildPaths,
+  games: VersionedGamePackages,
+): Promise<void> {
+  const roots = Object.fromEntries(
+    Object.entries(games).map(([id, game]) => [id, game.root]),
+  );
+  const mapping = `<script>window.ASTRO_GAME_ROOTS=Object.freeze(${JSON.stringify(roots)});</script>`;
+  for (const path of [paths.html, paths.captureHtml]) {
+    if (!(await isFile(path))) continue;
+    const content = await readFile(path, "utf8");
+    const updated = await replaceExactlyOnce(
+      content,
+      /<script src="js\/games\.[a-f0-9]{8}\.js"><\/script>/g,
+      `${mapping}\n    $&`,
+      `Could not inject versioned game roots into ${relative(paths.root, path)}`,
+    );
+    await writeFile(path, updated);
+  }
 }
 
 export async function writeOfflineGameManifest(
@@ -528,49 +620,14 @@ export async function writeOfflineGameManifest(
     .map((entry) => join(paths.js, entry.name))
     .toSorted();
 
-  const gameIds = new Set<string>();
-  for (const parent of [join(paths.root, "swf"), join(paths.root, "iframe")]) {
-    if (!(await isDirectory(parent))) continue;
-    for (const entry of await readdir(parent, { withFileTypes: true })) {
-      if (entry.isDirectory()) gameIds.add(entry.name);
-    }
-  }
-  gameIds.delete("scummvm");
-
   const sharedRuntimes = {
     scummvm: [
       join(paths.root, "iframe", "scummvm"),
       join(paths.root, "vendor", "scummvm", "2026.3.0"),
     ],
   };
-  const gameRuntimes: Record<string, keyof typeof sharedRuntimes> = {
-    "pink-panther-hokus-pokus": "scummvm",
-    "pink-panther-passport-to-peril": "scummvm",
-  };
-
-  const games: Record<string, OfflineGame> = {};
-  for (const gameId of [...gameIds].sort()) {
-    const gameType = (await isDirectory(join(paths.root, "swf", gameId)))
-      ? "swf"
-      : "iframe";
-    const roots = [join(paths.root, gameType, gameId)];
-    const doomRoot = join(paths.root, "dos", "doom");
-    if (gameId === "doom" && (await isDirectory(doomRoot)))
-      roots.push(doomRoot);
-    const files = (await Promise.all(roots.map(walkFiles))).flat().sort();
-    const sharedRuntime = gameRuntimes[gameId];
-    games[gameId] = {
-      bytes: (
-        await Promise.all(files.map(async (path) => (await stat(path)).size))
-      ).reduce((total, bytes) => total + bytes, 0),
-      files: await Promise.all(
-        files.map((path) => offlineFileEntry(paths.root, path)),
-      ),
-      revision: await offlineRevision(paths.root, files),
-      ...(sharedRuntime ? { runtime: sharedRuntime } : {}),
-      type: gameType,
-    };
-  }
+  const games = await versionGamePackages(paths);
+  await injectGameRoots(paths, games);
 
   const runtimes = Object.fromEntries(
     await Promise.all(
@@ -588,6 +645,7 @@ export async function writeOfflineGameManifest(
         .filter(({ available }) => available)
         .map(async ({ id, roots }) => {
           const files = (await Promise.all(roots.map(walkFiles))).flat().sort();
+          const revision = await offlineRevision(paths.root, files);
           return [
             id,
             {
@@ -597,14 +655,17 @@ export async function writeOfflineGameManifest(
                 )
               ).reduce((total, bytes) => total + bytes, 0),
               files: await Promise.all(
-                files.map((path) => offlineFileEntry(paths.root, path)),
+                files.map((path) =>
+                  offlineFileEntry(paths.root, path, revision),
+                ),
               ),
-              revision: await offlineRevision(paths.root, files),
+              revision,
             },
           ];
         }),
     ),
   );
+  const runtimeRevision = await offlineRevision(paths.root, runtimeFiles);
   const manifest: OfflineManifest = {
     games,
     runtime: {
@@ -614,9 +675,11 @@ export async function writeOfflineGameManifest(
         )
       ).reduce((total, bytes) => total + bytes, 0),
       files: await Promise.all(
-        runtimeFiles.map((path) => offlineFileEntry(paths.root, path)),
+        runtimeFiles.map((path) =>
+          offlineFileEntry(paths.root, path, runtimeRevision),
+        ),
       ),
-      revision: await offlineRevision(paths.root, runtimeFiles),
+      revision: runtimeRevision,
     },
     runtimes,
     version,
@@ -745,10 +808,6 @@ export async function validateOutput(outputDir: string): Promise<void> {
     paths.offlineGamesJson,
     paths.versionJson,
     join(outputDir, "sw.js"),
-    join(outputDir, "swf", "bike-mania", "main.swf"),
-    join(outputDir, "iframe", "doom", "index.html"),
-    join(outputDir, "iframe", "inside-the-firewall", "index.html"),
-    join(outputDir, "dos", "doom", "doom.jsdos"),
     paths.fflateJs,
   ];
   const missing = (
@@ -917,6 +976,47 @@ export async function validateOutput(outputDir: string): Promise<void> {
     !offlineManifest.runtime?.files?.length
   ) {
     throw new Error("Build output has invalid offline game manifest");
+  }
+  const gameRoots = Object.fromEntries(
+    Object.entries(offlineManifest.games).map(([id, game]) => [id, game.root]),
+  );
+  if (
+    !html.includes(
+      `window.ASTRO_GAME_ROOTS=Object.freeze(${JSON.stringify(gameRoots)})`,
+    )
+  ) {
+    throw new Error("Build output has no matching versioned game roots");
+  }
+  for (const [id, game] of Object.entries(offlineManifest.games)) {
+    if (
+      game.root !== `${game.type}/${id}.${game.revision}/` ||
+      !game.files.length ||
+      game.files.some((file) => !file.url.startsWith(game.root))
+    ) {
+      throw new Error(`Build output has an invalid game package for ${id}`);
+    }
+    for (const file of game.files) {
+      if (!(await isFile(join(outputDir, file.url)))) {
+        throw new Error(
+          `Build output references a missing game file: ${file.url}`,
+        );
+      }
+    }
+  }
+  for (const runtime of [
+    offlineManifest.runtime,
+    ...Object.values(offlineManifest.runtimes ?? {}),
+  ]) {
+    for (const file of runtime.files) {
+      if (
+        !file.url.endsWith(`?rev=${runtime.revision}`) ||
+        !(await isFile(join(outputDir, file.url.split("?")[0])))
+      ) {
+        throw new Error(
+          `Build output has an invalid runtime file: ${file.url}`,
+        );
+      }
+    }
   }
   if (
     !(versionMetadata.version as string).endsWith(
