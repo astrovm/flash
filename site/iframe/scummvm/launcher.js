@@ -9,6 +9,7 @@
   const SCUMMVM_ROOT = "../../vendor/scummvm/2026.3.0/";
   const SCUMMVM_GAME_ROUTE = `/iframe/scummvm/local-games/${game.id}/`;
   const STORAGE_DIRECTORY = "astro-flash-scummvm";
+  const MAX_CD_IMAGE_SIZE = 800 * 1024 * 1024;
   const metadataKey = `astro-flash.scummvm.${game.id}.iso.v1`;
   const runtimeManifestName = `${game.id}-manifest.json`;
   let currentVolume = 1;
@@ -100,7 +101,7 @@
     <body>
       <main id="disc-panel">
         <h1></h1>
-        <p>Select your own English CD image. Local images are read directly and never uploaded.</p>
+        <p>Select your own CD image in any supported language. Local images are read directly and never uploaded.</p>
         <input id="disc-input" type="file" accept=".iso,application/x-iso9660-image">
         <label class="keep-copy"><input id="keep-copy" type="checkbox" checked> Keep a copy in this browser for next time</label>
         <div class="divider">or download an ISO</div>
@@ -224,7 +225,7 @@
     return root.getDirectoryHandle(STORAGE_DIRECTORY, { create });
   };
 
-  const writeRuntimeManifest = async (directory, fileName, gameFiles) => {
+  const writeRuntimeManifest = async (directory, fileName, iso, gameFiles) => {
     const handle = await directory.getFileHandle(runtimeManifestName, {
       create: true,
     });
@@ -233,7 +234,7 @@
       JSON.stringify({
         version: 1,
         isoFile: fileName,
-        isoSize: game.isoSize,
+        isoSize: iso.size,
         files: Object.fromEntries(
           gameFiles.map(({ name, offset, size }) => [name, { offset, size }]),
         ),
@@ -275,13 +276,10 @@
       const directory = await getStorageDirectory();
       const handle = await directory.getFileHandle(metadata.fileName);
       const iso = await handle.getFile();
-      if (iso.size !== game.isoSize) {
-        throw new Error("Saved CD image has the wrong size.");
-      }
       savedIso = iso;
       discUrl.value = metadata.url || "";
       savedCopyButton.hidden = false;
-      savedCopyButton.textContent = `Play browser copy (${formatBytes(iso.size)})`;
+      savedCopyButton.textContent = `Play ${metadata.language ? `${metadata.language} ` : ""}browser copy (${formatBytes(iso.size)})`;
     } catch {
       localStorage.removeItem(metadataKey);
     }
@@ -383,14 +381,17 @@
     fileName,
     iso,
     gameFiles,
-    { keep, url = "" },
+    { keep, language, url = "" },
   ) => {
     const previous = keep ? readMetadata() : null;
     if (keep) {
-      localStorage.setItem(metadataKey, JSON.stringify({ fileName, url }));
+      localStorage.setItem(
+        metadataKey,
+        JSON.stringify({ fileName, language, url }),
+      );
     }
     try {
-      await writeRuntimeManifest(directory, fileName, gameFiles);
+      await writeRuntimeManifest(directory, fileName, iso, gameFiles);
     } catch (error) {
       if (keep) {
         if (previous) {
@@ -404,7 +405,7 @@
     if (keep) {
       savedIso = iso;
       savedCopyButton.hidden = false;
-      savedCopyButton.textContent = `Play browser copy (${formatBytes(iso.size)})`;
+      savedCopyButton.textContent = `Play ${language} browser copy (${formatBytes(iso.size)})`;
       if (previous?.fileName && previous.fileName !== fileName) {
         await directory.removeEntry(previous.fileName).catch(() => {});
       }
@@ -419,12 +420,7 @@
     );
   };
 
-  const storeIso = async (iso, gameFiles, { keep, url = "" }) => {
-    if (iso.size !== game.isoSize) {
-      throw new Error(
-        `The CD image is ${formatBytes(iso.size)}, but this game requires ${formatBytes(game.isoSize)}.`,
-      );
-    }
+  const storeIso = async (iso, gameFiles, options) => {
     await storagePolicy.requestPersistence(navigator.storage);
     const directory = await getStorageDirectory(true);
     const fileName = `${game.id}-${crypto.randomUUID()}.iso`;
@@ -439,7 +435,7 @@
         copied += value.byteLength;
         await writable.write(value);
         setMessage(
-          `Saving browser copy… ${formatBytes(copied)} of ${formatBytes(game.isoSize)} (${((copied / game.isoSize) * 100).toFixed(1)}%)`,
+          `Saving browser copy… ${formatBytes(copied)} of ${formatBytes(iso.size)} (${((copied / iso.size) * 100).toFixed(1)}%)`,
         );
       }
       await writable.close();
@@ -451,8 +447,7 @@
     try {
       const storedIso = await handle.getFile();
       await activateStoredIso(directory, fileName, storedIso, gameFiles, {
-        keep,
-        url,
+        ...options,
       });
       return { fileName, iso: storedIso };
     } catch (error) {
@@ -464,25 +459,36 @@
   const prepareIso = async (iso, options) => {
     setControlsDisabled(true);
     setMessage("Checking CD image…");
-    const gameFiles = await window.AstroIso9660.gameFilesFromIso(
+    if (iso.size > MAX_CD_IMAGE_SIZE) {
+      throw new Error(
+        "The CD image is larger than the supported 800 MiB limit.",
+      );
+    }
+    const { gameFiles, language } = await window.AstroIso9660.gameFilesFromIso(
       iso,
-      game.requiredFiles,
-      game.title,
+      game,
     );
-    if (options.keep) return storeIso(iso, gameFiles, options);
+    const preparedOptions = { ...options, language };
+    if (options.keep)
+      return {
+        ...(await storeIso(iso, gameFiles, preparedOptions)),
+        language,
+      };
     activateTemporaryIso(iso, gameFiles);
-    return { fileName: null, iso };
+    return { fileName: null, iso, language };
   };
 
   discInput.addEventListener("change", async () => {
     const [iso] = discInput.files;
     if (!iso) return;
     try {
-      await prepareIso(iso, { keep: keepCopy.checked });
+      const { language } = await prepareIso(iso, {
+        keep: keepCopy.checked,
+      });
       setMessage(
         keepCopy.checked
-          ? "Browser copy saved. Starting ScummVM…"
-          : "Starting ScummVM…",
+          ? `${language} browser copy saved. Starting ScummVM…`
+          : `${language} CD image verified. Starting ScummVM…`,
       );
       await startScummVm();
     } catch (error) {
@@ -497,11 +503,8 @@
     try {
       setControlsDisabled(true);
       setMessage("Checking browser copy…");
-      const gameFiles = await window.AstroIso9660.gameFilesFromIso(
-        savedIso,
-        game.requiredFiles,
-        game.title,
-      );
+      const { gameFiles, language } =
+        await window.AstroIso9660.gameFilesFromIso(savedIso, game);
       const metadata = readMetadata();
       const directory = await getStorageDirectory();
       await activateStoredIso(
@@ -509,7 +512,7 @@
         metadata.fileName,
         savedIso,
         gameFiles,
-        { keep: true, url: metadata.url || "" },
+        { keep: true, language, url: metadata.url || "" },
       );
       await startScummVm();
     } catch (error) {
@@ -559,9 +562,9 @@
       }
 
       const contentLength = Number(response.headers.get("Content-Length"));
-      if (contentLength && contentLength !== game.isoSize) {
+      if (contentLength > MAX_CD_IMAGE_SIZE) {
         throw new Error(
-          `The remote file is ${formatBytes(contentLength)}, but this game requires ${formatBytes(game.isoSize)}.`,
+          "The remote CD image is larger than the supported 800 MiB limit.",
         );
       }
 
@@ -581,11 +584,9 @@
         const { done, value } = await reader.read();
         if (done) break;
         downloaded += value.byteLength;
-        if (downloaded > game.isoSize) {
+        if (downloaded > MAX_CD_IMAGE_SIZE) {
           await reader.cancel();
-          throw new Error(
-            "The downloaded file is larger than the expected CD image.",
-          );
+          throw new Error("The downloaded CD image exceeds the 800 MiB limit.");
         }
         if (writable) {
           await writable.write(value);
@@ -593,7 +594,9 @@
           chunks.push(value);
         }
         setMessage(
-          `Downloading… ${formatBytes(downloaded)} of ${formatBytes(game.isoSize)} (${((downloaded / game.isoSize) * 100).toFixed(1)}%)`,
+          contentLength
+            ? `Downloading… ${formatBytes(downloaded)} of ${formatBytes(contentLength)} (${((downloaded / contentLength) * 100).toFixed(1)}%)`
+            : `Downloading… ${formatBytes(downloaded)}`,
         );
       }
       let iso;
@@ -604,20 +607,13 @@
       } else {
         iso = new Blob(chunks, { type: "application/x-iso9660-image" });
       }
-      if (iso.size !== game.isoSize) {
-        throw new Error(
-          `The download is ${formatBytes(iso.size)}, but this game requires ${formatBytes(game.isoSize)}.`,
-        );
-      }
       setMessage("Checking downloaded CD image…");
-      const gameFiles = await window.AstroIso9660.gameFilesFromIso(
-        iso,
-        game.requiredFiles,
-        game.title,
-      );
+      const { gameFiles, language } =
+        await window.AstroIso9660.gameFilesFromIso(iso, game);
       if (keepCopy.checked) {
         await activateStoredIso(directory, fileName, iso, gameFiles, {
           keep: true,
+          language,
           url: url.href,
         });
       } else {
@@ -625,8 +621,8 @@
       }
       setMessage(
         keepCopy.checked
-          ? "Download verified and saved. Starting ScummVM…"
-          : "Download verified. Starting ScummVM…",
+          ? `${language} download verified and saved. Starting ScummVM…`
+          : `${language} download verified. Starting ScummVM…`,
       );
       directory = null;
       fileName = null;

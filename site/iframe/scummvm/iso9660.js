@@ -98,16 +98,28 @@
     return files;
   };
 
-  const gameFilesFromIso = async (iso, requiredFiles, gameTitle) => {
+  const gameFilesFromIso = async (iso, game) => {
     const files = await indexIsoFiles(iso);
+    const orb = files.get(game.orbFile);
+    const language = orb && game.releases[String(orb.size)];
+    if (!language) {
+      throw new Error(
+        `This is not a supported ${game.title} CD image (${game.orbFile} was not recognized).`,
+      );
+    }
+
+    const requiredFiles = game.fileSets.find((fileSet) =>
+      fileSet.every((name) => files.has(name)),
+    );
+    if (!requiredFiles) {
+      throw new Error(
+        `This ${language} ${game.title} CD image is missing required game files.`,
+      );
+    }
+
     const gameFiles = [];
-    for (const [name, expectedSize] of Object.entries(requiredFiles)) {
+    for (const name of requiredFiles) {
       const entry = files.get(name);
-      if (!entry || entry.size !== expectedSize) {
-        throw new Error(
-          `This is not the English ${gameTitle} CD image (${name} was not found).`,
-        );
-      }
       const start = entry.extent * ISO_SECTOR_SIZE;
       gameFiles.push({
         name,
@@ -116,11 +128,10 @@
         data: iso.slice(start, start + entry.size),
       });
     }
-    return gameFiles;
+    return { gameFiles, language };
   };
 
-  const gameBlobsFromIso = async (iso, requiredFiles, gameTitle) =>
-    gameFilesFromIso(iso, requiredFiles, gameTitle);
+  const gameBlobsFromIso = gameFilesFromIso;
 
   return { gameBlobsFromIso, gameFilesFromIso, indexIsoFiles };
 });
