@@ -164,6 +164,9 @@ test("Flash URL routing is shared and uses exact archived assets", async () => {
     "window.FLASH_GAMES[gameId]",
     "router.wrapFetch(window.fetch)",
   );
+  expect(capture.indexOf("if (!game)")).toBeLessThan(
+    capture.indexOf("`${game.type}/${gameId}/`"),
+  );
   absent(games, "spoofUrl", "externalHosts");
   absent(capture, "spoofUrls", "externalHosts", "frameRates");
 });
@@ -926,6 +929,10 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
     'title: "Effects"',
     'title: "Advanced Appearance"',
     'title: "(Default Monitor) and Properties"',
+    'data-monitor-tab="adapter"',
+    'data-monitor-panel="adapter"',
+    'tab.addEventListener("click", () => selectTab(tab))',
+    'event.key === "ArrowRight"',
     'title: "Browse"',
     'data-system-icon="__my-documents"',
     'data-system-icon="__my-computer"',
@@ -966,6 +973,7 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
     "touch-action: none",
     ".desktop-items-dialog",
     ".desktop-icon-choices",
+    ".monitor-property-panel[hidden]",
     'html[data-xp-appearance="olive"]',
     "#desktop[data-monitor-resolution]",
   );

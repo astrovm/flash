@@ -3059,12 +3059,59 @@ const openMonitorPropertiesDialog = (ownerWindow) => {
   setDisplayDialogOwnerActive(ownerWindow, false);
   addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
-    <div class="monitor-property-tabs" role="tablist"><button class="selected">General</button><button>Adapter</button><button>Monitor</button><button>Troubleshoot</button></div>
-    <section class="monitor-general-panel">
+    <div class="monitor-property-tabs" role="tablist" aria-label="Monitor properties">
+      <button type="button" class="selected" role="tab" aria-selected="true" aria-controls="monitor-general-panel" data-monitor-tab="general">General</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-adapter-panel" data-monitor-tab="adapter" tabindex="-1">Adapter</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-monitor-panel" data-monitor-tab="monitor" tabindex="-1">Monitor</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-troubleshoot-panel" data-monitor-tab="troubleshoot" tabindex="-1">Troubleshoot</button>
+    </div>
+    <section class="monitor-property-panel" id="monitor-general-panel" role="tabpanel" data-monitor-panel="general">
       <fieldset><legend>Display</legend><p>If your screen resolution makes screen items too small to view<br>comfortably, you can increase the DPI to compensate. To change<br>font sizes only, click Cancel and go to the Appearance tab.</p><label>DPI setting:<select class="xp-select" disabled><option>Normal size (96 DPI)</option></select></label><p>Normal size (96 dpi)</p></fieldset>
       <fieldset><legend>Compatibility</legend><p>Some programs might not operate properly unless you restart the<br>computer after changing display settings.</p><p>After I change display settings:</p><label><input type="radio" name="display-compatibility"> Restart the computer before applying the new display settings</label><label><input type="radio" name="display-compatibility" checked> Apply the new display settings without restarting</label><label><input type="radio" name="display-compatibility"> Ask me before applying the new display settings</label><p>Some games and other programs must be run in 256-color mode.<br>Learn more about <u>running programs in 256-color mode</u>.</p></fieldset>
     </section>
+    <section class="monitor-property-panel" id="monitor-adapter-panel" role="tabpanel" data-monitor-panel="adapter" hidden>
+      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Astro Flash virtual display</p></fieldset>
+      <fieldset><legend>Adapter</legend><p>This desktop uses the browser's active graphics adapter.</p><button type="button" class="xp-property-button" disabled>List All Modes...</button></fieldset>
+    </section>
+    <section class="monitor-property-panel" id="monitor-monitor-panel" role="tabpanel" data-monitor-panel="monitor" hidden>
+      <fieldset><legend>Monitor type</legend><p>(Default Monitor)</p><button type="button" class="xp-property-button" disabled>Properties</button></fieldset>
+      <fieldset><legend>Monitor settings</legend><label>Screen refresh rate:<select class="xp-select" disabled><option>Use hardware default setting</option></select></label><label><input type="checkbox" checked disabled> Hide modes that this monitor cannot display</label></fieldset>
+    </section>
+    <section class="monitor-property-panel" id="monitor-troubleshoot-panel" role="tabpanel" data-monitor-panel="troubleshoot" hidden>
+      <fieldset><legend>Hardware acceleration</legend><p>If your computer is having problems with graphics, move the slider toward None.</p><label class="monitor-acceleration"><span>None</span><input type="range" min="0" max="5" value="5"><span>Full</span></label><p>All cursor and advanced drawing accelerations are enabled.</p></fieldset>
+      <label><input type="checkbox" checked> Enable write combining</label>
+    </section>
   `;
+  const tabs = [...dialog.body.querySelectorAll("[data-monitor-tab]")];
+  const panels = [...dialog.body.querySelectorAll("[data-monitor-panel]")];
+  const selectTab = (tab) => {
+    tabs.forEach((candidate) => {
+      const selected = candidate === tab;
+      candidate.classList.toggle("selected", selected);
+      candidate.setAttribute("aria-selected", String(selected));
+      candidate.tabIndex = selected ? 0 : -1;
+    });
+    panels.forEach((panel) => {
+      panel.hidden = panel.dataset.monitorPanel !== tab.dataset.monitorTab;
+    });
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      const direction =
+        event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (!direction && event.key !== "Home" && event.key !== "End") return;
+      event.preventDefault();
+      const nextIndex =
+        event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? tabs.length - 1
+            : (index + direction + tabs.length) % tabs.length;
+      selectTab(tabs[nextIndex]);
+      tabs[nextIndex].focus();
+    });
+  });
   const buttons = document.createElement("div");
   buttons.className = "dlg-buttons";
   const ok = XPDialogs.createDialogButton(
@@ -3084,7 +3131,7 @@ const openMonitorPropertiesDialog = (ownerWindow) => {
   dialog.body.append(buttons);
   dialog.defaultButton = ok;
   dialog.onResult(() => setDisplayDialogOwnerActive(ownerWindow, true));
-  dialog.body.querySelector('input[type="radio"]')?.focus();
+  tabs[0].focus();
 };
 
 const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {

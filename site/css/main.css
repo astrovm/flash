@@ -3517,7 +3517,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   background: #fff;
 }
 
-.monitor-general-panel {
+.monitor-property-panel {
   min-height: 342px;
   margin-top: -1px;
   padding: 12px 13px;
@@ -3525,22 +3525,33 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   background: #fff;
 }
 
-.monitor-general-panel fieldset {
+.monitor-property-panel[hidden] {
+  display: none;
+}
+
+.monitor-acceleration {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.monitor-property-panel fieldset {
   margin: 0 0 12px;
   padding: 8px 11px;
   border: 1px solid #d0cdbd;
 }
 
-.monitor-general-panel legend {
+.monitor-property-panel legend {
   color: #0645d1;
 }
 
-.monitor-general-panel label {
+.monitor-property-panel label {
   display: block;
   margin: 6px 0;
 }
 
-.monitor-general-panel select {
+.monitor-property-panel select {
   display: block;
   width: 250px;
   margin-top: 5px;

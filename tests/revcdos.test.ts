@@ -124,6 +124,13 @@ test("shows actionable startup errors above the game canvas", () => {
   expect(game).toContain('canvas.addEventListener("webglcontextlost"');
   expect(game).toContain('window.addEventListener("error"');
   expect(game).toContain('window.addEventListener("unhandledrejection"');
+  expect(game).toContain("postRun: [stopWatchingForStartupErrors]");
+  expect(game).toContain(
+    'window.removeEventListener("error", handleStartupError)',
+  );
+  expect(game).toContain(
+    'window.removeEventListener("unhandledrejection", handleStartupRejection)',
+  );
   expect(game).toContain("script.onerror");
   expect(game).toContain("window.location.reload()");
   expect(game).toContain("Enable browser hardware acceleration");

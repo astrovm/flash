@@ -9,6 +9,11 @@ const startupErrorRetry = document.getElementById("startup-error-retry");
 var wasm_content = "index.wasm";
 let webGLStartupFailed = false;
 
+function stopWatchingForStartupErrors() {
+  window.removeEventListener("error", handleStartupError);
+  window.removeEventListener("unhandledrejection", handleStartupRejection);
+}
+
 function showStartupError(message, error) {
   startupErrorTitle.textContent = "Unable to start reVCDOS";
   startupErrorMessage.textContent = message;
@@ -31,23 +36,26 @@ startupErrorRetry.addEventListener("click", () => {
   window.location.reload();
 });
 
-window.addEventListener("error", (event) => {
+function handleStartupError(event) {
   if (!webGLStartupFailed) {
     showStartupError(
       "The game could not finish starting. Reload and try again. If the problem continues, update your browser.",
       event.error || event.message,
     );
   }
-});
+}
 
-window.addEventListener("unhandledrejection", (event) => {
+function handleStartupRejection(event) {
   if (!webGLStartupFailed) {
     showStartupError(
       "The game could not finish starting. Check your connection, then reload and try again.",
       event.reason,
     );
   }
-});
+}
+
+window.addEventListener("error", handleStartupError);
+window.addEventListener("unhandledrejection", handleStartupRejection);
 
 const params = new URLSearchParams(window.location.search);
 const sessionAssets = params.get("session") === "1";
@@ -369,7 +377,7 @@ async function loadGame(data) {
       }
     },
     preRun: [],
-    postRun: [],
+    postRun: [stopWatchingForStartupErrors],
     print: (...args) => console.log(args.join(" ")),
     printErr: (...args) => console.error(args.join(" ")),
     getPreloadedPackage: () => {

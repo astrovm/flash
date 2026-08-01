@@ -29,12 +29,15 @@
       const params = new URLSearchParams(location.search);
       const gameId = params.get("game");
       const game = window.FLASH_GAMES[gameId];
-      const gameRoot =
-        window.ASTRO_GAME_ROOTS?.[gameId] || `${game.type}/${gameId}/`;
 
       if (!game) {
         throw new Error(`Unknown game: ${gameId}`);
-      } else if (game.type === "iframe") {
+      }
+
+      const gameRoot =
+        window.ASTRO_GAME_ROOTS?.[gameId] || `${game.type}/${gameId}/`;
+
+      if (game.type === "iframe") {
         const ifr = document.createElement("iframe");
         ifr.src = gameRoot;
         document.body.appendChild(ifr);
