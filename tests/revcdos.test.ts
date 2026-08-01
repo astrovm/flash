@@ -122,6 +122,7 @@ test("shows actionable startup errors above the game canvas", () => {
   expect(game).toContain("startupError.hidden = false");
   expect(game).toContain('canvas.addEventListener("webglcontextcreationerror"');
   expect(game).toContain('canvas.addEventListener("webglcontextlost"');
+  expect(game).toContain('window.addEventListener("error"');
   expect(game).toContain('window.addEventListener("unhandledrejection"');
   expect(game).toContain("script.onerror");
   expect(game).toContain("window.location.reload()");

@@ -101,6 +101,7 @@
         !/^[a-z0-9-]+$/.test(id) ||
         !validateManifestEntry(entry) ||
         !["swf", "iframe"].includes(entry.type) ||
+        entry.root !== `${entry.type}/${id}.${entry.revision}/` ||
         (entry.runtime !== undefined &&
           (!/^[a-z0-9-]+$/.test(entry.runtime) ||
             !manifest.runtimes?.[entry.runtime]))
@@ -457,6 +458,7 @@
       }
       const cache = await environment.caches.open(bundledCacheName);
       const previousFiles = records[id]?.files || [];
+      const previousUrls = new Set(previousFiles.map(absoluteUrl));
       let loaded = 0;
       const written = [];
       try {
@@ -474,17 +476,19 @@
           progress(file.bytes);
         }
       } catch (error) {
-        const cleanupUrls = new Set([
-          ...written,
-          ...previousFiles.map((url) => absoluteUrl(url)),
-        ]);
         await Promise.all(
-          [...cleanupUrls].map((url) => cache.delete(url).catch(() => {})),
+          written
+            .filter((url) => !previousUrls.has(url))
+            .map((url) => cache.delete(url).catch(() => {})),
         );
-        delete records[id];
-        persistRecords();
         throw error;
       }
+      const nextUrls = new Set(entry.files.map((file) => absoluteUrl(file.url)));
+      await Promise.all(
+        [...previousUrls]
+          .filter((url) => !nextUrls.has(url))
+          .map((url) => cache.delete(url).catch(() => {})),
+      );
       records[id] = {
         bytes: entry.bytes,
         files: entry.files.map((file) => file.url),

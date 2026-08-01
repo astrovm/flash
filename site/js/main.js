@@ -1076,6 +1076,9 @@ const updateMaximizeButton = (win) => {
   button.setAttribute("aria-label", button.title);
 };
 
+const bundledGameRoot = (gameId, type) =>
+  window.ASTRO_GAME_ROOTS?.[gameId] || `${type}/${gameId}/`;
+
 const loadRuffleSWF = (gameId, win) => {
   const ruffle = window.RufflePlayer.newest();
   const player = ruffle.createPlayer();
@@ -1090,13 +1093,14 @@ const loadRuffleSWF = (gameId, win) => {
   player.addEventListener("loadedmetadata", applyVolume, { once: true });
 
   const game = gamesList[gameId];
+  const gameRoot = bundledGameRoot(gameId, "swf");
   const archiveUrl = game.archive?.launchUrl;
   const frameRate = resolveGameFrameRate(gameId);
   const config = {
-    url: game.url || archiveUrl || `swf/${gameId}/main.swf`,
+    url: game.url || archiveUrl || `${gameRoot}main.swf`,
     base:
       game.base ||
-      (archiveUrl ? new URL(".", archiveUrl).href : `swf/${gameId}/`),
+      (archiveUrl ? new URL(".", archiveUrl).href : gameRoot),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,
@@ -1254,7 +1258,7 @@ const openGameProperties = (win) => {
 const loadIframe = (gameId, win) => {
   const player = document.createElement("iframe");
   player.allow = "fullscreen";
-  player.src = `iframe/${gameId}/`;
+  player.src = bundledGameRoot(gameId, "iframe");
   player.id = `player-${gameId}`;
   win.content.appendChild(player);
   win.player = player;

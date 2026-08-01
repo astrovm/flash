@@ -31,6 +31,24 @@ startupErrorRetry.addEventListener("click", () => {
   window.location.reload();
 });
 
+window.addEventListener("error", (event) => {
+  if (!webGLStartupFailed) {
+    showStartupError(
+      "The game could not finish starting. Reload and try again. If the problem continues, update your browser.",
+      event.error || event.message,
+    );
+  }
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  if (!webGLStartupFailed) {
+    showStartupError(
+      "The game could not finish starting. Check your connection, then reload and try again.",
+      event.reason,
+    );
+  }
+});
+
 const params = new URLSearchParams(window.location.search);
 const sessionAssets = params.get("session") === "1";
 
@@ -400,23 +418,6 @@ async function loadGame(data) {
     const module = await WebAssembly.instantiate(wasm, info);
     return receiveInstance(module.instance, module);
   };
-  window.onerror = (message, source, line, column, error) => {
-    if (!webGLStartupFailed) {
-      showStartupError(
-        "The game could not finish starting. Reload and try again. If the problem continues, update your browser.",
-        error || `${message} (${source}:${line}:${column})`,
-      );
-    }
-    return false;
-  };
-  window.addEventListener("unhandledrejection", (event) => {
-    if (!webGLStartupFailed) {
-      showStartupError(
-        "The game could not finish starting. Check your connection, then reload and try again.",
-        event.reason,
-      );
-    }
-  });
   Module.arguments = window.location.search
     .slice(1)
     .split("&")

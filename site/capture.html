@@ -29,12 +29,14 @@
       const params = new URLSearchParams(location.search);
       const gameId = params.get("game");
       const game = window.FLASH_GAMES[gameId];
+      const gameRoot =
+        window.ASTRO_GAME_ROOTS?.[gameId] || `${game.type}/${gameId}/`;
 
       if (!game) {
         throw new Error(`Unknown game: ${gameId}`);
       } else if (game.type === "iframe") {
         const ifr = document.createElement("iframe");
-        ifr.src = `iframe/${gameId}/`;
+        ifr.src = gameRoot;
         document.body.appendChild(ifr);
       } else {
         const router = window.AstroFlashUrlRouter.create(
@@ -49,8 +51,8 @@
 
         const archiveUrl = game.archive?.launchUrl;
         player.load({
-          url: archiveUrl || `swf/${gameId}/main.swf`,
-          base: archiveUrl ? new URL(".", archiveUrl).href : `swf/${gameId}/`,
+          url: archiveUrl || `${gameRoot}main.swf`,
+          base: archiveUrl ? new URL(".", archiveUrl).href : gameRoot,
           letterbox: "on",
           scale: "showAll",
           forceScale: true,
