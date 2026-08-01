@@ -8430,11 +8430,19 @@ const openSearchDialog = () => openSystemWindow("__search");
 
 const openRunDialog = () => {
   const dialog = XPDialogs.createDialog({ title: "Run" });
+  dialog.el.classList.add("run-dialog");
+  const introRow = document.createElement("div");
+  introRow.className = "run-dialog-intro";
+  const icon = document.createElement("img");
+  icon.src = "assets/xp/icons/Run.png";
+  icon.alt = "";
   const intro = document.createElement("p");
   intro.textContent =
     "Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.";
+  introRow.append(icon, intro);
   const prompt = document.createElement("label");
-  setAccessKeyText(prompt, "&Open:");
+  const promptText = document.createElement("span");
+  setAccessKeyText(promptText, "&Open:");
   const input = document.createElement("input");
   input.type = "text";
   input.className = "shell-dialog-input";
@@ -8445,9 +8453,10 @@ const openRunDialog = () => {
   getRunHistory().forEach((entry) =>
     history.appendChild(new Option(entry, entry)),
   );
-  prompt.appendChild(input);
+  prompt.append(promptText, input);
   const status = document.createElement("p");
   status.className = "shell-dialog-status";
+  status.hidden = true;
   const run = () => {
     const resolved = resolveShellCommand(input.value);
     if (!resolved || resolved.run() === false) {
@@ -8477,7 +8486,7 @@ const openRunDialog = () => {
   const row = document.createElement("div");
   row.className = "dlg-buttons";
   row.append(runButton, cancelButton, browseButton);
-  dialog.body.append(intro, prompt, history, status, row);
+  dialog.body.append(introRow, prompt, history, status, row);
   dialog.defaultButton = runButton;
   [
     [runButton, "&OK"],

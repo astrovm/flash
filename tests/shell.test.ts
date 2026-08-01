@@ -741,10 +741,13 @@ test("start search and run open their own dialogs", () => {
     'XPDialogs.openFile({ title: "Browse" })',
     "resolveShellCommand(input.value)",
     "rememberRunCommand(input.value)",
-    'setAccessKeyText(prompt, "&Open:")',
+    'setAccessKeyText(promptText, "&Open:")',
+    'dialog.el.classList.add("run-dialog")',
+    'icon.src = "assets/xp/icons/Run.png"',
     'dialog.accessKeys.set("o"',
     "XPDialogs.parseAccessKey(label)",
   );
+  contains(css, "width: min(346px, calc(100vw - 8px))", "bottom: 35px");
   contains(javascript, "const openAllPrograms");
   absent(
     places,

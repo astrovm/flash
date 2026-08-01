@@ -4110,6 +4110,63 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   width: min(520px, calc(100vw - 32px));
 }
 
+.run-dialog {
+  position: fixed;
+  left: 4px;
+  bottom: 35px;
+  width: min(346px, calc(100vw - 8px));
+  height: 184px;
+}
+
+.run-dialog .dlg-body {
+  position: relative;
+  height: 153px;
+  padding: 11px 12px 11px 9px;
+}
+
+.run-dialog-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.run-dialog-intro img {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.run-dialog-intro p {
+  margin: 2px 0 0;
+  line-height: 14px;
+}
+
+.run-dialog .dlg-body > label {
+  display: grid;
+  grid-template-columns: 45px minmax(0, 1fr);
+  align-items: center;
+  margin-top: 12px;
+}
+
+.run-dialog .shell-dialog-input {
+  width: 100%;
+  margin: 0;
+}
+
+.run-dialog .dlg-buttons {
+  position: absolute;
+  left: 93px;
+  bottom: 15px;
+  gap: 8px;
+  padding: 0;
+}
+
+.run-dialog .dlg-buttons .xp-btn {
+  width: 73px;
+  min-width: 73px;
+}
+
 .dlg-body {
   padding: 11px 12px;
   color: #111;
