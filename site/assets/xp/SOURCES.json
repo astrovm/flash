@@ -204,6 +204,19 @@
     "member": "I386/TREBUCBD.TT_",
     "sha256": "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e"
   },
+  "assets/xp/icons/Notepad.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NOTEPAD.EX_",
+    "sha256": "ee8a58534181d1292f9feef79b55f69d6b3e292e9e3ba5d5667616d9ae6a4109",
+    "resource": {
+      "parentSha256": "865f34fe7ba81e9622ddbdfc511547d190367bbf3dad21ceb6da3eec621044f5",
+      "type": 14,
+      "id": 2,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "0a09032ecc102bb86a5c3f449e0eead2b8fe812f46f9fb6e8ac779d6416baedb"
+    }
+  },
   "assets/xp/icons/AppearanceAndThemes.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

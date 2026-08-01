@@ -1293,6 +1293,7 @@ html[data-xp-appearance="silver"] {
   background: var(--xp-beige);
   color: #000;
   overflow: hidden;
+  padding: 1px 1px 3px;
 }
 
 .notepad-menu-bar {
@@ -1300,7 +1301,7 @@ html[data-xp-appearance="silver"] {
   z-index: 4;
   flex: none;
   display: flex;
-  height: 22px;
+  height: 21px;
   padding: 0 2px;
   border-bottom: 1px solid #aca899;
   background: var(--xp-beige);
@@ -1315,7 +1316,7 @@ html[data-xp-appearance="silver"] {
 }
 
 .notepad-menu-button {
-  height: 21px;
+  height: 20px;
   padding: 1px 6px;
   border: 1px solid transparent;
   background: transparent;
@@ -1405,7 +1406,7 @@ html[data-xp-appearance="silver"] {
     "Courier New",
     monospace;
   white-space: pre;
-  overflow: auto;
+  overflow: scroll;
 }
 
 .notepad-editor.word-wrap {
@@ -6129,7 +6130,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .start-menu-right::-webkit-scrollbar,
 #desktop-icons::-webkit-scrollbar,
 .explorer-sidebar::-webkit-scrollbar,
-.explorer-main::-webkit-scrollbar {
+.explorer-main::-webkit-scrollbar,
+.notepad-editor::-webkit-scrollbar {
   width: 17px;
   height: 17px;
 }
@@ -6138,7 +6140,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .start-menu-right::-webkit-scrollbar-corner,
 #desktop-icons::-webkit-scrollbar-corner,
 .explorer-sidebar::-webkit-scrollbar-corner,
-.explorer-main::-webkit-scrollbar-corner {
+.explorer-main::-webkit-scrollbar-corner,
+.notepad-editor::-webkit-scrollbar-corner {
   background: #dfdfdf;
 }
 
@@ -6146,7 +6149,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .start-menu-right::-webkit-scrollbar-track,
 #desktop-icons::-webkit-scrollbar-track,
 .explorer-sidebar::-webkit-scrollbar-track,
-.explorer-main::-webkit-scrollbar-track {
+.explorer-main::-webkit-scrollbar-track,
+.notepad-editor::-webkit-scrollbar-track {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -0.5 17 1' shape-rendering='crispEdges'%3E%3Cpath stroke='%23eeede5' d='M0 0h1m15 0h1'/%3E%3Cpath stroke='%23f3f1ec' d='M1 0h1'/%3E%3Cpath stroke='%23f4f1ec' d='M2 0h1'/%3E%3Cpath stroke='%23f4f3ee' d='M3 0h1'/%3E%3Cpath stroke='%23f5f4ef' d='M4 0h1'/%3E%3Cpath stroke='%23f6f5f0' d='M5 0h1'/%3E%3Cpath stroke='%23f7f7f3' d='M6 0h1'/%3E%3Cpath stroke='%23f9f8f4' d='M7 0h1'/%3E%3Cpath stroke='%23f9f9f7' d='M8 0h1'/%3E%3Cpath stroke='%23fbfbf8' d='M9 0h1'/%3E%3Cpath stroke='%23fbfbf9' d='M10 0h2'/%3E%3Cpath stroke='%23fdfdfa' d='M12 0h1'/%3E%3Cpath stroke='%23fefefb' d='M13 0h3'/%3E%3C/svg%3E");
 }
 
@@ -6154,7 +6158,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .start-menu-right::-webkit-scrollbar-thumb,
 #desktop-icons::-webkit-scrollbar-thumb,
 .explorer-sidebar::-webkit-scrollbar-thumb,
-.explorer-main::-webkit-scrollbar-thumb {
+.explorer-main::-webkit-scrollbar-thumb,
+.notepad-editor::-webkit-scrollbar-thumb {
   background-position: 50%;
   background-repeat: no-repeat;
   background-color: #c8d6fb;

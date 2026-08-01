@@ -302,7 +302,14 @@ test("text files open in filesystem backed notepad", () => {
     "win.beforeClose = confirmSaveChanges",
   );
   contains(javascript, "&File", "&Edit", "F&ormat", "&View", "&Help");
-  contains(css, ".notepad-editor");
+  contains(
+    javascript,
+    'icon: "assets/xp/icons/Notepad.png"',
+    "Math.min(768, desktopWidth - 16)",
+    "Math.min(530, desktopHeight - 16)",
+    "status.hidden = true",
+  );
+  contains(css, ".notepad-editor", "overflow: scroll");
 });
 test("selected desktop icon shows full label", () => {
   const match = css.match(

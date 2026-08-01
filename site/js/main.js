@@ -200,7 +200,7 @@ const systemShortcuts = {
   },
   __notepad: {
     title: "Notepad",
-    glyph: "notepad",
+    icon: "assets/xp/icons/Notepad.png",
     desktop: false,
   },
   __search: {
@@ -5275,12 +5275,12 @@ const openNotepad = (file = null) => {
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
-  const windowWidth = Math.min(600, desktopWidth - 16);
-  const windowHeight = Math.min(430, desktopHeight - 16);
+  const windowWidth = Math.min(768, desktopWidth - 16);
+  const windowHeight = Math.min(530, desktopHeight - 16);
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  el.style.left = `${Math.min(44, Math.max(8, desktopWidth - windowWidth))}px`;
+  el.style.top = `${Math.min(58, Math.max(8, desktopHeight - windowHeight))}px`;
 
   const content = el.querySelector(".window-content");
   content.className = "notepad-content";
@@ -5296,6 +5296,7 @@ const openNotepad = (file = null) => {
   editor.wrap = "off";
   const status = document.createElement("div");
   status.className = "notepad-status";
+  status.hidden = true;
   content.append(menuBar, editor, status);
   document.getElementById("desktop").appendChild(el);
 
@@ -5510,7 +5511,7 @@ const openNotepad = (file = null) => {
       ],
     ],
     ["F&ormat", [["&Word Wrap", "word-wrap", ""]]],
-    ["&View", [["&Status Bar", "status-bar", "", true]]],
+    ["&View", [["&Status Bar", "status-bar", ""]]],
     ["&Help", [["&About Notepad", "about", ""]]],
   ];
 
