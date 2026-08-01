@@ -2666,9 +2666,9 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .display-panel {
   position: absolute;
   z-index: 0;
-  inset: 31px 7px 43px;
+  inset: 27px 7px 38px;
   min-height: 0;
-  padding: 4px 15px;
+  padding: 4px 13px;
   border: 1px solid #919b9c;
   background: #fff;
 }
@@ -2679,7 +2679,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .display-tabs {
   z-index: 2;
-  top: 7px;
+  top: 9px;
   left: 8px;
   right: auto;
   gap: 0;
@@ -2707,7 +2707,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   width: 189px;
   height: 170px;
   aspect-ratio: auto;
-  margin: 12px auto 7px;
+  margin: 11px auto 5px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -2728,7 +2728,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   position: absolute;
   top: 16px;
   left: 12px;
-  z-index: 1;
+  z-index: 3;
   width: 162px;
   height: 120px;
   border: 0;
@@ -2736,9 +2736,9 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .display-desktop-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 82px;
+  grid-template-columns: minmax(0, 1fr) 73px;
   gap: 10px;
-  width: 376px;
+  width: 354px;
   max-width: 100%;
   margin: 0 auto;
 }
@@ -2751,7 +2751,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .display-wallpaper-label {
   width: auto;
-  margin: 0 0 7px;
+  margin: 0 0 3.5px;
 }
 
 .display-properties-content .display-wallpaper-list {
@@ -2759,7 +2759,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  height: 120px;
+  height: 113px;
   margin: 0;
   padding: 0;
   border: 1px solid #7f9db9;
@@ -2894,6 +2894,18 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   gap: 4px;
 }
 
+.display-background-actions .display-browse {
+  transform: translateY(-5px);
+}
+
+.display-properties-content .display-background-actions select {
+  height: 20px;
+}
+
+.display-background-actions .display-color-button {
+  height: 19px;
+}
+
 .display-properties-content .display-background-actions select {
   width: 82px;
   margin: -2px 0 4px;
@@ -2924,7 +2936,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .display-customize {
-  width: 146px;
+  width: 133px;
   margin-top: 7px;
 }
 
@@ -2975,14 +2987,14 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 /* Themes tab */
 .display-theme-description {
-  margin: 8px 8px 17px;
+  margin: 6px 8px 14px;
   line-height: 15px;
 }
 
 .display-theme-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 82px 82px;
-  gap: 9px;
+  grid-template-columns: minmax(0, 1fr) 74px 74px;
+  gap: 8px;
   margin: 0 8px 10px;
 }
 
@@ -2993,14 +3005,19 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .display-sample-label {
   display: block;
-  margin: 0 8px 5px;
+  margin: 0 8px 1px;
+}
+
+#display-panel-themes {
+  padding-right: 5px;
+  padding-left: 5px;
 }
 
 .display-theme-sample {
   position: relative;
   box-sizing: border-box;
-  height: 225px;
-  margin: 0 8px;
+  height: 223px;
+  margin: 0 11px;
   overflow: hidden;
   border: 1px solid #aca899;
   background: url("../assets/xp/bliss.jpg") center/cover no-repeat;
@@ -3017,8 +3034,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .display-theme-sample > img {
   position: absolute;
   z-index: 2;
-  right: 24px;
-  bottom: 27px;
+  right: 19px;
+  bottom: 9px;
   width: 32px;
   height: 32px;
 }
@@ -3026,10 +3043,10 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .display-sample-window {
   position: absolute;
   z-index: 1;
-  top: 36px;
-  left: 34px;
-  width: 238px;
-  height: 132px;
+  top: 34px;
+  left: 31px;
+  width: 216px;
+  height: 126px;
   border: 3px solid #0054e3;
   background: #fff;
 }
@@ -3109,7 +3126,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   box-sizing: border-box;
   width: 189px;
   height: 170px;
-  margin: 12px auto 5px;
+  margin: 11px auto 4px;
 }
 
 .display-saver-monitor > img,
@@ -3125,7 +3142,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   position: absolute;
   top: 16px;
   left: 12px;
-  z-index: 1;
+  z-index: 3;
   width: 162px;
   height: 120px;
   margin: 0;
@@ -3140,6 +3157,16 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   margin: 0 auto 7px !important;
   padding: 10px 9px 9px !important;
   border: 1px solid #d0cdbd !important;
+}
+
+.display-saver-group {
+  height: 74px;
+  margin-bottom: 9px !important;
+  padding-top: 1px !important;
+}
+
+.display-saver-group #display-saver {
+  height: 20px;
 }
 
 .display-saver-row {
@@ -3173,27 +3200,29 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .display-power-group {
   position: relative;
+  height: 79px;
   min-height: 73px;
 }
 
 .display-power-group p {
   margin: 2px 90px 0 83px;
   line-height: 14px;
+  transform: translateY(-10px);
 }
 
 .display-power-button {
   position: absolute;
   right: 9px;
-  bottom: 9px;
+  bottom: 7px;
 }
 
 /* Appearance tab */
 .appearance-preview {
   position: relative;
   box-sizing: border-box;
-  width: 100%;
-  height: 190px;
-  margin: 8px auto 12px;
+  width: 350px;
+  height: 188px;
+  margin: 8px auto 17px;
   padding: 0;
   overflow: hidden;
   border: 1px solid #aca899;
@@ -3212,15 +3241,17 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .appearance-window.inactive {
   top: 10px;
-  left: 12px;
-  width: 310px;
+  left: 9px;
+  width: 326px;
+  height: 137px;
   border-color: #7a96df;
 }
 
 .appearance-window.active {
-  top: 35px;
-  left: 25px;
-  width: 330px;
+  top: 31px;
+  left: 20px;
+  width: 320px;
+  height: 134px;
 }
 
 .appearance-window > strong {
@@ -3240,10 +3271,10 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .appearance-message {
   position: absolute;
   z-index: 2;
-  top: 68px;
-  left: 110px;
-  width: 162px;
-  height: 92px;
+  top: 61px;
+  left: 99px;
+  width: 150px;
+  height: 98px;
   border: 3px solid #0054e3;
   background: #ece9d8;
 }
@@ -3288,21 +3319,30 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 #display-panel-appearance > select {
-  width: 225px;
-  margin: 0 0 0 8px;
+  width: 197px;
+  margin: 0;
+}
+
+#display-panel-appearance .display-control-label {
+  margin-right: 0;
+  margin-left: 0;
 }
 
 .display-appearance-actions {
   position: absolute;
-  right: 15px;
-  bottom: 12px;
+  right: 13px;
+  bottom: 8px;
   display: grid;
   gap: 7px;
 }
 
+.display-appearance-actions .xp-property-button {
+  width: 81px;
+}
+
 /* Settings tab */
 .display-settings-monitor {
-  margin-top: 10px;
+  margin: -1px auto 34px;
 }
 
 .display-settings-monitor .display-resolution-preview {
@@ -3324,7 +3364,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .display-device-label {
-  margin: 2px 7px 7px;
+  margin: 2px 7px 14px;
   line-height: 14px;
 }
 
@@ -3338,9 +3378,10 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   box-sizing: border-box;
   width: auto;
   max-width: none;
-  min-height: 82px;
+  height: 68px;
+  min-height: 68px;
   margin: 0;
-  padding: 8px;
+  padding: 5px 8px;
   border: 1px solid #d0cdbd;
 }
 
@@ -3357,9 +3398,10 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 #display-resolution-slider {
-  width: 100%;
+  width: 100px;
   height: 22px;
-  margin: 0;
+  margin: -9px 0 0 36px;
+  appearance: none;
   accent-color: #d7d4c5;
 }
 
@@ -3379,13 +3421,13 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: 20px;
   margin-top: -9px;
   appearance: none;
-  border: 1px solid #8c897c;
-  background: linear-gradient(90deg, #ece9d8, #fff, #d2cfc0);
+  border: 1px solid #3d8134;
+  background: linear-gradient(90deg, #78ca65, #efffeb, #55a747);
   clip-path: polygon(0 0, 100% 0, 100% 68%, 50% 100%, 0 68%);
 }
 
 .display-resolution-group .display-resolution-value {
-  margin-top: 5px;
+  margin-top: 0;
   white-space: nowrap;
   font-weight: 700;
 }
@@ -3400,7 +3442,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   display: flex;
   justify-content: flex-end;
   gap: 9px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .display-settings-note {
@@ -3415,8 +3457,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .display-properties-window {
-  min-width: min(400px, calc(100% - 8px));
-  min-height: min(440px, calc(100% - 8px));
+  min-width: min(404px, calc(100% - 8px));
+  min-height: min(454px, calc(100% - 8px));
 }
 
 .display-properties-window .title-icon,

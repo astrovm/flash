@@ -2435,7 +2435,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                     <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="display-resolution-preview"><span></span></div>
                 </div>
-                <p class="display-device-label">Display:<br>(Default Monitor) on Astro Flash Display</p>
+                <p class="display-device-label">Display:<br>Default Monitor on Cirrus Logic 5446 Compatible Graphics Adapter</p>
                 <div class="display-settings-groups">
                     <fieldset class="display-resolution-group"><legend>Screen resolution</legend>
                         <div class="resolution-endpoints"><span>Less</span><span>More</span></div>
@@ -2444,7 +2444,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                         <p class="display-resolution-value"></p>
                     </fieldset>
                     <fieldset class="display-color-quality"><legend>Color quality</legend>
-                        <select disabled><option>Highest (32 bit)</option></select>
+                        <select disabled><option>High (24 bit)</option></select>
                         <div class="display-color-spectrum"></div>
                     </fieldset>
                 </div>
@@ -3436,7 +3436,9 @@ const wireDisplayProperties = (win) => {
     controls.fontSize.value = pending.fontSize;
     controls.resolution.value = pending.resolution;
     controls.resolutionSlider.value = String(
-      ["800x600", "1024x768", "1440x900", "auto"].indexOf(pending.resolution),
+      pending.resolution === "auto"
+        ? 1
+        : ["800x600", "1024x768", "1440x900"].indexOf(pending.resolution),
     );
     controls.clearImage.hidden = !pending.customWallpaper;
     controls.preview.style.backgroundColor = pending.backgroundColor;
@@ -3450,7 +3452,7 @@ const wireDisplayProperties = (win) => {
     const monitor = getSimulatedMonitorSize(pending.resolution);
     controls.resolutionValue.textContent =
       pending.resolution === "auto"
-        ? `Current browser size: ${window.innerWidth} by ${window.innerHeight} pixels`
+        ? `${window.innerWidth} by ${window.innerHeight} pixels`
         : `${pending.resolution.replace("x", " by ")} pixels${monitor.limited ? ` (limited to ${monitor.width} by ${monitor.height})` : ""}`;
     controls.apply.disabled =
       JSON.stringify(pending) === JSON.stringify(current);
@@ -5672,7 +5674,7 @@ const openSystemWindow = (shortcutId) => {
         : isControlPanel
           ? 800
           : isDisplayProperties
-            ? 426
+            ? 404
             : 700,
     desktopWidth - 16,
   );
@@ -5684,7 +5686,7 @@ const openSystemWindow = (shortcutId) => {
         : isControlPanel
           ? 600
           : isDisplayProperties
-            ? 480
+            ? 454
             : 500,
     desktopHeight - 16,
   );
@@ -5693,12 +5695,16 @@ const openSystemWindow = (shortcutId) => {
   el.style.left = `${
     isControlPanel
       ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
-      : Math.max(8, (desktopWidth - windowWidth) / 2)
+      : isDisplayProperties
+        ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+        : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
       ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
-      : Math.max(8, (desktopHeight - windowHeight) / 2)
+      : isDisplayProperties
+        ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+        : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 

@@ -939,13 +939,13 @@ test("display properties uses Windows XP desktop-tab geometry and labels", () =>
     'data-wallpaper="zapotec"',
     "controls.status.hidden = !message",
   );
-  expect(javascript).toMatch(/isDisplayProperties\s*\?\s*426/);
-  expect(javascript).toMatch(/isDisplayProperties\s*\?\s*480/);
+  expect(javascript).toMatch(/isDisplayProperties\s*\?\s*404/);
+  expect(javascript).toMatch(/isDisplayProperties\s*\?\s*454/);
   absent(javascript, 'controls.status.textContent = "Settings applied."');
   contains(
     css,
-    "grid-template-columns: minmax(0, 1fr) 82px",
-    "width: 376px",
+    "grid-template-columns: minmax(0, 1fr) 73px",
+    "width: 354px",
     "width: 189px",
     "height: 170px",
     "width: 162px",
