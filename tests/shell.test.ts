@@ -180,11 +180,7 @@ test("Flash URL routing is shared and uses exact archived assets", async () => {
   absent(capture, "spoofUrls", "externalHosts", "frameRates");
 });
 test("boot screen uses XP artwork", () => {
-  contains(
-    html,
-    'src="assets/xp/loading-logo.jpg"',
-    'src="assets/xp/loading-microsoft.jpg"',
-  );
+  contains(html, 'src="assets/xp/BootLogo.png"', 'class="boot-microsoft"');
   contains(css, ".boot-footer");
 });
 test("XP fonts have authentic faces", async () => {
@@ -455,8 +451,8 @@ test("Recycle Bin desktop context menu matches Windows XP commands", () => {
   contains(
     dialogs,
     "node.id === fs().RECYCLE_BIN",
-    '"assets/xp/icons/recycler-full.png"',
-    '"assets/xp/icons/recycler-empty.png"',
+    '"assets/xp/icons/RecyclerFull.png"',
+    '"assets/xp/icons/RecyclerEmpty.png"',
   );
 });
 test("explorer and recycle bin use shared filesystem controls", () => {
@@ -474,7 +470,7 @@ test("explorer and recycle bin use shared filesystem controls", () => {
     "fileOps.restore(ids)",
     "fileOps.permanentlyDelete(ids)",
     "fileOps.emptyRecycleBin()",
-    'XP_ICON_PATHS["recycler-full.png"]',
+    'XP_ICON_PATHS["RecyclerFull.png"]',
     "getRecycleBinIconPath()",
   );
   contains(css, ".explorer-body", '.explorer-items[data-view="details"]');
@@ -539,10 +535,10 @@ test("explorer task pane tracks current folder", async () => {
   );
   for (const icon of [
     "MyPictures.png",
-    "PrintersandFaxes.png",
+    "PrintersAndFaxes.png",
     "MyMusic.png",
     "NewFolder.png",
-    "Publishtoweb.png",
+    "PublishToWeb.png",
     "SharedFolder.png",
   ])
     expect(await Bun.file(iconPath(icon)).exists()).toBe(true);
@@ -563,7 +559,7 @@ test("explorer matches XP task pane toolbar and drive groups", () => {
     '"My Pictures",',
     '"MyPictures.png",',
     'src="assets/xp/icons/Back.png"',
-    'src="assets/xp/ms.png"',
+    'src="assets/xp/WindowsFlag.png"',
   );
   contains(
     compact(css),
@@ -676,8 +672,8 @@ test("every start destination has a functional route", () => {
     "MyMusic.png",
     "MyComputer.png",
     "ControlPanel.png",
-    "PrintersandFaxes.png",
-    "HelpandSupport.png",
+    "PrintersAndFaxes.png",
+    "HelpAndSupport.png",
     "Search.png",
     "Run.png",
   );

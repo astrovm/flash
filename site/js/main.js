@@ -105,11 +105,11 @@ const XP_ICON_PATHS = Object.freeze({
   "Back.png": "assets/xp/icons/Back.png",
   "ControlPanel.png": "assets/xp/icons/ControlPanel.png",
   "Exit.png": "assets/xp/icons/Exit.png",
-  "FolderView-Classic.png": "assets/xp/icons/FolderView-Classic.png",
+  "FolderViewClassic.png": "assets/xp/icons/FolderViewClassic.png",
   "FolderView.png": "assets/xp/icons/FolderView.png",
   "Forward.png": "assets/xp/icons/Forward.png",
   "Go.png": "assets/xp/icons/Go.png",
-  "HelpandSupport.png": "assets/xp/icons/HelpandSupport.png",
+  "HelpAndSupport.png": "assets/xp/icons/HelpAndSupport.png",
   "LocalDisk.png": "assets/xp/icons/LocalDisk.png",
   "Logout.png": "assets/xp/icons/Logout.png",
   "Maximize.png": "assets/xp/icons/Maximize.png",
@@ -121,9 +121,9 @@ const XP_ICON_PATHS = Object.freeze({
   "NetworkConnection.png": "assets/xp/icons/NetworkConnection.png",
   "NewFolder.png": "assets/xp/icons/NewFolder.png",
   "Power.png": "assets/xp/icons/Power.png",
-  "PrintersandFaxes.png": "assets/xp/icons/PrintersandFaxes.png",
+  "PrintersAndFaxes.png": "assets/xp/icons/PrintersAndFaxes.png",
   "Programs.png": "assets/xp/icons/Programs.png",
-  "Publishtoweb.png": "assets/xp/icons/Publishtoweb.png",
+  "PublishToWeb.png": "assets/xp/icons/PublishToWeb.png",
   "RecentDocuments.png": "assets/xp/icons/RecentDocuments.png",
   "RemovableMedia.png": "assets/xp/icons/RemovableMedia.png",
   "Restore.png": "assets/xp/icons/Restore.png",
@@ -132,12 +132,12 @@ const XP_ICON_PATHS = Object.freeze({
   "SharedFolder.png": "assets/xp/icons/SharedFolder.png",
   "Up.png": "assets/xp/icons/Up.png",
   "Volume.png": "assets/xp/icons/Volume.png",
-  "explorerproperties.png": "assets/xp/icons/explorerproperties.png",
+  "ExplorerProperties.png": "assets/xp/icons/ExplorerProperties.png",
   "MyComputer.png": "assets/xp/icons/MyComputer.png",
   "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
-  "recycler-empty.png": "assets/xp/icons/recycler-empty.png",
-  "recycler-full.png": "assets/xp/icons/recycler-full.png",
-  "shortcut.png": "assets/xp/icons/shortcut.png",
+  "RecyclerEmpty.png": "assets/xp/icons/RecyclerEmpty.png",
+  "RecyclerFull.png": "assets/xp/icons/RecyclerFull.png",
+  "Shortcut.png": "assets/xp/icons/Shortcut.png",
 });
 const TASKBAR_HEIGHT = 30;
 let activeMonitorResolution = "auto";
@@ -175,7 +175,7 @@ const systemShortcuts = {
   },
   "__recycle-bin": {
     title: "Recycle Bin",
-    icon: "assets/xp/icons/recycler-empty.png",
+    icon: "assets/xp/icons/RecyclerEmpty.png",
   },
   "__display-properties": {
     title: "Display Properties",
@@ -219,8 +219,8 @@ const getGameIcon = (gameId) =>
 
 const getRecycleBinIconPath = () =>
   window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length
-    ? XP_ICON_PATHS["recycler-full.png"]
-    : XP_ICON_PATHS["recycler-empty.png"];
+    ? XP_ICON_PATHS["RecyclerFull.png"]
+    : XP_ICON_PATHS["RecyclerEmpty.png"];
 
 const createGameIconElement = (gameId, className) => {
   const icon = document.createElement("span");
@@ -2099,7 +2099,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             </div>
             <div class="display-panel" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop" hidden>
                 <div class="display-preview" aria-label="Desktop preview">
-                    <img src="assets/xp/displaysettings.png" alt="">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="display-preview-surface"></div>
                 </div>
                 <div class="display-desktop-controls">
@@ -2200,12 +2200,12 @@ const createSystemWindowContent = (shortcutId, win) => {
                         <span>Window Text</span>
                         <b class="sample-scroll-up">▲</b><b class="sample-scroll-thumb">≡</b><b class="sample-scroll-down">▼</b>
                     </div>
-                    <img src="assets/xp/icons/recycler-full.png" alt="">
+                    <img src="assets/xp/icons/RecyclerFull.png" alt="">
                 </div>
             </div>
             <div class="display-panel" id="display-panel-saver" role="tabpanel" aria-labelledby="display-tab-saver" hidden>
                 <div class="display-saver-monitor" aria-label="Screen saver preview">
-                    <img src="assets/xp/displaysettings.png" alt="">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="screen-saver-preview"></div>
                 </div>
                 <fieldset class="display-saver-group"><legend>Screen saver</legend>
@@ -2245,7 +2245,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             </div>
             <div class="display-panel" id="display-panel-settings" role="tabpanel" aria-labelledby="display-tab-settings" hidden>
                 <div class="display-settings-monitor" aria-label="Display preview">
-                    <img src="assets/xp/displaysettings.png" alt="">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="display-resolution-preview"><span></span></div>
                 </div>
                 <p class="display-device-label">Display:<br>(Default Monitor) on Astro Flash Display</p>
@@ -2417,7 +2417,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     [
       [
         "View System Information",
-        "explorerproperties.png",
+        "ExplorerProperties.png",
         openProjectSettings,
       ],
       ["Add or remove programs", "Programs.png", openControlPanel],
@@ -2524,7 +2524,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   chrome.innerHTML = `
         <div class="explorer-menu-row">
             <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
-            <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/ms.png" alt=""></div>
+            <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
         </div>
         <div class="explorer-toolbar">
             <button data-explorer-action="back"><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
@@ -2534,7 +2534,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             <button data-explorer-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
             <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderView-Classic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
         </div>
         <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/MyComputer.png" alt=""><input type="text" aria-label="Address"></span><button type="button" data-explorer-action="go" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
     `;
@@ -2821,8 +2821,8 @@ const openDesktopItemsDialog = (ownerWindow) => {
         <button type="button" class="selected"><img src="assets/xp/icons/MyComputer.png" alt=""><span>My Computer</span></button>
         <button type="button"><img src="assets/xp/icons/MyDocuments.png" alt=""><span>My Documents</span></button>
         <button type="button"><img src="assets/xp/icons/MyNetworkPlaces.png" alt=""><span>My Network<br>Places</span></button>
-        <button type="button"><img src="assets/xp/icons/recycler-full.png" alt=""><span>Recycle Bin<br>(full)</span></button>
-        <button type="button"><img src="assets/xp/icons/recycler-empty.png" alt=""><span>Recycle Bin<br>(empty)</span></button>
+        <button type="button"><img src="assets/xp/icons/RecyclerFull.png" alt=""><span>Recycle Bin<br>(full)</span></button>
+        <button type="button"><img src="assets/xp/icons/RecyclerEmpty.png" alt=""><span>Recycle Bin<br>(empty)</span></button>
       </div>
       <div class="desktop-icon-actions"><button type="button" class="xp-btn">Change Icon...</button><button type="button" class="xp-btn">Restore Default</button></div>
       <fieldset class="desktop-cleanup-group"><legend>Desktop cleanup</legend>
@@ -4526,7 +4526,7 @@ const renderExplorerTaskPane = (win) => {
   if (isComputer) {
     addTask(
       "View System Information",
-      "explorerproperties.png",
+      "ExplorerProperties.png",
       openProjectSettings,
     );
     addTask("Add or remove programs", "Programs.png", openControlPanel);
@@ -4537,7 +4537,7 @@ const renderExplorerTaskPane = (win) => {
   if (isPictures) {
     addTask("View as a slide show", "MyPictures.png", null, true);
     addTask("Order prints online", "MyPictures.png", null, true);
-    addTask("Print pictures", "PrintersandFaxes.png", null, true);
+    addTask("Print pictures", "PrintersAndFaxes.png", null, true);
     return;
   }
 
@@ -4557,7 +4557,7 @@ const renderExplorerTaskPane = (win) => {
     () => fileOps.createFolder(win.currentFolderId, "New Folder"),
     !writable,
   );
-  addTask("Publish this folder to the Web", "Publishtoweb.png", null, true);
+  addTask("Publish this folder to the Web", "PublishToWeb.png", null, true);
   addTask("Share this folder", "SharedFolder.png", null, true);
 };
 
@@ -8179,8 +8179,8 @@ const buildPlaces = () => {
 
   [
     ["controlPanel", "&Control Panel", "ControlPanel.png"],
-    ["printers", "&Printers and Faxes", "PrintersandFaxes.png"],
-    ["help", "&Help and Support", "HelpandSupport.png"],
+    ["printers", "&Printers and Faxes", "PrintersAndFaxes.png"],
+    ["help", "&Help and Support", "HelpAndSupport.png"],
   ].forEach(([id, label, icon]) =>
     container.appendChild(createPlace({ id, label, icon })),
   );

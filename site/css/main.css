@@ -219,7 +219,7 @@ iframe {
   display: block;
   width: 36px;
   height: 36px;
-  background: url("../assets/xp/flag.png") center / contain no-repeat;
+  background: url("../assets/xp/WindowsFlag.png") center / contain no-repeat;
   filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
 }
 
@@ -301,6 +301,12 @@ iframe {
   margin: 0;
   font-family: Arial, sans-serif;
   font-size: clamp(12px, 2vw, 16px);
+}
+
+.boot-microsoft {
+  font-family: Arial, sans-serif;
+  font-size: clamp(18px, 3vw, 28px);
+  font-weight: 700;
 }
 
 .boot-footer img {
@@ -636,7 +642,7 @@ iframe {
 }
 
 #screen-saver-overlay[data-saver="windows-xp"] {
-  background: #000 url("../assets/xp/loading-logo.jpg") center / min(34%, 320px)
+  background: #000 url("../assets/xp/BootLogo.png") center / min(34%, 320px)
     auto no-repeat;
 }
 
@@ -735,7 +741,7 @@ html[data-xp-appearance="silver"] {
   content: "";
   position: absolute;
   inset: 0;
-  background: url("../assets/xp/icons/shortcut.png") center / contain no-repeat;
+  background: url("../assets/xp/icons/Shortcut.png") center / contain no-repeat;
   pointer-events: none;
 }
 
@@ -1065,20 +1071,39 @@ html[data-xp-appearance="silver"] {
   filter: brightness(0.92);
 }
 
+.minimize-btn,
+.maximize-btn,
+.restore-btn {
+  background-size:
+    13px 104px,
+    21px 168px;
+  background-position:
+    center top,
+    center top;
+}
+
 .minimize-btn {
-  background-image: url("../assets/xp/icons/Minimize.png");
+  background-image:
+    url("../assets/xp/icons/Minimize.png"),
+    url("../assets/xp/icons/CaptionButton.png");
 }
 
 .maximize-btn {
-  background-image: url("../assets/xp/icons/Maximize.png");
+  background-image:
+    url("../assets/xp/icons/Maximize.png"),
+    url("../assets/xp/icons/CaptionButton.png");
 }
 
 .restore-btn {
-  background-image: url("../assets/xp/icons/Restore.png");
+  background-image:
+    url("../assets/xp/icons/Restore.png"),
+    url("../assets/xp/icons/CaptionButton.png");
 }
 
 .close-btn {
   background-image: url("../assets/xp/icons/Exit.png");
+  background-size: 21px 168px;
+  background-position: center top;
 }
 
 /* ---- Game application menu bar ---- */
@@ -2279,8 +2304,7 @@ html[data-xp-appearance="silver"] {
 }
 
 .screen-saver-preview[data-saver="windows-xp"] {
-  background: #000 url("../assets/xp/loading-logo.jpg") center / 38% auto
-    no-repeat;
+  background: #000 url("../assets/xp/BootLogo.png") center / 38% auto no-repeat;
 }
 
 html[data-xp-font-size="large"] .window,
@@ -2542,12 +2566,12 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: 16px;
   flex: none;
   margin-right: 4px;
-  background: url("../assets/xp/icons/wallpaper-image.png") center/16px 16px
+  background: url("../assets/xp/icons/WallpaperImage.png") center/16px 16px
     no-repeat;
 }
 
 .wallpaper-icon.none {
-  background-image: url("../assets/xp/icons/wallpaper-none.png");
+  background-image: url("../assets/xp/icons/WallpaperNone.png");
 }
 
 .display-scrollbar {
@@ -4468,29 +4492,32 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   display: flex;
   align-items: center;
   gap: 4px;
-  width: 97px;
-  padding: 0;
+  width: 99px;
+  padding: 0 8px;
   margin: 0;
   border: none;
   border-radius: 0;
-  background: url("../assets/xp/start_btn_normal.png") left / 100% 100%
-    no-repeat;
-  color: transparent;
+  background: url("../assets/xp/StartButton.png") left top / 99px 99px no-repeat;
+  color: #fff;
   cursor: var(--xp-cursor);
 }
 
-#start-button .start-flag,
 #start-button .start-text {
-  visibility: hidden;
+  font-family: Tahoma, sans-serif;
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 1px 1px 2px #164f16;
 }
 
 #start-button:hover {
-  filter: brightness(1.1);
+  background-position: left center;
 }
 
 #start-button.active,
 #start-button:active {
-  filter: brightness(0.85) saturate(1.1);
+  background-position: left bottom;
 }
 
 .start-flag {

@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { decode as decodeBmp } from "@nktkas/bmp";
 import sharp from "sharp";
 
 type DirectAsset = { member: string; output: string };
@@ -23,6 +24,12 @@ type ResourceIcon = DirectAsset & {
   height: number;
   bitDepth: number;
 };
+type ResourceBitmap = DirectAsset & {
+  expandedName: string;
+  resourceType: number;
+  resourceId: number | string;
+  transparentColor?: [number, number, number];
+};
 type Manifest = {
   version: number;
   source: {
@@ -33,6 +40,7 @@ type Manifest = {
   };
   webAssets: DirectAsset[];
   resourceIcons: ResourceIcon[];
+  resourceBitmaps: ResourceBitmap[];
   auditFiles: DirectAsset[];
 };
 type SourceRecord = {
@@ -42,7 +50,7 @@ type SourceRecord = {
   resource?: {
     parentSha256: string;
     type: number;
-    id: number;
+    id: number | string;
     language: number;
     frame: string;
     pixelSha256: string;
@@ -114,7 +122,7 @@ async function extractIcon(
   const parentPath = join(workDirectory, icon.expandedName);
   await writeFile(parentPath, parent);
 
-  const resourceKey = `${icon.expandedName}-${icon.resourceId}`;
+  const resourceKey = `${icon.expandedName}-${icon.resourceId}-${basename(icon.output)}`;
   const groupDirectory = join(workDirectory, `group-${resourceKey}`);
   const frameDirectory = join(workDirectory, `frame-${resourceKey}`);
   await mkdir(groupDirectory);
@@ -152,6 +160,71 @@ async function extractIcon(
     png,
     parentSha256: sha256(parent),
     pixelSha256: sha256(data),
+  };
+}
+
+async function extractBitmap(
+  isoPath: string,
+  bitmap: ResourceBitmap,
+  workDirectory: string,
+): Promise<{
+  png: Uint8Array;
+  parentSha256: string;
+  pixelSha256: string;
+  frame: string;
+}> {
+  const parent = await expandMember(isoPath, bitmap.member, workDirectory);
+  const parentPath = join(workDirectory, bitmap.expandedName);
+  await writeFile(parentPath, parent);
+
+  const resourceKey =
+    `${bitmap.expandedName}-${bitmap.resourceId}-${basename(bitmap.output)}`.replace(
+      /[^a-zA-Z0-9._-]/g,
+      "-",
+    );
+  const bitmapDirectory = join(workDirectory, `bitmap-${resourceKey}`);
+  await mkdir(bitmapDirectory);
+  run("wrestool", [
+    "-x",
+    "-t",
+    String(bitmap.resourceType),
+    "-n",
+    String(bitmap.resourceId),
+    "-L",
+    String(manifest.source.language),
+    "-o",
+    bitmapDirectory,
+    parentPath,
+  ]);
+
+  const decoded = decodeBmp(
+    await readFile(await firstFile(bitmapDirectory, ".bmp")),
+  );
+  const rgba = new Uint8Array(decoded.width * decoded.height * 4);
+  for (let source = 0, target = 0; source < decoded.data.length;) {
+    const red = decoded.data[source++];
+    const green = decoded.data[source++];
+    const blue = decoded.data[source++];
+    const sourceAlpha = decoded.channels === 4 ? decoded.data[source++] : 255;
+    const transparent =
+      bitmap.transparentColor?.[0] === red &&
+      bitmap.transparentColor[1] === green &&
+      bitmap.transparentColor[2] === blue;
+    rgba[target++] = red;
+    rgba[target++] = green;
+    rgba[target++] = blue;
+    rgba[target++] = transparent ? 0 : sourceAlpha;
+  }
+  const png = await sharp(rgba, {
+    raw: { width: decoded.width, height: decoded.height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+  return {
+    png,
+    parentSha256: sha256(parent),
+    pixelSha256: sha256(rgba),
+    frame: `${decoded.width}x${decoded.height}x32`,
   };
 }
 
@@ -220,6 +293,24 @@ try {
     };
   }
 
+  for (const bitmap of manifest.resourceBitmaps) {
+    const extracted = await extractBitmap(isoPath, bitmap, workDirectory);
+    await verifyOrWrite(bitmap.output, extracted.png, extracted.pixelSha256);
+    records[relative("site", bitmap.output)] = {
+      isoSha256: manifest.source.sha256,
+      member: `I386/${bitmap.member}`,
+      sha256: sha256(extracted.png),
+      resource: {
+        parentSha256: extracted.parentSha256,
+        type: bitmap.resourceType,
+        id: bitmap.resourceId,
+        language: manifest.source.language,
+        frame: extracted.frame,
+        pixelSha256: extracted.pixelSha256,
+      },
+    };
+  }
+
   for (const asset of manifest.auditFiles) {
     const content = await expandMember(isoPath, asset.member, workDirectory);
     const outputPath = join(auditDirectory, asset.output);
@@ -239,7 +330,7 @@ try {
     await copyFile(manifestPath, join(auditDirectory, "manifest.json"));
   }
   console.log(
-    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + manifest.resourceIcons.length} web assets from the authenticated XP SP3 ISO.`,
+    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + manifest.resourceIcons.length + manifest.resourceBitmaps.length} web assets from the authenticated XP SP3 ISO.`,
   );
 } finally {
   await rm(workDirectory, { force: true, recursive: true });
