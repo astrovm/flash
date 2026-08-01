@@ -8746,6 +8746,11 @@ const routedFetch = flashUrlRouter.wrapFetch(originalFetch, (routed) => {
 });
 window.fetch = async (...args) => {
   const originalRequest = args[0];
+  // Bundled routes are exact and authoritative. Resolve them before the
+  // installed-game fallback, which may probe every legacy package remotely.
+  if (flashUrlRouter.resolve(originalRequest)) {
+    return routedFetch(...args);
+  }
   if (gameLibraryReady && gameLibrary && !gameLibraryError) {
     try {
       const installedResponse = await gameLibrary.match(originalRequest);
