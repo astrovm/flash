@@ -906,8 +906,10 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
   contains(
     javascript,
     'accept="image/png,image/jpeg,image/gif,image/webp"',
-    "MAX_CUSTOM_WALLPAPER_BYTES",
     'reader.result.startsWith("data:image/")',
+    'wallpaperList.addEventListener("keydown"',
+    'item.scrollIntoView({ block: "nearest" })',
+    'event.key === "ArrowDown"',
     "const scheduleScreenSaver =",
     'id = "screen-saver-overlay"',
     "settings.screenSaverWait * 60 * 1000",
@@ -928,8 +930,16 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
   contains(
     css,
     '#desktop[data-wallpaper-position="tile"]',
+    "overflow-y: auto",
+    "scrollbar-width: none",
     'html[data-xp-appearance="olive"]',
     "#desktop[data-monitor-resolution]",
+  );
+  absent(
+    javascript,
+    "MAX_CUSTOM_WALLPAPER_BYTES",
+    "file.size >",
+    "smaller than 1 MB",
   );
 });
 test("simulated monitor bounds common resolutions and narrow viewports", () =>

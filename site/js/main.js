@@ -47,7 +47,6 @@ const USER_STORAGE_KEYS = Object.freeze([
   "runHistory",
   "volume",
 ]);
-const MAX_CUSTOM_WALLPAPER_BYTES = 1024 * 1024;
 const DISPLAY_WALLPAPERS = {
   none: "none",
   bliss: 'url("../assets/xp/bliss.jpg")',
@@ -266,10 +265,9 @@ const isDisplaySettings = (value) =>
   Object.hasOwn(DISPLAY_WALLPAPERS, value.wallpaper) &&
   typeof value.customWallpaper === "string" &&
   (value.customWallpaper === "" ||
-    (/^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(
+    /^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(
       value.customWallpaper,
-    ) &&
-      value.customWallpaper.length <= MAX_CUSTOM_WALLPAPER_BYTES * 1.4)) &&
+    )) &&
   ["center", "tile", "stretch"].includes(value.position) &&
   /^#[0-9a-f]{6}$/i.test(value.backgroundColor) &&
   ["blue", "olive", "silver"].includes(value.appearance) &&
@@ -2676,6 +2674,7 @@ const wireDisplayProperties = (win) => {
       const selected = item.dataset.wallpaper === pending.wallpaper;
       item.classList.toggle("selected", selected);
       item.setAttribute("aria-selected", String(selected));
+      item.tabIndex = selected ? 0 : -1;
     });
     controls.position.value = pending.position;
     controls.color.value = pending.backgroundColor;
@@ -2750,18 +2749,45 @@ const wireDisplayProperties = (win) => {
     };
     sync();
   });
-  content
-    .querySelector(".display-wallpaper-list")
-    .addEventListener("click", (event) => {
-      const item = event.target.closest("[data-wallpaper]");
-      if (!item) return;
-      pending = {
-        ...pending,
-        wallpaper: item.dataset.wallpaper,
-        customWallpaper: "",
-      };
-      sync();
-    });
+  const wallpaperList = content.querySelector(".display-wallpaper-list");
+  const wallpaperItems = [
+    ...wallpaperList.querySelectorAll("[data-wallpaper]"),
+  ];
+  const selectWallpaper = (item, { focus = false } = {}) => {
+    pending = {
+      ...pending,
+      wallpaper: item.dataset.wallpaper,
+      customWallpaper: "",
+    };
+    sync();
+    item.scrollIntoView({ block: "nearest" });
+    if (focus) item.focus();
+  };
+  wallpaperList.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-wallpaper]");
+    if (!item) return;
+    selectWallpaper(item);
+  });
+  wallpaperList.addEventListener("keydown", (event) => {
+    if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const selectedIndex = wallpaperItems.findIndex(
+      (item) => item.dataset.wallpaper === pending.wallpaper,
+    );
+    const targetIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? wallpaperItems.length - 1
+          : Math.max(
+              0,
+              Math.min(
+                wallpaperItems.length - 1,
+                selectedIndex + (event.key === "ArrowDown" ? 1 : -1),
+              ),
+            );
+    selectWallpaper(wallpaperItems[targetIndex], { focus: true });
+  });
   ["position", "appearance", "saver"].forEach((name) => {
     controls[name].addEventListener("change", () => {
       pending = {
@@ -2806,11 +2832,8 @@ const wireDisplayProperties = (win) => {
       "image/gif",
       "image/webp",
     ];
-    if (
-      !supportedTypes.includes(file.type) ||
-      file.size > MAX_CUSTOM_WALLPAPER_BYTES
-    ) {
-      setStatus("Choose a PNG, JPEG, GIF, or WebP image smaller than 1 MB.");
+    if (!supportedTypes.includes(file.type)) {
+      setStatus("Choose a PNG, JPEG, GIF, or WebP image.");
       controls.image.value = "";
       return;
     }

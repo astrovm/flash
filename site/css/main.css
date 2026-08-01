@@ -2480,6 +2480,12 @@ html[data-xp-appearance="silver"] {
   flex: 1;
   min-width: 0;
   padding: 1px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.display-wallpaper-items::-webkit-scrollbar {
+  display: none;
 }
 
 .display-wallpaper-items button {
