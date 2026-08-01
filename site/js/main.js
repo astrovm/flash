@@ -3531,13 +3531,15 @@ const wireDisplayProperties = (win) => {
       "This screen saver has no options that you can set.",
     ),
   );
-  content.querySelector(".display-power-button").addEventListener("click", () =>
-    openDisplayNotice(
-      win,
-      "Power Options Properties",
-      "Power management is controlled by your browser and operating system.",
-    ),
-  );
+  content
+    .querySelector(".display-power-button")
+    .addEventListener("click", () =>
+      openDisplayNotice(
+        win,
+        "Power Options Properties",
+        "Power management is controlled by your browser and operating system.",
+      ),
+    );
   content
     .querySelector(".display-troubleshoot")
     .addEventListener("click", () =>
