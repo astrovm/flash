@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -118,21 +118,22 @@ async function pressKey(qcode: string) {
   });
 }
 
-async function typeProductKey() {
-  const extracted = spawnSync(
-    "7z",
-    ["e", "-so", isoPath, "I386/UNATTEND.TXT"],
-    { encoding: "utf8" },
-  );
-  if (extracted.status !== 0)
-    throw new Error("Unable to read XP setup metadata");
-  const match = extracted.stdout.match(/ProductKey\s*=\s*"?([A-Z0-9-]{29})"?/i);
-  if (!match) throw new Error("No Volume License key found in the XP ISO");
-  for (const character of match[1].replaceAll("-", "").toLowerCase()) {
-    await pressKey(character);
-    await Bun.sleep(100);
-  }
-  console.log("Injected the ISO-provided product key without logging it.");
+async function click(x: number, y: number, width: number, height: number) {
+  const absoluteX = Math.round((x / (width - 1)) * 0x7fff);
+  const absoluteY = Math.round((y / (height - 1)) * 0x7fff);
+  await execute("input-send-event", {
+    events: [
+      { type: "abs", data: { axis: "x", value: absoluteX } },
+      { type: "abs", data: { axis: "y", value: absoluteY } },
+    ],
+  });
+  await execute("input-send-event", {
+    events: [{ type: "btn", data: { down: true, button: "left" } }],
+  });
+  await Bun.sleep(75);
+  await execute("input-send-event", {
+    events: [{ type: "btn", data: { down: false, button: "left" } }],
+  });
 }
 
 const commands = createInterface({ input: process.stdin });
@@ -142,7 +143,7 @@ for await (const input of commands) {
     if (!command) continue;
     if (command === "help") {
       console.log(
-        "Commands: screenshot <path>, key <qcode> [...], product-key, save <name>, load <name>, status, quit",
+        "Commands: screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height], save <name>, load <name>, status, quit",
       );
     } else if (command === "screenshot") {
       const filename = resolve(
@@ -153,17 +154,33 @@ for await (const input of commands) {
       console.log(filename);
     } else if (command === "key") {
       for (const key of args) await pressKey(key);
-    } else if (command === "product-key") {
-      await typeProductKey();
+    } else if (command === "chord") {
+      await execute("input-send-event", {
+        events: [
+          ...args.map((key) => ({
+            type: "key",
+            data: { down: true, key: { type: "qcode", data: key } },
+          })),
+          ...args.toReversed().map((key) => ({
+            type: "key",
+            data: { down: false, key: { type: "qcode", data: key } },
+          })),
+        ],
+      });
+    } else if (command === "click") {
+      const [x, y, width = 640, height = 480] = args.map(Number);
+      if (![x, y, width, height].every(Number.isFinite))
+        throw new Error("click requires x y [width height]");
+      await click(x, y, width, height);
     } else if (command === "save" || command === "load") {
       if (!args[0]) throw new Error(`${command} requires a snapshot name`);
       await execute("human-monitor-command", {
-        commandLine: `${command === "save" ? "savevm" : "loadvm"} ${args[0]}`,
+        "command-line": `${command === "save" ? "savevm" : "loadvm"} ${args[0]}`,
       });
     } else if (command === "status") {
       console.log(JSON.stringify(await execute("query-status")));
     } else if (command === "quit") {
-      await execute("quit");
+      void execute("quit");
       break;
     } else {
       throw new Error(`Unknown command: ${command}`);
