@@ -2048,7 +2048,9 @@ const createSystemWindowContent = (shortcutId, win) => {
                             </div>
                             <div class="display-scrollbar" aria-hidden="true">
                                 <span class="scroll-arrow up"></span>
-                                <span class="scroll-thumb"><i></i><i></i><i></i></span>
+                                <span class="scroll-track">
+                                    <span class="scroll-thumb"><i></i><i></i><i></i></span>
+                                </span>
                                 <span class="scroll-arrow down"></span>
                             </div>
                         </div>
@@ -2753,6 +2755,88 @@ const wireDisplayProperties = (win) => {
   const wallpaperItems = [
     ...wallpaperList.querySelectorAll("[data-wallpaper]"),
   ];
+  const wallpaperScroller = wallpaperList.querySelector(
+    ".display-wallpaper-items",
+  );
+  const wallpaperScrollbar = wallpaperList.querySelector(".display-scrollbar");
+  const wallpaperScrollTrack =
+    wallpaperScrollbar.querySelector(".scroll-track");
+  const wallpaperScrollThumb =
+    wallpaperScrollbar.querySelector(".scroll-thumb");
+  const syncWallpaperScrollbar = () => {
+    const maxScroll = Math.max(
+      0,
+      wallpaperScroller.scrollHeight - wallpaperScroller.clientHeight,
+    );
+    const trackHeight = wallpaperScrollTrack.clientHeight;
+    const thumbHeight =
+      maxScroll === 0
+        ? trackHeight
+        : Math.max(
+            22,
+            Math.round(
+              trackHeight *
+                (wallpaperScroller.clientHeight /
+                  wallpaperScroller.scrollHeight),
+            ),
+          );
+    const thumbTravel = Math.max(0, trackHeight - thumbHeight);
+    const thumbTop =
+      maxScroll === 0
+        ? 0
+        : Math.round((wallpaperScroller.scrollTop / maxScroll) * thumbTravel);
+    wallpaperScrollThumb.style.height = `${thumbHeight}px`;
+    wallpaperScrollThumb.style.transform = `translateY(${thumbTop}px)`;
+    wallpaperScrollbar.classList.toggle("disabled", maxScroll === 0);
+  };
+  wallpaperScroller.addEventListener("scroll", syncWallpaperScrollbar);
+  wallpaperScrollbar
+    .querySelector(".scroll-arrow.up")
+    .addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      wallpaperScroller.scrollBy({ top: -18 });
+    });
+  wallpaperScrollbar
+    .querySelector(".scroll-arrow.down")
+    .addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      wallpaperScroller.scrollBy({ top: 18 });
+    });
+  wallpaperScrollTrack.addEventListener("pointerdown", (event) => {
+    if (event.target === wallpaperScrollThumb) return;
+    event.preventDefault();
+    const thumbBounds = wallpaperScrollThumb.getBoundingClientRect();
+    const direction = event.clientY < thumbBounds.top ? -1 : 1;
+    wallpaperScroller.scrollBy({
+      top: direction * wallpaperScroller.clientHeight,
+    });
+  });
+  wallpaperScrollThumb.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const startY = event.clientY;
+    const startScrollTop = wallpaperScroller.scrollTop;
+    const maxScroll =
+      wallpaperScroller.scrollHeight - wallpaperScroller.clientHeight;
+    const thumbTravel =
+      wallpaperScrollTrack.clientHeight - wallpaperScrollThumb.offsetHeight;
+    wallpaperScrollThumb.setPointerCapture(event.pointerId);
+    const dragThumb = (moveEvent) => {
+      if (thumbTravel <= 0) return;
+      wallpaperScroller.scrollTop =
+        startScrollTop +
+        ((moveEvent.clientY - startY) / thumbTravel) * maxScroll;
+    };
+    const stopDragging = () => {
+      wallpaperScrollThumb.removeEventListener("pointermove", dragThumb);
+      wallpaperScrollThumb.removeEventListener("pointerup", stopDragging);
+      wallpaperScrollThumb.removeEventListener("pointercancel", stopDragging);
+    };
+    wallpaperScrollThumb.addEventListener("pointermove", dragThumb);
+    wallpaperScrollThumb.addEventListener("pointerup", stopDragging);
+    wallpaperScrollThumb.addEventListener("pointercancel", stopDragging);
+  });
+  requestAnimationFrame(syncWallpaperScrollbar);
   const selectWallpaper = (item, { focus = false } = {}) => {
     pending = {
       ...pending,
