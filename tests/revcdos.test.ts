@@ -8,6 +8,7 @@ const [
   games,
   main,
   host,
+  gameHtml,
   game,
   source,
   packageManifest,
@@ -18,6 +19,7 @@ const [
   read("site/js/games.js"),
   read("site/js/main.js"),
   read("site/iframe/revcdos/index.html"),
+  read("site/iframe/revcdos/game.html"),
   read("site/iframe/revcdos/game.js"),
   read("site/iframe/revcdos/SOURCE.md"),
   read("site/iframe/revcdos/modules/packages/en.js"),
@@ -110,6 +112,20 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
   );
   expect(offlineWorker).toContain("data.slice(");
   expect(offlineWorker).toContain('"Content-Range"');
+});
+
+test("shows actionable startup errors above the game canvas", () => {
+  expect(gameHtml).toContain('id="startup-error"');
+  expect(gameHtml).toContain('role="alert"');
+  expect(gameHtml).toContain('id="startup-error-retry"');
+  expect(game).toContain("function showStartupError(");
+  expect(game).toContain("startupError.hidden = false");
+  expect(game).toContain('canvas.addEventListener("webglcontextcreationerror"');
+  expect(game).toContain('canvas.addEventListener("webglcontextlost"');
+  expect(game).toContain('window.addEventListener("unhandledrejection"');
+  expect(game).toContain("script.onerror");
+  expect(game).toContain("window.location.reload()");
+  expect(game).toContain("Enable browser hardware acceleration");
 });
 
 test("offers temporary or persistent WebTorrent downloads alongside manual selection", async () => {

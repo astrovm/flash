@@ -2,7 +2,34 @@ const cloudSavesStatus = document.getElementById("cloud-saves-status");
 var statusElement = document.getElementById("status");
 var progressElement = document.getElementById("progress");
 var spinnerElement = document.getElementById("spinner");
+const startupError = document.getElementById("startup-error");
+const startupErrorTitle = document.getElementById("startup-error-title");
+const startupErrorMessage = document.getElementById("startup-error-message");
+const startupErrorRetry = document.getElementById("startup-error-retry");
 var wasm_content = "index.wasm";
+let webGLStartupFailed = false;
+
+function showStartupError(message, error) {
+  startupErrorTitle.textContent = "Unable to start reVCDOS";
+  startupErrorMessage.textContent = message;
+  startupError.hidden = false;
+  progressElement.hidden = true;
+  spinnerElement.hidden = true;
+  console.error("reVCDOS startup error:", error || message);
+}
+
+function showWebGLStartupError(error) {
+  webGLStartupFailed = true;
+  showStartupError(
+    "WebGL 2 is unavailable. Enable browser hardware acceleration, update your browser or graphics driver, close other graphics-heavy tabs, and retry.",
+    error,
+  );
+}
+
+startupErrorRetry.addEventListener("click", () => {
+  window.onbeforeunload = null;
+  window.location.reload();
+});
 
 const params = new URLSearchParams(window.location.search);
 const sessionAssets = params.get("session") === "1";
@@ -332,13 +359,25 @@ async function loadGame(data) {
     },
     canvas: (function () {
       const canvas = document.getElementById("canvas");
+      canvas.addEventListener("webglcontextcreationerror", (event) => {
+        showWebGLStartupError(
+          event.statusMessage || "The browser could not create a WebGL context.",
+        );
+      });
       canvas.addEventListener("webglcontextlost", (e) => {
-        statusElement.textContent =
-          "WebGL context lost. Please reload the page.";
         e.preventDefault();
+        showWebGLStartupError("The WebGL context was lost.");
       });
       return canvas;
     })(),
+    onAbort: (reason) => {
+      if (!webGLStartupFailed) {
+        showStartupError(
+          "The game stopped while starting. Reload and try again. If the problem continues, update your browser.",
+          reason,
+        );
+      }
+    },
     setStatus,
     totalDependencies: 0,
     monitorRunDependencies: (num) => {
@@ -361,10 +400,23 @@ async function loadGame(data) {
     const module = await WebAssembly.instantiate(wasm, info);
     return receiveInstance(module.instance, module);
   };
-  window.onerror = (message) => {
-    Module.setStatus(`Error: ${message}`);
-    spinnerElement.hidden = true;
+  window.onerror = (message, source, line, column, error) => {
+    if (!webGLStartupFailed) {
+      showStartupError(
+        "The game could not finish starting. Reload and try again. If the problem continues, update your browser.",
+        error || `${message} (${source}:${line}:${column})`,
+      );
+    }
+    return false;
   };
+  window.addEventListener("unhandledrejection", (event) => {
+    if (!webGLStartupFailed) {
+      showStartupError(
+        "The game could not finish starting. Check your connection, then reload and try again.",
+        event.reason,
+      );
+    }
+  });
   Module.arguments = window.location.search
     .slice(1)
     .split("&")
@@ -379,6 +431,11 @@ async function loadGame(data) {
   const script = document.createElement("script");
   script.async = true;
   script.src = "index.js";
+  script.onerror = () => {
+    showStartupError(
+      "The reVCDOS runtime could not be loaded. Check your connection, then reload and try again.",
+    );
+  };
   document.body.appendChild(script);
 
   document.body.classList.add("gameIsStarted");
