@@ -25,6 +25,76 @@
       "member": "COFFEEBN.BM_",
       "output": "site/assets/xp/wallpapers/coffee-bean.bmp"
     },
+    {
+      "member": "CRYSTAL.JP_",
+      "output": "site/assets/xp/wallpapers/crystal.jpg"
+    },
+    {
+      "member": "FOLLOW.JP_",
+      "output": "site/assets/xp/wallpapers/follow.jpg"
+    },
+    {
+      "member": "FRIEND.JP_",
+      "output": "site/assets/xp/wallpapers/friend.jpg"
+    },
+    {
+      "member": "GRNSTONE.BM_",
+      "output": "site/assets/xp/wallpapers/greenstone.bmp"
+    },
+    { "member": "HOME.JP_", "output": "site/assets/xp/wallpapers/home.jpg" },
+    {
+      "member": "MOON.JP_",
+      "output": "site/assets/xp/wallpapers/moon-flower.jpg"
+    },
+    {
+      "member": "PEACE.JP_",
+      "output": "site/assets/xp/wallpapers/peace.jpg"
+    },
+    {
+      "member": "POWER.JP_",
+      "output": "site/assets/xp/wallpapers/power.jpg"
+    },
+    {
+      "member": "PRAIRIE.BM_",
+      "output": "site/assets/xp/wallpapers/prairie-wind.bmp"
+    },
+    {
+      "member": "PURPLEF.JP_",
+      "output": "site/assets/xp/wallpapers/purple-flower.jpg"
+    },
+    {
+      "member": "RADIANCE.JP_",
+      "output": "site/assets/xp/wallpapers/radiance.jpg"
+    },
+    {
+      "member": "REDMOON.JP_",
+      "output": "site/assets/xp/wallpapers/red-moon-desert.jpg"
+    },
+    {
+      "member": "RIPPLE.JP_",
+      "output": "site/assets/xp/wallpapers/ripple.jpg"
+    },
+    {
+      "member": "STONEH.JP_",
+      "output": "site/assets/xp/wallpapers/stonehenge.jpg"
+    },
+    {
+      "member": "TULIPS.JP_",
+      "output": "site/assets/xp/wallpapers/tulips.jpg"
+    },
+    {
+      "member": "VORTEC.JP_",
+      "output": "site/assets/xp/wallpapers/vortec-space.jpg"
+    },
+    { "member": "WIND.JP_", "output": "site/assets/xp/wallpapers/wind.jpg" },
+    {
+      "member": "WINXP.JP_",
+      "output": "site/assets/xp/wallpapers/windows-xp.jpg"
+    },
+    {
+      "member": "ZAPOTEC.BM_",
+      "output": "site/assets/xp/wallpapers/zapotec.bmp"
+    },
 
     { "member": "XPERROR.WA_", "output": "site/assets/xp/sounds/error.wav" },
     { "member": "XPLOGOFF.WA_", "output": "site/assets/xp/sounds/logoff.wav" },
