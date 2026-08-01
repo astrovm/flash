@@ -1552,6 +1552,18 @@ html[data-xp-appearance="silver"] {
   background: #fff;
   border: 1px solid #7f9db9;
 }
+.explorer-address-field::after {
+  content: "▾";
+  display: grid;
+  width: 16px;
+  height: 17px;
+  flex: none;
+  place-items: center;
+  border-left: 1px solid #7f9db9;
+  background: linear-gradient(135deg, #fff, #dce9f8);
+  color: #345f91;
+  font-size: 9px;
+}
 .explorer-address-field img {
   width: 16px;
   height: 16px;
@@ -1569,13 +1581,17 @@ html[data-xp-appearance="silver"] {
 }
 .explorer-address button {
   display: inline-flex;
-  width: 20px;
+  width: 48px;
   height: 20px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 2px;
   padding: 0;
   border: 0;
   background: transparent;
+}
+.explorer-address button::after {
+  content: "Go";
 }
 .explorer-address button img {
   width: 20px;
@@ -2503,6 +2519,78 @@ html[data-xp-appearance="silver"] {
 
 .control-panel-content.folders-visible .control-panel-sidebar > section {
   display: none;
+}
+
+.printers-body {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 211px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.printers-main {
+  min-width: 0;
+  background: #fff;
+}
+
+.printers-sidebar {
+  padding: 11px 14px 8px;
+}
+
+.printers-sidebar section {
+  box-sizing: border-box;
+  margin-bottom: 14px;
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.printers-sidebar h3 {
+  margin-right: -12px;
+  margin-left: -12px;
+}
+
+.printers-sidebar section:nth-child(1) {
+  height: 82px;
+  margin-bottom: 15px;
+}
+
+.printers-sidebar section:nth-child(1) h3 {
+  background: linear-gradient(90deg, #1c5dcc, #3f73d7);
+}
+
+.printers-sidebar section:nth-child(1) h3 .explorer-section-toggle {
+  color: #fff;
+}
+
+.printers-sidebar section:nth-child(2) {
+  height: 83px;
+}
+
+.printers-sidebar section:nth-child(3) {
+  height: 143px;
+}
+
+.printers-sidebar section:nth-child(4) {
+  height: 27px;
+}
+
+.printers-sidebar .explorer-section-body > button {
+  height: 20px;
+  min-height: 20px;
+  padding-block: 0;
+}
+
+.printers-sidebar section.collapsed {
+  padding-bottom: 0;
+}
+
+.printers-content.folders-visible .printers-sidebar {
+  display: none;
+}
+
+.printers-content.folders-visible .printers-body {
+  grid-template-columns: 1fr;
 }
 
 .explorer-empty {

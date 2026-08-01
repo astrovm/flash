@@ -719,14 +719,14 @@
   "assets/xp/icons/Up.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",
-    "sha256": "61a2bb21d2463d296a6f02f7f0b9f7c2ae7f013fac341e15ee8f285798a278d4",
+    "sha256": "a75504e9f8dc323a466bd418fb1be7e57e45c78f768b467504adc465d105246e",
     "resource": {
       "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
       "type": 14,
-      "id": 331,
+      "id": 39,
       "language": 1033,
       "frame": "48x48x32",
-      "pixelSha256": "d9d7841ce421e14e90305909fbbb884f0a7a967adcdf609a5b429b61d92d78e8"
+      "pixelSha256": "b2b4fb0a9fdb20c3853ebd4162a55291626ce615931f5e867dd8c49121919f9b"
     }
   },
   "assets/xp/icons/Volume.png": {

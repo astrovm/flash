@@ -626,6 +626,23 @@ test("explorer matches XP task pane toolbar and drive groups", () => {
     "grid-template-columns: 211px minmax(0, 1fr)",
   );
 });
+test("Printers and Faxes uses the XP Explorer folder shell", () => {
+  contains(
+    javascript,
+    "__printers: {",
+    'title: "Printers and Faxes"',
+    'content.className = "explorer-content printers-content"',
+    'class="printers-body"',
+    'data-printers-action="add"',
+    'const openPrintersAndFaxes = () => openSystemWindow("__printers")',
+    "const wirePrintersAndFaxes = (win) =>",
+  );
+  contains(
+    css,
+    ".printers-body",
+    "grid-template-columns: 211px minmax(0, 1fr)",
+  );
+});
 test("shell paste uses one conflict aware progress helper", () =>
   js(
     "const pasteIntoFolder = async (destinationId)",

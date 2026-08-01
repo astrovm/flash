@@ -199,6 +199,11 @@ const systemShortcuts = {
     icon: "assets/xp/icons/ControlPanel.png",
     desktop: false,
   },
+  __printers: {
+    title: "Printers and Faxes",
+    icon: "assets/xp/icons/PrintersAndFaxes.png",
+    desktop: false,
+  },
   __notepad: {
     title: "Notepad",
     icon: "assets/xp/icons/Notepad.png",
@@ -2117,7 +2122,7 @@ const createControlPanelContent = () => {
         <button type="button" disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
         <span class="explorer-toolbar-separator" aria-hidden="true"></span>
         <button type="button" data-control-panel-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
         <span class="explorer-toolbar-separator" aria-hidden="true"></span>
         <button type="button" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
       </div>
@@ -2269,6 +2274,39 @@ const createSystemWindowContent = (shortcutId, win) => {
   content.className = "explorer-content";
 
   if (shortcutId === "__control-panel") return createControlPanelContent();
+
+  if (shortcutId === "__printers") {
+    content.className = "explorer-content printers-content";
+    content.innerHTML = `
+      <div class="explorer-chrome printers-chrome">
+        <div class="explorer-menu-row">
+          <div class="explorer-menu-bar" role="menubar"><button data-printers-menu="file">File</button><button data-printers-menu="edit">Edit</button><button data-printers-menu="view">View</button><button data-printers-menu="favorites">Favorites</button><button data-printers-menu="tools">Tools</button><button data-printers-menu="help">Help</button></div>
+          <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
+        </div>
+        <div class="explorer-toolbar">
+          <button disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+          <button disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+          <button data-printers-action="control-panel" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+          <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+          <button data-printers-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+          <button data-printers-action="folders"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+          <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+          <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        </div>
+        <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><input type="text" aria-label="Address" value="Printers and Faxes" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+        <div class="game-menu explorer-menu printers-menu" role="menu" hidden></div>
+      </div>
+      <div class="printers-body">
+        <aside class="explorer-sidebar printers-sidebar">
+          <section><h3><button type="button" class="explorer-section-toggle">Printer Tasks<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="add"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><span>Add a printer</span></button><button data-printers-action="fax"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><span>Set up faxing</span></button></div></section>
+          <section><h3><button type="button" class="explorer-section-toggle">See Also<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="troubleshoot"><span>Troubleshoot printing</span></button><button data-printers-action="help"><span>Get help with printing</span></button></div></section>
+          <section><h3><button type="button" class="explorer-section-toggle">Other Places<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="control-panel"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span></button><button data-printers-action="scanners"><img src="assets/xp/icons/MyPictures.png" alt=""><span>Scanners and Cameras</span></button><button data-printers-action="documents"><img src="assets/xp/icons/MyDocuments.png" alt=""><span>My Documents</span></button><button data-printers-action="pictures"><img src="assets/xp/icons/MyPictures.png" alt=""><span>My Pictures</span></button><button data-printers-action="computer"><img src="assets/xp/icons/MyComputer.png" alt=""><span>My Computer</span></button></div></section>
+          <section class="collapsed"><h3><button type="button" class="explorer-section-toggle">Details<span aria-hidden="true">⌄</span></button></h3></section>
+        </aside>
+        <main class="printers-main"></main>
+      </div>`;
+    return content;
+  }
 
   if (shortcutId === "__astro-settings") {
     content.className = "project-settings-content";
@@ -2511,7 +2549,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                     <button disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
                     <span class="explorer-toolbar-separator" aria-hidden="true"></span>
                     <button class="search-toolbar-active"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-                    <button><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+                    <button><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
                     <span class="explorer-toolbar-separator" aria-hidden="true"></span>
                     <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
                 </div>
@@ -2755,7 +2793,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             <button data-explorer-action="up" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
             <button data-explorer-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
             <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
         </div>
@@ -5745,6 +5783,7 @@ const openSystemWindow = (shortcutId) => {
   const isDisplayProperties = shortcutId === "__display-properties";
   const isControlPanel = shortcutId === "__control-panel";
   const isSearch = shortcutId === "__search";
+  const isPrinters = shortcutId === "__printers";
   if (isDisplayProperties) el.classList.add("display-properties-window");
   const windowWidth = Math.min(
     isProjectSettings
@@ -5775,20 +5814,24 @@ const openSystemWindow = (shortcutId) => {
   el.style.left = `${
     isControlPanel
       ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
-      : isSearch
-        ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-        : isDisplayProperties
-          ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-          : Math.max(8, (desktopWidth - windowWidth) / 2)
+      : isPrinters
+        ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+        : isSearch
+          ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+          : isDisplayProperties
+            ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+            : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
       ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
-      : isSearch
-        ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
-        : isDisplayProperties
-          ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
-          : Math.max(8, (desktopHeight - windowHeight) / 2)
+      : isPrinters
+        ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
+        : isSearch
+          ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+          : isDisplayProperties
+            ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+            : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 
@@ -5834,6 +5877,7 @@ const openSystemWindow = (shortcutId) => {
   if (shortcutId === "__search") wireSearchCompanion(win);
   if (shortcutId === "__internet-games") wireInternetGames(win);
   if (shortcutId === "__control-panel") wireControlPanel(win);
+  if (shortcutId === "__printers") wirePrintersAndFaxes(win);
   focusWindow(shortcutId);
 };
 
@@ -8467,25 +8511,81 @@ const openRecentDocuments = () => {
 
 const openControlPanel = () => openSystemWindow("__control-panel");
 
-const openPrintersAndFaxes = () => {
-  const dialog = XPDialogs.createDialog({ title: "Printers and Faxes" });
-  const message = document.createElement("p");
-  message.textContent = "No printers are installed.";
-  const addPrinter = XPDialogs.createDialogButton(
-    { id: "add", label: "Add a &Printer" },
-    () => {
-      dialog.close();
+const openPrintersAndFaxes = () => openSystemWindow("__printers");
+
+const wirePrintersAndFaxes = (win) => {
+  const content = win.el.querySelector(".printers-content");
+  const menu = content.querySelector(".printers-menu");
+  const closeMenu = () => {
+    menu.hidden = true;
+    content
+      .querySelectorAll("[data-printers-menu]")
+      .forEach((button) => button.setAttribute("aria-expanded", "false"));
+  };
+  const showMenu = (button) => {
+    const labels =
+      button.dataset.printersMenu === "file"
+        ? [["Close", "close"]]
+        : button.dataset.printersMenu === "help"
+          ? [
+              ["Help and Support", "help"],
+              ["About Windows", "about"],
+            ]
+          : [["No commands available", "none"]];
+    menu.replaceChildren();
+    labels.forEach(([label, command]) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "game-menu-item";
+      item.textContent = label;
+      item.dataset.printersCommand = command;
+      item.disabled = command === "none";
+      menu.appendChild(item);
+    });
+    menu.style.left = `${button.offsetLeft}px`;
+    menu.style.top = `${button.offsetTop + button.offsetHeight}px`;
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+  };
+  content.addEventListener("click", (event) => {
+    const menuButton = event.target.closest("[data-printers-menu]");
+    if (menuButton) return showMenu(menuButton);
+    const command = event.target.closest("[data-printers-command]")?.dataset
+      .printersCommand;
+    if (command === "close") closeGameWindow("__printers");
+    if (command === "help") openHelpAndSupport();
+    if (command === "about") openProjectSettings();
+    if (command) return closeMenu();
+    const action = event.target.closest("[data-printers-action]")?.dataset
+      .printersAction;
+    if (action === "add" || action === "fax") {
       XPDialogs.message({
-        title: "Add Printer Wizard",
-        text: "Printer setup is not available in Astro Flash.",
+        title: action === "add" ? "Add Printer Wizard" : "Fax Setup Wizard",
+        text: "This setup wizard is not available in the offline recreation.",
         icon: "info",
       });
-    },
-  );
-  dialog.body.append(message, addPrinter);
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
+    } else if (action === "search") openSearchDialog();
+    else if (action === "folders") content.classList.toggle("folders-visible");
+    else if (action === "control-panel") openControlPanel();
+    else if (action === "documents") openSystemWindow("__my-documents");
+    else if (action === "pictures") openSystemWindow("__my-pictures");
+    else if (action === "computer") openSystemWindow("__my-computer");
+    else if (action === "scanners")
+      XPDialogs.alert(
+        "No scanners or cameras are installed.",
+        "Scanners and Cameras",
+        "info",
+      );
+    else if (action === "troubleshoot" || action === "help")
+      openHelpAndSupport();
+    const toggle = event.target.closest(".explorer-section-toggle");
+    if (toggle) {
+      const section = toggle.closest("section");
+      section.classList.toggle("collapsed");
+      toggle.querySelector("[aria-hidden]").textContent =
+        section.classList.contains("collapsed") ? "⌄" : "⌃";
+    }
+  });
 };
 
 const openHelpAndSupport = () => {
