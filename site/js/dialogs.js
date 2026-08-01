@@ -459,7 +459,7 @@
       icon.appendChild(image);
     } else if (node.type === "folder") {
       const image = document.createElement("img");
-      image.src = "assets/xp/icons/mydocuments.png";
+      image.src = "assets/xp/icons/MyDocuments.png";
       image.alt = "";
       icon.appendChild(image);
     } else {

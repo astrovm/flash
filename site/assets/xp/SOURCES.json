@@ -194,6 +194,32 @@
     "member": "I386/TREBUCBD.TT_",
     "sha256": "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e"
   },
+  "assets/xp/icons/MyComputer.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/EXPLORER.EX_",
+    "sha256": "665496c5cde8a39034228a2f25bf32279cd25df63882e4f82851da2c113d2307",
+    "resource": {
+      "parentSha256": "1e675cb7df214172f7eb0497f7275556038a0d09c6e5a3e6862c5e26885ef455",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "4c697dbb12eb58bf8973a80a71b32548f6ccdac1e0fd07c17c6b6ad5fa1f71fb"
+    }
+  },
+  "assets/xp/icons/MyDocuments.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MYDOCS.DL_",
+    "sha256": "e7493ffa0fc51820b13dcf65fb4c397dea63abc97039d0400429474cdecefb48",
+    "resource": {
+      "parentSha256": "47d8784c811fcadd1e78a907af56d3d0fa5abe9ac7da7cb41af60d304caa06ba",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "97a769207edd2ba00a558a63cae74612569072786f1eb512c7c8abefcad817b9"
+    }
+  },
   "assets/xp/icons/recycler-empty.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

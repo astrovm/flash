@@ -117,6 +117,26 @@
   ],
   "resourceIcons": [
     {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyComputer.png"
+    },
+    {
+      "member": "MYDOCS.DL_",
+      "expandedName": "mydocs.dll",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyDocuments.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
@@ -140,6 +160,7 @@
   "auditFiles": [
     { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
     { "member": "EXPLORER.EX_", "output": "system/explorer.exe" },
+    { "member": "MYDOCS.DL_", "output": "system/mydocs.dll" },
     { "member": "LUNA.MS_", "output": "themes/Luna.msstyles" },
     { "member": "APPSTART.AN_", "output": "cursors/appstarting.ani" },
     { "member": "HOURGLAS.AN_", "output": "cursors/busy.ani" },

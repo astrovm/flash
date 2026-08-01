@@ -114,8 +114,9 @@ async function extractIcon(
   const parentPath = join(workDirectory, icon.expandedName);
   await writeFile(parentPath, parent);
 
-  const groupDirectory = join(workDirectory, `group-${icon.resourceId}`);
-  const frameDirectory = join(workDirectory, `frame-${icon.resourceId}`);
+  const resourceKey = `${icon.expandedName}-${icon.resourceId}`;
+  const groupDirectory = join(workDirectory, `group-${resourceKey}`);
+  const frameDirectory = join(workDirectory, `frame-${resourceKey}`);
   await mkdir(groupDirectory);
   await mkdir(frameDirectory);
   run("wrestool", [

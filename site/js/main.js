@@ -115,8 +115,6 @@ const XP_ICON_PATHS = Object.freeze({
   "Maximize.png": "assets/xp/icons/Maximize.png",
   "Minimize.png": "assets/xp/icons/Minimize.png",
   "Mute.png": "assets/xp/icons/Mute.png",
-  "MyComputer.png": "assets/xp/icons/MyComputer.png",
-  "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
   "MyMusic.png": "assets/xp/icons/MyMusic.png",
   "MyNetworkPlaces.png": "assets/xp/icons/MyNetworkPlaces.png",
   "MyPictures.png": "assets/xp/icons/MyPictures.png",
@@ -135,8 +133,8 @@ const XP_ICON_PATHS = Object.freeze({
   "Up.png": "assets/xp/icons/Up.png",
   "Volume.png": "assets/xp/icons/Volume.png",
   "explorerproperties.png": "assets/xp/icons/explorerproperties.png",
-  "mycomputer.png": "assets/xp/icons/mycomputer.png",
-  "mydocuments.png": "assets/xp/icons/mydocuments.png",
+  "MyComputer.png": "assets/xp/icons/MyComputer.png",
+  "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
   "recycler-empty.png": "assets/xp/icons/recycler-empty.png",
   "recycler-full.png": "assets/xp/icons/recycler-full.png",
   "shortcut.png": "assets/xp/icons/shortcut.png",
@@ -159,11 +157,11 @@ const categoryIcons = {
 const systemShortcuts = {
   "__my-documents": {
     title: "My Documents",
-    icon: "assets/xp/icons/mydocuments.png",
+    icon: "assets/xp/icons/MyDocuments.png",
   },
   "__my-computer": {
     title: "My Computer",
-    icon: "assets/xp/icons/mycomputer.png",
+    icon: "assets/xp/icons/MyComputer.png",
   },
   "__my-pictures": {
     title: "My Pictures",
@@ -181,7 +179,7 @@ const systemShortcuts = {
   },
   "__display-properties": {
     title: "Display Properties",
-    icon: "assets/xp/icons/mycomputer.png",
+    icon: "assets/xp/icons/MyComputer.png",
     desktop: false,
   },
   __notepad: {
@@ -2474,7 +2472,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     appendSidebarAction(
       placesBody,
       "My Documents",
-      "mydocuments.png",
+      "MyDocuments.png",
       () => navigateExplorer(win, fs.MY_DOCUMENTS),
       "documents",
     );
@@ -2820,8 +2818,8 @@ const openDesktopItemsDialog = (ownerWindow) => {
         <label><input type="checkbox" disabled> My Network Places</label>
       </fieldset>
       <div class="desktop-icon-choices" role="listbox" aria-label="Desktop icons">
-        <button type="button" class="selected"><img src="assets/xp/icons/mycomputer.png" alt=""><span>My Computer</span></button>
-        <button type="button"><img src="assets/xp/icons/mydocuments.png" alt=""><span>My Documents</span></button>
+        <button type="button" class="selected"><img src="assets/xp/icons/MyComputer.png" alt=""><span>My Computer</span></button>
+        <button type="button"><img src="assets/xp/icons/MyDocuments.png" alt=""><span>My Documents</span></button>
         <button type="button"><img src="assets/xp/icons/MyNetworkPlaces.png" alt=""><span>My Network<br>Places</span></button>
         <button type="button"><img src="assets/xp/icons/recycler-full.png" alt=""><span>Recycle Bin<br>(full)</span></button>
         <button type="button"><img src="assets/xp/icons/recycler-empty.png" alt=""><span>Recycle Bin<br>(empty)</span></button>
@@ -3148,7 +3146,7 @@ const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {
   addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
     <div class="browse-location"><label>Look in:</label><span><img src="assets/xp/icons/MyPictures.png" alt="">My Pictures</span><button type="button" disabled>◀</button><button type="button" disabled>↥</button><button type="button" disabled>☆</button><button type="button" disabled>▦</button></div>
-    <div class="browse-body"><aside><button><img src="assets/xp/icons/RecentDocuments.png" alt="">My Recent<br>Documents</button><button><img src="assets/xp/icons/Programs.png" alt="">Desktop</button><button><img src="assets/xp/icons/mydocuments.png" alt="">My Documents</button><button><img src="assets/xp/icons/mycomputer.png" alt="">My Computer</button><button><img src="assets/xp/icons/MyNetworkPlaces.png" alt="">My Network</button></aside><main><button type="button" class="sample-pictures-folder"><span><i></i><i></i><i></i><i></i></span>Sample Pictures</button></main></div>
+    <div class="browse-body"><aside><button><img src="assets/xp/icons/RecentDocuments.png" alt="">My Recent<br>Documents</button><button><img src="assets/xp/icons/Programs.png" alt="">Desktop</button><button><img src="assets/xp/icons/MyDocuments.png" alt="">My Documents</button><button><img src="assets/xp/icons/MyComputer.png" alt="">My Computer</button><button><img src="assets/xp/icons/MyNetworkPlaces.png" alt="">My Network</button></aside><main><button type="button" class="sample-pictures-folder"><span><i></i><i></i><i></i><i></i></span>Sample Pictures</button></main></div>
     <div class="browse-fields"><label>File name:<input class="xp-input browse-file-name" readonly></label><label>Files of type:<select class="xp-select" disabled><option>Background Files</option></select></label></div>
   `;
   const buttons = document.createElement("div");
@@ -4793,7 +4791,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
             ? "assets/xp/icons/MyMusic.png"
             : folder.id === fs.MY_PICTURES
               ? "assets/xp/icons/MyPictures.png"
-              : "assets/xp/icons/mydocuments.png";
+              : "assets/xp/icons/MyDocuments.png";
     image.alt = "";
     titleIcon.appendChild(image);
   }
@@ -4815,7 +4813,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
               ? XP_ICON_PATHS["MyMusic.png"]
               : folder.id === fs.MY_PICTURES
                 ? XP_ICON_PATHS["MyPictures.png"]
-                : XP_ICON_PATHS["mydocuments.png"];
+                : XP_ICON_PATHS["MyDocuments.png"];
     }
     chrome.querySelector('[data-explorer-action="back"]').disabled =
       (win.historyIndex ?? 0) <= 0;
