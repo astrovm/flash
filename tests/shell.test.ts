@@ -150,7 +150,16 @@ test("Flash URL routing is shared and uses exact archived assets", async () => {
   js(
     "window.AstroFlashUrlRouter.create(",
     "const routedFetch = flashUrlRouter.wrapFetch",
+    "if (flashUrlRouter.resolve(originalRequest))",
   );
+  const bundledRouteCheck = javascript.indexOf(
+    "if (flashUrlRouter.resolve(originalRequest))",
+  );
+  const installedGameLookup = javascript.indexOf(
+    "await gameLibrary.match(originalRequest)",
+  );
+  expect(bundledRouteCheck).toBeGreaterThan(-1);
+  expect(bundledRouteCheck).toBeLessThan(installedGameLookup);
   contains(
     html,
     '<script src="js/games.js"></script>',
