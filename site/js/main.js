@@ -102,9 +102,12 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
   "1440x900": { width: 1440, height: 900 },
 });
 const XP_ICON_PATHS = Object.freeze({
+  "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
   "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
+  "AppearanceAndThemes.png": "assets/xp/icons/AppearanceAndThemes.png",
   "Back.png": "assets/xp/icons/Back.png",
   "ControlPanel.png": "assets/xp/icons/ControlPanel.png",
+  "DateTimeRegional.png": "assets/xp/icons/DateTimeRegional.png",
   "Exit.png": "assets/xp/icons/Exit.png",
   "FolderViewClassic.png": "assets/xp/icons/FolderViewClassic.png",
   "FolderView.png": "assets/xp/icons/FolderView.png",
@@ -119,9 +122,13 @@ const XP_ICON_PATHS = Object.freeze({
   "MyMusic.png": "assets/xp/icons/MyMusic.png",
   "MyNetworkPlaces.png": "assets/xp/icons/MyNetworkPlaces.png",
   "MyPictures.png": "assets/xp/icons/MyPictures.png",
+  "NetworkAndInternet.png": "assets/xp/icons/NetworkAndInternet.png",
   "NetworkConnection.png": "assets/xp/icons/NetworkConnection.png",
   "NewFolder.png": "assets/xp/icons/NewFolder.png",
   "Power.png": "assets/xp/icons/Power.png",
+  "PerformanceAndMaintenance.png":
+    "assets/xp/icons/PerformanceAndMaintenance.png",
+  "PrintersAndHardware.png": "assets/xp/icons/PrintersAndHardware.png",
   "PrintersAndFaxes.png": "assets/xp/icons/PrintersAndFaxes.png",
   "Programs.png": "assets/xp/icons/Programs.png",
   "PublishToWeb.png": "assets/xp/icons/PublishToWeb.png",
@@ -130,8 +137,11 @@ const XP_ICON_PATHS = Object.freeze({
   "Restore.png": "assets/xp/icons/Restore.png",
   "Run.png": "assets/xp/icons/Run.png",
   "Search.png": "assets/xp/icons/Search.png",
+  "SecurityCenter.png": "assets/xp/icons/SecurityCenter.png",
   "SharedFolder.png": "assets/xp/icons/SharedFolder.png",
   "Up.png": "assets/xp/icons/Up.png",
+  "SoundsSpeechAudio.png": "assets/xp/icons/SoundsSpeechAudio.png",
+  "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
   "Volume.png": "assets/xp/icons/Volume.png",
   "ExplorerProperties.png": "assets/xp/icons/ExplorerProperties.png",
   "MyComputer.png": "assets/xp/icons/MyComputer.png",
@@ -181,6 +191,11 @@ const systemShortcuts = {
   "__display-properties": {
     title: "Display Properties",
     icon: "assets/xp/icons/MyComputer.png",
+    desktop: false,
+  },
+  "__control-panel": {
+    title: "Control Panel",
+    icon: "assets/xp/icons/ControlPanel.png",
     desktop: false,
   },
   __notepad: {
@@ -2079,9 +2094,180 @@ const wireWindowControls = (win) => {
   wireResize(win);
 };
 
+const createControlPanelContent = () => {
+  const content = document.createElement("div");
+  content.className = "control-panel-content";
+  content.innerHTML = `
+    <div class="explorer-chrome control-panel-chrome">
+      <div class="explorer-menu-row">
+        <div class="explorer-menu-bar" role="menubar">
+          <button type="button" role="menuitem">File</button>
+          <button type="button" role="menuitem">Edit</button>
+          <button type="button" role="menuitem">View</button>
+          <button type="button" role="menuitem">Favorites</button>
+          <button type="button" role="menuitem">Tools</button>
+          <button type="button" role="menuitem">Help</button>
+        </div>
+        <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
+      </div>
+      <div class="explorer-toolbar">
+        <button type="button" disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+        <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+        <button type="button" data-control-panel-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+        <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+        <button type="button" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+      </div>
+      <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/ControlPanel.png" alt=""><input type="text" aria-label="Address" value="Control Panel" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+    </div>
+    <div class="control-panel-body">
+      <aside class="explorer-sidebar control-panel-sidebar">
+        <section>
+          <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span><b aria-hidden="true">⌃</b></button></h3>
+          <div class="explorer-section-body"><button type="button" data-control-panel-action="classic"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span>Switch to Classic View</span></button></div>
+        </section>
+        <section>
+          <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+          <div class="explorer-section-body">
+            <button type="button" data-control-panel-action="updates"><span class="control-panel-see-icon windows-update" aria-hidden="true"></span><span>Windows Update</span></button>
+            <button type="button" data-control-panel-action="help"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><span>Help and Support</span></button>
+          </div>
+        </section>
+      </aside>
+      <main class="control-panel-main">
+        <h1>Pick a category</h1>
+        <div class="control-panel-categories"></div>
+      </main>
+    </div>
+  `;
+
+  const categories = [
+    ["appearance", "Appearance and Themes", "AppearanceAndThemes.png", "left"],
+    [
+      "printers",
+      "Printers and Other Hardware",
+      "PrintersAndHardware.png",
+      "right",
+    ],
+    [
+      "network",
+      "Network and Internet Connections",
+      "NetworkAndInternet.png",
+      "left",
+    ],
+    ["users", "User Accounts", "UserAccounts.png", "right"],
+    ["programs", "Add or Remove Programs", "AddRemovePrograms.png", "left"],
+    [
+      "datetime",
+      "Date, Time, Language, and Regional Options",
+      "DateTimeRegional.png",
+      "right",
+    ],
+    [
+      "sounds",
+      "Sounds, Speech, and Audio Devices",
+      "SoundsSpeechAudio.png",
+      "left",
+    ],
+    [
+      "accessibility",
+      "Accessibility Options",
+      "AccessibilityOptions.png",
+      "right",
+    ],
+    [
+      "performance",
+      "Performance and Maintenance",
+      "PerformanceAndMaintenance.png",
+      "left",
+    ],
+    ["security", "Security Center", "SecurityCenter.png", "right"],
+  ];
+  const categoryGrid = content.querySelector(".control-panel-categories");
+  categories.forEach(([id, label, icon, column]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.controlPanelCategory = id;
+    button.dataset.column = column;
+    const image = document.createElement("img");
+    image.src = XP_ICON_PATHS[icon];
+    image.alt = "";
+    const text = document.createElement("span");
+    text.textContent = label;
+    button.append(image, text);
+    categoryGrid.appendChild(button);
+  });
+  return content;
+};
+
+const wireControlPanel = (win) => {
+  const content = win.el.querySelector(".control-panel-content");
+  const actions = {
+    appearance: () => openSystemWindow("__display-properties"),
+    printers: openPrintersAndFaxes,
+    network: openNetworkStatus,
+    users: openProjectSettings,
+    programs: () => openSystemWindow("__internet-games"),
+    datetime: openDateTimeProperties,
+    sounds: toggleTrayVolumePopup,
+    accessibility: openProjectSettings,
+    performance: openProjectSettings,
+    security: () =>
+      XPDialogs.alert(
+        "Firewall, Automatic Updates, and Virus Protection are monitored by Security Center.",
+        "Windows Security Center",
+        "info",
+      ),
+  };
+  content.addEventListener("click", (event) => {
+    const category = event.target.closest("[data-control-panel-category]");
+    if (category) {
+      actions[category.dataset.controlPanelCategory]?.();
+      return;
+    }
+    const action = event.target.closest("[data-control-panel-action]")?.dataset
+      .controlPanelAction;
+    if (action === "classic") {
+      const classic = content.classList.toggle("classic-view");
+      content.querySelector(".control-panel-main h1").textContent = classic
+        ? "Pick a Control Panel icon"
+        : "Pick a category";
+      event.target.closest("button").querySelector("span").textContent = classic
+        ? "Switch to Category View"
+        : "Switch to Classic View";
+    } else if (action === "search") {
+      openSearchDialog();
+    } else if (action === "folders") {
+      const pressed = content.classList.toggle("folders-visible");
+      event.target
+        .closest("button")
+        .setAttribute("aria-pressed", String(pressed));
+    } else if (action === "help") {
+      openHelpAndSupport();
+    } else if (action === "updates") {
+      XPDialogs.alert(
+        "This offline Windows XP recreation does not connect to Windows Update.",
+        "Windows Update",
+        "info",
+      );
+    }
+  });
+  content.querySelectorAll(".explorer-section-toggle").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const collapsed = toggle.closest("section").classList.toggle("collapsed");
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.querySelector("b").textContent = collapsed ? "⌄" : "⌃";
+    });
+  });
+};
+
 const createSystemWindowContent = (shortcutId, win) => {
   const content = document.createElement("div");
   content.className = "explorer-content";
+
+  if (shortcutId === "__control-panel") return createControlPanelContent();
 
   if (shortcutId === "__astro-settings") {
     content.className = "project-settings-content";
@@ -5476,15 +5662,18 @@ const openSystemWindow = (shortcutId) => {
   const isProjectSettings = shortcutId === "__astro-settings";
   const isInternetGames = shortcutId === "__internet-games";
   const isDisplayProperties = shortcutId === "__display-properties";
+  const isControlPanel = shortcutId === "__control-panel";
   if (isDisplayProperties) el.classList.add("display-properties-window");
   const windowWidth = Math.min(
     isProjectSettings
       ? 540
       : isInternetGames
         ? 760
-        : isDisplayProperties
-          ? 426
-          : 700,
+        : isControlPanel
+          ? 800
+          : isDisplayProperties
+            ? 426
+            : 700,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -5492,15 +5681,25 @@ const openSystemWindow = (shortcutId) => {
       ? 420
       : isInternetGames
         ? 540
-        : isDisplayProperties
-          ? 480
-          : 500,
+        : isControlPanel
+          ? 600
+          : isDisplayProperties
+            ? 480
+            : 500,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  el.style.left = `${
+    isControlPanel
+      ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
+      : Math.max(8, (desktopWidth - windowWidth) / 2)
+  }px`;
+  el.style.top = `${
+    isControlPanel
+      ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
+      : Math.max(8, (desktopHeight - windowHeight) / 2)
+  }px`;
   document.getElementById("desktop").appendChild(el);
 
   const win = {
@@ -5544,6 +5743,7 @@ const openSystemWindow = (shortcutId) => {
   if (shortcutId === "__astro-settings") wireProjectSettings(win);
   if (shortcutId === "__search") wireSearchCompanion(win);
   if (shortcutId === "__internet-games") wireInternetGames(win);
+  if (shortcutId === "__control-panel") wireControlPanel(win);
   focusWindow(shortcutId);
 };
 
@@ -8175,32 +8375,7 @@ const openRecentDocuments = () => {
   ]);
 };
 
-const openControlPanel = () => {
-  const dialog = XPDialogs.createDialog({ title: "Control Panel" });
-  const heading = document.createElement("p");
-  heading.textContent = "Pick a category to change a setting.";
-  const list = document.createElement("div");
-  list.className = "shell-dialog-list";
-  [
-    ["Internet Games", () => openSystemWindow("__internet-games")],
-    ["Display", () => openSystemWindow("__display-properties")],
-    ["Date and Time", openDateTimeProperties],
-    ["Astro Flash Settings", openProjectSettings],
-  ].forEach(([label, action]) => {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.textContent = label;
-    item.addEventListener("click", () => {
-      dialog.close();
-      action();
-    });
-    list.appendChild(item);
-  });
-  dialog.body.append(heading, list);
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
-};
+const openControlPanel = () => openSystemWindow("__control-panel");
 
 const openPrintersAndFaxes = () => {
   const dialog = XPDialogs.createDialog({ title: "Printers and Faxes" });

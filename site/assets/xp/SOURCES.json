@@ -204,6 +204,123 @@
     "member": "I386/TREBUCBD.TT_",
     "sha256": "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e"
   },
+  "assets/xp/icons/AppearanceAndThemes.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "5826c0209e402e740f79dc9716d5dc7665150d5069e02954d848f38bab36cd2b",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 270,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "4bb36c54a04bece67dcc1ecc44d7a84de3e76bcd394b5a59570c48c90ec3d4e6"
+    }
+  },
+  "assets/xp/icons/AccessibilityOptions.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "15c25f3006e16bcbbcc958fbbe307a294d8a3f4ae8e2b376ee6d236dc61fbb0b",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 268,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "04edb4d8fa4c5b2b1552d3752c6362a50040f46290af759161e7aaa13fa87a25"
+    }
+  },
+  "assets/xp/icons/DateTimeRegional.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "093d67df8908f47ba5686cbba3ad35fe41c67ee472edc4acfd9d4657595b7b37",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 276,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "4aaebc4cc3612565214795e646542f80533faeb2dc5fa059965e5e5b7bf672ee"
+    }
+  },
+  "assets/xp/icons/NetworkAndInternet.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "24d4989c4117798bdb0ca9f696d01093aa8320659d81d10de5573f0df680c48a",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 273,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "2e7f2bf71fbf29d602ca2f04853d0b96afda96b7601e4a5dfb9769e2426b51e9"
+    }
+  },
+  "assets/xp/icons/PerformanceAndMaintenance.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "6e96388fe61ae16a3bd8a4d2bbc0093ab05c141922efa0a4e018ec0a2bf9d629",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 275,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "4d38aeb90f467d170731b72c6cda5a4f3be5550e94bc25aa572f6d14f6e1b0f3"
+    }
+  },
+  "assets/xp/icons/PrintersAndHardware.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "ff02b00308321ca7540df61a85f061ab54b1c2f2fd6b44c54605014a4379ea9f",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 272,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "47a3d4f14b5120d68ca1b002b3ccc4be51e29e3e8aaa4d1e4e2c590e785b112b"
+    }
+  },
+  "assets/xp/icons/SoundsSpeechAudio.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "c1ab068589614735c40181066f965d9d80ae86983b15526591dad8e085338189",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 277,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "f8535c7cee5d297351e0e00c8e207525f85c0bff9cdfc9de69b7019064165733"
+    }
+  },
+  "assets/xp/icons/UserAccounts.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "bc644c297a84e3f0d0f598d0152415610fcb21f86d252916c18db7cd01330e23",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 269,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "e0600b8ce2848e807c31e9bca4a480994da259202d9eb88a69458bf38c431700"
+    }
+  },
+  "assets/xp/icons/SecurityCenter.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "7e40a421aff93934b09545518bd12f700a38ee727f167aef891676f62d837686",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": 14,
+      "id": 200,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "f42d22f897dec2511da61cb07197000a2cd6b6c935324c1fb2c93de15c7ddc76"
+    }
+  },
   "assets/xp/icons/AddRemovePrograms.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/APPWIZ.CP_",

@@ -2096,6 +2096,254 @@ html[data-xp-appearance="silver"] {
   color: #777;
 }
 
+/* Control Panel category view */
+
+.control-panel-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  color: #111;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.control-panel-chrome .explorer-menu-row {
+  min-height: 23px;
+}
+
+.control-panel-chrome .explorer-toolbar {
+  min-height: 40px;
+  padding-block: 1px;
+}
+
+.control-panel-chrome .explorer-toolbar button {
+  min-height: 36px;
+}
+
+.control-panel-chrome .explorer-toolbar button img {
+  width: 25px;
+  height: 25px;
+}
+
+.control-panel-chrome .explorer-address {
+  min-height: 23px;
+  padding: 1px 5px;
+}
+
+.control-panel-chrome .explorer-address-field img {
+  width: 16px;
+  height: 16px;
+  margin: 1px 3px;
+}
+
+.control-panel-chrome .explorer-address input {
+  height: 19px;
+}
+
+.control-panel-chrome .explorer-address button,
+.control-panel-chrome .explorer-address button img {
+  width: 20px;
+  height: 20px;
+}
+
+.control-panel-body {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 211px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.control-panel-sidebar {
+  padding: 11px 12px 8px;
+  background: rgb(106, 131, 219);
+}
+
+.control-panel-sidebar section {
+  margin-bottom: 16px;
+  padding: 0 10px 9px;
+  border-radius: 3px 3px 0 0;
+  background: #d6e3fa;
+}
+
+.control-panel-sidebar h3 {
+  height: 34px;
+  margin: 0 -10px 4px;
+  background: linear-gradient(90deg, #f7faff, #c7d7f5);
+  color: #154ba0;
+}
+
+.control-panel-sidebar h3 .explorer-section-toggle {
+  height: 34px;
+  padding: 3px 5px 3px 10px;
+  color: #154ba0;
+}
+
+.control-panel-sidebar h3 .explorer-section-toggle > img {
+  width: 30px;
+  height: 30px;
+  margin-left: -5px;
+  object-fit: contain;
+}
+
+.control-panel-sidebar h3 .explorer-section-toggle > span {
+  margin-right: auto;
+}
+
+.control-panel-sidebar h3 .explorer-section-toggle > b {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  border: 1px solid #7fa3dc;
+  border-radius: 50%;
+  background: #fff;
+  color: #215dc6;
+  font-size: 10px;
+}
+
+.control-panel-sidebar .explorer-section-body > button {
+  gap: 7px;
+  min-height: 24px;
+  padding: 2px 0;
+}
+
+.control-panel-see-icon.windows-update {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 65% 25%, #ffd82b 0 10%, transparent 11%),
+    conic-gradient(#0a55c7, #09a642, #ffd82b, #0a55c7);
+}
+
+.control-panel-main {
+  position: relative;
+  min-width: 0;
+  overflow: auto;
+  padding: 18px 24px;
+  background: rgb(99, 117, 214);
+  color: #fff;
+}
+
+.control-panel-main::after {
+  content: "";
+  position: absolute;
+  right: 24px;
+  bottom: 18px;
+  width: 250px;
+  height: 250px;
+  background: url("../assets/xp/icons/ControlPanel.png") center / contain
+    no-repeat;
+  opacity: 0.055;
+  pointer-events: none;
+}
+
+.control-panel-main h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 12px;
+  font:
+    700 28px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.control-panel-categories {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-template-rows: repeat(5, 62px);
+  column-gap: 26px;
+}
+
+.control-panel-categories button {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font:
+    700 11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  text-align: left;
+  text-shadow: 1px 1px rgba(35, 62, 143, 0.7);
+  cursor: var(--xp-cursor);
+}
+
+.control-panel-categories button[data-column="left"] {
+  grid-column: 1;
+}
+
+.control-panel-categories button[data-column="right"] {
+  grid-column: 2;
+}
+
+.control-panel-categories button img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.control-panel-categories button:hover span,
+.control-panel-categories button:focus-visible span {
+  text-decoration: underline;
+}
+
+.control-panel-content.classic-view .control-panel-main {
+  background: #fff;
+  color: #111;
+}
+
+.control-panel-content.classic-view .control-panel-main::after {
+  display: none;
+}
+
+.control-panel-content.classic-view .control-panel-main h1 {
+  color: #215dc6;
+  font-size: 20px;
+}
+
+.control-panel-content.classic-view .control-panel-categories {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  grid-template-rows: repeat(3, 92px);
+  column-gap: 10px;
+}
+
+.control-panel-content.classic-view .control-panel-categories button {
+  display: flex;
+  flex-direction: column;
+  color: #111;
+  font-weight: 400;
+  text-align: center;
+  text-shadow: none;
+}
+
+.control-panel-content.classic-view
+  .control-panel-categories
+  button[data-column] {
+  grid-column: auto;
+}
+
+.control-panel-content.folders-visible .control-panel-sidebar > section {
+  display: none;
+}
+
 .explorer-empty {
   color: #777;
 }

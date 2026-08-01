@@ -367,6 +367,28 @@ test("date time properties matches the XP tabbed applet", () => {
     /\.datetime-dialog\s*\{[^}]*width:\s*min\(404px,[^}]*height:\s*min\(345px/s,
   );
 });
+test("Control Panel uses the XP category-view Explorer shell", () => {
+  contains(
+    javascript,
+    'title: "Control Panel"',
+    'const openControlPanel = () => openSystemWindow("__control-panel")',
+    '"Appearance and Themes"',
+    '"Network and Internet Connections"',
+    '"Date, Time, Language, and Regional Options"',
+    '"Performance and Maintenance"',
+    '"Security Center"',
+    '"Switch to Classic View"',
+  );
+  for (const icon of [
+    "AppearanceAndThemes.png",
+    "NetworkAndInternet.png",
+    "PerformanceAndMaintenance.png",
+    "SecurityCenter.png",
+  ]) {
+    expect(javascript).toContain(`assets/xp/icons/${icon}`);
+  }
+  contains(css, ".control-panel-content", ".control-panel-categories");
+});
 test("desktop renders system places then virtual files", () => {
   const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
   const start = javascript.indexOf("const entries = [", desktop);
@@ -916,9 +938,9 @@ test("display properties uses Windows XP desktop-tab geometry and labels", () =>
     'data-wallpaper="windows-xp"',
     'data-wallpaper="zapotec"',
     "controls.status.hidden = !message",
-    "isDisplayProperties\n          ? 426",
-    "isDisplayProperties\n          ? 480",
   );
+  expect(javascript).toMatch(/isDisplayProperties\s*\?\s*426/);
+  expect(javascript).toMatch(/isDisplayProperties\s*\?\s*480/);
   absent(javascript, 'controls.status.textContent = "Settings applied."');
   contains(
     css,

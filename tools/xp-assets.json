@@ -120,6 +120,96 @@
   ],
   "resourceIcons": [
     {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 270,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AppearanceAndThemes.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 268,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AccessibilityOptions.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 276,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/DateTimeRegional.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 273,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/NetworkAndInternet.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 275,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PerformanceAndMaintenance.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 272,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PrintersAndHardware.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 277,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SoundsSpeechAudio.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 269,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/UserAccounts.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SecurityCenter.png"
+    },
+    {
       "member": "APPWIZ.CP_",
       "expandedName": "appwiz.cpl",
       "resourceType": 14,
