@@ -87,7 +87,7 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   fontSize: "normal",
   screenSaver: "windows-xp",
   screenSaverWait: 10,
-  screenSaverPassword: false,
+  requireLoginOnResume: false,
   transitionEffect: "fade",
   fontSmoothing: "standard",
   largeIcons: false,
@@ -320,8 +320,8 @@ const isDisplaySettings = (value) =>
   Number.isInteger(value.screenSaverWait) &&
   value.screenSaverWait >= 1 &&
   value.screenSaverWait <= 60 &&
-  (value.screenSaverPassword === undefined ||
-    typeof value.screenSaverPassword === "boolean") &&
+  (value.requireLoginOnResume === undefined ||
+    typeof value.requireLoginOnResume === "boolean") &&
   (value.transitionEffect === undefined ||
     ["none", "fade", "scroll"].includes(value.transitionEffect)) &&
   (value.fontSmoothing === undefined ||
@@ -2220,7 +2220,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                         <label for="display-saver-wait">Wait:</label>
                         <input id="display-saver-wait" type="number" min="1" max="60">
                         <span>minutes</span>
-                        <label><input type="checkbox" class="display-saver-password"> On resume, password protect</label>
+                        <label><input type="checkbox" class="display-saver-login"> On resume, password protect</label>
                     </div>
                 </fieldset>
                 <fieldset class="display-power-group"><legend>Monitor power</legend>
@@ -3195,7 +3195,7 @@ const wireDisplayProperties = (win) => {
     saverSettings: content.querySelector(".display-saver-settings"),
     saverPreviewButton: content.querySelector(".display-saver-preview-button"),
     saverWait: content.querySelector("#display-saver-wait"),
-    saverPassword: content.querySelector(".display-saver-password"),
+    saverLogin: content.querySelector(".display-saver-login"),
     appearance: content.querySelector("#display-appearance"),
     fontSize: content.querySelector("#display-font-size"),
     resolution: content.querySelector("#display-resolution"),
@@ -3246,7 +3246,7 @@ const wireDisplayProperties = (win) => {
     controls.saverSettings.disabled = pending.screenSaver === "none";
     controls.saverPreviewButton.disabled = pending.screenSaver === "none";
     controls.saverWait.value = String(pending.screenSaverWait);
-    controls.saverPassword.checked = pending.screenSaverPassword;
+    controls.saverLogin.checked = pending.requireLoginOnResume;
     controls.appearance.value = pending.appearance;
     controls.fontSize.value = pending.fontSize;
     controls.resolution.value = pending.resolution;
@@ -3499,10 +3499,10 @@ const wireDisplayProperties = (win) => {
     pending = { ...pending, screenSaverWait: wait };
     sync();
   });
-  controls.saverPassword.addEventListener("change", () => {
+  controls.saverLogin.addEventListener("change", () => {
     pending = {
       ...pending,
-      screenSaverPassword: controls.saverPassword.checked,
+      requireLoginOnResume: controls.saverLogin.checked,
     };
     sync();
   });

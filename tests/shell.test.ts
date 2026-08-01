@@ -948,7 +948,7 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
     "const scheduleScreenSaver =",
     'id = "screen-saver-overlay"',
     "settings.screenSaverWait * 60 * 1000",
-    "screenSaverPassword: false",
+    "requireLoginOnResume: false",
     'transitionEffect: "fade"',
     'fontSmoothing: "standard"',
     'id="display-resolution-slider"',
