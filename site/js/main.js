@@ -6767,6 +6767,15 @@ const openDateTimeProperties = () => {
     title: "Date and Time Properties",
     wide: true,
   });
+  dialog.el.classList.add("datetime-dialog");
+
+  const titleButtons = dialog.el.querySelector(".title-buttons");
+  const helpButton = document.createElement("button");
+  helpButton.type = "button";
+  helpButton.className = "tb-btn help-btn";
+  helpButton.title = "Help";
+  helpButton.setAttribute("aria-label", "Help");
+  titleButtons.prepend(helpButton);
 
   const shellNow = getShellTime();
   const state = {
@@ -6775,9 +6784,16 @@ const openDateTimeProperties = () => {
     day: shellNow.getDate(),
   };
 
+  const tabs = document.createElement("div");
+  tabs.className = "datetime-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.setAttribute("aria-label", "Date and Time Properties");
+  const panelHost = document.createElement("div");
+  panelHost.className = "datetime-panel-host";
+
   // ---- Date group ----
   const dateGroup = document.createElement("fieldset");
-  dateGroup.className = "dlg-group";
+  dateGroup.className = "dlg-group datetime-date-group";
   const dateLegend = document.createElement("legend");
   dateLegend.textContent = "Date";
   dateGroup.appendChild(dateLegend);
@@ -6811,75 +6827,135 @@ const openDateTimeProperties = () => {
 
   // ---- Time group ----
   const timeGroup = document.createElement("fieldset");
-  timeGroup.className = "dlg-group";
+  timeGroup.className = "dlg-group datetime-time-group";
   const timeLegend = document.createElement("legend");
   timeLegend.textContent = "Time";
   timeGroup.appendChild(timeLegend);
 
-  const timeRow = document.createElement("div");
-  timeRow.className = "dlg-time-row";
-  const makeTimeInput = (id, label, min, max, value) => {
-    const input = document.createElement("input");
-    input.type = "number";
-    input.id = id;
-    input.min = String(min);
-    input.max = String(max);
-    input.className = "xp-input dlg-time-input";
-    input.setAttribute("aria-label", label);
-    input.value = String(value);
-    return input;
-  };
-  const hour24 = shellNow.getHours();
-  const hourInput = makeTimeInput(
-    "dlg-time-hour",
-    "Hour",
-    1,
-    12,
-    hour24 % 12 || 12,
+  const analogClock = document.createElement("div");
+  analogClock.className = "datetime-analog-clock";
+  analogClock.setAttribute("aria-hidden", "true");
+  for (let tick = 0; tick < 60; tick += 1) {
+    const mark = document.createElement("i");
+    mark.className = tick % 5 === 0 ? "hour-tick" : "minute-tick";
+    mark.style.setProperty("--tick", tick);
+    analogClock.appendChild(mark);
+  }
+  const hourHand = document.createElement("span");
+  hourHand.className = "datetime-clock-hand hour";
+  const minuteHand = document.createElement("span");
+  minuteHand.className = "datetime-clock-hand minute";
+  const secondHand = document.createElement("span");
+  secondHand.className = "datetime-clock-hand second";
+  const clockPin = document.createElement("span");
+  clockPin.className = "datetime-clock-pin";
+  analogClock.append(hourHand, minuteHand, secondHand, clockPin);
+
+  const timeEdit = document.createElement("div");
+  timeEdit.className = "datetime-time-edit";
+  const timeInput = document.createElement("input");
+  timeInput.type = "text";
+  timeInput.className = "xp-input";
+  timeInput.setAttribute("aria-label", "Time");
+  const spinner = document.createElement("span");
+  spinner.className = "datetime-spinner";
+  spinner.innerHTML =
+    '<button type="button" aria-label="Increase time">▲</button><button type="button" aria-label="Decrease time">▼</button>';
+  timeEdit.append(timeInput, spinner);
+  timeGroup.append(analogClock, timeEdit);
+
+  const datePanel = document.createElement("section");
+  datePanel.className = "datetime-panel datetime-date-panel";
+  datePanel.setAttribute("role", "tabpanel");
+  datePanel.append(dateGroup, timeGroup);
+  const timeZoneText = document.createElement("p");
+  timeZoneText.className = "datetime-current-zone";
+  timeZoneText.textContent = "Current time zone:  SA Eastern Standard Time";
+  datePanel.appendChild(timeZoneText);
+
+  const timeZonePanel = document.createElement("section");
+  timeZonePanel.className = "datetime-panel datetime-time-zone-panel";
+  timeZonePanel.setAttribute("role", "tabpanel");
+  timeZonePanel.hidden = true;
+  const timeZoneSelect = document.createElement("select");
+  timeZoneSelect.className = "xp-select datetime-zone-select";
+  timeZoneSelect.setAttribute("aria-label", "Time zone");
+  const timeZoneOption = document.createElement("option");
+  timeZoneOption.textContent = "(GMT-03:00) Buenos Aires, Georgetown";
+  timeZoneSelect.appendChild(timeZoneOption);
+  const timeZoneMap = document.createElement("img");
+  timeZoneMap.className = "datetime-zone-map";
+  timeZoneMap.src = "assets/xp/TimeZoneMap.png";
+  timeZoneMap.alt = "World time zone map";
+  timeZoneMap.draggable = false;
+  timeZonePanel.append(timeZoneSelect, timeZoneMap);
+
+  const internetPanel = document.createElement("section");
+  internetPanel.className = "datetime-panel datetime-internet-panel";
+  internetPanel.setAttribute("role", "tabpanel");
+  internetPanel.hidden = true;
+  const syncLabel = document.createElement("label");
+  syncLabel.className = "datetime-sync-label";
+  const syncCheckbox = document.createElement("input");
+  syncCheckbox.type = "checkbox";
+  syncCheckbox.checked = true;
+  syncLabel.append(
+    syncCheckbox,
+    "Automatically synchronize with an Internet time server",
   );
-  const minuteInput = makeTimeInput(
-    "dlg-time-minute",
-    "Minute",
-    0,
-    59,
-    shellNow.getMinutes(),
-  );
-  const secondInput = makeTimeInput(
-    "dlg-time-second",
-    "Second",
-    0,
-    59,
-    shellNow.getSeconds(),
-  );
-  const ampmSelect = document.createElement("select");
-  ampmSelect.className = "xp-select";
-  ampmSelect.setAttribute("aria-label", "AM or PM");
-  ["AM", "PM"].forEach((text) => {
-    const option = document.createElement("option");
-    option.value = text;
-    option.textContent = text;
-    ampmSelect.appendChild(option);
+  const serverRow = document.createElement("div");
+  serverRow.className = "datetime-server-row";
+  const serverLabel = document.createElement("label");
+  serverLabel.textContent = "Server:";
+  const serverSelect = document.createElement("select");
+  serverSelect.className = "xp-select";
+  serverSelect.innerHTML =
+    "<option>time.windows.com</option><option>time.nist.gov</option>";
+  const updateNow = document.createElement("button");
+  updateNow.type = "button";
+  updateNow.className = "xp-btn";
+  updateNow.textContent = "Update Now";
+  serverRow.append(serverLabel, serverSelect, updateNow);
+  const syncStatus = document.createElement("p");
+  syncStatus.className = "datetime-sync-status";
+  syncStatus.textContent =
+    "Windows has never attempted to synchronize with an Internet time server.";
+  const nextSync = document.createElement("p");
+  nextSync.className = "datetime-next-sync";
+  nextSync.textContent = `Next synchronization: ${shellNow.toLocaleDateString("en-US")} at ${shellNow.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  const syncNote = document.createElement("p");
+  syncNote.className = "datetime-sync-note";
+  syncNote.innerHTML =
+    "Synchronization can occur only when your computer is connected to the Internet. Learn more about <u>time synchronization</u> in Help and Support Center.";
+  internetPanel.append(syncLabel, serverRow, syncStatus, nextSync, syncNote);
+
+  const panels = [datePanel, timeZonePanel, internetPanel];
+  const tabDefinitions = [
+    ["Date & Time", datePanel],
+    ["Time Zone", timeZonePanel],
+    ["Internet Time", internetPanel],
+  ];
+  tabDefinitions.forEach(([label, panel], index) => {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", String(index === 0));
+    tab.classList.toggle("active", index === 0);
+    tab.textContent = label;
+    tab.addEventListener("click", () => {
+      panels.forEach((candidate) => {
+        candidate.hidden = candidate !== panel;
+      });
+      [...tabs.children].forEach((candidate) => {
+        const selected = candidate === tab;
+        candidate.classList.toggle("active", selected);
+        candidate.setAttribute("aria-selected", String(selected));
+      });
+    });
+    tabs.appendChild(tab);
   });
-  ampmSelect.value = hour24 < 12 ? "AM" : "PM";
-
-  const colon1 = document.createElement("span");
-  colon1.textContent = ":";
-  const colon2 = document.createElement("span");
-  colon2.textContent = ":";
-  timeRow.append(
-    hourInput,
-    colon1,
-    minuteInput,
-    colon2,
-    secondInput,
-    ampmSelect,
-  );
-  timeGroup.appendChild(timeRow);
-
-  const groups = document.createElement("div");
-  groups.className = "dlg-datetime";
-  groups.append(dateGroup, timeGroup);
-  dialog.body.appendChild(groups);
+  panelHost.append(...panels);
+  dialog.body.append(tabs, panelHost);
 
   const renderCalendar = () => {
     calendar.innerHTML = "";
@@ -6919,6 +6995,23 @@ const openDateTimeProperties = () => {
     }
   };
 
+  const formatTime = (date) =>
+    date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  const renderAnalogClock = (date) => {
+    const seconds = date.getSeconds();
+    const minutes = date.getMinutes() + seconds / 60;
+    const hours = (date.getHours() % 12) + minutes / 60;
+    hourHand.style.setProperty("--angle", `${hours * 30}deg`);
+    minuteHand.style.setProperty("--angle", `${minutes * 6}deg`);
+    secondHand.style.setProperty("--angle", `${seconds * 6}deg`);
+  };
+  timeInput.value = formatTime(shellNow);
+  renderAnalogClock(shellNow);
+
   monthSelect.addEventListener("change", () => {
     state.month = parseInt(monthSelect.value, 10);
     state.day = Math.min(
@@ -6940,18 +7033,15 @@ const openDateTimeProperties = () => {
     renderCalendar();
   });
 
-  const readTimeField = (input, min, max, fallback) => {
-    const value = parseInt(input.value, 10);
-    return Number.isFinite(value)
-      ? Math.min(Math.max(value, min), max)
-      : fallback;
-  };
-
   const applyDateTime = () => {
-    let hours = readTimeField(hourInput, 1, 12, 12) % 12;
-    if (ampmSelect.value === "PM") hours += 12;
-    const minutes = readTimeField(minuteInput, 0, 59, 0);
-    const seconds = readTimeField(secondInput, 0, 59, 0);
+    const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(
+      timeInput.value.trim(),
+    );
+    let hours = match ? Math.min(Math.max(parseInt(match[1], 10), 1), 12) : 12;
+    const minutes = match ? Math.min(parseInt(match[2], 10), 59) : 0;
+    const seconds = match ? Math.min(parseInt(match[3], 10), 59) : 0;
+    hours %= 12;
+    if (match?.[4].toUpperCase() === "PM") hours += 12;
     const chosen = new Date(
       state.year,
       state.month,
@@ -6965,6 +7055,7 @@ const openDateTimeProperties = () => {
       String(chosen.getTime() - Date.now()),
     );
     updateClockDisplay();
+    renderAnalogClock(chosen);
   };
 
   const row = document.createElement("div");
@@ -6982,11 +7073,60 @@ const openDateTimeProperties = () => {
   );
   const applyButton = XPDialogs.createDialogButton(
     { id: "apply", label: "Apply" },
-    applyDateTime,
+    () => {
+      applyDateTime();
+      applyButton.disabled = true;
+    },
   );
+  applyButton.disabled = true;
   row.append(okButton, cancelButton, applyButton);
   dialog.body.appendChild(row);
   dialog.defaultButton = okButton;
+
+  const markDirty = () => {
+    applyButton.disabled = false;
+  };
+  [
+    monthSelect,
+    yearInput,
+    timeInput,
+    timeZoneSelect,
+    syncCheckbox,
+    serverSelect,
+  ].forEach((control) => control.addEventListener("change", markDirty));
+  calendar.addEventListener("click", markDirty);
+  spinner.querySelectorAll("button").forEach((button, index) => {
+    button.addEventListener("click", () => {
+      const value = new Date(2000, 0, 1);
+      const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(
+        timeInput.value.trim(),
+      );
+      if (match) {
+        let hours = parseInt(match[1], 10) % 12;
+        if (match[4].toUpperCase() === "PM") hours += 12;
+        value.setHours(hours, parseInt(match[2], 10), parseInt(match[3], 10));
+      }
+      value.setSeconds(value.getSeconds() + (index === 0 ? 1 : -1));
+      timeInput.value = formatTime(value);
+      renderAnalogClock(value);
+      markDirty();
+    });
+  });
+  syncCheckbox.addEventListener("change", () => {
+    serverSelect.disabled = !syncCheckbox.checked;
+    updateNow.disabled = !syncCheckbox.checked;
+  });
+  updateNow.addEventListener("click", () => {
+    syncStatus.textContent =
+      "An error occurred while Windows was synchronizing with time.windows.com.";
+  });
+  helpButton.addEventListener("click", () => {
+    XPDialogs.alert(
+      "Select a tab to change the date, time, time zone, or Internet time settings.",
+      "Date and Time Help",
+      "info",
+    );
+  });
 
   renderCalendar();
   okButton.focus();

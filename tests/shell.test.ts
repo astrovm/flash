@@ -348,6 +348,25 @@ test("clock click opens date time properties", () => {
     "wide: true",
   );
 });
+test("date time properties matches the XP tabbed applet", () => {
+  const applet = between(
+    javascript,
+    "const openDateTimeProperties = () =>",
+    "const setupSystemTray = () =>",
+  );
+  contains(
+    applet,
+    '"Date & Time"',
+    '"Time Zone"',
+    '"Internet Time"',
+    '"datetime-analog-clock"',
+    '"assets/xp/TimeZoneMap.png"',
+    "applyButton.disabled = true",
+  );
+  expect(css).toMatch(
+    /\.datetime-dialog\s*\{[^}]*width:\s*min\(404px,[^}]*height:\s*min\(345px/s,
+  );
+});
 test("desktop renders system places then virtual files", () => {
   const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
   const start = javascript.indexOf("const entries = [", desktop);

@@ -1084,9 +1084,14 @@ html[data-xp-appearance="silver"] {
 }
 
 .close-btn {
-  background-image: url("../assets/xp/icons/Exit.png");
-  background-size: 21px 168px;
-  background-position: center top;
+  background-image:
+    url("../assets/xp/icons/Close.png"), url("../assets/xp/icons/Exit.png");
+  background-size:
+    13px 104px,
+    21px 168px;
+  background-position:
+    center top,
+    center top;
 }
 
 /* ---- Game application menu bar ---- */
@@ -4238,14 +4243,6 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 /* Date and Time Properties */
 
-.dlg-datetime {
-  display: grid;
-  grid-template-columns: minmax(190px, 1fr) minmax(0, 1.2fr);
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
 .dlg-group {
   min-width: 0;
   margin: 0;
@@ -4342,23 +4339,323 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   outline-offset: -3px;
 }
 
-.dlg-time-row {
+.datetime-dialog {
+  width: min(404px, calc(100vw - 8px));
+  height: min(345px, calc(100vh - 34px));
+  min-width: min(404px, calc(100vw - 8px));
+  min-height: min(345px, calc(100vh - 34px));
+}
+
+.datetime-dialog > .title-bar {
+  height: 26px;
+}
+
+.datetime-dialog .dlg-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 7px 6px 7px;
+}
+
+.datetime-tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 20px;
+  align-items: flex-end;
+  padding-left: 2px;
+}
+
+.datetime-tabs button {
+  height: 20px;
+  margin-right: -1px;
+  padding: 1px 7px 2px;
+  border: 1px solid #919b9c;
+  border-bottom-color: #fff;
+  border-radius: 3px 3px 0 0;
+  background: #ece9d8;
+  color: #111;
+  font: inherit;
+  white-space: nowrap;
+  cursor: var(--xp-cursor);
+}
+
+.datetime-tabs button.active {
+  position: relative;
+  z-index: 2;
+  height: 22px;
+  padding-top: 2px;
+  border-bottom-color: #ece9d8;
+}
+
+.datetime-panel-host {
+  min-height: 0;
+  flex: 1;
+  border: 1px solid #919b9c;
+  background: #ece9d8;
+  box-shadow: inset 1px 1px #fff;
+}
+
+.datetime-panel {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.datetime-date-panel {
+  position: relative;
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr)
-    auto;
+  grid-template-columns: 184px 170px;
+  grid-template-rows: 207px auto;
+  gap: 0 9px;
+  padding: 8px 8px 6px;
+}
+
+.datetime-date-panel > .dlg-group {
+  height: 207px;
+  box-sizing: border-box;
+  padding: 13px 10px 9px;
+  border-color: #d4d0c8;
+}
+
+.datetime-date-panel > .dlg-group legend {
+  color: #003399;
+}
+
+.datetime-date-group .dlg-month-year {
+  height: 22px;
+  margin: 0 0 9px;
+}
+
+.datetime-date-group .dlg-month-select {
+  height: 21px;
+}
+
+.datetime-date-group .dlg-year-input {
+  width: 64px;
+  height: 21px;
+  box-sizing: border-box;
+}
+
+.datetime-date-group .dlg-calendar {
+  display: grid;
+  width: 160px;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 18px;
+  gap: 0;
+  border: 1px solid #c7c7c7;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.datetime-date-group .dlg-calendar-head {
+  display: flex;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  background: #7b90c5;
+  color: #fff;
+}
+
+.datetime-date-group .dlg-calendar-day {
+  width: auto;
+  height: 18px;
+  line-height: 16px;
+}
+
+.datetime-date-group .dlg-calendar-day.selected {
+  margin: 1px 2px;
+  line-height: 14px;
+}
+
+.datetime-time-group {
+  position: relative;
+  overflow: hidden;
+}
+
+.datetime-analog-clock {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin: 3px auto 13px;
+  border-radius: 50%;
+}
+
+.datetime-analog-clock > i {
+  --radius: 59px;
+  position: absolute;
+  left: 63px;
+  top: 63px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #168b84;
+  transform: rotate(calc(var(--tick) * 6deg))
+    translateY(calc(-1 * var(--radius)));
+}
+
+.datetime-analog-clock > i.hour-tick {
+  width: 3px;
+  height: 3px;
+  background: #173f3f;
+}
+
+.datetime-clock-hand {
+  position: absolute;
+  left: 63px;
+  bottom: 63px;
+  width: 2px;
+  height: 43px;
+  background: #111;
+  transform: rotate(var(--angle));
+  transform-origin: 50% 100%;
+}
+
+.datetime-clock-hand.hour {
+  width: 3px;
+  height: 34px;
+}
+
+.datetime-clock-hand.minute {
+  height: 51px;
+}
+
+.datetime-clock-hand.second {
+  width: 1px;
+  height: 55px;
+  background: #00a79d;
+}
+
+.datetime-clock-pin {
+  position: absolute;
+  left: 61px;
+  top: 61px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #111;
+}
+
+.datetime-time-edit {
+  display: flex;
+  width: 104px;
+  height: 20px;
+  margin: 0 auto;
+}
+
+.datetime-time-edit > input {
+  width: 86px;
+  height: 20px;
+  box-sizing: border-box;
+  border-right: 0;
+}
+
+.datetime-spinner {
+  display: grid;
+  width: 18px;
+  grid-template-rows: 10px 10px;
+}
+
+.datetime-spinner button {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #7f9db9;
+  background: linear-gradient(90deg, #fff, #d7e4f6);
+  color: #315b91;
+  font-size: 7px;
+  line-height: 7px;
+}
+
+.datetime-current-zone {
+  grid-column: 1 / -1;
+  margin: 14px 0 0;
+}
+
+.datetime-time-zone-panel {
+  padding: 8px 12px;
+}
+
+.datetime-zone-select {
+  width: 100%;
+  height: 20px;
+  margin-bottom: 7px;
+}
+
+.datetime-zone-map {
+  display: block;
+  width: 356px;
+  height: 184px;
+  image-rendering: auto;
+}
+
+.datetime-internet-panel {
+  padding: 15px 14px;
+}
+
+.datetime-sync-label {
+  display: flex;
   align-items: center;
   gap: 3px;
+  white-space: nowrap;
 }
 
-.dlg-time-input {
-  width: 100%;
-  min-width: 0;
+.datetime-sync-label input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
 }
 
-@media (max-width: 460px) {
-  .dlg-datetime {
-    grid-template-columns: 1fr;
+.datetime-server-row {
+  display: grid;
+  grid-template-columns: 73px 173px 80px;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 14px 0 45px;
+}
+
+.datetime-server-row label {
+  text-align: right;
+}
+
+.datetime-server-row .xp-select,
+.datetime-server-row .xp-btn {
+  height: 21px;
+}
+
+.datetime-server-row .xp-btn {
+  min-width: 80px;
+  padding: 0 5px;
+}
+
+.datetime-sync-status {
+  width: 310px;
+  margin: 28px 0 0;
+}
+
+.datetime-next-sync {
+  margin: 40px 0 0;
+}
+
+.datetime-sync-note {
+  width: 348px;
+  margin: 8px 0 0;
+}
+
+.datetime-dialog .dlg-buttons {
+  justify-content: flex-end;
+  gap: 8px;
+  height: 28px;
+  padding-top: 9px;
+}
+
+.datetime-dialog .dlg-buttons .xp-btn {
+  min-width: 73px;
+  height: 21px;
+}
+
+@media (max-width: 420px), (max-height: 380px) {
+  .datetime-dialog {
+    overflow: auto;
   }
 }
 

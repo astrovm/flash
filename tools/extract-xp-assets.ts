@@ -29,6 +29,13 @@ type ResourceBitmap = DirectAsset & {
   resourceType: number;
   resourceId: number | string;
   transparentColor?: [number, number, number];
+  indexedPalette?: {
+    sourceShiftX: number;
+    colors: Array<{
+      indices: number[];
+      rgba: [number, number, number, number];
+    }>;
+  };
 };
 type Manifest = {
   version: number;
@@ -197,23 +204,79 @@ async function extractBitmap(
     parentPath,
   ]);
 
-  const decoded = decodeBmp(
-    await readFile(await firstFile(bitmapDirectory, ".bmp")),
-  );
+  const bitmapFile = await readFile(await firstFile(bitmapDirectory, ".bmp"));
+  const decoded = decodeBmp(bitmapFile);
   const rgba = new Uint8Array(decoded.width * decoded.height * 4);
-  for (let source = 0, target = 0; source < decoded.data.length;) {
-    const red = decoded.data[source++];
-    const green = decoded.data[source++];
-    const blue = decoded.data[source++];
-    const sourceAlpha = decoded.channels === 4 ? decoded.data[source++] : 255;
-    const transparent =
-      bitmap.transparentColor?.[0] === red &&
-      bitmap.transparentColor[1] === green &&
-      bitmap.transparentColor[2] === blue;
-    rgba[target++] = red;
-    rgba[target++] = green;
-    rgba[target++] = blue;
-    rgba[target++] = transparent ? 0 : sourceAlpha;
+  if (bitmap.indexedPalette) {
+    const bitsPerPixel = bitmapFile.readUInt16LE(28);
+    const compression = bitmapFile.readUInt32LE(30);
+    if (bitsPerPixel !== 8 || compression !== 1)
+      throw new Error(
+        `${bitmap.expandedName} resource ${bitmap.resourceId} must be RLE8 for indexed palette rendering`,
+      );
+    const indices = new Uint8Array(decoded.width * decoded.height);
+    let input = bitmapFile.readUInt32LE(10);
+    let x = 0;
+    let y = decoded.height - 1;
+    while (input < bitmapFile.length && y >= 0) {
+      const count = bitmapFile[input++];
+      const value = bitmapFile[input++];
+      if (count) {
+        for (let offset = 0; offset < count; offset += 1) {
+          if (x < decoded.width) indices[y * decoded.width + x] = value;
+          x += 1;
+        }
+      } else if (value === 0) {
+        x = 0;
+        y -= 1;
+      } else if (value === 1) {
+        break;
+      } else if (value === 2) {
+        x += bitmapFile[input++];
+        y -= bitmapFile[input++];
+      } else {
+        for (let offset = 0; offset < value; offset += 1) {
+          if (x < decoded.width)
+            indices[y * decoded.width + x] = bitmapFile[input];
+          x += 1;
+          input += 1;
+        }
+        if (value % 2) input += 1;
+      }
+    }
+    const palette = new Map<number, [number, number, number, number]>();
+    bitmap.indexedPalette.colors.forEach(({ indices: entries, rgba: color }) =>
+      entries.forEach((index) => palette.set(index, color)),
+    );
+    for (let targetY = 0; targetY < decoded.height; targetY += 1) {
+      for (let targetX = 0; targetX < decoded.width; targetX += 1) {
+        const sourceX =
+          (targetX + bitmap.indexedPalette.sourceShiftX + decoded.width) %
+          decoded.width;
+        const index = indices[targetY * decoded.width + sourceX];
+        const color = palette.get(index);
+        if (!color)
+          throw new Error(
+            `${bitmap.expandedName} resource ${bitmap.resourceId} has unmapped palette index ${index}`,
+          );
+        rgba.set(color, (targetY * decoded.width + targetX) * 4);
+      }
+    }
+  } else {
+    for (let source = 0, target = 0; source < decoded.data.length;) {
+      const red = decoded.data[source++];
+      const green = decoded.data[source++];
+      const blue = decoded.data[source++];
+      const sourceAlpha = decoded.channels === 4 ? decoded.data[source++] : 255;
+      const transparent =
+        bitmap.transparentColor?.[0] === red &&
+        bitmap.transparentColor[1] === green &&
+        bitmap.transparentColor[2] === blue;
+      rgba[target++] = red;
+      rgba[target++] = green;
+      rgba[target++] = blue;
+      rgba[target++] = transparent ? 0 : sourceAlpha;
+    }
   }
   const png = await sharp(rgba, {
     raw: { width: decoded.width, height: decoded.height, channels: 4 },

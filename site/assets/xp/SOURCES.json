@@ -633,6 +633,19 @@
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
     }
   },
+  "assets/xp/TimeZoneMap.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TIMEDATE.CP_",
+    "sha256": "bace106a0b2561fdf21e9b9aaa137e952839caf3b5c5d9b8cc3d45a19bce7ed0",
+    "resource": {
+      "parentSha256": "ca5d2f90158313d7b827c88c0d950e95366ed2bccc5e0503268c12be8e5d48ce",
+      "type": 2,
+      "id": 50,
+      "language": 1033,
+      "frame": "356x184x32",
+      "pixelSha256": "c3e509aa80429ab97094833a450b4c8cd9d99ae46c500d29b33560e15535989d"
+    }
+  },
   "assets/xp/icons/CaptionButton.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -657,6 +670,19 @@
       "language": 1033,
       "frame": "21x168x32",
       "pixelSha256": "cde504d3db4f27c802d78cec46bdd5cd7ca9fd02af82123f247ee9d89d14f4b7"
+    }
+  },
+  "assets/xp/icons/Close.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "72663d78d5c3454a19601e508aa3e65ee90943fe4e03bad4359c14803190c8d5",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_CLOSEGLYPH_BMP",
+      "language": 1033,
+      "frame": "13x104x32",
+      "pixelSha256": "8cd2975f38a56697188de3f2f1585115a822f99afca32d4781e57094c8a45b8c"
     }
   },
   "assets/xp/icons/Maximize.png": {
