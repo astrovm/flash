@@ -604,6 +604,11 @@ test("explorer matches XP task pane toolbar and drive groups", () => {
     '"Files Stored on This Computer"',
     '"Hard Disk Drives"',
     '"Devices with Removable Storage"',
+    '"Shared Documents"',
+    '"Administrator\'s Documents"',
+    '"3½ Floppy (A:)"',
+    '"GRTMPVOL_EN (D:)"',
+    'XP_ICON_PATHS["OpticalDrive.png"]',
     "node.id === fs.DRIVE_F",
     'className = "explorer-group-heading"',
     '"My Pictures",',
@@ -618,6 +623,7 @@ test("explorer matches XP task pane toolbar and drive groups", () => {
     ".explorer-content.folders-visible .explorer-sidebar > section:not(.explorer-tree-section)",
     ".explorer-section-toggle",
     ".explorer-group-heading",
+    "grid-template-columns: 211px minmax(0, 1fr)",
   );
 });
 test("shell paste uses one conflict aware progress helper", () =>
@@ -798,12 +804,17 @@ test("search companion uses virtual filesystem filters and open actions", () =>
     'id="search-filename"',
     'id="search-location"',
     'id="search-type"',
+    'class="explorer-chrome search-explorer-chrome"',
+    'class="search-start-panel"',
+    'src="assets/xp/SearchDog.bmp"',
+    'data-search-kind="all"',
     'value="files"',
     'value="folders"',
     'value="games"',
     'value="applications"',
     "wireSearchCompanion(win)",
     "fs.open(result.node.id)",
+    'const showForm = (kind = "all") =>',
     "const representedGameIds = new Set()",
     "!representedGameIds.has(id)",
   ));

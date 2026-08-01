@@ -115,6 +115,7 @@ const XP_ICON_PATHS = Object.freeze({
   "Go.png": "assets/xp/icons/Go.png",
   "HelpAndSupport.png": "assets/xp/icons/HelpAndSupport.png",
   "LocalDisk.png": "assets/xp/icons/LocalDisk.png",
+  "OpticalDrive.png": "assets/xp/icons/OpticalDrive.png",
   "Logout.png": "assets/xp/icons/Logout.png",
   "Maximize.png": "assets/xp/icons/Maximize.png",
   "Minimize.png": "assets/xp/icons/Minimize.png",
@@ -2499,27 +2500,62 @@ const createSystemWindowContent = (shortcutId, win) => {
   if (shortcutId === "__search") {
     content.className = "search-companion-content";
     content.innerHTML = `
-            <aside class="search-companion-panel">
-                <h2>Search Companion</h2>
-                <label for="search-filename">All or part of the file name:</label>
-                <input id="search-filename" class="xp-input" type="search" autocomplete="off">
-                <label for="search-location">Look in:</label>
-                <select id="search-location" class="xp-input"></select>
-                <label for="search-type">What do you want to find?</label>
-                <select id="search-type" class="xp-input">
-                    <option value="all">All files and folders</option>
-                    <option value="files">Files</option>
-                    <option value="folders">Folders</option>
-                    <option value="games">Games</option>
-                    <option value="applications">Applications</option>
-                </select>
-                <button type="button" class="xp-btn default" data-search-action="search">&nbsp;Search</button>
-            </aside>
-            <main class="search-results-pane">
-                <h2>Search Results</h2>
-                <p class="search-results-status" aria-live="polite">Enter a name and click Search.</p>
-                <div class="search-results-list" role="listbox" aria-label="Search results"></div>
-            </main>
+            <div class="explorer-chrome search-explorer-chrome">
+                <div class="explorer-menu-row">
+                    <div class="explorer-menu-bar" role="menubar"><button>File</button><button>Edit</button><button>View</button><button>Favorites</button><button>Tools</button><button>Help</button></div>
+                    <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
+                </div>
+                <div class="explorer-toolbar">
+                    <button disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+                    <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+                    <button class="search-toolbar-active"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+                    <button><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+                    <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+                    <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                </div>
+                <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/Search.png" alt=""><input type="text" aria-label="Address" value="Search Results" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+            </div>
+            <div class="search-column-header"><span>Search Companion</span><span><b>Name</b><b>In Folder</b><b>Size</b><b>Type</b></span></div>
+            <div class="search-companion-body">
+                <aside class="search-companion-panel">
+                    <section class="search-start-panel">
+                        <strong>What do you want to search for?</strong>
+                        <button type="button" data-search-kind="media">Pictures, music, or video</button>
+                        <button type="button" data-search-kind="documents">Documents (word processing, spreadsheet, etc.)</button>
+                        <button type="button" data-search-kind="all">All files and folders</button>
+                        <button type="button" data-search-kind="people">Computers or people</button>
+                        <button type="button" data-search-kind="help">Information in Help and Support Center</button>
+                        <span>You may also want to...</span>
+                        <button type="button" data-search-extra>Search the Internet</button>
+                        <button type="button" data-search-extra>Change preferences</button>
+                        <button type="button" data-search-extra>Turn off animated character</button>
+                    </section>
+                    <section class="search-form-panel" hidden>
+                        <button type="button" class="search-back" data-search-action="back">Back</button>
+                        <strong>Search by any or all of the criteria below.</strong>
+                        <label for="search-filename">All or part of the file name:</label>
+                        <input id="search-filename" class="xp-input" type="search" autocomplete="off">
+                        <label for="search-location">Look in:</label>
+                        <select id="search-location" class="xp-input"></select>
+                        <label for="search-type">What do you want to find?</label>
+                        <select id="search-type" class="xp-input">
+                            <option value="all">All files and folders</option>
+                            <option value="files">Files</option>
+                            <option value="folders">Folders</option>
+                            <option value="games">Games</option>
+                            <option value="applications">Applications</option>
+                        </select>
+                        <button type="button" class="xp-btn default" data-search-action="search">Search</button>
+                    </section>
+                    <img class="search-dog" src="assets/xp/SearchDog.bmp" alt="">
+                </aside>
+                <main class="search-results-pane">
+                    <p class="search-results-status" aria-live="polite">To start your search, follow the instructions in the left pane.</p>
+                    <div class="search-results-list" role="listbox" aria-label="Search results"></div>
+                </main>
+            </div>
         `;
     return content;
   }
@@ -2730,6 +2766,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   body.append(sidebar, main);
   const status = document.createElement("div");
   status.className = "explorer-status";
+  status.hidden = true;
   content.append(chrome, body, status);
   const explorerMenu = document.createElement("div");
   explorerMenu.className = "game-menu explorer-menu";
@@ -4051,11 +4088,28 @@ const searchVirtualNodes = ({
 const wireSearchCompanion = (win) => {
   const content = win.el.querySelector(".search-companion-content");
   if (!content) return;
+  const startPanel = content.querySelector(".search-start-panel");
+  const formPanel = content.querySelector(".search-form-panel");
   const query = content.querySelector("#search-filename");
   const location = content.querySelector("#search-location");
   const type = content.querySelector("#search-type");
   const status = content.querySelector(".search-results-status");
   const list = content.querySelector(".search-results-list");
+  const showForm = (kind = "all") => {
+    startPanel.hidden = true;
+    formPanel.hidden = false;
+    type.value = ["media", "documents"].includes(kind) ? "files" : "all";
+    query.focus();
+  };
+  content.querySelectorAll("[data-search-kind]").forEach((button) => {
+    button.addEventListener("click", () => showForm(button.dataset.searchKind));
+  });
+  content
+    .querySelector('[data-search-action="back"]')
+    .addEventListener("click", () => {
+      formPanel.hidden = true;
+      startPanel.hidden = false;
+    });
   [
     [fs.MY_COMPUTER, "My Computer"],
     [fs.DESKTOP, "Desktop"],
@@ -4134,7 +4188,6 @@ const wireSearchCompanion = (win) => {
   [location, type].forEach((control) =>
     control.addEventListener("change", render),
   );
-  query.focus();
 };
 
 const findBundledGameByTitle = (title) => {
@@ -5036,13 +5089,20 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   const myComputerGroup = (node) =>
     [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
       ? "Files Stored on This Computer"
-      : node.id === fs.DRIVE_F
+      : [fs.DRIVE_D, fs.DRIVE_F].includes(node.id)
         ? "Devices with Removable Storage"
         : "Hard Disk Drives";
   const myComputerGroupOrder = [
     "Files Stored on This Computer",
     "Hard Disk Drives",
     "Devices with Removable Storage",
+  ];
+  const myComputerOrder = [
+    fs.MY_MUSIC,
+    fs.MY_PICTURES,
+    fs.DRIVE_C,
+    fs.DRIVE_F,
+    fs.DRIVE_D,
   ];
   const children = [
     ...(folder.id === fs.MY_COMPUTER
@@ -5055,7 +5115,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
       folder.id === fs.MY_COMPUTER
         ? myComputerGroupOrder.indexOf(myComputerGroup(a)) -
             myComputerGroupOrder.indexOf(myComputerGroup(b)) ||
-          a.name.localeCompare(b.name)
+          myComputerOrder.indexOf(a.id) - myComputerOrder.indexOf(b.id)
         : a.type === b.type
           ? a.name.localeCompare(b.name)
           : a.type === "folder"
@@ -5109,13 +5169,31 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
 
     const label = document.createElement("span");
     const name = document.createElement("b");
-    name.textContent = node.name;
+    const myComputerNames = {
+      [fs.MY_MUSIC]: "Shared Documents",
+      [fs.MY_PICTURES]: "Administrator's Documents",
+      [fs.DRIVE_F]: "3½ Floppy (A:)",
+      [fs.DRIVE_D]: "GRTMPVOL_EN (D:)",
+    };
+    name.textContent =
+      folder.id === fs.MY_COMPUTER
+        ? myComputerNames[node.id] || node.name
+        : node.name;
     const description = document.createElement("small");
     description.textContent = explorerItemDescription(node);
     label.appendChild(name);
     if (folder.id !== fs.MY_COMPUTER) label.appendChild(description);
 
-    item.append(createExplorerIcon(node), label);
+    const itemIcon = createExplorerIcon(node);
+    if (
+      folder.id === fs.MY_COMPUTER &&
+      [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
+    ) {
+      itemIcon.querySelector("img").src = XP_ICON_PATHS["NewFolder.png"];
+    } else if (folder.id === fs.MY_COMPUTER && node.id === fs.DRIVE_D) {
+      itemIcon.querySelector("img").src = XP_ICON_PATHS["OpticalDrive.png"];
+    }
+    item.append(itemIcon, label);
     if (folder.id === fs.MY_COMPUTER) item.classList.add("my-computer-item");
     if (items.dataset.view === "details") {
       item.classList.add("explorer-details-row");
@@ -5666,6 +5744,7 @@ const openSystemWindow = (shortcutId) => {
   const isInternetGames = shortcutId === "__internet-games";
   const isDisplayProperties = shortcutId === "__display-properties";
   const isControlPanel = shortcutId === "__control-panel";
+  const isSearch = shortcutId === "__search";
   if (isDisplayProperties) el.classList.add("display-properties-window");
   const windowWidth = Math.min(
     isProjectSettings
@@ -5676,7 +5755,7 @@ const openSystemWindow = (shortcutId) => {
           ? 800
           : isDisplayProperties
             ? 404
-            : 700,
+            : 800,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -5688,7 +5767,7 @@ const openSystemWindow = (shortcutId) => {
           ? 600
           : isDisplayProperties
             ? 454
-            : 500,
+            : 600,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -5696,16 +5775,20 @@ const openSystemWindow = (shortcutId) => {
   el.style.left = `${
     isControlPanel
       ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
-      : isDisplayProperties
-        ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-        : Math.max(8, (desktopWidth - windowWidth) / 2)
+      : isSearch
+        ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+        : isDisplayProperties
+          ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+          : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
       ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
-      : isDisplayProperties
-        ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
-        : Math.max(8, (desktopHeight - windowHeight) / 2)
+      : isSearch
+        ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+        : isDisplayProperties
+          ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+          : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 

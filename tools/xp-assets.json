@@ -8,6 +8,10 @@
   },
   "webAssets": [
     {
+      "member": "DOG.BM_",
+      "output": "site/assets/xp/SearchDog.bmp"
+    },
+    {
       "member": "ASCENT.JP_",
       "output": "site/assets/xp/wallpapers/ascent.jpg"
     },
@@ -308,6 +312,16 @@
       "height": 48,
       "bitDepth": 32,
       "output": "site/assets/xp/icons/LocalDisk.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 12,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/OpticalDrive.png"
     },
     {
       "member": "STOBJECT.DL_",
