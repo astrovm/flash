@@ -106,6 +106,7 @@
     { "member": "XPSTARTU.WA_", "output": "site/assets/xp/sounds/startup.wav" },
 
     { "member": "ARROW_M.CU_", "output": "site/assets/xp/cursor.cur" },
+    { "member": "CHESS.BM_", "output": "site/assets/xp/Chess.bmp" },
 
     { "member": "ARIAL.TT_", "output": "site/css/fonts/arial.ttf" },
     { "member": "ARIALBD.TT_", "output": "site/css/fonts/arialbd.ttf" },

@@ -154,6 +154,11 @@
     "member": "I386/ARROW_M.CU_",
     "sha256": "a19a7c5c46920c0e652d3b77355b4d6364ff983dfa364a4d9db6127cf049ecb6"
   },
+  "assets/xp/Chess.bmp": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CHESS.BM_",
+    "sha256": "f5003282e999e6d9704b53812e3713723b37838efdcf8102901c14baa174257a"
+  },
   "css/fonts/arial.ttf": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/ARIAL.TT_",

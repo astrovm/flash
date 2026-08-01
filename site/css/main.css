@@ -472,29 +472,12 @@ iframe {
   position: relative;
   display: inline-block;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 68% 24%, #fff6aa 0 7%, transparent 8%),
-    linear-gradient(
-      155deg,
-      transparent 0 53%,
-      #34764b 54% 65%,
-      transparent 66%
-    ),
-    linear-gradient(25deg, transparent 0 50%, #62a458 51% 67%, transparent 68%),
-    linear-gradient(180deg, #76c8f0 0 55%, #9bcf6b 56% 100%);
+  background: url("../assets/xp/Chess.bmp") center / cover no-repeat;
   border: 2px solid #fff;
 }
 
 .xp-user-tile::after {
-  content: "";
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 17%;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  transform: rotate(-8deg);
+  content: none;
 }
 
 .welcome-username {
@@ -4801,8 +4784,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .start-menu-avatar {
   flex: none;
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border: 2px solid rgba(255, 255, 255, 0.85);
   border-radius: 5px;
   box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
@@ -4819,7 +4802,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .start-menu-body {
   display: flex;
   margin: 0 2px;
-  min-height: 292px;
+  min-height: 372px;
   max-height: min(390px, 66vh);
 }
 
@@ -4842,8 +4825,13 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 #start-menu-pinned .sm-game-icon.has-image {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+}
+
+#start-menu-pinned .sm-game {
+  gap: 3px;
+  padding-inline: 8px;
 }
 
 #all-programs-button {
@@ -4852,7 +4840,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: 34px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 8px;
   padding: 0 12px;
   border: 0;
@@ -5073,7 +5061,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .start-menu-right {
   flex: none;
-  width: 160px;
+  width: 188px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -5091,9 +5079,9 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   text-align: left;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 2px;
   min-height: 28px;
-  padding: 4px 7px;
+  padding: 4px;
   border-radius: 3px;
   font-size: 11px;
   font-weight: 700;
@@ -5182,7 +5170,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   gap: 6px;
   justify-content: flex-end;
   margin: 0 2px 2px;
-  padding: 8px 10px;
+  padding: 4px 10px;
   background: var(--menu-footer-gradient);
 }
 
