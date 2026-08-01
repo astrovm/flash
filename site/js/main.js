@@ -3008,7 +3008,7 @@ const openAdvancedAppearanceDialog = (ownerWindow, settings, onCommit) => {
   setDisplayDialogOwnerActive(ownerWindow, false);
   addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
-    <div class="advanced-appearance-preview" data-appearance="${settings.appearance}">
+    <div class="advanced-appearance-preview">
       <div class="advanced-inactive">Inactive Window <b>_</b><b>□</b><b>×</b></div>
       <div class="advanced-active">Active Window <b>_</b><b>□</b><b>×</b></div>
       <div class="advanced-menu">Normal &nbsp;&nbsp; <span>Disabled</span> &nbsp;&nbsp; Selected</div>
@@ -3019,13 +3019,17 @@ const openAdvancedAppearanceDialog = (ownerWindow, settings, onCommit) => {
     <div class="advanced-controls">
       <label>Item:<select class="xp-select" disabled><option>Desktop</option></select></label>
       <label class="advanced-size">Size:<input class="xp-input" disabled></label>
-      <label>Color 1:<input type="color" data-advanced-color value="${settings.backgroundColor}"></label>
+      <label>Color 1:<input type="color" data-advanced-color></label>
       <label class="advanced-disabled">Color 2:<input disabled></label>
       <label class="advanced-disabled">Font:<select class="xp-select" disabled></select></label>
       <label class="advanced-disabled">Size:<input class="xp-input" disabled></label>
       <label class="advanced-disabled">Color:<input disabled></label>
     </div>
   `;
+  dialog.body.querySelector(".advanced-appearance-preview").dataset.appearance =
+    settings.appearance;
+  dialog.body.querySelector("[data-advanced-color]").value =
+    settings.backgroundColor;
   const buttons = document.createElement("div");
   buttons.className = "dlg-buttons";
   const ok = XPDialogs.createDialogButton(

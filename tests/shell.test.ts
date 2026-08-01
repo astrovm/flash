@@ -923,6 +923,8 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
     "const openDesktopItemsDialog =",
     "const openDisplayEffectsDialog =",
     "const openAdvancedAppearanceDialog =",
+    'querySelector(".advanced-appearance-preview").dataset.appearance',
+    'querySelector("[data-advanced-color]").value',
     "const openMonitorPropertiesDialog =",
     "const openWallpaperBrowseDialog =",
     'title: "Desktop Items"',
@@ -982,6 +984,8 @@ test("display properties exposes all tabs and safe wallpaper controls", () => {
     "MAX_CUSTOM_WALLPAPER_BYTES",
     "file.size >",
     "smaller than 1 MB",
+    'data-appearance="${settings.appearance}"',
+    'value="${settings.backgroundColor}"',
   );
 });
 test("simulated monitor bounds common resolutions and narrow viewports", () =>
