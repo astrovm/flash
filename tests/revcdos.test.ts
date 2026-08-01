@@ -108,7 +108,7 @@ test("serves the Lolendor runtime through a packed OPFS store", async () => {
     "manifestWriter.write(JSON.stringify(manifest))",
   );
   expect(offlineWorker).toContain(
-    'const REVCDOS_ROUTE = "/iframe/revcdos/local-assets/"',
+    "/\\/iframe\\/revcdos(?:\\.[a-f0-9]{16})?\\/local-assets\\//",
   );
   expect(offlineWorker).toContain("data.slice(");
   expect(offlineWorker).toContain('"Content-Range"');

@@ -483,7 +483,9 @@
         );
         throw error;
       }
-      const nextUrls = new Set(entry.files.map((file) => absoluteUrl(file.url)));
+      const nextUrls = new Set(
+        entry.files.map((file) => absoluteUrl(file.url)),
+      );
       await Promise.all(
         [...previousUrls]
           .filter((url) => !nextUrls.has(url))

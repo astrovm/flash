@@ -67,6 +67,26 @@ test("Flash URL router wraps fetch and restores the archived response URL", asyn
   expect(await response.text()).toBe("game");
 });
 
+test("Flash URL router maps archived assets into a versioned game package", () => {
+  const router = routerApi.create(
+    {
+      example: {
+        archive: {
+          routes: {
+            "https://media.example/main.swf": "swf/example/main.swf",
+          },
+        },
+      },
+    },
+    pageUrl,
+    { example: "swf/example.0123456789abcdef/" },
+  );
+
+  expect(router.resolve("https://media.example/main.swf")?.localUrl.href).toBe(
+    "https://astro.example/app/swf/example.0123456789abcdef/main.swf",
+  );
+});
+
 test("Flash URL router reads archived responses with GET", () => {
   const router = routerApi.create(
     {

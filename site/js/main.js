@@ -1098,9 +1098,7 @@ const loadRuffleSWF = (gameId, win) => {
   const frameRate = resolveGameFrameRate(gameId);
   const config = {
     url: game.url || archiveUrl || `${gameRoot}main.swf`,
-    base:
-      game.base ||
-      (archiveUrl ? new URL(".", archiveUrl).href : gameRoot),
+    base: game.base || (archiveUrl ? new URL(".", archiveUrl).href : gameRoot),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,

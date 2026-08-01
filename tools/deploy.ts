@@ -577,9 +577,7 @@ export async function versionGamePackages(
       ),
       revision,
       root: `${type}/${versionedName}/`,
-      ...(gameRuntimes[gameId]
-        ? { runtime: gameRuntimes[gameId] }
-        : {}),
+      ...(gameRuntimes[gameId] ? { runtime: gameRuntimes[gameId] } : {}),
       type,
     };
   }
@@ -999,7 +997,9 @@ export async function validateOutput(outputDir: string): Promise<void> {
     }
     for (const file of game.files) {
       if (!(await isFile(join(outputDir, file.url)))) {
-        throw new Error(`Build output references a missing game file: ${file.url}`);
+        throw new Error(
+          `Build output references a missing game file: ${file.url}`,
+        );
       }
     }
   }
@@ -1012,7 +1012,9 @@ export async function validateOutput(outputDir: string): Promise<void> {
         !file.url.endsWith(`?rev=${runtime.revision}`) ||
         !(await isFile(join(outputDir, file.url.split("?")[0])))
       ) {
-        throw new Error(`Build output has an invalid runtime file: ${file.url}`);
+        throw new Error(
+          `Build output has an invalid runtime file: ${file.url}`,
+        );
       }
     }
   }

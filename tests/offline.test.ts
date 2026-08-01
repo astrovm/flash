@@ -120,9 +120,7 @@ test("offline updates", async () => {
         root: "swf/bike-mania.bike-1/",
         type: "swf",
         bytes: 4,
-        files: [
-          { url: "swf/bike-mania.bike-1/main.swf", bytes: 4 },
-        ],
+        files: [{ url: "swf/bike-mania.bike-1/main.swf", bytes: 4 }],
       },
       doom: {
         revision: "doom-1",
@@ -352,6 +350,52 @@ test("offline updates", async () => {
   assert.match(
     quotaFailureManager.getSnapshot().gameError,
     /actual storage quota/,
+  );
+
+  const failedUpgrade = makeEnvironment({
+    storageValues: {
+      astroFlashOfflineGameRecords: JSON.stringify({
+        __runtime__: {
+          bytes: 10,
+          files: ["js/runtime.wasm?rev=runtime-old"],
+          revision: "runtime-old",
+          type: "runtime",
+        },
+        "bike-mania": {
+          bytes: 4,
+          files: ["swf/bike-mania.old/main.swf"],
+          revision: "old",
+          type: "swf",
+        },
+      }),
+    },
+  });
+  const oldBikeUrl = "https://flash.example/swf/bike-mania.old/main.swf";
+  await failedUpgrade.bundledCache.put(oldBikeUrl, new Response("old game"));
+  const upgradePut = failedUpgrade.bundledCache.put.bind(
+    failedUpgrade.bundledCache,
+  );
+  failedUpgrade.bundledCache.put = async (key, response) => {
+    if (String(key).includes("bike-mania.bike-1")) {
+      throw new DOMException("full", "QuotaExceededError");
+    }
+    return upgradePut(key, response);
+  };
+  const failedUpgradeManager = createManager({
+    currentVersion: manifest.version,
+    environment: failedUpgrade.environment,
+  });
+  await failedUpgradeManager.initialize();
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (failedUpgradeManager.getSnapshot().gamePhase === "error") break;
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  assert.strictEqual(failedUpgrade.bundledCache.values.has(oldBikeUrl), true);
+  assert.strictEqual(
+    JSON.parse(failedUpgrade.storage.getItem("astroFlashOfflineGameRecords"))[
+      "bike-mania"
+    ].revision,
+    "old",
   );
 
   const sharedRuntime = makeEnvironment();
