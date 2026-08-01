@@ -1061,7 +1061,7 @@ test("taskbar keeps overflow windows reachable", () => {
   );
   absent(javascript, "const appendTaskButton = ([win, gameId]) =>");
 });
-test("taskbar attention and fixed lock state are explicit", () => {
+test("taskbar attention and lock state are explicit", () => {
   contains(
     javascript,
     "const setWindowAttention =",
@@ -1075,7 +1075,11 @@ test("taskbar attention and fixed lock state are explicit", () => {
     ".task-button.needs-attention",
     ".taskbar-overflow-item.needs-attention",
   );
-  contains(compact(html), 'data-taskbar-action="lock" disabled');
+  contains(
+    compact(html),
+    'role="menuitemcheckbox" aria-checked="true" data-taskbar-action="lock"',
+  );
+  contains(javascript, "const setTaskbarLocked =", "!taskbarLocked");
 });
 test("taskbar supports window and taskbar context menus", () => {
   contains(
@@ -1093,6 +1097,8 @@ test("taskbar supports window and taskbar context menus", () => {
     "Tile Windows Vertically",
     "Show the Desktop",
     "Task Manager",
+    "Quick Launch",
+    "New Toolbar...",
     "Lock the Taskbar",
     "Properties",
   );

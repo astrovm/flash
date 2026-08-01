@@ -12,6 +12,11 @@ const diskPath = resolve(
   projectDirectory,
   "source-media/xp-vm/windows-xp.qcow2",
 );
+const snapshotOption = Bun.argv.indexOf("--snapshot");
+const snapshotName =
+  snapshotOption === -1 ? undefined : Bun.argv[snapshotOption + 1];
+if (snapshotOption !== -1 && !snapshotName)
+  throw new Error("--snapshot requires a snapshot name");
 
 const qemu = spawn(
   "qemu-system-i386",
@@ -46,6 +51,7 @@ const qemu = spawn(
     "cocoa",
     "-qmp",
     "stdio",
+    ...(snapshotName ? ["-loadvm", snapshotName] : []),
   ],
   { cwd: projectDirectory, stdio: ["pipe", "pipe", "inherit"] },
 );
@@ -118,7 +124,13 @@ async function pressKey(qcode: string) {
   });
 }
 
-async function click(x: number, y: number, width: number, height: number) {
+async function click(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  button: "left" | "right",
+) {
   const absoluteX = Math.round((x / (width - 1)) * 0x7fff);
   const absoluteY = Math.round((y / (height - 1)) * 0x7fff);
   await execute("input-send-event", {
@@ -128,11 +140,11 @@ async function click(x: number, y: number, width: number, height: number) {
     ],
   });
   await execute("input-send-event", {
-    events: [{ type: "btn", data: { down: true, button: "left" } }],
+    events: [{ type: "btn", data: { down: true, button } }],
   });
   await Bun.sleep(75);
   await execute("input-send-event", {
-    events: [{ type: "btn", data: { down: false, button: "left" } }],
+    events: [{ type: "btn", data: { down: false, button } }],
   });
 }
 
@@ -143,7 +155,7 @@ for await (const input of commands) {
     if (!command) continue;
     if (command === "help") {
       console.log(
-        "Commands: screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height], save <name>, load <name>, status, quit",
+        "Commands: screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], save <name>, load <name>, status, quit",
       );
     } else if (command === "screenshot") {
       const filename = resolve(
@@ -168,10 +180,13 @@ for await (const input of commands) {
         ],
       });
     } else if (command === "click") {
-      const [x, y, width = 640, height = 480] = args.map(Number);
+      const [x, y, width = 640, height = 480] = args.slice(0, 4).map(Number);
       if (![x, y, width, height].every(Number.isFinite))
-        throw new Error("click requires x y [width height]");
-      await click(x, y, width, height);
+        throw new Error("click requires x y [width height] [left|right]");
+      const button = args[4] || "left";
+      if (button !== "left" && button !== "right")
+        throw new Error("click button must be left or right");
+      await click(x, y, width, height, button);
     } else if (command === "save" || command === "load") {
       if (!args[0]) throw new Error(`${command} requires a snapshot name`);
       await execute("human-monitor-command", {

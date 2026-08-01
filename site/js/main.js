@@ -5691,7 +5691,15 @@ const positionTaskbarMenu = (menu, clientX, clientY) => {
 
 const wireTaskbarMenuKeyboard = (menu) => {
   menu.addEventListener("keydown", (event) => {
-    const items = [...menu.querySelectorAll("button:not(:disabled)")];
+    const items = [...menu.children]
+      .map((child) =>
+        child.matches("button")
+          ? child
+          : child.matches(".context-parent")
+            ? child.firstElementChild
+            : null,
+      )
+      .filter((item) => item?.matches("button:not(:disabled)"));
     if (!items.length) return;
     const current = items.indexOf(document.activeElement);
     let target = null;
@@ -5924,34 +5932,85 @@ const openTaskbarProperties = () => {
   const label = document.createElement("label");
   const input = document.createElement("input");
   input.type = "checkbox";
-  input.checked = true;
-  input.disabled = true;
-  input.title = "The taskbar is fixed in this shell.";
-  label.append(input, " Lock the taskbar (taskbar position is fixed)");
+  input.checked = taskbarLocked;
+  input.addEventListener("change", () => setTaskbarLocked(input.checked));
+  label.append(input, " Lock the taskbar");
   dialog.body.appendChild(label);
+};
+
+let taskbarLocked = true;
+
+const setTaskbarLocked = (locked) => {
+  taskbarLocked = locked;
+  const button = document.querySelector('[data-taskbar-action="lock"]');
+  button.setAttribute("aria-checked", String(locked));
+  button.querySelector(".context-check").textContent = locked ? "✓" : "";
 };
 
 const setupTaskbarContextMenu = () => {
   const taskbar = document.getElementById("taskbar");
   const menu = document.getElementById("taskbar-context-menu");
+  const toolbarParent = document.getElementById("taskbar-toolbar-parent");
+  const toolbarButton = toolbarParent.firstElementChild;
+  const toolbarSubmenu = document.getElementById("taskbar-toolbar-submenu");
   wireTaskbarMenuKeyboard(menu);
+  wireTaskbarMenuKeyboard(toolbarSubmenu);
   wireTaskbarMenuKeyboard(document.getElementById("taskbar-overflow-menu"));
+  const openToolbarSubmenu = () => {
+    toolbarParent.classList.add("open");
+    toolbarButton.setAttribute("aria-expanded", "true");
+    toolbarSubmenu.style.left = "calc(100% - 2px)";
+    if (toolbarSubmenu.getBoundingClientRect().right > innerWidth)
+      toolbarSubmenu.style.left = `${-toolbarSubmenu.offsetWidth + 5}px`;
+  };
+  const closeToolbarSubmenu = () => {
+    toolbarParent.classList.remove("open");
+    toolbarButton.setAttribute("aria-expanded", "false");
+  };
+  toolbarParent.addEventListener("pointerenter", openToolbarSubmenu);
+  toolbarParent.addEventListener("pointerleave", closeToolbarSubmenu);
+  toolbarButton.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowRight") return;
+    event.preventDefault();
+    event.stopPropagation();
+    openToolbarSubmenu();
+    toolbarSubmenu.querySelector("button")?.focus();
+  });
+  toolbarSubmenu.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeToolbarSubmenu();
+    toolbarButton.focus();
+  });
+  toolbarSubmenu.addEventListener("click", closeTaskbarMenus);
   taskbar.addEventListener("contextmenu", (event) => {
     if (event.target.closest(".task-button, #tray-volume-popup")) return;
     event.preventDefault();
     closeWindowSystemMenu();
     closeTaskbarMenus();
+    closeToolbarSubmenu();
+    const canArrange = [...openWindows.values()].some((win) => !win.minimized);
+    ["cascade", "tile-horizontal", "tile-vertical"].forEach((action) => {
+      menu.querySelector(`[data-taskbar-action="${action}"]`).disabled =
+        !canArrange;
+    });
     positionTaskbarMenu(menu, event.clientX, event.clientY);
   });
   menu.addEventListener("click", (event) => {
     const action = event.target.closest("[data-taskbar-action]")?.dataset
       .taskbarAction;
-    if (!action || event.target.disabled) return;
+    if (!action || event.target.closest("button")?.disabled) return;
+    if (action === "toolbars") {
+      openToolbarSubmenu();
+      return;
+    }
     closeTaskbarMenus();
     if (action === "show-desktop") toggleShowDesktop();
     else if (action === "cascade" || action.startsWith("tile-"))
       arrangeTaskbarWindows(action);
     else if (action === "task-manager") openTaskManager();
+    else if (action === "lock") setTaskbarLocked(!taskbarLocked);
     else if (action === "properties") openTaskbarProperties();
   });
 };

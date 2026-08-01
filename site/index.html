@@ -182,33 +182,71 @@
     </div>
 
     <div id="taskbar-context-menu" class="xp-context-menu" role="menu" hidden>
-      <button
-        type="button"
-        role="menuitem"
-        data-taskbar-action="toolbars"
-        disabled
-      >
-        Toolbars
-      </button>
+      <div id="taskbar-toolbar-parent" class="context-parent">
+        <button
+          type="button"
+          role="menuitem"
+          data-taskbar-action="toolbars"
+          aria-haspopup="menu"
+          aria-expanded="false"
+        >
+          <span class="context-check" aria-hidden="true"></span>
+          <span class="context-label">Toolbars</span>
+          <span class="context-arrow" aria-hidden="true"></span>
+        </button>
+        <div
+          id="taskbar-toolbar-submenu"
+          class="xp-context-menu context-submenu"
+          role="menu"
+        >
+          <button type="button" role="menuitem" data-taskbar-toolbar="links">
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">Links</span>
+          </button>
+          <button type="button" role="menuitem" data-taskbar-toolbar="desktop">
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">Desktop</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            data-taskbar-toolbar="quick-launch"
+          >
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">Quick Launch</span>
+          </button>
+          <span class="context-separator" aria-hidden="true"></span>
+          <button type="button" role="menuitem" data-taskbar-toolbar="new">
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">New Toolbar...</span>
+          </button>
+        </div>
+      </div>
       <span class="context-separator" aria-hidden="true"></span>
       <button type="button" role="menuitem" data-taskbar-action="cascade">
-        Cascade Windows
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Cascade Windows</span>
       </button>
       <button
         type="button"
         role="menuitem"
         data-taskbar-action="tile-horizontal"
       >
-        Tile Windows Horizontally
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Tile Windows Horizontally</span>
       </button>
       <button type="button" role="menuitem" data-taskbar-action="tile-vertical">
-        Tile Windows Vertically
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Tile Windows Vertically</span>
       </button>
       <button type="button" role="menuitem" data-taskbar-action="show-desktop">
-        Show the Desktop
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Show the Desktop</span>
       </button>
+      <span class="context-separator" aria-hidden="true"></span>
       <button type="button" role="menuitem" data-taskbar-action="task-manager">
-        Task Manager
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Task Manager</span>
       </button>
       <span class="context-separator" aria-hidden="true"></span>
       <button
@@ -216,13 +254,13 @@
         role="menuitemcheckbox"
         aria-checked="true"
         data-taskbar-action="lock"
-        disabled
-        title="The taskbar position is fixed"
       >
-        Lock the Taskbar
+        <span class="context-check" aria-hidden="true">✓</span>
+        <span class="context-label">Lock the Taskbar</span>
       </button>
       <button type="button" role="menuitem" data-taskbar-action="properties">
-        Properties
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Properties</span>
       </button>
     </div>
     <div

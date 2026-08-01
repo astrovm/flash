@@ -835,8 +835,8 @@ html[data-xp-appearance="silver"] {
 .xp-context-menu {
   position: absolute;
   z-index: 2500;
-  min-width: 170px;
-  padding: 2px;
+  min-width: 128px;
+  padding: 2px 2px 3px;
   background: #fff;
   border: 1px solid #aca899;
   box-shadow:
@@ -854,7 +854,7 @@ html[data-xp-appearance="silver"] {
   display: block;
   width: 100%;
   min-height: 20px;
-  padding: 2px 24px 2px 2px;
+  padding: 2px 22px 2px 2px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -865,7 +865,7 @@ html[data-xp-appearance="silver"] {
 
 .context-check {
   display: inline-block;
-  width: 23px;
+  width: 15px;
   color: currentColor;
   font-size: 15px;
   line-height: 14px;
@@ -896,7 +896,7 @@ html[data-xp-appearance="silver"] {
 .context-separator {
   display: block;
   height: 1px;
-  margin: 3px 2px;
+  margin: 1px 2px;
   background: #aca899;
   box-shadow: 0 1px #fff;
 }
@@ -4584,6 +4584,40 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 #taskbar-overflow-menu {
   position: fixed;
   z-index: 8200;
+}
+
+#taskbar-context-menu {
+  width: 165px;
+  padding-bottom: 4px;
+}
+
+#taskbar-context-menu button {
+  display: flex;
+  align-items: center;
+  padding-left: 1px;
+}
+
+#taskbar-context-menu > button,
+#taskbar-context-menu > .context-parent > button {
+  min-height: 19px;
+  padding-block: 1px;
+}
+
+#taskbar-toolbar-parent:hover > .context-submenu,
+#taskbar-toolbar-parent.open > .context-submenu {
+  display: block;
+}
+
+#taskbar-toolbar-submenu {
+  top: -3px;
+  left: calc(100% - 2px);
+  width: 116px;
+  min-width: 116px;
+}
+
+#taskbar-toolbar-submenu button {
+  min-height: 18px;
+  padding-block: 1px;
 }
 
 .task-button.active {
