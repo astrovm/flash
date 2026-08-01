@@ -199,6 +199,19 @@
     "member": "I386/TREBUCBD.TT_",
     "sha256": "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e"
   },
+  "assets/xp/icons/AddRemovePrograms.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/APPWIZ.CP_",
+    "sha256": "b576408d696a29deddba318ff1169c35b53b04a0cd71c20186dfa7f4f70c766c",
+    "resource": {
+      "parentSha256": "ce3b41c28cf53a8d9a0dbfdbbbe68f0f881514bc786d5f3d892346a61b2f8262",
+      "type": 14,
+      "id": 1500,
+      "language": 1033,
+      "frame": "48x48x32",
+      "pixelSha256": "1a0b16ef8f2d5cfea023dc333ebae511be7ff10179adef1b87614e90fa66eef7"
+    }
+  },
   "assets/xp/icons/Back.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

@@ -102,6 +102,7 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
   "1440x900": { width: 1440, height: 900 },
 });
 const XP_ICON_PATHS = Object.freeze({
+  "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
   "Back.png": "assets/xp/icons/Back.png",
   "ControlPanel.png": "assets/xp/icons/ControlPanel.png",
   "Exit.png": "assets/xp/icons/Exit.png",
@@ -198,7 +199,7 @@ const systemShortcuts = {
   },
   "__internet-games": {
     title: "Internet Games",
-    icon: "assets/xp/icons/Programs.png",
+    icon: "assets/xp/icons/AddRemovePrograms.png",
   },
 };
 
@@ -2284,7 +2285,7 @@ const createSystemWindowContent = (shortcutId, win) => {
           <h1>Internet Games</h1>
           <p>Find and install playable Flash games from Flashpoint Archive.</p>
         </div>
-        <img src="assets/xp/icons/Programs.png" alt="">
+        <img src="assets/xp/icons/AddRemovePrograms.png" alt="">
       </header>
       <div class="internet-games-tabs" role="tablist" aria-label="Internet Games">
         <button type="button" role="tab" aria-selected="true" data-internet-tab="browse">Find Games</button>
@@ -2420,7 +2421,7 @@ const createSystemWindowContent = (shortcutId, win) => {
         "ExplorerProperties.png",
         openProjectSettings,
       ],
-      ["Add or remove programs", "Programs.png", openControlPanel],
+      ["Add or remove programs", "AddRemovePrograms.png", openControlPanel],
       ["Change a setting", "ControlPanel.png", openControlPanel],
     ].forEach(([label, icon, action]) =>
       appendSidebarAction(tasksBody, label, icon, action),
@@ -4529,7 +4530,11 @@ const renderExplorerTaskPane = (win) => {
       "ExplorerProperties.png",
       openProjectSettings,
     );
-    addTask("Add or remove programs", "Programs.png", openControlPanel);
+    addTask(
+      "Add or remove programs",
+      "AddRemovePrograms.png",
+      openControlPanel,
+    );
     addTask("Change a setting", "ControlPanel.png", openControlPanel);
     return;
   }

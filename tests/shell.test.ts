@@ -120,6 +120,8 @@ test("internet games is integrated with the shell", async () => {
   js(
     '"__internet-games": {',
     'title: "Internet Games"',
+    'icon: "assets/xp/icons/AddRemovePrograms.png"',
+    '<img src="assets/xp/icons/AddRemovePrograms.png" alt="">',
     "gameLibraryInitialization = initializeGameLibrary()",
     'if (shortcutId === "__internet-games") wireInternetGames(win)',
     "url: game.url ||",

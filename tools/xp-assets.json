@@ -119,6 +119,16 @@
   ],
   "resourceIcons": [
     {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 1500,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AddRemovePrograms.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
@@ -531,6 +541,7 @@
     }
   ],
   "auditFiles": [
+    { "member": "APPWIZ.CP_", "output": "system/appwiz.cpl" },
     { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
     { "member": "EXPLORER.EX_", "output": "system/explorer.exe" },
     { "member": "MYDOCS.DL_", "output": "system/mydocs.dll" },
