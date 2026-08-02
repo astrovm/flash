@@ -1477,6 +1477,13 @@
       "member": "EXPLORER.EX_",
       "expandedName": "explorer.exe",
       "resourceType": 2,
+      "resourceId": 171,
+      "output": "site/assets/xp/system/ClassicStartMenuPreview.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
       "resourceId": 180,
       "output": "site/assets/xp/system/NotificationAreaPreview.png"
     },
