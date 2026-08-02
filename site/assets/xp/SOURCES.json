@@ -307,6 +307,19 @@
       "pixelSha256": "5a1ea24ceee882211905eb89d60fd87de9c8370f83d0a4f6a77025011fe3fe96"
     }
   },
+  "assets/xp/icons/TaskManager.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "8d784741063aa2ffeef07dfde9f91d71d8e82a5214f982dd9cf53a1901f9f6e2",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 107,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "396311d318d745fa7a8bbe50fe9e6b5c103717f75fa828f0b75b8c035dac9691"
+    }
+  },
   "assets/xp/icons/AccessibilityOptions.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

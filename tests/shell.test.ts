@@ -1344,6 +1344,33 @@ test("Taskbar and Start Menu Properties uses the native XP previews and tabs", (
     "height: min(454px",
   );
 });
+
+test("Windows Task Manager matches the five-tab XP application", () => {
+  contains(
+    javascript,
+    "const openTaskManager = () =>",
+    'title: "Windows Task Manager"',
+    "assets/xp/icons/TaskManager.png",
+    'data-task-manager-tab="applications"',
+    'data-task-manager-tab="processes"',
+    'data-task-manager-tab="performance"',
+    'data-task-manager-tab="networking"',
+    'data-task-manager-tab="users"',
+    "No Active Network Adapters Found.",
+    "Commit Charge: 81M / 1249M",
+    'data-task-manager-action="new-task"',
+    'data-task-manager-action="end-task"',
+    'data-task-manager-action="switch-to"',
+  );
+  contains(
+    css,
+    ".task-manager-dialog",
+    ".task-manager-menu-bar",
+    ".task-manager-process-list",
+    ".task-manager-graph",
+    ".task-manager-status",
+  );
+});
 test("taskbar keyboard and state styles are present", () => {
   js('taskButton && ["ArrowLeft", "ArrowRight", "Home", "End"]');
   contains(javascript, "const wireTaskbarMenuKeyboard = (menu) =>");

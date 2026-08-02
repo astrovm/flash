@@ -5755,6 +5755,441 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   margin: 5px 0 0;
 }
 
+.task-manager-dialog {
+  position: fixed;
+  top: 11px;
+  left: 11px;
+  width: min(403px, calc(100vw - 22px));
+  height: min(454px, calc(100vh - 22px));
+}
+
+.task-manager-dialog .dlg-body {
+  position: relative;
+  display: block;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  background: var(--xp-beige);
+  font:
+    11px/14px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.task-manager-title-icon {
+  width: 16px;
+  height: 16px;
+  margin: 0 2px 0 1px;
+  object-fit: contain;
+}
+
+.task-manager-menu-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  height: 24px;
+  align-items: center;
+  padding: 0 3px;
+  border-bottom: 1px solid #aaa;
+  background: var(--xp-beige);
+}
+
+.task-manager-menu-bar button {
+  height: 21px;
+  padding: 1px 7px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.task-manager-menu-bar button:hover,
+.task-manager-menu-bar button:focus-visible {
+  background: #316ac5;
+  color: #fff;
+}
+
+.task-manager-menu-popup {
+  position: absolute;
+  z-index: 5;
+  top: 21px;
+  min-width: 156px;
+  padding: 2px;
+  border: 1px solid #888;
+  background: #fff;
+  box-shadow: 2px 2px 2px rgb(0 0 0 / 30%);
+}
+
+.task-manager-menu-popup[hidden] {
+  display: none;
+}
+
+.task-manager-menu-popup button {
+  display: flex;
+  width: 100%;
+  min-height: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 18px;
+  border: 0;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+}
+
+.task-manager-menu-popup button:hover,
+.task-manager-menu-popup button:focus-visible {
+  background: #316ac5;
+  color: #fff;
+}
+
+.task-manager-menu-popup hr {
+  margin: 2px;
+  border: 0;
+  border-top: 1px solid #aaa;
+}
+
+.task-manager-tabs {
+  position: absolute;
+  z-index: 2;
+  top: 26px;
+  left: 7px;
+  display: flex;
+}
+
+.task-manager-tabs button {
+  height: 20px;
+  margin-right: -1px;
+  padding: 1px 7px 2px;
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: var(--xp-beige);
+  font: inherit;
+}
+
+.task-manager-tabs button[aria-selected="true"] {
+  z-index: 1;
+  height: 21px;
+  margin-top: -1px;
+  border-bottom-color: #f5f3ed;
+  background: #f5f3ed;
+}
+
+.task-manager-panel {
+  position: absolute;
+  top: 46px;
+  right: 7px;
+  bottom: 32px;
+  left: 7px;
+  border: 1px solid #919b9c;
+  background: #f5f3ed;
+  box-shadow: inset 1px 1px #fff;
+}
+
+.task-manager-panel[hidden] {
+  display: none;
+}
+
+.task-manager-list-head,
+.task-manager-process-head,
+.task-manager-user-head {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  left: 17px;
+  display: grid;
+  height: 20px;
+  align-items: center;
+  border: 1px solid #a8a8a8;
+  background: #f1f0e8;
+}
+
+.task-manager-list-head {
+  grid-template-columns: 255px minmax(0, 1fr);
+}
+
+.task-manager-list-head span,
+.task-manager-process-head span,
+.task-manager-user-head span {
+  height: 17px;
+  padding: 1px 5px;
+  border-right: 1px solid #aaa;
+}
+
+.task-manager-app-list,
+.task-manager-process-list {
+  position: absolute;
+  top: 36px;
+  right: 16px;
+  bottom: 43px;
+  left: 17px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  border-top: 0;
+  background: #fff;
+}
+
+.task-manager-row {
+  display: grid;
+  width: 100%;
+  min-height: 18px;
+  grid-template-columns: 255px minmax(0, 1fr);
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+}
+
+.task-manager-row > span {
+  padding: 1px 5px;
+}
+
+.task-manager-row img {
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  object-fit: contain;
+  vertical-align: -4px;
+}
+
+.task-manager-row.selected,
+.task-manager-process-row.selected,
+.task-manager-user-row.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.task-manager-empty {
+  margin: 10px;
+}
+
+.task-manager-panel-buttons {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  display: flex;
+  gap: 7px;
+}
+
+.task-manager-panel-buttons .xp-btn {
+  min-width: 78px;
+}
+
+.task-manager-process-head {
+  grid-template-columns: 107px 105px 34px minmax(0, 1fr);
+}
+
+.task-manager-process-list {
+  top: 36px;
+  bottom: 43px;
+}
+
+.task-manager-process-row {
+  display: grid;
+  width: 100%;
+  min-height: 16px;
+  grid-template-columns: 107px 105px 34px minmax(0, 1fr);
+  padding: 0;
+  border: 0;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+}
+
+.task-manager-process-row span {
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.task-manager-processes > label {
+  position: absolute;
+  bottom: 14px;
+  left: 17px;
+}
+
+.task-manager-processes > .xp-btn {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  width: 98px;
+}
+
+.task-manager-performance fieldset {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid #d0d0bf;
+}
+
+.task-manager-performance legend {
+  padding: 0 3px;
+  color: #003399;
+}
+
+.task-manager-meter {
+  left: 15px;
+  width: 87px;
+  height: 87px;
+}
+
+.task-manager-chart {
+  right: 13px;
+  width: 249px;
+  height: 87px;
+}
+
+.cpu-meter,
+.cpu-history {
+  top: 12px;
+}
+
+.pf-meter,
+.pf-history {
+  top: 105px;
+}
+
+.task-manager-black-meter,
+.task-manager-graph {
+  position: absolute;
+  inset: 11px 7px 7px;
+  overflow: hidden;
+  border: 1px solid #707070;
+  background-color: #000;
+  background-image:
+    linear-gradient(rgb(0 170 70 / 70%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(0 170 70 / 70%) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.task-manager-black-meter span {
+  position: absolute;
+  right: 18px;
+  bottom: 17px;
+  left: 18px;
+  height: 13px;
+  border-top: 2px solid #00ff40;
+  border-bottom: 2px solid #00ff40;
+}
+
+.task-manager-black-meter b {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  left: 0;
+  color: #00ff40;
+  font-weight: 400;
+  text-align: center;
+}
+
+.task-manager-graph svg {
+  width: 100%;
+  height: 100%;
+}
+
+.task-manager-graph polyline {
+  fill: none;
+  stroke: #00ff40;
+  stroke-width: 1;
+}
+
+.task-manager-stats {
+  width: 170px;
+  height: 62px;
+  padding: 3px 7px;
+}
+
+.task-manager-stats.totals,
+.task-manager-stats.commit {
+  left: 15px;
+}
+
+.task-manager-stats.physical,
+.task-manager-stats.kernel {
+  right: 13px;
+}
+
+.task-manager-stats.totals,
+.task-manager-stats.physical {
+  top: 198px;
+}
+
+.task-manager-stats.commit,
+.task-manager-stats.kernel {
+  top: 269px;
+}
+
+.task-manager-stats dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  margin: 0;
+}
+
+.task-manager-stats dt,
+.task-manager-stats dd {
+  margin: 0;
+}
+
+.task-manager-networking p {
+  position: absolute;
+  top: 128px;
+  right: 0;
+  left: 0;
+  text-align: center;
+}
+
+.task-manager-user-head {
+  grid-template-columns: 120px 37px 92px minmax(0, 1fr);
+}
+
+.task-manager-user-row {
+  position: absolute;
+  top: 36px;
+  right: 16px;
+  left: 17px;
+  display: grid;
+  min-height: 18px;
+  grid-template-columns: 120px 37px 92px minmax(0, 1fr);
+  border: 0;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+}
+
+.task-manager-status {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  height: 23px;
+  grid-template-columns: 96px 121px minmax(0, 1fr);
+  align-items: center;
+  border-top: 1px solid #aaa;
+}
+
+.task-manager-status span {
+  height: 18px;
+  padding: 2px 4px;
+  border-right: 1px solid #aaa;
+}
+
+.task-manager-minimized {
+  height: 31px !important;
+}
+
+.task-manager-minimized .dlg-body {
+  display: none;
+}
+
+.task-manager-maximized {
+  inset: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh - var(--taskbar-height)) !important;
+}
+
 .folder-options-dialog {
   width: min(384px, calc(100vw - 8px));
   height: min(479px, calc(100vh - 8px));

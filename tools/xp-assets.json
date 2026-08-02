@@ -210,6 +210,16 @@
       "output": "site/assets/xp/icons/OfflineFiles.png"
     },
     {
+      "member": "TASKMGR.EX_",
+      "expandedName": "taskmgr.exe",
+      "resourceType": 14,
+      "resourceId": 107,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/TaskManager.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,

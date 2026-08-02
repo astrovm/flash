@@ -6789,15 +6789,194 @@ const arrangeTaskbarWindows = (mode) => {
 
 const openTaskManager = () => {
   const dialog = XPDialogs.createDialog({ title: "Windows Task Manager" });
-  const heading = document.createElement("p");
-  heading.textContent = `${openWindows.size} application${openWindows.size === 1 ? "" : "s"} running`;
-  const list = document.createElement("ul");
-  [...openWindows.values()].forEach((win) => {
-    const item = document.createElement("li");
-    item.textContent = `${formatGameTitle(win.gameId)}${win.minimized ? " (Minimized)" : ""}`;
-    list.appendChild(item);
+  dialog.el.classList.add("task-manager-dialog");
+  const title = dialog.el.querySelector(".title-text");
+  const titleIcon = document.createElement("img");
+  titleIcon.className = "task-manager-title-icon";
+  titleIcon.src = "assets/xp/icons/TaskManager.png";
+  titleIcon.alt = "";
+  title.before(titleIcon);
+  const titleButtons = dialog.el.querySelector(".title-buttons");
+  const minimize = document.createElement("button");
+  minimize.type = "button";
+  minimize.className = "tb-btn minimize-btn";
+  minimize.setAttribute("aria-label", "Minimize");
+  const maximize = document.createElement("button");
+  maximize.type = "button";
+  maximize.className = "tb-btn maximize-btn";
+  maximize.setAttribute("aria-label", "Maximize");
+  titleButtons.prepend(minimize, maximize);
+
+  const escapeTaskManagerText = (value) =>
+    String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  const applications = [...openWindows.values()].map((win) => ({
+    id: win.gameId,
+    title: win.title || formatGameTitle(win.gameId),
+    minimized: win.minimized,
+  }));
+  const applicationRows = applications.length
+    ? applications
+        .map(
+          (application, index) =>
+            `<button type="button" class="task-manager-row${index ? "" : " selected"}" data-task-manager-window="${application.id}" role="option" aria-selected="${index ? "false" : "true"}"><span><img src="${openWindows.get(application.id)?.icon || systemShortcuts[application.id]?.icon || "assets/xp/icons/FolderOptions.png"}" alt="">${escapeTaskManagerText(application.title)}</span><span>${application.minimized ? "Minimized" : "Running"}</span></button>`,
+        )
+        .join("")
+    : '<p class="task-manager-empty">No applications are running.</p>';
+  const processes = [
+    ["taskmgr.exe", "Administrator", "06", "3,828 K"],
+    ["wscntfy.exe", "Administrator", "00", "1,852 K"],
+    ["alg.exe", "LOCAL SERVICE", "00", "3,328 K"],
+    ["spoolsv.exe", "SYSTEM", "00", "4,376 K"],
+    ["explorer.exe", "Administrator", "00", "21,960 K"],
+    ["svchost.exe", "LOCAL SERVICE", "00", "4,100 K"],
+    ["svchost.exe", "NETWORK SERVICE", "00", "2,640 K"],
+    ["svchost.exe", "SYSTEM", "00", "16,864 K"],
+    ["lsass.exe", "SYSTEM", "00", "3,996 K"],
+    ["services.exe", "SYSTEM", "00", "3,000 K"],
+    ["winlogon.exe", "SYSTEM", "00", "6,396 K"],
+    ["csrss.exe", "SYSTEM", "00", "3,148 K"],
+    ["smss.exe", "SYSTEM", "00", "372 K"],
+    ["System", "SYSTEM", "00", "212 K"],
+    ["System Idle Process", "SYSTEM", "94", "16 K"],
+  ];
+  const processRows = processes
+    .map(
+      (process, index) =>
+        `<button type="button" class="task-manager-process-row${index ? "" : " selected"}" role="option" aria-selected="${index ? "false" : "true"}">${process.map((value) => `<span>${value}</span>`).join("")}</button>`,
+    )
+    .join("");
+  dialog.body.innerHTML = `
+    <div class="task-manager-menu-bar" role="menubar">
+      <button type="button" role="menuitem" data-task-manager-menu="file">File</button>
+      <button type="button" role="menuitem" data-task-manager-menu="options">Options</button>
+      <button type="button" role="menuitem" data-task-manager-menu="view">View</button>
+      <button type="button" role="menuitem" data-task-manager-menu="windows">Windows</button>
+      <button type="button" role="menuitem" data-task-manager-menu="shutdown">Shut Down</button>
+      <button type="button" role="menuitem" data-task-manager-menu="help">Help</button>
+    </div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="file" role="menu" hidden><button role="menuitem" data-task-manager-action="new-task">New Task (Run...)</button><hr><button role="menuitem" data-task-manager-action="exit">Exit Task Manager</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="options" role="menu" hidden><button role="menuitem" data-task-manager-action="always-on-top">✓ Always On Top</button><button role="menuitem">Minimize On Use</button><button role="menuitem">Hide When Minimized</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="view" role="menu" hidden><button role="menuitem" data-task-manager-action="refresh">Refresh Now</button><hr><button role="menuitem">Update Speed <span>▶</span></button><button role="menuitem">CPU History <span>▶</span></button><button role="menuitem">Show Kernel Times</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="windows" role="menu" hidden><button role="menuitem" data-task-manager-action="cascade">Cascade</button><button role="menuitem" data-task-manager-action="tile-horizontal">Tile Horizontally</button><button role="menuitem" data-task-manager-action="tile-vertical">Tile Vertically</button><hr><button role="menuitem">Minimize</button><button role="menuitem">Maximize</button><button role="menuitem">Bring To Front</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="shutdown" role="menu" hidden><button role="menuitem">Stand By</button><button role="menuitem">Hibernate</button><hr><button role="menuitem" data-task-manager-action="turn-off">Turn Off</button><button role="menuitem" data-task-manager-action="restart">Restart</button><hr><button role="menuitem" data-task-manager-action="log-off">Log Off Administrator</button><button role="menuitem">Switch User</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="help" role="menu" hidden><button role="menuitem" data-task-manager-action="help">Task Manager Help Topics</button><hr><button role="menuitem" data-task-manager-action="about">About Task Manager</button></div>
+    <div class="task-manager-tabs" role="tablist" aria-label="Windows Task Manager">
+      <button type="button" role="tab" data-task-manager-tab="applications" aria-selected="true">Applications</button>
+      <button type="button" role="tab" data-task-manager-tab="processes" aria-selected="false" tabindex="-1">Processes</button>
+      <button type="button" role="tab" data-task-manager-tab="performance" aria-selected="false" tabindex="-1">Performance</button>
+      <button type="button" role="tab" data-task-manager-tab="networking" aria-selected="false" tabindex="-1">Networking</button>
+      <button type="button" role="tab" data-task-manager-tab="users" aria-selected="false" tabindex="-1">Users</button>
+    </div>
+    <div class="task-manager-panel task-manager-applications" data-task-manager-panel="applications">
+      <div class="task-manager-list-head"><span>Task</span><span>Status</span></div>
+      <div class="task-manager-app-list" role="listbox">${applicationRows}</div>
+      <div class="task-manager-panel-buttons"><button type="button" class="xp-btn" data-task-manager-action="end-task">End Task</button><button type="button" class="xp-btn" data-task-manager-action="switch-to">Switch To</button><button type="button" class="xp-btn" data-task-manager-action="new-task">New Task...</button></div>
+    </div>
+    <div class="task-manager-panel task-manager-processes" data-task-manager-panel="processes" hidden>
+      <div class="task-manager-process-head"><span>Image Name</span><span>User Name</span><span>CPU</span><span>Mem Usage</span></div>
+      <div class="task-manager-process-list" role="listbox">${processRows}</div>
+      <label><input type="checkbox"> Show processes from all users</label><button type="button" class="xp-btn">End Process</button>
+    </div>
+    <div class="task-manager-panel task-manager-performance" data-task-manager-panel="performance" hidden>
+      <fieldset class="task-manager-meter cpu-meter"><legend>CPU Usage</legend><div class="task-manager-black-meter"><span></span><b>5%</b></div></fieldset>
+      <fieldset class="task-manager-chart cpu-history"><legend>CPU Usage History</legend><div class="task-manager-graph"><svg viewBox="0 0 230 58" preserveAspectRatio="none"><polyline points="0,55 120,55 122,2 126,52 180,55 183,45 186,55 230,52"/></svg></div></fieldset>
+      <fieldset class="task-manager-meter pf-meter"><legend>PF Usage</legend><div class="task-manager-black-meter"><span></span><b>81.0 MB</b></div></fieldset>
+      <fieldset class="task-manager-chart pf-history"><legend>Page File Usage History</legend><div class="task-manager-graph"><svg viewBox="0 0 230 58" preserveAspectRatio="none"><polyline points="0,53 110,53 115,51 230,51"/></svg></div></fieldset>
+      <fieldset class="task-manager-stats totals"><legend>Totals</legend><dl><dt>Handles</dt><dd>4061</dd><dt>Threads</dt><dd>243</dd><dt>Processes</dt><dd>17</dd></dl></fieldset>
+      <fieldset class="task-manager-stats physical"><legend>Physical Memory (K)</legend><dl><dt>Total</dt><dd>523696</dd><dt>Available</dt><dd>400248</dd><dt>System Cache</dt><dd>126496</dd></dl></fieldset>
+      <fieldset class="task-manager-stats commit"><legend>Commit Charge (K)</legend><dl><dt>Total</dt><dd>83032</dd><dt>Limit</dt><dd>1279408</dd><dt>Peak</dt><dd>108992</dd></dl></fieldset>
+      <fieldset class="task-manager-stats kernel"><legend>Kernel Memory (K)</legend><dl><dt>Total</dt><dd>18640</dd><dt>Paged</dt><dd>15004</dd><dt>Nonpaged</dt><dd>3636</dd></dl></fieldset>
+    </div>
+    <div class="task-manager-panel task-manager-networking" data-task-manager-panel="networking" hidden><p>No Active Network Adapters Found.</p></div>
+    <div class="task-manager-panel task-manager-users" data-task-manager-panel="users" hidden>
+      <div class="task-manager-user-head"><span>User</span><span>ID</span><span>Status</span><span>Client Name</span></div>
+      <button type="button" class="task-manager-user-row selected"><span>♟ Administrator</span><span>0</span><span>Active</span><span></span></button>
+      <div class="task-manager-panel-buttons"><button type="button" class="xp-btn">Disconnect</button><button type="button" class="xp-btn" data-task-manager-action="log-off">Logoff</button><button type="button" class="xp-btn" disabled>Send Message...</button></div>
+    </div>
+    <div class="task-manager-status"><span>Processes: 17</span><span>CPU Usage: 5%</span><span>Commit Charge: 81M / 1249M</span></div>`;
+
+  const tabs = [...dialog.body.querySelectorAll("[data-task-manager-tab]")];
+  const panels = [...dialog.body.querySelectorAll("[data-task-manager-panel]")];
+  const closeMenus = () =>
+    dialog.body
+      .querySelectorAll("[data-task-manager-popup]")
+      .forEach((popup) => (popup.hidden = true));
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) => {
+        const selected =
+          entry.dataset.taskManagerTab === tab.dataset.taskManagerTab;
+        entry.setAttribute("aria-selected", String(selected));
+        entry.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach((panel) => {
+        panel.hidden =
+          panel.dataset.taskManagerPanel !== tab.dataset.taskManagerTab;
+      });
+    }),
+  );
+  dialog.body.querySelectorAll("[data-task-manager-menu]").forEach((button) =>
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const popup = dialog.body.querySelector(
+        `[data-task-manager-popup="${button.dataset.taskManagerMenu}"]`,
+      );
+      const open = popup.hidden;
+      closeMenus();
+      popup.hidden = !open;
+      popup.style.left = `${button.offsetLeft}px`;
+    }),
+  );
+  dialog.body.addEventListener("click", (event) => {
+    const row = event.target.closest(".task-manager-row");
+    if (row) {
+      dialog.body.querySelectorAll(".task-manager-row").forEach((entry) => {
+        const selected = entry === row;
+        entry.classList.toggle("selected", selected);
+        entry.setAttribute("aria-selected", String(selected));
+      });
+    }
+    const action = event.target.closest("[data-task-manager-action]")?.dataset
+      .taskManagerAction;
+    if (!action) return;
+    const selectedWindow = dialog.body.querySelector(
+      ".task-manager-row.selected",
+    )?.dataset.taskManagerWindow;
+    closeMenus();
+    if (action === "new-task") openRunDialog();
+    else if (action === "exit") dialog.close("exit");
+    else if (action === "end-task" && selectedWindow) {
+      closeGameWindow(selectedWindow);
+      dialog.body.querySelector(".task-manager-row.selected")?.remove();
+    } else if (action === "switch-to" && selectedWindow) {
+      dialog.close("switch");
+      restoreWindow(selectedWindow);
+      focusWindow(selectedWindow);
+    } else if (action === "help") openHelpAndSupport();
+    else if (action === "about") openAboutWindows();
+    else if (action === "cascade") arrangeTaskbarWindows("cascade");
+    else if (action === "tile-horizontal")
+      arrangeTaskbarWindows("tile-horizontal");
+    else if (action === "tile-vertical") arrangeTaskbarWindows("tile-vertical");
+    else if (action === "turn-off" || action === "restart") {
+      dialog.close(action);
+      showShutdownDialog();
+    } else if (action === "log-off") {
+      dialog.close(action);
+      showLogoffDialog();
+    }
   });
-  dialog.body.append(heading, list);
+  document.addEventListener("pointerdown", closeMenus, { once: true });
+  minimize.addEventListener("click", () =>
+    dialog.el.classList.toggle("task-manager-minimized"),
+  );
+  maximize.addEventListener("click", () =>
+    dialog.el.classList.toggle("task-manager-maximized"),
+  );
 };
 
 const openFolderOptions = () => {
