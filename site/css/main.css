@@ -7776,6 +7776,316 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: 22px;
 }
 
+.power-options-dialog {
+  width: min(404px, calc(100vw - 8px));
+  height: min(454px, calc(100vh - 8px));
+}
+
+.power-options-dialog .dlg-body {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 28px);
+  padding: 7px;
+  background: var(--xp-dialog, #ece9d8);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.power-options-tabs {
+  display: flex;
+  height: 23px;
+  align-items: flex-end;
+}
+
+.power-options-tabs button {
+  height: 22px;
+  margin-right: -1px;
+  padding: 2px 7px;
+  border: 1px solid #919b9c;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#fff, #ece9d8);
+  font: inherit;
+}
+
+.power-options-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 2;
+  height: 24px;
+  border-bottom-color: #ece9d8;
+}
+
+.power-options-panels {
+  box-sizing: border-box;
+  height: 356px;
+  margin-top: -1px;
+  padding: 10px 13px;
+  border: 1px solid #919b9c;
+  background: #ece9d8;
+}
+
+.power-options-dialog fieldset {
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid #aaa;
+}
+
+.power-options-dialog legend {
+  color: #04e;
+}
+
+.power-options-intro,
+.power-hibernate-intro {
+  display: flex;
+  min-height: 54px;
+  align-items: flex-start;
+  gap: 17px;
+}
+
+.power-options-intro img,
+.power-hibernate-intro img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.power-options-intro p,
+.power-hibernate-intro p {
+  margin: 4px 0 0;
+}
+
+.power-options-intro p,
+.power-hibernate-intro p {
+  white-space: nowrap;
+}
+
+.power-schemes-panel .power-options-intro {
+  min-height: 53px;
+}
+
+.power-advanced-panel .power-options-intro {
+  min-height: 44px;
+}
+
+.power-options-dialog select {
+  box-sizing: border-box;
+  height: 21px;
+  border: 1px solid #7f9db9;
+  font: inherit;
+}
+
+.power-scheme-picker {
+  height: 85px;
+  padding: 7px 9px;
+}
+
+.power-scheme-picker > select {
+  width: 100%;
+}
+
+.power-scheme-picker > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.power-scheme-picker .xp-btn {
+  width: 73px;
+}
+
+.power-scheme-settings {
+  height: 155px;
+  margin-top: 11px !important;
+  padding: 7px 9px;
+}
+
+.power-scheme-settings label {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.power-scheme-settings hr {
+  height: 1px;
+  margin: 12px 0 15px;
+  border: 0;
+  background: #aca899;
+}
+
+.power-advanced-panel > fieldset {
+  height: 95px;
+  padding: 8px;
+}
+
+.power-advanced-panel > fieldset label {
+  display: block;
+  margin: 3px 0 8px;
+}
+
+.power-options-dialog input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  margin: 0 3px 0 0;
+  vertical-align: -2px;
+  accent-color: #fff;
+}
+
+.power-advanced-panel .power-buttons-field {
+  height: 174px;
+  margin-top: 6px;
+  padding: 58px 8px 8px;
+}
+
+.power-buttons-field label,
+.power-buttons-field select {
+  display: block;
+  width: 100%;
+}
+
+.power-buttons-field select {
+  margin-top: 5px;
+}
+
+.power-hibernate-intro {
+  min-height: 64px;
+}
+
+.power-hibernate-panel > fieldset {
+  height: 39px;
+  padding: 6px 8px;
+}
+
+.power-hibernate-panel > fieldset + fieldset {
+  height: 89px;
+  margin-top: 12px;
+}
+
+.power-hibernate-panel fieldset p {
+  position: relative;
+  display: block;
+  margin: 7px 0;
+}
+
+.power-hibernate-panel fieldset p:first-of-type span {
+  position: absolute;
+  left: 108px;
+}
+
+.power-hibernate-panel fieldset p:last-of-type span {
+  position: absolute;
+  left: 189px;
+}
+
+.power-ups-panel h2 {
+  margin: 4px 0 7px;
+  text-align: center;
+  font: inherit;
+}
+
+.power-ups-panel fieldset {
+  position: relative;
+}
+
+.power-ups-status {
+  height: 102px;
+  margin-top: -7px !important;
+  padding: 8px;
+}
+
+.power-ups-status img {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.power-ups-status > div {
+  margin-left: 44px;
+  color: #aca899;
+}
+
+.power-ups-status p {
+  margin: 0 0 4px;
+}
+
+.power-ups-details {
+  height: 107px;
+  margin-top: 5px !important;
+  padding: 9px;
+}
+
+.power-ups-details > img {
+  float: left;
+  width: 32px;
+  height: 36px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.power-ups-details > p {
+  margin: 2px 0;
+  line-height: 17px;
+}
+
+.power-ups-details > p span {
+  margin-left: 22px;
+}
+
+.power-ups-details > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 8px;
+}
+
+.power-ups-details .xp-btn,
+.power-ups-about {
+  width: 73px;
+}
+
+.power-ups-warning {
+  display: flex;
+  height: 54px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 11px;
+  border: 1px solid #aaa;
+}
+
+.power-ups-warning img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.power-ups-warning p {
+  margin: 0;
+}
+
+.power-ups-about {
+  margin-top: 14px;
+}
+
+.power-options-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: 9px;
+  display: flex;
+  gap: 9px;
+}
+
+.power-options-buttons button {
+  width: 72px;
+  height: 21px;
+}
+
 .mouse-properties-dialog .dlg-body {
   position: relative;
   box-sizing: border-box;

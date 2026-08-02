@@ -418,6 +418,46 @@
       "output": "site/assets/xp/icons/PowerOptions.png"
     },
     {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 203,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/PowerHibernate.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/PowerUpsStatus.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 204,
+      "width": 32,
+      "height": 36,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/PowerUpsDetails.png"
+    },
+    {
+      "member": "USER32.DL_",
+      "expandedName": "user32.dll",
+      "resourceType": 14,
+      "resourceId": 101,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SystemWarning.png"
+    },
+    {
       "member": "MSTASK.DL_",
       "expandedName": "mstask.dll",
       "resourceType": 14,

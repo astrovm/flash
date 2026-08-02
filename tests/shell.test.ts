@@ -496,6 +496,28 @@ test("Game Controllers matches the native XP applet and child dialogs", () => {
   );
 });
 
+test("Power Options matches the four-tab native XP applet", () => {
+  contains(
+    javascript,
+    'const openPowerOptions = (initialTab = "power-schemes") =>',
+    'title: "Power Options Properties"',
+    'data-power-panel="power-schemes"',
+    'data-power-panel="advanced"',
+    'data-power-panel="hibernate"',
+    'data-power-panel="ups"',
+    "Home/Office Desk",
+    "Prompt for password when computer resumes from standby",
+    "Enable hibernation",
+    "Uninterruptible Power Supply",
+    "PowerHibernate.png",
+    "PowerUpsStatus.png",
+    "PowerUpsDetails.png",
+    "SystemWarning.png",
+    "openPowerOptions();",
+  );
+  contains(css, ".power-options-dialog", ".power-options-tabs");
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,

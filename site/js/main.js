@@ -2806,6 +2806,8 @@ const wireControlPanel = (win) => {
       openKeyboardProperties();
     } else if (action === "game-controllers") {
       openGameControllers();
+    } else if (action === "power-options") {
+      openPowerOptions();
     } else if (
       action === "phone-modem" ||
       action === "add-hardware" ||
@@ -2843,7 +2845,6 @@ const wireControlPanel = (win) => {
         "backup",
         "defrag",
         "administrative-tools",
-        "power-options",
         "scheduled-tasks",
       ].includes(action)
     ) {
@@ -2852,7 +2853,6 @@ const wireControlPanel = (win) => {
         backup: "Backup Utility",
         defrag: "Disk Defragmenter",
         "administrative-tools": "Administrative Tools",
-        "power-options": "Power Options Properties",
         "scheduled-tasks": "Scheduled Tasks",
       };
       XPDialogs.alert(
@@ -7900,6 +7900,66 @@ const openGameControllers = () => {
     }
   });
   XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.ok);
+};
+
+const openPowerOptions = (initialTab = "power-schemes") => {
+  const dialog = XPDialogs.createDialog({ title: "Power Options Properties" });
+  dialog.el.classList.add("power-options-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(22, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(30, Math.max(4, window.innerHeight - 454))}px`,
+  });
+  addDialogHelpButton(dialog);
+  const select = (options, selected) =>
+    `<select>${options.map((option) => `<option${option === selected ? " selected" : ""}>${option}</option>`).join("")}</select>`;
+  const timeOptions = [
+    "After 1 min",
+    "After 5 mins",
+    "After 10 mins",
+    "After 20 mins",
+    "After 30 mins",
+    "After 45 mins",
+    "After 1 hour",
+    "Never",
+  ];
+  dialog.body.innerHTML = `
+    <div class="power-options-tabs" role="tablist"><button type="button" role="tab" data-power-tab="power-schemes">Power Schemes</button><button type="button" role="tab" data-power-tab="advanced">Advanced</button><button type="button" role="tab" data-power-tab="hibernate">Hibernate</button><button type="button" role="tab" data-power-tab="ups">UPS</button></div>
+    <div class="power-options-panels">
+      <section class="power-schemes-panel" data-power-panel="power-schemes"><div class="power-options-intro"><img src="assets/xp/icons/PowerOptions.png" alt=""><p>Select the power scheme with the most appropriate settings for<br>this computer. Note that changing the settings below will modify<br>the selected scheme.</p></div><fieldset class="power-scheme-picker"><legend>Power schemes</legend>${select(["Home/Office Desk", "Portable/Laptop", "Presentation", "Always On", "Minimal Power Management", "Max Battery"], "Home/Office Desk")}<div><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div></fieldset><fieldset class="power-scheme-settings"><legend>Settings for Home/Office Desk power scheme</legend><label>Turn off monitor:${select(timeOptions, "After 20 mins")}</label><label>Turn off hard disks:${select(timeOptions, "Never")}</label><hr><label>System standby:${select(timeOptions, "Never")}</label><label>System hibernates:${select(timeOptions, "Never")}</label></fieldset></section>
+      <section class="power-advanced-panel" data-power-panel="advanced" hidden><div class="power-options-intro"><img src="assets/xp/icons/PowerOptions.png" alt=""><p>Select the power-saving settings you want to use.</p></div><fieldset><legend>Options</legend><label><input type="checkbox"> Always show icon on the taskbar</label><label><input type="checkbox" checked> Prompt for password when computer resumes from standby</label></fieldset><fieldset class="power-buttons-field"><legend>Power buttons</legend><label>When I press the power button on my computer:${select(["Do nothing", "Ask me what to do", "Stand by", "Shut down"], "Shut down")}</label></fieldset></section>
+      <section class="power-hibernate-panel" data-power-panel="hibernate" hidden><div class="power-hibernate-intro"><img src="assets/xp/icons/PowerHibernate.png" alt=""><p>When your computer hibernates, it stores whatever it has in<br>memory on your hard disk and then shuts down. When your<br>computer comes out of hibernation, it returns to its previous state.</p></div><fieldset><legend>Hibernate</legend><label><input type="checkbox" checked> Enable hibernation</label></fieldset><fieldset><legend>Disk space for hibernation</legend><p>Free disk space: <span>5,682 MB</span></p><p>Disk space required to hibernate: <span>512 MB</span></p></fieldset></section>
+      <section class="power-ups-panel" data-power-panel="ups" hidden><h2>Uninterruptible Power Supply</h2><fieldset class="power-ups-status"><legend>Status</legend><img src="assets/xp/icons/PowerUpsStatus.png" alt=""><div><p>Current power source:</p><p>Estimated UPS runtime:</p><p>Estimated UPS capacity:</p><p>Battery condition:</p></div></fieldset><fieldset class="power-ups-details"><legend>Details</legend><img src="assets/xp/icons/PowerUpsDetails.png" alt=""><p>Manufacturer: <span>(None)</span><br>Model:</p><div><button class="xp-btn" disabled>Configure...</button><button class="xp-btn">Select...</button></div></fieldset><div class="power-ups-warning"><img src="assets/xp/icons/SystemWarning.png" alt=""><p>The UPS service is currently stopped.</p></div><button class="xp-btn power-ups-about">About...</button></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-power-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.powerTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-power-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.powerPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-power-tab]")?.dataset.powerTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("power-options-buttons");
+  const apply = dialog.body.querySelector('[data-action="apply"]');
+  apply.disabled = true;
+  dialog.body.addEventListener("change", () => {
+    apply.disabled = false;
+  });
+  activate(initialTab);
 };
 
 const openMouseProperties = (initialTab = "buttons") => {

@@ -577,6 +577,58 @@
       "pixelSha256": "69b76df029b590d451a6653760af431cc2f7e3a94ac6a88e974b9555f70fd8cc"
     }
   },
+  "assets/xp/icons/PowerHibernate.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/POWERCFG.CP_",
+    "sha256": "5ce95d9469c1f6813b8648ffbc8f8b8c87fdaa6c747321592e386ea44c23f3e1",
+    "resource": {
+      "parentSha256": "047cfe207d031983ba6f86aa2a131c2187ee616738bd017fcd63bc887f4b425a",
+      "type": 14,
+      "id": 203,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "e78c301e8baf032443022ee585a11b57857df0ac9b91c28a5cee0d443f302d1e"
+    }
+  },
+  "assets/xp/icons/PowerUpsStatus.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/POWERCFG.CP_",
+    "sha256": "f259b573156a61e8d77b506e65913e4f4db550836b48dcbb5d79ea8a504c3b5d",
+    "resource": {
+      "parentSha256": "047cfe207d031983ba6f86aa2a131c2187ee616738bd017fcd63bc887f4b425a",
+      "type": 14,
+      "id": 200,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "07c19de44a6e8f9caab4e5e026167fab7e4fdb8b2902953cdc66e92a3850abc5"
+    }
+  },
+  "assets/xp/icons/PowerUpsDetails.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/POWERCFG.CP_",
+    "sha256": "9fd08b5ed64afc15f307a129d60092b4416f6a970c32fe16049aba90b1ee1466",
+    "resource": {
+      "parentSha256": "047cfe207d031983ba6f86aa2a131c2187ee616738bd017fcd63bc887f4b425a",
+      "type": 14,
+      "id": 204,
+      "language": 1033,
+      "frame": "32x36x8",
+      "pixelSha256": "6365b1bc64ad3a342d5b4d3752d9a316f32bdb9977bc65485e99f2d9bc53aa7c"
+    }
+  },
+  "assets/xp/icons/SystemWarning.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/USER32.DL_",
+    "sha256": "3e440f269c38f1930dc9ceb5bb0850ee353fabe0d13df0b1a4b0de39dc4c802a",
+    "resource": {
+      "parentSha256": "acd0ae7b4d5f871e148276c6cc4ae3a216e33f67fc78d827c16986e1f945438c",
+      "type": 14,
+      "id": 101,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "6c9951c999a282fd28e3f5a1ef9e776fd5646c8e45519ecdd206b67d4f6d9231"
+    }
+  },
   "assets/xp/icons/ScheduledTasks.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MSTASK.DL_",
