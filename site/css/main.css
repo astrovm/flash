@@ -2856,16 +2856,16 @@ html[data-xp-appearance="silver"] {
 
 .xp-dialog.accessibility-options-dialog {
   position: absolute;
-  top: 146px;
+  top: 139px;
   left: 110px;
   width: 366px;
-  height: 448px;
+  height: 456px;
 }
 
 .accessibility-options-dialog .dlg-body {
   position: relative;
-  height: 416px;
-  padding: 31px 8px 40px;
+  height: 424px;
+  padding: 34px 7px 38px 6px;
   font:
     11px Tahoma,
     sans-serif;
@@ -2873,8 +2873,8 @@ html[data-xp-appearance="silver"] {
 
 .accessibility-tabs {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 16px;
+  left: 6px;
   display: flex;
 }
 
@@ -2897,16 +2897,19 @@ html[data-xp-appearance="silver"] {
 }
 
 .accessibility-panels {
+  box-sizing: border-box;
   height: 100%;
-  padding: 7px 14px;
+  padding: 7px 11px 7px 14px;
   border: 1px solid #919b9c;
   background: #fff;
 }
 
 .accessibility-panels fieldset {
   position: relative;
-  min-height: 84px;
-  margin: 0 0 5px;
+  box-sizing: border-box;
+  width: 320px;
+  min-height: 0;
+  margin: 0;
   padding: 10px 9px 8px;
   border: 1px solid #d0cab2;
 }
@@ -2918,15 +2921,21 @@ html[data-xp-appearance="silver"] {
   margin: 2px 0 8px;
   line-height: 13px;
 }
+.accessibility-panels input[type="checkbox"] {
+  accent-color: #21a121;
+}
 .accessibility-panels label {
   display: block;
   margin: 5px 0;
 }
 .accessibility-panels fieldset > .xp-btn {
   position: absolute;
-  right: 13px;
-  bottom: 11px;
+  right: 14px;
+  bottom: 12px;
+  box-sizing: border-box;
+  width: 72px;
   min-width: 72px;
+  height: 21px;
 }
 .accessibility-panels .disabled-copy {
   color: #aaa;
@@ -2943,41 +2952,245 @@ html[data-xp-appearance="silver"] {
   margin: 10px 10px;
   text-align: right;
 }
+.cursor-slider {
+  position: absolute;
+  left: 10px;
+  display: grid;
+  width: 272px;
+  height: 45px;
+  grid-template-columns: 52px 156px 52px;
+  align-items: center;
+  column-gap: 0;
+}
+.cursor-blink {
+  top: 43px;
+}
+.cursor-width {
+  top: 108px;
+}
+.cursor-slider-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+.cursor-slider > span:not(.cursor-slider-title) {
+  margin-top: 13px;
+}
+.cursor-slider > span:last-of-type {
+  text-align: right;
+}
+.cursor-slider input[type="range"] {
+  z-index: 1;
+  width: 156px;
+  height: 21px;
+  margin: 13px 0 0;
+  appearance: none;
+  background: transparent;
+}
+.cursor-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+  background: #d4d0c8;
+}
+.cursor-slider input[type="range"]::-webkit-slider-thumb {
+  width: 11px;
+  height: 21px;
+  margin-top: -10px;
+  border: 1px solid #008b45;
+  border-radius: 1px;
+  appearance: none;
+  background: linear-gradient(90deg, #fff 0 20%, #ece9d8 20% 80%, #008b45 80%);
+}
+.cursor-slider > i {
+  position: absolute;
+  top: 37px;
+  left: 57px;
+  width: 146px;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #808080 0 1px,
+    transparent 1px 14px
+  );
+}
+.accessibility-panels [data-accessibility-panel] {
+  position: relative;
+  height: 100%;
+}
+.accessibility-panels [data-accessibility-panel="keyboard"] fieldset,
+.accessibility-panels [data-accessibility-panel="display"] fieldset,
+.accessibility-panels [data-accessibility-panel="general"] fieldset {
+  position: absolute;
+  left: 0;
+}
+.accessibility-panels
+  [data-accessibility-panel="keyboard"]
+  fieldset:nth-of-type(1) {
+  top: 0;
+  height: 96px;
+}
+.accessibility-panels
+  [data-accessibility-panel="keyboard"]
+  fieldset:nth-of-type(2) {
+  top: 106px;
+  height: 86px;
+}
+.accessibility-panels
+  [data-accessibility-panel="keyboard"]
+  fieldset:nth-of-type(3) {
+  top: 202px;
+  height: 86px;
+}
+.accessibility-panels [data-accessibility-panel="keyboard"] > label {
+  position: absolute;
+  top: 294px;
+  left: 0;
+  margin: 5px 0 0;
+}
 .accessibility-panels [data-accessibility-panel="sound"] fieldset {
-  min-height: 142px;
+  position: relative;
+  height: 149px;
+}
+.accessibility-panels [data-accessibility-panel="sound"] fieldset > p,
+.accessibility-panels [data-accessibility-panel="sound"] fieldset > label {
+  position: absolute;
+  left: 9px;
+  margin: 0;
+}
+.accessibility-panels
+  [data-accessibility-panel="sound"]
+  fieldset
+  > p:first-of-type {
+  top: 17px;
+}
+.accessibility-panels [data-accessibility-panel="sound"] fieldset > label {
+  top: 50px;
+}
+.accessibility-panels
+  [data-accessibility-panel="sound"]
+  fieldset
+  > p.disabled-copy {
+  top: 82px;
+}
+.accessibility-panels
+  [data-accessibility-panel="keyboard"]
+  fieldset:nth-of-type(2)
+  p {
+  letter-spacing: -0.25px;
+}
+.accessibility-panels
+  [data-accessibility-panel="display"]
+  fieldset:nth-of-type(1) {
+  top: 0;
+  height: 96px;
 }
 .accessibility-panels
   [data-accessibility-panel="display"]
   fieldset:nth-of-type(2) {
-  min-height: 190px;
+  top: 106px;
+  height: 188px;
 }
-.accessibility-panels [data-accessibility-panel="general"] fieldset {
-  min-height: 0;
+.accessibility-panels [data-accessibility-panel="mouse"] fieldset {
+  height: 96px;
 }
 .accessibility-panels
   [data-accessibility-panel="general"]
   fieldset:nth-of-type(1) {
-  height: 70px;
+  top: 0;
+  height: 83px;
 }
 .accessibility-panels
   [data-accessibility-panel="general"]
   fieldset:nth-of-type(2) {
+  top: 93px;
   height: 65px;
 }
 .accessibility-panels
   [data-accessibility-panel="general"]
   fieldset:nth-of-type(3) {
+  top: 168px;
   height: 88px;
 }
 .accessibility-panels
   [data-accessibility-panel="general"]
   fieldset:nth-of-type(4) {
-  height: 62px;
+  top: 266px;
+  height: 64px;
 }
 .accessibility-options-dialog .dlg-buttons {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 7px;
+  bottom: 7px;
+  gap: 9px;
+}
+.accessibility-options-dialog .dlg-buttons button {
+  box-sizing: border-box;
+  width: 72px;
+  height: 21px;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(1)
+  select {
+  position: absolute;
+  top: 36px;
+  left: 28px;
+  width: 166px;
+  height: 21px;
+  margin: 0;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(2)
+  label,
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(4)
+  label {
+  position: absolute;
+  left: 9px;
+  margin: 0;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(2)
+  label:nth-of-type(1),
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(4)
+  label:nth-of-type(1) {
+  top: 4px;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(2)
+  label:nth-of-type(2),
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(4)
+  label:nth-of-type(2) {
+  top: 27px;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(3)
+  p {
+  position: absolute;
+  top: 6px;
+  left: 9px;
+  margin: 0;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(3)
+  label {
+  position: absolute;
+  top: 43px;
+  left: 9px;
+  margin: 0;
 }
 
 .xp-dialog.sounds-audio-properties-dialog {

@@ -603,6 +603,7 @@ test("Accessibility Options uses the native XP category page", () => {
     'data-accessibility-panel="display"',
     'data-accessibility-panel="mouse"',
     'data-accessibility-panel="general"',
+    "cursor-slider cursor-blink",
   );
   contains(css, ".accessibility-options-dialog", ".accessibility-tabs");
 });
