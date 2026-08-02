@@ -1489,6 +1489,89 @@ html[data-xp-appearance="silver"] {
   font: inherit;
   padding: 2px 7px;
 }
+
+.explorer-menu {
+  min-width: 120px;
+  padding: 1px;
+}
+
+.explorer-menu[data-explorer-menu-name="file"] {
+  width: 120px;
+}
+
+.explorer-menu[data-explorer-menu-name="edit"] {
+  width: 142px;
+}
+
+.explorer-menu[data-explorer-menu-name="view"] {
+  width: 126px;
+}
+
+.explorer-menu[data-explorer-menu-name="favorites"] {
+  width: 153px;
+}
+
+.explorer-menu[data-explorer-menu-name="tools"] {
+  width: 179px;
+}
+
+.explorer-menu[data-explorer-menu-name="help"] {
+  width: 189px;
+}
+
+.explorer-submenu {
+  z-index: 21;
+}
+
+.explorer-submenu[data-explorer-submenu-name="folder-menu"] {
+  width: 179px;
+}
+
+.explorer-submenu[data-explorer-submenu-name="toolbars"] {
+  width: 124px;
+}
+
+.explorer-submenu[data-explorer-submenu-name="explorer-bar"] {
+  width: 150px;
+}
+
+.explorer-submenu[data-explorer-submenu-name="arrange-icons"] {
+  width: 118px;
+}
+
+.explorer-submenu[data-explorer-submenu-name="go-to"] {
+  width: 192px;
+}
+
+.explorer-menu .game-menu-item {
+  min-height: 18px;
+  padding: 1px 16px 1px 18px;
+}
+
+.explorer-menu .game-menu-separator {
+  margin: 1px 2px;
+}
+
+.explorer-menu .menu-check {
+  width: 14px;
+  margin-left: -15px;
+  font-size: 15px;
+  line-height: 12px;
+}
+
+.explorer-menu .menu-shortcut {
+  padding-left: 14px;
+}
+
+.explorer-menu-arrow {
+  margin-left: auto;
+  padding-left: 10px;
+  font-size: 8px;
+}
+
+.explorer-menu-default {
+  font-weight: 700;
+}
 .explorer-brand {
   display: grid;
   width: 40px;

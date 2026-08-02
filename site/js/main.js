@@ -2856,6 +2856,11 @@ const createSystemWindowContent = (shortcutId, win) => {
   explorerMenu.setAttribute("role", "menu");
   explorerMenu.hidden = true;
   chrome.appendChild(explorerMenu);
+  const explorerSubmenu = document.createElement("div");
+  explorerSubmenu.className = "game-menu explorer-menu explorer-submenu";
+  explorerSubmenu.setAttribute("role", "menu");
+  explorerSubmenu.hidden = true;
+  chrome.appendChild(explorerSubmenu);
   const explorerMenuLabels = {
     file: "&File",
     edit: "&Edit",
@@ -2867,6 +2872,71 @@ const createSystemWindowContent = (shortcutId, win) => {
   const explorerMenuButtons = [
     ...chrome.querySelectorAll("[data-explorer-menu]"),
   ];
+  const explorerSubmenus = {
+    "folder-menu": [
+      { label: "Explore", action: "explore", default: true },
+      { label: "Open", action: "open-current" },
+      { label: "Search...", action: "search-current" },
+      { label: "Manage", action: "manage" },
+      { separator: true },
+      { label: "Map Network Drive...", action: "map-network-drive" },
+      {
+        label: "Disconnect Network Drive...",
+        action: "disconnect-network-drive",
+      },
+      { separator: true },
+      { label: "Create Shortcut", action: "create-shortcut-current" },
+      { label: "Delete", action: "delete-current" },
+      { separator: true },
+      { label: "Properties", action: "properties-current" },
+    ],
+    toolbars: [
+      { label: "Standard Buttons", action: "standard-buttons", checked: true },
+      { label: "Address Bar", action: "address-bar", checked: true },
+      { label: "Links", action: "links-toolbar" },
+      { separator: true },
+      { label: "Lock the Toolbars", action: "lock-toolbars", checked: true },
+      { label: "Customize...", action: "customize-toolbar" },
+    ],
+    "explorer-bar": [
+      { label: "Search", action: "search-current", shortcut: "Ctrl+E" },
+      { label: "Favorites", action: "favorites-bar", shortcut: "Ctrl+I" },
+      { label: "History", action: "history-bar", shortcut: "Ctrl+H" },
+      { label: "Folders", action: "folders-bar", checked: true },
+      { separator: true },
+      { label: "Tip of the Day", action: "tip-of-day" },
+    ],
+    "arrange-icons": [
+      { label: "Name", action: "arrange-name" },
+      { label: "Type", action: "arrange-type", radio: true, checked: true },
+      { label: "Total Size", action: "arrange-total-size" },
+      { label: "Free Space", action: "arrange-free-space" },
+      { label: "Comments", action: "arrange-comments" },
+      { separator: true },
+      { label: "Show in Groups", action: "show-groups", checked: true },
+      { label: "Auto Arrange", action: "auto-arrange", disabled: true },
+      { label: "Align to Grid", action: "align-grid", disabled: true },
+    ],
+    "go-to": [
+      {
+        label: "Back",
+        action: "back",
+        shortcut: "Alt+Left Arrow",
+        disabled: true,
+      },
+      {
+        label: "Forward",
+        action: "forward",
+        shortcut: "Alt+Right Arrow",
+        disabled: true,
+      },
+      { label: "Up One Level", action: "up-one-level" },
+      { separator: true },
+      { label: "Home Page", action: "home-page", shortcut: "Alt+Home" },
+      { separator: true },
+      { label: "My Computer", action: "my-computer", checked: true },
+    ],
+  };
   explorerMenuButtons.forEach((button) => {
     const { key } = setAccessKeyText(
       button,
@@ -2877,64 +2947,218 @@ const createSystemWindowContent = (shortcutId, win) => {
     button.setAttribute("aria-haspopup", "menu");
     button.setAttribute("aria-expanded", "false");
   });
-  const showExplorerMenu = (name, button) => {
+  const renderExplorerMenuEntries = (menu, entries, commandAttribute) => {
+    menu.replaceChildren();
+    entries.forEach((entry) => {
+      if (entry.separator) {
+        const separator = document.createElement("div");
+        separator.className = "game-menu-separator";
+        separator.setAttribute("role", "separator");
+        menu.appendChild(separator);
+        return;
+      }
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "game-menu-item";
+      item.dataset[commandAttribute] = entry.action;
+      item.disabled = !!entry.disabled;
+      item.setAttribute("role", "menuitem");
+      if (entry.default) item.classList.add("explorer-menu-default");
+      if (entry.checked) item.classList.add("checked");
+      if (entry.radio || entry.checked) {
+        const check = document.createElement("span");
+        check.className = "menu-check explorer-menu-radio";
+        check.textContent = entry.checked ? (entry.radio ? "•" : "✓") : "";
+        item.appendChild(check);
+      }
+      const label = document.createElement("span");
+      label.textContent = entry.label;
+      item.appendChild(label);
+      if (entry.shortcut) {
+        const shortcut = document.createElement("span");
+        shortcut.className = "menu-shortcut";
+        shortcut.textContent = entry.shortcut;
+        item.appendChild(shortcut);
+      }
+      if (entry.submenu) {
+        item.classList.add("has-submenu");
+        item.setAttribute("aria-haspopup", "menu");
+        const arrow = document.createElement("span");
+        arrow.className = "explorer-menu-arrow";
+        arrow.textContent = "▶";
+        item.appendChild(arrow);
+      }
+      menu.appendChild(item);
+    });
+  };
+  const showExplorerSubmenu = (name, parentItem, focusFirst = false) => {
+    const entries = explorerSubmenus[name];
+    if (!entries) return false;
+    renderExplorerMenuEntries(explorerSubmenu, entries, "explorerSubcommand");
+    explorerSubmenu.dataset.explorerSubmenuName = name;
+    explorerSubmenu.dataset.parentCommand = name;
+    explorerSubmenu.style.left = `${explorerMenu.offsetLeft + explorerMenu.offsetWidth - 3}px`;
+    explorerSubmenu.style.top = `${explorerMenu.offsetTop + parentItem.offsetTop - 1}px`;
+    explorerSubmenu.hidden = false;
+    if (focusFirst)
+      explorerSubmenu.querySelector("button:not(:disabled)")?.focus();
+    return true;
+  };
+  const showExplorerMenu = (name, button, focusFirst = false) => {
     const selected = selectedExplorerNodes(win);
     const protectedSelection = selected.some((id) => fs.isProtected(id));
     const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
       win.currentFolderId,
     );
+    const currentFolderName = fs.getNode(win.currentFolderId)?.name || "Folder";
     const actions = {
       file: [
-        ["New Folder", "new", !writable],
-        ["Close", "close"],
+        { label: "Create Shortcut", action: "create-shortcut", disabled: true },
+        {
+          label: "Delete",
+          action:
+            win.currentFolderId === fs.MY_COMPUTER
+              ? "delete-current"
+              : "delete",
+          disabled:
+            win.currentFolderId !== fs.MY_COMPUTER &&
+            (!selected.length || protectedSelection),
+        },
+        {
+          label: "Rename",
+          action:
+            win.currentFolderId === fs.MY_COMPUTER
+              ? "rename-current"
+              : "rename",
+          disabled:
+            win.currentFolderId !== fs.MY_COMPUTER &&
+            (selected.length !== 1 || protectedSelection),
+        },
+        { label: "Properties", action: "properties-current" },
+        { separator: true },
+        { label: currentFolderName, action: "folder-menu", submenu: true },
+        { separator: true },
+        { label: "Close", action: "close" },
       ],
       edit: [
-        ["Cut", "cut", !selected.length || protectedSelection],
-        ["Copy", "copy", !selected.length],
-        ["Paste", "paste", !writable || !fileOps.canPaste(win.currentFolderId)],
-        ["Delete", "delete", !selected.length || protectedSelection],
-        ["Rename", "rename", selected.length !== 1 || protectedSelection],
+        { label: "Undo", action: "undo", shortcut: "Ctrl+Z", disabled: true },
+        { separator: true },
+        {
+          label: "Cut",
+          action: "cut",
+          shortcut: "Ctrl+X",
+          disabled: !selected.length || protectedSelection,
+        },
+        {
+          label: "Copy",
+          action: "copy",
+          shortcut: "Ctrl+C",
+          disabled: !selected.length,
+        },
+        {
+          label: "Paste",
+          action: "paste",
+          shortcut: "Ctrl+V",
+          disabled: !writable || !fileOps.canPaste(win.currentFolderId),
+        },
+        { label: "Paste Shortcut", action: "paste-shortcut", disabled: true },
+        { separator: true },
+        { label: "Select All", action: "select-all", shortcut: "Ctrl+A" },
+        { label: "Invert Selection", action: "invert-selection" },
       ],
       view: [
-        ["Thumbnails", "thumbnails"],
-        ["Tiles", "tiles"],
-        ["Icons", "icons"],
-        ["List", "list"],
-        ["Details", "details"],
+        { label: "Toolbars", action: "toolbars", submenu: true },
+        { label: "Status Bar", action: "status-bar" },
+        { label: "Explorer Bar", action: "explorer-bar", submenu: true },
+        { separator: true },
+        {
+          label: "Thumbnails",
+          action: "thumbnails",
+          radio: true,
+          checked: win.explorerView === "thumbnails",
+        },
+        {
+          label: "Tiles",
+          action: "tiles",
+          radio: true,
+          checked: (win.explorerView || "tiles") === "tiles",
+        },
+        {
+          label: "Icons",
+          action: "icons",
+          radio: true,
+          checked: win.explorerView === "icons",
+        },
+        {
+          label: "List",
+          action: "list",
+          radio: true,
+          checked: win.explorerView === "list",
+        },
+        {
+          label: "Details",
+          action: "details",
+          radio: true,
+          checked: win.explorerView === "details",
+        },
+        { separator: true },
+        { label: "Arrange Icons By", action: "arrange-icons", submenu: true },
+        { separator: true },
+        { label: "Choose Details...", action: "choose-details" },
+        { label: "Go To", action: "go-to", submenu: true },
+        { label: "Refresh", action: "refresh" },
       ],
-      favorites: [["My Documents", "documents"]],
-      tools: [["Properties", "properties", selected.length !== 1]],
-      help: [["About Astro Flash", "about"]],
+      favorites: [
+        { label: "Add to Favorites...", action: "add-favorite" },
+        { label: "Organize Favorites...", action: "organize-favorites" },
+        { separator: true },
+        { label: "Links", action: "links", submenu: true },
+        { label: "MSN.com", action: "msn" },
+        { label: "Radio Station Guide", action: "radio-guide" },
+      ],
+      tools: [
+        { label: "Map Network Drive...", action: "map-network-drive" },
+        {
+          label: "Disconnect Network Drive...",
+          action: "disconnect-network-drive",
+        },
+        { label: "Synchronize...", action: "synchronize" },
+        { separator: true },
+        { label: "Folder Options...", action: "folder-options" },
+      ],
+      help: [
+        { label: "Help and Support Center", action: "help-center" },
+        { separator: true },
+        { label: "Is this copy of Windows legal?", action: "windows-legal" },
+        { label: "About Windows", action: "about-windows" },
+      ],
     }[name];
-    explorerMenu.replaceChildren();
-    actions.forEach(([label, action, disabled]) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "game-menu-item";
-      item.textContent = label;
-      item.dataset.explorerCommand = action;
-      item.disabled = !!disabled;
-      item.setAttribute("role", "menuitem");
-      explorerMenu.appendChild(item);
-    });
+    explorerMenu.dataset.explorerMenuName = name;
+    renderExplorerMenuEntries(explorerMenu, actions, "explorerCommand");
+    explorerSubmenu.hidden = true;
     explorerMenu.hidden = false;
     explorerMenuButtons.forEach((entry) =>
       entry.setAttribute("aria-expanded", String(entry === button)),
     );
     explorerMenu.style.left = `${button.offsetLeft}px`;
     explorerMenu.style.top = `${button.offsetTop + button.offsetHeight}px`;
-    explorerMenu.querySelector("button:not(:disabled)")?.focus();
+    if (focusFirst)
+      explorerMenu.querySelector("button:not(:disabled)")?.focus();
   };
   chrome.addEventListener("click", (event) => {
     const menuButton = event.target.closest("[data-explorer-menu]");
     const menuName = menuButton?.dataset.explorerMenu;
     if (menuName) {
-      showExplorerMenu(menuName, menuButton);
+      showExplorerMenu(menuName, menuButton, false);
       return;
     }
     const commandButton = event.target.closest("[data-explorer-command]");
     const command = commandButton?.dataset.explorerCommand;
     if (command) {
+      if (commandButton.classList.contains("has-submenu")) {
+        showExplorerSubmenu(command, commandButton, false);
+        return;
+      }
       const selected = selectedExplorerNodes(win);
       if (
         command === "new" &&
@@ -2950,6 +3174,12 @@ const createSystemWindowContent = (shortcutId, win) => {
       )
         pasteIntoFolder(win.currentFolderId);
       if (command === "delete") confirmRecycleDelete(selected);
+      if (command === "delete-current" || command === "rename-current")
+        XPDialogs.alert(
+          `Cannot ${command === "delete-current" ? "delete" : "rename"} My Computer.`,
+          "Windows Explorer",
+          "info",
+        );
       if (command === "rename") {
         const name = window.prompt("Rename", fs.getNode(selected[0]).name);
         if (name !== null) fileOps.rename(selected[0], name);
@@ -2961,9 +3191,93 @@ const createSystemWindowContent = (shortcutId, win) => {
         renderExplorerItems(win);
       }
       if (command === "documents") openSystemWindow("__my-documents");
-      if (command === "properties") XPDialogs.properties(selected[0]);
-      if (command === "about") openProjectSettings();
+      if (command === "properties-current")
+        XPDialogs.properties(selected[0] || win.currentFolderId);
+      if (command === "select-all")
+        win.el
+          .querySelectorAll(".explorer-item")
+          .forEach((item) => item.classList.add("selected"));
+      if (command === "invert-selection")
+        win.el
+          .querySelectorAll(".explorer-item")
+          .forEach((item) => item.classList.toggle("selected"));
+      if (command === "refresh") renderExplorerItems(win);
+      if (command === "help-center") openHelpAndSupport();
+      if (command === "about-windows")
+        XPDialogs.alert(
+          "Microsoft Windows XP Professional",
+          "About Windows",
+          "info",
+        );
+      if (
+        [
+          "add-favorite",
+          "organize-favorites",
+          "msn",
+          "radio-guide",
+          "map-network-drive",
+          "disconnect-network-drive",
+          "synchronize",
+          "folder-options",
+          "windows-legal",
+          "choose-details",
+        ].includes(command)
+      )
+        XPDialogs.alert(
+          "This Windows XP feature is not available in Astro Flash.",
+          commandButton.textContent.trim() || "Windows Explorer",
+          "info",
+        );
       explorerMenu.hidden = true;
+      explorerSubmenu.hidden = true;
+      explorerMenuButtons.forEach((button) =>
+        button.setAttribute("aria-expanded", "false"),
+      );
+      return;
+    }
+    const subcommandButton = event.target.closest("[data-explorer-subcommand]");
+    const subcommand = subcommandButton?.dataset.explorerSubcommand;
+    if (subcommand) {
+      if (subcommand === "search-current") openSearchDialog();
+      if (subcommand === "folders-bar") {
+        content.classList.add("folders-visible");
+        chrome
+          .querySelector('[data-explorer-action="folders"]')
+          ?.setAttribute("aria-pressed", "true");
+      }
+      if (subcommand === "up-one-level") {
+        const parent =
+          fs.getParent(win.currentFolderId) || fs.getNode(fs.DESKTOP);
+        if (parent) navigateExplorer(win, parent.id);
+      }
+      if (subcommand === "my-computer") navigateExplorer(win, fs.MY_COMPUTER);
+      if (subcommand === "properties-current")
+        XPDialogs.properties(win.currentFolderId);
+      if (
+        [
+          "manage",
+          "map-network-drive",
+          "disconnect-network-drive",
+          "create-shortcut-current",
+          "delete-current",
+          "standard-buttons",
+          "address-bar",
+          "links-toolbar",
+          "lock-toolbars",
+          "customize-toolbar",
+          "favorites-bar",
+          "history-bar",
+          "tip-of-day",
+          "home-page",
+        ].includes(subcommand)
+      )
+        XPDialogs.alert(
+          "This Windows XP feature is not available in Astro Flash.",
+          subcommandButton.textContent.trim() || "Windows Explorer",
+          "info",
+        );
+      explorerMenu.hidden = true;
+      explorerSubmenu.hidden = true;
       explorerMenuButtons.forEach((button) =>
         button.setAttribute("aria-expanded", "false"),
       );
@@ -2975,7 +3289,11 @@ const createSystemWindowContent = (shortcutId, win) => {
     if (action === "back") explorerBack(win);
     if (action === "forward") explorerForward(win);
     if (action === "up") {
-      const parent = fs.getParent(win.currentFolderId);
+      const parent =
+        fs.getParent(win.currentFolderId) ||
+        ([fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId)
+          ? fs.getNode(fs.DESKTOP)
+          : null);
       if (parent) navigateExplorer(win, parent.id);
     }
     if (action === "folders") {
@@ -2997,6 +3315,17 @@ const createSystemWindowContent = (shortcutId, win) => {
       else input.value = fs.getPath(win.currentFolderId);
     }
   });
+  explorerMenu.addEventListener("pointerover", (event) => {
+    const parentItem = event.target.closest(".has-submenu");
+    if (parentItem)
+      showExplorerSubmenu(
+        parentItem.dataset.explorerCommand,
+        parentItem,
+        false,
+      );
+    else if (event.target.closest(".game-menu-item"))
+      explorerSubmenu.hidden = true;
+  });
   chrome.querySelector("input").addEventListener("change", (event) => {
     const destination = fs.resolvePath(event.target.value);
     if (destination && fs.getNode(destination)?.type === "folder")
@@ -3009,6 +3338,7 @@ const createSystemWindowContent = (shortcutId, win) => {
         (button) => button.getAttribute("aria-expanded") === "true",
       );
       explorerMenu.hidden = true;
+      explorerSubmenu.hidden = true;
       explorerMenuButtons.forEach((button) =>
         button.setAttribute("aria-expanded", "false"),
       );
@@ -3022,7 +3352,7 @@ const createSystemWindowContent = (shortcutId, win) => {
       );
       if (target) {
         event.preventDefault();
-        showExplorerMenu(target.dataset.explorerMenu, target);
+        showExplorerMenu(target.dataset.explorerMenu, target, true);
       }
       return;
     }
@@ -3048,16 +3378,67 @@ const createSystemWindowContent = (shortcutId, win) => {
                     explorerMenuButtons.length
                 ];
       if (event.key === "ArrowDown")
-        showExplorerMenu(heading.dataset.explorerMenu, heading);
+        showExplorerMenu(heading.dataset.explorerMenu, heading, true);
       else {
         target.focus();
-        showExplorerMenu(target.dataset.explorerMenu, target);
+        showExplorerMenu(target.dataset.explorerMenu, target, true);
       }
       return;
     }
     const menuItems = [
       ...explorerMenu.querySelectorAll("button:not(:disabled)"),
     ];
+    const activeMenuItem = document.activeElement?.closest?.(
+      "[data-explorer-command]",
+    );
+    if (
+      event.key === "ArrowRight" &&
+      activeMenuItem?.classList.contains("has-submenu")
+    ) {
+      event.preventDefault();
+      showExplorerSubmenu(
+        activeMenuItem.dataset.explorerCommand,
+        activeMenuItem,
+        true,
+      );
+      return;
+    }
+    const activeSubmenuItem = document.activeElement?.closest?.(
+      "[data-explorer-subcommand]",
+    );
+    if (event.key === "ArrowLeft" && activeSubmenuItem) {
+      event.preventDefault();
+      const parent = explorerMenu.querySelector(
+        `[data-explorer-command="${CSS.escape(explorerSubmenu.dataset.parentCommand)}"]`,
+      );
+      explorerSubmenu.hidden = true;
+      parent?.focus();
+      return;
+    }
+    const submenuItems = [
+      ...explorerSubmenu.querySelectorAll("button:not(:disabled)"),
+    ];
+    if (
+      !explorerSubmenu.hidden &&
+      activeSubmenuItem &&
+      ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
+    ) {
+      event.preventDefault();
+      const index = submenuItems.indexOf(activeSubmenuItem);
+      const target =
+        event.key === "Home"
+          ? submenuItems[0]
+          : event.key === "End"
+            ? submenuItems.at(-1)
+            : submenuItems[
+                (index +
+                  (event.key === "ArrowDown" ? 1 : -1) +
+                  submenuItems.length) %
+                  submenuItems.length
+              ];
+      target?.focus();
+      return;
+    }
     if (
       !explorerMenu.hidden &&
       ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
@@ -5149,7 +5530,8 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     chrome.querySelector('[data-explorer-action="forward"]').disabled =
       (win.historyIndex ?? -1) >= (win.history?.length ?? 0) - 1;
     chrome.querySelector('[data-explorer-action="up"]').disabled =
-      !folder.parent;
+      !folder.parent &&
+      ![fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId);
   }
 
   const heading = main.querySelector("h2");
