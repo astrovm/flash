@@ -8,6 +8,10 @@
   },
   "webAssets": [
     {
+      "member": "DOG.BM_",
+      "output": "site/assets/xp/SearchDog.bmp"
+    },
+    {
       "member": "ASCENT.JP_",
       "output": "site/assets/xp/wallpapers/ascent.jpg"
     },
@@ -17,6 +21,14 @@
     },
     { "member": "AZUL.JP_", "output": "site/assets/xp/wallpapers/azul.jpg" },
     { "member": "BLISS.JP_", "output": "site/assets/xp/bliss.jpg" },
+    {
+      "member": "CHESS.BM_",
+      "output": "site/assets/xp/system/UserAdministrator.bmp"
+    },
+    {
+      "member": "GUEST.BM_",
+      "output": "site/assets/xp/system/UserGuest.bmp"
+    },
     {
       "member": "BLULAC16.BM_",
       "output": "site/assets/xp/wallpapers/blue-lace-16.bmp"
@@ -105,6 +117,9 @@
     },
     { "member": "XPSTARTU.WA_", "output": "site/assets/xp/sounds/startup.wav" },
 
+    { "member": "ARROW_M.CU_", "output": "site/assets/xp/cursor.cur" },
+    { "member": "CHESS.BM_", "output": "site/assets/xp/Chess.bmp" },
+
     { "member": "ARIAL.TT_", "output": "site/css/fonts/arial.ttf" },
     { "member": "ARIALBD.TT_", "output": "site/css/fonts/arialbd.ttf" },
     { "member": "ARIALBI.TT_", "output": "site/css/fonts/arialbi.ttf" },
@@ -115,7 +130,1107 @@
     { "member": "TREBUC.TT_", "output": "site/css/fonts/trebuc.ttf" },
     { "member": "TREBUCBD.TT_", "output": "site/css/fonts/trebucbd.ttf" }
   ],
+  "cabAssets": [
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE40.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicComputer.png"
+    },
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE41.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicNetwork.png"
+    },
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE42.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicAccessibility.png"
+    },
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE43.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicHardware.png"
+    }
+  ],
+  "cursorImages": [
+    {
+      "member": "ARROW_M.CU_",
+      "output": "site/assets/xp/system/cursors/NormalSelect.png"
+    },
+    {
+      "member": "HELP_M.CU_",
+      "output": "site/assets/xp/system/cursors/HelpSelect.png"
+    },
+    {
+      "member": "LAPPSTRT.CU_",
+      "output": "site/assets/xp/system/cursors/WorkingInBackground.png"
+    },
+    {
+      "member": "WAIT_M.CU_",
+      "output": "site/assets/xp/system/cursors/Busy.png"
+    },
+    {
+      "member": "CROSS_M.CU_",
+      "output": "site/assets/xp/system/cursors/PrecisionSelect.png"
+    },
+    {
+      "member": "BEAM_M.CU_",
+      "output": "site/assets/xp/system/cursors/TextSelect.png"
+    },
+    {
+      "member": "PEN_M.CU_",
+      "output": "site/assets/xp/system/cursors/Handwriting.png"
+    },
+    {
+      "member": "NO_M.CU_",
+      "output": "site/assets/xp/system/cursors/Unavailable.png"
+    }
+  ],
   "resourceIcons": [
+    {
+      "member": "NOTEPAD.EX_",
+      "expandedName": "notepad.exe",
+      "resourceType": 14,
+      "resourceId": 2,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Notepad.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 270,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AppearanceAndThemes.png"
+    },
+    {
+      "member": "DESK.CP_",
+      "expandedName": "desk.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Display.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 210,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/FolderOptions.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 40,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/TaskbarAndStartMenu.png"
+    },
+    {
+      "member": "CSCUI.DL_",
+      "expandedName": "cscui.dll",
+      "resourceType": 14,
+      "resourceId": 1200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/OfflineFiles.png"
+    },
+    {
+      "member": "TASKMGR.EX_",
+      "expandedName": "taskmgr.exe",
+      "resourceType": 14,
+      "resourceId": 107,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/TaskManager.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 268,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AccessibilityOptions.png"
+    },
+    {
+      "member": "MAGNIFY.EX_",
+      "expandedName": "magnify.exe",
+      "resourceType": 14,
+      "resourceId": 128,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Magnifier.png"
+    },
+    {
+      "member": "OSK.EX_",
+      "expandedName": "osk.exe",
+      "resourceType": 14,
+      "resourceId": "APP_OSK",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/OnScreenKeyboard.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 276,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/DateTimeRegional.png"
+    },
+    {
+      "member": "TIMEDATE.CP_",
+      "expandedName": "timedate.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/DateAndTime.png"
+    },
+    {
+      "member": "INTL.CP_",
+      "expandedName": "intl.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/RegionalAndLanguage.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 273,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/NetworkAndInternet.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4487,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetOptions.png"
+    },
+    {
+      "member": "INETCPLC.DL_",
+      "expandedName": "inetcplc.dll",
+      "resourceType": 14,
+      "resourceId": 1301,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetHomePage.png"
+    },
+    {
+      "member": "INETCPLC.DL_",
+      "expandedName": "inetcplc.dll",
+      "resourceType": 14,
+      "resourceId": 1319,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/TemporaryInternetFiles.png"
+    },
+    {
+      "member": "INETCPLC.DL_",
+      "expandedName": "inetcplc.dll",
+      "resourceType": 14,
+      "resourceId": 1303,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetHistory.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 1313,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4461,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/LocalIntranetZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4480,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/TrustedSitesZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4481,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/RestrictedSitesZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 1307,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/PrivacySettings.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4497,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/PopUpBlocker.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 1308,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetPrograms.png"
+    },
+    {
+      "member": "NETSHELL.DL_",
+      "expandedName": "netshell.dll",
+      "resourceType": 14,
+      "resourceId": 0,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/NetworkConnections.png"
+    },
+    {
+      "member": "HNETWIZ.DL_",
+      "expandedName": "hnetwiz.dll",
+      "resourceType": 14,
+      "resourceId": 10000,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/NetworkSetupWizard.png"
+    },
+    {
+      "member": "XPSP2RES.DL_",
+      "expandedName": "xpsp2res.dll",
+      "resourceType": 14,
+      "resourceId": 10605,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsFirewall.png"
+    },
+    {
+      "member": "XPSP2RES.DL_",
+      "expandedName": "xpsp2res.dll",
+      "resourceType": 14,
+      "resourceId": 2026,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WirelessNetworkSetupWizard.png"
+    },
+    {
+      "member": "NETSHELL.DL_",
+      "expandedName": "netshell.dll",
+      "resourceType": 14,
+      "resourceId": 0,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyNetworkPlacesSmall.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 138,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PrintersAndFaxesSmall.png"
+    },
+    {
+      "member": "REMOTEPG.DL_",
+      "expandedName": "remotepg.dll",
+      "resourceType": 14,
+      "resourceId": 500,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/RemoteDesktop.png"
+    },
+    {
+      "member": "TELEPHON.CP_",
+      "expandedName": "telephon.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PhoneAndModemOptions.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 275,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PerformanceAndMaintenance.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 37,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AdministrativeTools.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 202,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PowerOptions.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 203,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/PowerHibernate.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/PowerUpsStatus.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 204,
+      "width": 32,
+      "height": 36,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/PowerUpsDetails.png"
+    },
+    {
+      "member": "USER32.DL_",
+      "expandedName": "user32.dll",
+      "resourceType": 14,
+      "resourceId": 101,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SystemWarning.png"
+    },
+    {
+      "member": "MSTASK.DL_",
+      "expandedName": "mstask.dll",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/ScheduledTasks.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/System.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 272,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PrintersAndHardware.png"
+    },
+    {
+      "member": "JOY.CP_",
+      "expandedName": "joy.cpl",
+      "resourceType": 14,
+      "resourceId": 102,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/GameControllers.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Keyboard.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/KeyboardDevice.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 105,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/KeyboardRepeatDelay.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 106,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/KeyboardRepeatRate.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Mouse.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/MouseDevice.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 104,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseMotion.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 108,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseSnapTo.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 600,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseTrails.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 601,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseHideWhileTyping.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 602,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseLocate.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 603,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseWheel.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 605,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseDoubleClickFolder.png"
+    },
+    {
+      "member": "TELEPHON.CP_",
+      "expandedName": "telephon.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PhoneAndModemOptionsLarge.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 138,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PrintersAndFaxesLarge.png"
+    },
+    {
+      "member": "WIASHEXT.DL_",
+      "expandedName": "wiashext.dll",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/ScannersAndCameras.png"
+    },
+    {
+      "member": "HDWWIZ.CP_",
+      "expandedName": "hdwwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AddHardwareSmall.png"
+    },
+    {
+      "member": "HDWWIZ.CP_",
+      "expandedName": "hdwwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AddHardware.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 39,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Fonts.png"
+    },
+    {
+      "member": "DESK.CP_",
+      "expandedName": "desk.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/DisplaySmall.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 3004,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SoundsAudioSmall.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 202,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PowerOptionsSmall.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SystemSmall.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 277,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SoundsSpeechAudio.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 3004,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SoundsAndAudioDevices.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 3004,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AccessibilitySound.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 4356,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/AdvancedVolumeControls.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 4369,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/AudioRecording.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 4381,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MidiPlayback.png"
+    },
+    {
+      "member": "SAPI.CP_",
+      "expandedName": "sapi.cpl",
+      "resourceType": 14,
+      "resourceId": 138,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Speech.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 269,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/UserAccounts.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SecurityCenter.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 1500,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AddRemovePrograms.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 255,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Back.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 137,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/ControlPanel.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 182,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/FolderViewClassic.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 183,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/FolderView.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 184,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/system/FolderBrowse.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 110,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/system/FolderClickItems.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 37,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/FolderViews.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 4,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/FolderTree.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 290,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Forward.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 290,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Go.png"
+    },
+    {
+      "member": "HELPCTR.EX_",
+      "expandedName": "helpctr.exe",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/HelpAndSupport.png"
+    },
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 14,
+      "resourceId": 21,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/LogoffKey.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 8,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/LocalDisk.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 12,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/OpticalDrive.png"
+    },
+    {
+      "member": "STOBJECT.DL_",
+      "expandedName": "stobject.dll",
+      "resourceType": 14,
+      "resourceId": 231,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Mute.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyComputer.png"
+    },
+    {
+      "member": "MYDOCS.DL_",
+      "expandedName": "mydocs.dll",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyDocuments.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 237,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyMusic.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 18,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyNetworkPlaces.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 238,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/MyPictures.png"
+    },
+    {
+      "member": "NETSHELL.DL_",
+      "expandedName": "netshell.dll",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/NetworkConnection.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 4,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/NewFolder.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 138,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PrintersAndFaxes.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 14,
+      "resourceId": 107,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Programs.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 244,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PublishToWeb.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 21,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/RecentDocuments.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 7,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/RemovableMedia.png"
+    },
     {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
@@ -124,7 +1239,7 @@
       "width": 48,
       "height": 48,
       "bitDepth": 32,
-      "output": "site/assets/xp/icons/recycler-empty.png"
+      "output": "site/assets/xp/icons/RecyclerEmpty.png"
     },
     {
       "member": "SHELL32.DL_",
@@ -134,13 +1249,533 @@
       "width": 48,
       "height": 48,
       "bitDepth": 32,
-      "output": "site/assets/xp/icons/recycler-full.png"
+      "output": "site/assets/xp/icons/RecyclerFull.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 25,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Run.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 23,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Search.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 193,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/SharedFolder.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 30,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/Shortcut.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 39,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Up.png"
+    },
+    {
+      "member": "STOBJECT.DL_",
+      "expandedName": "stobject.dll",
+      "resourceType": 14,
+      "resourceId": 230,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Volume.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/ExplorerProperties.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 6,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/ComputerName.png"
+    },
+    {
+      "member": "HDWWIZ.CP_",
+      "expandedName": "hdwwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/DeviceManager.png"
+    },
+    {
+      "member": "SETUPAPI.DL_",
+      "expandedName": "setupapi.dll",
+      "resourceType": 14,
+      "resourceId": 40,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/DriverSigning.png"
+    },
+    {
+      "member": "SRCLIENT.DL_",
+      "expandedName": "srclient.dll",
+      "resourceType": 14,
+      "resourceId": 0,
+      "width": 24,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/SystemRestore.png"
+    },
+    {
+      "member": "WUAUCPL.CP_",
+      "expandedName": "wuaucpl.cpl",
+      "resourceType": 14,
+      "resourceId": 2,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/UpdateShield.png"
+    },
+    {
+      "member": "WUAUCPL.CP_",
+      "expandedName": "wuaucpl.cpl",
+      "resourceType": 14,
+      "resourceId": 3,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/UpdateEnabled.png"
+    },
+    {
+      "member": "WUAUCPL.CP_",
+      "expandedName": "wuaucpl.cpl",
+      "resourceType": 14,
+      "resourceId": 5,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/UpdateDisabled.png"
+    },
+    {
+      "member": "REMOTEPG.DL_",
+      "expandedName": "remotepg.dll",
+      "resourceType": 14,
+      "resourceId": 500,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/RemoteSettings.png"
+    },
+    {
+      "member": "SHIMGVW.DL_",
+      "expandedName": "shimgvw.dll",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WallpaperImage.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 48,
+      "height": 48,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WallpaperNone.png"
+    }
+  ],
+  "resourceBitmaps": [
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 2,
+      "resourceId": 100,
+      "transparentColor": [0, 255, 255],
+      "colorMap": [
+        { "from": [255, 0, 255], "to": [49, 106, 197] },
+        { "from": [255, 255, 0], "to": [255, 255, 255] },
+        { "from": [128, 0, 128], "to": [0, 0, 0] },
+        { "from": [128, 128, 0], "to": [0, 0, 0] }
+      ],
+      "output": "site/assets/xp/system/MouseButtonConfiguration.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 2,
+      "resourceId": 4624,
+      "output": "site/assets/xp/system/SpeakerSettings.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 131,
+      "output": "site/assets/xp/AboutWindows.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 2,
+      "resourceId": 1,
+      "transparentColor": [255, 1, 255],
+      "output": "site/assets/xp/SystemProperties.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 150,
+      "output": "site/assets/xp/system/TaskbarPreview.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 170,
+      "output": "site/assets/xp/system/StartMenuPreview.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 180,
+      "output": "site/assets/xp/system/NotificationAreaPreview.png"
+    },
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 2,
+      "resourceId": 20142,
+      "output": "site/assets/xp/dialogs/ShutdownDialog.png"
+    },
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 2,
+      "resourceId": 20143,
+      "output": "site/assets/xp/dialogs/DialogFlag.png"
+    },
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 2,
+      "resourceId": 20150,
+      "output": "site/assets/xp/dialogs/ShutdownIcons.png"
+    },
+    {
+      "member": "HELPCTR.EX_",
+      "expandedName": "helpctr.exe",
+      "resourceType": 2,
+      "resourceId": 300,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/help/Toolbar.png"
+    },
+    {
+      "member": "TIMEDATE.CP_",
+      "expandedName": "timedate.cpl",
+      "resourceType": 2,
+      "resourceId": 50,
+      "indexedPalette": {
+        "sourceShiftX": -62,
+        "colors": [
+          {
+            "indices": [
+              0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
+              36, 38, 40, 42, 44, 46, 65, 78, 88
+            ],
+            "rgba": [0, 0, 127, 255]
+          },
+          {
+            "indices": [
+              1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35,
+              37, 39, 41, 43, 47, 64, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75,
+              76, 77, 79, 80, 81, 82, 83, 84, 85, 86, 87, 89
+            ],
+            "rgba": [0, 127, 0, 255]
+          }
+        ]
+      },
+      "output": "site/assets/xp/TimeZoneMap.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_CAPTIONBUTTON_BMP",
+      "output": "site/assets/xp/icons/CaptionButton.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_CLOSEBUTTON_BMP",
+      "output": "site/assets/xp/icons/Exit.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_CLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/icons/Close.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_MAXIMIZEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/icons/Maximize.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_MINIMIZEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/icons/Minimize.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_RESTOREGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/icons/Restore.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 101,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/ChangeRemovePrograms.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 102,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/AddNewPrograms.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 103,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/AddRemoveWindowsComponents.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 104,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/ProgramAccessDefaults.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 108,
+      "output": "site/assets/xp/icons/Logout.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 107,
+      "output": "site/assets/xp/icons/Power.png"
+    },
+    {
+      "member": "NTOSKRNL.EX_",
+      "expandedName": "ntoskrnl.exe",
+      "resourceType": 2,
+      "resourceId": 5,
+      "output": "site/assets/xp/BootLogo.png"
+    },
+    {
+      "member": "THEMEUI.DL_",
+      "expandedName": "themeui.dll",
+      "resourceType": 2,
+      "resourceId": 126,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/DisplaySettings.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/StartButton.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 143,
+      "output": "site/assets/xp/WindowsFlag.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 127,
+      "output": "site/assets/xp/WindowsWordmark.png"
+    }
+  ],
+  "resourcePngs": [
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 100,
+      "output": "site/assets/xp/system/SecurityHelp.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 101,
+      "output": "site/assets/xp/system/SecurityExpand.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 102,
+      "output": "site/assets/xp/system/SecurityCollapse.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 103,
+      "output": "site/assets/xp/system/SecurityFirewall.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 104,
+      "output": "site/assets/xp/system/SecurityAutomaticUpdates.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 105,
+      "output": "site/assets/xp/system/SecurityVirusProtection.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 106,
+      "output": "site/assets/xp/system/SecurityStatusRed.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 107,
+      "output": "site/assets/xp/system/SecurityStatusYellow.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 108,
+      "output": "site/assets/xp/system/SecurityStatusGreen.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 109,
+      "output": "site/assets/xp/system/SecurityCenterHeader.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 110,
+      "output": "site/assets/xp/system/SecurityCenterSmall.png"
+    }
+  ],
+  "renderedAssets": [
+    {
+      "member": "LUNA.MS_",
+      "output": "site/assets/xp/StartButtonRendered.png",
+      "frame": "99x90x32",
+      "sha256": "959ad525483f765357ec7fc08344a77ccfd9bd954eb7678f9235d2d93aa779fe",
+      "pixelSha256": "855d5ed3ca725ca415d852b0965bcf4f9b0eb0eaa7712bf87055fe13cb6e8493",
+      "inputs": [
+        "I386/LUNA.MS_!BLUE_STARTBUTTON_BMP",
+        "I386/EXPLORER.EX_!BITMAP/143",
+        "I386/TAHOMA.TT_",
+        "I386/TAHOMABD.TT_"
+      ],
+      "capture": "Windows XP Explorer at 1024x768, 96 DPI, Luna Blue; normal, hot, and pressed states"
     }
   ],
   "auditFiles": [
+    { "member": "APPWIZ.CP_", "output": "system/appwiz.cpl" },
     { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
     { "member": "EXPLORER.EX_", "output": "system/explorer.exe" },
+    { "member": "MYDOCS.DL_", "output": "system/mydocs.dll" },
+    { "member": "HELPCTR.EX_", "output": "system/helpctr.exe" },
+    { "member": "LOGONUI.EX_", "output": "system/logonui.exe" },
+    { "member": "NETSHELL.DL_", "output": "system/netshell.dll" },
+    { "member": "NTOSKRNL.EX_", "output": "system/ntoskrnl.exe" },
+    { "member": "SHIMGVW.DL_", "output": "system/shimgvw.dll" },
+    { "member": "STOBJECT.DL_", "output": "system/stobject.dll" },
+    { "member": "SYSDM.CP_", "output": "system/sysdm.cpl" },
+    { "member": "THEMEUI.DL_", "output": "system/themeui.dll" },
     { "member": "LUNA.MS_", "output": "themes/Luna.msstyles" },
+    { "member": "WSCUI.CP_", "output": "system/wscui.cpl" },
     { "member": "APPSTART.AN_", "output": "cursors/appstarting.ani" },
     { "member": "HOURGLAS.AN_", "output": "cursors/busy.ani" },
     { "member": "HAND.AN_", "output": "cursors/link-select.ani" },

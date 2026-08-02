@@ -5,9 +5,12 @@ import { join } from "node:path";
 
 import {
   DEV_BUILD_STATE,
+  DEV_RELOAD_PATH,
   computeSourceFingerprint,
+  createDevelopmentLiveReload,
   createRequestHandler,
   ensureDevelopmentBuild,
+  watchDevelopmentBuild,
 } from "../tools/dev-server";
 
 const temporaryDirectories: string[] = [];
@@ -189,5 +192,82 @@ describe("Bun request handler", () => {
         },
       ],
     });
+  });
+
+  test("injects the development client and serves reload events", async () => {
+    const root = await makeTemporaryDirectory();
+    await writeFile(join(root, "index.html"), "<body>site</body>");
+    const liveReload = createDevelopmentLiveReload();
+    const handler = createRequestHandler(root, fetch, liveReload);
+
+    const page = await handler(new Request("http://localhost/"));
+    const pageHtml = await page.text();
+    expect(pageHtml).toContain("window.ASTRO_DEV = true");
+    expect(pageHtml).toContain(`new EventSource("${DEV_RELOAD_PATH}")`);
+
+    const response = await handler(
+      new Request(`http://localhost${DEV_RELOAD_PATH}`),
+    );
+    expect(response.headers.get("content-type")).toBe("text/event-stream");
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    expect(decoder.decode((await reader.read()).value)).toContain("connected");
+    liveReload.reload();
+    expect(decoder.decode((await reader.read()).value)).toContain(
+      "event: reload",
+    );
+    await reader.cancel();
+    liveReload.close();
+  });
+
+  test("replaces the production service worker in development", async () => {
+    const root = await makeTemporaryDirectory();
+    await writeFile(join(root, "index.html"), "<body>site</body>");
+    const liveReload = createDevelopmentLiveReload();
+    const handler = createRequestHandler(root, fetch, liveReload);
+
+    const response = await handler(new Request("http://localhost/sw.js"));
+    const worker = await response.text();
+    expect(worker).toContain('name.startsWith("astro-flash")');
+    expect(worker).toContain("self.registration.unregister()");
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    liveReload.close();
+  });
+});
+
+describe("development source watching", () => {
+  test("debounces source changes and reloads after rebuilding", async () => {
+    const project = await makeTemporaryDirectory();
+    await mkdir(join(project, "site"), { recursive: true });
+    const source = join(project, "site", "index.html");
+    await writeFile(source, "one");
+    let builds = 0;
+    let resolveReload!: () => void;
+    const reloaded = new Promise<void>((resolve) => {
+      resolveReload = resolve;
+    });
+    const watcher = await watchDevelopmentBuild({
+      debounceMs: 10,
+      onReload: resolveReload,
+      projectDir: project,
+      rebuild: async () => {
+        builds += 1;
+        return { rebuilt: true, reusedRuffle: false };
+      },
+    });
+
+    try {
+      await Bun.sleep(25);
+      await writeFile(source, "two");
+      await Promise.race([
+        reloaded,
+        Bun.sleep(2_000).then(() => {
+          throw new Error("Timed out waiting for the development rebuild");
+        }),
+      ]);
+      expect(builds).toBe(1);
+    } finally {
+      watcher.close();
+    }
   });
 });

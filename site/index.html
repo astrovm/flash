@@ -32,7 +32,7 @@
       <div class="boot-center">
         <img
           class="boot-logo"
-          src="assets/xp/loading-logo.jpg"
+          src="assets/xp/BootLogo.png"
           alt="Microsoft Windows XP"
         />
         <div class="boot-progress" aria-hidden="true">
@@ -41,7 +41,7 @@
       </div>
       <div class="boot-footer">
         <p>Copyright © Microsoft Corporation</p>
-        <img src="assets/xp/loading-microsoft.jpg" alt="Microsoft" />
+        <span class="boot-microsoft">Microsoft</span>
       </div>
     </div>
 
@@ -49,7 +49,7 @@
     <div id="welcome-screen" hidden>
       <img
         class="welcome-wordmark"
-        src="assets/xp/wordmark.png"
+        src="assets/xp/WindowsWordmark.png"
         alt="Microsoft Windows XP"
       />
       <p class="welcome-message">welcome</p>
@@ -139,12 +139,7 @@
 
     <!-- Taskbar -->
     <div id="taskbar" hidden>
-      <button id="start-button" type="button">
-        <span class="brand-flag start-flag" aria-hidden="true"
-          ><i></i><i></i><i></i><i></i
-        ></span>
-        <span class="start-text">start</span>
-      </button>
+      <button id="start-button" type="button" aria-label="start"></button>
       <div id="task-buttons"></div>
       <div id="taskbar-tray">
         <button
@@ -182,33 +177,71 @@
     </div>
 
     <div id="taskbar-context-menu" class="xp-context-menu" role="menu" hidden>
-      <button
-        type="button"
-        role="menuitem"
-        data-taskbar-action="toolbars"
-        disabled
-      >
-        Toolbars
-      </button>
+      <div id="taskbar-toolbar-parent" class="context-parent">
+        <button
+          type="button"
+          role="menuitem"
+          data-taskbar-action="toolbars"
+          aria-haspopup="menu"
+          aria-expanded="false"
+        >
+          <span class="context-check" aria-hidden="true"></span>
+          <span class="context-label">Toolbars</span>
+          <span class="context-arrow" aria-hidden="true"></span>
+        </button>
+        <div
+          id="taskbar-toolbar-submenu"
+          class="xp-context-menu context-submenu"
+          role="menu"
+        >
+          <button type="button" role="menuitem" data-taskbar-toolbar="links">
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">Links</span>
+          </button>
+          <button type="button" role="menuitem" data-taskbar-toolbar="desktop">
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">Desktop</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            data-taskbar-toolbar="quick-launch"
+          >
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">Quick Launch</span>
+          </button>
+          <span class="context-separator" aria-hidden="true"></span>
+          <button type="button" role="menuitem" data-taskbar-toolbar="new">
+            <span class="context-check" aria-hidden="true"></span>
+            <span class="context-label">New Toolbar...</span>
+          </button>
+        </div>
+      </div>
       <span class="context-separator" aria-hidden="true"></span>
       <button type="button" role="menuitem" data-taskbar-action="cascade">
-        Cascade Windows
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Cascade Windows</span>
       </button>
       <button
         type="button"
         role="menuitem"
         data-taskbar-action="tile-horizontal"
       >
-        Tile Windows Horizontally
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Tile Windows Horizontally</span>
       </button>
       <button type="button" role="menuitem" data-taskbar-action="tile-vertical">
-        Tile Windows Vertically
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Tile Windows Vertically</span>
       </button>
       <button type="button" role="menuitem" data-taskbar-action="show-desktop">
-        Show the Desktop
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Show the Desktop</span>
       </button>
+      <span class="context-separator" aria-hidden="true"></span>
       <button type="button" role="menuitem" data-taskbar-action="task-manager">
-        Task Manager
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Task Manager</span>
       </button>
       <span class="context-separator" aria-hidden="true"></span>
       <button
@@ -216,13 +249,13 @@
         role="menuitemcheckbox"
         aria-checked="true"
         data-taskbar-action="lock"
-        disabled
-        title="The taskbar position is fixed"
       >
-        Lock the Taskbar
+        <span class="context-check" aria-hidden="true">✓</span>
+        <span class="context-label">Lock the Taskbar</span>
       </button>
       <button type="button" role="menuitem" data-taskbar-action="properties">
-        Properties
+        <span class="context-check" aria-hidden="true"></span>
+        <span class="context-label">Properties</span>
       </button>
     </div>
     <div
@@ -299,13 +332,13 @@
 
     <!-- Shutting down -->
     <div id="shutdown-screen" hidden>
-      <img src="assets/xp/wordmark.png" alt="Microsoft Windows XP" />
+      <img src="assets/xp/WindowsWordmark.png" alt="Microsoft Windows XP" />
       <p>Windows is shutting down...</p>
     </div>
 
     <!-- Safe to turn off -->
     <div id="turn-off-screen" hidden>
-      <img src="assets/xp/wordmark.png" alt="Microsoft Windows" />
+      <img src="assets/xp/WindowsWordmark.png" alt="Microsoft Windows" />
       <p>It is now safe to turn off your computer.</p>
       <span class="turn-off-hint">Click anywhere to restart</span>
     </div>

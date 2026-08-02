@@ -453,13 +453,13 @@
     } else if (node.id === fs().RECYCLE_BIN) {
       const image = document.createElement("img");
       image.src = fs().getChildren(fs().RECYCLE_BIN).length
-        ? "assets/xp/icons/recycler-full.png"
-        : "assets/xp/icons/recycler-empty.png";
+        ? "assets/xp/icons/RecyclerFull.png"
+        : "assets/xp/icons/RecyclerEmpty.png";
       image.alt = "";
       icon.appendChild(image);
     } else if (node.type === "folder") {
       const image = document.createElement("img");
-      image.src = "assets/xp/icons/mydocuments.png";
+      image.src = "assets/xp/icons/MyDocuments.png";
       image.alt = "";
       icon.appendChild(image);
     } else {

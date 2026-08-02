@@ -31,6 +31,8 @@ let gameLibrary = null;
 let gameLibraryError = null;
 let gameLibraryReady = false;
 let gameLibraryInitialization = Promise.resolve();
+let offlineManagerInitialization = Promise.resolve();
+let automaticOfflineDownloadQueue = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
 const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
@@ -102,44 +104,60 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
   "1440x900": { width: 1440, height: 900 },
 });
 const XP_ICON_PATHS = Object.freeze({
+  "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
+  "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
+  "AppearanceAndThemes.png": "assets/xp/icons/AppearanceAndThemes.png",
   "Back.png": "assets/xp/icons/Back.png",
   "ControlPanel.png": "assets/xp/icons/ControlPanel.png",
+  "DateTimeRegional.png": "assets/xp/icons/DateTimeRegional.png",
   "Exit.png": "assets/xp/icons/Exit.png",
-  "FolderView-Classic.png": "assets/xp/icons/FolderView-Classic.png",
+  "FolderViewClassic.png": "assets/xp/icons/FolderViewClassic.png",
   "FolderView.png": "assets/xp/icons/FolderView.png",
   "Forward.png": "assets/xp/icons/Forward.png",
   "Go.png": "assets/xp/icons/Go.png",
-  "HelpandSupport.png": "assets/xp/icons/HelpandSupport.png",
+  "HelpAndSupport.png": "assets/xp/icons/HelpAndSupport.png",
+  "InternetOptions.png": "assets/xp/icons/InternetOptions.png",
   "LocalDisk.png": "assets/xp/icons/LocalDisk.png",
+  "OpticalDrive.png": "assets/xp/icons/OpticalDrive.png",
   "Logout.png": "assets/xp/icons/Logout.png",
   "Maximize.png": "assets/xp/icons/Maximize.png",
   "Minimize.png": "assets/xp/icons/Minimize.png",
   "Mute.png": "assets/xp/icons/Mute.png",
-  "MyComputer.png": "assets/xp/icons/MyComputer.png",
-  "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
   "MyMusic.png": "assets/xp/icons/MyMusic.png",
   "MyNetworkPlaces.png": "assets/xp/icons/MyNetworkPlaces.png",
   "MyPictures.png": "assets/xp/icons/MyPictures.png",
+  "NetworkAndInternet.png": "assets/xp/icons/NetworkAndInternet.png",
   "NetworkConnection.png": "assets/xp/icons/NetworkConnection.png",
+  "NetworkConnections.png": "assets/xp/icons/NetworkConnections.png",
+  "NetworkSetupWizard.png": "assets/xp/icons/NetworkSetupWizard.png",
   "NewFolder.png": "assets/xp/icons/NewFolder.png",
   "Power.png": "assets/xp/icons/Power.png",
-  "PrintersandFaxes.png": "assets/xp/icons/PrintersandFaxes.png",
+  "PerformanceAndMaintenance.png":
+    "assets/xp/icons/PerformanceAndMaintenance.png",
+  "PrintersAndHardware.png": "assets/xp/icons/PrintersAndHardware.png",
+  "PrintersAndFaxes.png": "assets/xp/icons/PrintersAndFaxes.png",
   "Programs.png": "assets/xp/icons/Programs.png",
-  "Publishtoweb.png": "assets/xp/icons/Publishtoweb.png",
+  "PublishToWeb.png": "assets/xp/icons/PublishToWeb.png",
   "RecentDocuments.png": "assets/xp/icons/RecentDocuments.png",
   "RemovableMedia.png": "assets/xp/icons/RemovableMedia.png",
   "Restore.png": "assets/xp/icons/Restore.png",
   "Run.png": "assets/xp/icons/Run.png",
   "Search.png": "assets/xp/icons/Search.png",
+  "WindowsFirewall.png": "assets/xp/icons/WindowsFirewall.png",
+  "WirelessNetworkSetupWizard.png":
+    "assets/xp/icons/WirelessNetworkSetupWizard.png",
+  "SecurityCenter.png": "assets/xp/icons/SecurityCenter.png",
   "SharedFolder.png": "assets/xp/icons/SharedFolder.png",
   "Up.png": "assets/xp/icons/Up.png",
+  "SoundsSpeechAudio.png": "assets/xp/icons/SoundsSpeechAudio.png",
+  "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
   "Volume.png": "assets/xp/icons/Volume.png",
-  "explorerproperties.png": "assets/xp/icons/explorerproperties.png",
-  "mycomputer.png": "assets/xp/icons/mycomputer.png",
-  "mydocuments.png": "assets/xp/icons/mydocuments.png",
-  "recycler-empty.png": "assets/xp/icons/recycler-empty.png",
-  "recycler-full.png": "assets/xp/icons/recycler-full.png",
-  "shortcut.png": "assets/xp/icons/shortcut.png",
+  "ExplorerProperties.png": "assets/xp/icons/ExplorerProperties.png",
+  "MyComputer.png": "assets/xp/icons/MyComputer.png",
+  "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
+  "RecyclerEmpty.png": "assets/xp/icons/RecyclerEmpty.png",
+  "RecyclerFull.png": "assets/xp/icons/RecyclerFull.png",
+  "Shortcut.png": "assets/xp/icons/Shortcut.png",
 });
 const TASKBAR_HEIGHT = 30;
 let activeMonitorResolution = "auto";
@@ -159,11 +177,11 @@ const categoryIcons = {
 const systemShortcuts = {
   "__my-documents": {
     title: "My Documents",
-    icon: "assets/xp/icons/mydocuments.png",
+    icon: "assets/xp/icons/MyDocuments.png",
   },
   "__my-computer": {
     title: "My Computer",
-    icon: "assets/xp/icons/mycomputer.png",
+    icon: "assets/xp/icons/MyComputer.png",
   },
   "__my-pictures": {
     title: "My Pictures",
@@ -177,16 +195,46 @@ const systemShortcuts = {
   },
   "__recycle-bin": {
     title: "Recycle Bin",
-    icon: "assets/xp/icons/recycler-empty.png",
+    icon: "assets/xp/icons/RecyclerEmpty.png",
   },
   "__display-properties": {
     title: "Display Properties",
-    icon: "assets/xp/icons/mycomputer.png",
+    icon: "assets/xp/icons/MyComputer.png",
+    desktop: false,
+  },
+  "__control-panel": {
+    title: "Control Panel",
+    icon: "assets/xp/icons/ControlPanel.png",
+    desktop: false,
+  },
+  "__user-accounts": {
+    title: "User Accounts",
+    icon: "assets/xp/icons/UserAccounts.png",
+    desktop: false,
+  },
+  "__add-remove-programs": {
+    title: "Add or Remove Programs",
+    icon: "assets/xp/icons/AddRemovePrograms.png",
+    desktop: false,
+  },
+  "__security-center": {
+    title: "Windows Security Center",
+    icon: "assets/xp/icons/SecurityCenter.png",
+    desktop: false,
+  },
+  __printers: {
+    title: "Printers and Faxes",
+    icon: "assets/xp/icons/PrintersAndFaxes.png",
+    desktop: false,
+  },
+  __help: {
+    title: "Help and Support Center",
+    icon: "assets/xp/icons/HelpAndSupport.png",
     desktop: false,
   },
   __notepad: {
     title: "Notepad",
-    glyph: "notepad",
+    icon: "assets/xp/icons/Notepad.png",
     desktop: false,
   },
   __search: {
@@ -200,7 +248,7 @@ const systemShortcuts = {
   },
   "__internet-games": {
     title: "Internet Games",
-    icon: "assets/xp/icons/Programs.png",
+    icon: "assets/xp/icons/AddRemovePrograms.png",
   },
 };
 
@@ -221,8 +269,8 @@ const getGameIcon = (gameId) =>
 
 const getRecycleBinIconPath = () =>
   window.VirtualFS?.getChildren(window.VirtualFS.RECYCLE_BIN).length
-    ? XP_ICON_PATHS["recycler-full.png"]
-    : XP_ICON_PATHS["recycler-empty.png"];
+    ? XP_ICON_PATHS["RecyclerFull.png"]
+    : XP_ICON_PATHS["RecyclerEmpty.png"];
 
 const createGameIconElement = (gameId, className) => {
   const icon = document.createElement("span");
@@ -2080,9 +2128,1072 @@ const wireWindowControls = (win) => {
   wireResize(win);
 };
 
+const createControlPanelContent = () => {
+  const content = document.createElement("div");
+  content.className = "control-panel-content";
+  content.innerHTML = `
+    <div class="explorer-chrome control-panel-chrome">
+      <div class="explorer-menu-row">
+        <div class="explorer-menu-bar" role="menubar">
+          <button type="button" role="menuitem">File</button>
+          <button type="button" role="menuitem">Edit</button>
+          <button type="button" role="menuitem">View</button>
+          <button type="button" role="menuitem">Favorites</button>
+          <button type="button" role="menuitem">Tools</button>
+          <button type="button" role="menuitem">Help</button>
+        </div>
+        <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
+      </div>
+      <div class="explorer-toolbar">
+        <button type="button" disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+        <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+        <button type="button" data-control-panel-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+        <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+        <button type="button" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+      </div>
+      <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/ControlPanel.png" alt=""><input type="text" aria-label="Address" value="Control Panel" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+    </div>
+    <div class="control-panel-body">
+      <aside class="explorer-sidebar control-panel-sidebar">
+        <section>
+          <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span><b aria-hidden="true">⌃</b></button></h3>
+          <div class="explorer-section-body"><button type="button" data-control-panel-action="classic"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span>Switch to Classic View</span></button></div>
+        </section>
+        <section>
+          <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+          <div class="explorer-section-body">
+            <button type="button" data-control-panel-action="updates"><span class="control-panel-see-icon windows-update" aria-hidden="true"></span><span>Windows Update</span></button>
+            <button type="button" data-control-panel-action="help"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><span>Help and Support</span></button>
+          </div>
+        </section>
+      </aside>
+      <main class="control-panel-main">
+        <h1>Pick a category</h1>
+        <div class="control-panel-categories"></div>
+      </main>
+    </div>
+  `;
+
+  const categories = [
+    ["appearance", "Appearance and Themes", "AppearanceAndThemes.png", "left"],
+    [
+      "printers",
+      "Printers and Other Hardware",
+      "PrintersAndHardware.png",
+      "right",
+    ],
+    [
+      "network",
+      "Network and Internet Connections",
+      "NetworkAndInternet.png",
+      "left",
+    ],
+    ["users", "User Accounts", "UserAccounts.png", "right"],
+    ["programs", "Add or Remove Programs", "AddRemovePrograms.png", "left"],
+    [
+      "datetime",
+      "Date, Time, Language, and Regional Options",
+      "DateTimeRegional.png",
+      "right",
+    ],
+    [
+      "sounds",
+      "Sounds, Speech, and Audio Devices",
+      "SoundsSpeechAudio.png",
+      "left",
+    ],
+    [
+      "accessibility",
+      "Accessibility Options",
+      "AccessibilityOptions.png",
+      "right",
+    ],
+    [
+      "performance",
+      "Performance and Maintenance",
+      "PerformanceAndMaintenance.png",
+      "left",
+    ],
+    ["security", "Security Center", "SecurityCenter.png", "right"],
+  ];
+  const categoryGrid = content.querySelector(".control-panel-categories");
+  categories.forEach(([id, label, icon, column]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.controlPanelCategory = id;
+    button.dataset.column = column;
+    const image = document.createElement("img");
+    image.src = XP_ICON_PATHS[icon];
+    image.alt = "";
+    const text = document.createElement("span");
+    text.textContent = label;
+    button.append(image, text);
+    categoryGrid.appendChild(button);
+  });
+  return content;
+};
+
+const wireControlPanel = (win) => {
+  const content = win.el.querySelector(".control-panel-content");
+  const titleText = win.el.querySelector(".title-text");
+  const titleIcon = win.el.querySelector(".title-icon img");
+  const address = content.querySelector(".explorer-address input");
+  const addressIcon = content.querySelector(".explorer-address-field img");
+  const backButton = content.querySelector(
+    '.explorer-toolbar button[aria-label="Back"], .explorer-toolbar button:first-child',
+  );
+  const upButton = content.querySelector(
+    '.explorer-toolbar button[aria-label="Up"]',
+  );
+  backButton.dataset.controlPanelAction = "back";
+  upButton.dataset.controlPanelAction = "back";
+  const categoryGrid = content.querySelector(".control-panel-categories");
+  const categoryMarkup = categoryGrid.innerHTML;
+  const classicIconPaths = {
+    "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
+    "AddHardware.png": "assets/xp/icons/AddHardware.png",
+    "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
+    "AdministrativeTools.png": "assets/xp/icons/AdministrativeTools.png",
+    "UpdateEnabled.png": "assets/xp/system/UpdateEnabled.png",
+    "DateAndTime.png": "assets/xp/icons/DateAndTime.png",
+    "Display.png": "assets/xp/icons/Display.png",
+    "FolderOptions.png": "assets/xp/icons/FolderOptions.png",
+    "Fonts.png": "assets/xp/icons/Fonts.png",
+    "GameControllers.png": "assets/xp/icons/GameControllers.png",
+    "InternetOptions.png": "assets/xp/icons/InternetOptions.png",
+    "Keyboard.png": "assets/xp/icons/Keyboard.png",
+    "Mouse.png": "assets/xp/icons/Mouse.png",
+    "NetworkConnections.png": "assets/xp/icons/NetworkConnections.png",
+    "NetworkSetupWizard.png": "assets/xp/icons/NetworkSetupWizard.png",
+    "PhoneAndModemOptionsLarge.png":
+      "assets/xp/icons/PhoneAndModemOptionsLarge.png",
+    "PowerOptions.png": "assets/xp/icons/PowerOptions.png",
+    "PrintersAndFaxesLarge.png": "assets/xp/icons/PrintersAndFaxesLarge.png",
+    "RegionalAndLanguage.png": "assets/xp/icons/RegionalAndLanguage.png",
+    "ScannersAndCameras.png": "assets/xp/icons/ScannersAndCameras.png",
+    "ScheduledTasks.png": "assets/xp/icons/ScheduledTasks.png",
+    "SecurityCenter.png": "assets/xp/icons/SecurityCenter.png",
+    "SoundsAndAudioDevices.png": "assets/xp/icons/SoundsAndAudioDevices.png",
+    "Speech.png": "assets/xp/icons/Speech.png",
+    "System.png": "assets/xp/icons/System.png",
+    "TaskbarAndStartMenu.png": "assets/xp/icons/TaskbarAndStartMenu.png",
+    "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
+    "WindowsFirewall.png": "assets/xp/icons/WindowsFirewall.png",
+    "WirelessNetworkSetupWizard.png":
+      "assets/xp/icons/WirelessNetworkSetupWizard.png",
+  };
+  const classicItems = [
+    [
+      "accessibility-options",
+      "Accessibility Options",
+      "AccessibilityOptions.png",
+    ],
+    ["add-hardware", "Add Hardware", "AddHardware.png"],
+    ["programs", "Add or Remove Programs", "AddRemovePrograms.png"],
+    ["administrative-tools", "Administrative Tools", "AdministrativeTools.png"],
+    ["updates", "Automatic Updates", "UpdateEnabled.png"],
+    ["date-time", "Date and Time", "DateAndTime.png"],
+    ["display", "Display", "Display.png"],
+    ["folder-options", "Folder Options", "FolderOptions.png"],
+    ["fonts", "Fonts", "Fonts.png"],
+    ["game-controllers", "Game Controllers", "GameControllers.png"],
+    ["internet-options", "Internet Options", "InternetOptions.png"],
+    ["keyboard", "Keyboard", "Keyboard.png"],
+    ["mouse", "Mouse", "Mouse.png"],
+    ["network-connections", "Network Connections", "NetworkConnections.png"],
+    ["network-setup", "Network Setup Wizard", "NetworkSetupWizard.png"],
+    ["phone-modem", "Phone and Modem Options", "PhoneAndModemOptionsLarge.png"],
+    ["power-options", "Power Options", "PowerOptions.png"],
+    ["view-printers", "Printers and Faxes", "PrintersAndFaxesLarge.png"],
+    [
+      "regional-language",
+      "Regional and Language Options",
+      "RegionalAndLanguage.png",
+    ],
+    ["scanners-cameras", "Scanners and Cameras", "ScannersAndCameras.png"],
+    ["scheduled-tasks", "Scheduled Tasks", "ScheduledTasks.png"],
+    ["security-center", "Security Center", "SecurityCenter.png"],
+    ["sounds-audio", "Sounds and Audio Devices", "SoundsAndAudioDevices.png"],
+    ["speech", "Speech", "Speech.png"],
+    ["system", "System", "System.png"],
+    ["taskbar-properties", "Taskbar and Start Menu", "TaskbarAndStartMenu.png"],
+    ["users", "User Accounts", "UserAccounts.png"],
+    ["firewall", "Windows Firewall", "WindowsFirewall.png"],
+    [
+      "wireless-network",
+      "Wireless Network Setup Wizard",
+      "WirelessNetworkSetupWizard.png",
+    ],
+  ];
+  const renderClassicItems = () => {
+    categoryGrid.innerHTML = classicItems
+      .map(
+        ([action, label, icon]) =>
+          `<button type="button" data-control-panel-action="${action}" title="${label}"><img src="${classicIconPaths[icon]}" alt=""><span>${label}</span></button>`,
+      )
+      .join("");
+  };
+
+  const setWindowIdentity = (title, icon) => {
+    win.title = title;
+    win.icon = icon;
+    titleText.textContent = title;
+    titleIcon.src = icon;
+    address.value = title;
+    addressIcon.src = icon;
+    renderTaskButtons();
+  };
+
+  const openDisplayTab = (tab) => {
+    openSystemWindow("__display-properties");
+    openWindows
+      .get("__display-properties")
+      ?.el.querySelector(`#display-tab-${tab}`)
+      ?.click();
+  };
+
+  const renderAppearanceCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Appearance and Themes",
+      XP_ICON_PATHS["AppearanceAndThemes.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="fonts"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>Fonts</span></button>
+          <button type="button" data-control-panel-action="mouse"><span class="control-panel-small-glyph mouse-glyph" aria-hidden="true"></span><span>Mouse Pointers</span></button>
+          <button type="button" data-control-panel-action="contrast"><span class="control-panel-small-glyph contrast-glyph" aria-hidden="true"></span><span>High Contrast</span></button>
+          <button type="button" data-control-panel-action="user-picture"><img src="assets/xp/icons/UserAccounts.png" alt=""><span>User Account Picture</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="display-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Display</span></button>
+          <button type="button" data-control-panel-action="sound-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Sound</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/AppearanceAndThemes.png" alt=""><strong>Appearance and Themes</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="theme"><img src="assets/xp/icons/Go.png" alt=""><span>Change the computer's theme</span></button>
+        <button type="button" data-control-panel-action="desktop"><img src="assets/xp/icons/Go.png" alt=""><span>Change the desktop background</span></button>
+        <button type="button" data-control-panel-action="screen-saver"><img src="assets/xp/icons/Go.png" alt=""><span>Choose a screen saver</span></button>
+        <button type="button" data-control-panel-action="resolution"><img src="assets/xp/icons/Go.png" alt=""><span>Change the screen resolution</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons">
+        <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/Display.png" alt=""><span>Display</span></button>
+        <button type="button" data-control-panel-action="folder-options"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>Folder Options</span></button>
+        <button type="button" data-control-panel-action="taskbar-properties"><img src="assets/xp/icons/TaskbarAndStartMenu.png" alt=""><span>Taskbar and Start Menu</span></button>
+      </div>`;
+  };
+
+  const renderPerformanceCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Performance and Maintenance",
+      XP_ICON_PATHS["PerformanceAndMaintenance.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="file-types"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>File Types</span></button>
+          <button type="button" data-control-panel-action="system-restore"><img src="assets/xp/system/SystemRestore.png" alt=""><span>System Restore</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="startup-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Startup and Shutdown</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/PerformanceAndMaintenance.png" alt=""><strong>Performance and Maintenance</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links performance-task-links">
+        <button type="button" data-control-panel-action="system-info"><img src="assets/xp/icons/Go.png" alt=""><span>See basic information about your computer</span></button>
+        <button type="button" data-control-panel-action="visual-effects"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust visual effects</span></button>
+        <button type="button" data-control-panel-action="disk-cleanup"><img src="assets/xp/icons/Go.png" alt=""><span>Free up space on your hard disk</span></button>
+        <button type="button" data-control-panel-action="backup"><img src="assets/xp/icons/Go.png" alt=""><span>Back up your data</span></button>
+        <button type="button" data-control-panel-action="defrag"><img src="assets/xp/icons/Go.png" alt=""><span>Rearrange items on your hard disk to make programs run faster</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons">
+        <button type="button" data-control-panel-action="administrative-tools"><img src="assets/xp/icons/AdministrativeTools.png" alt=""><span>Administrative Tools</span></button>
+        <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptions.png" alt=""><span>Power Options</span></button>
+        <button type="button" data-control-panel-action="scheduled-tasks"><img src="assets/xp/icons/ScheduledTasks.png" alt=""><span>Scheduled Tasks</span></button>
+        <button type="button" data-control-panel-action="system"><img src="assets/xp/icons/System.png" alt=""><span>System</span></button>
+      </div>`;
+  };
+
+  const renderAccessibilityCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Accessibility Options",
+      XP_ICON_PATHS["AccessibilityOptions.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="magnifier"><img src="assets/xp/icons/Magnifier.png" alt=""><span>Magnifier</span></button>
+          <button type="button" data-control-panel-action="on-screen-keyboard"><img src="assets/xp/icons/OnScreenKeyboard.png" alt=""><span>On-Screen Keyboard</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/AccessibilityOptions.png" alt=""><strong>Accessibility Options</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="accessibility-contrast"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust the contrast for text and colors on your screen</span></button>
+        <button type="button" data-control-panel-action="accessibility-wizard"><img src="assets/xp/icons/Go.png" alt=""><span>Configure Windows to work for your vision, hearing, and mobility needs</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons accessibility-category-icons">
+        <button type="button" data-control-panel-action="accessibility-options"><img src="assets/xp/icons/AccessibilityOptions.png" alt=""><span>Accessibility Options</span></button>
+      </div>`;
+  };
+
+  const renderSoundsCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Sounds, Speech, and Audio Devices",
+      XP_ICON_PATHS["SoundsSpeechAudio.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="accessibility-sound"><img src="assets/xp/icons/AccessibilitySound.png" alt=""><span>Accessibility Sound Options</span></button>
+          <button type="button" data-control-panel-action="advanced-volume"><img src="assets/xp/icons/AdvancedVolumeControls.png" alt=""><span>Advanced Volume Controls</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="sound-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Sound</span></button>
+          <button type="button" data-control-panel-action="dvd-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>DVD</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/SoundsSpeechAudio.png" alt=""><strong>Sounds, Speech, and Audio Devices</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="system-volume"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust the system volume</span></button>
+        <button type="button" data-control-panel-action="sound-scheme"><img src="assets/xp/icons/Go.png" alt=""><span>Change the sound scheme</span></button>
+        <button type="button" data-control-panel-action="speaker-settings"><img src="assets/xp/icons/Go.png" alt=""><span>Change the speaker settings</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons sounds-category-icons">
+        <button type="button" data-control-panel-action="sounds-audio"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>Sounds and Audio Devices</span></button>
+        <button type="button" data-control-panel-action="speech"><img src="assets/xp/icons/Speech.png" alt=""><span>Speech</span></button>
+      </div>`;
+  };
+
+  const renderDateRegionalCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Date, Time, Language, and Regional Options",
+      XP_ICON_PATHS["DateTimeRegional.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="scheduled-tasks"><img src="assets/xp/icons/ScheduledTasks.png" alt=""><span>Scheduled Tasks</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/DateTimeRegional.png" alt=""><strong>Date, Time, Language, and Regional Options</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/Go.png" alt=""><span>Change the date and time</span></button>
+        <button type="button" data-control-panel-action="regional-format"><img src="assets/xp/icons/Go.png" alt=""><span>Change the format of numbers, dates, and times</span></button>
+        <button type="button" data-control-panel-action="languages"><img src="assets/xp/icons/Go.png" alt=""><span>Add other languages</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons date-regional-category-icons">
+        <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/DateAndTime.png" alt=""><span>Date and Time</span></button>
+        <button type="button" data-control-panel-action="regional-language"><img src="assets/xp/icons/RegionalAndLanguage.png" alt=""><span>Regional and Language Options</span></button>
+      </div>`;
+  };
+
+  const renderNetworkCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Network and Internet Connections",
+      XP_ICON_PATHS["NetworkAndInternet.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="my-network-places"><img src="assets/xp/icons/MyNetworkPlacesSmall.png" alt=""><span>My Network Places</span></button>
+          <button type="button" data-control-panel-action="printers"><img src="assets/xp/icons/PrintersAndFaxesSmall.png" alt=""><span>Printers and Other Hardware</span></button>
+          <button type="button" data-control-panel-action="remote-desktop"><img src="assets/xp/icons/RemoteDesktop.png" alt=""><span>Remote Desktop</span></button>
+          <button type="button" data-control-panel-action="phone-modem"><img src="assets/xp/icons/PhoneAndModemOptions.png" alt=""><span>Phone and Modem Options</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="network-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Home or Small Office Networking</span></button>
+          <button type="button" data-control-panel-action="internet-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Internet Explorer</span></button>
+          <button type="button" data-control-panel-action="network-diagnostics"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Network Diagnostics</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/NetworkAndInternet.png" alt=""><strong>Network and Internet Connections</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links network-task-links">
+        <button type="button" data-control-panel-action="internet-connection"><img src="assets/xp/icons/Go.png" alt=""><span>Set up or change your Internet connection</span></button>
+        <button type="button" data-control-panel-action="workplace-connection"><img src="assets/xp/icons/Go.png" alt=""><span>Create a connection to the network at your workplace</span></button>
+        <button type="button" data-control-panel-action="home-network"><img src="assets/xp/icons/Go.png" alt=""><span>Set up or change your home or small office network</span></button>
+        <button type="button" data-control-panel-action="wireless-network"><img src="assets/xp/icons/Go.png" alt=""><span>Set up a wireless network for a home or small office</span></button>
+        <button type="button" data-control-panel-action="firewall"><img src="assets/xp/icons/Go.png" alt=""><span>Change Windows Firewall settings</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons network-category-icons">
+        <button type="button" data-control-panel-action="internet-options"><img src="assets/xp/icons/InternetOptions.png" alt=""><span>Internet Options</span></button>
+        <button type="button" data-control-panel-action="network-connections"><img src="assets/xp/icons/NetworkConnections.png" alt=""><span>Network Connections</span></button>
+        <button type="button" data-control-panel-action="network-setup"><img src="assets/xp/icons/NetworkSetupWizard.png" alt=""><span>Network Setup Wizard</span></button>
+        <button type="button" data-control-panel-action="firewall"><img src="assets/xp/icons/WindowsFirewall.png" alt=""><span>Windows Firewall</span></button>
+        <button type="button" data-control-panel-action="wireless-network"><img src="assets/xp/icons/WirelessNetworkSetupWizard.png" alt=""><span>Wireless Network Setup Wizard</span></button>
+      </div>`;
+  };
+
+  const renderHardwareCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Printers and Other Hardware",
+      XP_ICON_PATHS["PrintersAndHardware.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="add-hardware"><img src="assets/xp/icons/AddHardwareSmall.png" alt=""><span>Add Hardware</span></button>
+          <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/DisplaySmall.png" alt=""><span>Display</span></button>
+          <button type="button" data-control-panel-action="sounds-audio"><img src="assets/xp/icons/SoundsAudioSmall.png" alt=""><span>Sounds, Speech, and Audio Devices</span></button>
+          <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptionsSmall.png" alt=""><span>Power Options</span></button>
+          <button type="button" data-control-panel-action="system"><img src="assets/xp/icons/SystemSmall.png" alt=""><span>System</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="hardware-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Hardware</span></button>
+          <button type="button" data-control-panel-action="printing-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Printing</span></button>
+          <button type="button" data-control-panel-action="network-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Home or Small Office Networking</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/PrintersAndHardware.png" alt=""><strong>Printers and Other Hardware</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="view-printers"><img src="assets/xp/icons/Go.png" alt=""><span>View installed printers or fax printers</span></button>
+        <button type="button" data-control-panel-action="add-printer"><img src="assets/xp/icons/Go.png" alt=""><span>Add a printer</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons hardware-category-icons">
+        <button type="button" data-control-panel-action="game-controllers"><img src="assets/xp/icons/GameControllers.png" alt=""><span>Game Controllers</span></button>
+        <button type="button" data-control-panel-action="keyboard"><img src="assets/xp/icons/Keyboard.png" alt=""><span>Keyboard</span></button>
+        <button type="button" data-control-panel-action="mouse"><img src="assets/xp/icons/Mouse.png" alt=""><span>Mouse</span></button>
+        <button type="button" data-control-panel-action="phone-modem"><img src="assets/xp/icons/PhoneAndModemOptionsLarge.png" alt=""><span>Phone and Modem Options</span></button>
+        <button type="button" data-control-panel-action="view-printers"><img src="assets/xp/icons/PrintersAndFaxesLarge.png" alt=""><span>Printers and Faxes</span></button>
+        <button type="button" data-control-panel-action="scanners-cameras"><img src="assets/xp/icons/ScannersAndCameras.png" alt=""><span>Scanners and Cameras</span></button>
+      </div>`;
+  };
+
+  const actions = {
+    appearance: renderAppearanceCategory,
+    printers: renderHardwareCategory,
+    network: renderNetworkCategory,
+    users: () => openSystemWindow("__user-accounts"),
+    programs: () => openSystemWindow("__add-remove-programs"),
+    datetime: renderDateRegionalCategory,
+    sounds: renderSoundsCategory,
+    accessibility: renderAccessibilityCategory,
+    performance: renderPerformanceCategory,
+    security: () => openSystemWindow("__security-center"),
+  };
+  content.addEventListener("click", (event) => {
+    const sectionToggle = event.target.closest(".explorer-section-toggle");
+    if (sectionToggle) {
+      const collapsed = sectionToggle
+        .closest("section")
+        .classList.toggle("collapsed");
+      sectionToggle.setAttribute("aria-expanded", String(!collapsed));
+      sectionToggle.querySelector("b").textContent = collapsed ? "⌄" : "⌃";
+      return;
+    }
+    const category = event.target.closest("[data-control-panel-category]");
+    if (category) {
+      actions[category.dataset.controlPanelCategory]?.();
+      return;
+    }
+    const action = event.target.closest("[data-control-panel-action]")?.dataset
+      .controlPanelAction;
+    if (action === "classic") {
+      const classic = content.classList.toggle("classic-view");
+      content.querySelector(".control-panel-main h1").textContent =
+        "Pick a category";
+      if (classic) renderClassicItems();
+      else categoryGrid.innerHTML = categoryMarkup;
+      event.target.closest("button").querySelector("span").textContent = classic
+        ? "Switch to Category View"
+        : "Switch to Classic View";
+    } else if (action === "search") {
+      openSearchDialog();
+    } else if (action === "folders") {
+      const pressed = content.classList.toggle("folders-visible");
+      event.target
+        .closest("button")
+        .setAttribute("aria-pressed", String(pressed));
+    } else if (action === "help") {
+      openHelpAndSupport();
+    } else if (action === "updates") {
+      XPDialogs.alert(
+        "This offline Windows XP recreation does not connect to Windows Update.",
+        "Windows Update",
+        "info",
+      );
+    } else if (action === "security-center") {
+      openSystemWindow("__security-center");
+    } else if (action === "programs") {
+      openSystemWindow("__add-remove-programs");
+    } else if (action === "users") {
+      openSystemWindow("__user-accounts");
+    } else if (action === "back") {
+      closeGameWindow("__control-panel");
+      setTimeout(openControlPanel, 0);
+    } else if (action === "theme" || action === "display") {
+      openDisplayTab("themes");
+    } else if (action === "desktop") {
+      openDisplayTab("desktop");
+    } else if (action === "screen-saver") {
+      openDisplayTab("saver");
+    } else if (action === "resolution") {
+      openDisplayTab("settings");
+    } else if (action === "taskbar-properties") {
+      openTaskbarProperties();
+    } else if (action === "folder-options") {
+      openFolderOptions();
+    } else if (action === "file-types") {
+      openFolderOptions();
+      document
+        .querySelector(".folder-options-dialog [data-folder-tab='file-types']")
+        ?.click();
+    } else if (action === "system-info" || action === "system") {
+      openSystemProperties();
+    } else if (action === "visual-effects") {
+      openSystemProperties();
+      document
+        .querySelector(".system-properties-dialog [data-system-tab='advanced']")
+        ?.click();
+    } else if (action === "system-restore") {
+      openSystemProperties();
+      document
+        .querySelector(".system-properties-dialog [data-system-tab='restore']")
+        ?.click();
+    } else if (action === "startup-help") {
+      openHelpAndSupport();
+    } else if (
+      action === "accessibility-contrast" ||
+      action === "accessibility-options"
+    ) {
+      openAccessibilityOptions(
+        action === "accessibility-contrast" ? "display" : "keyboard",
+      );
+    } else if (action === "accessibility-wizard") {
+      openHelpAndSupport();
+    } else if (action === "magnifier" || action === "on-screen-keyboard") {
+      XPDialogs.alert(
+        `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in this offline recreation.`,
+        action === "magnifier" ? "Magnifier" : "On-Screen Keyboard",
+        "info",
+      );
+    } else if (action === "accessibility-sound") {
+      openAccessibilityOptions("sound");
+    } else if (action === "system-volume") {
+      openSoundsAudioProperties("volume");
+    } else if (action === "advanced-volume") {
+      toggleTrayVolumePopup();
+    } else if (action === "sound-help" || action === "dvd-help") {
+      openHelpAndSupport();
+    } else if (action === "sound-scheme") {
+      openSoundsAudioProperties("sounds");
+    } else if (action === "speaker-settings" || action === "sounds-audio") {
+      openSoundsAudioProperties("volume");
+    } else if (action === "speech") {
+      XPDialogs.alert(
+        "Speech Properties is not available in this offline recreation.",
+        "Speech Properties",
+        "info",
+      );
+    } else if (action === "date-time") {
+      openDateTimeProperties();
+    } else if (
+      action === "network-connections" ||
+      action === "my-network-places"
+    ) {
+      openNetworkStatus();
+    } else if (action === "printers") {
+      openPrintersAndFaxes();
+    } else if (action === "view-printers" || action === "add-printer") {
+      openPrintersAndFaxes();
+    } else if (
+      action === "network-help" ||
+      action === "internet-help" ||
+      action === "network-diagnostics" ||
+      action === "remote-desktop" ||
+      action === "hardware-help" ||
+      action === "printing-help"
+    ) {
+      openHelpAndSupport();
+    } else if (
+      [
+        "internet-connection",
+        "workplace-connection",
+        "home-network",
+        "network-setup",
+      ].includes(action)
+    ) {
+      XPDialogs.alert(
+        "The Network Setup Wizard is not available in this offline recreation.",
+        "Network Setup Wizard",
+        "info",
+      );
+    } else if (action === "wireless-network") {
+      XPDialogs.alert(
+        "The Wireless Network Setup Wizard is not available in this offline recreation.",
+        "Wireless Network Setup Wizard",
+        "info",
+      );
+    } else if (action === "firewall") {
+      XPDialogs.alert(
+        "Windows Firewall settings are not available in this offline recreation.",
+        "Windows Firewall",
+        "info",
+      );
+    } else if (action === "internet-options") {
+      openInternetProperties();
+    } else if (action === "mouse") {
+      openMouseProperties();
+    } else if (action === "keyboard") {
+      openKeyboardProperties();
+    } else if (action === "game-controllers") {
+      openGameControllers();
+    } else if (action === "power-options") {
+      openPowerOptions();
+    } else if (
+      action === "phone-modem" ||
+      action === "add-hardware" ||
+      action === "scanners-cameras"
+    ) {
+      const hardwareLabels = {
+        "add-hardware": "Add Hardware Wizard",
+        "game-controllers": "Game Controllers",
+        keyboard: "Keyboard Properties",
+        mouse: "Mouse Properties",
+        "scanners-cameras": "Scanners and Cameras",
+      };
+      const label =
+        action === "phone-modem"
+          ? "Phone and Modem Options"
+          : hardwareLabels[action];
+      XPDialogs.alert(
+        `${label} is not available in this offline recreation.`,
+        label,
+        "info",
+      );
+    } else if (action === "languages") {
+      openRegionalLanguageOptions("languages");
+    } else if (action === "regional-format" || action === "regional-language") {
+      openRegionalLanguageOptions();
+    } else if (
+      [
+        "disk-cleanup",
+        "backup",
+        "defrag",
+        "administrative-tools",
+        "scheduled-tasks",
+      ].includes(action)
+    ) {
+      const labels = {
+        "disk-cleanup": "Disk Cleanup",
+        backup: "Backup Utility",
+        defrag: "Disk Defragmenter",
+        "administrative-tools": "Administrative Tools",
+        "scheduled-tasks": "Scheduled Tasks",
+      };
+      XPDialogs.alert(
+        `${labels[action]} is not available in this offline recreation.`,
+        labels[action],
+        "info",
+      );
+    } else if (
+      [
+        "fonts",
+        "mouse",
+        "contrast",
+        "user-picture",
+        "display-help",
+        "sound-help",
+      ].includes(action)
+    ) {
+      openHelpAndSupport();
+    }
+  });
+};
+
+const createUserAccountsContent = () => {
+  const content = document.createElement("div");
+  content.className = "user-accounts-content";
+  content.innerHTML = `
+    <div class="user-accounts-toolbar">
+      <button type="button" data-user-accounts-action="back" disabled><img src="assets/xp/icons/Back.png" alt=""> Back</button>
+      <button type="button" disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""></button>
+      <button type="button" data-user-accounts-action="home"><img src="assets/xp/icons/UserAccounts.png" alt=""> Home</button>
+    </div>
+    <div class="user-accounts-body">
+      <aside class="user-accounts-sidebar">
+        <section><h2>Learn About</h2>
+          <button type="button" data-user-accounts-action="help"><span>?</span> User accounts</button>
+          <button type="button" data-user-accounts-action="help"><span>?</span> User account types</button>
+          <button type="button" data-user-accounts-action="help"><span>?</span> Switching users</button>
+        </section>
+      </aside>
+      <main class="user-accounts-main"></main>
+    </div>`;
+  const main = content.querySelector(".user-accounts-main");
+  const sidebar = content.querySelector(".user-accounts-sidebar");
+  const back = content.querySelector('[data-user-accounts-action="back"]');
+  const home = content.querySelector('[data-user-accounts-action="home"]');
+  const renderHeader = () => `
+    <div class="user-accounts-heading"><img src="assets/xp/icons/UserAccounts.png" alt=""><strong>User Accounts</strong></div>`;
+  const learnLink = (label) =>
+    `<button type="button" data-user-accounts-action="help"><span>?</span> ${label}</button>`;
+  const renderSidebar = (markup) => {
+    sidebar.innerHTML = markup;
+  };
+  const showSubpage = (sidebarMarkup, pageMarkup) => {
+    back.disabled = false;
+    home.disabled = false;
+    main.className = "user-accounts-main user-accounts-subpage";
+    renderSidebar(sidebarMarkup);
+    main.innerHTML = pageMarkup;
+  };
+  const renderHome = () => {
+    back.disabled = true;
+    home.disabled = true;
+    main.className = "user-accounts-main";
+    renderSidebar(`<section><h2>Learn About</h2>
+      ${learnLink("User accounts")}
+      ${learnLink("User account types")}
+      ${learnLink("Switching users")}
+    </section>`);
+    main.innerHTML = `${renderHeader()}
+      <div class="user-accounts-page">
+        <h1>Pick a task...</h1>
+        <div class="user-account-task-links">
+          <button type="button" data-user-accounts-action="change"><img src="assets/xp/icons/Go.png" alt="">Change an account</button>
+          <button type="button" data-user-accounts-action="create"><img src="assets/xp/icons/Go.png" alt="">Create a new account</button>
+          <button type="button" data-user-accounts-action="logon"><img src="assets/xp/icons/Go.png" alt="">Change the way users log on or off</button>
+        </div>
+        <h2>or pick an account to change</h2>
+        <div class="user-account-choices">
+          <button type="button" data-user-accounts-action="administrator"><img src="assets/xp/system/UserAdministrator.bmp" alt=""><span><strong>Administrator</strong><small>Computer administrator</small></span></button>
+          <button type="button" data-user-accounts-action="guest"><img src="assets/xp/system/UserGuest.bmp" alt=""><span><strong>Guest</strong><small>Guest account is off</small></span></button>
+        </div>
+      </div>`;
+  };
+  const accountChoice = (guest = false, selected = false) => {
+    const name = guest ? "Guest" : "Administrator";
+    const detail = guest ? "Guest account is off" : "Computer administrator";
+    const image = guest
+      ? "assets/xp/system/UserGuest.bmp"
+      : "assets/xp/system/UserAdministrator.bmp";
+    return `<button type="button" class="${selected ? "selected" : ""}" data-user-accounts-action="${guest ? "guest" : "administrator"}"><img src="${image}" alt=""><span><strong>${name}</strong><small>${detail}</small></span></button>`;
+  };
+  const renderChange = () => {
+    showSubpage(
+      `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="create">Create a new account</button></section>
+       <section><h2>Learn About</h2>${learnLink("User accounts")}</section>`,
+      `<div class="user-account-change"><h1>Pick an account to change</h1><div class="user-account-picker">${accountChoice(false, true)}${accountChoice(true)}</div></div>`,
+    );
+  };
+  const renderAccount = (guest = false) => {
+    if (guest) {
+      showSubpage(
+        `<div class="user-account-sidebar-summary"><img src="assets/xp/system/UserGuest.bmp" alt=""><span><strong>Guest</strong><small>Guest account is off</small></span></div><section><h2>Learn About</h2>${learnLink("Using the guest account")}</section>`,
+        `<div class="user-account-guest"><h1>Do you want to turn on the guest account?</h1><p>If you turn on the guest account, people who do not have an account can use the guest account to log on to the computer. Password-protected files, folders, or settings are not accessible to guest users.</p><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default">Turn On the Guest Account</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
+      );
+      return;
+    }
+    showSubpage(
+      `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="help">Manage my network passwords</button><button type="button" data-user-accounts-action="help">Prevent a forgotten password</button><button type="button" data-user-accounts-action="change">Change another account</button><button type="button" data-user-accounts-action="create">Create a new account</button></section><section><h2>Learn About</h2>${learnLink("Deleting your own account")}${learnLink("Switching users")}${learnLink("Using a .NET Passport")}</section>`,
+      `<div class="user-account-administrator"><h1>What do you want to change about your<br>account?</h1><div class="user-account-summary"><img src="assets/xp/system/UserAdministrator.bmp" alt=""><span><strong>Administrator</strong><small>Computer administrator</small></span></div><div class="user-account-detail-links"><button type="button"><img src="assets/xp/icons/Go.png" alt="">Create a password</button><button type="button"><img src="assets/xp/icons/Go.png" alt="">Change my picture</button><button type="button"><img src="assets/xp/icons/Go.png" alt="">Set up my account to use a .NET Passport</button></div><p>The administrator account is only visible on the Welcome screen when no other user accounts exist (except the guest account), or when you start your computer in Safe Mode.</p></div>`,
+    );
+  };
+  const renderCreate = () => {
+    showSubpage(
+      "",
+      `<div class="user-account-create"><h1>Name the new account</h1><label for="new-account-name">Type a name for the new account:</label><input id="new-account-name" type="text" aria-label="New account name"><p>This name will appear on the <button type="button" data-user-accounts-action="help">Welcome screen</button> and on the <button type="button" data-user-accounts-action="help">Start menu</button>.</p><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default">Next &gt;</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
+    );
+    main.querySelector("input").focus();
+  };
+  const renderLogon = () => {
+    showSubpage(
+      `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="change">Manage accounts</button></section><section><h2>Learn About</h2>${learnLink("Logon options")}</section>`,
+      `<div class="user-account-logon"><h1>Select logon and logoff options</h1><label><input type="checkbox" checked><span><strong>Use the Welcome screen</strong><small>By using the Welcome screen, you can simply click your account name to log on. For added security, you can turn off this feature and use the classic logon prompt which requires users to type an account name.</small></span></label><label><input type="checkbox" checked><span><strong>Use Fast User Switching</strong><small>With Fast User Switching, you can quickly switch to another user account without having to close any programs. Then, when the other user is finished, you can switch back to your own account.</small></span></label><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default" data-user-accounts-action="home">Apply Options</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
+    );
+  };
+  content.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-user-accounts-action]")?.dataset
+      .userAccountsAction;
+    if (action === "home" || action === "back") renderHome();
+    else if (action === "change") renderChange();
+    else if (action === "administrator") renderAccount(false);
+    else if (action === "guest") renderAccount(true);
+    else if (action === "create") renderCreate();
+    else if (action === "logon") renderLogon();
+    else if (action === "help") openHelpAndSupport();
+  });
+  renderHome();
+  return content;
+};
+
+const createAddRemoveProgramsContent = () => {
+  const content = document.createElement("div");
+  content.className = "add-remove-programs-content";
+  content.innerHTML = `
+    <nav class="add-remove-programs-nav" aria-label="Add or Remove Programs tasks">
+      <button type="button" data-add-remove-page="change" class="selected"><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><span>Change or<br>Remove<br>Programs</span></button>
+      <button type="button" data-add-remove-page="add"><img src="assets/xp/system/AddNewPrograms.png" alt=""><span>Add New<br>Programs</span></button>
+      <button type="button" data-add-remove-page="components"><img src="assets/xp/system/AddRemoveWindowsComponents.png" alt=""><span>Add/Remove<br>Windows<br>Components</span></button>
+      <button type="button" data-add-remove-page="defaults"><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><span>Set Program<br>Access and<br>Defaults</span></button>
+    </nav>
+    <main class="add-remove-programs-main"></main>`;
+  const main = content.querySelector(".add-remove-programs-main");
+  const selectPage = (page) =>
+    content
+      .querySelectorAll("[data-add-remove-page]")
+      .forEach((button) =>
+        button.classList.toggle(
+          "selected",
+          button.dataset.addRemovePage === page,
+        ),
+      );
+  const renderChange = () => {
+    selectPage("change");
+    main.innerHTML = `<div class="add-remove-programs-toolbar"><span>Currently installed programs:</span><label><input type="checkbox"> Show updates</label><label>Sort by: <select><option>Name</option><option>Size</option><option>Frequency of Use</option><option>Date Last Used</option></select></label></div><div class="add-remove-programs-list" aria-label="Currently installed programs"></div>`;
+  };
+  const renderAdd = () => {
+    selectPage("add");
+    main.innerHTML = `<section class="add-new-program-section"><h2>Add a program from CD-ROM or floppy disk</h2><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><p>To add a program from a CD-ROM or floppy disk, click CD or Floppy.</p><button type="button" class="xp-btn" data-add-remove-action="cd">CD or Floppy</button></section><section class="add-new-program-section"><h2>Add programs from Microsoft</h2><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><p>To add new Windows features, device drivers, and system updates over the Internet, click<br>Windows Update.</p><button type="button" class="xp-btn" data-add-remove-action="update">Windows Update</button></section>`;
+  };
+  const renderDefaults = () => {
+    selectPage("defaults");
+    main.innerHTML = `<div class="program-defaults-intro"><p>A program configuration specifies default programs for certain activities, such as Web browsing or sending e-mail, and which<br>programs are accessible from the Start menu, desktop, and other locations.</p><p>Choose a configuration:</p></div><div class="program-defaults-list"><label><input type="radio" name="program-default" value="microsoft"> Microsoft Windows <button type="button" aria-label="Expand Microsoft Windows">⌄</button></label><label><input type="radio" name="program-default" value="other"> Non-Microsoft <button type="button" aria-label="Expand Non-Microsoft">⌄</button></label><label class="selected"><input type="radio" name="program-default" value="custom" checked> Custom <button type="button" aria-label="Expand Custom">⌄</button></label></div><div class="program-defaults-buttons"><button type="button" class="xp-btn" data-add-remove-action="ok">OK</button><button type="button" class="xp-btn" data-add-remove-action="cancel">Cancel</button><button type="button" class="xp-btn" data-add-remove-action="help">Help</button></div>`;
+  };
+  content.addEventListener("click", (event) => {
+    const page = event.target.closest("[data-add-remove-page]")?.dataset
+      .addRemovePage;
+    if (page === "change") renderChange();
+    else if (page === "add") renderAdd();
+    else if (page === "components") {
+      selectPage("components");
+      const setup = XPDialogs.createDialog({ title: "Windows XP Setup" });
+      setup.el.classList.add("windows-setup-wait-dialog");
+      setup.body.innerHTML = "<p>Please wait...</p>";
+      setTimeout(() => setup.close("ready"), 1800);
+    } else if (page === "defaults") renderDefaults();
+    const action = event.target.closest("[data-add-remove-action]")?.dataset
+      .addRemoveAction;
+    if (action === "cd")
+      XPDialogs.alert(
+        "Please insert the program installation disc.",
+        "Install Program From Floppy Disk or CD-ROM",
+        "info",
+      );
+    else if (action === "update")
+      XPDialogs.alert(
+        "Windows Update is not available in this offline recreation.",
+        "Windows Update",
+        "info",
+      );
+    else if (action === "cancel") renderChange();
+    else if (action === "help") openHelpAndSupport();
+  });
+  renderChange();
+  return content;
+};
+
+const createSecurityCenterContent = () => {
+  const content = document.createElement("div");
+  content.className = "security-center-content";
+  content.innerHTML = `
+    <header class="security-center-header">
+      <img src="assets/xp/system/SecurityCenterHeader.png" alt="">
+      <span><strong>Security Center</strong><small>Help protect your PC</small></span>
+    </header>
+    <div class="security-center-body">
+      <aside class="security-center-resources">
+        <section>
+          <h2><img src="assets/xp/system/SecurityHelp.png" alt=""> Resources <img class="security-section-toggle" src="assets/xp/system/SecurityCollapse.png" alt=""></h2>
+          <button type="button">Get the latest security and virus<br>information from Microsoft</button>
+          <button type="button">Check for the latest updates from<br>Windows Update</button>
+          <button type="button">Get support for security-related<br>issues</button>
+          <button type="button">Get help about Security Center</button>
+          <button type="button">Change the way Security Center<br>alerts me</button>
+        </section>
+      </aside>
+      <main class="security-center-main">
+        <h1>Security essentials</h1>
+        <p>Security Center helps you manage your Windows security settings. To help protect your computer,<br>make sure the three security essentials are marked ON. If the settings are not ON, follow the<br>recommendations. To return to the Security Center later, open Control Panel.<br><a href="#">What's new in Windows to help protect my computer?</a></p>
+        <section class="security-status security-firewall">
+          <h2><img src="assets/xp/system/SecurityFirewall.png" alt=""> <span>Firewall</span><strong><img src="assets/xp/system/SecurityStatusGreen.png" alt=""> ON</strong><button type="button" aria-label="Expand Firewall"><img src="assets/xp/system/SecurityExpand.png" alt=""></button></h2>
+        </section>
+        <section class="security-status security-updates">
+          <h2><img src="assets/xp/system/SecurityAutomaticUpdates.png" alt=""> <span>Automatic Updates</span><strong><img data-security-update-indicator src="assets/xp/system/SecurityStatusYellow.png" alt=""> <b data-security-update-status>CHECK SETTINGS</b></strong><button type="button" aria-label="Collapse Automatic Updates"><img src="assets/xp/system/SecurityCollapse.png" alt=""></button></h2>
+          <div><p>Automatic Updates is not yet configured for this computer. Click Turn on Automatic Updates to<br>have Windows automatically keep your computer current with important updates<br>(recommended). <a href="#">How does Automatic Updates help protect my computer?</a></p><button type="button" class="xp-btn" data-security-action="updates">Turn on Automatic Updates</button></div>
+        </section>
+        <section class="security-status security-virus">
+          <h2><img src="assets/xp/system/SecurityVirusProtection.png" alt=""> <span>Virus Protection</span><strong><img src="assets/xp/system/SecurityStatusRed.png" alt=""> NOT FOUND</strong><button type="button" aria-label="Collapse Virus Protection"><img src="assets/xp/system/SecurityCollapse.png" alt=""></button></h2>
+          <div><p>Windows did not find antivirus software on this computer. Antivirus software helps protect your<br>computer against viruses and other security threats. Click Recommendations for<br>suggested actions you can take. <a href="#">How does antivirus software help protect my computer?</a></p><p>Note: Windows does not detect all antivirus programs.</p><button type="button" class="xp-btn">Recommendations...</button></div>
+        </section>
+        <h2 class="security-manage-heading">Manage security settings for:</h2>
+        <div class="security-manage-links">
+          <button type="button"><img src="assets/xp/icons/InternetOptions.png" alt="">Internet Options</button>
+          <button type="button"><img src="assets/xp/icons/WindowsFirewall.png" alt="">Windows Firewall</button>
+          <button type="button"><img src="assets/xp/system/SecurityAutomaticUpdates.png" alt="">Automatic Updates</button>
+        </div>
+      </main>
+    </div>
+    <footer>At Microsoft, we care about your privacy. Please read our <a href="#">privacy statement.</a></footer>`;
+  content.addEventListener("click", (event) => {
+    if (event.target.closest('[data-security-action="updates"]')) {
+      content.querySelector("[data-security-update-status]").textContent = "ON";
+      content.querySelector("[data-security-update-indicator]").src =
+        "assets/xp/system/SecurityStatusGreen.png";
+      content.querySelector(".security-updates").classList.add("enabled");
+      event.target.closest("button").disabled = true;
+    }
+  });
+  return content;
+};
+
 const createSystemWindowContent = (shortcutId, win) => {
   const content = document.createElement("div");
   content.className = "explorer-content";
+
+  if (shortcutId === "__control-panel") return createControlPanelContent();
+  if (shortcutId === "__user-accounts") return createUserAccountsContent();
+  if (shortcutId === "__add-remove-programs")
+    return createAddRemoveProgramsContent();
+  if (shortcutId === "__security-center") return createSecurityCenterContent();
+
+  if (shortcutId === "__printers") {
+    content.className = "explorer-content printers-content";
+    content.innerHTML = `
+      <div class="explorer-chrome printers-chrome">
+        <div class="explorer-menu-row">
+          <div class="explorer-menu-bar" role="menubar"><button data-printers-menu="file">File</button><button data-printers-menu="edit">Edit</button><button data-printers-menu="view">View</button><button data-printers-menu="favorites">Favorites</button><button data-printers-menu="tools">Tools</button><button data-printers-menu="help">Help</button></div>
+          <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
+        </div>
+        <div class="explorer-toolbar">
+          <button disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+          <button disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+          <button data-printers-action="control-panel" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+          <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+          <button data-printers-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+          <button data-printers-action="folders"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+          <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+          <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        </div>
+        <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><input type="text" aria-label="Address" value="Printers and Faxes" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+        <div class="game-menu explorer-menu printers-menu" role="menu" hidden></div>
+      </div>
+      <div class="printers-body">
+        <aside class="explorer-sidebar printers-sidebar">
+          <section><h3><button type="button" class="explorer-section-toggle">Printer Tasks<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="add"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><span>Add a printer</span></button><button data-printers-action="fax"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><span>Set up faxing</span></button></div></section>
+          <section><h3><button type="button" class="explorer-section-toggle">See Also<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="troubleshoot"><span>Troubleshoot printing</span></button><button data-printers-action="help"><span>Get help with printing</span></button></div></section>
+          <section><h3><button type="button" class="explorer-section-toggle">Other Places<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="control-panel"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span></button><button data-printers-action="scanners"><img src="assets/xp/icons/MyPictures.png" alt=""><span>Scanners and Cameras</span></button><button data-printers-action="documents"><img src="assets/xp/icons/MyDocuments.png" alt=""><span>My Documents</span></button><button data-printers-action="pictures"><img src="assets/xp/icons/MyPictures.png" alt=""><span>My Pictures</span></button><button data-printers-action="computer"><img src="assets/xp/icons/MyComputer.png" alt=""><span>My Computer</span></button></div></section>
+          <section class="collapsed"><h3><button type="button" class="explorer-section-toggle">Details<span aria-hidden="true">⌄</span></button></h3></section>
+        </aside>
+        <main class="printers-main"></main>
+      </div>`;
+    return content;
+  }
+
+  if (shortcutId === "__help") {
+    content.className = "help-center-content";
+    content.innerHTML = `
+      <nav class="help-center-toolbar" aria-label="Help navigation">
+        <button type="button" disabled><span class="help-toolbar-icon help-toolbar-back"></span><span>Back</span><b aria-hidden="true">⌄</b></button>
+        <button type="button" disabled aria-label="Forward"><span class="help-toolbar-icon help-toolbar-forward"></span></button>
+        <button type="button" data-help-action="home" aria-label="Home"><span class="help-toolbar-icon help-toolbar-home"></span></button>
+        <button type="button" data-help-action="index"><span class="help-toolbar-icon help-toolbar-index"></span><span>Index</span></button>
+        <button type="button" data-help-action="favorites"><span class="help-toolbar-icon help-toolbar-favorites"></span><span>Favorites</span></button>
+        <button type="button" data-help-action="history"><span class="help-toolbar-icon help-toolbar-history"></span><span>History</span></button>
+        <button type="button" data-help-action="support"><span class="help-toolbar-icon help-toolbar-support"></span><span>Support</span></button>
+        <button type="button" data-help-action="options"><span class="help-toolbar-icon help-toolbar-options"></span><span>Options</span></button>
+      </nav>
+      <header class="help-center-search">
+        <form><label for="help-query">Search</label><input id="help-query" type="search"><button type="submit" aria-label="Search"><img src="assets/xp/icons/Go.png" alt=""></button><button type="button" class="help-search-options" data-help-action="search-options">Set search options</button></form>
+        <div class="help-center-brand"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><strong>Help and Support Center</strong><small>Windows XP Professional</small></div>
+      </header>
+      <main class="help-center-home">
+        <section class="help-topic-column">
+          <h1>Pick a Help topic</h1>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicComputer.png" alt=""><div><button data-help-topic>What's new in Windows XP</button><button data-help-topic>Music, video, games, and photos</button><button data-help-topic>Windows basics</button><button data-help-topic>Protecting your PC: security basics</button></div></div>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicNetwork.png" alt=""><div><button data-help-topic>Networking and the Web</button><button data-help-topic>Working remotely</button><button data-help-topic>System administration</button></div></div>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicAccessibility.png" alt=""><div><button data-help-topic>Customizing your computer</button><button data-help-topic>Accessibility</button></div></div>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicHardware.png" alt=""><div><button data-help-topic>Printing and faxing</button><button data-help-topic>Performance and maintenance</button><button data-help-topic>Hardware</button><button data-help-topic>Fixing a problem</button><button data-help-topic>Send your feedback to Microsoft</button></div></div>
+        </section>
+        <section class="help-task-column">
+          <h1>Ask for assistance</h1>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Invite a friend to connect to your computer with <strong>Remote Assistance</strong></button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Get support, or find information in Windows XP <strong>newsgroups</strong></button>
+          <h1>Pick a task</h1>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Keep your computer up-to-date with <strong>Windows Update</strong></button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Find compatible hardware and software for Windows XP</button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Undo changes to your computer with <strong>System Restore</strong></button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Use <strong>Tools</strong> to view your computer information and diagnose problems</button>
+          <div class="help-did-you-know"><h1>Did you know?</h1><span>Updating...</span></div>
+        </section>
+      </main>`;
+    return content;
+  }
 
   if (shortcutId === "__astro-settings") {
     content.className = "project-settings-content";
@@ -2101,7 +3212,7 @@ const createSystemWindowContent = (shortcutId, win) => {
             </div>
             <div class="display-panel" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop" hidden>
                 <div class="display-preview" aria-label="Desktop preview">
-                    <img src="assets/xp/displaysettings.png" alt="">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="display-preview-surface"></div>
                 </div>
                 <div class="display-desktop-controls">
@@ -2202,12 +3313,12 @@ const createSystemWindowContent = (shortcutId, win) => {
                         <span>Window Text</span>
                         <b class="sample-scroll-up">▲</b><b class="sample-scroll-thumb">≡</b><b class="sample-scroll-down">▼</b>
                     </div>
-                    <img src="assets/xp/icons/recycler-full.png" alt="">
+                    <img src="assets/xp/icons/RecyclerFull.png" alt="">
                 </div>
             </div>
             <div class="display-panel" id="display-panel-saver" role="tabpanel" aria-labelledby="display-tab-saver" hidden>
                 <div class="display-saver-monitor" aria-label="Screen saver preview">
-                    <img src="assets/xp/displaysettings.png" alt="">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="screen-saver-preview"></div>
                 </div>
                 <fieldset class="display-saver-group"><legend>Screen saver</legend>
@@ -2247,10 +3358,10 @@ const createSystemWindowContent = (shortcutId, win) => {
             </div>
             <div class="display-panel" id="display-panel-settings" role="tabpanel" aria-labelledby="display-tab-settings" hidden>
                 <div class="display-settings-monitor" aria-label="Display preview">
-                    <img src="assets/xp/displaysettings.png" alt="">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="display-resolution-preview"><span></span></div>
                 </div>
-                <p class="display-device-label">Display:<br>(Default Monitor) on Astro Flash Display</p>
+                <p class="display-device-label">Display:<br>Default Monitor on Cirrus Logic 5446 Compatible Graphics Adapter</p>
                 <div class="display-settings-groups">
                     <fieldset class="display-resolution-group"><legend>Screen resolution</legend>
                         <div class="resolution-endpoints"><span>Less</span><span>More</span></div>
@@ -2259,7 +3370,7 @@ const createSystemWindowContent = (shortcutId, win) => {
                         <p class="display-resolution-value"></p>
                     </fieldset>
                     <fieldset class="display-color-quality"><legend>Color quality</legend>
-                        <select disabled><option>Highest (32 bit)</option></select>
+                        <select disabled><option>High (24 bit)</option></select>
                         <div class="display-color-spectrum"></div>
                     </fieldset>
                 </div>
@@ -2286,7 +3397,7 @@ const createSystemWindowContent = (shortcutId, win) => {
           <h1>Internet Games</h1>
           <p>Find and install playable Flash games from Flashpoint Archive.</p>
         </div>
-        <img src="assets/xp/icons/Programs.png" alt="">
+        <img src="assets/xp/icons/AddRemovePrograms.png" alt="">
       </header>
       <div class="internet-games-tabs" role="tablist" aria-label="Internet Games">
         <button type="button" role="tab" aria-selected="true" data-internet-tab="browse">Find Games</button>
@@ -2314,27 +3425,62 @@ const createSystemWindowContent = (shortcutId, win) => {
   if (shortcutId === "__search") {
     content.className = "search-companion-content";
     content.innerHTML = `
-            <aside class="search-companion-panel">
-                <h2>Search Companion</h2>
-                <label for="search-filename">All or part of the file name:</label>
-                <input id="search-filename" class="xp-input" type="search" autocomplete="off">
-                <label for="search-location">Look in:</label>
-                <select id="search-location" class="xp-input"></select>
-                <label for="search-type">What do you want to find?</label>
-                <select id="search-type" class="xp-input">
-                    <option value="all">All files and folders</option>
-                    <option value="files">Files</option>
-                    <option value="folders">Folders</option>
-                    <option value="games">Games</option>
-                    <option value="applications">Applications</option>
-                </select>
-                <button type="button" class="xp-btn default" data-search-action="search">&nbsp;Search</button>
-            </aside>
-            <main class="search-results-pane">
-                <h2>Search Results</h2>
-                <p class="search-results-status" aria-live="polite">Enter a name and click Search.</p>
-                <div class="search-results-list" role="listbox" aria-label="Search results"></div>
-            </main>
+            <div class="explorer-chrome search-explorer-chrome">
+                <div class="explorer-menu-row">
+                    <div class="explorer-menu-bar" role="menubar"><button>File</button><button>Edit</button><button>View</button><button>Favorites</button><button>Tools</button><button>Help</button></div>
+                    <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
+                </div>
+                <div class="explorer-toolbar">
+                    <button disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+                    <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+                    <button class="search-toolbar-active"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
+                    <button><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+                    <span class="explorer-toolbar-separator" aria-hidden="true"></span>
+                    <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                </div>
+                <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/Search.png" alt=""><input type="text" aria-label="Address" value="Search Results" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+            </div>
+            <div class="search-column-header"><span>Search Companion</span><span><b>Name</b><b>In Folder</b><b>Size</b><b>Type</b></span></div>
+            <div class="search-companion-body">
+                <aside class="search-companion-panel">
+                    <section class="search-start-panel">
+                        <strong>What do you want to search for?</strong>
+                        <button type="button" data-search-kind="media">Pictures, music, or video</button>
+                        <button type="button" data-search-kind="documents">Documents (word processing, spreadsheet, etc.)</button>
+                        <button type="button" data-search-kind="all">All files and folders</button>
+                        <button type="button" data-search-kind="people">Computers or people</button>
+                        <button type="button" data-search-kind="help">Information in Help and Support Center</button>
+                        <span>You may also want to...</span>
+                        <button type="button" data-search-extra>Search the Internet</button>
+                        <button type="button" data-search-extra>Change preferences</button>
+                        <button type="button" data-search-extra>Turn off animated character</button>
+                    </section>
+                    <section class="search-form-panel" hidden>
+                        <button type="button" class="search-back" data-search-action="back">Back</button>
+                        <strong>Search by any or all of the criteria below.</strong>
+                        <label for="search-filename">All or part of the file name:</label>
+                        <input id="search-filename" class="xp-input" type="search" autocomplete="off">
+                        <label for="search-location">Look in:</label>
+                        <select id="search-location" class="xp-input"></select>
+                        <label for="search-type">What do you want to find?</label>
+                        <select id="search-type" class="xp-input">
+                            <option value="all">All files and folders</option>
+                            <option value="files">Files</option>
+                            <option value="folders">Folders</option>
+                            <option value="games">Games</option>
+                            <option value="applications">Applications</option>
+                        </select>
+                        <button type="button" class="xp-btn default" data-search-action="search">Search</button>
+                    </section>
+                    <img class="search-dog" src="assets/xp/SearchDog.bmp" alt="">
+                </aside>
+                <main class="search-results-pane">
+                    <p class="search-results-status" aria-live="polite">To start your search, follow the instructions in the left pane.</p>
+                    <div class="search-results-list" role="listbox" aria-label="Search results"></div>
+                </main>
+            </div>
         `;
     return content;
   }
@@ -2419,10 +3565,10 @@ const createSystemWindowContent = (shortcutId, win) => {
     [
       [
         "View System Information",
-        "explorerproperties.png",
+        "ExplorerProperties.png",
         openProjectSettings,
       ],
-      ["Add or remove programs", "Programs.png", openControlPanel],
+      ["Add or remove programs", "AddRemovePrograms.png", openControlPanel],
       ["Change a setting", "ControlPanel.png", openControlPanel],
     ].forEach(([label, icon, action]) =>
       appendSidebarAction(tasksBody, label, icon, action),
@@ -2474,7 +3620,7 @@ const createSystemWindowContent = (shortcutId, win) => {
     appendSidebarAction(
       placesBody,
       "My Documents",
-      "mydocuments.png",
+      "MyDocuments.png",
       () => navigateExplorer(win, fs.MY_DOCUMENTS),
       "documents",
     );
@@ -2526,7 +3672,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   chrome.innerHTML = `
         <div class="explorer-menu-row">
             <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
-            <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/ms.png" alt=""></div>
+            <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
         </div>
         <div class="explorer-toolbar">
             <button data-explorer-action="back"><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
@@ -2534,9 +3680,9 @@ const createSystemWindowContent = (shortcutId, win) => {
             <button data-explorer-action="up" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
             <button data-explorer-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/FolderView.png" alt=""> Folders</button>
+            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderView-Classic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
         </div>
         <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/MyComputer.png" alt=""><input type="text" aria-label="Address"></span><button type="button" data-explorer-action="go" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
     `;
@@ -2545,12 +3691,18 @@ const createSystemWindowContent = (shortcutId, win) => {
   body.append(sidebar, main);
   const status = document.createElement("div");
   status.className = "explorer-status";
+  status.hidden = true;
   content.append(chrome, body, status);
   const explorerMenu = document.createElement("div");
   explorerMenu.className = "game-menu explorer-menu";
   explorerMenu.setAttribute("role", "menu");
   explorerMenu.hidden = true;
   chrome.appendChild(explorerMenu);
+  const explorerSubmenu = document.createElement("div");
+  explorerSubmenu.className = "game-menu explorer-menu explorer-submenu";
+  explorerSubmenu.setAttribute("role", "menu");
+  explorerSubmenu.hidden = true;
+  chrome.appendChild(explorerSubmenu);
   const explorerMenuLabels = {
     file: "&File",
     edit: "&Edit",
@@ -2562,6 +3714,71 @@ const createSystemWindowContent = (shortcutId, win) => {
   const explorerMenuButtons = [
     ...chrome.querySelectorAll("[data-explorer-menu]"),
   ];
+  const explorerSubmenus = {
+    "folder-menu": [
+      { label: "Explore", action: "explore", default: true },
+      { label: "Open", action: "open-current" },
+      { label: "Search...", action: "search-current" },
+      { label: "Manage", action: "manage" },
+      { separator: true },
+      { label: "Map Network Drive...", action: "map-network-drive" },
+      {
+        label: "Disconnect Network Drive...",
+        action: "disconnect-network-drive",
+      },
+      { separator: true },
+      { label: "Create Shortcut", action: "create-shortcut-current" },
+      { label: "Delete", action: "delete-current" },
+      { separator: true },
+      { label: "Properties", action: "properties-current" },
+    ],
+    toolbars: [
+      { label: "Standard Buttons", action: "standard-buttons", checked: true },
+      { label: "Address Bar", action: "address-bar", checked: true },
+      { label: "Links", action: "links-toolbar" },
+      { separator: true },
+      { label: "Lock the Toolbars", action: "lock-toolbars", checked: true },
+      { label: "Customize...", action: "customize-toolbar" },
+    ],
+    "explorer-bar": [
+      { label: "Search", action: "search-current", shortcut: "Ctrl+E" },
+      { label: "Favorites", action: "favorites-bar", shortcut: "Ctrl+I" },
+      { label: "History", action: "history-bar", shortcut: "Ctrl+H" },
+      { label: "Folders", action: "folders-bar", checked: true },
+      { separator: true },
+      { label: "Tip of the Day", action: "tip-of-day" },
+    ],
+    "arrange-icons": [
+      { label: "Name", action: "arrange-name" },
+      { label: "Type", action: "arrange-type", radio: true, checked: true },
+      { label: "Total Size", action: "arrange-total-size" },
+      { label: "Free Space", action: "arrange-free-space" },
+      { label: "Comments", action: "arrange-comments" },
+      { separator: true },
+      { label: "Show in Groups", action: "show-groups", checked: true },
+      { label: "Auto Arrange", action: "auto-arrange", disabled: true },
+      { label: "Align to Grid", action: "align-grid", disabled: true },
+    ],
+    "go-to": [
+      {
+        label: "Back",
+        action: "back",
+        shortcut: "Alt+Left Arrow",
+        disabled: true,
+      },
+      {
+        label: "Forward",
+        action: "forward",
+        shortcut: "Alt+Right Arrow",
+        disabled: true,
+      },
+      { label: "Up One Level", action: "up-one-level" },
+      { separator: true },
+      { label: "Home Page", action: "home-page", shortcut: "Alt+Home" },
+      { separator: true },
+      { label: "My Computer", action: "my-computer", checked: true },
+    ],
+  };
   explorerMenuButtons.forEach((button) => {
     const { key } = setAccessKeyText(
       button,
@@ -2572,64 +3789,218 @@ const createSystemWindowContent = (shortcutId, win) => {
     button.setAttribute("aria-haspopup", "menu");
     button.setAttribute("aria-expanded", "false");
   });
-  const showExplorerMenu = (name, button) => {
+  const renderExplorerMenuEntries = (menu, entries, commandAttribute) => {
+    menu.replaceChildren();
+    entries.forEach((entry) => {
+      if (entry.separator) {
+        const separator = document.createElement("div");
+        separator.className = "game-menu-separator";
+        separator.setAttribute("role", "separator");
+        menu.appendChild(separator);
+        return;
+      }
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "game-menu-item";
+      item.dataset[commandAttribute] = entry.action;
+      item.disabled = !!entry.disabled;
+      item.setAttribute("role", "menuitem");
+      if (entry.default) item.classList.add("explorer-menu-default");
+      if (entry.checked) item.classList.add("checked");
+      if (entry.radio || entry.checked) {
+        const check = document.createElement("span");
+        check.className = "menu-check explorer-menu-radio";
+        check.textContent = entry.checked ? (entry.radio ? "•" : "✓") : "";
+        item.appendChild(check);
+      }
+      const label = document.createElement("span");
+      label.textContent = entry.label;
+      item.appendChild(label);
+      if (entry.shortcut) {
+        const shortcut = document.createElement("span");
+        shortcut.className = "menu-shortcut";
+        shortcut.textContent = entry.shortcut;
+        item.appendChild(shortcut);
+      }
+      if (entry.submenu) {
+        item.classList.add("has-submenu");
+        item.setAttribute("aria-haspopup", "menu");
+        const arrow = document.createElement("span");
+        arrow.className = "explorer-menu-arrow";
+        arrow.textContent = "▶";
+        item.appendChild(arrow);
+      }
+      menu.appendChild(item);
+    });
+  };
+  const showExplorerSubmenu = (name, parentItem, focusFirst = false) => {
+    const entries = explorerSubmenus[name];
+    if (!entries) return false;
+    renderExplorerMenuEntries(explorerSubmenu, entries, "explorerSubcommand");
+    explorerSubmenu.dataset.explorerSubmenuName = name;
+    explorerSubmenu.dataset.parentCommand = name;
+    explorerSubmenu.style.left = `${explorerMenu.offsetLeft + explorerMenu.offsetWidth - 3}px`;
+    explorerSubmenu.style.top = `${explorerMenu.offsetTop + parentItem.offsetTop - 1}px`;
+    explorerSubmenu.hidden = false;
+    if (focusFirst)
+      explorerSubmenu.querySelector("button:not(:disabled)")?.focus();
+    return true;
+  };
+  const showExplorerMenu = (name, button, focusFirst = false) => {
     const selected = selectedExplorerNodes(win);
     const protectedSelection = selected.some((id) => fs.isProtected(id));
     const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
       win.currentFolderId,
     );
+    const currentFolderName = fs.getNode(win.currentFolderId)?.name || "Folder";
     const actions = {
       file: [
-        ["New Folder", "new", !writable],
-        ["Close", "close"],
+        { label: "Create Shortcut", action: "create-shortcut", disabled: true },
+        {
+          label: "Delete",
+          action:
+            win.currentFolderId === fs.MY_COMPUTER
+              ? "delete-current"
+              : "delete",
+          disabled:
+            win.currentFolderId !== fs.MY_COMPUTER &&
+            (!selected.length || protectedSelection),
+        },
+        {
+          label: "Rename",
+          action:
+            win.currentFolderId === fs.MY_COMPUTER
+              ? "rename-current"
+              : "rename",
+          disabled:
+            win.currentFolderId !== fs.MY_COMPUTER &&
+            (selected.length !== 1 || protectedSelection),
+        },
+        { label: "Properties", action: "properties-current" },
+        { separator: true },
+        { label: currentFolderName, action: "folder-menu", submenu: true },
+        { separator: true },
+        { label: "Close", action: "close" },
       ],
       edit: [
-        ["Cut", "cut", !selected.length || protectedSelection],
-        ["Copy", "copy", !selected.length],
-        ["Paste", "paste", !writable || !fileOps.canPaste(win.currentFolderId)],
-        ["Delete", "delete", !selected.length || protectedSelection],
-        ["Rename", "rename", selected.length !== 1 || protectedSelection],
+        { label: "Undo", action: "undo", shortcut: "Ctrl+Z", disabled: true },
+        { separator: true },
+        {
+          label: "Cut",
+          action: "cut",
+          shortcut: "Ctrl+X",
+          disabled: !selected.length || protectedSelection,
+        },
+        {
+          label: "Copy",
+          action: "copy",
+          shortcut: "Ctrl+C",
+          disabled: !selected.length,
+        },
+        {
+          label: "Paste",
+          action: "paste",
+          shortcut: "Ctrl+V",
+          disabled: !writable || !fileOps.canPaste(win.currentFolderId),
+        },
+        { label: "Paste Shortcut", action: "paste-shortcut", disabled: true },
+        { separator: true },
+        { label: "Select All", action: "select-all", shortcut: "Ctrl+A" },
+        { label: "Invert Selection", action: "invert-selection" },
       ],
       view: [
-        ["Thumbnails", "thumbnails"],
-        ["Tiles", "tiles"],
-        ["Icons", "icons"],
-        ["List", "list"],
-        ["Details", "details"],
+        { label: "Toolbars", action: "toolbars", submenu: true },
+        { label: "Status Bar", action: "status-bar" },
+        { label: "Explorer Bar", action: "explorer-bar", submenu: true },
+        { separator: true },
+        {
+          label: "Thumbnails",
+          action: "thumbnails",
+          radio: true,
+          checked: win.explorerView === "thumbnails",
+        },
+        {
+          label: "Tiles",
+          action: "tiles",
+          radio: true,
+          checked: (win.explorerView || "tiles") === "tiles",
+        },
+        {
+          label: "Icons",
+          action: "icons",
+          radio: true,
+          checked: win.explorerView === "icons",
+        },
+        {
+          label: "List",
+          action: "list",
+          radio: true,
+          checked: win.explorerView === "list",
+        },
+        {
+          label: "Details",
+          action: "details",
+          radio: true,
+          checked: win.explorerView === "details",
+        },
+        { separator: true },
+        { label: "Arrange Icons By", action: "arrange-icons", submenu: true },
+        { separator: true },
+        { label: "Choose Details...", action: "choose-details" },
+        { label: "Go To", action: "go-to", submenu: true },
+        { label: "Refresh", action: "refresh" },
       ],
-      favorites: [["My Documents", "documents"]],
-      tools: [["Properties", "properties", selected.length !== 1]],
-      help: [["About Astro Flash", "about"]],
+      favorites: [
+        { label: "Add to Favorites...", action: "add-favorite" },
+        { label: "Organize Favorites...", action: "organize-favorites" },
+        { separator: true },
+        { label: "Links", action: "links", submenu: true },
+        { label: "MSN.com", action: "msn" },
+        { label: "Radio Station Guide", action: "radio-guide" },
+      ],
+      tools: [
+        { label: "Map Network Drive...", action: "map-network-drive" },
+        {
+          label: "Disconnect Network Drive...",
+          action: "disconnect-network-drive",
+        },
+        { label: "Synchronize...", action: "synchronize" },
+        { separator: true },
+        { label: "Folder Options...", action: "folder-options" },
+      ],
+      help: [
+        { label: "Help and Support Center", action: "help-center" },
+        { separator: true },
+        { label: "Is this copy of Windows legal?", action: "windows-legal" },
+        { label: "About Windows", action: "about-windows" },
+      ],
     }[name];
-    explorerMenu.replaceChildren();
-    actions.forEach(([label, action, disabled]) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "game-menu-item";
-      item.textContent = label;
-      item.dataset.explorerCommand = action;
-      item.disabled = !!disabled;
-      item.setAttribute("role", "menuitem");
-      explorerMenu.appendChild(item);
-    });
+    explorerMenu.dataset.explorerMenuName = name;
+    renderExplorerMenuEntries(explorerMenu, actions, "explorerCommand");
+    explorerSubmenu.hidden = true;
     explorerMenu.hidden = false;
     explorerMenuButtons.forEach((entry) =>
       entry.setAttribute("aria-expanded", String(entry === button)),
     );
     explorerMenu.style.left = `${button.offsetLeft}px`;
     explorerMenu.style.top = `${button.offsetTop + button.offsetHeight}px`;
-    explorerMenu.querySelector("button:not(:disabled)")?.focus();
+    if (focusFirst)
+      explorerMenu.querySelector("button:not(:disabled)")?.focus();
   };
   chrome.addEventListener("click", (event) => {
     const menuButton = event.target.closest("[data-explorer-menu]");
     const menuName = menuButton?.dataset.explorerMenu;
     if (menuName) {
-      showExplorerMenu(menuName, menuButton);
+      showExplorerMenu(menuName, menuButton, false);
       return;
     }
     const commandButton = event.target.closest("[data-explorer-command]");
     const command = commandButton?.dataset.explorerCommand;
     if (command) {
+      if (commandButton.classList.contains("has-submenu")) {
+        showExplorerSubmenu(command, commandButton, false);
+        return;
+      }
       const selected = selectedExplorerNodes(win);
       if (
         command === "new" &&
@@ -2645,6 +4016,12 @@ const createSystemWindowContent = (shortcutId, win) => {
       )
         pasteIntoFolder(win.currentFolderId);
       if (command === "delete") confirmRecycleDelete(selected);
+      if (command === "delete-current" || command === "rename-current")
+        XPDialogs.alert(
+          `Cannot ${command === "delete-current" ? "delete" : "rename"} My Computer.`,
+          "Windows Explorer",
+          "info",
+        );
       if (command === "rename") {
         const name = window.prompt("Rename", fs.getNode(selected[0]).name);
         if (name !== null) fileOps.rename(selected[0], name);
@@ -2656,9 +4033,88 @@ const createSystemWindowContent = (shortcutId, win) => {
         renderExplorerItems(win);
       }
       if (command === "documents") openSystemWindow("__my-documents");
-      if (command === "properties") XPDialogs.properties(selected[0]);
-      if (command === "about") openProjectSettings();
+      if (command === "properties-current")
+        openShellProperties(selected[0] || win.currentFolderId);
+      if (command === "select-all")
+        win.el
+          .querySelectorAll(".explorer-item")
+          .forEach((item) => item.classList.add("selected"));
+      if (command === "invert-selection")
+        win.el
+          .querySelectorAll(".explorer-item")
+          .forEach((item) => item.classList.toggle("selected"));
+      if (command === "refresh") renderExplorerItems(win);
+      if (command === "help-center") openHelpAndSupport();
+      if (command === "about-windows") openAboutWindows();
+      if (
+        [
+          "add-favorite",
+          "organize-favorites",
+          "msn",
+          "radio-guide",
+          "map-network-drive",
+          "disconnect-network-drive",
+          "synchronize",
+          "folder-options",
+          "windows-legal",
+          "choose-details",
+        ].includes(command)
+      )
+        XPDialogs.alert(
+          "This Windows XP feature is not available in Astro Flash.",
+          commandButton.textContent.trim() || "Windows Explorer",
+          "info",
+        );
       explorerMenu.hidden = true;
+      explorerSubmenu.hidden = true;
+      explorerMenuButtons.forEach((button) =>
+        button.setAttribute("aria-expanded", "false"),
+      );
+      return;
+    }
+    const subcommandButton = event.target.closest("[data-explorer-subcommand]");
+    const subcommand = subcommandButton?.dataset.explorerSubcommand;
+    if (subcommand) {
+      if (subcommand === "search-current") openSearchDialog();
+      if (subcommand === "folders-bar") {
+        content.classList.add("folders-visible");
+        chrome
+          .querySelector('[data-explorer-action="folders"]')
+          ?.setAttribute("aria-pressed", "true");
+      }
+      if (subcommand === "up-one-level") {
+        const parent =
+          fs.getParent(win.currentFolderId) || fs.getNode(fs.DESKTOP);
+        if (parent) navigateExplorer(win, parent.id);
+      }
+      if (subcommand === "my-computer") navigateExplorer(win, fs.MY_COMPUTER);
+      if (subcommand === "properties-current")
+        openShellProperties(win.currentFolderId);
+      if (
+        [
+          "manage",
+          "map-network-drive",
+          "disconnect-network-drive",
+          "create-shortcut-current",
+          "delete-current",
+          "standard-buttons",
+          "address-bar",
+          "links-toolbar",
+          "lock-toolbars",
+          "customize-toolbar",
+          "favorites-bar",
+          "history-bar",
+          "tip-of-day",
+          "home-page",
+        ].includes(subcommand)
+      )
+        XPDialogs.alert(
+          "This Windows XP feature is not available in Astro Flash.",
+          subcommandButton.textContent.trim() || "Windows Explorer",
+          "info",
+        );
+      explorerMenu.hidden = true;
+      explorerSubmenu.hidden = true;
       explorerMenuButtons.forEach((button) =>
         button.setAttribute("aria-expanded", "false"),
       );
@@ -2670,7 +4126,11 @@ const createSystemWindowContent = (shortcutId, win) => {
     if (action === "back") explorerBack(win);
     if (action === "forward") explorerForward(win);
     if (action === "up") {
-      const parent = fs.getParent(win.currentFolderId);
+      const parent =
+        fs.getParent(win.currentFolderId) ||
+        ([fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId)
+          ? fs.getNode(fs.DESKTOP)
+          : null);
       if (parent) navigateExplorer(win, parent.id);
     }
     if (action === "folders") {
@@ -2692,6 +4152,17 @@ const createSystemWindowContent = (shortcutId, win) => {
       else input.value = fs.getPath(win.currentFolderId);
     }
   });
+  explorerMenu.addEventListener("pointerover", (event) => {
+    const parentItem = event.target.closest(".has-submenu");
+    if (parentItem)
+      showExplorerSubmenu(
+        parentItem.dataset.explorerCommand,
+        parentItem,
+        false,
+      );
+    else if (event.target.closest(".game-menu-item"))
+      explorerSubmenu.hidden = true;
+  });
   chrome.querySelector("input").addEventListener("change", (event) => {
     const destination = fs.resolvePath(event.target.value);
     if (destination && fs.getNode(destination)?.type === "folder")
@@ -2704,6 +4175,7 @@ const createSystemWindowContent = (shortcutId, win) => {
         (button) => button.getAttribute("aria-expanded") === "true",
       );
       explorerMenu.hidden = true;
+      explorerSubmenu.hidden = true;
       explorerMenuButtons.forEach((button) =>
         button.setAttribute("aria-expanded", "false"),
       );
@@ -2717,7 +4189,7 @@ const createSystemWindowContent = (shortcutId, win) => {
       );
       if (target) {
         event.preventDefault();
-        showExplorerMenu(target.dataset.explorerMenu, target);
+        showExplorerMenu(target.dataset.explorerMenu, target, true);
       }
       return;
     }
@@ -2743,16 +4215,67 @@ const createSystemWindowContent = (shortcutId, win) => {
                     explorerMenuButtons.length
                 ];
       if (event.key === "ArrowDown")
-        showExplorerMenu(heading.dataset.explorerMenu, heading);
+        showExplorerMenu(heading.dataset.explorerMenu, heading, true);
       else {
         target.focus();
-        showExplorerMenu(target.dataset.explorerMenu, target);
+        showExplorerMenu(target.dataset.explorerMenu, target, true);
       }
       return;
     }
     const menuItems = [
       ...explorerMenu.querySelectorAll("button:not(:disabled)"),
     ];
+    const activeMenuItem = document.activeElement?.closest?.(
+      "[data-explorer-command]",
+    );
+    if (
+      event.key === "ArrowRight" &&
+      activeMenuItem?.classList.contains("has-submenu")
+    ) {
+      event.preventDefault();
+      showExplorerSubmenu(
+        activeMenuItem.dataset.explorerCommand,
+        activeMenuItem,
+        true,
+      );
+      return;
+    }
+    const activeSubmenuItem = document.activeElement?.closest?.(
+      "[data-explorer-subcommand]",
+    );
+    if (event.key === "ArrowLeft" && activeSubmenuItem) {
+      event.preventDefault();
+      const parent = explorerMenu.querySelector(
+        `[data-explorer-command="${CSS.escape(explorerSubmenu.dataset.parentCommand)}"]`,
+      );
+      explorerSubmenu.hidden = true;
+      parent?.focus();
+      return;
+    }
+    const submenuItems = [
+      ...explorerSubmenu.querySelectorAll("button:not(:disabled)"),
+    ];
+    if (
+      !explorerSubmenu.hidden &&
+      activeSubmenuItem &&
+      ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
+    ) {
+      event.preventDefault();
+      const index = submenuItems.indexOf(activeSubmenuItem);
+      const target =
+        event.key === "Home"
+          ? submenuItems[0]
+          : event.key === "End"
+            ? submenuItems.at(-1)
+            : submenuItems[
+                (index +
+                  (event.key === "ArrowDown" ? 1 : -1) +
+                  submenuItems.length) %
+                  submenuItems.length
+              ];
+      target?.focus();
+      return;
+    }
     if (
       !explorerMenu.hidden &&
       ["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)
@@ -2820,11 +4343,11 @@ const openDesktopItemsDialog = (ownerWindow) => {
         <label><input type="checkbox" disabled> My Network Places</label>
       </fieldset>
       <div class="desktop-icon-choices" role="listbox" aria-label="Desktop icons">
-        <button type="button" class="selected"><img src="assets/xp/icons/mycomputer.png" alt=""><span>My Computer</span></button>
-        <button type="button"><img src="assets/xp/icons/mydocuments.png" alt=""><span>My Documents</span></button>
+        <button type="button" class="selected"><img src="assets/xp/icons/MyComputer.png" alt=""><span>My Computer</span></button>
+        <button type="button"><img src="assets/xp/icons/MyDocuments.png" alt=""><span>My Documents</span></button>
         <button type="button"><img src="assets/xp/icons/MyNetworkPlaces.png" alt=""><span>My Network<br>Places</span></button>
-        <button type="button"><img src="assets/xp/icons/recycler-full.png" alt=""><span>Recycle Bin<br>(full)</span></button>
-        <button type="button"><img src="assets/xp/icons/recycler-empty.png" alt=""><span>Recycle Bin<br>(empty)</span></button>
+        <button type="button"><img src="assets/xp/icons/RecyclerFull.png" alt=""><span>Recycle Bin<br>(full)</span></button>
+        <button type="button"><img src="assets/xp/icons/RecyclerEmpty.png" alt=""><span>Recycle Bin<br>(empty)</span></button>
       </div>
       <div class="desktop-icon-actions"><button type="button" class="xp-btn">Change Icon...</button><button type="button" class="xp-btn">Restore Default</button></div>
       <fieldset class="desktop-cleanup-group"><legend>Desktop cleanup</legend>
@@ -3148,7 +4671,7 @@ const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {
   addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
     <div class="browse-location"><label>Look in:</label><span><img src="assets/xp/icons/MyPictures.png" alt="">My Pictures</span><button type="button" disabled>◀</button><button type="button" disabled>↥</button><button type="button" disabled>☆</button><button type="button" disabled>▦</button></div>
-    <div class="browse-body"><aside><button><img src="assets/xp/icons/RecentDocuments.png" alt="">My Recent<br>Documents</button><button><img src="assets/xp/icons/Programs.png" alt="">Desktop</button><button><img src="assets/xp/icons/mydocuments.png" alt="">My Documents</button><button><img src="assets/xp/icons/mycomputer.png" alt="">My Computer</button><button><img src="assets/xp/icons/MyNetworkPlaces.png" alt="">My Network</button></aside><main><button type="button" class="sample-pictures-folder"><span><i></i><i></i><i></i><i></i></span>Sample Pictures</button></main></div>
+    <div class="browse-body"><aside><button><img src="assets/xp/icons/RecentDocuments.png" alt="">My Recent<br>Documents</button><button><img src="assets/xp/icons/Programs.png" alt="">Desktop</button><button><img src="assets/xp/icons/MyDocuments.png" alt="">My Documents</button><button><img src="assets/xp/icons/MyComputer.png" alt="">My Computer</button><button><img src="assets/xp/icons/MyNetworkPlaces.png" alt="">My Network</button></aside><main><button type="button" class="sample-pictures-folder"><span><i></i><i></i><i></i><i></i></span>Sample Pictures</button></main></div>
     <div class="browse-fields"><label>File name:<input class="xp-input browse-file-name" readonly></label><label>Files of type:<select class="xp-select" disabled><option>Background Files</option></select></label></div>
   `;
   const buttons = document.createElement("div");
@@ -3251,7 +4774,9 @@ const wireDisplayProperties = (win) => {
     controls.fontSize.value = pending.fontSize;
     controls.resolution.value = pending.resolution;
     controls.resolutionSlider.value = String(
-      ["800x600", "1024x768", "1440x900", "auto"].indexOf(pending.resolution),
+      pending.resolution === "auto"
+        ? 1
+        : ["800x600", "1024x768", "1440x900"].indexOf(pending.resolution),
     );
     controls.clearImage.hidden = !pending.customWallpaper;
     controls.preview.style.backgroundColor = pending.backgroundColor;
@@ -3265,7 +4790,7 @@ const wireDisplayProperties = (win) => {
     const monitor = getSimulatedMonitorSize(pending.resolution);
     controls.resolutionValue.textContent =
       pending.resolution === "auto"
-        ? `Current browser size: ${window.innerWidth} by ${window.innerHeight} pixels`
+        ? `${window.innerWidth} by ${window.innerHeight} pixels`
         : `${pending.resolution.replace("x", " by ")} pixels${monitor.limited ? ` (limited to ${monitor.width} by ${monitor.height})` : ""}`;
     controls.apply.disabled =
       JSON.stringify(pending) === JSON.stringify(current);
@@ -3730,6 +5255,12 @@ const SHELL_COMMANDS = [
     run: () => openControlPanel(),
   },
   {
+    id: "system-properties",
+    title: "System Properties",
+    aliases: ["sysdm.cpl", "system properties"],
+    run: () => openSystemProperties(),
+  },
+  {
     id: "printers",
     title: "Printers and Faxes",
     aliases: ["printers", "printers and faxes"],
@@ -3864,11 +5395,28 @@ const searchVirtualNodes = ({
 const wireSearchCompanion = (win) => {
   const content = win.el.querySelector(".search-companion-content");
   if (!content) return;
+  const startPanel = content.querySelector(".search-start-panel");
+  const formPanel = content.querySelector(".search-form-panel");
   const query = content.querySelector("#search-filename");
   const location = content.querySelector("#search-location");
   const type = content.querySelector("#search-type");
   const status = content.querySelector(".search-results-status");
   const list = content.querySelector(".search-results-list");
+  const showForm = (kind = "all") => {
+    startPanel.hidden = true;
+    formPanel.hidden = false;
+    type.value = ["media", "documents"].includes(kind) ? "files" : "all";
+    query.focus();
+  };
+  content.querySelectorAll("[data-search-kind]").forEach((button) => {
+    button.addEventListener("click", () => showForm(button.dataset.searchKind));
+  });
+  content
+    .querySelector('[data-search-action="back"]')
+    .addEventListener("click", () => {
+      formPanel.hidden = true;
+      startPanel.hidden = false;
+    });
   [
     [fs.MY_COMPUTER, "My Computer"],
     [fs.DESKTOP, "Desktop"],
@@ -3947,7 +5495,6 @@ const wireSearchCompanion = (win) => {
   [location, type].forEach((control) =>
     control.addEventListener("change", render),
   );
-  query.focus();
 };
 
 const findBundledGameByTitle = (title) => {
@@ -4528,10 +6075,14 @@ const renderExplorerTaskPane = (win) => {
   if (isComputer) {
     addTask(
       "View System Information",
-      "explorerproperties.png",
+      "ExplorerProperties.png",
       openProjectSettings,
     );
-    addTask("Add or remove programs", "Programs.png", openControlPanel);
+    addTask(
+      "Add or remove programs",
+      "AddRemovePrograms.png",
+      openControlPanel,
+    );
     addTask("Change a setting", "ControlPanel.png", openControlPanel);
     return;
   }
@@ -4539,7 +6090,7 @@ const renderExplorerTaskPane = (win) => {
   if (isPictures) {
     addTask("View as a slide show", "MyPictures.png", null, true);
     addTask("Order prints online", "MyPictures.png", null, true);
-    addTask("Print pictures", "PrintersandFaxes.png", null, true);
+    addTask("Print pictures", "PrintersAndFaxes.png", null, true);
     return;
   }
 
@@ -4559,7 +6110,7 @@ const renderExplorerTaskPane = (win) => {
     () => fileOps.createFolder(win.currentFolderId, "New Folder"),
     !writable,
   );
-  addTask("Publish this folder to the Web", "Publishtoweb.png", null, true);
+  addTask("Publish this folder to the Web", "PublishToWeb.png", null, true);
   addTask("Share this folder", "SharedFolder.png", null, true);
 };
 
@@ -4793,7 +6344,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
             ? "assets/xp/icons/MyMusic.png"
             : folder.id === fs.MY_PICTURES
               ? "assets/xp/icons/MyPictures.png"
-              : "assets/xp/icons/mydocuments.png";
+              : "assets/xp/icons/MyDocuments.png";
     image.alt = "";
     titleIcon.appendChild(image);
   }
@@ -4815,14 +6366,15 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
               ? XP_ICON_PATHS["MyMusic.png"]
               : folder.id === fs.MY_PICTURES
                 ? XP_ICON_PATHS["MyPictures.png"]
-                : XP_ICON_PATHS["mydocuments.png"];
+                : XP_ICON_PATHS["MyDocuments.png"];
     }
     chrome.querySelector('[data-explorer-action="back"]').disabled =
       (win.historyIndex ?? 0) <= 0;
     chrome.querySelector('[data-explorer-action="forward"]').disabled =
       (win.historyIndex ?? -1) >= (win.history?.length ?? 0) - 1;
     chrome.querySelector('[data-explorer-action="up"]').disabled =
-      !folder.parent;
+      !folder.parent &&
+      ![fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId);
   }
 
   const heading = main.querySelector("h2");
@@ -4845,13 +6397,20 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   const myComputerGroup = (node) =>
     [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
       ? "Files Stored on This Computer"
-      : node.id === fs.DRIVE_F
+      : [fs.DRIVE_D, fs.DRIVE_F].includes(node.id)
         ? "Devices with Removable Storage"
         : "Hard Disk Drives";
   const myComputerGroupOrder = [
     "Files Stored on This Computer",
     "Hard Disk Drives",
     "Devices with Removable Storage",
+  ];
+  const myComputerOrder = [
+    fs.MY_MUSIC,
+    fs.MY_PICTURES,
+    fs.DRIVE_C,
+    fs.DRIVE_F,
+    fs.DRIVE_D,
   ];
   const children = [
     ...(folder.id === fs.MY_COMPUTER
@@ -4864,7 +6423,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
       folder.id === fs.MY_COMPUTER
         ? myComputerGroupOrder.indexOf(myComputerGroup(a)) -
             myComputerGroupOrder.indexOf(myComputerGroup(b)) ||
-          a.name.localeCompare(b.name)
+          myComputerOrder.indexOf(a.id) - myComputerOrder.indexOf(b.id)
         : a.type === b.type
           ? a.name.localeCompare(b.name)
           : a.type === "folder"
@@ -4918,13 +6477,31 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
 
     const label = document.createElement("span");
     const name = document.createElement("b");
-    name.textContent = node.name;
+    const myComputerNames = {
+      [fs.MY_MUSIC]: "Shared Documents",
+      [fs.MY_PICTURES]: "Administrator's Documents",
+      [fs.DRIVE_F]: "3½ Floppy (A:)",
+      [fs.DRIVE_D]: "GRTMPVOL_EN (D:)",
+    };
+    name.textContent =
+      folder.id === fs.MY_COMPUTER
+        ? myComputerNames[node.id] || node.name
+        : node.name;
     const description = document.createElement("small");
     description.textContent = explorerItemDescription(node);
     label.appendChild(name);
     if (folder.id !== fs.MY_COMPUTER) label.appendChild(description);
 
-    item.append(createExplorerIcon(node), label);
+    const itemIcon = createExplorerIcon(node);
+    if (
+      folder.id === fs.MY_COMPUTER &&
+      [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
+    ) {
+      itemIcon.querySelector("img").src = XP_ICON_PATHS["NewFolder.png"];
+    } else if (folder.id === fs.MY_COMPUTER && node.id === fs.DRIVE_D) {
+      itemIcon.querySelector("img").src = XP_ICON_PATHS["OpticalDrive.png"];
+    }
+    item.append(itemIcon, label);
     if (folder.id === fs.MY_COMPUTER) item.classList.add("my-computer-item");
     if (items.dataset.view === "details") {
       item.classList.add("explorer-details-row");
@@ -5084,12 +6661,12 @@ const openNotepad = (file = null) => {
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
-  const windowWidth = Math.min(600, desktopWidth - 16);
-  const windowHeight = Math.min(430, desktopHeight - 16);
+  const windowWidth = Math.min(768, desktopWidth - 16);
+  const windowHeight = Math.min(530, desktopHeight - 16);
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  el.style.left = `${Math.min(44, Math.max(8, desktopWidth - windowWidth))}px`;
+  el.style.top = `${Math.min(58, Math.max(8, desktopHeight - windowHeight))}px`;
 
   const content = el.querySelector(".window-content");
   content.className = "notepad-content";
@@ -5105,6 +6682,7 @@ const openNotepad = (file = null) => {
   editor.wrap = "off";
   const status = document.createElement("div");
   status.className = "notepad-status";
+  status.hidden = true;
   content.append(menuBar, editor, status);
   document.getElementById("desktop").appendChild(el);
 
@@ -5319,7 +6897,7 @@ const openNotepad = (file = null) => {
       ],
     ],
     ["F&ormat", [["&Word Wrap", "word-wrap", ""]]],
-    ["&View", [["&Status Bar", "status-bar", "", true]]],
+    ["&View", [["&Status Bar", "status-bar", ""]]],
     ["&Help", [["&About Notepad", "about", ""]]],
   ];
 
@@ -5473,15 +7051,34 @@ const openSystemWindow = (shortcutId) => {
   const isProjectSettings = shortcutId === "__astro-settings";
   const isInternetGames = shortcutId === "__internet-games";
   const isDisplayProperties = shortcutId === "__display-properties";
+  const isControlPanel = shortcutId === "__control-panel";
+  const isUserAccounts = shortcutId === "__user-accounts";
+  const isAddRemovePrograms = shortcutId === "__add-remove-programs";
+  const isSecurityCenter = shortcutId === "__security-center";
+  const isSearch = shortcutId === "__search";
+  const isPrinters = shortcutId === "__printers";
+  const isHelp = shortcutId === "__help";
   if (isDisplayProperties) el.classList.add("display-properties-window");
+  if (isUserAccounts) el.classList.add("user-accounts-window");
+  if (isAddRemovePrograms) el.classList.add("add-remove-programs-window");
   const windowWidth = Math.min(
     isProjectSettings
       ? 540
       : isInternetGames
         ? 760
-        : isDisplayProperties
-          ? 426
-          : 700,
+        : isControlPanel
+          ? 800
+          : isUserAccounts
+            ? 729
+            : isAddRemovePrograms
+              ? 729
+              : isSecurityCenter
+                ? 748
+                : isHelp
+                  ? 768
+                  : isDisplayProperties
+                    ? 404
+                    : 800,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -5489,15 +7086,61 @@ const openSystemWindow = (shortcutId) => {
       ? 420
       : isInternetGames
         ? 540
-        : isDisplayProperties
-          ? 480
-          : 500,
+        : isControlPanel
+          ? 600
+          : isUserAccounts
+            ? 530
+            : isAddRemovePrograms
+              ? 530
+              : isSecurityCenter
+                ? 600
+                : isHelp
+                  ? 650
+                  : isDisplayProperties
+                    ? 454
+                    : 600,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  el.style.left = `${
+    isControlPanel
+      ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
+      : isUserAccounts
+        ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
+        : isAddRemovePrograms
+          ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
+          : isSecurityCenter
+            ? Math.min(138, Math.max(8, desktopWidth - windowWidth))
+            : isPrinters
+              ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+              : isHelp
+                ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+                : isSearch
+                  ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+                  : isDisplayProperties
+                    ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+                    : Math.max(8, (desktopWidth - windowWidth) / 2)
+  }px`;
+  el.style.top = `${
+    isControlPanel
+      ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
+      : isUserAccounts
+        ? Math.min(52, Math.max(8, desktopHeight - windowHeight))
+        : isAddRemovePrograms
+          ? Math.min(104, Math.max(8, desktopHeight - windowHeight))
+          : isSecurityCenter
+            ? Math.min(70, Math.max(8, desktopHeight - windowHeight))
+            : isPrinters
+              ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
+              : isHelp
+                ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
+                : isSearch
+                  ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+                  : isDisplayProperties
+                    ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+                    : Math.max(8, (desktopHeight - windowHeight) / 2)
+  }px`;
   document.getElementById("desktop").appendChild(el);
 
   const win = {
@@ -5541,6 +7184,9 @@ const openSystemWindow = (shortcutId) => {
   if (shortcutId === "__astro-settings") wireProjectSettings(win);
   if (shortcutId === "__search") wireSearchCompanion(win);
   if (shortcutId === "__internet-games") wireInternetGames(win);
+  if (shortcutId === "__control-panel") wireControlPanel(win);
+  if (shortcutId === "__printers") wirePrintersAndFaxes(win);
+  if (shortcutId === "__help") wireHelpAndSupport(win);
   focusWindow(shortcutId);
 };
 
@@ -5649,6 +7295,8 @@ const openGameWindow = (gameId) => {
       break;
   }
 
+  saveBundledGameForOffline(gameId);
+
   wireWindowControls(win);
   focusWindow(gameId);
 
@@ -5688,7 +7336,15 @@ const positionTaskbarMenu = (menu, clientX, clientY) => {
 
 const wireTaskbarMenuKeyboard = (menu) => {
   menu.addEventListener("keydown", (event) => {
-    const items = [...menu.querySelectorAll("button:not(:disabled)")];
+    const items = [...menu.children]
+      .map((child) =>
+        child.matches("button")
+          ? child
+          : child.matches(".context-parent")
+            ? child.firstElementChild
+            : null,
+      )
+      .filter((item) => item?.matches("button:not(:disabled)"));
     if (!items.length) return;
     const current = items.indexOf(document.activeElement);
     let target = null;
@@ -5764,6 +7420,7 @@ const renderTaskButtons = () => {
   container.innerHTML = "";
 
   const appendTaskButton = ([gameId, win]) => {
+    const taskTitle = win.title || formatGameTitle(gameId);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
@@ -5771,10 +7428,10 @@ const renderTaskButtons = () => {
       (gameId === focusedGameId && !win.minimized ? " active" : "") +
       (win.needsAttention ? " needs-attention" : "");
     btn.dataset.game = gameId;
-    btn.title = formatGameTitle(gameId);
+    btn.title = taskTitle;
     btn.setAttribute(
       "aria-label",
-      `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
+      `${taskTitle}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
     );
     btn.setAttribute(
       "aria-pressed",
@@ -5782,10 +7439,12 @@ const renderTaskButtons = () => {
     );
 
     const icon = createGameIconElement(gameId, "task-icon");
+    const taskImage = icon.querySelector("img");
+    if (taskImage && win.icon) taskImage.src = win.icon;
 
     const label = document.createElement("span");
     label.className = "task-label";
-    label.textContent = formatGameTitle(gameId);
+    label.textContent = taskTitle;
 
     btn.append(icon, label);
     btn.addEventListener("click", () => activateTaskButton(gameId));
@@ -5903,52 +7562,969 @@ const arrangeTaskbarWindows = (mode) => {
 
 const openTaskManager = () => {
   const dialog = XPDialogs.createDialog({ title: "Windows Task Manager" });
-  const heading = document.createElement("p");
-  heading.textContent = `${openWindows.size} application${openWindows.size === 1 ? "" : "s"} running`;
-  const list = document.createElement("ul");
-  [...openWindows.values()].forEach((win) => {
-    const item = document.createElement("li");
-    item.textContent = `${formatGameTitle(win.gameId)}${win.minimized ? " (Minimized)" : ""}`;
-    list.appendChild(item);
+  dialog.el.classList.add("task-manager-dialog");
+  const title = dialog.el.querySelector(".title-text");
+  const titleIcon = document.createElement("img");
+  titleIcon.className = "task-manager-title-icon";
+  titleIcon.src = "assets/xp/icons/TaskManager.png";
+  titleIcon.alt = "";
+  title.before(titleIcon);
+  const titleButtons = dialog.el.querySelector(".title-buttons");
+  const minimize = document.createElement("button");
+  minimize.type = "button";
+  minimize.className = "tb-btn minimize-btn";
+  minimize.setAttribute("aria-label", "Minimize");
+  const maximize = document.createElement("button");
+  maximize.type = "button";
+  maximize.className = "tb-btn maximize-btn";
+  maximize.setAttribute("aria-label", "Maximize");
+  titleButtons.prepend(minimize, maximize);
+
+  const escapeTaskManagerText = (value) =>
+    String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  const applications = [...openWindows.values()].map((win) => ({
+    id: win.gameId,
+    title: win.title || formatGameTitle(win.gameId),
+    minimized: win.minimized,
+  }));
+  const applicationRows = applications.length
+    ? applications
+        .map(
+          (application, index) =>
+            `<button type="button" class="task-manager-row${index ? "" : " selected"}" data-task-manager-window="${application.id}" role="option" aria-selected="${index ? "false" : "true"}"><span><img src="${openWindows.get(application.id)?.icon || systemShortcuts[application.id]?.icon || "assets/xp/icons/FolderOptions.png"}" alt="">${escapeTaskManagerText(application.title)}</span><span>${application.minimized ? "Minimized" : "Running"}</span></button>`,
+        )
+        .join("")
+    : '<p class="task-manager-empty">No applications are running.</p>';
+  const processes = [
+    ["taskmgr.exe", "Administrator", "06", "3,828 K"],
+    ["wscntfy.exe", "Administrator", "00", "1,852 K"],
+    ["alg.exe", "LOCAL SERVICE", "00", "3,328 K"],
+    ["spoolsv.exe", "SYSTEM", "00", "4,376 K"],
+    ["explorer.exe", "Administrator", "00", "21,960 K"],
+    ["svchost.exe", "LOCAL SERVICE", "00", "4,100 K"],
+    ["svchost.exe", "NETWORK SERVICE", "00", "2,640 K"],
+    ["svchost.exe", "SYSTEM", "00", "16,864 K"],
+    ["lsass.exe", "SYSTEM", "00", "3,996 K"],
+    ["services.exe", "SYSTEM", "00", "3,000 K"],
+    ["winlogon.exe", "SYSTEM", "00", "6,396 K"],
+    ["csrss.exe", "SYSTEM", "00", "3,148 K"],
+    ["smss.exe", "SYSTEM", "00", "372 K"],
+    ["System", "SYSTEM", "00", "212 K"],
+    ["System Idle Process", "SYSTEM", "94", "16 K"],
+  ];
+  const processRows = processes
+    .map(
+      (process, index) =>
+        `<button type="button" class="task-manager-process-row${index ? "" : " selected"}" role="option" aria-selected="${index ? "false" : "true"}">${process.map((value) => `<span>${value}</span>`).join("")}</button>`,
+    )
+    .join("");
+  dialog.body.innerHTML = `
+    <div class="task-manager-menu-bar" role="menubar">
+      <button type="button" role="menuitem" data-task-manager-menu="file">File</button>
+      <button type="button" role="menuitem" data-task-manager-menu="options">Options</button>
+      <button type="button" role="menuitem" data-task-manager-menu="view">View</button>
+      <button type="button" role="menuitem" data-task-manager-menu="windows">Windows</button>
+      <button type="button" role="menuitem" data-task-manager-menu="shutdown">Shut Down</button>
+      <button type="button" role="menuitem" data-task-manager-menu="help">Help</button>
+    </div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="file" role="menu" hidden><button role="menuitem" data-task-manager-action="new-task">New Task (Run...)</button><hr><button role="menuitem" data-task-manager-action="exit">Exit Task Manager</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="options" role="menu" hidden><button role="menuitem" data-task-manager-action="always-on-top">✓ Always On Top</button><button role="menuitem">Minimize On Use</button><button role="menuitem">Hide When Minimized</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="view" role="menu" hidden><button role="menuitem" data-task-manager-action="refresh">Refresh Now</button><hr><button role="menuitem">Update Speed <span>▶</span></button><button role="menuitem">CPU History <span>▶</span></button><button role="menuitem">Show Kernel Times</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="windows" role="menu" hidden><button role="menuitem" data-task-manager-action="cascade">Cascade</button><button role="menuitem" data-task-manager-action="tile-horizontal">Tile Horizontally</button><button role="menuitem" data-task-manager-action="tile-vertical">Tile Vertically</button><hr><button role="menuitem">Minimize</button><button role="menuitem">Maximize</button><button role="menuitem">Bring To Front</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="shutdown" role="menu" hidden><button role="menuitem">Stand By</button><button role="menuitem">Hibernate</button><hr><button role="menuitem" data-task-manager-action="turn-off">Turn Off</button><button role="menuitem" data-task-manager-action="restart">Restart</button><hr><button role="menuitem" data-task-manager-action="log-off">Log Off Administrator</button><button role="menuitem">Switch User</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="help" role="menu" hidden><button role="menuitem" data-task-manager-action="help">Task Manager Help Topics</button><hr><button role="menuitem" data-task-manager-action="about">About Task Manager</button></div>
+    <div class="task-manager-tabs" role="tablist" aria-label="Windows Task Manager">
+      <button type="button" role="tab" data-task-manager-tab="applications" aria-selected="true">Applications</button>
+      <button type="button" role="tab" data-task-manager-tab="processes" aria-selected="false" tabindex="-1">Processes</button>
+      <button type="button" role="tab" data-task-manager-tab="performance" aria-selected="false" tabindex="-1">Performance</button>
+      <button type="button" role="tab" data-task-manager-tab="networking" aria-selected="false" tabindex="-1">Networking</button>
+      <button type="button" role="tab" data-task-manager-tab="users" aria-selected="false" tabindex="-1">Users</button>
+    </div>
+    <div class="task-manager-panel task-manager-applications" data-task-manager-panel="applications">
+      <div class="task-manager-list-head"><span>Task</span><span>Status</span></div>
+      <div class="task-manager-app-list" role="listbox">${applicationRows}</div>
+      <div class="task-manager-panel-buttons"><button type="button" class="xp-btn" data-task-manager-action="end-task">End Task</button><button type="button" class="xp-btn" data-task-manager-action="switch-to">Switch To</button><button type="button" class="xp-btn" data-task-manager-action="new-task">New Task...</button></div>
+    </div>
+    <div class="task-manager-panel task-manager-processes" data-task-manager-panel="processes" hidden>
+      <div class="task-manager-process-head"><span>Image Name</span><span>User Name</span><span>CPU</span><span>Mem Usage</span></div>
+      <div class="task-manager-process-list" role="listbox">${processRows}</div>
+      <label><input type="checkbox"> Show processes from all users</label><button type="button" class="xp-btn">End Process</button>
+    </div>
+    <div class="task-manager-panel task-manager-performance" data-task-manager-panel="performance" hidden>
+      <fieldset class="task-manager-meter cpu-meter"><legend>CPU Usage</legend><div class="task-manager-black-meter"><span></span><b>5%</b></div></fieldset>
+      <fieldset class="task-manager-chart cpu-history"><legend>CPU Usage History</legend><div class="task-manager-graph"><svg viewBox="0 0 230 58" preserveAspectRatio="none"><polyline points="0,55 120,55 122,2 126,52 180,55 183,45 186,55 230,52"/></svg></div></fieldset>
+      <fieldset class="task-manager-meter pf-meter"><legend>PF Usage</legend><div class="task-manager-black-meter"><span></span><b>81.0 MB</b></div></fieldset>
+      <fieldset class="task-manager-chart pf-history"><legend>Page File Usage History</legend><div class="task-manager-graph"><svg viewBox="0 0 230 58" preserveAspectRatio="none"><polyline points="0,53 110,53 115,51 230,51"/></svg></div></fieldset>
+      <fieldset class="task-manager-stats totals"><legend>Totals</legend><dl><dt>Handles</dt><dd>4061</dd><dt>Threads</dt><dd>243</dd><dt>Processes</dt><dd>17</dd></dl></fieldset>
+      <fieldset class="task-manager-stats physical"><legend>Physical Memory (K)</legend><dl><dt>Total</dt><dd>523696</dd><dt>Available</dt><dd>400248</dd><dt>System Cache</dt><dd>126496</dd></dl></fieldset>
+      <fieldset class="task-manager-stats commit"><legend>Commit Charge (K)</legend><dl><dt>Total</dt><dd>83032</dd><dt>Limit</dt><dd>1279408</dd><dt>Peak</dt><dd>108992</dd></dl></fieldset>
+      <fieldset class="task-manager-stats kernel"><legend>Kernel Memory (K)</legend><dl><dt>Total</dt><dd>18640</dd><dt>Paged</dt><dd>15004</dd><dt>Nonpaged</dt><dd>3636</dd></dl></fieldset>
+    </div>
+    <div class="task-manager-panel task-manager-networking" data-task-manager-panel="networking" hidden><p>No Active Network Adapters Found.</p></div>
+    <div class="task-manager-panel task-manager-users" data-task-manager-panel="users" hidden>
+      <div class="task-manager-user-head"><span>User</span><span>ID</span><span>Status</span><span>Client Name</span></div>
+      <button type="button" class="task-manager-user-row selected"><span>♟ Administrator</span><span>0</span><span>Active</span><span></span></button>
+      <div class="task-manager-panel-buttons"><button type="button" class="xp-btn">Disconnect</button><button type="button" class="xp-btn" data-task-manager-action="log-off">Logoff</button><button type="button" class="xp-btn" disabled>Send Message...</button></div>
+    </div>
+    <div class="task-manager-status"><span>Processes: 17</span><span>CPU Usage: 5%</span><span>Commit Charge: 81M / 1249M</span></div>`;
+
+  const tabs = [...dialog.body.querySelectorAll("[data-task-manager-tab]")];
+  const panels = [...dialog.body.querySelectorAll("[data-task-manager-panel]")];
+  const closeMenus = () =>
+    dialog.body
+      .querySelectorAll("[data-task-manager-popup]")
+      .forEach((popup) => (popup.hidden = true));
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) => {
+        const selected =
+          entry.dataset.taskManagerTab === tab.dataset.taskManagerTab;
+        entry.setAttribute("aria-selected", String(selected));
+        entry.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach((panel) => {
+        panel.hidden =
+          panel.dataset.taskManagerPanel !== tab.dataset.taskManagerTab;
+      });
+    }),
+  );
+  dialog.body.querySelectorAll("[data-task-manager-menu]").forEach((button) =>
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const popup = dialog.body.querySelector(
+        `[data-task-manager-popup="${button.dataset.taskManagerMenu}"]`,
+      );
+      const open = popup.hidden;
+      closeMenus();
+      popup.hidden = !open;
+      popup.style.left = `${button.offsetLeft}px`;
+    }),
+  );
+  dialog.body.addEventListener("click", (event) => {
+    const row = event.target.closest(".task-manager-row");
+    if (row) {
+      dialog.body.querySelectorAll(".task-manager-row").forEach((entry) => {
+        const selected = entry === row;
+        entry.classList.toggle("selected", selected);
+        entry.setAttribute("aria-selected", String(selected));
+      });
+    }
+    const action = event.target.closest("[data-task-manager-action]")?.dataset
+      .taskManagerAction;
+    if (!action) return;
+    const selectedWindow = dialog.body.querySelector(
+      ".task-manager-row.selected",
+    )?.dataset.taskManagerWindow;
+    closeMenus();
+    if (action === "new-task") openRunDialog();
+    else if (action === "exit") dialog.close("exit");
+    else if (action === "end-task" && selectedWindow) {
+      closeGameWindow(selectedWindow);
+      dialog.body.querySelector(".task-manager-row.selected")?.remove();
+    } else if (action === "switch-to" && selectedWindow) {
+      dialog.close("switch");
+      restoreWindow(selectedWindow);
+      focusWindow(selectedWindow);
+    } else if (action === "help") openHelpAndSupport();
+    else if (action === "about") openAboutWindows();
+    else if (action === "cascade") arrangeTaskbarWindows("cascade");
+    else if (action === "tile-horizontal")
+      arrangeTaskbarWindows("tile-horizontal");
+    else if (action === "tile-vertical") arrangeTaskbarWindows("tile-vertical");
+    else if (action === "turn-off" || action === "restart") {
+      dialog.close(action);
+      showShutdownDialog();
+    } else if (action === "log-off") {
+      dialog.close(action);
+      showLogoffDialog();
+    }
   });
-  dialog.body.append(heading, list);
+  document.addEventListener("pointerdown", closeMenus, { once: true });
+  minimize.addEventListener("click", () =>
+    dialog.el.classList.toggle("task-manager-minimized"),
+  );
+  maximize.addEventListener("click", () =>
+    dialog.el.classList.toggle("task-manager-maximized"),
+  );
+};
+
+const openKeyboardProperties = (initialTab = "speed") => {
+  const dialog = XPDialogs.createDialog({ title: "Keyboard Properties" });
+  dialog.el.classList.add("keyboard-properties-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(110, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(144, Math.max(4, window.innerHeight - 454))}px`,
+  });
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="keyboard-properties-tabs" role="tablist"><button type="button" role="tab" data-keyboard-tab="speed">Speed</button><button type="button" role="tab" data-keyboard-tab="hardware">Hardware</button></div>
+    <div class="keyboard-properties-panels">
+      <section data-keyboard-panel="speed"><fieldset class="keyboard-repeat"><legend>Character repeat</legend><img class="keyboard-delay-icon" src="assets/xp/icons/KeyboardRepeatDelay.png" alt=""><img class="keyboard-rate-icon" src="assets/xp/icons/KeyboardRepeatRate.png" alt=""><label><b>Repeat delay:</b><span>Long</span><input type="range" min="0" max="10" value="7"><span>Short</span></label><label><b>Repeat rate:</b><span>Slow</span><input type="range" min="0" max="10" value="10"><span>Fast</span></label><label>Click here and hold down a key to test repeat rate:<input type="text"></label></fieldset><fieldset class="keyboard-cursor"><legend>Cursor blink rate</legend><i aria-hidden="true"></i><label><span>None</span><input type="range" min="0" max="10" value="6"><span>Fast</span></label></fieldset></section>
+      <section data-keyboard-panel="hardware" hidden><p class="keyboard-devices-label">Devices:</p><div class="keyboard-hardware-list" role="listbox"><strong><span>Name</span><span>Type</span></strong><span class="selected"><img src="assets/xp/system/KeyboardDevice.png" alt="">Standard 101/102-Key or Microsoft Natural PS/2 Keyboard <i>Keyboards</i></span></div><fieldset class="keyboard-device-properties"><legend>Device Properties</legend><p>Manufacturer: (Standard keyboards)</p><p>Location: plugged into keyboard port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-keyboard-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.keyboardTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-keyboard-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.keyboardPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-keyboard-tab]")?.dataset
+      .keyboardTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("keyboard-properties-buttons");
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+  activate(initialTab);
+};
+
+const addDialogHelpButton = (dialog) => {
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+};
+
+const openAdvancedGameControllerSettings = () => {
+  const dialog = XPDialogs.createDialog({ title: "Advanced Settings" });
+  dialog.el.classList.add("game-controller-advanced-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(28, Math.max(4, window.innerWidth - 335))}px`,
+    top: `${Math.min(80, Math.max(4, window.innerHeight - 171))}px`,
+  });
+  addDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <p>Select the device you want to use with older programs.</p>
+    <div class="game-controller-preferred"><img src="assets/xp/icons/GameControllers.png" alt=""><label>Preferred device:<select><option>(none)</option></select></label></div>`;
+  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.okCancel);
+};
+
+const openAddGameController = (onAdd) => {
+  const dialog = XPDialogs.createDialog({ title: "Add Game Controller" });
+  dialog.el.classList.add("add-game-controller-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(28, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(80, Math.max(4, window.innerHeight - 356))}px`,
+  });
+  addDialogHelpButton(dialog);
+  const controllerTypes = [
+    "2-axis, 2-button joystick",
+    "2-axis, 4-button joystick",
+    "2-button flight yoke",
+    "2-button flight yoke w/throttle",
+    "2-button gamepad",
+    "3-axis, 2-button joystick",
+    "3-axis, 4-button joystick",
+    "3-axis, 4-button flight yoke",
+    "3-axis, 4-button flight yoke w/throttle",
+    "4-button gamepad",
+  ];
+  dialog.body.innerHTML = `
+    <div class="add-game-controller-intro"><img src="assets/xp/icons/GameControllers.png" alt=""><p>Select a game controller from the list below, and then click OK. If<br>your game controller does not appear in the list, click Custom.</p></div>
+    <label class="game-controller-types">Game controllers:<select size="7">${controllerTypes.map((type) => `<option>${type}</option>`).join("")}</select></label>
+    <label class="game-controller-rudders"><input type="checkbox"> Enable rudders and pedals</label>
+    <button type="button" class="xp-btn game-controller-custom">Custom...</button>
+    <hr>`;
+  const select = dialog.body.querySelector("select");
+  select.selectedIndex = 0;
+  dialog.body
+    .querySelector(".game-controller-custom")
+    .addEventListener("click", () =>
+      XPDialogs.alert(
+        "Custom game controllers can be configured after compatible hardware is connected.",
+        "Custom Game Controller",
+      ),
+    );
+  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.okCancel);
+  dialog.onResult((result) => {
+    if (result === "ok") onAdd(select.value);
+  });
+};
+
+const openGameControllers = () => {
+  const dialog = XPDialogs.createDialog({ title: "Game Controllers" });
+  dialog.el.classList.add("game-controllers-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(25, Math.max(4, window.innerWidth - 383))}px`,
+    top: `${Math.min(51, Math.max(4, window.innerHeight - 369))}px`,
+  });
+  addDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="game-controllers-intro"><img src="assets/xp/icons/GameControllers.png" alt=""><p>These settings help you configure the game controllers installed on<br>your computer.</p></div>
+    <fieldset><legend>Installed game controllers</legend><div class="game-controller-list" role="listbox" tabindex="0"><div class="game-controller-list-header"><span>Controller</span><span>Status</span></div><div class="game-controller-list-items"></div></div><div class="game-controller-actions"><button type="button" class="xp-btn" data-game-controller-action="add">Add...</button><button type="button" class="xp-btn" data-game-controller-action="remove" disabled>Remove</button><button type="button" class="xp-btn" data-game-controller-action="properties" disabled>Properties</button></div></fieldset>
+    <div class="game-controller-secondary"><button type="button" class="xp-btn" data-game-controller-action="advanced">Advanced...</button><button type="button" class="xp-btn" data-game-controller-action="troubleshoot">Troubleshoot...</button></div>`;
+  const items = dialog.body.querySelector(".game-controller-list-items");
+  const remove = dialog.body.querySelector(
+    '[data-game-controller-action="remove"]',
+  );
+  const properties = dialog.body.querySelector(
+    '[data-game-controller-action="properties"]',
+  );
+  let selected = null;
+  const addController = (name) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.innerHTML = `<span>${name}</span><span>OK</span>`;
+    item.addEventListener("click", () => {
+      items
+        .querySelectorAll("button")
+        .forEach((entry) =>
+          entry.setAttribute("aria-selected", String(entry === item)),
+        );
+      selected = item;
+      remove.disabled = false;
+      properties.disabled = false;
+    });
+    items.appendChild(item);
+    item.click();
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-game-controller-action]")
+      ?.dataset.gameControllerAction;
+    if (action === "add") openAddGameController(addController);
+    if (action === "advanced") openAdvancedGameControllerSettings();
+    if (action === "troubleshoot") openHelpAndSupport();
+    if (action === "remove" && selected) {
+      selected.remove();
+      selected = null;
+      remove.disabled = true;
+      properties.disabled = true;
+    }
+    if (action === "properties" && selected) {
+      XPDialogs.alert(
+        "This game controller is connected and working properly.",
+        "Game Controller Properties",
+      );
+    }
+  });
+  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.ok);
+};
+
+const openPowerOptions = (initialTab = "power-schemes") => {
+  const dialog = XPDialogs.createDialog({ title: "Power Options Properties" });
+  dialog.el.classList.add("power-options-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(22, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(30, Math.max(4, window.innerHeight - 454))}px`,
+  });
+  addDialogHelpButton(dialog);
+  const select = (options, selected) =>
+    `<select>${options.map((option) => `<option${option === selected ? " selected" : ""}>${option}</option>`).join("")}</select>`;
+  const timeOptions = [
+    "After 1 min",
+    "After 5 mins",
+    "After 10 mins",
+    "After 20 mins",
+    "After 30 mins",
+    "After 45 mins",
+    "After 1 hour",
+    "Never",
+  ];
+  dialog.body.innerHTML = `
+    <div class="power-options-tabs" role="tablist"><button type="button" role="tab" data-power-tab="power-schemes">Power Schemes</button><button type="button" role="tab" data-power-tab="advanced">Advanced</button><button type="button" role="tab" data-power-tab="hibernate">Hibernate</button><button type="button" role="tab" data-power-tab="ups">UPS</button></div>
+    <div class="power-options-panels">
+      <section class="power-schemes-panel" data-power-panel="power-schemes"><div class="power-options-intro"><img src="assets/xp/icons/PowerOptions.png" alt=""><p>Select the power scheme with the most appropriate settings for<br>this computer. Note that changing the settings below will modify<br>the selected scheme.</p></div><fieldset class="power-scheme-picker"><legend>Power schemes</legend>${select(["Home/Office Desk", "Portable/Laptop", "Presentation", "Always On", "Minimal Power Management", "Max Battery"], "Home/Office Desk")}<div><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div></fieldset><fieldset class="power-scheme-settings"><legend>Settings for Home/Office Desk power scheme</legend><label>Turn off monitor:${select(timeOptions, "After 20 mins")}</label><label>Turn off hard disks:${select(timeOptions, "Never")}</label><hr><label>System standby:${select(timeOptions, "Never")}</label><label>System hibernates:${select(timeOptions, "Never")}</label></fieldset></section>
+      <section class="power-advanced-panel" data-power-panel="advanced" hidden><div class="power-options-intro"><img src="assets/xp/icons/PowerOptions.png" alt=""><p>Select the power-saving settings you want to use.</p></div><fieldset><legend>Options</legend><label><input type="checkbox"> Always show icon on the taskbar</label><label><input type="checkbox" checked> Prompt for password when computer resumes from standby</label></fieldset><fieldset class="power-buttons-field"><legend>Power buttons</legend><label>When I press the power button on my computer:${select(["Do nothing", "Ask me what to do", "Stand by", "Shut down"], "Shut down")}</label></fieldset></section>
+      <section class="power-hibernate-panel" data-power-panel="hibernate" hidden><div class="power-hibernate-intro"><img src="assets/xp/icons/PowerHibernate.png" alt=""><p>When your computer hibernates, it stores whatever it has in<br>memory on your hard disk and then shuts down. When your<br>computer comes out of hibernation, it returns to its previous state.</p></div><fieldset><legend>Hibernate</legend><label><input type="checkbox" checked> Enable hibernation</label></fieldset><fieldset><legend>Disk space for hibernation</legend><p>Free disk space: <span>5,682 MB</span></p><p>Disk space required to hibernate: <span>512 MB</span></p></fieldset></section>
+      <section class="power-ups-panel" data-power-panel="ups" hidden><h2>Uninterruptible Power Supply</h2><fieldset class="power-ups-status"><legend>Status</legend><img src="assets/xp/icons/PowerUpsStatus.png" alt=""><div><p>Current power source:</p><p>Estimated UPS runtime:</p><p>Estimated UPS capacity:</p><p>Battery condition:</p></div></fieldset><fieldset class="power-ups-details"><legend>Details</legend><img src="assets/xp/icons/PowerUpsDetails.png" alt=""><p>Manufacturer: <span>(None)</span><br>Model:</p><div><button class="xp-btn" disabled>Configure...</button><button class="xp-btn">Select...</button></div></fieldset><div class="power-ups-warning"><img src="assets/xp/icons/SystemWarning.png" alt=""><p>The UPS service is currently stopped.</p></div><button class="xp-btn power-ups-about">About...</button></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-power-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.powerTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-power-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.powerPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-power-tab]")?.dataset.powerTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("power-options-buttons");
+  const apply = dialog.body.querySelector('[data-action="apply"]');
+  apply.disabled = true;
+  dialog.body.addEventListener("change", () => {
+    apply.disabled = false;
+  });
+  activate(initialTab);
+};
+
+const openRegionalLanguageOptions = (initialTab = "regional-options") => {
+  const dialog = XPDialogs.createDialog({
+    title: "Regional and Language Options",
+  });
+  dialog.el.classList.add("regional-language-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(58, Math.max(4, window.innerHeight - 484))}px`,
+  });
+  addDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="regional-language-tabs" role="tablist"><button type="button" role="tab" data-regional-tab="regional-options">Regional Options</button><button type="button" role="tab" data-regional-tab="languages">Languages</button><button type="button" role="tab" data-regional-tab="advanced">Advanced</button></div>
+    <div class="regional-language-panels">
+      <section class="regional-options-panel" data-regional-panel="regional-options"><fieldset class="regional-formats"><legend>Standards and formats</legend><p>This option affects how some programs format numbers, currencies,<br>dates, and time.</p><p>Select an item to match its preferences, or click Customize to choose<br>your own formats:</p><div class="regional-format-select"><select><option>English (United States)</option></select><button class="xp-btn">Customize...</button></div><p>Samples</p><div class="regional-samples"><label>Number:<input readonly value="123,456,789.00"></label><label>Currency:<input readonly value="$123,456,789.00"></label><label>Time:<input readonly value="3:22:38 AM"></label><label>Short date:<input readonly value="8/2/2026"></label><label>Long date:<input readonly value="Sunday, August 02, 2026"></label></div></fieldset><fieldset class="regional-location"><legend>Location</legend><p>To help services provide you with local information, such as news and<br>weather, select your present location:</p><select><option>United States</option></select></fieldset></section>
+      <section class="regional-languages-panel" data-regional-panel="languages" hidden><fieldset><legend>Text services and input languages</legend><p>To view or change the languages and methods you can use to enter<br>text, click Details.</p><button class="xp-btn">Details...</button></fieldset><fieldset><legend>Supplemental language support</legend><p>Most languages are installed by default. To install additional languages,<br>select the appropriate check box below.</p><label><input type="checkbox"> Install files for complex script and right-to-left languages (including<br><span>Thai)</span></label><label><input type="checkbox"> Install files for East Asian languages</label></fieldset></section>
+      <section class="regional-advanced-panel" data-regional-panel="advanced" hidden><fieldset><legend>Language for non-Unicode programs</legend><p>This system setting enables non-Unicode programs to display menus<br>and dialogs in their native language. It does not affect Unicode<br>programs, but it does apply to all users of this computer.</p><p>Select a language to match the language version of the non-Unicode<br>programs you want to use:</p><select><option>English (United States)</option></select></fieldset><fieldset><legend>Code page conversion tables</legend><div class="regional-code-pages">${["10000 (MAC - Roman)", "10001 (MAC - Japanese)", "10002 (MAC - Traditional Chinese Big5)", "10003 (MAC - Korean)", "10004 (MAC - Arabic)", "10005 (MAC - Hebrew)"].map((label, index) => `<label><input type="checkbox" ${index === 0 ? "checked disabled" : ""}> ${label}</label>`).join("")}</div></fieldset><fieldset><legend>Default user account settings</legend><label><input type="checkbox"> Apply all settings to the current user account and to the default<br><span>user profile</span></label></fieldset></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-regional-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.regionalTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-regional-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.regionalPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-regional-tab]")?.dataset
+      .regionalTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("regional-language-buttons");
+  const apply = dialog.body.querySelector('[data-action="apply"]');
+  apply.disabled = true;
+  dialog.body.addEventListener("change", () => {
+    apply.disabled = false;
+  });
+  activate(initialTab);
+};
+
+const openMouseProperties = (initialTab = "buttons") => {
+  const dialog = XPDialogs.createDialog({ title: "Mouse Properties" });
+  dialog.el.classList.add("mouse-properties-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(88, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(117, Math.max(4, window.innerHeight - 454))}px`,
+  });
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const tabs = ["Buttons", "Pointers", "Pointer Options", "Wheel", "Hardware"];
+  dialog.body.innerHTML = `
+    <div class="mouse-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-mouse-tab="${tab.toLowerCase().replace(" ", "-")}">${tab}</button>`).join("")}</div>
+    <div class="mouse-properties-panels">
+      <section data-mouse-panel="buttons">
+        <fieldset class="mouse-buttons-configuration"><legend>Button configuration</legend><label><input type="checkbox"> Switch primary and secondary buttons</label><p>Select this check box to make the button on the<br>right the one you use for primary functions such<br>as selecting and dragging.</p><img src="assets/xp/system/MouseButtonConfiguration.png" alt=""></fieldset>
+        <fieldset class="mouse-double-click"><legend>Double-click speed</legend><p>Double-click the folder to test your setting. If the<br>folder does not open or close, try using a slower<br>setting.</p><label>Speed: <span>Slow</span><input type="range" min="0" max="10" value="5"><span>Fast</span></label><button type="button" aria-label="Test double-click"><img src="assets/xp/system/MouseDoubleClickFolder.png" alt=""></button></fieldset>
+        <fieldset class="mouse-click-lock"><legend>ClickLock</legend><label><input type="checkbox"> Turn on ClickLock</label><button class="xp-btn" disabled>Settings...</button><p>Enables you to highlight or drag without holding down the mouse<br>button. To set, briefly press the mouse button. To release, click the<br>mouse button again.</p></fieldset>
+      </section>
+      <section data-mouse-panel="pointers"><fieldset class="mouse-scheme"><legend>Scheme</legend><select><option>Windows Default (system scheme)</option></select><button class="xp-btn">Save As...</button><button class="xp-btn" disabled>Delete</button></fieldset><div class="mouse-pointer-preview"><img src="assets/xp/system/cursors/NormalSelect.png" alt=""></div><p class="mouse-customize-label">Customize:</p><div class="mouse-pointer-list" role="listbox"><span class="selected">Normal Select <img src="assets/xp/system/cursors/NormalSelect.png" alt=""></span><span>Help Select <img src="assets/xp/system/cursors/HelpSelect.png" alt=""></span><span>Working In Background <img src="assets/xp/system/cursors/WorkingInBackground.png" alt=""></span><span>Busy <img src="assets/xp/system/cursors/Busy.png" alt=""></span><span>Precision Select <img src="assets/xp/system/cursors/PrecisionSelect.png" alt=""></span><span>Text Select <img src="assets/xp/system/cursors/TextSelect.png" alt=""></span><span>Handwriting <img src="assets/xp/system/cursors/Handwriting.png" alt=""></span><span>Unavailable <img src="assets/xp/system/cursors/Unavailable.png" alt=""></span></div><label class="mouse-pointer-shadow"><input type="checkbox" checked> Enable pointer shadow</label><button class="xp-btn mouse-pointer-default" disabled>Use Default</button><button class="xp-btn mouse-pointer-browse">Browse...</button></section>
+      <section data-mouse-panel="pointer-options" hidden><fieldset class="mouse-motion"><legend>Motion</legend><img src="assets/xp/system/MouseMotion.png" alt=""><p>Select a pointer speed:</p><label><span>Slow</span><input type="range" min="0" max="10" value="5"><span>Fast</span></label><label><input type="checkbox" checked> Enhance pointer precision</label></fieldset><fieldset class="mouse-snap"><legend>Snap To</legend><img src="assets/xp/system/MouseSnapTo.png" alt=""><label><input type="checkbox"> Automatically move pointer to the default button in a<br>dialog box</label></fieldset><fieldset class="mouse-visibility"><legend>Visibility</legend><label><img src="assets/xp/system/MouseTrails.png" alt=""><input type="checkbox"> Display pointer trails</label><div><span>Short</span><input type="range" min="0" max="10" value="8" disabled><span>Long</span></div><label><img src="assets/xp/system/MouseHideWhileTyping.png" alt=""><input type="checkbox" checked> Hide pointer while typing</label><label><img src="assets/xp/system/MouseLocate.png" alt=""><input type="checkbox"> Show location of pointer when I press the CTRL key</label></fieldset></section>
+      <section data-mouse-panel="wheel" hidden><fieldset class="mouse-wheel-scroll"><legend>Scrolling</legend><img src="assets/xp/system/MouseWheel.png" alt=""><p>Roll the wheel one notch to scroll:</p><label><input type="radio" name="wheel-scroll" checked> The following number of lines at a time:</label><input type="number" value="3" min="1"><label><input type="radio" name="wheel-scroll"> One screen at a time</label></fieldset></section>
+      <section data-mouse-panel="hardware" hidden><p class="mouse-devices-label">Devices:</p><div class="mouse-hardware-list" role="listbox"><strong><span>Name</span><span>Type</span></strong><span class="selected"><img src="assets/xp/system/MouseDevice.png" alt="">PS/2 Compatible Mouse <i>Mouse and other pointing devices</i></span><span><img src="assets/xp/system/MouseDevice.png" alt="">HID-compliant mouse <i>Mouse and other pointing devices</i></span></div><fieldset class="mouse-device-properties"><legend>Device Properties</legend><p>Manufacturer: Microsoft</p><p>Location: plugged into PS/2 mouse port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-mouse-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.mouseTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-mouse-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.mousePanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-mouse-tab]")?.dataset.mouseTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("mouse-properties-buttons");
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+  activate(initialTab);
+};
+
+const openInternetProperties = (initialTab = "general") => {
+  const dialog = XPDialogs.createDialog({ title: "Internet Properties" });
+  dialog.el.classList.add("internet-properties-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(58, Math.max(4, window.innerHeight - 458))}px`,
+  });
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const tabs = [
+    "General",
+    "Security",
+    "Privacy",
+    "Content",
+    "Connections",
+    "Programs",
+    "Advanced",
+  ];
+  dialog.body.innerHTML = `
+    <div class="internet-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-internet-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div>
+    <div class="internet-properties-panels">
+      <section data-internet-panel="general">
+        <fieldset><legend>Home page</legend><img src="assets/xp/system/InternetHomePage.png" alt=""><p>You can change which page to use for your home page.</p><label>Address: <input type="text" value="isapi/redir.dll?prd=ie&amp;pver=6&amp;ar=msnhome"></label><div><button class="xp-btn" disabled>Use Current</button><button class="xp-btn">Use Default</button><button class="xp-btn">Use Blank</button></div></fieldset>
+        <fieldset><legend>Temporary Internet files</legend><img src="assets/xp/system/TemporaryInternetFiles.png" alt=""><p>Pages you view on the Internet are stored in a special folder<br>for quick viewing later.</p><div><button class="xp-btn">Delete Cookies...</button><button class="xp-btn">Delete Files...</button><button class="xp-btn">Settings...</button></div></fieldset>
+        <fieldset><legend>History</legend><img src="assets/xp/system/InternetHistory.png" alt=""><p>The History folder contains links to pages you've visited, for<br>quick access to recently viewed pages.</p><label>Days to keep pages in history: <input type="number" value="20" min="0"></label><button class="xp-btn">Clear History</button></fieldset>
+        <div class="internet-general-actions"><button class="xp-btn">Colors...</button><button class="xp-btn">Fonts...</button><button class="xp-btn">Languages...</button><button class="xp-btn">Accessibility...</button></div>
+      </section>
+      <section data-internet-panel="security" hidden><p class="internet-security-intro">Select a Web content zone to specify its security settings.</p><div class="internet-zone-list">${[
+        ["Internet", "assets/xp/system/InternetZone.png"],
+        ["Local intranet", "assets/xp/system/LocalIntranetZone.png"],
+        ["Trusted sites", "assets/xp/system/TrustedSitesZone.png"],
+        ["Restricted sites", "assets/xp/system/RestrictedSitesZone.png"],
+      ]
+        .map(
+          ([label, icon], index) =>
+            `<button class="${index === 0 ? "selected" : ""}"><img src="${icon}" alt=""><span>${label}</span></button>`,
+        )
+        .join(
+          "",
+        )}</div><div class="internet-zone-description"><img src="assets/xp/system/InternetZone.png" alt=""><strong>Internet</strong><p>This zone contains all Web sites you<br>haven't placed in other zones.</p><button class="xp-btn" disabled>Sites...</button></div><fieldset class="internet-security-level"><legend>Security level for this zone</legend><strong>Custom</strong><p>Custom settings.<br>· To change the settings, click Custom Level.<br>· To use the recommended settings, click Default Level.</p><button class="xp-btn">Custom Level...</button><button class="xp-btn">Default Level</button></fieldset></section>
+      <section data-internet-panel="privacy" hidden><fieldset class="internet-privacy-settings"><legend>Settings</legend><img src="assets/xp/system/PrivacySettings.png" alt=""><p>Move the slider to select a privacy setting for the Internet<br>zone.</p><div class="internet-privacy-scale"><input type="range" min="0" max="5" value="2"><i aria-hidden="true"></i></div><strong>Medium</strong><ul><li>Blocks third-party cookies that do not have a compact<br>privacy policy</li><li>Blocks third-party cookies that use personally identifiable<br>information without your implicit consent</li><li>Restricts first-party cookies that use personally identifiable<br>information without implicit consent</li></ul><div><button class="xp-btn">Sites...</button><button class="xp-btn">Import...</button><button class="xp-btn">Advanced...</button><button class="xp-btn" disabled>Default</button></div></fieldset><fieldset class="internet-popup-settings"><legend>Pop-up Blocker</legend><img src="assets/xp/system/PopUpBlocker.png" alt=""><p>Prevent most pop-up windows from appearing.</p><label><input type="checkbox" checked> Block pop-ups</label><button class="xp-btn">Settings...</button></fieldset></section>
+      <section data-internet-panel="content" hidden><fieldset><legend>Content Advisor</legend><img src="assets/xp/system/TrustedSitesZone.png" alt=""><p>Ratings help you control the Internet content that can be<br>viewed on this computer.</p><button class="xp-btn">Enable...</button><button class="xp-btn" disabled>Settings...</button></fieldset><fieldset><legend>Certificates</legend><img src="assets/xp/system/PrivacySettings.png" alt=""><p>Use certificates to positively identify yourself, certification<br>authorities, and publishers.</p><button class="xp-btn">Clear SSL State</button><button class="xp-btn">Certificates...</button><button class="xp-btn">Publishers...</button></fieldset><fieldset><legend>Personal information</legend><img src="assets/xp/icons/RecentDocuments.png" alt=""><p>AutoComplete stores previous entries<br>and suggests matches for you.</p><button class="xp-btn">AutoComplete...</button><p>Microsoft Profile Assistant stores your<br>personal information.</p><button class="xp-btn">My Profile...</button></fieldset></section>
+      <section data-internet-panel="connections" hidden><div class="internet-setup-copy"><img src="assets/xp/system/LocalIntranetZone.png" alt=""><p>To set up an Internet connection, click<br>Setup.</p><button class="xp-btn">Setup...</button></div><fieldset class="internet-dialup-settings"><legend>Dial-up and Virtual Private Network settings</legend><div class="internet-connection-list"></div><button class="xp-btn">Add...</button><button class="xp-btn" disabled>Remove</button><button class="xp-btn" disabled>Settings...</button><p>Choose Settings if you need to configure a proxy<br>server for a connection.</p><label><input type="radio" disabled> Never dial a connection</label><label><input type="radio" disabled> Dial whenever a network connection is not present</label><label><input type="radio" disabled> Always dial my default connection</label><span>Current: <i>None</i></span><button class="xp-btn" disabled>Set Default</button></fieldset><fieldset class="internet-lan-settings"><legend>Local Area Network (LAN) settings</legend><p>LAN Settings do not apply to dial-up connections.<br>Choose Settings above for dial-up settings.</p><button class="xp-btn">LAN Settings...</button></fieldset></section>
+      <section data-internet-panel="programs" hidden><fieldset><legend>Internet programs</legend><img src="assets/xp/system/InternetPrograms.png" alt=""><p>You can specify which program Windows automatically uses<br>for each Internet service.</p>${[
+        ["HTML editor:", ""],
+        ["E-mail:", "Outlook Express"],
+        ["Newsgroups:", "Outlook Express"],
+        ["Internet call:", "NetMeeting"],
+        ["Calendar:", ""],
+        ["Contact list:", "Address Book"],
+      ]
+        .map(
+          ([label, value]) =>
+            `<label>${label}<select><option>${value}</option></select></label>`,
+        )
+        .join(
+          "",
+        )}</fieldset><div class="internet-program-actions"><button class="xp-btn">Reset Web Settings...</button><p>You can reset Internet Explorer to the default<br>home and search pages.</p><button class="xp-btn">Manage Add-ons...</button><p>Enable or disable browser add-ons installed on<br>your computer.</p><label><input type="checkbox" checked> Internet Explorer should check to see whether it is the default browser</label></div></section>
+      <section data-internet-panel="advanced" hidden><p>Settings:</p><div class="internet-advanced-list"><strong>🌐 Accessibility</strong>${["Always expand ALT text for images", "Move system caret with focus/selection changes"].map((label) => `<label><input type="checkbox"> ${label}</label>`).join("")}<strong>▣ Browsing</strong>${["Always send URLs as UTF-8 (requires restart)", "Automatically check for Internet Explorer updates", "Close unused folders in History and Favorites (requires restart)", "Disable Script Debugging (Internet Explorer)", "Disable Script Debugging (Other)", "Display a notification about every script error", "Enable folder view for FTP sites", "Enable Install On Demand (Internet Explorer)", "Enable Install On Demand (Other)", "Enable offline items to be synchronized on a schedule", "Enable page transitions", "Enable Personalized Favorites Menu"].map((label, index) => `<label><input type="checkbox" ${[0, 2, 3, 4, 6, 8, 9, 10].includes(index) ? "checked" : ""}> ${label}</label>`).join("")}</div><button class="xp-btn internet-restore-defaults">Restore Defaults</button></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-internet-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.internetTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-internet-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.internetPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-internet-tab]")?.dataset
+      .internetTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("internet-properties-buttons");
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+  activate(initialTab);
+};
+
+const openFolderOptions = () => {
+  const dialog = XPDialogs.createDialog({ title: "Folder Options" });
+  dialog.el.classList.add("folder-options-dialog");
+  const parentRect = openWindows
+    .get("__control-panel")
+    ?.el.getBoundingClientRect();
+  if (parentRect) {
+    Object.assign(dialog.el.style, {
+      position: "fixed",
+      left: `${parentRect.left}px`,
+      top: `${parentRect.top}px`,
+    });
+  }
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="folder-options-tabs" role="tablist" aria-label="Folder Options">
+      <button type="button" role="tab" data-folder-options-tab="general" aria-selected="true">General</button>
+      <button type="button" role="tab" data-folder-options-tab="view" aria-selected="false" tabindex="-1">View</button>
+      <button type="button" role="tab" data-folder-options-tab="file-types" aria-selected="false" tabindex="-1">File Types</button>
+      <button type="button" role="tab" data-folder-options-tab="offline" aria-selected="false" tabindex="-1">Offline Files</button>
+    </div>
+    <div class="folder-options-panel" data-folder-options-panel="general">
+      <fieldset><legend>Tasks</legend><img src="assets/xp/icons/FolderViewClassic.png" alt="">
+        <label><input type="radio" name="folder-tasks" checked> Show common tasks in folders</label>
+        <label><input type="radio" name="folder-tasks"> Use Windows classic folders</label>
+      </fieldset>
+      <fieldset><legend>Browse folders</legend><img src="assets/xp/system/FolderBrowse.png" alt="">
+        <label><input type="radio" name="browse-folders" checked> Open each folder in the same window</label>
+        <label><input type="radio" name="browse-folders"> Open each folder in its own window</label>
+      </fieldset>
+      <fieldset class="folder-click-options"><legend>Click items as follows</legend><img class="folder-click-illustration" src="assets/xp/system/FolderClickItems.png" alt="">
+        <label><input type="radio" name="click-items"> Single-click to open an item (point to select)</label>
+        <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles consistent with my browser</label>
+        <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles only when I point at them</label>
+        <label><input type="radio" name="click-items" checked> Double-click to open an item (single-click to select)</label>
+      </fieldset>
+      <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
+    </div>
+    <div class="folder-options-panel folder-view-panel" data-folder-options-panel="view" hidden>
+      <fieldset class="folder-views-group"><legend>Folder views</legend><img src="assets/xp/system/FolderViews.png" alt=""><p>You can apply the view (such as Details or Tiles) that<br>you are using for this folder to all folders.</p><button type="button" class="xp-btn" disabled>Apply to All Folders</button><button type="button" class="xp-btn">Reset All Folders</button></fieldset>
+      <label class="folder-advanced-label">Advanced settings:</label>
+      <div class="folder-advanced-list">
+        <strong><img src="assets/xp/system/FolderTree.png" alt="">Files and Folders</strong>
+        <label><input type="checkbox" checked> Automatically search for network folders and printers</label>
+        <label><input type="checkbox" checked> Display file size information in folder tips</label>
+        <label><input type="checkbox" checked> Display simple folder view in Explorer's Folders list</label>
+        <label><input type="checkbox"> Display the contents of system folders</label>
+        <label><input type="checkbox" checked> Display the full path in the address bar</label>
+        <label><input type="checkbox"> Display the full path in the title bar</label>
+        <label><input type="checkbox"> Do not cache thumbnails</label>
+        <strong><img src="assets/xp/system/FolderTree.png" alt="">Hidden files and folders</strong>
+        <label class="folder-indented"><input type="radio" name="hidden-files" checked> Do not show hidden files and folders</label>
+        <label class="folder-indented"><input type="radio" name="hidden-files"> Show hidden files and folders</label>
+        <label><input type="checkbox" checked> Hide extensions for known file types</label>
+        <label><input type="checkbox" checked> Hide protected operating system files (Recommended)</label>
+      </div>
+      <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
+    </div>
+    <div class="folder-options-panel folder-file-types-panel" data-folder-options-panel="file-types" hidden>
+      <p>Registered file types:</p>
+      <div class="folder-file-types-list" role="listbox" aria-label="Registered file types">
+        <div class="folder-file-types-head"><span>Extensions</span><span>File Types</span></div>
+        <button type="button" class="selected"><img src="assets/xp/icons/LocalDisk.png" alt=""><span>(NONE)</span><span>AudioCD</span></button>
+        <button type="button"><img src="assets/xp/icons/LocalDisk.png" alt=""><span>(NONE)</span><span>Drive</span></button>
+        <button type="button"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>(NONE)</span><span>DVD</span></button>
+        <button type="button"><img src="assets/xp/icons/SharedFolder.png" alt=""><span>(NONE)</span><span>File Folder</span></button>
+        <button type="button"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>(NONE)</span><span>Folder</span></button>
+        <button type="button"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><span>(NONE)</span><span>Help and Support Center protocol</span></button>
+      </div>
+      <button type="button" class="xp-btn folder-file-new">New</button><button type="button" class="xp-btn folder-file-delete" disabled>Delete</button>
+      <fieldset class="folder-file-details"><legend>Details for 'AudioCD' file type</legend><label>Opens with:</label><button type="button" class="xp-btn" disabled>Change...</button><p>To change settings that affect all 'AudioCD' files, click Advanced.</p><button type="button" class="xp-btn">Advanced</button></fieldset>
+    </div>
+    <div class="folder-options-panel folder-offline-panel" data-folder-options-panel="offline" hidden>
+      <img src="assets/xp/icons/OfflineFiles.png" alt=""><p>Use Offline Files to work with files and programs stored on the<br>network even when you are not connected.</p>
+      <p>Fast User Switching is enabled on this computer. &nbsp;Offline Files<br>cannot be enabled while Fast User Switching is enabled.</p>
+      <p>To change your Fast User Switching setting, open User Accounts<br>in Control Panel and select "Change the way users log on or off."</p>
+    </div>
+    <div class="dlg-buttons folder-options-buttons"></div>`;
+
+  const tabs = [...dialog.body.querySelectorAll("[data-folder-options-tab]")];
+  const panels = [
+    ...dialog.body.querySelectorAll("[data-folder-options-panel]"),
+  ];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) => {
+        const selected =
+          entry.dataset.folderOptionsTab === tab.dataset.folderOptionsTab;
+        entry.setAttribute("aria-selected", String(selected));
+        entry.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach((panel) => {
+        panel.hidden =
+          panel.dataset.folderOptionsPanel !== tab.dataset.folderOptionsTab;
+      });
+    }),
+  );
+  const buttons = dialog.body.querySelector(".folder-options-buttons");
+  const apply = XPDialogs.createDialogButton(
+    { id: "apply", label: "Apply" },
+    () => {
+      apply.disabled = true;
+    },
+  );
+  apply.disabled = true;
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  dialog.defaultButton = ok;
+  buttons.append(ok, cancel, apply);
+  dialog.body.addEventListener("change", () => {
+    apply.disabled = false;
+  });
+  dialog.body.querySelectorAll(".folder-restore-defaults").forEach((button) =>
+    button.addEventListener("click", () => {
+      dialog.body
+        .querySelectorAll('input[type="checkbox"]')
+        .forEach((input) => (input.checked = input.defaultChecked));
+      dialog.body
+        .querySelectorAll('input[type="radio"]')
+        .forEach((input) => (input.checked = input.defaultChecked));
+      apply.disabled = false;
+    }),
+  );
+  dialog.body
+    .querySelectorAll(".folder-file-types-list button")
+    .forEach((button) =>
+      button.addEventListener("click", () => {
+        dialog.body
+          .querySelectorAll(".folder-file-types-list button")
+          .forEach((entry) =>
+            entry.classList.toggle("selected", entry === button),
+          );
+      }),
+    );
 };
 
 const openTaskbarProperties = () => {
   const dialog = XPDialogs.createDialog({
     title: "Taskbar and Start Menu Properties",
   });
-  const label = document.createElement("label");
-  const input = document.createElement("input");
-  input.type = "checkbox";
-  input.checked = true;
-  input.disabled = true;
-  input.title = "The taskbar is fixed in this shell.";
-  label.append(input, " Lock the taskbar (taskbar position is fixed)");
-  dialog.body.appendChild(label);
+  dialog.el.classList.add("taskbar-properties-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="taskbar-properties-tabs" role="tablist">
+      <button type="button" role="tab" data-taskbar-properties-tab="taskbar" aria-selected="true">Taskbar</button>
+      <button type="button" role="tab" data-taskbar-properties-tab="start-menu">Start Menu</button>
+    </div>
+    <div class="taskbar-properties-panel" data-taskbar-properties-panel="taskbar">
+      <div class="taskbar-properties-group taskbar-appearance-group"><span class="taskbar-properties-legend">Taskbar appearance</span>
+        <img class="taskbar-properties-preview" src="assets/xp/system/TaskbarPreview.png" alt="Taskbar preview">
+        <label><input type="checkbox" data-taskbar-setting="locked" ${taskbarLocked ? "checked" : ""}> Lock the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="auto-hide"> Auto-hide the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="keep-on-top" checked> Keep the taskbar on top of other windows</label>
+        <label><input type="checkbox" data-taskbar-setting="group" checked> Group similar taskbar buttons</label>
+        <label><input type="checkbox" data-taskbar-setting="quick-launch"> Show Quick Launch</label>
+      </div>
+      <div class="taskbar-properties-group notification-area-group"><span class="taskbar-properties-legend">Notification area</span>
+        <img class="taskbar-properties-preview" src="assets/xp/system/NotificationAreaPreview.png" alt="Notification area preview">
+        <label><input type="checkbox" data-taskbar-setting="show-clock" checked> Show the clock</label>
+        <p>You can keep the notification area uncluttered by hiding icons that you<br>have not clicked recently.</p>
+        <label><input type="checkbox" data-taskbar-setting="hide-inactive" checked> Hide inactive icons</label>
+        <button type="button" class="xp-btn">Customize...</button>
+      </div>
+    </div>
+    <div class="taskbar-properties-panel taskbar-start-menu-panel" data-taskbar-properties-panel="start-menu" hidden>
+      <img class="taskbar-start-menu-preview" src="assets/xp/system/StartMenuPreview.png" alt="Start menu preview">
+      <label class="taskbar-start-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="start" checked> Start menu</label>
+      <p class="taskbar-start-menu-description">Select this menu style for easy access to the<br>Internet, e-mail, and your favorite programs.</p>
+      <button type="button" class="xp-btn taskbar-start-customize">Customize...</button>
+      <label class="taskbar-classic-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="classic"> Classic Start menu</label>
+      <p class="taskbar-classic-menu-description">Select this option to use the menu style from<br>earlier versions of Windows.</p>
+      <button type="button" class="xp-btn taskbar-classic-customize" disabled>Customize...</button>
+    </div>
+    <div class="dlg-buttons taskbar-properties-buttons"></div>
+  `;
+  const tabs = [
+    ...dialog.body.querySelectorAll("[data-taskbar-properties-tab]"),
+  ];
+  const panels = [
+    ...dialog.body.querySelectorAll("[data-taskbar-properties-panel]"),
+  ];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) =>
+        entry.setAttribute(
+          "aria-selected",
+          String(
+            entry.dataset.taskbarPropertiesTab ===
+              tab.dataset.taskbarPropertiesTab,
+          ),
+        ),
+      );
+      panels.forEach((panel) => {
+        panel.hidden =
+          panel.dataset.taskbarPropertiesPanel !==
+          tab.dataset.taskbarPropertiesTab;
+      });
+    }),
+  );
+  const buttonRow = dialog.body.querySelector(".taskbar-properties-buttons");
+  const apply = XPDialogs.createDialogButton(
+    { id: "apply", label: "Apply" },
+    () => {
+      setTaskbarLocked(
+        dialog.body.querySelector('[data-taskbar-setting="locked"]').checked,
+      );
+      document.getElementById("taskbar-clock").hidden =
+        !dialog.body.querySelector('[data-taskbar-setting="show-clock"]')
+          .checked;
+      apply.disabled = true;
+    },
+  );
+  apply.disabled = true;
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      apply.click();
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  dialog.defaultButton = ok;
+  buttonRow.append(ok, cancel, apply);
+  dialog.body.addEventListener("change", (event) => {
+    apply.disabled = false;
+    if (event.target.name === "taskbar-start-menu-style") {
+      const classic = event.target.value === "classic";
+      dialog.body.querySelector(".taskbar-start-customize").disabled = classic;
+      dialog.body.querySelector(".taskbar-classic-customize").disabled =
+        !classic;
+    }
+  });
+  dialog.body
+    .querySelector(".notification-area-group .xp-btn")
+    .addEventListener("click", () =>
+      XPDialogs.alert(
+        "Select which notification icons should be hidden when inactive.",
+        "Customize Notifications",
+        "info",
+      ),
+    );
+  ok.focus();
+};
+
+let taskbarLocked = true;
+
+const setTaskbarLocked = (locked) => {
+  taskbarLocked = locked;
+  const button = document.querySelector('[data-taskbar-action="lock"]');
+  button.setAttribute("aria-checked", String(locked));
+  button.querySelector(".context-check").textContent = locked ? "✓" : "";
 };
 
 const setupTaskbarContextMenu = () => {
   const taskbar = document.getElementById("taskbar");
   const menu = document.getElementById("taskbar-context-menu");
+  const toolbarParent = document.getElementById("taskbar-toolbar-parent");
+  const toolbarButton = toolbarParent.firstElementChild;
+  const toolbarSubmenu = document.getElementById("taskbar-toolbar-submenu");
   wireTaskbarMenuKeyboard(menu);
+  wireTaskbarMenuKeyboard(toolbarSubmenu);
   wireTaskbarMenuKeyboard(document.getElementById("taskbar-overflow-menu"));
+  const openToolbarSubmenu = () => {
+    toolbarParent.classList.add("open");
+    toolbarButton.setAttribute("aria-expanded", "true");
+    toolbarSubmenu.style.left = "calc(100% - 2px)";
+    if (toolbarSubmenu.getBoundingClientRect().right > innerWidth)
+      toolbarSubmenu.style.left = `${-toolbarSubmenu.offsetWidth + 5}px`;
+  };
+  const closeToolbarSubmenu = () => {
+    toolbarParent.classList.remove("open");
+    toolbarButton.setAttribute("aria-expanded", "false");
+  };
+  toolbarParent.addEventListener("pointerenter", openToolbarSubmenu);
+  toolbarParent.addEventListener("pointerleave", closeToolbarSubmenu);
+  toolbarButton.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowRight") return;
+    event.preventDefault();
+    event.stopPropagation();
+    openToolbarSubmenu();
+    toolbarSubmenu.querySelector("button")?.focus();
+  });
+  toolbarSubmenu.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeToolbarSubmenu();
+    toolbarButton.focus();
+  });
+  toolbarSubmenu.addEventListener("click", closeTaskbarMenus);
   taskbar.addEventListener("contextmenu", (event) => {
     if (event.target.closest(".task-button, #tray-volume-popup")) return;
     event.preventDefault();
     closeWindowSystemMenu();
     closeTaskbarMenus();
+    closeToolbarSubmenu();
+    const canArrange = [...openWindows.values()].some((win) => !win.minimized);
+    ["cascade", "tile-horizontal", "tile-vertical"].forEach((action) => {
+      menu.querySelector(`[data-taskbar-action="${action}"]`).disabled =
+        !canArrange;
+    });
     positionTaskbarMenu(menu, event.clientX, event.clientY);
   });
   menu.addEventListener("click", (event) => {
     const action = event.target.closest("[data-taskbar-action]")?.dataset
       .taskbarAction;
-    if (!action || event.target.disabled) return;
+    if (!action || event.target.closest("button")?.disabled) return;
+    if (action === "toolbars") {
+      openToolbarSubmenu();
+      return;
+    }
     closeTaskbarMenus();
     if (action === "show-desktop") toggleShowDesktop();
     else if (action === "cascade" || action.startsWith("tile-"))
       arrangeTaskbarWindows(action);
     else if (action === "task-manager") openTaskManager();
+    else if (action === "lock") setTaskbarLocked(!taskbarLocked);
     else if (action === "properties") openTaskbarProperties();
   });
 };
@@ -6177,12 +8753,43 @@ const maybePromptForUpdate = (state) => {
 };
 
 const initializeOfflineMode = () => {
-  if (offlineManagerInitialized) return;
+  if (offlineManagerInitialized || window.ASTRO_DEV) {
+    return offlineManagerInitialization;
+  }
   offlineManagerInitialized = true;
   offlineManager.subscribe(maybePromptForUpdate);
-  offlineManager.initialize().catch((error) => {
+  offlineManagerInitialization = offlineManager.initialize().catch((error) => {
     console.error("Offline mode initialization failed:", error);
+    throw error;
   });
+  return offlineManagerInitialization;
+};
+
+const saveBundledGameForOffline = (gameId) => {
+  if (
+    window.ASTRO_DEV ||
+    navigator.onLine === false ||
+    !Object.hasOwn(window.FLASH_GAMES, gameId)
+  ) {
+    return;
+  }
+
+  automaticOfflineDownloadQueue = automaticOfflineDownloadQueue
+    .catch(() => {})
+    .then(async () => {
+      await offlineManagerInitialization;
+      if (offlineManager.getSnapshot().downloadedGameIds.includes(gameId)) {
+        return;
+      }
+      await offlineManager.downloadGame(gameId);
+    })
+    .catch((error) => {
+      console.warn(
+        "Could not save game for offline play:",
+        formatGameTitle(gameId),
+        error,
+      );
+    });
 };
 
 const wireProjectSettings = (win) => {
@@ -6705,6 +9312,15 @@ const openDateTimeProperties = () => {
     title: "Date and Time Properties",
     wide: true,
   });
+  dialog.el.classList.add("datetime-dialog");
+
+  const titleButtons = dialog.el.querySelector(".title-buttons");
+  const helpButton = document.createElement("button");
+  helpButton.type = "button";
+  helpButton.className = "tb-btn help-btn";
+  helpButton.title = "Help";
+  helpButton.setAttribute("aria-label", "Help");
+  titleButtons.prepend(helpButton);
 
   const shellNow = getShellTime();
   const state = {
@@ -6713,9 +9329,16 @@ const openDateTimeProperties = () => {
     day: shellNow.getDate(),
   };
 
+  const tabs = document.createElement("div");
+  tabs.className = "datetime-tabs";
+  tabs.setAttribute("role", "tablist");
+  tabs.setAttribute("aria-label", "Date and Time Properties");
+  const panelHost = document.createElement("div");
+  panelHost.className = "datetime-panel-host";
+
   // ---- Date group ----
   const dateGroup = document.createElement("fieldset");
-  dateGroup.className = "dlg-group";
+  dateGroup.className = "dlg-group datetime-date-group";
   const dateLegend = document.createElement("legend");
   dateLegend.textContent = "Date";
   dateGroup.appendChild(dateLegend);
@@ -6749,75 +9372,135 @@ const openDateTimeProperties = () => {
 
   // ---- Time group ----
   const timeGroup = document.createElement("fieldset");
-  timeGroup.className = "dlg-group";
+  timeGroup.className = "dlg-group datetime-time-group";
   const timeLegend = document.createElement("legend");
   timeLegend.textContent = "Time";
   timeGroup.appendChild(timeLegend);
 
-  const timeRow = document.createElement("div");
-  timeRow.className = "dlg-time-row";
-  const makeTimeInput = (id, label, min, max, value) => {
-    const input = document.createElement("input");
-    input.type = "number";
-    input.id = id;
-    input.min = String(min);
-    input.max = String(max);
-    input.className = "xp-input dlg-time-input";
-    input.setAttribute("aria-label", label);
-    input.value = String(value);
-    return input;
-  };
-  const hour24 = shellNow.getHours();
-  const hourInput = makeTimeInput(
-    "dlg-time-hour",
-    "Hour",
-    1,
-    12,
-    hour24 % 12 || 12,
+  const analogClock = document.createElement("div");
+  analogClock.className = "datetime-analog-clock";
+  analogClock.setAttribute("aria-hidden", "true");
+  for (let tick = 0; tick < 60; tick += 1) {
+    const mark = document.createElement("i");
+    mark.className = tick % 5 === 0 ? "hour-tick" : "minute-tick";
+    mark.style.setProperty("--tick", tick);
+    analogClock.appendChild(mark);
+  }
+  const hourHand = document.createElement("span");
+  hourHand.className = "datetime-clock-hand hour";
+  const minuteHand = document.createElement("span");
+  minuteHand.className = "datetime-clock-hand minute";
+  const secondHand = document.createElement("span");
+  secondHand.className = "datetime-clock-hand second";
+  const clockPin = document.createElement("span");
+  clockPin.className = "datetime-clock-pin";
+  analogClock.append(hourHand, minuteHand, secondHand, clockPin);
+
+  const timeEdit = document.createElement("div");
+  timeEdit.className = "datetime-time-edit";
+  const timeInput = document.createElement("input");
+  timeInput.type = "text";
+  timeInput.className = "xp-input";
+  timeInput.setAttribute("aria-label", "Time");
+  const spinner = document.createElement("span");
+  spinner.className = "datetime-spinner";
+  spinner.innerHTML =
+    '<button type="button" aria-label="Increase time">▲</button><button type="button" aria-label="Decrease time">▼</button>';
+  timeEdit.append(timeInput, spinner);
+  timeGroup.append(analogClock, timeEdit);
+
+  const datePanel = document.createElement("section");
+  datePanel.className = "datetime-panel datetime-date-panel";
+  datePanel.setAttribute("role", "tabpanel");
+  datePanel.append(dateGroup, timeGroup);
+  const timeZoneText = document.createElement("p");
+  timeZoneText.className = "datetime-current-zone";
+  timeZoneText.textContent = "Current time zone:  SA Eastern Standard Time";
+  datePanel.appendChild(timeZoneText);
+
+  const timeZonePanel = document.createElement("section");
+  timeZonePanel.className = "datetime-panel datetime-time-zone-panel";
+  timeZonePanel.setAttribute("role", "tabpanel");
+  timeZonePanel.hidden = true;
+  const timeZoneSelect = document.createElement("select");
+  timeZoneSelect.className = "xp-select datetime-zone-select";
+  timeZoneSelect.setAttribute("aria-label", "Time zone");
+  const timeZoneOption = document.createElement("option");
+  timeZoneOption.textContent = "(GMT-03:00) Buenos Aires, Georgetown";
+  timeZoneSelect.appendChild(timeZoneOption);
+  const timeZoneMap = document.createElement("img");
+  timeZoneMap.className = "datetime-zone-map";
+  timeZoneMap.src = "assets/xp/TimeZoneMap.png";
+  timeZoneMap.alt = "World time zone map";
+  timeZoneMap.draggable = false;
+  timeZonePanel.append(timeZoneSelect, timeZoneMap);
+
+  const internetPanel = document.createElement("section");
+  internetPanel.className = "datetime-panel datetime-internet-panel";
+  internetPanel.setAttribute("role", "tabpanel");
+  internetPanel.hidden = true;
+  const syncLabel = document.createElement("label");
+  syncLabel.className = "datetime-sync-label";
+  const syncCheckbox = document.createElement("input");
+  syncCheckbox.type = "checkbox";
+  syncCheckbox.checked = true;
+  syncLabel.append(
+    syncCheckbox,
+    "Automatically synchronize with an Internet time server",
   );
-  const minuteInput = makeTimeInput(
-    "dlg-time-minute",
-    "Minute",
-    0,
-    59,
-    shellNow.getMinutes(),
-  );
-  const secondInput = makeTimeInput(
-    "dlg-time-second",
-    "Second",
-    0,
-    59,
-    shellNow.getSeconds(),
-  );
-  const ampmSelect = document.createElement("select");
-  ampmSelect.className = "xp-select";
-  ampmSelect.setAttribute("aria-label", "AM or PM");
-  ["AM", "PM"].forEach((text) => {
-    const option = document.createElement("option");
-    option.value = text;
-    option.textContent = text;
-    ampmSelect.appendChild(option);
+  const serverRow = document.createElement("div");
+  serverRow.className = "datetime-server-row";
+  const serverLabel = document.createElement("label");
+  serverLabel.textContent = "Server:";
+  const serverSelect = document.createElement("select");
+  serverSelect.className = "xp-select";
+  serverSelect.innerHTML =
+    "<option>time.windows.com</option><option>time.nist.gov</option>";
+  const updateNow = document.createElement("button");
+  updateNow.type = "button";
+  updateNow.className = "xp-btn";
+  updateNow.textContent = "Update Now";
+  serverRow.append(serverLabel, serverSelect, updateNow);
+  const syncStatus = document.createElement("p");
+  syncStatus.className = "datetime-sync-status";
+  syncStatus.textContent =
+    "Windows has never attempted to synchronize with an Internet time server.";
+  const nextSync = document.createElement("p");
+  nextSync.className = "datetime-next-sync";
+  nextSync.textContent = `Next synchronization: ${shellNow.toLocaleDateString("en-US")} at ${shellNow.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  const syncNote = document.createElement("p");
+  syncNote.className = "datetime-sync-note";
+  syncNote.innerHTML =
+    "Synchronization can occur only when your computer is connected to the Internet. Learn more about <u>time synchronization</u> in Help and Support Center.";
+  internetPanel.append(syncLabel, serverRow, syncStatus, nextSync, syncNote);
+
+  const panels = [datePanel, timeZonePanel, internetPanel];
+  const tabDefinitions = [
+    ["Date & Time", datePanel],
+    ["Time Zone", timeZonePanel],
+    ["Internet Time", internetPanel],
+  ];
+  tabDefinitions.forEach(([label, panel], index) => {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", String(index === 0));
+    tab.classList.toggle("active", index === 0);
+    tab.textContent = label;
+    tab.addEventListener("click", () => {
+      panels.forEach((candidate) => {
+        candidate.hidden = candidate !== panel;
+      });
+      [...tabs.children].forEach((candidate) => {
+        const selected = candidate === tab;
+        candidate.classList.toggle("active", selected);
+        candidate.setAttribute("aria-selected", String(selected));
+      });
+    });
+    tabs.appendChild(tab);
   });
-  ampmSelect.value = hour24 < 12 ? "AM" : "PM";
-
-  const colon1 = document.createElement("span");
-  colon1.textContent = ":";
-  const colon2 = document.createElement("span");
-  colon2.textContent = ":";
-  timeRow.append(
-    hourInput,
-    colon1,
-    minuteInput,
-    colon2,
-    secondInput,
-    ampmSelect,
-  );
-  timeGroup.appendChild(timeRow);
-
-  const groups = document.createElement("div");
-  groups.className = "dlg-datetime";
-  groups.append(dateGroup, timeGroup);
-  dialog.body.appendChild(groups);
+  panelHost.append(...panels);
+  dialog.body.append(tabs, panelHost);
 
   const renderCalendar = () => {
     calendar.innerHTML = "";
@@ -6857,6 +9540,23 @@ const openDateTimeProperties = () => {
     }
   };
 
+  const formatTime = (date) =>
+    date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  const renderAnalogClock = (date) => {
+    const seconds = date.getSeconds();
+    const minutes = date.getMinutes() + seconds / 60;
+    const hours = (date.getHours() % 12) + minutes / 60;
+    hourHand.style.setProperty("--angle", `${hours * 30}deg`);
+    minuteHand.style.setProperty("--angle", `${minutes * 6}deg`);
+    secondHand.style.setProperty("--angle", `${seconds * 6}deg`);
+  };
+  timeInput.value = formatTime(shellNow);
+  renderAnalogClock(shellNow);
+
   monthSelect.addEventListener("change", () => {
     state.month = parseInt(monthSelect.value, 10);
     state.day = Math.min(
@@ -6878,18 +9578,15 @@ const openDateTimeProperties = () => {
     renderCalendar();
   });
 
-  const readTimeField = (input, min, max, fallback) => {
-    const value = parseInt(input.value, 10);
-    return Number.isFinite(value)
-      ? Math.min(Math.max(value, min), max)
-      : fallback;
-  };
-
   const applyDateTime = () => {
-    let hours = readTimeField(hourInput, 1, 12, 12) % 12;
-    if (ampmSelect.value === "PM") hours += 12;
-    const minutes = readTimeField(minuteInput, 0, 59, 0);
-    const seconds = readTimeField(secondInput, 0, 59, 0);
+    const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(
+      timeInput.value.trim(),
+    );
+    let hours = match ? Math.min(Math.max(parseInt(match[1], 10), 1), 12) : 12;
+    const minutes = match ? Math.min(parseInt(match[2], 10), 59) : 0;
+    const seconds = match ? Math.min(parseInt(match[3], 10), 59) : 0;
+    hours %= 12;
+    if (match?.[4].toUpperCase() === "PM") hours += 12;
     const chosen = new Date(
       state.year,
       state.month,
@@ -6903,6 +9600,7 @@ const openDateTimeProperties = () => {
       String(chosen.getTime() - Date.now()),
     );
     updateClockDisplay();
+    renderAnalogClock(chosen);
   };
 
   const row = document.createElement("div");
@@ -6920,11 +9618,60 @@ const openDateTimeProperties = () => {
   );
   const applyButton = XPDialogs.createDialogButton(
     { id: "apply", label: "Apply" },
-    applyDateTime,
+    () => {
+      applyDateTime();
+      applyButton.disabled = true;
+    },
   );
+  applyButton.disabled = true;
   row.append(okButton, cancelButton, applyButton);
   dialog.body.appendChild(row);
   dialog.defaultButton = okButton;
+
+  const markDirty = () => {
+    applyButton.disabled = false;
+  };
+  [
+    monthSelect,
+    yearInput,
+    timeInput,
+    timeZoneSelect,
+    syncCheckbox,
+    serverSelect,
+  ].forEach((control) => control.addEventListener("change", markDirty));
+  calendar.addEventListener("click", markDirty);
+  spinner.querySelectorAll("button").forEach((button, index) => {
+    button.addEventListener("click", () => {
+      const value = new Date(2000, 0, 1);
+      const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(
+        timeInput.value.trim(),
+      );
+      if (match) {
+        let hours = parseInt(match[1], 10) % 12;
+        if (match[4].toUpperCase() === "PM") hours += 12;
+        value.setHours(hours, parseInt(match[2], 10), parseInt(match[3], 10));
+      }
+      value.setSeconds(value.getSeconds() + (index === 0 ? 1 : -1));
+      timeInput.value = formatTime(value);
+      renderAnalogClock(value);
+      markDirty();
+    });
+  });
+  syncCheckbox.addEventListener("change", () => {
+    serverSelect.disabled = !syncCheckbox.checked;
+    updateNow.disabled = !syncCheckbox.checked;
+  });
+  updateNow.addEventListener("click", () => {
+    syncStatus.textContent =
+      "An error occurred while Windows was synchronizing with time.windows.com.";
+  });
+  helpButton.addEventListener("click", () => {
+    XPDialogs.alert(
+      "Select a tab to change the date, time, time zone, or Internet time settings.",
+      "Date and Time Help",
+      "info",
+    );
+  });
 
   renderCalendar();
   okButton.focus();
@@ -7798,7 +10545,7 @@ const setupDesktopContextMenu = () => {
       );
       selectDesktopIcon(shortcut.id);
     } else if (action === "recycle-properties") {
-      XPDialogs.properties(fs.RECYCLE_BIN);
+      openShellProperties(fs.RECYCLE_BIN);
     } else if (action === "cut") {
       fileOps.cut(selectedFsIds);
     } else if (action === "copy") {
@@ -7814,7 +10561,7 @@ const setupDesktopContextMenu = () => {
     } else if (action === "rename" && selectedFsIds[0]) {
       beginDesktopRename(selectedFsIds[0]);
     } else if (action === "item-properties" && selectedFsIds[0]) {
-      XPDialogs.properties(selectedFsIds[0]);
+      openShellProperties(selectedFsIds[0]);
     } else if (action === "properties") {
       openSystemWindow("__display-properties");
     }
@@ -7973,84 +10720,431 @@ const openRecentDocuments = () => {
   ]);
 };
 
-const openControlPanel = () => {
-  const dialog = XPDialogs.createDialog({ title: "Control Panel" });
-  const heading = document.createElement("p");
-  heading.textContent = "Pick a category to change a setting.";
-  const list = document.createElement("div");
-  list.className = "shell-dialog-list";
-  [
-    ["Internet Games", () => openSystemWindow("__internet-games")],
-    ["Display", () => openSystemWindow("__display-properties")],
-    ["Date and Time", openDateTimeProperties],
-    ["Astro Flash Settings", openProjectSettings],
-  ].forEach(([label, action]) => {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.textContent = label;
-    item.addEventListener("click", () => {
-      dialog.close();
-      action();
-    });
-    list.appendChild(item);
-  });
-  dialog.body.append(heading, list);
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
-};
+const openControlPanel = () => openSystemWindow("__control-panel");
 
-const openPrintersAndFaxes = () => {
-  const dialog = XPDialogs.createDialog({ title: "Printers and Faxes" });
-  const message = document.createElement("p");
-  message.textContent = "No printers are installed.";
-  const addPrinter = XPDialogs.createDialogButton(
-    { id: "add", label: "Add a &Printer" },
-    () => {
-      dialog.close();
+const openPrintersAndFaxes = () => openSystemWindow("__printers");
+
+const wirePrintersAndFaxes = (win) => {
+  const content = win.el.querySelector(".printers-content");
+  const menu = content.querySelector(".printers-menu");
+  const closeMenu = () => {
+    menu.hidden = true;
+    content
+      .querySelectorAll("[data-printers-menu]")
+      .forEach((button) => button.setAttribute("aria-expanded", "false"));
+  };
+  const showMenu = (button) => {
+    const labels =
+      button.dataset.printersMenu === "file"
+        ? [["Close", "close"]]
+        : button.dataset.printersMenu === "help"
+          ? [
+              ["Help and Support", "help"],
+              ["About Windows", "about"],
+            ]
+          : [["No commands available", "none"]];
+    menu.replaceChildren();
+    labels.forEach(([label, command]) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "game-menu-item";
+      item.textContent = label;
+      item.dataset.printersCommand = command;
+      item.disabled = command === "none";
+      menu.appendChild(item);
+    });
+    menu.style.left = `${button.offsetLeft}px`;
+    menu.style.top = `${button.offsetTop + button.offsetHeight}px`;
+    menu.hidden = false;
+    button.setAttribute("aria-expanded", "true");
+  };
+  content.addEventListener("click", (event) => {
+    const menuButton = event.target.closest("[data-printers-menu]");
+    if (menuButton) return showMenu(menuButton);
+    const command = event.target.closest("[data-printers-command]")?.dataset
+      .printersCommand;
+    if (command === "close") closeGameWindow("__printers");
+    if (command === "help") openHelpAndSupport();
+    if (command === "about") openProjectSettings();
+    if (command) return closeMenu();
+    const action = event.target.closest("[data-printers-action]")?.dataset
+      .printersAction;
+    if (action === "add" || action === "fax") {
       XPDialogs.message({
-        title: "Add Printer Wizard",
-        text: "Printer setup is not available in Astro Flash.",
+        title: action === "add" ? "Add Printer Wizard" : "Fax Setup Wizard",
+        text: "This setup wizard is not available in the offline recreation.",
         icon: "info",
       });
-    },
-  );
-  dialog.body.append(message, addPrinter);
+    } else if (action === "search") openSearchDialog();
+    else if (action === "folders") content.classList.toggle("folders-visible");
+    else if (action === "control-panel") openControlPanel();
+    else if (action === "documents") openSystemWindow("__my-documents");
+    else if (action === "pictures") openSystemWindow("__my-pictures");
+    else if (action === "computer") openSystemWindow("__my-computer");
+    else if (action === "scanners")
+      XPDialogs.alert(
+        "No scanners or cameras are installed.",
+        "Scanners and Cameras",
+        "info",
+      );
+    else if (action === "troubleshoot" || action === "help")
+      openHelpAndSupport();
+    const toggle = event.target.closest(".explorer-section-toggle");
+    if (toggle) {
+      const section = toggle.closest("section");
+      section.classList.toggle("collapsed");
+      toggle.querySelector("[aria-hidden]").textContent =
+        section.classList.contains("collapsed") ? "⌄" : "⌃";
+    }
+  });
+};
+
+const wireHelpAndSupport = (win) => {
+  const content = win.el.querySelector(".help-center-content");
+  const query = content.querySelector("#help-query");
+  const topics = [...content.querySelectorAll("[data-help-topic]")];
+  const filterTopics = () => {
+    const needle = query.value.trim().toLocaleLowerCase();
+    topics.forEach((topic) => {
+      topic.hidden =
+        Boolean(needle) &&
+        !topic.textContent.toLocaleLowerCase().includes(needle);
+    });
+  };
+  content.querySelector("form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    filterTopics();
+  });
+  content.addEventListener("click", (event) => {
+    const action =
+      event.target.closest("[data-help-action]")?.dataset.helpAction;
+    if (action === "home") {
+      query.value = "";
+      filterTopics();
+    } else if (action === "support") {
+      window.open(
+        "https://github.com/astrovm/flash/issues",
+        "_blank",
+        "noopener",
+      );
+    } else if (action) {
+      XPDialogs.alert(
+        `${event.target.closest("[data-help-action]").textContent.trim() || "This option"} is not available in the offline recreation.`,
+        "Help and Support Center",
+        "info",
+      );
+    }
+    const topic = event.target.closest("[data-help-topic]");
+    if (topic)
+      XPDialogs.alert(
+        `Help content for “${topic.textContent.trim()}” is not available in the offline recreation.`,
+        "Help and Support Center",
+        "info",
+      );
+  });
+};
+
+const openHelpAndSupport = () => openSystemWindow("__help");
+
+const openAboutWindows = () => {
+  const dialog = XPDialogs.createDialog({ title: "About Windows" });
+  dialog.el.classList.add("about-windows-dialog");
+  dialog.body.innerHTML = `
+    <img class="about-windows-banner" src="assets/xp/AboutWindows.png" alt="Microsoft Windows XP Professional">
+    <div class="about-windows-copy">
+      <p>Microsoft ® Windows<br>Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)<br>Copyright © 2007 Microsoft Corporation</p>
+      <p>This product is licensed under the terms of the <a href="https://www.microsoft.com/useterms/" target="_blank" rel="noreferrer">End-User<br>License Agreement</a> to:</p>
+      <p class="about-windows-user">astro</p>
+      <hr>
+      <p>Physical memory available to Windows:&nbsp;&nbsp; 523,696 KB</p>
+    </div>
+  `;
   XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
+    { id: "ok", label: "OK", isDefault: true, isCancel: true },
   ]);
 };
 
-const openHelpAndSupport = () => {
+const openSoundsAudioProperties = (initialTab = "volume") => {
   const dialog = XPDialogs.createDialog({
-    title: "Help and Support Center",
-    wide: true,
+    title: "Sounds and Audio Devices Properties",
   });
-  const heading = document.createElement("h2");
-  heading.textContent = "Astro Flash Help and Support";
-  const help = document.createElement("p");
-  help.textContent =
-    "Open games from the desktop or Start menu. Use F11 for full screen, and the taskbar to switch between open windows.";
-  const support = document.createElement("a");
-  support.href = "https://github.com/astrovm/flash/issues";
-  support.target = "_blank";
-  support.rel = "noopener noreferrer";
-  support.textContent = "Get support or send feedback";
-  dialog.body.append(heading, help, support);
+  dialog.el.classList.add("sounds-audio-properties-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const tabs = ["Volume", "Sounds", "Audio", "Voice", "Hardware"];
+  const deviceGroup = (title, icon, device, second = "Advanced...") =>
+    `<fieldset><legend>${title}</legend><img src="${icon}" alt=""><label>Default device:<select disabled><option>${device}</option></select></label><button class="xp-btn" disabled>Volume...</button><button class="xp-btn" disabled>${second}</button></fieldset>`;
+  dialog.body.innerHTML = `<div class="sounds-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-sounds-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div><div class="sounds-properties-panels">
+    <section data-sounds-panel="volume"><div class="sounds-no-device"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>No Audio Device</span></div><fieldset class="device-volume-settings"><legend>Device volume</legend><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><div class="device-volume-slider"><input type="range" value="0" disabled><span class="volume-ticks" aria-hidden="true"></span><span class="volume-low">Low</span><span class="volume-high">High</span></div><label class="volume-mute"><input type="checkbox" disabled> Mute</label><label class="volume-taskbar"><input type="checkbox" disabled> Place volume icon in the taskbar</label><button class="xp-btn" disabled>Advanced...</button></fieldset><fieldset class="speaker-settings"><legend>Speaker settings</legend><img class="speaker-pair" src="assets/xp/system/SpeakerSettings.png" alt=""><p>Use the settings below to change individual<br>speaker volume and other settings.</p><button class="xp-btn" disabled>Speaker Volume...</button><button class="xp-btn" disabled>Advanced...</button></fieldset></section>
+    <section data-sounds-panel="sounds"><p class="sounds-intro">A sound scheme is a set of sounds applied to events in Windows<br>and programs. You can select an existing scheme or save one you<br>have modified.</p><label class="sound-scheme">Sound scheme:<select><option></option></select></label><div class="sounds-scheme-buttons"><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div><p class="sounds-help">To change sounds, click a program event in the following list and<br>then select a sound to apply. You can save the changes as a new<br>sound scheme.</p><label class="program-events-label">Program events:</label><div class="program-events"><strong><span class="tree-toggle">−</span> Windows</strong>${["Asterisk", "Close program", "Critical Battery Alarm", "Critical Stop", "Default Beep"].map((name) => `<span><img src="assets/xp/icons/SoundsAudioSmall.png" alt="">${name}</span>`).join("")}</div><label class="sounds-picker disabled-copy">Sounds:<select disabled><option></option></select><button class="xp-btn sound-play" aria-label="Play" disabled></button><button class="xp-btn sound-browse" disabled>Browse...</button></label></section>
+    <section data-sounds-panel="audio">${deviceGroup("Sound playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Sound recording", "assets/xp/system/AudioRecording.png", "No Recording Devices")}${deviceGroup("MIDI music playback", "assets/xp/system/MidiPlayback.png", "No MIDI Playback Devices", "About...")}<label class="audio-default-devices"><input type="checkbox" disabled> Use only default devices</label></section>
+    <section data-sounds-panel="voice"><p class="voice-intro">These settings control volume and advanced options for the voice<br>playback or recording device you selected.</p>${deviceGroup("Voice playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Voice recording", "assets/xp/system/AudioRecording.png", "No Recording Devices")}<button class="xp-btn voice-test" disabled>Test hardware...</button></section>
+    <section data-sounds-panel="hardware"><label class="hardware-devices-label">Devices:</label><div class="audio-hardware-list"><strong><span>Name</span><span>Type</span></strong>${[
+      ["QEMU QEMU DVD-ROM", "DVD/CD-R...", "assets/xp/icons/OpticalDrive.png"],
+      ["Audio Codecs", "Sound, vid...", "assets/xp/icons/SoundsAudioSmall.png"],
+      [
+        "Legacy Audio Drivers",
+        "Sound, vid...",
+        "assets/xp/icons/SoundsAudioSmall.png",
+      ],
+      [
+        "Media Control Devices",
+        "Sound, vid...",
+        "assets/xp/icons/SoundsAudioSmall.png",
+      ],
+      [
+        "Legacy Video Capture Devices",
+        "Sound, vid...",
+        "assets/xp/icons/SoundsAudioSmall.png",
+      ],
+      ["Video Codecs", "Sound, vid...", "assets/xp/icons/SoundsAudioSmall.png"],
+    ]
+      .map(
+        ([name, type, icon]) =>
+          `<span><img src="${icon}" alt=""><span>${name}</span><span>${type}</span></span>`,
+      )
+      .join(
+        "",
+      )}</div><fieldset><legend>Device Properties</legend><p>Manufacturer: (Standard CD-ROM drives)</p><p>Location: Location 0 (0)</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+  </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-sounds-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.soundsTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-sounds-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.soundsPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-sounds-tab]")?.dataset.soundsTab;
+    if (tab) activate(tab);
+  });
+  activate(initialTab);
   XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
   ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
 };
+
+const openAccessibilityOptions = (initialTab = "keyboard") => {
+  const dialog = XPDialogs.createDialog({ title: "Accessibility Options" });
+  dialog.el.classList.add("accessibility-options-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const group = (title, body) =>
+    `<fieldset><legend>${title}</legend>${body}</fieldset>`;
+  dialog.body.innerHTML = `<div class="accessibility-tabs" role="tablist">${["Keyboard", "Sound", "Display", "Mouse", "General"].map((tab) => `<button type="button" role="tab" data-accessibility-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div><div class="accessibility-panels">
+    <section data-accessibility-panel="keyboard">${group("StickyKeys", '<p>Use StickyKeys if you want to use SHIFT, CTRL, ALT, or<br>Windows logo key by pressing one key at a time.</p><label><input type="checkbox"> Use StickyKeys</label><button class="xp-btn">Settings</button>')}${group("FilterKeys", '<p>Use FilterKeys if you want Windows to ignore brief or repeated<br>keystrokes, or slow the repeat rate.</p><label><input type="checkbox"> Use FilterKeys</label><button class="xp-btn">Settings</button>')}${group("ToggleKeys", '<p>Use ToggleKeys if you want to hear tones when pressing<br>CAPS LOCK, NUM LOCK, and SCROLL LOCK.</p><label><input type="checkbox"> Use ToggleKeys</label><button class="xp-btn">Settings</button>')}<label><input type="checkbox"> Show extra keyboard help in programs</label></section>
+    <section data-accessibility-panel="sound">${group("SoundSentry", '<p>Use SoundSentry if you want Windows to generate visual<br>warnings when your system makes a sound.</p><label><input type="checkbox"> Use SoundSentry</label><p class="disabled-copy">Choose the visual warning:</p>')}</section>
+    <section data-accessibility-panel="display">${group("High Contrast", '<p>Use this option if you want Windows to use colors and fonts<br>designed for easy reading.</p><label><input type="checkbox"> Use High Contrast</label><button class="xp-btn">Settings</button>')}${group("Cursor Options", '<p>Move the sliders to change the speed that the cursor blinks<br>(cursor blink rate) and the width of the cursor.</p><div class="cursor-slider cursor-blink"><span class="cursor-slider-title">Blink Rate:</span><span>None</span><input type="range" min="0" max="10" value="6"><span>Fast</span><i aria-hidden="true"></i></div><div class="cursor-slider cursor-width"><span class="cursor-slider-title">Width:</span><span>Narrow</span><input type="range" min="0" max="10" value="0"><span>Wide</span><i aria-hidden="true"></i></div>')}</section>
+    <section data-accessibility-panel="mouse">${group("MouseKeys", '<p>Use MouseKeys if you want to control the pointer with the<br>numeric keypad on your keyboard.</p><label><input type="checkbox"> Use MouseKeys</label><button class="xp-btn">Settings</button>')}</section>
+    <section data-accessibility-panel="general">${group("Automatic reset", '<label><input type="checkbox"> Turn off accessibility features after idle for:</label><select disabled><option>5 minutes</option></select>')}${group("Notification", '<label><input type="checkbox" checked> Give warning message when turning a feature on</label><label><input type="checkbox" checked> Make a sound when turning a feature on or off</label>')}${group("SerialKey devices", '<p>SerialKey devices allow alternative access to keyboard and<br>mouse features.</p><label><input type="checkbox"> Use Serial Keys</label><button class="xp-btn">Settings</button>')}${group("Administrative options", '<label><input type="checkbox"> Apply all settings to logon desktop</label><label><input type="checkbox"> Apply all settings to defaults for new users</label>')}</section>
+  </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-accessibility-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.accessibilityTab === tab),
+        ),
+      );
+    dialog.body
+      .querySelectorAll("[data-accessibility-panel]")
+      .forEach((panel) => {
+        panel.hidden = panel.dataset.accessibilityPanel !== tab;
+      });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-accessibility-tab]")?.dataset
+      .accessibilityTab;
+    if (tab) activate(tab);
+  });
+  activate(initialTab);
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+};
+
+const openSystemProperties = () => {
+  const dialog = XPDialogs.createDialog({ title: "System Properties" });
+  dialog.el.classList.add("system-properties-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="system-properties-tabs" role="tablist" data-active-row="lower">
+      <button type="button" role="tab" data-system-tab="restore">System Restore</button>
+      <button type="button" role="tab" data-system-tab="updates">Automatic Updates</button>
+      <button type="button" role="tab" data-system-tab="remote">Remote</button>
+      <button type="button" role="tab" data-system-tab="general" aria-selected="true">General</button>
+      <button type="button" role="tab" data-system-tab="computer-name">Computer Name</button>
+      <button type="button" role="tab" data-system-tab="hardware">Hardware</button>
+      <button type="button" role="tab" data-system-tab="advanced">Advanced</button>
+    </div>
+    <div class="system-properties-panels">
+      <section data-system-panel="general">
+        <img class="system-properties-logo" src="assets/xp/SystemProperties.png" alt="">
+        <div class="system-properties-general-copy">
+          <p>System:<br><span>Microsoft Windows XP<br>Professional<br>Version 2002<br>Service Pack 3</span></p>
+          <p>Registered to:<br><span>astro<br><br>76487-640-8834005-23175</span></p>
+          <p>Computer:<br><span>Intel Pentium III Xeon<br>processor<br>1.00 GHz, 512 MB of RAM</span></p>
+        </div>
+      </section>
+      <section data-system-panel="computer-name" hidden>
+        <div class="system-computer-name-intro">
+          <img src="assets/xp/system/ComputerName.png" alt="">
+          <p>Windows uses the following information to identify your computer<br>on the network.</p>
+        </div>
+        <div class="system-computer-description">
+          <label for="system-computer-description">Computer description:</label>
+          <input id="system-computer-description" class="xp-input">
+          <p>For example: "Kitchen Computer" or "Mary's<br>Computer".</p>
+        </div>
+        <dl class="system-computer-identity">
+          <dt>Full computer name:</dt><dd>astro-295e53a14.</dd>
+          <dt>Workgroup:</dt><dd>WORKGROUP</dd>
+        </dl>
+        <div class="system-computer-action">
+          <p>To use the Network Identification Wizard to join a<br>domain and create a local user account, click Network<br>ID.</p>
+          <button type="button" class="xp-btn">Network ID</button>
+        </div>
+        <div class="system-computer-action system-computer-change">
+          <p>To rename this computer or join a domain, click Change.</p>
+          <button type="button" class="xp-btn">Change...</button>
+        </div>
+      </section>
+      <section data-system-panel="hardware" hidden>
+        <div class="system-properties-group system-hardware-group system-device-manager"><span class="system-group-title">Device Manager</span>
+          <img src="assets/xp/system/DeviceManager.png" alt="">
+          <p>The Device Manager lists all the hardware devices installed<br>on your computer. Use the Device Manager to change the<br>properties of any device.</p>
+          <button type="button" class="xp-btn">Device Manager</button>
+        </div>
+        <div class="system-properties-group system-hardware-group system-driver-signing"><span class="system-group-title">Drivers</span>
+          <img src="assets/xp/system/DriverSigning.png" alt="">
+          <p>Driver Signing lets you make sure that installed drivers are<br>compatible with Windows. Windows Update lets you set up<br>how Windows connects to Windows Update for drivers.</p>
+          <button type="button" class="xp-btn">Driver Signing</button>
+        </div>
+      </section>
+      <section data-system-panel="advanced" hidden>
+        <p class="system-advanced-intro">You must be logged on as an Administrator to make most of these changes.</p>
+        <div class="system-properties-group system-advanced-group"><span class="system-group-title">Performance</span><p>Visual effects, processor scheduling, memory usage, and virtual memory</p><button type="button" class="xp-btn">Settings</button></div>
+        <div class="system-properties-group system-advanced-group"><span class="system-group-title">User Profiles</span><p>Desktop settings related to your logon</p><button type="button" class="xp-btn">Settings</button></div>
+        <div class="system-properties-group system-advanced-group"><span class="system-group-title">Startup and Recovery</span><p>System startup, system failure, and debugging information</p><button type="button" class="xp-btn">Settings</button></div>
+        <div class="system-advanced-actions"><button type="button" class="xp-btn">Environment Variables</button><button type="button" class="xp-btn">Error Reporting</button></div>
+      </section>
+      <section data-system-panel="restore" hidden>
+        <div class="system-restore-intro"><img src="assets/xp/system/SystemRestore.png" alt=""><p>System Restore can track and reverse harmful changes to your<br>computer.</p></div>
+        <label class="system-restore-off"><input type="checkbox"> Turn off System Restore</label>
+        <div class="system-properties-group system-restore-space"><span class="system-group-title">Disk space usage</span>
+          <p>Move the slider to the right to increase or to the left to decrease the<br>amount of disk space for System Restore. Decreasing the disk space<br>may reduce the number of available restore points.</p>
+          <div class="system-restore-slider-label"><span>Disk space to use:</span><span>Min</span><span>Max</span></div>
+          <input type="range" min="0" max="100" value="100" aria-label="Disk space to use">
+          <output>12% (981 MB)</output>
+        </div>
+        <div class="system-properties-group system-restore-status"><span class="system-group-title">Status</span><p><img class="system-drive-icon" src="assets/xp/icons/LocalDisk.png" alt=""> (C:) Monitoring</p></div>
+      </section>
+      <section data-system-panel="updates" hidden>
+        <div class="system-updates-banner"><img src="assets/xp/system/UpdateShield.png" alt=""><span>Help protect your PC</span></div>
+        <p class="system-updates-copy">Windows can regularly check for important updates and install them for you.<br>(Turning on Automatic Updates may automatically update Windows Update<br>software first, before any other updates.)<br><a href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">How does Automatic Updates work?</a></p>
+        <label class="system-update-option system-update-auto"><input type="radio" name="system-updates" checked> <strong>Automatic (recommended)</strong></label>
+        <div class="system-update-detail"><img src="assets/xp/system/UpdateEnabled.png" alt=""><p>Automatically download recommended updates for my computer<br>and install them:</p><div><select disabled aria-label="Update frequency"><option>Every day</option></select><span>at</span><select disabled aria-label="Update time"><option>3:00 AM</option></select></div></div>
+        <label class="system-update-option"><input type="radio" name="system-updates"> Download updates for me, but let me choose when to install them.</label>
+        <label class="system-update-option"><input type="radio" name="system-updates"> Notify me but don't automatically download or install them.</label>
+        <label class="system-update-option"><input type="radio" name="system-updates"> Turn off Automatic Updates.</label>
+        <div class="system-update-warning"><img src="assets/xp/system/UpdateDisabled.png" alt=""><p>Your computer will be more vulnerable unless you install updates<br>regularly.<br>Install updates from the <a href="https://update.microsoft.com/" target="_blank" rel="noreferrer">Windows Update Web site</a>.</p></div>
+        <a class="system-updates-hidden" href="#">Offer updates again that I've previously hidden</a>
+      </section>
+      <section data-system-panel="remote" hidden>
+        <div class="system-remote-intro"><img src="assets/xp/system/RemoteSettings.png" alt=""><p>Select the ways that this computer can be used from another<br>location.</p></div>
+        <div class="system-properties-group system-remote-assistance"><span class="system-group-title">Remote Assistance</span>
+          <label><input type="checkbox" checked> Allow Remote Assistance invitations to be sent from this computer</label>
+          <a href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">What is Remote Assistance?</a>
+          <button type="button" class="xp-btn">Advanced...</button>
+        </div>
+        <div class="system-properties-group system-remote-desktop"><span class="system-group-title">Remote Desktop</span>
+          <label><input type="checkbox"> Allow users to connect remotely to this computer</label>
+          <p class="system-remote-computer">Full computer name:<br><span>astro-295e53a14</span></p>
+          <a class="system-remote-help" href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">What is Remote Desktop?</a>
+          <button type="button" class="xp-btn system-remote-users">Select Remote Users...</button>
+          <p class="system-remote-password">For users to connect remotely to this computer, the user account must<br>have a password.</p>
+          <p class="system-remote-firewall"><a href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">Windows Firewall</a> will be configured to allow Remote Desktop<br>connections to this computer.</p>
+        </div>
+      </section>
+    </div>
+  `;
+  const tabs = [...dialog.body.querySelectorAll("[data-system-tab]")];
+  const panels = [...dialog.body.querySelectorAll("[data-system-panel]")];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) =>
+        entry.setAttribute(
+          "aria-selected",
+          String(entry.dataset.systemTab === tab.dataset.systemTab),
+        ),
+      );
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.systemPanel !== tab.dataset.systemTab;
+      });
+      dialog.body.querySelector(".system-properties-tabs").dataset.activeRow = [
+        "restore",
+        "updates",
+        "remote",
+      ].includes(tab.dataset.systemTab)
+        ? "upper"
+        : "lower";
+    }),
+  );
+  help.addEventListener("click", openHelpAndSupport);
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+};
+
+const openShellProperties = (nodeId) =>
+  nodeId === fs.MY_COMPUTER
+    ? openSystemProperties()
+    : XPDialogs.properties(nodeId);
 
 const openSearchDialog = () => openSystemWindow("__search");
 
 const openRunDialog = () => {
   const dialog = XPDialogs.createDialog({ title: "Run" });
+  dialog.el.classList.add("run-dialog");
+  const introRow = document.createElement("div");
+  introRow.className = "run-dialog-intro";
+  const icon = document.createElement("img");
+  icon.src = "assets/xp/icons/Run.png";
+  icon.alt = "";
   const intro = document.createElement("p");
   intro.textContent =
     "Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.";
+  introRow.append(icon, intro);
   const prompt = document.createElement("label");
-  setAccessKeyText(prompt, "&Open:");
+  const promptText = document.createElement("span");
+  setAccessKeyText(promptText, "&Open:");
   const input = document.createElement("input");
   input.type = "text";
   input.className = "shell-dialog-input";
@@ -8061,9 +11155,10 @@ const openRunDialog = () => {
   getRunHistory().forEach((entry) =>
     history.appendChild(new Option(entry, entry)),
   );
-  prompt.appendChild(input);
+  prompt.append(promptText, input);
   const status = document.createElement("p");
   status.className = "shell-dialog-status";
+  status.hidden = true;
   const run = () => {
     const resolved = resolveShellCommand(input.value);
     if (!resolved || resolved.run() === false) {
@@ -8093,7 +11188,7 @@ const openRunDialog = () => {
   const row = document.createElement("div");
   row.className = "dlg-buttons";
   row.append(runButton, cancelButton, browseButton);
-  dialog.body.append(intro, prompt, history, status, row);
+  dialog.body.append(introRow, prompt, history, status, row);
   dialog.defaultButton = runButton;
   [
     [runButton, "&OK"],
@@ -8181,8 +11276,8 @@ const buildPlaces = () => {
 
   [
     ["controlPanel", "&Control Panel", "ControlPanel.png"],
-    ["printers", "&Printers and Faxes", "PrintersandFaxes.png"],
-    ["help", "&Help and Support", "HelpandSupport.png"],
+    ["printers", "&Printers and Faxes", "PrintersAndFaxes.png"],
+    ["help", "&Help and Support", "HelpAndSupport.png"],
   ].forEach(([id, label, icon]) =>
     container.appendChild(createPlace({ id, label, icon })),
   );

@@ -17,6 +17,7 @@ import type { BuildOptions } from "./deploy";
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_OUTPUT_DIR = join(PROJECT_DIR, "dist");
 export const DEV_BUILD_STATE = ".dev-build-state.json";
+export const DEV_RELOAD_PATH = "/__dev/reload";
 const BUILD_INPUTS = [
   "site",
   "tools/deploy.ts",
@@ -25,6 +26,94 @@ const BUILD_INPUTS = [
   "package.json",
   "bun.lock",
 ];
+const DEV_CLIENT = `<script>
+window.ASTRO_DEV = true;
+(() => {
+  const clearProductionOfflineState = async () => {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    if ("caches" in window) {
+      const names = await caches.keys();
+      await Promise.all(
+        names
+          .filter((name) => name.startsWith("astro-flash"))
+          .map((name) => caches.delete(name)),
+      );
+    }
+  };
+  void clearProductionOfflineState().catch((error) =>
+    console.warn("Could not clear the production offline worker:", error),
+  );
+  const events = new EventSource("${DEV_RELOAD_PATH}");
+  events.addEventListener("reload", () => window.location.reload());
+})();
+</script>`;
+const DEV_SERVICE_WORKER = `self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(
+      names.filter((name) => name.startsWith("astro-flash")).map((name) => caches.delete(name)),
+    );
+    await self.registration.unregister();
+    const windows = await clients.matchAll({ type: "window" });
+    await Promise.all(windows.map((client) => client.navigate(client.url)));
+  })());
+});`;
+
+export interface DevelopmentLiveReload {
+  close(): void;
+  reload(): void;
+  response(): Response;
+}
+
+export function createDevelopmentLiveReload(): DevelopmentLiveReload {
+  const encoder = new TextEncoder();
+  const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
+  const send = (message: string) => {
+    for (const client of clients) {
+      try {
+        client.enqueue(encoder.encode(message));
+      } catch {
+        clients.delete(client);
+      }
+    }
+  };
+  const heartbeat = setInterval(() => send(": heartbeat\n\n"), 5_000);
+  heartbeat.unref?.();
+
+  return {
+    close() {
+      clearInterval(heartbeat);
+      for (const client of clients) client.close();
+      clients.clear();
+    },
+    reload() {
+      send(`event: reload\ndata: ${Date.now()}\n\n`);
+    },
+    response() {
+      let activeController: ReadableStreamDefaultController<Uint8Array>;
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          activeController = controller;
+          clients.add(controller);
+          controller.enqueue(encoder.encode(": connected\n\n"));
+        },
+        cancel() {
+          clients.delete(activeController);
+        },
+      });
+      return new Response(stream, {
+        headers: noCacheHeaders({
+          Connection: "keep-alive",
+          "Content-Type": "text/event-stream",
+        }),
+      });
+    },
+  };
+}
 
 interface DevBuildState {
   schema: 1;
@@ -272,6 +361,7 @@ function noCacheHeaders(extra: HeadersInit = {}): Headers {
 async function staticResponse(
   request: Request,
   directory: string,
+  development = false,
 ): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed.", {
@@ -312,9 +402,16 @@ async function staticResponse(
       headers: noCacheHeaders(),
     });
   }
-  return new Response(request.method === "HEAD" ? null : file, {
+  const injectClient = development && file.type.startsWith("text/html");
+  const body = injectClient
+    ? (await file.text()).replace("</body>", `${DEV_CLIENT}\n  </body>`)
+    : file;
+  const size = injectClient
+    ? new TextEncoder().encode(body as string).length
+    : file.size;
+  return new Response(request.method === "HEAD" ? null : body, {
     headers: noCacheHeaders({
-      "Content-Length": String(file.size),
+      "Content-Length": String(size),
       "Content-Type": file.type || "application/octet-stream",
     }),
   });
@@ -323,16 +420,106 @@ async function staticResponse(
 export function createRequestHandler(
   directory: string,
   fetcher: CatalogFetcher = fetch,
+  liveReload?: DevelopmentLiveReload,
 ): (request: Request) => Promise<Response> {
   return (request) => {
     const path = new URL(request.url).pathname;
+    if (liveReload && path === DEV_RELOAD_PATH) {
+      return Promise.resolve(liveReload.response());
+    }
+    if (liveReload && path === "/sw.js") {
+      return Promise.resolve(
+        new Response(DEV_SERVICE_WORKER, {
+          headers: noCacheHeaders({
+            "Content-Type": "text/javascript; charset=utf-8",
+            "Service-Worker-Allowed": "/",
+          }),
+        }),
+      );
+    }
     if (path === "/api/games" || path.startsWith("/api/games/")) {
       return handleCatalogRequest(request, fetcher);
     }
     if (path === "/api/rtc") {
       return handleRtcRequest(request, fetcher);
     }
-    return staticResponse(request, directory);
+    return staticResponse(request, directory, Boolean(liveReload));
+  };
+}
+
+interface WatchDevelopmentBuildOptions {
+  debounceMs?: number;
+  fingerprint?: () => Promise<string>;
+  onReload: () => void;
+  outputDir?: string;
+  projectDir?: string;
+  rebuild?: () => Promise<EnsureDevelopmentBuildResult>;
+}
+
+export interface DevelopmentBuildWatcher {
+  close(): void;
+}
+
+export async function watchDevelopmentBuild({
+  debounceMs = 350,
+  fingerprint = () => computeSourceFingerprint(projectDir),
+  onReload,
+  outputDir = DEFAULT_OUTPUT_DIR,
+  projectDir = PROJECT_DIR,
+  rebuild = () => ensureDevelopmentBuild({ outputDir, projectDir }),
+}: WatchDevelopmentBuildOptions): Promise<DevelopmentBuildWatcher> {
+  let building = false;
+  let pending = false;
+  let checking = false;
+  let previousFingerprint = await fingerprint();
+
+  const runBuild = async () => {
+    if (building) {
+      pending = true;
+      return;
+    }
+    building = true;
+    try {
+      const result = await rebuild();
+      if (result.rebuilt) onReload();
+    } catch (error) {
+      console.error(
+        "Development rebuild failed:",
+        error instanceof Error ? error.message : error,
+      );
+    } finally {
+      building = false;
+      if (pending) {
+        pending = false;
+        scheduleBuild();
+      }
+    }
+  };
+
+  const scheduleBuild = () => void runBuild();
+  const interval = setInterval(async () => {
+    if (checking) return;
+    checking = true;
+    try {
+      const nextFingerprint = await fingerprint();
+      if (nextFingerprint !== previousFingerprint) {
+        previousFingerprint = nextFingerprint;
+        scheduleBuild();
+      }
+    } catch (error) {
+      console.error(
+        "Could not check development sources:",
+        error instanceof Error ? error.message : error,
+      );
+    } finally {
+      checking = false;
+    }
+  }, debounceMs);
+
+  return {
+    close() {
+      clearInterval(interval);
+    },
   };
 }
 
@@ -404,10 +591,11 @@ if (import.meta.main) {
         `${arguments_.directory} is not built; omit --no-sync or run \`bun run build\``,
       );
     }
+    const liveReload = createDevelopmentLiveReload();
     const server = Bun.serve({
       hostname: arguments_.hostname,
       port: arguments_.port,
-      fetch: createRequestHandler(arguments_.directory),
+      fetch: createRequestHandler(arguments_.directory, fetch, liveReload),
       error(error) {
         console.error(error);
         return new Response("Internal server error.", {
@@ -417,6 +605,13 @@ if (import.meta.main) {
       },
     });
     console.log(`Server running on ${server.url}`);
+    if (arguments_.sync) {
+      await watchDevelopmentBuild({
+        outputDir: arguments_.directory,
+        onReload: () => liveReload.reload(),
+      });
+      console.log("Watching source files for changes.");
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;

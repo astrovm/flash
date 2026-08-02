@@ -6,6 +6,7 @@
     "dev": "bun tools/dev-server.ts",
     "deploy:worker": "wrangler deploy --config worker/wrangler.toml",
     "extract:xp-assets": "bun tools/extract-xp-assets.ts",
+    "compare:xp-ui": "bun tools/compare-xp-ui.ts",
     "extract:swf": "bun tools/extract-swf.ts",
     "find:icons": "bun tools/find-flashpoint-icons.ts",
     "format": "prettier --write .",
@@ -18,7 +19,8 @@
     "update:ruffle": "bun tools/update-ruffle.ts",
     "validate:icons": "bun tools/validate-icons.ts --require-all",
     "validate:javascript": "bun tools/validate-javascript.ts",
-    "verify:xp-assets": "bun tools/extract-xp-assets.ts --check"
+    "verify:xp-assets": "bun tools/extract-xp-assets.ts --check",
+    "xp:vm": "bun tools/xp-vm.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -27,6 +29,7 @@
     "eslint": "10.8.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.8.0",
+    "happy-dom": "20.11.1",
     "prettier": "3.9.6",
     "typescript": "6.0.2",
     "typescript-eslint": "8.65.0",
@@ -34,6 +37,7 @@
     "wrangler": "4.114.0"
   },
   "dependencies": {
+    "@nktkas/bmp": "4.0.0",
     "fflate": "0.8.3",
     "sharp": "^0.35.3"
   }

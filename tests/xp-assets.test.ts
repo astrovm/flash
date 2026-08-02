@@ -12,10 +12,13 @@ type SourceRecord = {
   sha256: string;
   resource?: {
     parentSha256: string;
-    type: number;
-    id: number;
+    type: number | string;
+    id: number | string;
     language: number;
     frame: string;
+    pixelSha256: string;
+  };
+  rendered?: {
     pixelSha256: string;
   };
 };
@@ -32,7 +35,12 @@ const manifest = JSON.parse(
 ) as {
   source: { sha256: string };
   webAssets: { output: string }[];
+  cabAssets?: { output: string }[];
+  cursorImages?: { output: string }[];
   resourceIcons: { output: string; resourceId: number }[];
+  resourceBitmaps: { output: string; resourceId: number | string }[];
+  resourcePngs?: { output: string; resourceId: number | string }[];
+  renderedAssets?: { output: string }[];
 };
 
 const sha256 = (content: Uint8Array) =>
@@ -42,15 +50,61 @@ describe("Windows XP asset provenance", () => {
   test("covers every committed extracted asset", () => {
     const outputs = [
       ...manifest.webAssets.map(({ output }) => output.replace(/^site\//, "")),
+      ...(manifest.cabAssets ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.cursorImages ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
       ...manifest.resourceIcons.map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...manifest.resourceBitmaps.map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.resourcePngs ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.renderedAssets ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
     ];
     expect(Object.keys(sources)).toEqual(outputs);
     for (const source of Object.values(sources)) {
       expect(source.isoSha256).toBe(manifest.source.sha256);
-      expect(source.member).toMatch(/^I386\/[A-Z0-9]+(?:\.[A-Z0-9_]+)$/);
+      expect(source.member).toMatch(
+        /^I386\/[A-Z0-9_]+(?:\.[A-Z0-9_]+)(?:!\/[A-Za-z0-9_.-]+)?$/,
+      );
     }
+
+    const xpFiles = [
+      ...new Bun.Glob("site/assets/xp/**/*").scanSync({
+        cwd: projectDirectory,
+        onlyFiles: true,
+      }),
+    ]
+      .map((file) => file.replace(/^site\//, ""))
+      .filter((file) => file !== "assets/xp/SOURCES.json")
+      .sort();
+    expect(
+      Object.keys(sources)
+        .filter((file) => file.startsWith("assets/xp/"))
+        .sort(),
+    ).toEqual(xpFiles);
+
+    const fontFiles = [
+      ...new Bun.Glob("site/css/fonts/*").scanSync({
+        cwd: projectDirectory,
+        onlyFiles: true,
+      }),
+    ]
+      .map((file) => file.replace(/^site\//, ""))
+      .sort();
+    expect(
+      Object.keys(sources)
+        .filter((file) => file.startsWith("css/fonts/"))
+        .sort(),
+    ).toEqual(fontFiles);
   });
 
   test("matches the recorded byte and pixel hashes", async () => {
@@ -67,12 +121,20 @@ describe("Windows XP asset provenance", () => {
           source.resource.pixelSha256,
         );
       }
+      if (source.rendered) {
+        const { data } = await sharp(content).ensureAlpha().raw().toBuffer({
+          resolveWithObject: true,
+        });
+        expect(sha256(data), `${relativePath} rendered pixels`).toBe(
+          source.rendered.pixelSha256,
+        );
+      }
     }
   });
 
   test("uses the canonical shell32 Recycle Bin resource pair", () => {
-    const empty = sources["assets/xp/icons/recycler-empty.png"];
-    const full = sources["assets/xp/icons/recycler-full.png"];
+    const empty = sources["assets/xp/icons/RecyclerEmpty.png"];
+    const full = sources["assets/xp/icons/RecyclerFull.png"];
     expect(empty.resource?.id).toBe(32);
     expect(full.resource?.id).toBe(33);
     expect(empty.resource?.parentSha256).toBe(full.resource?.parentSha256);
