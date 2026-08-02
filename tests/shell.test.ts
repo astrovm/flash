@@ -625,6 +625,9 @@ test("Sounds Speech and Audio Devices uses the native XP category page", () => {
     'data-sounds-panel="audio"',
     'data-sounds-panel="voice"',
     'data-sounds-panel="hardware"',
+    "assets/xp/system/SpeakerSettings.png",
+    "assets/xp/system/AudioRecording.png",
+    "assets/xp/system/MidiPlayback.png",
   );
   contains(css, ".sounds-audio-properties-dialog", ".sounds-properties-tabs");
 });

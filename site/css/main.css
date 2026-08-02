@@ -2983,15 +2983,15 @@ html[data-xp-appearance="silver"] {
 .xp-dialog.sounds-audio-properties-dialog {
   position: absolute;
   top: 88px;
-  left: 66px;
-  width: 366px;
+  left: 67px;
+  width: 364px;
   height: 454px;
 }
 
 .sounds-audio-properties-dialog .dlg-body {
   position: relative;
   height: 422px;
-  padding: 31px 8px 40px;
+  padding: 27px 6px 35px;
   font:
     11px Tahoma,
     sans-serif;
@@ -2999,8 +2999,8 @@ html[data-xp-appearance="silver"] {
 
 .sounds-properties-tabs {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 0;
+  left: 2px;
   display: flex;
 }
 
@@ -3024,8 +3024,9 @@ html[data-xp-appearance="silver"] {
 }
 
 .sounds-properties-panels {
-  height: 100%;
-  padding: 10px 14px;
+  box-sizing: border-box;
+  height: 360px;
+  padding: 10px 11px 10px 13px;
   border: 1px solid #919b9c;
   background: #fff;
 }
@@ -3048,7 +3049,7 @@ html[data-xp-appearance="silver"] {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 6px 8px 21px;
+  margin: 12px 8px 26px;
 }
 .sounds-no-device img,
 .sounds-properties-panels fieldset > img {
@@ -3057,20 +3058,95 @@ html[data-xp-appearance="silver"] {
   object-fit: contain;
 }
 .sounds-properties-panels [data-sounds-panel="volume"] fieldset {
-  height: 167px;
+  height: 161px;
   padding-left: 57px;
 }
-.sounds-properties-panels [data-sounds-panel="volume"] fieldset > img {
+.sounds-properties-panels
+  [data-sounds-panel="volume"]
+  .device-volume-settings
+  > img {
   position: absolute;
-  top: 12px;
-  left: 22px;
+  top: 8px;
+  left: 26px;
+}
+.device-volume-slider {
+  position: absolute;
+  top: 8px;
+  left: 89px;
+  width: 178px;
+  height: 48px;
 }
 .sounds-properties-panels [data-sounds-panel="volume"] input[type="range"] {
-  width: 184px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 178px;
+  height: 21px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+}
+.sounds-properties-panels
+  [data-sounds-panel="volume"]
+  input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+  background: #d4d0c8;
+}
+.sounds-properties-panels
+  [data-sounds-panel="volume"]
+  input[type="range"]::-webkit-slider-thumb {
+  width: 11px;
+  height: 21px;
+  margin-top: -10px;
+  border: 1px solid #aca899;
+  border-radius: 1px;
+  appearance: none;
+  background: linear-gradient(90deg, #fff 0 20%, #ece9d8 20% 80%, #aca899 80%);
+  transform: translateX(-11px);
+}
+.volume-ticks {
+  position: absolute;
+  top: 25px;
+  left: 22px;
+  width: 153px;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #808080 0 1px,
+    transparent 1px 19px
+  );
+}
+.volume-low,
+.volume-high {
+  position: absolute;
+  top: 35px;
+  color: #808080;
+}
+.volume-low {
+  left: -12px;
+}
+.volume-high {
+  right: -13px;
+}
+.sounds-properties-panels .device-volume-settings > label {
+  position: absolute;
+  left: 57px;
+  margin: 0;
+}
+.sounds-properties-panels .device-volume-settings > .volume-mute {
+  top: 65px;
+}
+.sounds-properties-panels .device-volume-settings > .volume-taskbar {
+  top: 88px;
 }
 .sounds-properties-panels [data-sounds-panel="volume"] label {
   display: block;
   margin: 8px 0;
+}
+.sounds-properties-panels .device-volume-settings > label {
+  margin: 0;
 }
 .sounds-properties-panels fieldset > .xp-btn {
   min-width: 104px;
@@ -3078,11 +3154,14 @@ html[data-xp-appearance="silver"] {
 .sounds-properties-panels [data-sounds-panel="volume"] fieldset > .xp-btn {
   position: absolute;
   right: 9px;
-  bottom: 9px;
+  bottom: 6px;
+  box-sizing: border-box;
+  width: 111px;
+  height: 21px;
 }
 .sounds-properties-panels .speaker-settings {
   height: 98px !important;
-  margin-top: 13px;
+  margin-top: 18px;
   padding-left: 78px !important;
 }
 .sounds-properties-panels .speaker-settings > .xp-btn:first-of-type {
@@ -3091,24 +3170,36 @@ html[data-xp-appearance="silver"] {
 .sounds-properties-panels .speaker-settings > .xp-btn:last-of-type {
   right: 9px;
 }
+
+.sounds-properties-panels
+  [data-sounds-panel="volume"]
+  .speaker-settings
+  > .xp-btn {
+  bottom: 13px;
+  box-sizing: border-box;
+  height: 21px;
+}
+
+.sounds-properties-panels .speaker-settings > p {
+  position: absolute;
+  top: 3px;
+  left: 78px;
+  margin: 0;
+}
 .speaker-pair {
   position: absolute;
-  top: 10px;
-  left: 9px;
-  display: flex;
-  align-items: end;
-  gap: 5px;
+  top: 3px;
+  left: 8px;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
 }
-.speaker-pair i {
-  display: block;
-  width: 24px;
-  height: 63px;
-  transform: skewY(-12deg);
-  border: 1px solid #777;
-  background: linear-gradient(90deg, #777, #c3c4ce);
-}
-.speaker-pair i:last-child {
-  height: 52px;
+
+.sounds-properties-panels .speaker-settings > img.speaker-pair {
+  top: 3px;
+  left: 8px;
+  width: 72px;
+  height: 72px;
 }
 .sounds-properties-panels label {
   display: block;
@@ -3196,10 +3287,316 @@ html[data-xp-appearance="silver"] {
   .xp-btn:last-of-type {
   left: 219px;
 }
+
+.sounds-properties-panels [data-sounds-panel="sounds"],
+.sounds-properties-panels [data-sounds-panel="audio"],
+.sounds-properties-panels [data-sounds-panel="voice"],
+.sounds-properties-panels [data-sounds-panel="hardware"] {
+  position: relative;
+  height: 100%;
+  transform: none;
+}
+
+.sounds-properties-panels [data-sounds-panel="sounds"] > * {
+  position: absolute;
+  margin: 0;
+}
+.sounds-intro {
+  top: 0;
+  left: 0;
+  width: 320px;
+  letter-spacing: -0.15px;
+}
+.sound-scheme {
+  top: 47px;
+  left: 1px;
+  width: 314px;
+}
+.sound-scheme select {
+  display: block;
+  margin-top: 3px;
+}
+.sounds-scheme-buttons {
+  top: 91px;
+  right: 6px;
+  gap: 7px;
+}
+.sounds-scheme-buttons .xp-btn {
+  box-sizing: border-box;
+  width: 73px;
+  height: 21px;
+}
+.sounds-help {
+  top: 123px;
+  left: 0;
+  width: 320px;
+  letter-spacing: -0.15px;
+}
+.program-events-label {
+  top: 171px;
+  left: 1px;
+}
+.program-events {
+  top: 184px;
+  left: 1px;
+  box-sizing: border-box;
+  width: 320px;
+  height: 101px;
+  padding: 2px 4px;
+  background: #fff;
+}
+.program-events strong,
+.program-events > span {
+  display: flex;
+  height: 17px;
+  align-items: center;
+  padding: 0;
+  font-weight: normal;
+}
+.program-events strong {
+  font-weight: normal;
+}
+.program-events .tree-toggle {
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border: 1px solid #808080;
+  line-height: 7px;
+  text-align: center;
+}
+.program-events > span {
+  padding-left: 23px;
+}
+.program-events img {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  object-fit: contain;
+}
+.sounds-picker {
+  top: 294px;
+  left: 1px;
+  width: 314px;
+}
+.sounds-picker select {
+  position: absolute;
+  top: 17px;
+  left: 0;
+  width: 208px;
+}
+.sounds-picker .xp-btn {
+  position: absolute;
+  top: 17px;
+  box-sizing: border-box;
+  height: 21px;
+}
+.sound-play {
+  left: 213px;
+  min-width: 23px;
+  width: 23px;
+}
+.sound-play::after {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: auto;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 7px solid #aaa79b;
+  content: "";
+}
+.sound-browse {
+  left: 241px;
+  min-width: 73px;
+  width: 73px;
+}
+
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset {
+  position: absolute;
+  left: 0;
+  box-sizing: border-box;
+  width: 320px;
+  height: 92px;
+  margin: 0;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset:nth-of-type(1) {
+  top: 9px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset:nth-of-type(2) {
+  top: 113px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset:nth-of-type(3) {
+  top: 217px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset .xp-btn,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset .xp-btn {
+  position: absolute;
+  bottom: 8px;
+  box-sizing: border-box;
+  width: 103px;
+  height: 21px;
+  margin: 0;
+}
+.sounds-properties-panels
+  [data-sounds-panel="audio"]
+  fieldset
+  .xp-btn:first-of-type,
+.sounds-properties-panels
+  [data-sounds-panel="voice"]
+  fieldset
+  .xp-btn:first-of-type {
+  left: 96px;
+}
+.sounds-properties-panels
+  [data-sounds-panel="audio"]
+  fieldset
+  .xp-btn:last-of-type,
+.sounds-properties-panels
+  [data-sounds-panel="voice"]
+  fieldset
+  .xp-btn:last-of-type {
+  left: 205px;
+}
+.audio-default-devices {
+  position: absolute;
+  top: 320px;
+  left: 0;
+  margin: 0 !important;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset > img,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset > img {
+  top: 0;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset > label,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset > label {
+  position: absolute;
+  top: 3px;
+  left: 48px;
+  width: 261px;
+}
+.voice-intro {
+  position: absolute;
+  top: 9px;
+  left: 0;
+  margin: 0 !important;
+}
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset:nth-of-type(1) {
+  top: 63px;
+}
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset:nth-of-type(2) {
+  top: 167px;
+}
+.voice-test {
+  position: absolute;
+  top: 275px;
+  left: 206px;
+  box-sizing: border-box;
+  width: 103px;
+  height: 21px;
+}
+
+.hardware-devices-label {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  margin: 0 !important;
+}
+.audio-hardware-list {
+  position: absolute;
+  top: 17px;
+  left: 0;
+  box-sizing: border-box;
+  width: 320px;
+  height: 130px;
+  padding: 0;
+  background: #fff;
+}
+.audio-hardware-list > strong,
+.audio-hardware-list > span {
+  display: grid;
+  height: 18px;
+  grid-template-columns: 22px 207px 1fr;
+  align-items: center;
+  padding: 0 4px;
+  border: 0;
+  font-weight: normal;
+}
+.audio-hardware-list > strong {
+  height: 19px;
+  grid-template-columns: 229px 1fr;
+  border-bottom: 1px solid #d6d2c2;
+}
+.audio-hardware-list > span:first-of-type {
+  background: #ece9d8;
+}
+.audio-hardware-list img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] fieldset {
+  position: absolute;
+  top: 170px;
+  left: 0;
+  box-sizing: border-box;
+  width: 320px;
+  height: 165px;
+  margin: 0;
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] fieldset .xp-btn {
+  bottom: 12px;
+  box-sizing: border-box;
+  min-width: 88px;
+  width: 88px;
+  height: 21px;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  .xp-btn:first-of-type {
+  left: 119px;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  .xp-btn:last-of-type {
+  left: 219px;
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] fieldset p {
+  position: absolute;
+  left: 9px;
+  margin: 0;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  p:nth-of-type(1) {
+  top: 3px;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  p:nth-of-type(2) {
+  top: 21px;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  p:nth-of-type(3) {
+  top: 39px;
+}
 .sounds-audio-properties-dialog .dlg-buttons {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 6px;
+  bottom: 6px;
+  gap: 9px;
+}
+
+.sounds-audio-properties-dialog .dlg-buttons button {
+  box-sizing: border-box;
+  width: 72px;
+  height: 21px;
 }
 
 .control-panel-content {

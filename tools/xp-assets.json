@@ -678,6 +678,26 @@
       "output": "site/assets/xp/icons/AdvancedVolumeControls.png"
     },
     {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 4369,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/AudioRecording.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 4381,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MidiPlayback.png"
+    },
+    {
       "member": "SAPI.CP_",
       "expandedName": "sapi.cpl",
       "resourceType": 14,
@@ -1139,6 +1159,13 @@
     }
   ],
   "resourceBitmaps": [
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 2,
+      "resourceId": 4624,
+      "output": "site/assets/xp/system/SpeakerSettings.png"
+    },
     {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",

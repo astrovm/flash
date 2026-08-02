@@ -915,6 +915,32 @@
       "pixelSha256": "b8a93ffef601570c58e011dc366ea058c08a0a5c922199c4af4a5509922acc58"
     }
   },
+  "assets/xp/system/AudioRecording.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "9ddb031117616a15f48d2856d585947d5024a82e4b4570adbd688aa3020cb7a8",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 14,
+      "id": 4369,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "3607d133763b0aa94461a1e8d10549655a9165d730a1b7d4dc08c2da220861b1"
+    }
+  },
+  "assets/xp/system/MidiPlayback.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "faae28ff56b5cefda6bf7421ea36e96b30605c60f81216bb8379cabdebc05b68",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 14,
+      "id": 4381,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "7bb42ea9ba5eecbdf0a79e9535d89e94ed5144c3071f2450e0ce930ef5090d5b"
+    }
+  },
   "assets/xp/icons/Speech.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SAPI.CP_",
@@ -1511,6 +1537,19 @@
       "language": 1033,
       "frame": "48x48x32",
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
+    }
+  },
+  "assets/xp/system/SpeakerSettings.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "eb552b562cbeffe51b4b066568e38d0c8f104beb87cbd32d7dd127c1a6eac97e",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 2,
+      "id": 4624,
+      "language": 1033,
+      "frame": "72x72x32",
+      "pixelSha256": "a286c9fc6d28507c7891dae9917172e2aa633a5be188f38019666ef4319e02f6"
     }
   },
   "assets/xp/AboutWindows.png": {

@@ -10790,11 +10790,37 @@ const openSoundsAudioProperties = (initialTab = "volume") => {
   const deviceGroup = (title, icon, device, second = "Advanced...") =>
     `<fieldset><legend>${title}</legend><img src="${icon}" alt=""><label>Default device:<select disabled><option>${device}</option></select></label><button class="xp-btn" disabled>Volume...</button><button class="xp-btn" disabled>${second}</button></fieldset>`;
   dialog.body.innerHTML = `<div class="sounds-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-sounds-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div><div class="sounds-properties-panels">
-    <section data-sounds-panel="volume"><div class="sounds-no-device"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>No Audio Device</span></div><fieldset><legend>Device volume</legend><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><input type="range" disabled><label><input type="checkbox" disabled> Mute</label><label><input type="checkbox" disabled> Place volume icon in the taskbar</label><button class="xp-btn" disabled>Advanced...</button></fieldset><fieldset class="speaker-settings"><legend>Speaker settings</legend><div class="speaker-pair" aria-hidden="true"><i></i><i></i></div><p>Use the settings below to change individual<br>speaker volume and other settings.</p><button class="xp-btn" disabled>Speaker Volume...</button><button class="xp-btn" disabled>Advanced...</button></fieldset></section>
-    <section data-sounds-panel="sounds"><p>A sound scheme is a set of sounds applied to events in Windows<br>and programs. You can select an existing scheme or save one you<br>have modified.</p><label>Sound scheme:<select><option></option></select></label><div class="sounds-scheme-buttons"><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div><p>To change sounds, click a program event in the following list and<br>then select a sound to apply. You can save the changes as a new<br>sound scheme.</p><label>Program events:</label><div class="program-events"><strong>▣ Windows</strong><span>◉ Asterisk</span><span>◉ Close program</span><span>◉ Critical Battery Alarm</span><span>◉ Critical Stop</span><span>◉ Default Beep</span></div><label class="disabled-copy">Sounds:<select disabled><option></option></select></label></section>
-    <section data-sounds-panel="audio">${deviceGroup("Sound playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Sound recording", "assets/xp/icons/AccessibilitySound.png", "No Recording Devices")}${deviceGroup("MIDI music playback", "assets/xp/icons/AdvancedVolumeControls.png", "No MIDI Playback Devices", "About...")}<label><input type="checkbox" disabled> Use only default devices</label></section>
-    <section data-sounds-panel="voice"><p>These settings control volume and advanced options for the voice<br>playback or recording device you selected.</p>${deviceGroup("Voice playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Voice recording", "assets/xp/icons/AccessibilitySound.png", "No Recording Devices")}<button class="xp-btn voice-test" disabled>Test hardware...</button></section>
-    <section data-sounds-panel="hardware"><label>Devices:</label><div class="audio-hardware-list"><strong>Name <span>Type</span></strong>${["QEMU QEMU DVD-ROM", "Audio Codecs", "Legacy Audio Drivers", "Media Control Devices", "Legacy Video Capture Devices", "Video Codecs"].map((name) => `<span>◉ ${name}</span>`).join("")}</div><fieldset><legend>Device Properties</legend><p>Manufacturer: (Standard CD-ROM drives)</p><p>Location: Location 0 (0)</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+    <section data-sounds-panel="volume"><div class="sounds-no-device"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>No Audio Device</span></div><fieldset class="device-volume-settings"><legend>Device volume</legend><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><div class="device-volume-slider"><input type="range" value="0" disabled><span class="volume-ticks" aria-hidden="true"></span><span class="volume-low">Low</span><span class="volume-high">High</span></div><label class="volume-mute"><input type="checkbox" disabled> Mute</label><label class="volume-taskbar"><input type="checkbox" disabled> Place volume icon in the taskbar</label><button class="xp-btn" disabled>Advanced...</button></fieldset><fieldset class="speaker-settings"><legend>Speaker settings</legend><img class="speaker-pair" src="assets/xp/system/SpeakerSettings.png" alt=""><p>Use the settings below to change individual<br>speaker volume and other settings.</p><button class="xp-btn" disabled>Speaker Volume...</button><button class="xp-btn" disabled>Advanced...</button></fieldset></section>
+    <section data-sounds-panel="sounds"><p class="sounds-intro">A sound scheme is a set of sounds applied to events in Windows<br>and programs. You can select an existing scheme or save one you<br>have modified.</p><label class="sound-scheme">Sound scheme:<select><option></option></select></label><div class="sounds-scheme-buttons"><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div><p class="sounds-help">To change sounds, click a program event in the following list and<br>then select a sound to apply. You can save the changes as a new<br>sound scheme.</p><label class="program-events-label">Program events:</label><div class="program-events"><strong><span class="tree-toggle">−</span> Windows</strong>${["Asterisk", "Close program", "Critical Battery Alarm", "Critical Stop", "Default Beep"].map((name) => `<span><img src="assets/xp/icons/SoundsAudioSmall.png" alt="">${name}</span>`).join("")}</div><label class="sounds-picker disabled-copy">Sounds:<select disabled><option></option></select><button class="xp-btn sound-play" aria-label="Play" disabled></button><button class="xp-btn sound-browse" disabled>Browse...</button></label></section>
+    <section data-sounds-panel="audio">${deviceGroup("Sound playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Sound recording", "assets/xp/system/AudioRecording.png", "No Recording Devices")}${deviceGroup("MIDI music playback", "assets/xp/system/MidiPlayback.png", "No MIDI Playback Devices", "About...")}<label class="audio-default-devices"><input type="checkbox" disabled> Use only default devices</label></section>
+    <section data-sounds-panel="voice"><p class="voice-intro">These settings control volume and advanced options for the voice<br>playback or recording device you selected.</p>${deviceGroup("Voice playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Voice recording", "assets/xp/system/AudioRecording.png", "No Recording Devices")}<button class="xp-btn voice-test" disabled>Test hardware...</button></section>
+    <section data-sounds-panel="hardware"><label class="hardware-devices-label">Devices:</label><div class="audio-hardware-list"><strong><span>Name</span><span>Type</span></strong>${[
+      ["QEMU QEMU DVD-ROM", "DVD/CD-R...", "assets/xp/icons/OpticalDrive.png"],
+      ["Audio Codecs", "Sound, vid...", "assets/xp/icons/SoundsAudioSmall.png"],
+      [
+        "Legacy Audio Drivers",
+        "Sound, vid...",
+        "assets/xp/icons/SoundsAudioSmall.png",
+      ],
+      [
+        "Media Control Devices",
+        "Sound, vid...",
+        "assets/xp/icons/SoundsAudioSmall.png",
+      ],
+      [
+        "Legacy Video Capture Devices",
+        "Sound, vid...",
+        "assets/xp/icons/SoundsAudioSmall.png",
+      ],
+      ["Video Codecs", "Sound, vid...", "assets/xp/icons/SoundsAudioSmall.png"],
+    ]
+      .map(
+        ([name, type, icon]) =>
+          `<span><img src="${icon}" alt=""><span>${name}</span><span>${type}</span></span>`,
+      )
+      .join(
+        "",
+      )}</div><fieldset><legend>Device Properties</legend><p>Manufacturer: (Standard CD-ROM drives)</p><p>Location: Location 0 (0)</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
   </div>`;
   const activate = (tab) => {
     dialog.body
