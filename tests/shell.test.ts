@@ -76,6 +76,7 @@ test("caption controls select every native Luna sprite state", () => {
   contains(
     controls,
     "margin-right: 2px",
+    "border-radius: 0",
     "--caption-glyph-y: -13px",
     "--caption-button-y: -21px",
     "--caption-glyph-y: -39px",
