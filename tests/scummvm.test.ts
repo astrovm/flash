@@ -94,7 +94,10 @@ const wrapperConfiguration = async (relativePath: string) => {
   const window = new Window({
     url: `http://127.0.0.1/${relativePath}`,
     settings: {
-      enableJavaScriptEvaluation: true,
+      disableCSSFileLoading: true,
+      disableJavaScriptFileLoading: true,
+      enableJavaScriptEvaluation: false,
+      handleDisabledFileLoadingAsSuccess: true,
       suppressInsecureJavaScriptEnvironmentWarning: true,
     },
   });
@@ -102,9 +105,16 @@ const wrapperConfiguration = async (relativePath: string) => {
   const html = await Bun.file(
     new URL(`../site/${relativePath}`, import.meta.url),
   ).text();
-  window.document.write(
-    html.replace(/<script\b[^>]*\bsrc=["'][^"']+["'][^>]*><\/script>/gi, ""),
-  );
+  window.document.write(html);
+  const configurationSource =
+    window.document.querySelector("script:not([src])")!.textContent;
+  window.document
+    .querySelectorAll("script")
+    .forEach((script) => script.remove());
+  window.happyDOM.settings.enableJavaScriptEvaluation = true;
+  const configurationScript = window.document.createElement("script");
+  configurationScript.textContent = configurationSource;
+  window.document.body.appendChild(configurationScript);
   const configuration = JSON.parse(JSON.stringify(window.PINK_GAME));
   window.close();
   return configuration;

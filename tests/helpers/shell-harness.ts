@@ -26,7 +26,10 @@ export async function loadShell() {
     width: 1024,
     height: 768,
     settings: {
-      enableJavaScriptEvaluation: true,
+      disableCSSFileLoading: true,
+      disableJavaScriptFileLoading: true,
+      enableJavaScriptEvaluation: false,
+      handleDisabledFileLoadingAsSuccess: true,
       suppressInsecureJavaScriptEnvironmentWarning: true,
     },
   });
@@ -79,11 +82,8 @@ export async function loadShell() {
   const html = await Bun.file(
     new URL("site/index.html", projectDirectory),
   ).text();
-  document.write(
-    html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi, ""),
-  );
+  document.write(html);
+  window.happyDOM.settings.enableJavaScriptEvaluation = true;
 
   window.matchMedia ??= (() => ({
     matches: false,
