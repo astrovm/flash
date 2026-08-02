@@ -343,6 +343,32 @@
       "pixelSha256": "04edb4d8fa4c5b2b1552d3752c6362a50040f46290af759161e7aaa13fa87a25"
     }
   },
+  "assets/xp/icons/Magnifier.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAGNIFY.EX_",
+    "sha256": "3601b29f139a56a639c95fd75129b9c10652393e374c89e701bab69eed530100",
+    "resource": {
+      "parentSha256": "9b42c30299828de045790b0bd352da666e8b07c2117c6128ec68491c3bad7b08",
+      "type": 14,
+      "id": 128,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "94183ccdfae564cb09c61441a0d86cd953218328f2d48a4997baed0bd5a8ca16"
+    }
+  },
+  "assets/xp/icons/OnScreenKeyboard.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/OSK.EX_",
+    "sha256": "8c7006e4e491178efe13c81eaa1cbeb35ddadb48d656f331a182ae2798f27e7e",
+    "resource": {
+      "parentSha256": "de35aafaeec9a73fa2f2921073439809ef2b06281d2d637284aef5ae7dbe421b",
+      "type": 14,
+      "id": "APP_OSK",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "bc8169d3137eb46ad2551431ac52cf8ad56e0262efd7818ddc81b050f4969712"
+    }
+  },
   "assets/xp/icons/DateTimeRegional.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

@@ -2341,6 +2341,36 @@ const wireControlPanel = (win) => {
       </div>`;
   };
 
+  const renderAccessibilityCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Accessibility Options",
+      XP_ICON_PATHS["AccessibilityOptions.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="magnifier"><img src="assets/xp/icons/Magnifier.png" alt=""><span>Magnifier</span></button>
+          <button type="button" data-control-panel-action="on-screen-keyboard"><img src="assets/xp/icons/OnScreenKeyboard.png" alt=""><span>On-Screen Keyboard</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/AccessibilityOptions.png" alt=""><strong>Accessibility Options</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="accessibility-contrast"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust the contrast for text and colors on your screen</span></button>
+        <button type="button" data-control-panel-action="accessibility-wizard"><img src="assets/xp/icons/Go.png" alt=""><span>Configure Windows to work for your vision, hearing, and mobility needs</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons accessibility-category-icons">
+        <button type="button" data-control-panel-action="accessibility-options"><img src="assets/xp/icons/AccessibilityOptions.png" alt=""><span>Accessibility Options</span></button>
+      </div>`;
+  };
+
   const actions = {
     appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
@@ -2349,7 +2379,7 @@ const wireControlPanel = (win) => {
     programs: () => openSystemWindow("__add-remove-programs"),
     datetime: openDateTimeProperties,
     sounds: toggleTrayVolumePopup,
-    accessibility: openProjectSettings,
+    accessibility: renderAccessibilityCategory,
     performance: renderPerformanceCategory,
     security: () =>
       XPDialogs.alert(
@@ -2432,6 +2462,23 @@ const wireControlPanel = (win) => {
         ?.click();
     } else if (action === "startup-help") {
       openHelpAndSupport();
+    } else if (
+      action === "accessibility-contrast" ||
+      action === "accessibility-options"
+    ) {
+      XPDialogs.alert(
+        "Accessibility settings are available from this Control Panel category.",
+        "Accessibility Options",
+        "info",
+      );
+    } else if (action === "accessibility-wizard") {
+      openHelpAndSupport();
+    } else if (action === "magnifier" || action === "on-screen-keyboard") {
+      XPDialogs.alert(
+        `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in this offline recreation.`,
+        action === "magnifier" ? "Magnifier" : "On-Screen Keyboard",
+        "info",
+      );
     } else if (
       [
         "disk-cleanup",

@@ -238,6 +238,26 @@
       "output": "site/assets/xp/icons/AccessibilityOptions.png"
     },
     {
+      "member": "MAGNIFY.EX_",
+      "expandedName": "magnify.exe",
+      "resourceType": 14,
+      "resourceId": 128,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Magnifier.png"
+    },
+    {
+      "member": "OSK.EX_",
+      "expandedName": "osk.exe",
+      "resourceType": 14,
+      "resourceId": "APP_OSK",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/OnScreenKeyboard.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,

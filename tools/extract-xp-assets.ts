@@ -20,7 +20,7 @@ type CabAsset = DirectAsset & { cabMember: string; bitmap?: boolean };
 type ResourceIcon = DirectAsset & {
   expandedName: string;
   resourceType: number;
-  resourceId: number;
+  resourceId: number | string;
   width: number;
   height: number;
   bitDepth: number;

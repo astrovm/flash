@@ -449,6 +449,18 @@ test("Performance and Maintenance uses the native XP category page", () => {
   );
 });
 
+test("Accessibility Options uses the native XP category page", () => {
+  contains(
+    javascript,
+    "const renderAccessibilityCategory = () =>",
+    "Adjust the contrast for text and colors on your screen",
+    "Configure Windows to work for your vision, hearing, and mobility needs",
+    "assets/xp/icons/Magnifier.png",
+    "assets/xp/icons/OnScreenKeyboard.png",
+    'data-control-panel-action="accessibility-options"',
+  );
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,
