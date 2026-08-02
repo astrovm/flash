@@ -2980,6 +2980,228 @@ html[data-xp-appearance="silver"] {
   bottom: 8px;
 }
 
+.xp-dialog.sounds-audio-properties-dialog {
+  position: absolute;
+  top: 88px;
+  left: 66px;
+  width: 366px;
+  height: 454px;
+}
+
+.sounds-audio-properties-dialog .dlg-body {
+  position: relative;
+  height: 422px;
+  padding: 31px 8px 40px;
+  font:
+    11px Tahoma,
+    sans-serif;
+}
+
+.sounds-properties-tabs {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+}
+
+.sounds-properties-tabs button {
+  width: 64px;
+  height: 20px;
+  padding: 1px 5px;
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: #ece9d8;
+  font: inherit;
+}
+
+.sounds-properties-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 1;
+  height: 22px;
+  margin-bottom: -2px;
+  border-top-color: #e68b2c;
+  background: #fff;
+}
+
+.sounds-properties-panels {
+  height: 100%;
+  padding: 10px 14px;
+  border: 1px solid #919b9c;
+  background: #fff;
+}
+
+.sounds-properties-panels fieldset {
+  position: relative;
+  margin: 7px 0;
+  padding: 10px 9px;
+  border: 1px solid #d0cab2;
+}
+
+.sounds-properties-panels legend {
+  color: #0046d5;
+}
+.sounds-properties-panels p {
+  margin: 5px 0;
+  line-height: 13px;
+}
+.sounds-no-device {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 8px 21px;
+}
+.sounds-no-device img,
+.sounds-properties-panels fieldset > img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+.sounds-properties-panels [data-sounds-panel="volume"] fieldset {
+  height: 167px;
+  padding-left: 57px;
+}
+.sounds-properties-panels [data-sounds-panel="volume"] fieldset > img {
+  position: absolute;
+  top: 12px;
+  left: 22px;
+}
+.sounds-properties-panels [data-sounds-panel="volume"] input[type="range"] {
+  width: 184px;
+}
+.sounds-properties-panels [data-sounds-panel="volume"] label {
+  display: block;
+  margin: 8px 0;
+}
+.sounds-properties-panels fieldset > .xp-btn {
+  min-width: 104px;
+}
+.sounds-properties-panels [data-sounds-panel="volume"] fieldset > .xp-btn {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+}
+.sounds-properties-panels .speaker-settings {
+  height: 98px !important;
+  margin-top: 13px;
+  padding-left: 78px !important;
+}
+.sounds-properties-panels .speaker-settings > .xp-btn:first-of-type {
+  right: 128px;
+}
+.sounds-properties-panels .speaker-settings > .xp-btn:last-of-type {
+  right: 9px;
+}
+.speaker-pair {
+  position: absolute;
+  top: 10px;
+  left: 9px;
+  display: flex;
+  align-items: end;
+  gap: 5px;
+}
+.speaker-pair i {
+  display: block;
+  width: 24px;
+  height: 63px;
+  transform: skewY(-12deg);
+  border: 1px solid #777;
+  background: linear-gradient(90deg, #777, #c3c4ce);
+}
+.speaker-pair i:last-child {
+  height: 52px;
+}
+.sounds-properties-panels label {
+  display: block;
+  margin: 6px 0;
+}
+.sounds-properties-panels select {
+  width: 100%;
+  height: 21px;
+}
+.sounds-scheme-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.program-events {
+  display: flex;
+  height: 101px;
+  flex-direction: column;
+  padding: 3px 6px;
+  overflow: hidden;
+  border: 1px solid #7f9db9;
+}
+.program-events span {
+  padding-left: 20px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset {
+  height: 93px;
+  padding-left: 48px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset > img,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset > img {
+  position: absolute;
+  top: 11px;
+  left: 8px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset label,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset label {
+  margin: 0 0 7px;
+}
+.sounds-properties-panels [data-sounds-panel="audio"] fieldset .xp-btn,
+.sounds-properties-panels [data-sounds-panel="voice"] fieldset .xp-btn {
+  min-width: 102px;
+  margin-right: 3px;
+}
+.voice-test {
+  float: right;
+  min-width: 102px;
+}
+.audio-hardware-list {
+  display: flex;
+  height: 132px;
+  flex-direction: column;
+  padding: 2px 6px;
+  border: 1px solid #7f9db9;
+}
+.audio-hardware-list strong {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #ccc;
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] fieldset {
+  height: 165px;
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] {
+  transform: translateY(-7px);
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] > label {
+  margin: 0;
+}
+.sounds-properties-panels [data-sounds-panel="hardware"] fieldset .xp-btn {
+  position: absolute;
+  bottom: 11px;
+  margin: 0;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  .xp-btn:first-of-type {
+  left: 119px;
+}
+.sounds-properties-panels
+  [data-sounds-panel="hardware"]
+  fieldset
+  .xp-btn:last-of-type {
+  left: 219px;
+}
+.sounds-audio-properties-dialog .dlg-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
 .control-panel-content {
   display: flex;
   min-height: 0;

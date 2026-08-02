@@ -2518,19 +2518,20 @@ const wireControlPanel = (win) => {
       );
     } else if (action === "accessibility-sound") {
       openAccessibilityOptions("sound");
-    } else if (action === "system-volume" || action === "advanced-volume") {
+    } else if (action === "system-volume") {
+      openSoundsAudioProperties("volume");
+    } else if (action === "advanced-volume") {
       toggleTrayVolumePopup();
     } else if (action === "sound-help" || action === "dvd-help") {
       openHelpAndSupport();
-    } else if (
-      ["sound-scheme", "speaker-settings", "sounds-audio", "speech"].includes(
-        action,
-      )
-    ) {
-      const speech = action === "speech";
+    } else if (action === "sound-scheme") {
+      openSoundsAudioProperties("sounds");
+    } else if (action === "speaker-settings" || action === "sounds-audio") {
+      openSoundsAudioProperties("volume");
+    } else if (action === "speech") {
       XPDialogs.alert(
-        `${speech ? "Speech Properties" : "Sounds and Audio Devices Properties"} is not available in this offline recreation.`,
-        speech ? "Speech Properties" : "Sounds and Audio Devices Properties",
+        "Speech Properties is not available in this offline recreation.",
+        "Speech Properties",
         "info",
       );
     } else if (
@@ -10008,6 +10009,52 @@ const openAboutWindows = () => {
   XPDialogs.addButtonRow(dialog, [
     { id: "ok", label: "OK", isDefault: true, isCancel: true },
   ]);
+};
+
+const openSoundsAudioProperties = (initialTab = "volume") => {
+  const dialog = XPDialogs.createDialog({
+    title: "Sounds and Audio Devices Properties",
+  });
+  dialog.el.classList.add("sounds-audio-properties-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const tabs = ["Volume", "Sounds", "Audio", "Voice", "Hardware"];
+  const deviceGroup = (title, icon, device, second = "Advanced...") =>
+    `<fieldset><legend>${title}</legend><img src="${icon}" alt=""><label>Default device:<select disabled><option>${device}</option></select></label><button class="xp-btn" disabled>Volume...</button><button class="xp-btn" disabled>${second}</button></fieldset>`;
+  dialog.body.innerHTML = `<div class="sounds-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-sounds-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div><div class="sounds-properties-panels">
+    <section data-sounds-panel="volume"><div class="sounds-no-device"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>No Audio Device</span></div><fieldset><legend>Device volume</legend><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><input type="range" disabled><label><input type="checkbox" disabled> Mute</label><label><input type="checkbox" disabled> Place volume icon in the taskbar</label><button class="xp-btn" disabled>Advanced...</button></fieldset><fieldset class="speaker-settings"><legend>Speaker settings</legend><div class="speaker-pair" aria-hidden="true"><i></i><i></i></div><p>Use the settings below to change individual<br>speaker volume and other settings.</p><button class="xp-btn" disabled>Speaker Volume...</button><button class="xp-btn" disabled>Advanced...</button></fieldset></section>
+    <section data-sounds-panel="sounds"><p>A sound scheme is a set of sounds applied to events in Windows<br>and programs. You can select an existing scheme or save one you<br>have modified.</p><label>Sound scheme:<select><option></option></select></label><div class="sounds-scheme-buttons"><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div><p>To change sounds, click a program event in the following list and<br>then select a sound to apply. You can save the changes as a new<br>sound scheme.</p><label>Program events:</label><div class="program-events"><strong>▣ Windows</strong><span>◉ Asterisk</span><span>◉ Close program</span><span>◉ Critical Battery Alarm</span><span>◉ Critical Stop</span><span>◉ Default Beep</span></div><label class="disabled-copy">Sounds:<select disabled><option></option></select></label></section>
+    <section data-sounds-panel="audio">${deviceGroup("Sound playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Sound recording", "assets/xp/icons/AccessibilitySound.png", "No Recording Devices")}${deviceGroup("MIDI music playback", "assets/xp/icons/AdvancedVolumeControls.png", "No MIDI Playback Devices", "About...")}<label><input type="checkbox" disabled> Use only default devices</label></section>
+    <section data-sounds-panel="voice"><p>These settings control volume and advanced options for the voice<br>playback or recording device you selected.</p>${deviceGroup("Voice playback", "assets/xp/icons/SoundsAndAudioDevices.png", "No Playback Devices")}${deviceGroup("Voice recording", "assets/xp/icons/AccessibilitySound.png", "No Recording Devices")}<button class="xp-btn voice-test" disabled>Test hardware...</button></section>
+    <section data-sounds-panel="hardware"><label>Devices:</label><div class="audio-hardware-list"><strong>Name <span>Type</span></strong>${["QEMU QEMU DVD-ROM", "Audio Codecs", "Legacy Audio Drivers", "Media Control Devices", "Legacy Video Capture Devices", "Video Codecs"].map((name) => `<span>◉ ${name}</span>`).join("")}</div><fieldset><legend>Device Properties</legend><p>Manufacturer: (Standard CD-ROM drives)</p><p>Location: Location 0 (0)</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+  </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-sounds-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.soundsTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-sounds-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.soundsPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-sounds-tab]")?.dataset.soundsTab;
+    if (tab) activate(tab);
+  });
+  activate(initialTab);
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
 };
 
 const openAccessibilityOptions = (initialTab = "keyboard") => {

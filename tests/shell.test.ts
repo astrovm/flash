@@ -480,7 +480,14 @@ test("Sounds Speech and Audio Devices uses the native XP category page", () => {
     "assets/xp/icons/SoundsAndAudioDevices.png",
     "assets/xp/icons/Speech.png",
     'openAccessibilityOptions("sound")',
+    'const openSoundsAudioProperties = (initialTab = "volume") =>',
+    'data-sounds-panel="volume"',
+    'data-sounds-panel="sounds"',
+    'data-sounds-panel="audio"',
+    'data-sounds-panel="voice"',
+    'data-sounds-panel="hardware"',
   );
+  contains(css, ".sounds-audio-properties-dialog", ".sounds-properties-tabs");
 });
 
 test("Folder Options matches the four-tab XP shell applet", () => {
