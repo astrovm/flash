@@ -268,6 +268,26 @@
       "output": "site/assets/xp/icons/DateTimeRegional.png"
     },
     {
+      "member": "TIMEDATE.CP_",
+      "expandedName": "timedate.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/DateAndTime.png"
+    },
+    {
+      "member": "INTL.CP_",
+      "expandedName": "intl.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/RegionalAndLanguage.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,

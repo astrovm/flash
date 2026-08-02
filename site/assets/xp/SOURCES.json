@@ -382,6 +382,32 @@
       "pixelSha256": "4aaebc4cc3612565214795e646542f80533faeb2dc5fa059965e5e5b7bf672ee"
     }
   },
+  "assets/xp/icons/DateAndTime.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TIMEDATE.CP_",
+    "sha256": "5e31a7e7685290f3813c6bc0057111ef876ce3aaa82942d838a0ab64825dd2dc",
+    "resource": {
+      "parentSha256": "ca5d2f90158313d7b827c88c0d950e95366ed2bccc5e0503268c12be8e5d48ce",
+      "type": 14,
+      "id": 200,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "f64db6793a0b9f9d3f1ec1326a1f21dc0220e273a42640cc6a80fb33a55be80e"
+    }
+  },
+  "assets/xp/icons/RegionalAndLanguage.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/INTL.CP_",
+    "sha256": "1d00a572655b34cf79f47248b3a06359b3d81386f3161fed51906ac4c70b819f",
+    "resource": {
+      "parentSha256": "995bbf474d8a55128218cf67330ae640bf4d12cf903fea63d319e42272b59c56",
+      "type": 14,
+      "id": 200,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "d1b80d72b7270bee0b61c83f58ca571ce33dbf835f068fe82c308cc116f08a76"
+    }
+  },
   "assets/xp/icons/NetworkAndInternet.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

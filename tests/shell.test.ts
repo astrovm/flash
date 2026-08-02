@@ -490,6 +490,19 @@ test("Sounds Speech and Audio Devices uses the native XP category page", () => {
   contains(css, ".sounds-audio-properties-dialog", ".sounds-properties-tabs");
 });
 
+test("Date Time Language and Regional Options uses the native XP category page", () => {
+  contains(
+    javascript,
+    "const renderDateRegionalCategory = () =>",
+    "Change the date and time",
+    "Change the format of numbers, dates, and times",
+    "Add other languages",
+    "assets/xp/icons/DateAndTime.png",
+    "assets/xp/icons/RegionalAndLanguage.png",
+    "openDateTimeProperties();",
+  );
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,

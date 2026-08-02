@@ -2410,13 +2410,44 @@ const wireControlPanel = (win) => {
       </div>`;
   };
 
+  const renderDateRegionalCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Date, Time, Language, and Regional Options",
+      XP_ICON_PATHS["DateTimeRegional.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="scheduled-tasks"><img src="assets/xp/icons/ScheduledTasks.png" alt=""><span>Scheduled Tasks</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/DateTimeRegional.png" alt=""><strong>Date, Time, Language, and Regional Options</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/Go.png" alt=""><span>Change the date and time</span></button>
+        <button type="button" data-control-panel-action="regional-format"><img src="assets/xp/icons/Go.png" alt=""><span>Change the format of numbers, dates, and times</span></button>
+        <button type="button" data-control-panel-action="languages"><img src="assets/xp/icons/Go.png" alt=""><span>Add other languages</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons date-regional-category-icons">
+        <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/DateAndTime.png" alt=""><span>Date and Time</span></button>
+        <button type="button" data-control-panel-action="regional-language"><img src="assets/xp/icons/RegionalAndLanguage.png" alt=""><span>Regional and Language Options</span></button>
+      </div>`;
+  };
+
   const actions = {
     appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
     network: openNetworkStatus,
     users: () => openSystemWindow("__user-accounts"),
     programs: () => openSystemWindow("__add-remove-programs"),
-    datetime: openDateTimeProperties,
+    datetime: renderDateRegionalCategory,
     sounds: renderSoundsCategory,
     accessibility: renderAccessibilityCategory,
     performance: renderPerformanceCategory,
@@ -2532,6 +2563,18 @@ const wireControlPanel = (win) => {
       XPDialogs.alert(
         "Speech Properties is not available in this offline recreation.",
         "Speech Properties",
+        "info",
+      );
+    } else if (action === "date-time") {
+      openDateTimeProperties();
+    } else if (
+      action === "regional-format" ||
+      action === "languages" ||
+      action === "regional-language"
+    ) {
+      XPDialogs.alert(
+        "Regional and Language Options is not available in this offline recreation.",
+        "Regional and Language Options",
         "info",
       );
     } else if (
