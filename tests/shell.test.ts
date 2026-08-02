@@ -432,6 +432,13 @@ test("Internet Properties matches the seven-tab XP applet", () => {
     'data-internet-panel="advanced"',
     "Temporary Internet files",
     "Days to keep pages in history:",
+    "assets/xp/system/InternetHomePage.png",
+    "assets/xp/system/TemporaryInternetFiles.png",
+    "assets/xp/system/InternetHistory.png",
+    "assets/xp/system/InternetZone.png",
+    "assets/xp/system/PrivacySettings.png",
+    "assets/xp/system/PopUpBlocker.png",
+    "assets/xp/system/InternetPrograms.png",
     "openInternetProperties();",
   );
   contains(css, ".internet-properties-dialog", ".internet-properties-tabs");

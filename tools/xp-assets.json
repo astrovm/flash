@@ -308,6 +308,106 @@
       "output": "site/assets/xp/icons/InternetOptions.png"
     },
     {
+      "member": "INETCPLC.DL_",
+      "expandedName": "inetcplc.dll",
+      "resourceType": 14,
+      "resourceId": 1301,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetHomePage.png"
+    },
+    {
+      "member": "INETCPLC.DL_",
+      "expandedName": "inetcplc.dll",
+      "resourceType": 14,
+      "resourceId": 1319,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/TemporaryInternetFiles.png"
+    },
+    {
+      "member": "INETCPLC.DL_",
+      "expandedName": "inetcplc.dll",
+      "resourceType": 14,
+      "resourceId": 1303,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetHistory.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 1313,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4461,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/LocalIntranetZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4480,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/TrustedSitesZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4481,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/RestrictedSitesZone.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 1307,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/PrivacySettings.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 4497,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/PopUpBlocker.png"
+    },
+    {
+      "member": "INETCPL.CP_",
+      "expandedName": "inetcpl.cpl",
+      "resourceType": 14,
+      "resourceId": 1308,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/InternetPrograms.png"
+    },
+    {
       "member": "NETSHELL.DL_",
       "expandedName": "netshell.dll",
       "resourceType": 14,
