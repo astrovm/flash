@@ -1272,6 +1272,26 @@ test("taskbar supports window and taskbar context menus", () => {
     "Properties",
   );
 });
+test("Taskbar and Start Menu Properties uses the native XP previews and tabs", () => {
+  contains(
+    javascript,
+    'title: "Taskbar and Start Menu Properties"',
+    'src="assets/xp/system/TaskbarPreview.png"',
+    'src="assets/xp/system/NotificationAreaPreview.png"',
+    'src="assets/xp/system/StartMenuPreview.png"',
+    'data-taskbar-properties-tab="taskbar"',
+    'data-taskbar-properties-tab="start-menu"',
+    "Group similar taskbar buttons",
+    "Classic Start menu",
+    'document.getElementById("taskbar-clock").hidden',
+  );
+  contains(
+    css,
+    ".taskbar-properties-dialog",
+    "width: min(403px",
+    "height: min(454px",
+  );
+});
 test("taskbar keyboard and state styles are present", () => {
   js('taskButton && ["ArrowLeft", "ArrowRight", "Home", "End"]');
   contains(javascript, "const wireTaskbarMenuKeyboard = (menu) =>");

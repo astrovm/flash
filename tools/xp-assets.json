@@ -697,6 +697,27 @@
       "output": "site/assets/xp/SystemProperties.png"
     },
     {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 150,
+      "output": "site/assets/xp/system/TaskbarPreview.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 170,
+      "output": "site/assets/xp/system/StartMenuPreview.png"
+    },
+    {
+      "member": "EXPLORER.EX_",
+      "expandedName": "explorer.exe",
+      "resourceType": 2,
+      "resourceId": 180,
+      "output": "site/assets/xp/system/NotificationAreaPreview.png"
+    },
+    {
       "member": "MSGINA.DL_",
       "expandedName": "msgina.dll",
       "resourceType": 2,

@@ -6701,13 +6701,117 @@ const openTaskbarProperties = () => {
   const dialog = XPDialogs.createDialog({
     title: "Taskbar and Start Menu Properties",
   });
-  const label = document.createElement("label");
-  const input = document.createElement("input");
-  input.type = "checkbox";
-  input.checked = taskbarLocked;
-  input.addEventListener("change", () => setTaskbarLocked(input.checked));
-  label.append(input, " Lock the taskbar");
-  dialog.body.appendChild(label);
+  dialog.el.classList.add("taskbar-properties-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="taskbar-properties-tabs" role="tablist">
+      <button type="button" role="tab" data-taskbar-properties-tab="taskbar" aria-selected="true">Taskbar</button>
+      <button type="button" role="tab" data-taskbar-properties-tab="start-menu">Start Menu</button>
+    </div>
+    <div class="taskbar-properties-panel" data-taskbar-properties-panel="taskbar">
+      <div class="taskbar-properties-group taskbar-appearance-group"><span class="taskbar-properties-legend">Taskbar appearance</span>
+        <img class="taskbar-properties-preview" src="assets/xp/system/TaskbarPreview.png" alt="Taskbar preview">
+        <label><input type="checkbox" data-taskbar-setting="locked" ${taskbarLocked ? "checked" : ""}> Lock the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="auto-hide"> Auto-hide the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="keep-on-top" checked> Keep the taskbar on top of other windows</label>
+        <label><input type="checkbox" data-taskbar-setting="group" checked> Group similar taskbar buttons</label>
+        <label><input type="checkbox" data-taskbar-setting="quick-launch"> Show Quick Launch</label>
+      </div>
+      <div class="taskbar-properties-group notification-area-group"><span class="taskbar-properties-legend">Notification area</span>
+        <img class="taskbar-properties-preview" src="assets/xp/system/NotificationAreaPreview.png" alt="Notification area preview">
+        <label><input type="checkbox" data-taskbar-setting="show-clock" checked> Show the clock</label>
+        <p>You can keep the notification area uncluttered by hiding icons that you<br>have not clicked recently.</p>
+        <label><input type="checkbox" data-taskbar-setting="hide-inactive" checked> Hide inactive icons</label>
+        <button type="button" class="xp-btn">Customize...</button>
+      </div>
+    </div>
+    <div class="taskbar-properties-panel taskbar-start-menu-panel" data-taskbar-properties-panel="start-menu" hidden>
+      <img class="taskbar-start-menu-preview" src="assets/xp/system/StartMenuPreview.png" alt="Start menu preview">
+      <label class="taskbar-start-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="start" checked> Start menu</label>
+      <p class="taskbar-start-menu-description">Select this menu style for easy access to the<br>Internet, e-mail, and your favorite programs.</p>
+      <button type="button" class="xp-btn taskbar-start-customize">Customize...</button>
+      <label class="taskbar-classic-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="classic"> Classic Start menu</label>
+      <p class="taskbar-classic-menu-description">Select this option to use the menu style from<br>earlier versions of Windows.</p>
+      <button type="button" class="xp-btn taskbar-classic-customize" disabled>Customize...</button>
+    </div>
+    <div class="dlg-buttons taskbar-properties-buttons"></div>
+  `;
+  const tabs = [
+    ...dialog.body.querySelectorAll("[data-taskbar-properties-tab]"),
+  ];
+  const panels = [
+    ...dialog.body.querySelectorAll("[data-taskbar-properties-panel]"),
+  ];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) =>
+        entry.setAttribute(
+          "aria-selected",
+          String(
+            entry.dataset.taskbarPropertiesTab ===
+              tab.dataset.taskbarPropertiesTab,
+          ),
+        ),
+      );
+      panels.forEach((panel) => {
+        panel.hidden =
+          panel.dataset.taskbarPropertiesPanel !==
+          tab.dataset.taskbarPropertiesTab;
+      });
+    }),
+  );
+  const buttonRow = dialog.body.querySelector(".taskbar-properties-buttons");
+  const apply = XPDialogs.createDialogButton(
+    { id: "apply", label: "Apply" },
+    () => {
+      setTaskbarLocked(
+        dialog.body.querySelector('[data-taskbar-setting="locked"]').checked,
+      );
+      document.getElementById("taskbar-clock").hidden =
+        !dialog.body.querySelector('[data-taskbar-setting="show-clock"]')
+          .checked;
+      apply.disabled = true;
+    },
+  );
+  apply.disabled = true;
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      apply.click();
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  dialog.defaultButton = ok;
+  buttonRow.append(ok, cancel, apply);
+  dialog.body.addEventListener("change", (event) => {
+    apply.disabled = false;
+    if (event.target.name === "taskbar-start-menu-style") {
+      const classic = event.target.value === "classic";
+      dialog.body.querySelector(".taskbar-start-customize").disabled = classic;
+      dialog.body.querySelector(".taskbar-classic-customize").disabled =
+        !classic;
+    }
+  });
+  dialog.body
+    .querySelector(".notification-area-group .xp-btn")
+    .addEventListener("click", () =>
+      XPDialogs.alert(
+        "Select which notification icons should be hidden when inactive.",
+        "Customize Notifications",
+        "info",
+      ),
+    );
+  ok.focus();
 };
 
 let taskbarLocked = true;

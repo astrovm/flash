@@ -5609,6 +5609,265 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   margin: 5px 0 0;
 }
 
+.taskbar-properties-dialog {
+  width: min(403px, calc(100vw - 8px));
+  height: min(454px, calc(100vh - 8px));
+}
+
+.taskbar-properties-dialog .dlg-body {
+  position: relative;
+  display: block;
+  flex: 1;
+  padding: 0;
+}
+
+.taskbar-properties-tabs {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 7px;
+  display: flex;
+}
+
+.taskbar-properties-tabs button {
+  height: 20px;
+  margin-right: -1px;
+  padding: 1px 7px 2px;
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: var(--xp-beige);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.taskbar-properties-tabs button[aria-selected="true"] {
+  z-index: 1;
+  height: 21px;
+  margin-top: -1px;
+  border-bottom-color: #f5f3ed;
+  background: #f5f3ed;
+}
+
+.taskbar-properties-panel {
+  position: absolute;
+  top: 28px;
+  right: 9px;
+  bottom: 38px;
+  left: 6px;
+  border: 1px solid #919b9c;
+  background: #f5f3ed;
+  box-shadow: inset 1px 1px #fff;
+  font:
+    11px/14px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.taskbar-properties-panel[hidden] {
+  display: none;
+}
+
+.taskbar-properties-group {
+  position: absolute;
+  left: 13px;
+  box-sizing: border-box;
+  width: 360px;
+  border: 1px solid #d0d0bf;
+}
+
+.taskbar-properties-legend {
+  position: absolute;
+  top: -8px;
+  left: 7px;
+  padding: 0 2px;
+  background: #f5f3ed;
+  color: #003399;
+}
+
+.taskbar-appearance-group {
+  top: 17px;
+  height: 163px;
+}
+
+.notification-area-group {
+  top: 193px;
+  height: 154px;
+}
+
+.taskbar-properties-preview {
+  position: absolute;
+  top: 10px;
+  left: 9px;
+  width: 336px;
+  height: 35px;
+}
+
+.taskbar-properties-group label {
+  position: absolute;
+  left: 8px;
+  white-space: nowrap;
+}
+
+.taskbar-properties-group input,
+.taskbar-start-menu-panel input {
+  width: 13px;
+  height: 13px;
+  margin: 0 3px 0 0;
+  vertical-align: -2px;
+}
+
+.taskbar-properties-dialog input[type="checkbox"] {
+  position: relative;
+  appearance: none;
+  border: 1px solid #1f6098;
+  background: #fff;
+}
+
+.taskbar-properties-dialog input[type="checkbox"]:checked::after {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  color: #008000;
+  content: "✓";
+  font:
+    bold 14px Arial,
+    sans-serif;
+}
+
+.taskbar-properties-dialog input[type="radio"] {
+  position: relative;
+  appearance: none;
+  border: 1px solid #1f6098;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.taskbar-properties-dialog input[type="radio"]:checked::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #36a84a;
+  content: "";
+}
+
+.taskbar-appearance-group label:nth-of-type(1) {
+  top: 57px;
+}
+
+.taskbar-appearance-group label:nth-of-type(2) {
+  top: 78px;
+}
+
+.taskbar-appearance-group label:nth-of-type(3) {
+  top: 99px;
+}
+
+.taskbar-appearance-group label:nth-of-type(4) {
+  top: 120px;
+}
+
+.taskbar-appearance-group label:nth-of-type(5) {
+  top: 141px;
+}
+
+.notification-area-group label:nth-of-type(1) {
+  top: 57px;
+}
+
+.notification-area-group p {
+  position: absolute;
+  top: 83px;
+  left: 8px;
+  margin: 0;
+  line-height: 14px;
+}
+
+.notification-area-group label:nth-of-type(2) {
+  top: 117px;
+}
+
+.notification-area-group .xp-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 13px;
+  width: 73px;
+  height: 22px;
+}
+
+.notification-area-group .taskbar-properties-preview {
+  top: 17px;
+}
+
+.taskbar-start-menu-preview {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  width: 300px;
+  height: 180px;
+}
+
+.taskbar-start-menu-choice,
+.taskbar-classic-menu-choice {
+  position: absolute;
+  left: 15px;
+}
+
+.taskbar-start-menu-choice {
+  top: 221px;
+}
+
+.taskbar-classic-menu-choice {
+  top: 285px;
+}
+
+.taskbar-start-menu-description,
+.taskbar-classic-menu-description {
+  position: absolute;
+  left: 33px;
+  margin: 0;
+  line-height: 14px;
+}
+
+.taskbar-start-menu-description {
+  top: 235px;
+}
+
+.taskbar-classic-menu-description {
+  top: 299px;
+}
+
+.taskbar-start-menu-panel > .xp-btn {
+  position: absolute;
+  right: 10px;
+  width: 78px;
+  height: 22px;
+}
+
+.taskbar-start-customize {
+  top: 215px;
+}
+
+.taskbar-classic-customize {
+  top: 281px;
+}
+
+.taskbar-properties-buttons {
+  position: absolute;
+  right: 9px;
+  bottom: 7px;
+  margin: 0;
+}
+
+.taskbar-properties-buttons .xp-btn {
+  width: 73px;
+  min-width: 73px;
+}
+
 .run-dialog {
   position: fixed;
   left: 4px;
