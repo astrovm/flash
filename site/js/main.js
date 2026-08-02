@@ -3192,7 +3192,7 @@ const createSystemWindowContent = (shortcutId, win) => {
       }
       if (command === "documents") openSystemWindow("__my-documents");
       if (command === "properties-current")
-        XPDialogs.properties(selected[0] || win.currentFolderId);
+        openShellProperties(selected[0] || win.currentFolderId);
       if (command === "select-all")
         win.el
           .querySelectorAll(".explorer-item")
@@ -3247,7 +3247,7 @@ const createSystemWindowContent = (shortcutId, win) => {
       }
       if (subcommand === "my-computer") navigateExplorer(win, fs.MY_COMPUTER);
       if (subcommand === "properties-current")
-        XPDialogs.properties(win.currentFolderId);
+        openShellProperties(win.currentFolderId);
       if (
         [
           "manage",
@@ -4411,6 +4411,12 @@ const SHELL_COMMANDS = [
     title: "Control Panel",
     aliases: ["control panel"],
     run: () => openControlPanel(),
+  },
+  {
+    id: "system-properties",
+    title: "System Properties",
+    aliases: ["sysdm.cpl", "system properties"],
+    run: () => openSystemProperties(),
   },
   {
     id: "printers",
@@ -8766,7 +8772,7 @@ const setupDesktopContextMenu = () => {
       );
       selectDesktopIcon(shortcut.id);
     } else if (action === "recycle-properties") {
-      XPDialogs.properties(fs.RECYCLE_BIN);
+      openShellProperties(fs.RECYCLE_BIN);
     } else if (action === "cut") {
       fileOps.cut(selectedFsIds);
     } else if (action === "copy") {
@@ -8782,7 +8788,7 @@ const setupDesktopContextMenu = () => {
     } else if (action === "rename" && selectedFsIds[0]) {
       beginDesktopRename(selectedFsIds[0]);
     } else if (action === "item-properties" && selectedFsIds[0]) {
-      XPDialogs.properties(selectedFsIds[0]);
+      openShellProperties(selectedFsIds[0]);
     } else if (action === "properties") {
       openSystemWindow("__display-properties");
     }
@@ -9084,6 +9090,96 @@ const openAboutWindows = () => {
     { id: "ok", label: "OK", isDefault: true, isCancel: true },
   ]);
 };
+
+const openSystemProperties = () => {
+  const dialog = XPDialogs.createDialog({ title: "System Properties" });
+  dialog.el.classList.add("system-properties-dialog");
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="system-properties-tabs" role="tablist">
+      <button type="button" role="tab" data-system-tab="restore">System Restore</button>
+      <button type="button" role="tab" data-system-tab="updates">Automatic Updates</button>
+      <button type="button" role="tab" data-system-tab="remote">Remote</button>
+      <button type="button" role="tab" data-system-tab="general" aria-selected="true">General</button>
+      <button type="button" role="tab" data-system-tab="computer-name">Computer Name</button>
+      <button type="button" role="tab" data-system-tab="hardware">Hardware</button>
+      <button type="button" role="tab" data-system-tab="advanced">Advanced</button>
+    </div>
+    <div class="system-properties-panels">
+      <section data-system-panel="general">
+        <img class="system-properties-logo" src="assets/xp/SystemProperties.png" alt="">
+        <div class="system-properties-general-copy">
+          <p>System:<br><span>Microsoft Windows XP<br>Professional<br>Version 2002<br>Service Pack 3</span></p>
+          <p>Registered to:<br><span>astro<br><br>76487-640-8834005-23175</span></p>
+          <p>Computer:<br><span>Intel Pentium III Xeon<br>processor<br>1.00 GHz, 512 MB of RAM</span></p>
+        </div>
+      </section>
+      <section data-system-panel="computer-name" hidden>
+        <p>Windows uses the following information to identify your computer on the network.</p>
+        <fieldset><legend>Computer description</legend><input class="xp-input" aria-label="Computer description"></fieldset>
+        <p>Full computer name: <strong>astro-xp</strong><br>Workgroup: <strong>WORKGROUP</strong></p>
+        <button type="button" class="xp-btn">Change...</button>
+      </section>
+      <section data-system-panel="hardware" hidden>
+        <fieldset><legend>Device Manager</legend><p>The Device Manager lists all the hardware devices installed on your computer.</p><button type="button" class="xp-btn">Device Manager</button></fieldset>
+        <fieldset><legend>Drivers</legend><button type="button" class="xp-btn">Driver Signing</button></fieldset>
+        <fieldset><legend>Hardware Profiles</legend><button type="button" class="xp-btn">Hardware Profiles</button></fieldset>
+      </section>
+      <section data-system-panel="advanced" hidden>
+        <p>You must be logged on as an Administrator to make most of these changes.</p>
+        <fieldset><legend>Performance</legend><p>Visual effects, processor scheduling, memory usage, and virtual memory</p><button type="button" class="xp-btn">Settings</button></fieldset>
+        <fieldset><legend>User Profiles</legend><p>Desktop settings related to your logon</p><button type="button" class="xp-btn">Settings</button></fieldset>
+        <fieldset><legend>Startup and Recovery</legend><p>System startup, system failure, and debugging information</p><button type="button" class="xp-btn">Settings</button></fieldset>
+      </section>
+      <section data-system-panel="restore" hidden>
+        <p>System Restore can track and reverse harmful changes to your computer.</p>
+        <label><input type="checkbox"> Turn off System Restore on all drives</label>
+      </section>
+      <section data-system-panel="updates" hidden>
+        <p>Help protect your PC by keeping Windows up to date automatically.</p>
+        <label><input type="radio" name="system-updates" checked> Automatic (recommended)</label>
+        <label><input type="radio" name="system-updates"> Download updates for me, but let me choose when to install them.</label>
+        <label><input type="radio" name="system-updates"> Turn off Automatic Updates.</label>
+      </section>
+      <section data-system-panel="remote" hidden>
+        <fieldset><legend>Remote Assistance</legend><label><input type="checkbox" checked> Allow Remote Assistance invitations to be sent from this computer</label></fieldset>
+        <fieldset><legend>Remote Desktop</legend><label><input type="checkbox"> Allow users to connect remotely to this computer</label></fieldset>
+      </section>
+    </div>
+  `;
+  const tabs = [...dialog.body.querySelectorAll("[data-system-tab]")];
+  const panels = [...dialog.body.querySelectorAll("[data-system-panel]")];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) =>
+        entry.setAttribute(
+          "aria-selected",
+          String(entry.dataset.systemTab === tab.dataset.systemTab),
+        ),
+      );
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.systemPanel !== tab.dataset.systemTab;
+      });
+    }),
+  );
+  help.addEventListener("click", openHelpAndSupport);
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+};
+
+const openShellProperties = (nodeId) =>
+  nodeId === fs.MY_COMPUTER
+    ? openSystemProperties()
+    : XPDialogs.properties(nodeId);
 
 const openSearchDialog = () => openSystemWindow("__search");
 

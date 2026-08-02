@@ -495,7 +495,7 @@ test("Recycle Bin desktop context menu matches Windows XP commands", () => {
     '{ app: "__recycle-bin" }',
     'fs.registerFileType("app:__recycle-bin"',
     "confirmEmptyRecycleBin()",
-    "XPDialogs.properties(fs.RECYCLE_BIN)",
+    "openShellProperties(fs.RECYCLE_BIN)",
   );
   contains(css, ".xp-context-menu button.context-default");
   contains(
@@ -686,6 +686,27 @@ test("About Windows uses the ISO shell32 banner and XP build copy", () => {
     ".about-windows-dialog",
     "width: min(418px",
     "height: min(354px",
+  );
+});
+test("System Properties uses the ISO sysdm artwork and seven XP tabs", () => {
+  contains(
+    javascript,
+    "const openSystemProperties = () =>",
+    'src="assets/xp/SystemProperties.png"',
+    'data-system-tab="general"',
+    'data-system-tab="computer-name"',
+    'data-system-tab="hardware"',
+    'data-system-tab="advanced"',
+    'data-system-tab="restore"',
+    'data-system-tab="updates"',
+    'data-system-tab="remote"',
+    'aliases: ["sysdm.cpl", "system properties"]',
+  );
+  contains(
+    css,
+    ".system-properties-dialog",
+    "width: min(418px",
+    "height: min(491px",
   );
 });
 test("shutdown dialog uses the native XP geometry and grayscale fade", () => {

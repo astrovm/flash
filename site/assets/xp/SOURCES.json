@@ -827,6 +827,19 @@
       "pixelSha256": "6f1a46bc2f6c748557920aa986db335c2155e0166b84a6e2c04b7bcb3a729dd6"
     }
   },
+  "assets/xp/SystemProperties.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SYSDM.CP_",
+    "sha256": "151dec315f4c73ea2097d5f513156332fd849caf3570c03439aeb7c77e612bdc",
+    "resource": {
+      "parentSha256": "99bd5757aa68b6513313d97b1bf61bcc6e44f7bfae63f375b2afa47a06038067",
+      "type": 2,
+      "id": 1,
+      "language": 1033,
+      "frame": "118x113x32",
+      "pixelSha256": "77994ccdc351fbffee3447935efca08c978cb6989e011aa28a0e8a9bf60c0443"
+    }
+  },
   "assets/xp/dialogs/ShutdownDialog.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MSGINA.DL_",

@@ -4851,6 +4851,158 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   min-width: 73px;
 }
 
+.system-properties-dialog {
+  width: min(418px, calc(100vw - 16px));
+  height: min(491px, calc(100vh - 16px));
+}
+
+.system-properties-dialog .dlg-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 13px 6px 7px;
+}
+
+.system-properties-tabs {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: 400px;
+  height: 38px;
+}
+
+.system-properties-tabs button {
+  position: absolute;
+  height: 20px;
+  padding: 1px 5px 2px;
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: var(--xp-beige);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  white-space: nowrap;
+}
+
+.system-properties-tabs button:nth-child(1) {
+  top: 0;
+  left: 0;
+  width: 140px;
+}
+
+.system-properties-tabs button:nth-child(2) {
+  top: 0;
+  left: 139px;
+  width: 155px;
+}
+
+.system-properties-tabs button:nth-child(3) {
+  top: 0;
+  left: 293px;
+  width: 107px;
+}
+
+.system-properties-tabs button:nth-child(4) {
+  top: 19px;
+  left: 0;
+  width: 89px;
+}
+
+.system-properties-tabs button:nth-child(5) {
+  top: 19px;
+  left: 88px;
+  width: 122px;
+}
+
+.system-properties-tabs button:nth-child(6) {
+  top: 19px;
+  left: 209px;
+  width: 95px;
+}
+
+.system-properties-tabs button:nth-child(7) {
+  top: 19px;
+  left: 303px;
+  width: 97px;
+}
+
+.system-properties-tabs button[aria-selected="true"] {
+  z-index: 2;
+  height: 21px;
+  margin-top: -1px;
+  border-bottom-color: #fff;
+  background: #fff;
+}
+
+.system-properties-panels {
+  position: relative;
+  flex: 1;
+  margin-top: -1px;
+  border: 1px solid #919b9c;
+  background: #fff;
+  box-shadow: inset 1px 1px #fff;
+}
+
+.system-properties-panels > section {
+  position: absolute;
+  inset: 0;
+  padding: 17px 16px;
+  font:
+    11px/18px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.system-properties-panels > section[hidden] {
+  display: none;
+}
+
+.system-properties-logo {
+  position: absolute;
+  top: 43px;
+  left: 44px;
+  width: 118px;
+  height: 113px;
+}
+
+.system-properties-general-copy {
+  position: absolute;
+  top: 21px;
+  left: 198px;
+}
+
+.system-properties-general-copy p {
+  margin: 0 0 11px;
+}
+
+.system-properties-general-copy span {
+  display: inline-block;
+  margin-left: 18px;
+}
+
+.system-properties-panels fieldset {
+  position: relative;
+  margin: 8px 0;
+  padding: 8px;
+}
+
+.system-properties-panels fieldset .xp-btn,
+.system-properties-panels > section > .xp-btn {
+  float: right;
+}
+
+.system-properties-panels label {
+  display: block;
+  margin: 10px 0;
+}
+
+.system-properties-dialog .dlg-buttons {
+  flex: none;
+  margin: 5px 0 0;
+}
+
 .run-dialog {
   position: fixed;
   left: 4px;

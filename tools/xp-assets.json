@@ -609,6 +609,14 @@
       "output": "site/assets/xp/AboutWindows.png"
     },
     {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 2,
+      "resourceId": 1,
+      "transparentColor": [255, 1, 255],
+      "output": "site/assets/xp/SystemProperties.png"
+    },
+    {
       "member": "MSGINA.DL_",
       "expandedName": "msgina.dll",
       "resourceType": 2,
