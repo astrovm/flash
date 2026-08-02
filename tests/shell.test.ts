@@ -730,6 +730,14 @@ test("Windows Security Center uses the native XP status dashboard", () => {
     "CHECK SETTINGS",
     "NOT FOUND",
     "Manage security settings for:",
+    "assets/xp/system/SecurityHelp.png",
+    "assets/xp/system/SecurityFirewall.png",
+    "assets/xp/system/SecurityAutomaticUpdates.png",
+    "assets/xp/system/SecurityVirusProtection.png",
+    "assets/xp/system/SecurityStatusGreen.png",
+    "assets/xp/system/SecurityStatusYellow.png",
+    "assets/xp/system/SecurityStatusRed.png",
+    "assets/xp/system/SecurityCenterHeader.png",
     'security: () => openSystemWindow("__security-center")',
   );
   contains(

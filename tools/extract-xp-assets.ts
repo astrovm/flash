@@ -42,6 +42,11 @@ type ResourceBitmap = DirectAsset & {
     }>;
   };
 };
+type ResourcePng = DirectAsset & {
+  expandedName: string;
+  resourceType: string;
+  resourceId: number | string;
+};
 type Manifest = {
   version: number;
   source: {
@@ -55,6 +60,7 @@ type Manifest = {
   cursorImages?: DirectAsset[];
   resourceIcons: ResourceIcon[];
   resourceBitmaps: ResourceBitmap[];
+  resourcePngs?: ResourcePng[];
   auditFiles: DirectAsset[];
 };
 type SourceRecord = {
@@ -63,7 +69,7 @@ type SourceRecord = {
   sha256: string;
   resource?: {
     parentSha256: string;
-    type: number;
+    type: number | string;
     id: number | string;
     language: number;
     frame: string;
@@ -348,6 +354,52 @@ async function extractBitmap(
   };
 }
 
+async function extractPng(
+  isoPath: string,
+  asset: ResourcePng,
+  workDirectory: string,
+): Promise<{
+  png: Uint8Array;
+  parentSha256: string;
+  pixelSha256: string;
+  frame: string;
+}> {
+  const parent = await expandMember(isoPath, asset.member, workDirectory);
+  const parentPath = join(workDirectory, asset.expandedName);
+  await writeFile(parentPath, parent);
+  const resourceKey =
+    `${asset.expandedName}-${asset.resourceId}-${basename(asset.output)}`.replace(
+      /[^a-zA-Z0-9._-]/g,
+      "-",
+    );
+  const pngDirectory = join(workDirectory, `png-${resourceKey}`);
+  await mkdir(pngDirectory);
+  run("wrestool", [
+    "-x",
+    "--raw",
+    "-t",
+    asset.resourceType,
+    "-n",
+    String(asset.resourceId),
+    "-L",
+    String(manifest.source.language),
+    "-o",
+    pngDirectory,
+    parentPath,
+  ]);
+  const png = await readFile(await firstFile(pngDirectory, ""));
+  const metadata = await sharp(png).metadata();
+  const { data } = await sharp(png).ensureAlpha().raw().toBuffer({
+    resolveWithObject: true,
+  });
+  return {
+    png,
+    parentSha256: sha256(parent),
+    pixelSha256: sha256(data),
+    frame: `${metadata.width}x${metadata.height}`,
+  };
+}
+
 async function verifyOrWrite(
   output: string,
   content: Uint8Array,
@@ -451,6 +503,24 @@ try {
     };
   }
 
+  for (const asset of manifest.resourcePngs ?? []) {
+    const extracted = await extractPng(isoPath, asset, workDirectory);
+    await verifyOrWrite(asset.output, extracted.png, extracted.pixelSha256);
+    records[relative("site", asset.output)] = {
+      isoSha256: manifest.source.sha256,
+      member: `I386/${asset.member}`,
+      sha256: sha256(extracted.png),
+      resource: {
+        parentSha256: extracted.parentSha256,
+        type: asset.resourceType,
+        id: asset.resourceId,
+        language: manifest.source.language,
+        frame: extracted.frame,
+        pixelSha256: extracted.pixelSha256,
+      },
+    };
+  }
+
   for (const asset of manifest.auditFiles) {
     const content = await expandMember(isoPath, asset.member, workDirectory);
     const outputPath = join(auditDirectory, asset.output);
@@ -470,7 +540,7 @@ try {
     await copyFile(manifestPath, join(auditDirectory, "manifest.json"));
   }
   console.log(
-    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length} web assets from the authenticated XP SP3 ISO.`,
+    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length + (manifest.resourcePngs?.length ?? 0)} web assets from the authenticated XP SP3 ISO.`,
   );
 } finally {
   await rm(workDirectory, { force: true, recursive: true });

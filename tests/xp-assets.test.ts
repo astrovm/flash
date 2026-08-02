@@ -12,7 +12,7 @@ type SourceRecord = {
   sha256: string;
   resource?: {
     parentSha256: string;
-    type: number;
+    type: number | string;
     id: number | string;
     language: number;
     frame: string;
@@ -36,6 +36,7 @@ const manifest = JSON.parse(
   cursorImages?: { output: string }[];
   resourceIcons: { output: string; resourceId: number }[];
   resourceBitmaps: { output: string; resourceId: number | string }[];
+  resourcePngs?: { output: string; resourceId: number | string }[];
 };
 
 const sha256 = (content: Uint8Array) =>
@@ -55,6 +56,9 @@ describe("Windows XP asset provenance", () => {
         output.replace(/^site\//, ""),
       ),
       ...manifest.resourceBitmaps.map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.resourcePngs ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
     ];

@@ -2254,5 +2254,148 @@
       "frame": "137x86x32",
       "pixelSha256": "c2a7d56e27b6d25ed490aff2bc546b6981589de6d6f3b4a1d254e77cc182e611"
     }
+  },
+  "assets/xp/system/SecurityHelp.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "5c39a53a631bd0e1dce04ba4a9c8fe249114255a81c549a7e697e26df7f60461",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32",
+      "pixelSha256": "b88babb4fb7c4888e014fffe47c13fff0b93aaf59d8ade8ff78fd79984ec2a3d"
+    }
+  },
+  "assets/xp/system/SecurityExpand.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "8c28fccd19a185f1d168da3a8f35658cbc9f5d6fc68efd1b9af4ba5457a8c532",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 101,
+      "language": 1033,
+      "frame": "16x16",
+      "pixelSha256": "29c65f3cbaf468cccb22335ecacd88d1fc9e0125bb68263d1b0fe4d716b709c0"
+    }
+  },
+  "assets/xp/system/SecurityCollapse.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "2a367a2dba714022a6566f2182af3b096692a76843239c030e3cf9ddc3c52d15",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 102,
+      "language": 1033,
+      "frame": "16x16",
+      "pixelSha256": "70ea3fb410891e842b55471028f349e81d1a9fc52c6b836f04445191be7665f3"
+    }
+  },
+  "assets/xp/system/SecurityFirewall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "fe985b7f7d755b8482a352920a73ca08827a4791d456e58d0b1241213edfeae8",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 103,
+      "language": 1033,
+      "frame": "29x26",
+      "pixelSha256": "122524495eb22c6dbc325ba8501e126d8ad9a274b6654d36ce6af8276f4749ad"
+    }
+  },
+  "assets/xp/system/SecurityAutomaticUpdates.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "d5ade5184b2c5d4e1da975c18abb655eeae1d7f2ab31af23a81ee837d349ddd6",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 104,
+      "language": 1033,
+      "frame": "30x28",
+      "pixelSha256": "646e2e6e10aaf49e5ad213e2eda94be0f10430c3636348684b15460fa62fd8b6"
+    }
+  },
+  "assets/xp/system/SecurityVirusProtection.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "5b600e00351efb2520de5858251f987f168c8abf3e386138ea0e0fb52da16b38",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 105,
+      "language": 1033,
+      "frame": "26x30",
+      "pixelSha256": "34fd1b27dfd187d9c5f749e2d9ca4cb107318b6dd463e29351c9f16f4f30ab0b"
+    }
+  },
+  "assets/xp/system/SecurityStatusRed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "eee82eaf892b9d49594683fe12075dab6e7297dd6bb900dd3db171739fad4bf1",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 106,
+      "language": 1033,
+      "frame": "23x22",
+      "pixelSha256": "71ca5f989d5626895f281935d1efc3846a633cab00ad8e41cd0102dd9b5bd55f"
+    }
+  },
+  "assets/xp/system/SecurityStatusYellow.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "3708c248cae3ec15a944ce6633b02002b5e0d49018ad3f6e349f7dba2cfcba0b",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 107,
+      "language": 1033,
+      "frame": "23x22",
+      "pixelSha256": "e354cbaa1396aa1b92e27f7a17a55a09473ae9626ed8ae73695849ac29132443"
+    }
+  },
+  "assets/xp/system/SecurityStatusGreen.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "17e675bc2579b85eae69de4531769f9b006de2a870148587ae8f4cdf82eaef4c",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 108,
+      "language": 1033,
+      "frame": "23x22",
+      "pixelSha256": "f624091404165f461b0c6b8e1e31a1ae08cd65e5f17831fd92a5cefadd9d8dd1"
+    }
+  },
+  "assets/xp/system/SecurityCenterHeader.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "d17ea1099f83d06b09b16c09cc916ac1fcaf6f228f21cfb137fda56cb6d07cd5",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 109,
+      "language": 1033,
+      "frame": "30x33",
+      "pixelSha256": "c1a89887031202c049807de70f9781e225be12e281e5b9e958fb48b0a73da744"
+    }
+  },
+  "assets/xp/system/SecurityCenterSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WSCUI.CP_",
+    "sha256": "c3a7339add811b1635667fd6ce00bd8594c4a523961d169c76e2c07f13199f02",
+    "resource": {
+      "parentSha256": "534a15487b422a1131cab929d85df16cbdec4be718adc7dc4b6ffc54184a5658",
+      "type": "PNG",
+      "id": 110,
+      "language": 1033,
+      "frame": "25x25",
+      "pixelSha256": "c242281ae6aa54709fb25d3b8fdb7ca871bd16d38f9c6622bdc7f160f00fc919"
+    }
   }
 }

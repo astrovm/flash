@@ -3061,13 +3061,13 @@ const createSecurityCenterContent = () => {
   content.className = "security-center-content";
   content.innerHTML = `
     <header class="security-center-header">
-      <img src="assets/xp/icons/SecurityCenter.png" alt="">
+      <img src="assets/xp/system/SecurityCenterHeader.png" alt="">
       <span><strong>Security Center</strong><small>Help protect your PC</small></span>
     </header>
     <div class="security-center-body">
       <aside class="security-center-resources">
         <section>
-          <h2><span>?</span> Resources <b aria-hidden="true">⌃</b></h2>
+          <h2><img src="assets/xp/system/SecurityHelp.png" alt=""> Resources <img class="security-section-toggle" src="assets/xp/system/SecurityCollapse.png" alt=""></h2>
           <button type="button">Get the latest security and virus<br>information from Microsoft</button>
           <button type="button">Check for the latest updates from<br>Windows Update</button>
           <button type="button">Get support for security-related<br>issues</button>
@@ -3079,21 +3079,21 @@ const createSecurityCenterContent = () => {
         <h1>Security essentials</h1>
         <p>Security Center helps you manage your Windows security settings. To help protect your computer,<br>make sure the three security essentials are marked ON. If the settings are not ON, follow the<br>recommendations. To return to the Security Center later, open Control Panel.<br><a href="#">What's new in Windows to help protect my computer?</a></p>
         <section class="security-status security-firewall">
-          <h2><img src="assets/xp/icons/WindowsFirewall.png" alt=""> <span>Firewall</span><strong><i></i> ON</strong><button type="button" aria-label="Expand Firewall">⌄</button></h2>
+          <h2><img src="assets/xp/system/SecurityFirewall.png" alt=""> <span>Firewall</span><strong><img src="assets/xp/system/SecurityStatusGreen.png" alt=""> ON</strong><button type="button" aria-label="Expand Firewall"><img src="assets/xp/system/SecurityExpand.png" alt=""></button></h2>
         </section>
         <section class="security-status security-updates">
-          <h2><img src="assets/xp/system/UpdateEnabled.png" alt=""> <span>Automatic Updates</span><strong><i></i> <b data-security-update-status>CHECK SETTINGS</b></strong><button type="button" aria-label="Collapse Automatic Updates">⌃</button></h2>
+          <h2><img src="assets/xp/system/SecurityAutomaticUpdates.png" alt=""> <span>Automatic Updates</span><strong><img data-security-update-indicator src="assets/xp/system/SecurityStatusYellow.png" alt=""> <b data-security-update-status>CHECK SETTINGS</b></strong><button type="button" aria-label="Collapse Automatic Updates"><img src="assets/xp/system/SecurityCollapse.png" alt=""></button></h2>
           <div><p>Automatic Updates is not yet configured for this computer. Click Turn on Automatic Updates to<br>have Windows automatically keep your computer current with important updates<br>(recommended). <a href="#">How does Automatic Updates help protect my computer?</a></p><button type="button" class="xp-btn" data-security-action="updates">Turn on Automatic Updates</button></div>
         </section>
         <section class="security-status security-virus">
-          <h2><img src="assets/xp/system/UpdateDisabled.png" alt=""> <span>Virus Protection</span><strong><i></i> NOT FOUND</strong><button type="button" aria-label="Collapse Virus Protection">⌃</button></h2>
+          <h2><img src="assets/xp/system/SecurityVirusProtection.png" alt=""> <span>Virus Protection</span><strong><img src="assets/xp/system/SecurityStatusRed.png" alt=""> NOT FOUND</strong><button type="button" aria-label="Collapse Virus Protection"><img src="assets/xp/system/SecurityCollapse.png" alt=""></button></h2>
           <div><p>Windows did not find antivirus software on this computer. Antivirus software helps protect your<br>computer against viruses and other security threats. Click Recommendations for<br>suggested actions you can take. <a href="#">How does antivirus software help protect my computer?</a></p><p>Note: Windows does not detect all antivirus programs.</p><button type="button" class="xp-btn">Recommendations...</button></div>
         </section>
         <h2 class="security-manage-heading">Manage security settings for:</h2>
         <div class="security-manage-links">
           <button type="button"><img src="assets/xp/icons/InternetOptions.png" alt="">Internet Options</button>
           <button type="button"><img src="assets/xp/icons/WindowsFirewall.png" alt="">Windows Firewall</button>
-          <button type="button"><img src="assets/xp/system/UpdateEnabled.png" alt="">Automatic Updates</button>
+          <button type="button"><img src="assets/xp/system/SecurityAutomaticUpdates.png" alt="">Automatic Updates</button>
         </div>
       </main>
     </div>
@@ -3101,6 +3101,8 @@ const createSecurityCenterContent = () => {
   content.addEventListener("click", (event) => {
     if (event.target.closest('[data-security-action="updates"]')) {
       content.querySelector("[data-security-update-status]").textContent = "ON";
+      content.querySelector("[data-security-update-indicator]").src =
+        "assets/xp/system/SecurityStatusGreen.png";
       content.querySelector(".security-updates").classList.add("enabled");
       event.target.closest("button").disabled = true;
     }

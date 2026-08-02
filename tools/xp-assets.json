@@ -1666,6 +1666,85 @@
       "output": "site/assets/xp/WindowsWordmark.png"
     }
   ],
+  "resourcePngs": [
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 100,
+      "output": "site/assets/xp/system/SecurityHelp.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 101,
+      "output": "site/assets/xp/system/SecurityExpand.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 102,
+      "output": "site/assets/xp/system/SecurityCollapse.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 103,
+      "output": "site/assets/xp/system/SecurityFirewall.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 104,
+      "output": "site/assets/xp/system/SecurityAutomaticUpdates.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 105,
+      "output": "site/assets/xp/system/SecurityVirusProtection.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 106,
+      "output": "site/assets/xp/system/SecurityStatusRed.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 107,
+      "output": "site/assets/xp/system/SecurityStatusYellow.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 108,
+      "output": "site/assets/xp/system/SecurityStatusGreen.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 109,
+      "output": "site/assets/xp/system/SecurityCenterHeader.png"
+    },
+    {
+      "member": "WSCUI.CP_",
+      "expandedName": "wscui.cpl",
+      "resourceType": "PNG",
+      "resourceId": 110,
+      "output": "site/assets/xp/system/SecurityCenterSmall.png"
+    }
+  ],
   "auditFiles": [
     { "member": "APPWIZ.CP_", "output": "system/appwiz.cpl" },
     { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
@@ -1680,6 +1759,7 @@
     { "member": "SYSDM.CP_", "output": "system/sysdm.cpl" },
     { "member": "THEMEUI.DL_", "output": "system/themeui.dll" },
     { "member": "LUNA.MS_", "output": "themes/Luna.msstyles" },
+    { "member": "WSCUI.CP_", "output": "system/wscui.cpl" },
     { "member": "APPSTART.AN_", "output": "cursors/appstarting.ani" },
     { "member": "HOURGLAS.AN_", "output": "cursors/busy.ani" },
     { "member": "HAND.AN_", "output": "cursors/link-select.ani" },

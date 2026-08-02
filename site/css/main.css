@@ -4355,12 +4355,12 @@ html[data-xp-appearance="silver"] {
 .security-center-content {
   display: grid;
   height: 100%;
-  grid-template-rows: 68px minmax(0, 1fr) 25px;
+  grid-template-rows: 67px minmax(0, 1fr) 25px;
   overflow: hidden;
   background: #fff;
   color: #1d1d1d;
   font:
-    11px Tahoma,
+    10px/13px Tahoma,
     "Segoe UI",
     sans-serif;
 }
@@ -4375,8 +4375,8 @@ html[data-xp-appearance="silver"] {
 }
 
 .security-center-header img {
-  width: 32px;
-  height: 48px;
+  width: 30px;
+  height: 33px;
   object-fit: contain;
 }
 
@@ -4403,15 +4403,17 @@ html[data-xp-appearance="silver"] {
 .security-center-body {
   display: grid;
   min-height: 0;
-  grid-template-columns: 232px minmax(0, 1fr);
-  background: linear-gradient(90deg, #f1f5ff 0 232px, #fff 232px);
+  grid-template-columns: 229px minmax(0, 1fr);
+  background: linear-gradient(90deg, #f1f5ff 0 229px, #fff 229px);
 }
 
 .security-center-resources {
-  padding: 25px 10px 0 19px;
+  padding: 25px 9px 0 16px;
 }
 
 .security-center-resources section {
+  box-sizing: border-box;
+  height: 240px;
   overflow: hidden;
   border: 1px solid #8da6e6;
   border-radius: 12px;
@@ -4430,20 +4432,15 @@ html[data-xp-appearance="silver"] {
   font-size: 14px;
 }
 
-.security-center-resources h2 span {
-  display: grid;
+.security-center-resources h2 > img:first-child {
   width: 24px;
   height: 24px;
-  place-items: center;
-  border-radius: 50%;
-  background: #4b7ed5;
-  color: white;
-  font-size: 19px;
 }
 
-.security-center-resources h2 b {
+.security-center-resources h2 .security-section-toggle {
+  width: 16px;
+  height: 16px;
   margin-left: auto;
-  color: #344f94;
 }
 
 .security-center-resources button {
@@ -4488,7 +4485,7 @@ html[data-xp-appearance="silver"] {
 }
 
 .security-status {
-  margin-bottom: 9px;
+  margin-bottom: 7px;
   border: 1px solid #9eb9ef;
   border-radius: 7px;
   background: #eef3ff;
@@ -4508,9 +4505,11 @@ html[data-xp-appearance="silver"] {
     sans-serif;
 }
 
-.security-status h2 img {
-  width: 28px;
-  height: 28px;
+.security-status h2 > img:first-child {
+  width: auto;
+  max-width: 30px;
+  height: auto;
+  max-height: 30px;
   object-fit: contain;
 }
 
@@ -4526,23 +4525,25 @@ html[data-xp-appearance="silver"] {
   font-weight: 400;
 }
 
-.security-status h2 i {
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #e4ffbd, #20a800 55%, #087400);
-  box-shadow: 0 0 3px #365;
+.security-status h2 strong > img {
+  width: 23px;
+  height: 22px;
+  margin-right: -5px;
 }
 
 .security-status h2 > button {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   margin-left: 12px;
   padding: 0;
-  border: 1px solid #9faecd;
-  border-radius: 50%;
-  background: #fff;
-  color: #3f5480;
+  border: 0;
+  background: transparent;
+}
+
+.security-status h2 > button img {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .security-status > div {
@@ -4564,7 +4565,12 @@ html[data-xp-appearance="silver"] {
 }
 
 .security-updates {
+  margin-bottom: 9px;
   border-color: #d7a631;
+}
+
+.security-updates > div {
+  min-height: 78px;
 }
 
 .security-updates h2 {
@@ -4572,16 +4578,8 @@ html[data-xp-appearance="silver"] {
   color: #775d13;
 }
 
-.security-updates h2 i {
-  background: radial-gradient(circle at 35% 30%, #fff0b4, #d79400 58%, #956000);
-}
-
 .security-updates.enabled h2 {
   background: #e8f4d9;
-}
-
-.security-updates.enabled h2 i {
-  background: radial-gradient(circle at 35% 30%, #e4ffbd, #20a800 55%, #087400);
 }
 
 .security-virus {
@@ -4599,17 +4597,13 @@ html[data-xp-appearance="silver"] {
   font-weight: 400;
 }
 
-.security-virus h2 i {
-  background: radial-gradient(circle at 35% 30%, #ffd3ad, #d84a09 58%, #923000);
-}
-
 .security-virus > div {
   min-height: 102px;
   border-top-color: #d88959;
 }
 
 .security-manage-heading {
-  margin: 10px 0 5px;
+  margin: 10px 0 15px;
   color: #213b6f;
   font:
     700 18px "Trebuchet MS",
