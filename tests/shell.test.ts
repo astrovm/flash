@@ -748,6 +748,11 @@ test("Folder Options matches the four-tab XP shell applet", () => {
     "Advanced settings:",
     "Registered file types:",
     "Fast User Switching is enabled on this computer.",
+    "assets/xp/icons/FolderViewClassic.png",
+    "assets/xp/system/FolderBrowse.png",
+    "assets/xp/system/FolderClickItems.png",
+    "assets/xp/system/FolderViews.png",
+    "assets/xp/system/FolderTree.png",
     "assets/xp/icons/OfflineFiles.png",
   );
   contains(

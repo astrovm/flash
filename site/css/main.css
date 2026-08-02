@@ -10260,21 +10260,9 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   position: absolute;
   top: 14px;
   left: 11px;
-  width: 25px;
-  height: 31px;
-  border: 1px solid #777;
-  background: linear-gradient(135deg, #fff 0 54%, #e5e5e5 55% 100%);
-}
-
-.folder-click-illustration::after {
-  position: absolute;
-  top: 7px;
-  left: 8px;
-  color: #000;
-  content: "↖";
-  font:
-    24px Arial,
-    sans-serif;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
 }
 
 .folder-restore-defaults {
@@ -10335,6 +10323,18 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   display: block;
   min-height: 16px;
   white-space: nowrap;
+}
+
+.folder-advanced-list strong {
+  display: flex;
+  align-items: center;
+}
+
+.folder-advanced-list strong img {
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  image-rendering: pixelated;
 }
 
 .folder-advanced-list .folder-indented {

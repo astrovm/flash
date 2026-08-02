@@ -8183,15 +8183,15 @@ const openFolderOptions = () => {
       <button type="button" role="tab" data-folder-options-tab="offline" aria-selected="false" tabindex="-1">Offline Files</button>
     </div>
     <div class="folder-options-panel" data-folder-options-panel="general">
-      <fieldset><legend>Tasks</legend><img src="assets/xp/icons/TaskbarAndStartMenu.png" alt="">
+      <fieldset><legend>Tasks</legend><img src="assets/xp/icons/FolderViewClassic.png" alt="">
         <label><input type="radio" name="folder-tasks" checked> Show common tasks in folders</label>
         <label><input type="radio" name="folder-tasks"> Use Windows classic folders</label>
       </fieldset>
-      <fieldset><legend>Browse folders</legend><img src="assets/xp/icons/FolderOptions.png" alt="">
+      <fieldset><legend>Browse folders</legend><img src="assets/xp/system/FolderBrowse.png" alt="">
         <label><input type="radio" name="browse-folders" checked> Open each folder in the same window</label>
         <label><input type="radio" name="browse-folders"> Open each folder in its own window</label>
       </fieldset>
-      <fieldset class="folder-click-options"><legend>Click items as follows</legend><span class="folder-click-illustration" aria-hidden="true"></span>
+      <fieldset class="folder-click-options"><legend>Click items as follows</legend><img class="folder-click-illustration" src="assets/xp/system/FolderClickItems.png" alt="">
         <label><input type="radio" name="click-items"> Single-click to open an item (point to select)</label>
         <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles consistent with my browser</label>
         <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles only when I point at them</label>
@@ -8200,10 +8200,10 @@ const openFolderOptions = () => {
       <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
     </div>
     <div class="folder-options-panel folder-view-panel" data-folder-options-panel="view" hidden>
-      <fieldset class="folder-views-group"><legend>Folder views</legend><img src="assets/xp/icons/FolderOptions.png" alt=""><p>You can apply the view (such as Details or Tiles) that<br>you are using for this folder to all folders.</p><button type="button" class="xp-btn" disabled>Apply to All Folders</button><button type="button" class="xp-btn">Reset All Folders</button></fieldset>
+      <fieldset class="folder-views-group"><legend>Folder views</legend><img src="assets/xp/system/FolderViews.png" alt=""><p>You can apply the view (such as Details or Tiles) that<br>you are using for this folder to all folders.</p><button type="button" class="xp-btn" disabled>Apply to All Folders</button><button type="button" class="xp-btn">Reset All Folders</button></fieldset>
       <label class="folder-advanced-label">Advanced settings:</label>
       <div class="folder-advanced-list">
-        <strong>📁 Files and Folders</strong>
+        <strong><img src="assets/xp/system/FolderTree.png" alt="">Files and Folders</strong>
         <label><input type="checkbox" checked> Automatically search for network folders and printers</label>
         <label><input type="checkbox" checked> Display file size information in folder tips</label>
         <label><input type="checkbox" checked> Display simple folder view in Explorer's Folders list</label>
@@ -8211,7 +8211,7 @@ const openFolderOptions = () => {
         <label><input type="checkbox" checked> Display the full path in the address bar</label>
         <label><input type="checkbox"> Display the full path in the title bar</label>
         <label><input type="checkbox"> Do not cache thumbnails</label>
-        <strong>📁 Hidden files and folders</strong>
+        <strong><img src="assets/xp/system/FolderTree.png" alt="">Hidden files and folders</strong>
         <label class="folder-indented"><input type="radio" name="hidden-files" checked> Do not show hidden files and folders</label>
         <label class="folder-indented"><input type="radio" name="hidden-files"> Show hidden files and folders</label>
         <label><input type="checkbox" checked> Hide extensions for known file types</label>

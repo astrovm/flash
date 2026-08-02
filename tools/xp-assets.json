@@ -1005,6 +1005,46 @@
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
+      "resourceId": 184,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/system/FolderBrowse.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 110,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/system/FolderClickItems.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 37,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/FolderViews.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 4,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/FolderTree.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
       "resourceId": 290,
       "width": 16,
       "height": 16,

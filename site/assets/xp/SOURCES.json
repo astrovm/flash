@@ -1332,6 +1332,58 @@
       "pixelSha256": "f9938e169fab93a290e81bfe0441a0f570a1c83363146873eebc1bfce650dc49"
     }
   },
+  "assets/xp/system/FolderBrowse.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "8006a72f483d8044a26df1285c680eb1ec2fe8e35dcf3cf6284f8ed242cf9967",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 184,
+      "language": 1033,
+      "frame": "32x32x8",
+      "pixelSha256": "2ae63fc264ccce4017d0d9686d14dc402ff42f9c55f15265224c061b2164dd85"
+    }
+  },
+  "assets/xp/system/FolderClickItems.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "a4824ff0201ae8444107cb6e5a09c8fedee2c55afba8868d85134a10151ea17b",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 110,
+      "language": 1033,
+      "frame": "32x32x8",
+      "pixelSha256": "2b9dd5e03c73c4b62f019fc713f8226d96043a02115a3ee65c5b4a223c18bb09"
+    }
+  },
+  "assets/xp/system/FolderViews.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "6278672ee1d2f40159b570581539d3205c0664a42cb67ffb24c7a96824481776",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 37,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "22f551da4a8bb3943e46a3d8224f030b57815657a03688a9a921fa84333d4181"
+    }
+  },
+  "assets/xp/system/FolderTree.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "584d82018482fdad9d0490b0966c0472c962b731a639ee39bea7a1ffeda78059",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 4,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "6d066306a9c8eee0282160109d07a60cdfa18d773d6c3ae35939291625089a39"
+    }
+  },
   "assets/xp/icons/Forward.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",
