@@ -105,6 +105,18 @@ test("Flash games keep curated FPS defaults and allow user overrides", async () 
   );
   contains(css, ".game-playback-settings", ".game-playback-row");
 });
+test("opening a bundled game queues a complete offline download", () => {
+  js(
+    "let automaticOfflineDownloadQueue = Promise.resolve()",
+    "saveBundledGameForOffline(gameId)",
+    "!Object.hasOwn(window.FLASH_GAMES, gameId)",
+    "offlineManager.getSnapshot().downloadedGameIds.includes(gameId)",
+    "await offlineManager.downloadGame(gameId)",
+  );
+  expect(
+    javascript.indexOf("saveBundledGameForOffline(gameId)"),
+  ).toBeGreaterThan(javascript.indexOf("switch (game.type)"));
+});
 test("window dragging and resizing coalesce updates by animation frame", () => {
   const drag = between(javascript, "const wireDrag =", "const applyResize =");
   const resize = between(

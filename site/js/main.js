@@ -31,6 +31,8 @@ let gameLibrary = null;
 let gameLibraryError = null;
 let gameLibraryReady = false;
 let gameLibraryInitialization = Promise.resolve();
+let offlineManagerInitialization = Promise.resolve();
+let automaticOfflineDownloadQueue = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
 const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
@@ -7293,6 +7295,8 @@ const openGameWindow = (gameId) => {
       break;
   }
 
+  saveBundledGameForOffline(gameId);
+
   wireWindowControls(win);
   focusWindow(gameId);
 
@@ -8749,12 +8753,42 @@ const maybePromptForUpdate = (state) => {
 };
 
 const initializeOfflineMode = () => {
-  if (offlineManagerInitialized) return;
+  if (offlineManagerInitialized || window.ASTRO_DEV) {
+    return offlineManagerInitialization;
+  }
   offlineManagerInitialized = true;
   offlineManager.subscribe(maybePromptForUpdate);
-  offlineManager.initialize().catch((error) => {
+  offlineManagerInitialization = offlineManager.initialize().catch((error) => {
     console.error("Offline mode initialization failed:", error);
+    throw error;
   });
+  return offlineManagerInitialization;
+};
+
+const saveBundledGameForOffline = (gameId) => {
+  if (
+    window.ASTRO_DEV ||
+    navigator.onLine === false ||
+    !Object.hasOwn(window.FLASH_GAMES, gameId)
+  ) {
+    return;
+  }
+
+  automaticOfflineDownloadQueue = automaticOfflineDownloadQueue
+    .catch(() => {})
+    .then(async () => {
+      await offlineManagerInitialization;
+      if (offlineManager.getSnapshot().downloadedGameIds.includes(gameId)) {
+        return;
+      }
+      await offlineManager.downloadGame(gameId);
+    })
+    .catch((error) => {
+      console.warn(
+        `Could not save ${formatGameTitle(gameId)} for offline play:`,
+        error,
+      );
+    });
 };
 
 const wireProjectSettings = (win) => {

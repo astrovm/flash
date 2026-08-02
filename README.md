@@ -29,9 +29,10 @@ Build and serve the production site locally:
 bun run dev
 ```
 
-Open <http://127.0.0.1:8000>. The development server also provides the local
-`/api/games` proxy used by Internet Games. It builds automatically when source
-files change and starts immediately when `dist/` is already current. Use
+Open <http://127.0.0.1:8000>. The development server watches build inputs,
+rebuilds automatically, and reloads open browser tabs after a successful build.
+It also provides the local `/api/games` proxy used by Internet Games and starts
+immediately when `dist/` is already current. Use
 `bun run dev -- --rebuild` to force a rebuild or `--no-sync` to serve the
 existing output unchanged.
 
@@ -48,9 +49,10 @@ existing output unchanged.
 Included games are defined in `site/js/games.js`. Ruffle games use `type: "swf"`;
 embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
 
-The Windows XP shell is cached automatically. Included games can be downloaded
-individually or all at once from **Settings > Offline**. The shared Ruffle
-and ScummVM runtimes are downloaded only when needed.
+The Windows XP shell is cached automatically. Opening an included game queues a
+complete background download for offline play. Games can also be downloaded or
+removed individually, or all at once, from **Settings > Offline**. The shared
+Ruffle and ScummVM runtimes are downloaded only when needed.
 
 Games installed through **Internet Games** are stored separately in IndexedDB
 and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
