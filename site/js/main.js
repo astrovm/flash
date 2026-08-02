@@ -2494,9 +2494,55 @@ const wireControlPanel = (win) => {
       </div>`;
   };
 
+  const renderHardwareCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Printers and Other Hardware",
+      XP_ICON_PATHS["PrintersAndHardware.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="add-hardware"><img src="assets/xp/icons/AddHardwareSmall.png" alt=""><span>Add Hardware</span></button>
+          <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/DisplaySmall.png" alt=""><span>Display</span></button>
+          <button type="button" data-control-panel-action="sounds-audio"><img src="assets/xp/icons/SoundsAudioSmall.png" alt=""><span>Sounds, Speech, and Audio Devices</span></button>
+          <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptionsSmall.png" alt=""><span>Power Options</span></button>
+          <button type="button" data-control-panel-action="system"><img src="assets/xp/icons/SystemSmall.png" alt=""><span>System</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="hardware-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Hardware</span></button>
+          <button type="button" data-control-panel-action="printing-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Printing</span></button>
+          <button type="button" data-control-panel-action="network-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Home or Small Office Networking</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/PrintersAndHardware.png" alt=""><strong>Printers and Other Hardware</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="view-printers"><img src="assets/xp/icons/Go.png" alt=""><span>View installed printers or fax printers</span></button>
+        <button type="button" data-control-panel-action="add-printer"><img src="assets/xp/icons/Go.png" alt=""><span>Add a printer</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons hardware-category-icons">
+        <button type="button" data-control-panel-action="game-controllers"><img src="assets/xp/icons/GameControllers.png" alt=""><span>Game Controllers</span></button>
+        <button type="button" data-control-panel-action="keyboard"><img src="assets/xp/icons/Keyboard.png" alt=""><span>Keyboard</span></button>
+        <button type="button" data-control-panel-action="mouse"><img src="assets/xp/icons/Mouse.png" alt=""><span>Mouse</span></button>
+        <button type="button" data-control-panel-action="phone-modem"><img src="assets/xp/icons/PhoneAndModemOptionsLarge.png" alt=""><span>Phone and Modem Options</span></button>
+        <button type="button" data-control-panel-action="view-printers"><img src="assets/xp/icons/PrintersAndFaxesLarge.png" alt=""><span>Printers and Faxes</span></button>
+        <button type="button" data-control-panel-action="scanners-cameras"><img src="assets/xp/icons/ScannersAndCameras.png" alt=""><span>Scanners and Cameras</span></button>
+      </div>`;
+  };
+
   const actions = {
     appearance: renderAppearanceCategory,
-    printers: openPrintersAndFaxes,
+    printers: renderHardwareCategory,
     network: renderNetworkCategory,
     users: () => openSystemWindow("__user-accounts"),
     programs: () => openSystemWindow("__add-remove-programs"),
@@ -2627,11 +2673,15 @@ const wireControlPanel = (win) => {
       openNetworkStatus();
     } else if (action === "printers") {
       openPrintersAndFaxes();
+    } else if (action === "view-printers" || action === "add-printer") {
+      openPrintersAndFaxes();
     } else if (
       action === "network-help" ||
       action === "internet-help" ||
       action === "network-diagnostics" ||
-      action === "remote-desktop"
+      action === "remote-desktop" ||
+      action === "hardware-help" ||
+      action === "printing-help"
     ) {
       openHelpAndSupport();
     } else if (
@@ -2659,12 +2709,31 @@ const wireControlPanel = (win) => {
         "Windows Firewall",
         "info",
       );
-    } else if (action === "internet-options" || action === "phone-modem") {
-      XPDialogs.alert(
-        `${action === "internet-options" ? "Internet Options" : "Phone and Modem Options"} is not available in this offline recreation.`,
+    } else if (
+      action === "internet-options" ||
+      action === "phone-modem" ||
+      action === "add-hardware" ||
+      action === "game-controllers" ||
+      action === "keyboard" ||
+      action === "mouse" ||
+      action === "scanners-cameras"
+    ) {
+      const hardwareLabels = {
+        "add-hardware": "Add Hardware Wizard",
+        "game-controllers": "Game Controllers",
+        keyboard: "Keyboard Properties",
+        mouse: "Mouse Properties",
+        "scanners-cameras": "Scanners and Cameras",
+      };
+      const label =
         action === "internet-options"
-          ? "Internet Properties"
-          : "Phone and Modem Options",
+          ? "Internet Options"
+          : action === "phone-modem"
+            ? "Phone and Modem Options"
+            : hardwareLabels[action];
+      XPDialogs.alert(
+        `${label} is not available in this offline recreation.`,
+        action === "internet-options" ? "Internet Properties" : label,
         "info",
       );
     } else if (

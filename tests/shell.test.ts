@@ -528,6 +528,28 @@ test("Network and Internet Connections uses the native XP category page", () => 
   contains(css, ".network-category-icons");
 });
 
+test("Printers and Other Hardware uses the native XP category page", () => {
+  contains(
+    javascript,
+    "const renderHardwareCategory = () =>",
+    "View installed printers or fax printers",
+    "Add a printer",
+    "assets/xp/icons/GameControllers.png",
+    "assets/xp/icons/Keyboard.png",
+    "assets/xp/icons/Mouse.png",
+    "assets/xp/icons/PhoneAndModemOptionsLarge.png",
+    "assets/xp/icons/PrintersAndFaxesLarge.png",
+    "assets/xp/icons/ScannersAndCameras.png",
+    "assets/xp/icons/AddHardwareSmall.png",
+    "assets/xp/icons/DisplaySmall.png",
+    "assets/xp/icons/SoundsAudioSmall.png",
+    "assets/xp/icons/PowerOptionsSmall.png",
+    "assets/xp/icons/SystemSmall.png",
+    "printers: renderHardwareCategory",
+  );
+  contains(css, ".hardware-category-icons");
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,

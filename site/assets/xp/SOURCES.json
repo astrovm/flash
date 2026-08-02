@@ -616,6 +616,149 @@
       "pixelSha256": "47a3d4f14b5120d68ca1b002b3ccc4be51e29e3e8aaa4d1e4e2c590e785b112b"
     }
   },
+  "assets/xp/icons/GameControllers.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/JOY.CP_",
+    "sha256": "ee091bf3ccadb89d407bd10de28c030afbfe487608f4c9c3a989c47e220e3e83",
+    "resource": {
+      "parentSha256": "2e89074889fab49ed1c53ebd2f77544080a0cb4ee1d0457317c4fcb1d8cf24e7",
+      "type": 14,
+      "id": 102,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "b60204626c584b85d0c5affbbdbdac6db70412e91fcb7daed85ddde5879b61d4"
+    }
+  },
+  "assets/xp/icons/Keyboard.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "f18c2e12bb871f2e13dc0047e4b4bd0607edb4a2ae4f1f2887fbe4fed5fee1d4",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 200,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "1acc578d629c4ba74fe5c8e1f6e15a58a7f6f01107f4e83705ed9cd5d167a7c4"
+    }
+  },
+  "assets/xp/icons/Mouse.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "b5dc90e103e7797e4d5be5b908395722379be5604480e230018eaec338d61537",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "a57eb81492227735117451772909e81f64d4eb439cf783627052f2680aa79f25"
+    }
+  },
+  "assets/xp/icons/PhoneAndModemOptionsLarge.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TELEPHON.CP_",
+    "sha256": "6c8110e402e655dc17dcb248684b6a8ba1304d54ade3e4e567dc141b4f4e2ab3",
+    "resource": {
+      "parentSha256": "ad7a6d3a6eca994ce550362455fdeb0a71529994fa926ad70032ff0a4174a1e8",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "febc7beccae868c0b0b510300748201f4372825898bb14f1f5c52860cf7fe1b3"
+    }
+  },
+  "assets/xp/icons/PrintersAndFaxesLarge.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "a9f7f6be4c81cc03023170366e6102caecca858d8219235ab8e79e4873e1aec5",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 138,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "6345cd8d53054b9a0782dcf2a1c90e0accfbc44cce5c01f422ec704e9db926f7"
+    }
+  },
+  "assets/xp/icons/ScannersAndCameras.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WIASHEXT.DL_",
+    "sha256": "624953f27d25d237624224fb227a9dd1b45f28e0906edd1b7347f2fc262267b6",
+    "resource": {
+      "parentSha256": "431b0c05c1243864cbece189400ec8be7c1abee37360c40fed40c66051d01f3d",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "3231b4fbb9dc11dfa5fdb13e4ad2716e500ee019bc1536c16b4e38f6150c5658"
+    }
+  },
+  "assets/xp/icons/AddHardwareSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HDWWIZ.CP_",
+    "sha256": "dc2381bfd6624e67fd6d3dfe8ef63cf7e9d0a7ea2c9bf33111600bbd3fac136f",
+    "resource": {
+      "parentSha256": "6e10ead8430679265358bab9f24816dd3653c7b177250dd5c6e5d4c24956486c",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "946e12d8bebcd8fa89c74399af9b58689ac0391cc43d58f598e5dcf814d20bdd"
+    }
+  },
+  "assets/xp/icons/DisplaySmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/DESK.CP_",
+    "sha256": "baac3a58ad6de4e3c153eb681dd473e3de36b715219f89dbc5896f2901eacdfa",
+    "resource": {
+      "parentSha256": "1fb5abae69103bf477f704189d75b0395f587234bfe94f9f79961d8fe2ce55ac",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "b1a8a5fe8c11cb093882174e007cf4705d0608c837fa0fa66921247acb7f2437"
+    }
+  },
+  "assets/xp/icons/SoundsAudioSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "e9c8694f2ee027e3c10bbaaf56cfe01bcef609f884f728183181026f8d0485ef",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 14,
+      "id": 3004,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "8696c7d3b3cfcb935230ba39619efd3d4f81359a9589db785f5b26764b96174a"
+    }
+  },
+  "assets/xp/icons/PowerOptionsSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/POWERCFG.CP_",
+    "sha256": "8d15749822e6c76aca8797c2adf3b598ca3f4f64cd2739c2e8aafdb44e2d7fae",
+    "resource": {
+      "parentSha256": "047cfe207d031983ba6f86aa2a131c2187ee616738bd017fcd63bc887f4b425a",
+      "type": 14,
+      "id": 202,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "0abfde73a2358e176c1f2d90d62e209c052f9b3e95aca607032f27f05d6c1d9e"
+    }
+  },
+  "assets/xp/icons/SystemSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SYSDM.CP_",
+    "sha256": "8d11e7e31590d4b53669bb0f6e66360acf5c15411b678c9a6fe1a3488b2895aa",
+    "resource": {
+      "parentSha256": "99bd5757aa68b6513313d97b1bf61bcc6e44f7bfae63f375b2afa47a06038067",
+      "type": 14,
+      "id": 1,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "5aad33fee91809e5491ac9ad6888a8e68f892bafb4d9dacb292b26f3d2cb20db"
+    }
+  },
   "assets/xp/icons/SoundsSpeechAudio.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

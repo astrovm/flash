@@ -448,6 +448,116 @@
       "output": "site/assets/xp/icons/PrintersAndHardware.png"
     },
     {
+      "member": "JOY.CP_",
+      "expandedName": "joy.cpl",
+      "resourceType": 14,
+      "resourceId": 102,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/GameControllers.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Keyboard.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Mouse.png"
+    },
+    {
+      "member": "TELEPHON.CP_",
+      "expandedName": "telephon.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PhoneAndModemOptionsLarge.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 138,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PrintersAndFaxesLarge.png"
+    },
+    {
+      "member": "WIASHEXT.DL_",
+      "expandedName": "wiashext.dll",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/ScannersAndCameras.png"
+    },
+    {
+      "member": "HDWWIZ.CP_",
+      "expandedName": "hdwwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AddHardwareSmall.png"
+    },
+    {
+      "member": "DESK.CP_",
+      "expandedName": "desk.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/DisplaySmall.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 3004,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SoundsAudioSmall.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 202,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PowerOptionsSmall.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SystemSmall.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
