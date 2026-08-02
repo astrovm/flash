@@ -5712,6 +5712,11 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .display-customize {
   width: 133px;
   margin-top: 7px;
+  padding: 0 8px;
+  white-space: nowrap;
+  font:
+    11px/21px Tahoma,
+    sans-serif;
 }
 
 .display-customize:disabled {
@@ -6763,16 +6768,17 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .help-btn {
-  border: 1px solid #fff;
-  background: linear-gradient(#6aaeff, #1664df);
-  box-shadow: inset 0 0 0 1px #0b4fc1;
+  background-image: url("../assets/xp/icons/CaptionButton.png");
 }
 
 .help-btn::after {
   content: "?";
+  inset: 1px 3px 3px;
+  display: grid;
+  place-items: center;
   color: #fff;
   font:
-    bold 17px Tahoma,
+    bold 15px/17px Tahoma,
     sans-serif;
   text-shadow: 1px 1px #124ba0;
 }

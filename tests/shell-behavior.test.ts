@@ -127,6 +127,59 @@ test("desktop icons select and launch their actual destinations", async () => {
   ).not.toBeNull();
 });
 
+test("desktop arrow keys move between icons by screen direction", async () => {
+  const shell = await login(await loadShell());
+  const ids = [
+    "__my-computer",
+    "__my-documents",
+    "__internet-games",
+    "__astro-settings",
+  ];
+  const icons = ids.map((id) =>
+    shell.document.querySelector<HTMLButtonElement>(
+      `[data-desktop-id="${id}"]`,
+    ),
+  );
+  const positions = [
+    [8, 8],
+    [8, 88],
+    [90, 8],
+    [90, 88],
+  ];
+  icons.forEach((icon, index) => {
+    const [left, top] = positions[index];
+    icon!.getBoundingClientRect = () => ({
+      left,
+      top,
+      right: left + 76,
+      bottom: top + 74,
+      width: 76,
+      height: 74,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    });
+  });
+
+  const press = (key: string) => {
+    shell.document.dispatchEvent(
+      new shell.window.KeyboardEvent("keydown", { key, bubbles: true }),
+    );
+  };
+  icons[0]!.click();
+  icons[0]!.focus();
+
+  press("ArrowRight");
+  expect(shell.document.activeElement).toBe(icons[2]);
+  press("ArrowDown");
+  expect(shell.document.activeElement).toBe(icons[3]);
+  press("ArrowLeft");
+  expect(shell.document.activeElement).toBe(icons[1]);
+  press("ArrowUp");
+  expect(shell.document.activeElement).toBe(icons[0]);
+  expect(icons[0]!.classList.contains("selected")).toBeTrue();
+});
+
 test("My Computer exposes the native desktop shell menu and opens Properties", async () => {
   const shell = await login(await loadShell());
   const icon = shell.document.querySelector<HTMLButtonElement>(
