@@ -2686,6 +2686,10 @@ const wireControlPanel = (win) => {
       );
     } else if (action === "security-center") {
       openSystemWindow("__security-center");
+    } else if (action === "programs") {
+      openSystemWindow("__add-remove-programs");
+    } else if (action === "users") {
+      openSystemWindow("__user-accounts");
     } else if (action === "back") {
       closeGameWindow("__control-panel");
       setTimeout(openControlPanel, 0);
@@ -2993,7 +2997,7 @@ const createAddRemoveProgramsContent = () => {
   };
   const renderAdd = () => {
     selectPage("add");
-    main.innerHTML = `<section class="add-new-program-section"><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><div><h2>Add a program from CD-ROM or floppy disk</h2><p>To add a program from a CD-ROM or floppy disk, click CD or Floppy.</p></div><button type="button" class="xp-btn" data-add-remove-action="cd">CD or Floppy</button></section><section class="add-new-program-section"><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><div><h2>Add programs from Microsoft</h2><p>To add new Windows features, device drivers, and system updates over the Internet, click<br>Windows Update.</p></div><button type="button" class="xp-btn" data-add-remove-action="update">Windows Update</button></section>`;
+    main.innerHTML = `<section class="add-new-program-section"><h2>Add a program from CD-ROM or floppy disk</h2><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><p>To add a program from a CD-ROM or floppy disk, click CD or Floppy.</p><button type="button" class="xp-btn" data-add-remove-action="cd">CD or Floppy</button></section><section class="add-new-program-section"><h2>Add programs from Microsoft</h2><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><p>To add new Windows features, device drivers, and system updates over the Internet, click<br>Windows Update.</p><button type="button" class="xp-btn" data-add-remove-action="update">Windows Update</button></section>`;
   };
   const renderDefaults = () => {
     selectPage("defaults");

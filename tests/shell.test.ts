@@ -416,6 +416,13 @@ test("Control Panel Classic View uses the native XP applet grid", () => {
   expect(css).toMatch(
     /\.control-panel-content\.classic-view \.control-panel-categories\s*\{[^}]*grid-template-columns:\s*repeat\(7, 75px\)/s,
   );
+  contains(
+    javascript,
+    'action === "programs"',
+    'openSystemWindow("__add-remove-programs")',
+    'action === "users"',
+    'openSystemWindow("__user-accounts")',
+  );
 });
 
 test("Internet Properties matches the seven-tab XP applet", () => {
