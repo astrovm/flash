@@ -550,6 +550,30 @@ test("Printers and Other Hardware uses the native XP category page", () => {
   contains(css, ".hardware-category-icons");
 });
 
+test("Windows Security Center uses the native XP status dashboard", () => {
+  contains(
+    javascript,
+    '"__security-center"',
+    "const createSecurityCenterContent = () =>",
+    "Security essentials",
+    "Firewall",
+    "Automatic Updates",
+    "Virus Protection",
+    "CHECK SETTINGS",
+    "NOT FOUND",
+    "Manage security settings for:",
+    'security: () => openSystemWindow("__security-center")',
+  );
+  contains(
+    css,
+    ".security-center-content",
+    ".security-center-header",
+    ".security-center-resources",
+    ".security-status",
+    ".security-virus",
+  );
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,

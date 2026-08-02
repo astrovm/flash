@@ -3561,6 +3561,301 @@ html[data-xp-appearance="silver"] {
   grid-template-columns: 191px 190px;
 }
 
+.security-center-content {
+  display: grid;
+  height: 100%;
+  grid-template-rows: 68px minmax(0, 1fr) 25px;
+  overflow: hidden;
+  background: #fff;
+  color: #1d1d1d;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.security-center-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 5px 15px 7px;
+  background: linear-gradient(#063de0, #1855ed 72%, #1f62f1);
+  color: #fff;
+}
+
+.security-center-header img {
+  width: 32px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.security-center-header span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.security-center-header strong {
+  font:
+    29px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.security-center-header small {
+  font:
+    18px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.security-center-body {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 232px minmax(0, 1fr);
+  background: linear-gradient(90deg, #f1f5ff 0 232px, #fff 232px);
+}
+
+.security-center-resources {
+  padding: 25px 10px 0 19px;
+}
+
+.security-center-resources section {
+  overflow: hidden;
+  border: 1px solid #8da6e6;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.security-center-resources h2 {
+  display: flex;
+  height: 31px;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 9px;
+  border-bottom: 1px solid #aabbea;
+  color: #777;
+  font-size: 14px;
+}
+
+.security-center-resources h2 span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: #4b7ed5;
+  color: white;
+  font-size: 19px;
+}
+
+.security-center-resources h2 b {
+  margin-left: auto;
+  color: #344f94;
+}
+
+.security-center-resources button {
+  display: block;
+  margin: 16px 10px 0 20px;
+  padding: 0 0 0 9px;
+  border: 0;
+  background: transparent;
+  color: #04e;
+  font: inherit;
+  text-align: left;
+}
+
+.security-center-resources button::before {
+  content: "▪";
+  position: absolute;
+  margin-left: -9px;
+}
+
+.security-center-main {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 27px 20px 10px;
+}
+
+.security-center-main > h1 {
+  margin: 0 0 3px;
+  color: #213b6f;
+  font:
+    700 16px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.security-center-main > p {
+  margin: 0 0 19px;
+}
+
+.security-center-content a {
+  color: #04e;
+  text-decoration: underline;
+}
+
+.security-status {
+  margin-bottom: 9px;
+  border: 1px solid #9eb9ef;
+  border-radius: 7px;
+  background: #eef3ff;
+}
+
+.security-status h2 {
+  display: flex;
+  height: 36px;
+  align-items: center;
+  margin: 0;
+  padding: 0 9px;
+  border-radius: 6px;
+  color: #314873;
+  font:
+    20px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.security-status h2 img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.security-status h2 span {
+  margin-left: 4px;
+}
+
+.security-status h2 strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  font-weight: 400;
+}
+
+.security-status h2 i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e4ffbd, #20a800 55%, #087400);
+  box-shadow: 0 0 3px #365;
+}
+
+.security-status h2 > button {
+  width: 18px;
+  height: 18px;
+  margin-left: 12px;
+  padding: 0;
+  border: 1px solid #9faecd;
+  border-radius: 50%;
+  background: #fff;
+  color: #3f5480;
+}
+
+.security-status > div {
+  position: relative;
+  min-height: 75px;
+  padding: 7px 10px 8px;
+  border-top: 1px solid #d3b766;
+  background: #fff8e7;
+}
+
+.security-status > div p {
+  margin: 0 0 7px;
+}
+
+.security-status > div > .xp-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+}
+
+.security-updates {
+  border-color: #d7a631;
+}
+
+.security-updates h2 {
+  background: linear-gradient(90deg, #ffe26c, #fff1bd);
+  color: #775d13;
+}
+
+.security-updates h2 i {
+  background: radial-gradient(circle at 35% 30%, #fff0b4, #d79400 58%, #956000);
+}
+
+.security-updates.enabled h2 {
+  background: #e8f4d9;
+}
+
+.security-updates.enabled h2 i {
+  background: radial-gradient(circle at 35% 30%, #e4ffbd, #20a800 55%, #087400);
+}
+
+.security-virus {
+  border-color: #d88959;
+}
+
+.security-virus h2 {
+  background: linear-gradient(90deg, #d84b13, #f3bca0);
+  color: #fff;
+  font-weight: 700;
+}
+
+.security-virus h2 strong {
+  color: #b9360a;
+  font-weight: 400;
+}
+
+.security-virus h2 i {
+  background: radial-gradient(circle at 35% 30%, #ffd3ad, #d84a09 58%, #923000);
+}
+
+.security-virus > div {
+  min-height: 102px;
+  border-top-color: #d88959;
+}
+
+.security-manage-heading {
+  margin: 10px 0 5px;
+  color: #213b6f;
+  font:
+    700 18px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.security-manage-links {
+  display: flex;
+  gap: 28px;
+}
+
+.security-manage-links button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: #04e;
+}
+
+.security-manage-links img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.security-center-content > footer {
+  padding: 5px 11px;
+  background: #0649de;
+  color: #fff;
+}
+
+.security-center-content > footer a {
+  color: #fff;
+}
+
 .control-panel-category-icons img {
   width: 32px;
   height: 32px;

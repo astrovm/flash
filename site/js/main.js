@@ -215,6 +215,11 @@ const systemShortcuts = {
     icon: "assets/xp/icons/AddRemovePrograms.png",
     desktop: false,
   },
+  "__security-center": {
+    title: "Windows Security Center",
+    icon: "assets/xp/icons/SecurityCenter.png",
+    desktop: false,
+  },
   __printers: {
     title: "Printers and Faxes",
     icon: "assets/xp/icons/PrintersAndFaxes.png",
@@ -2550,12 +2555,7 @@ const wireControlPanel = (win) => {
     sounds: renderSoundsCategory,
     accessibility: renderAccessibilityCategory,
     performance: renderPerformanceCategory,
-    security: () =>
-      XPDialogs.alert(
-        "Firewall, Automatic Updates, and Virus Protection are monitored by Security Center.",
-        "Windows Security Center",
-        "info",
-      ),
+    security: () => openSystemWindow("__security-center"),
   };
   content.addEventListener("click", (event) => {
     const sectionToggle = event.target.closest(".explorer-section-toggle");
@@ -2947,6 +2947,58 @@ const createAddRemoveProgramsContent = () => {
   return content;
 };
 
+const createSecurityCenterContent = () => {
+  const content = document.createElement("div");
+  content.className = "security-center-content";
+  content.innerHTML = `
+    <header class="security-center-header">
+      <img src="assets/xp/icons/SecurityCenter.png" alt="">
+      <span><strong>Security Center</strong><small>Help protect your PC</small></span>
+    </header>
+    <div class="security-center-body">
+      <aside class="security-center-resources">
+        <section>
+          <h2><span>?</span> Resources <b aria-hidden="true">⌃</b></h2>
+          <button type="button">Get the latest security and virus<br>information from Microsoft</button>
+          <button type="button">Check for the latest updates from<br>Windows Update</button>
+          <button type="button">Get support for security-related<br>issues</button>
+          <button type="button">Get help about Security Center</button>
+          <button type="button">Change the way Security Center<br>alerts me</button>
+        </section>
+      </aside>
+      <main class="security-center-main">
+        <h1>Security essentials</h1>
+        <p>Security Center helps you manage your Windows security settings. To help protect your computer,<br>make sure the three security essentials are marked ON. If the settings are not ON, follow the<br>recommendations. To return to the Security Center later, open Control Panel.<br><a href="#">What's new in Windows to help protect my computer?</a></p>
+        <section class="security-status security-firewall">
+          <h2><img src="assets/xp/icons/WindowsFirewall.png" alt=""> <span>Firewall</span><strong><i></i> ON</strong><button type="button" aria-label="Expand Firewall">⌄</button></h2>
+        </section>
+        <section class="security-status security-updates">
+          <h2><img src="assets/xp/system/UpdateEnabled.png" alt=""> <span>Automatic Updates</span><strong><i></i> <b data-security-update-status>CHECK SETTINGS</b></strong><button type="button" aria-label="Collapse Automatic Updates">⌃</button></h2>
+          <div><p>Automatic Updates is not yet configured for this computer. Click Turn on Automatic Updates to<br>have Windows automatically keep your computer current with important updates<br>(recommended). <a href="#">How does Automatic Updates help protect my computer?</a></p><button type="button" class="xp-btn" data-security-action="updates">Turn on Automatic Updates</button></div>
+        </section>
+        <section class="security-status security-virus">
+          <h2><img src="assets/xp/system/UpdateDisabled.png" alt=""> <span>Virus Protection</span><strong><i></i> NOT FOUND</strong><button type="button" aria-label="Collapse Virus Protection">⌃</button></h2>
+          <div><p>Windows did not find antivirus software on this computer. Antivirus software helps protect your<br>computer against viruses and other security threats. Click Recommendations for<br>suggested actions you can take. <a href="#">How does antivirus software help protect my computer?</a></p><p>Note: Windows does not detect all antivirus programs.</p><button type="button" class="xp-btn">Recommendations...</button></div>
+        </section>
+        <h2 class="security-manage-heading">Manage security settings for:</h2>
+        <div class="security-manage-links">
+          <button type="button"><img src="assets/xp/icons/InternetOptions.png" alt="">Internet Options</button>
+          <button type="button"><img src="assets/xp/icons/WindowsFirewall.png" alt="">Windows Firewall</button>
+          <button type="button"><img src="assets/xp/system/UpdateEnabled.png" alt="">Automatic Updates</button>
+        </div>
+      </main>
+    </div>
+    <footer>At Microsoft, we care about your privacy. Please read our <a href="#">privacy statement.</a></footer>`;
+  content.addEventListener("click", (event) => {
+    if (event.target.closest('[data-security-action="updates"]')) {
+      content.querySelector("[data-security-update-status]").textContent = "ON";
+      content.querySelector(".security-updates").classList.add("enabled");
+      event.target.closest("button").disabled = true;
+    }
+  });
+  return content;
+};
+
 const createSystemWindowContent = (shortcutId, win) => {
   const content = document.createElement("div");
   content.className = "explorer-content";
@@ -2955,6 +3007,7 @@ const createSystemWindowContent = (shortcutId, win) => {
   if (shortcutId === "__user-accounts") return createUserAccountsContent();
   if (shortcutId === "__add-remove-programs")
     return createAddRemoveProgramsContent();
+  if (shortcutId === "__security-center") return createSecurityCenterContent();
 
   if (shortcutId === "__printers") {
     content.className = "explorer-content printers-content";
@@ -6888,6 +6941,7 @@ const openSystemWindow = (shortcutId) => {
   const isControlPanel = shortcutId === "__control-panel";
   const isUserAccounts = shortcutId === "__user-accounts";
   const isAddRemovePrograms = shortcutId === "__add-remove-programs";
+  const isSecurityCenter = shortcutId === "__security-center";
   const isSearch = shortcutId === "__search";
   const isPrinters = shortcutId === "__printers";
   const isHelp = shortcutId === "__help";
@@ -6905,11 +6959,13 @@ const openSystemWindow = (shortcutId) => {
             ? 729
             : isAddRemovePrograms
               ? 729
-              : isHelp
-                ? 768
-                : isDisplayProperties
-                  ? 404
-                  : 800,
+              : isSecurityCenter
+                ? 748
+                : isHelp
+                  ? 768
+                  : isDisplayProperties
+                    ? 404
+                    : 800,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -6923,11 +6979,13 @@ const openSystemWindow = (shortcutId) => {
             ? 530
             : isAddRemovePrograms
               ? 530
-              : isHelp
-                ? 650
-                : isDisplayProperties
-                  ? 454
-                  : 600,
+              : isSecurityCenter
+                ? 600
+                : isHelp
+                  ? 650
+                  : isDisplayProperties
+                    ? 454
+                    : 600,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -6939,15 +6997,17 @@ const openSystemWindow = (shortcutId) => {
         ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
         : isAddRemovePrograms
           ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
-          : isPrinters
-            ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-            : isHelp
-              ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-              : isSearch
+          : isSecurityCenter
+            ? Math.min(138, Math.max(8, desktopWidth - windowWidth))
+            : isPrinters
+              ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+              : isHelp
                 ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-                : isDisplayProperties
-                  ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-                  : Math.max(8, (desktopWidth - windowWidth) / 2)
+                : isSearch
+                  ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+                  : isDisplayProperties
+                    ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+                    : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
@@ -6956,15 +7016,17 @@ const openSystemWindow = (shortcutId) => {
         ? Math.min(52, Math.max(8, desktopHeight - windowHeight))
         : isAddRemovePrograms
           ? Math.min(104, Math.max(8, desktopHeight - windowHeight))
-          : isPrinters
-            ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
-            : isHelp
-              ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
-              : isSearch
-                ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
-                : isDisplayProperties
-                  ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
-                  : Math.max(8, (desktopHeight - windowHeight) / 2)
+          : isSecurityCenter
+            ? Math.min(70, Math.max(8, desktopHeight - windowHeight))
+            : isPrinters
+              ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
+              : isHelp
+                ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
+                : isSearch
+                  ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+                  : isDisplayProperties
+                    ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+                    : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 
