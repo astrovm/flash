@@ -722,6 +722,98 @@ test("restored XP utilities expose dedicated working controls", async () => {
   );
 });
 
+test("FreeCell and restored system tools perform their primary workflows", async () => {
+  const shell = await login(await loadShell());
+  const openProgram = (folders: string[], programId: string) => {
+    shell.document.getElementById("start-button")!.click();
+    shell.document.getElementById("all-programs-button")!.click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+    for (const folder of folders) {
+      flyouts
+        .querySelector<HTMLButtonElement>(`[data-program-id="${folder}"]`)!
+        .click();
+    }
+    flyouts
+      .querySelector<HTMLButtonElement>(`[data-program-id="${programId}"]`)!
+      .click();
+  };
+
+  openProgram(["games"], "freecell");
+  const freeCell = shell.document.querySelector(
+    '.xp-window[data-game="__freecell"]',
+  )!;
+  expect(freeCell.querySelectorAll(".xp-freecell-cascade")).toHaveLength(8);
+  expect(
+    freeCell.querySelectorAll(".xp-freecell-cascade .xp-playing-card"),
+  ).toHaveLength(52);
+  freeCell
+    .querySelector<HTMLButtonElement>(
+      ".xp-freecell-cascade:first-child button:last-child",
+    )!
+    .click();
+  freeCell
+    .querySelector<HTMLButtonElement>('.xp-freecell-cells [data-cell="0"]')!
+    .click();
+  expect(
+    freeCell
+      .querySelector('.xp-freecell-cells [data-cell="0"]')!
+      .classList.contains("empty"),
+  ).toBeFalse();
+  expect(
+    freeCell.querySelectorAll(".xp-freecell-cascade .xp-playing-card"),
+  ).toHaveLength(51);
+
+  openProgram(["accessories", "system-tools"], "disk-defragmenter");
+  const defrag = shell.document.querySelector(
+    '.xp-window[data-game="__disk-defragmenter"]',
+  )!;
+  expect(defrag.querySelector("[data-disk-clean]")).toBeNull();
+  const defragment =
+    defrag.querySelector<HTMLButtonElement>("[data-defrag-run]")!;
+  expect(defragment.disabled).toBeTrue();
+  defrag.querySelector<HTMLButtonElement>("[data-defrag-analyze]")!.click();
+  expect(defragment.disabled).toBeFalse();
+  defragment.click();
+  expect(defrag.querySelector(".xp-program-status")!.textContent).toContain(
+    "Defragmentation is complete",
+  );
+
+  openProgram(["accessories", "system-tools"], "system-information");
+  const information = shell.document.querySelector(
+    '.xp-window[data-game="__system-information"]',
+  )!;
+  information
+    .querySelector<HTMLButtonElement>('[data-info-section="components"]')!
+    .click();
+  expect(information.querySelector("table")!.textContent).toContain(
+    "Standard VGA Graphics Adapter",
+  );
+
+  openProgram(["accessories", "communications"], "hyperterminal");
+  const hyperTerminal = shell.document.querySelector(
+    '.xp-window[data-game="__hyperterminal"]',
+  )!;
+  const connection = hyperTerminal.querySelector<HTMLFormElement>(
+    ".xp-hyperterminal-connect",
+  )!;
+  connection.elements.namedItem("phone")!.value = "5550100";
+  connection.dispatchEvent(
+    new shell.window.Event("submit", { bubbles: true, cancelable: true }),
+  );
+  const terminalInput = hyperTerminal.querySelector<HTMLInputElement>(
+    ".xp-hyperterminal-prompt input",
+  )!;
+  terminalInput.value = "HELLO XP";
+  terminalInput
+    .closest("form")!
+    .dispatchEvent(
+      new shell.window.Event("submit", { bubbles: true, cancelable: true }),
+    );
+  expect(
+    hyperTerminal.querySelector(".xp-hyperterminal-screen")!.textContent,
+  ).toContain("HELLO XP");
+});
+
 test("Taskbar Properties applies Classic Start menu independently and switches previews", async () => {
   const shell = await login(await loadShell());
   const { document, window } = shell;

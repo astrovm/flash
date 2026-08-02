@@ -351,7 +351,7 @@ const XP_NATIVE_PROGRAMS = Object.freeze({
   __hyperterminal: {
     title: "HyperTerminal",
     icon: "CommandPrompt.png",
-    kind: "terminal",
+    kind: "hyperterminal",
   },
   "__network-connections": {
     title: "Network Connections",
@@ -7460,6 +7460,43 @@ const createXPProgramContent = (programId) => {
     return content;
   }
 
+  if (program.kind === "hyperterminal") {
+    content.innerHTML = `<form class="xp-hyperterminal-connect"><fieldset><legend>Connect To</legend><label>Name: <input name="name" value="My Connection" aria-label="Connection name"></label><label>Country/region: <select name="country" aria-label="Country or region"><option>Argentina (54)</option><option>United States of America (1)</option></select></label><label>Area code: <input name="area" aria-label="Area code"></label><label>Phone number: <input name="phone" aria-label="Phone number" required></label></fieldset><div><button type="submit">Dial</button><button type="button" data-hyperterminal-cancel>Cancel</button></div><p class="xp-program-status" aria-live="polite"></p></form>`;
+    const form = content.querySelector("form");
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const phone = form.elements.phone.value.trim();
+      if (!phone) return;
+      content.innerHTML = `<div class="xp-hyperterminal-toolbar"><span>Connected to </span><b></b><button type="button" data-disconnect>Disconnect</button></div><div class="xp-hyperterminal-screen" aria-live="polite">ATDT${phone}\nCONNECT 57600\n</div><form class="xp-hyperterminal-prompt"><input aria-label="Terminal input" autocomplete="off"><button type="submit">Send</button></form>`;
+      content.querySelector(".xp-hyperterminal-toolbar b").textContent =
+        form.elements.name.value || phone;
+      const screen = content.querySelector(".xp-hyperterminal-screen");
+      const prompt = content.querySelector(".xp-hyperterminal-prompt");
+      prompt.addEventListener("submit", (promptEvent) => {
+        promptEvent.preventDefault();
+        const input = prompt.querySelector("input");
+        if (!input.value) return;
+        screen.textContent += `${input.value}\n`;
+        input.value = "";
+      });
+      content
+        .querySelector("[data-disconnect]")
+        .addEventListener("click", () => {
+          screen.textContent += "\nNO CARRIER";
+          prompt.querySelector("input").disabled = true;
+          prompt.querySelector("button").disabled = true;
+        });
+      prompt.querySelector("input").focus();
+    });
+    form
+      .querySelector("[data-hyperterminal-cancel]")
+      .addEventListener("click", () => {
+        form.querySelector(".xp-program-status").textContent =
+          "The connection was cancelled.";
+      });
+    return content;
+  }
+
   if (program.kind === "editor") {
     content.innerHTML = `<div class="xp-editor-toolbar"><button type="button" data-editor-command="bold"><b>B</b></button><button type="button" data-editor-command="italic"><i>I</i></button><button type="button" data-editor-command="underline"><u>U</u></button></div><div class="xp-editor-page" contenteditable="true" role="textbox" aria-label="Document"></div>`;
     const page = content.querySelector(".xp-editor-page");
@@ -7820,12 +7857,16 @@ const createXPProgramContent = (programId) => {
       if (!button || !selected) return;
       const card = selectedCard();
       const foundation = foundations.get(button.dataset.suit) || [];
+      const isSingleCard =
+        selected.source === "waste" ||
+        selected.card === tableau[selected.column].length - 1;
       if (
+        isSingleCard &&
         card?.suit === button.dataset.suit &&
         card.rank === foundation.length + 1
       ) {
-        removeSelected();
-        foundation.push(card);
+        const moved = removeSelected();
+        foundation.push(Array.isArray(moved) ? moved[0] : moved);
         foundations.set(card.suit, foundation);
         score.textContent = String(Number(score.textContent) + 10);
         selected = null;
@@ -7857,6 +7898,172 @@ const createXPProgramContent = (programId) => {
       render();
     };
     content.querySelector("[data-new-game]").addEventListener("click", newGame);
+    newGame();
+    return content;
+  }
+
+  if (programId === "__freecell") {
+    content.className += " xp-freecell";
+    content.innerHTML = `<div class="xp-freecell-menu"><button type="button" data-freecell-new>Game</button><button type="button">Help</button><span data-freecell-status>Game in progress</span></div><div class="xp-freecell-board"><div class="xp-freecell-cells" aria-label="Free cells"></div><div class="xp-freecell-foundations" aria-label="Foundations"></div><div class="xp-freecell-cascades" aria-label="Cascades"></div></div>`;
+    const suits = ["♠", "♥", "♦", "♣"];
+    const redSuits = new Set(["♥", "♦"]);
+    const rankLabel = (rank) =>
+      rank === 1
+        ? "A"
+        : rank === 11
+          ? "J"
+          : rank === 12
+            ? "Q"
+            : rank === 13
+              ? "K"
+              : String(rank);
+    const freeCellElement = content.querySelector(".xp-freecell-cells");
+    const foundationElement = content.querySelector(".xp-freecell-foundations");
+    const cascadeElement = content.querySelector(".xp-freecell-cascades");
+    const status = content.querySelector("[data-freecell-status]");
+    let freeCells = Array(4).fill(null);
+    let foundations = new Map();
+    let cascades = [];
+    let selected = null;
+    const renderCard = (button, card) => {
+      button.className = `xp-playing-card face-up${redSuits.has(card.suit) ? " red" : ""}`;
+      button.innerHTML = `<span>${rankLabel(card.rank)}</span><b>${card.suit}</b>`;
+      button.setAttribute(
+        "aria-label",
+        `${rankLabel(card.rank)} of ${card.suit}`,
+      );
+    };
+    const selectedCard = () =>
+      selected?.source === "cell"
+        ? freeCells[selected.index]
+        : cascades[selected?.index]?.at(-1);
+    const removeSelected = () => {
+      const card = selectedCard();
+      if (selected.source === "cell") freeCells[selected.index] = null;
+      else cascades[selected.index].pop();
+      return card;
+    };
+    const validCascadeMove = (card, destination) => {
+      const top = destination.at(-1);
+      return (
+        !top ||
+        (top.rank === card.rank + 1 &&
+          redSuits.has(top.suit) !== redSuits.has(card.suit))
+      );
+    };
+    const render = () => {
+      freeCellElement.replaceChildren();
+      freeCells.forEach((card, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.cell = String(index);
+        button.className = "xp-freecell-slot empty";
+        if (card) renderCard(button, card);
+        else button.setAttribute("aria-label", `Empty free cell ${index + 1}`);
+        if (selected?.source === "cell" && selected.index === index)
+          button.classList.add("selected");
+        freeCellElement.appendChild(button);
+      });
+      foundationElement.replaceChildren();
+      suits.forEach((suit) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.suit = suit;
+        button.className = "xp-freecell-foundation empty";
+        const pile = foundations.get(suit) || [];
+        if (pile.length) renderCard(button, pile.at(-1));
+        else button.textContent = suit;
+        foundationElement.appendChild(button);
+      });
+      cascadeElement.replaceChildren();
+      cascades.forEach((cascade, cascadeIndex) => {
+        const column = document.createElement("div");
+        column.className = "xp-freecell-cascade";
+        column.dataset.cascade = String(cascadeIndex);
+        cascade.forEach((card, cardIndex) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.style.setProperty("--card-index", cardIndex);
+          renderCard(button, card);
+          if (
+            selected?.source === "cascade" &&
+            selected.index === cascadeIndex &&
+            cardIndex === cascade.length - 1
+          )
+            button.classList.add("selected");
+          column.appendChild(button);
+        });
+        cascadeElement.appendChild(column);
+      });
+      const remaining = cascades.reduce(
+        (total, pile) => total + pile.length,
+        0,
+      );
+      if (!remaining && freeCells.every((card) => !card))
+        status.textContent = "You won!";
+    };
+    freeCellElement.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-cell]");
+      if (!button) return;
+      const index = Number(button.dataset.cell);
+      if (selected && !freeCells[index]) {
+        freeCells[index] = removeSelected();
+        selected = null;
+      } else if (freeCells[index]) {
+        selected = { source: "cell", index };
+      }
+      render();
+    });
+    cascadeElement.addEventListener("click", (event) => {
+      const column = event.target.closest("[data-cascade]");
+      if (!column) return;
+      const index = Number(column.dataset.cascade);
+      if (selected) {
+        const card = selectedCard();
+        if (card && validCascadeMove(card, cascades[index])) {
+          cascades[index].push(removeSelected());
+          selected = null;
+          render();
+          return;
+        }
+      }
+      if (cascades[index].length) selected = { source: "cascade", index };
+      render();
+    });
+    foundationElement.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-suit]");
+      if (!button || !selected) return;
+      const card = selectedCard();
+      const pile = foundations.get(button.dataset.suit) || [];
+      if (card?.suit === button.dataset.suit && card.rank === pile.length + 1) {
+        pile.push(removeSelected());
+        foundations.set(button.dataset.suit, pile);
+        selected = null;
+        render();
+      }
+    });
+    const newGame = () => {
+      const deck = suits.flatMap((suit) =>
+        Array.from({ length: 13 }, (_, index) => ({
+          suit,
+          rank: index + 1,
+        })),
+      );
+      for (let index = deck.length - 1; index > 0; index -= 1) {
+        const target = Math.floor(Math.random() * (index + 1));
+        [deck[index], deck[target]] = [deck[target], deck[index]];
+      }
+      cascades = Array.from({ length: 8 }, () => []);
+      deck.forEach((card, index) => cascades[index % 8].push(card));
+      freeCells = Array(4).fill(null);
+      foundations = new Map();
+      selected = null;
+      status.textContent = "Game in progress";
+      render();
+    };
+    content
+      .querySelector("[data-freecell-new]")
+      .addEventListener("click", newGame);
     newGame();
     return content;
   }
@@ -7933,6 +8140,60 @@ const createXPProgramContent = (programId) => {
     return content;
   }
 
+  if (programId === "__disk-defragmenter") {
+    content.innerHTML = `<div class="xp-defrag-volume"><table><thead><tr><th>Volume</th><th>File System</th><th>Capacity</th><th>Free Space</th><th>% Free Space</th></tr></thead><tbody><tr class="selected"><td>(C:)</td><td>NTFS</td><td>20.00 GB</td><td>12.34 GB</td><td>61%</td></tr></tbody></table></div><div class="xp-defrag-legend"><span><i class="fragmented"></i> Fragmented files</span><span><i class="contiguous"></i> Contiguous files</span><span><i class="system"></i> System files</span><span><i class="free"></i> Free space</span></div><section class="xp-defrag-map"><h3>Estimated disk usage before defragmentation:</h3><div data-defrag-before></div><h3>Estimated disk usage after defragmentation:</h3><div data-defrag-after></div></section><p class="xp-program-status" aria-live="polite">Select a volume and click Analyze.</p><div class="xp-defrag-actions"><button type="button" data-defrag-analyze>Analyze</button><button type="button" data-defrag-run disabled>Defragment</button></div>`;
+    const before = content.querySelector("[data-defrag-before]");
+    const after = content.querySelector("[data-defrag-after]");
+    const status = content.querySelector(".xp-program-status");
+    const runButton = content.querySelector("[data-defrag-run]");
+    const blocks = [
+      "contiguous",
+      "contiguous",
+      "fragmented",
+      "free",
+      "system",
+      "fragmented",
+      "contiguous",
+      "free",
+      "fragmented",
+      "free",
+      "contiguous",
+      "free",
+      "system",
+      "free",
+      "free",
+      "contiguous",
+    ];
+    const renderMap = (target, layout) => {
+      target.replaceChildren(
+        ...layout.map((type) => {
+          const block = document.createElement("i");
+          block.className = type;
+          return block;
+        }),
+      );
+    };
+    renderMap(before, blocks);
+    renderMap(after, Array(16).fill("free"));
+    content
+      .querySelector("[data-defrag-analyze]")
+      .addEventListener("click", () => {
+        status.textContent =
+          "Analysis is complete. You should defragment this volume.";
+        runButton.disabled = false;
+      });
+    runButton.addEventListener("click", () => {
+      renderMap(after, [
+        ...Array(7).fill("contiguous"),
+        ...Array(2).fill("system"),
+        ...Array(7).fill("free"),
+      ]);
+      status.textContent = "Defragmentation is complete for Local Disk (C:).";
+      runButton.disabled = true;
+    });
+    return content;
+  }
+
   if (program.kind === "disk") {
     content.innerHTML = `<div class="xp-disk-header"><img src="${XP_ICON_PATHS[program.icon]}" alt=""><div><b>${program.title}</b><p>Local Disk (C:)</p></div></div><fieldset><legend>Files to delete</legend><label><input type="checkbox" data-size="18" checked> Downloaded Program Files <span>18 KB</span></label><label><input type="checkbox" data-size="1536" checked> Temporary Internet Files <span>1,536 KB</span></label><label><input type="checkbox" data-size="64"> Recycle Bin <span>64 KB</span></label><label><input type="checkbox" data-size="2944" checked> Temporary files <span>2,944 KB</span></label></fieldset><p>You can free up <b data-disk-total>4,498 KB</b> of disk space.</p><button type="button" data-disk-clean>OK</button><p class="xp-program-status" aria-live="polite"></p>`;
     const updateTotal = () => {
@@ -7954,7 +8215,61 @@ const createXPProgramContent = (programId) => {
   }
 
   if (program.kind === "information") {
-    content.innerHTML = `<div class="xp-system-information"><aside><button type="button" class="selected">System Summary</button><button type="button">Hardware Resources</button><button type="button">Components</button><button type="button">Software Environment</button></aside><table><tbody><tr><th>OS Name</th><td>Microsoft Windows XP Professional</td></tr><tr><th>Version</th><td>5.1.2600 Service Pack 3 Build 2600</td></tr><tr><th>System Manufacturer</th><td>Astro VM</td></tr><tr><th>System Type</th><td>X86-based PC</td></tr><tr><th>Total Physical Memory</th><td>512.00 MB</td></tr><tr><th>Display</th><td>${window.innerWidth} × ${window.innerHeight}</td></tr></tbody></table></div>`;
+    content.innerHTML = `<div class="xp-system-information"><aside><button type="button" class="selected" data-info-section="summary">System Summary</button><button type="button" data-info-section="hardware">Hardware Resources</button><button type="button" data-info-section="components">Components</button><button type="button" data-info-section="software">Software Environment</button></aside><table><tbody></tbody></table></div>`;
+    const sections = {
+      summary: [
+        ["OS Name", "Microsoft Windows XP Professional"],
+        ["Version", "5.1.2600 Service Pack 3 Build 2600"],
+        ["System Manufacturer", "Astro VM"],
+        ["System Type", "X86-based PC"],
+        ["Total Physical Memory", "512.00 MB"],
+        ["Display", `${window.innerWidth} × ${window.innerHeight}`],
+      ],
+      hardware: [
+        ["Conflicts/Sharing", "No hardware conflicts detected"],
+        ["DMA", "Direct memory access controller"],
+        ["IRQs", "System timer — IRQ 0"],
+        ["Memory", "0x00000000–0x1FFFFFFF"],
+      ],
+      components: [
+        ["Display", "Standard VGA Graphics Adapter"],
+        ["Multimedia", "Audio Codecs"],
+        ["Network", "Local Area Connection"],
+        ["Storage", "Local Disk (C:)"],
+      ],
+      software: [
+        ["System Drivers", "All drivers are running"],
+        ["Environment Variables", "TEMP, PATH, USERPROFILE"],
+        ["Running Tasks", "explorer.exe, services.exe"],
+        ["Startup Programs", "Windows Messenger"],
+      ],
+    };
+    const body = content.querySelector("tbody");
+    const renderSection = (section) => {
+      body.replaceChildren();
+      sections[section].forEach(([name, value]) => {
+        const row = document.createElement("tr");
+        const heading = document.createElement("th");
+        const cell = document.createElement("td");
+        heading.textContent = name;
+        cell.textContent = value;
+        row.append(heading, cell);
+        body.appendChild(row);
+      });
+      content
+        .querySelectorAll("[data-info-section]")
+        .forEach((button) =>
+          button.classList.toggle(
+            "selected",
+            button.dataset.infoSection === section,
+          ),
+        );
+    };
+    content.querySelector("aside").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-info-section]");
+      if (button) renderSection(button.dataset.infoSection);
+    });
+    renderSection("summary");
     return content;
   }
 
@@ -8162,16 +8477,20 @@ const openXPProgram = (programId) => {
     media: [600, 420],
     disk: [430, 420],
     information: [700, 500],
+    hyperterminal: [560, 420],
     mail: [720, 520],
     messenger: [500, 460],
     solitaire: [720, 520],
+    freecell: [760, 540],
   };
   const [preferredWidth, preferredHeight] =
     programId === "__minesweeper"
       ? preferredSizes.minesweeper
       : programId === "__solitaire"
         ? preferredSizes.solitaire
-        : preferredSizes[program.kind] || [640, 470];
+        : programId === "__freecell"
+          ? preferredSizes.freecell
+          : preferredSizes[program.kind] || [640, 470];
   if (programId === "__minesweeper") {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
