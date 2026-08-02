@@ -2829,16 +2829,10 @@ const wireControlPanel = (win) => {
         label,
         "info",
       );
-    } else if (
-      action === "regional-format" ||
-      action === "languages" ||
-      action === "regional-language"
-    ) {
-      XPDialogs.alert(
-        "Regional and Language Options is not available in this offline recreation.",
-        "Regional and Language Options",
-        "info",
-      );
+    } else if (action === "languages") {
+      openRegionalLanguageOptions("languages");
+    } else if (action === "regional-format" || action === "regional-language") {
+      openRegionalLanguageOptions();
     } else if (
       [
         "disk-cleanup",
@@ -7954,6 +7948,56 @@ const openPowerOptions = (initialTab = "power-schemes") => {
     { id: "apply", label: "Apply" },
   ]);
   dialog.body.lastElementChild.classList.add("power-options-buttons");
+  const apply = dialog.body.querySelector('[data-action="apply"]');
+  apply.disabled = true;
+  dialog.body.addEventListener("change", () => {
+    apply.disabled = false;
+  });
+  activate(initialTab);
+};
+
+const openRegionalLanguageOptions = (initialTab = "regional-options") => {
+  const dialog = XPDialogs.createDialog({
+    title: "Regional and Language Options",
+  });
+  dialog.el.classList.add("regional-language-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(58, Math.max(4, window.innerHeight - 484))}px`,
+  });
+  addDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="regional-language-tabs" role="tablist"><button type="button" role="tab" data-regional-tab="regional-options">Regional Options</button><button type="button" role="tab" data-regional-tab="languages">Languages</button><button type="button" role="tab" data-regional-tab="advanced">Advanced</button></div>
+    <div class="regional-language-panels">
+      <section class="regional-options-panel" data-regional-panel="regional-options"><fieldset class="regional-formats"><legend>Standards and formats</legend><p>This option affects how some programs format numbers, currencies,<br>dates, and time.</p><p>Select an item to match its preferences, or click Customize to choose<br>your own formats:</p><div class="regional-format-select"><select><option>English (United States)</option></select><button class="xp-btn">Customize...</button></div><p>Samples</p><div class="regional-samples"><label>Number:<input readonly value="123,456,789.00"></label><label>Currency:<input readonly value="$123,456,789.00"></label><label>Time:<input readonly value="3:22:38 AM"></label><label>Short date:<input readonly value="8/2/2026"></label><label>Long date:<input readonly value="Sunday, August 02, 2026"></label></div></fieldset><fieldset class="regional-location"><legend>Location</legend><p>To help services provide you with local information, such as news and<br>weather, select your present location:</p><select><option>United States</option></select></fieldset></section>
+      <section class="regional-languages-panel" data-regional-panel="languages" hidden><fieldset><legend>Text services and input languages</legend><p>To view or change the languages and methods you can use to enter<br>text, click Details.</p><button class="xp-btn">Details...</button></fieldset><fieldset><legend>Supplemental language support</legend><p>Most languages are installed by default. To install additional languages,<br>select the appropriate check box below.</p><label><input type="checkbox"> Install files for complex script and right-to-left languages (including<br><span>Thai)</span></label><label><input type="checkbox"> Install files for East Asian languages</label></fieldset></section>
+      <section class="regional-advanced-panel" data-regional-panel="advanced" hidden><fieldset><legend>Language for non-Unicode programs</legend><p>This system setting enables non-Unicode programs to display menus<br>and dialogs in their native language. It does not affect Unicode<br>programs, but it does apply to all users of this computer.</p><p>Select a language to match the language version of the non-Unicode<br>programs you want to use:</p><select><option>English (United States)</option></select></fieldset><fieldset><legend>Code page conversion tables</legend><div class="regional-code-pages">${["10000 (MAC - Roman)", "10001 (MAC - Japanese)", "10002 (MAC - Traditional Chinese Big5)", "10003 (MAC - Korean)", "10004 (MAC - Arabic)", "10005 (MAC - Hebrew)"].map((label, index) => `<label><input type="checkbox" ${index === 0 ? "checked disabled" : ""}> ${label}</label>`).join("")}</div></fieldset><fieldset><legend>Default user account settings</legend><label><input type="checkbox"> Apply all settings to the current user account and to the default<br><span>user profile</span></label></fieldset></section>
+    </div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-regional-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.regionalTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-regional-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.regionalPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-regional-tab]")?.dataset
+      .regionalTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.lastElementChild.classList.add("regional-language-buttons");
   const apply = dialog.body.querySelector('[data-action="apply"]');
   apply.disabled = true;
   dialog.body.addEventListener("change", () => {

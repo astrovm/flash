@@ -518,6 +518,24 @@ test("Power Options matches the four-tab native XP applet", () => {
   contains(css, ".power-options-dialog", ".power-options-tabs");
 });
 
+test("Regional and Language Options matches the native three-tab applet", () => {
+  contains(
+    javascript,
+    'const openRegionalLanguageOptions = (initialTab = "regional-options") =>',
+    'title: "Regional and Language Options"',
+    'data-regional-panel="regional-options"',
+    'data-regional-panel="languages"',
+    'data-regional-panel="advanced"',
+    "Standards and formats",
+    "Supplemental language support",
+    "Language for non-Unicode programs",
+    "Code page conversion tables",
+    'openRegionalLanguageOptions("languages");',
+    "openRegionalLanguageOptions();",
+  );
+  contains(css, ".regional-language-dialog", ".regional-language-tabs");
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,
