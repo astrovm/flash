@@ -109,9 +109,12 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
 });
 const XP_ICON_PATHS = Object.freeze({
   "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
+  "AddressBook.png": "assets/xp/icons/AddressBook.png",
   "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
   "AppearanceAndThemes.png": "assets/xp/icons/AppearanceAndThemes.png",
   "Back.png": "assets/xp/icons/Back.png",
+  "Calculator.png": "assets/xp/icons/Calculator.png",
+  "CommandPrompt.png": "assets/xp/icons/CommandPrompt.png",
   "ControlPanel.png": "assets/xp/icons/ControlPanel.png",
   "DateTimeRegional.png": "assets/xp/icons/DateTimeRegional.png",
   "Exit.png": "assets/xp/icons/Exit.png",
@@ -138,11 +141,20 @@ const XP_ICON_PATHS = Object.freeze({
   "Power.png": "assets/xp/icons/Power.png",
   "PerformanceAndMaintenance.png":
     "assets/xp/icons/PerformanceAndMaintenance.png",
+  "Paint.png": "assets/xp/icons/Paint.png",
   "PrintersAndHardware.png": "assets/xp/icons/PrintersAndHardware.png",
   "PrintersAndFaxes.png": "assets/xp/icons/PrintersAndFaxes.png",
   "Programs.png": "assets/xp/icons/Programs.png",
+  "ProgramAccessDefaultsSmall.png":
+    "assets/xp/icons/ProgramAccessDefaultsSmall.png",
+  "ProgramAccessDefaultsMenu.png":
+    "assets/xp/icons/ProgramAccessDefaultsMenu.png",
+  "ProgramCompatibilityWizard.png":
+    "assets/xp/icons/ProgramCompatibilityWizard.png",
+  "ProgramFolder.png": "assets/xp/icons/ProgramFolder.png",
   "PublishToWeb.png": "assets/xp/icons/PublishToWeb.png",
   "RecentDocuments.png": "assets/xp/icons/RecentDocuments.png",
+  "RemoteDesktopConnection.png": "assets/xp/icons/RemoteDesktopConnection.png",
   "RemovableMedia.png": "assets/xp/icons/RemovableMedia.png",
   "Restore.png": "assets/xp/icons/Restore.png",
   "Run.png": "assets/xp/icons/Run.png",
@@ -154,8 +166,16 @@ const XP_ICON_PATHS = Object.freeze({
   "SharedFolder.png": "assets/xp/icons/SharedFolder.png",
   "Up.png": "assets/xp/icons/Up.png",
   "SoundsSpeechAudio.png": "assets/xp/icons/SoundsSpeechAudio.png",
+  "Synchronize.png": "assets/xp/icons/Synchronize.png",
+  "TourWindowsXP.png": "assets/xp/icons/TourWindowsXP.png",
   "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
   "Volume.png": "assets/xp/icons/Volume.png",
+  "WindowsCatalog.png": "assets/xp/icons/WindowsCatalog.png",
+  "WindowsCatalogMenu.png": "assets/xp/icons/WindowsCatalogMenu.png",
+  "WindowsExplorer.png": "assets/xp/icons/WindowsExplorer.png",
+  "WindowsUpdate.png": "assets/xp/icons/WindowsUpdate.png",
+  "WindowsUpdateMenu.png": "assets/xp/icons/WindowsUpdateMenu.png",
+  "WordPad.png": "assets/xp/icons/WordPad.png",
   "ExplorerProperties.png": "assets/xp/icons/ExplorerProperties.png",
   "MyComputer.png": "assets/xp/icons/MyComputer.png",
   "MyDocuments.png": "assets/xp/icons/MyDocuments.png",
@@ -10782,47 +10802,6 @@ const createMenuGameItem = (gameId) => {
   return item;
 };
 
-const getProgramGroups = () => {
-  const groups = {};
-  const addToGroup = (category, gameId) => {
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(gameId);
-  };
-
-  const gameStats = getGameStats();
-  Object.entries(gameStats)
-    .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
-    .slice(0, 8)
-    .forEach(([gameId]) => {
-      if (gamesList[gameId]) addToGroup("Recently Played", gameId);
-    });
-
-  getFavorites().forEach((gameId) => {
-    if (gamesList[gameId]) addToGroup("Favorites", gameId);
-  });
-
-  Object.entries(gamesList).forEach(([gameId, game]) => {
-    addToGroup(game.category || "Other", gameId);
-  });
-
-  return Object.keys(groups)
-    .sort((catA, catB) => {
-      if (catA === "Recently Played") return -1;
-      if (catB === "Recently Played") return 1;
-      if (catA === "Favorites") return -1;
-      if (catB === "Favorites") return 1;
-      return catA.localeCompare(catB);
-    })
-    .map((category) => [
-      category,
-      groups[category]
-        .slice()
-        .sort((a, b) => formatGameTitle(a).localeCompare(formatGameTitle(b))),
-    ]);
-};
-
 const openRecentDocuments = () => {
   const dialog = XPDialogs.createDialog({ title: "My Recent Documents" });
   const recentGames = Object.entries(getGameStats())
@@ -11550,12 +11529,12 @@ const buildPinnedPrograms = () => {
     [
       {
         label: "Set Program Access and Defaults",
-        icon: "AddRemovePrograms.png",
+        icon: "ProgramAccessDefaultsMenu.png",
         action: () => openSystemWindow("__add-remove-programs"),
       },
       {
         label: "Windows Catalog",
-        icon: "Programs.png",
+        icon: "WindowsCatalogMenu.png",
         action: () =>
           XPDialogs.alert(
             "Windows Catalog is not available on this offline computer.",
@@ -11565,7 +11544,7 @@ const buildPinnedPrograms = () => {
       },
       {
         label: "Windows Update",
-        icon: "SecurityCenter.png",
+        icon: "WindowsUpdateMenu.png",
         action: () => openSystemWindow("__security-center"),
       },
     ].forEach((definition) => container.appendChild(createCommand(definition)));
@@ -11674,23 +11653,31 @@ const wireStartFlyoutKeyboard = (panel, parentButton) => {
   });
 };
 
+const openUnavailableXPProgram = (title) =>
+  XPDialogs.alert(
+    `${title} is not available on this offline computer.`,
+    title,
+    "info",
+  );
+
 const getAllProgramsTree = () => {
-  const gameGroups = getProgramGroups().map(([category, games]) => ({
-    label: category,
-    icon: "Programs.png",
-    children: games.map((gameId) => ({ gameId })),
-  }));
+  const games = Object.keys(gamesList)
+    .sort((left, right) =>
+      formatGameTitle(left).localeCompare(formatGameTitle(right)),
+    )
+    .map((gameId) => ({ gameId }));
+  const programFolder = "ProgramFolder.png";
   return [
     {
       id: "program-access-defaults",
       label: "Set Program Access and Defaults",
-      icon: "AddRemovePrograms.png",
+      icon: "ProgramAccessDefaultsSmall.png",
       action: () => openSystemWindow("__add-remove-programs"),
     },
     {
       id: "windows-catalog",
       label: "Windows Catalog",
-      icon: "Programs.png",
+      icon: "WindowsCatalog.png",
       action: () =>
         XPDialogs.alert(
           "Windows Catalog is not available on this offline computer.",
@@ -11701,43 +11688,37 @@ const getAllProgramsTree = () => {
     {
       id: "windows-update",
       label: "Windows Update",
-      icon: "SecurityCenter.png",
+      icon: "WindowsUpdate.png",
       action: () => openSystemWindow("__security-center"),
     },
     { separator: true },
     {
       id: "accessories",
       label: "Accessories",
-      icon: "Programs.png",
+      icon: programFolder,
       children: [
         {
-          id: "notepad",
-          label: "Notepad",
-          icon: "Notepad.png",
-          action: openNotepad,
+          id: "accessibility",
+          label: "Accessibility",
+          icon: programFolder,
+          children: [],
         },
         {
-          id: "windows-explorer",
-          label: "Windows Explorer",
-          icon: "MyDocuments.png",
-          action: () => openSystemWindow("__my-documents"),
+          id: "communications",
+          label: "Communications",
+          icon: programFolder,
+          children: [],
         },
         {
-          id: "search",
-          label: "Search",
-          icon: "Search.png",
-          action: openSearchDialog,
-        },
-        {
-          id: "help",
-          label: "Help and Support",
-          icon: "HelpAndSupport.png",
-          action: openHelpAndSupport,
+          id: "entertainment",
+          label: "Entertainment",
+          icon: programFolder,
+          children: [],
         },
         {
           id: "system-tools",
           label: "System Tools",
-          icon: "Programs.png",
+          icon: programFolder,
           children: [
             {
               id: "control-panel",
@@ -11765,13 +11746,86 @@ const getAllProgramsTree = () => {
             },
           ],
         },
+        {
+          id: "address-book",
+          label: "Address Book",
+          icon: "AddressBook.png",
+          action: () => openUnavailableXPProgram("Address Book"),
+        },
+        {
+          id: "calculator",
+          label: "Calculator",
+          icon: "Calculator.png",
+          action: () => openUnavailableXPProgram("Calculator"),
+        },
+        {
+          id: "command-prompt",
+          label: "Command Prompt",
+          icon: "CommandPrompt.png",
+          action: () => openUnavailableXPProgram("Command Prompt"),
+        },
+        {
+          id: "notepad",
+          label: "Notepad",
+          icon: "Notepad.png",
+          action: openNotepad,
+        },
+        {
+          id: "paint",
+          label: "Paint",
+          icon: "Paint.png",
+          action: () => openUnavailableXPProgram("Paint"),
+        },
+        {
+          id: "program-compatibility-wizard",
+          label: "Program Compatibility Wizard",
+          icon: "ProgramCompatibilityWizard.png",
+          action: () =>
+            openUnavailableXPProgram("Program Compatibility Wizard"),
+        },
+        {
+          id: "remote-desktop-connection",
+          label: "Remote Desktop Connection",
+          icon: "RemoteDesktopConnection.png",
+          action: () => openUnavailableXPProgram("Remote Desktop Connection"),
+        },
+        {
+          id: "synchronize",
+          label: "Synchronize",
+          icon: "Synchronize.png",
+          action: () => openUnavailableXPProgram("Synchronize"),
+        },
+        {
+          id: "tour-windows-xp",
+          label: "Tour Windows XP",
+          icon: "TourWindowsXP.png",
+          action: () => openUnavailableXPProgram("Tour Windows XP"),
+        },
+        {
+          id: "windows-explorer",
+          label: "Windows Explorer",
+          icon: "WindowsExplorer.png",
+          action: () => openSystemWindow("__my-documents"),
+        },
+        {
+          id: "wordpad",
+          label: "WordPad",
+          icon: "WordPad.png",
+          action: () => openUnavailableXPProgram("WordPad"),
+        },
       ],
     },
     {
       id: "games",
       label: "Games",
-      icon: "Programs.png",
-      children: gameGroups,
+      icon: programFolder,
+      children: games,
+    },
+    {
+      id: "startup",
+      label: "Startup",
+      icon: programFolder,
+      children: [],
     },
     {
       id: "astro-settings",

@@ -459,9 +459,25 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     "windows-update",
     "accessories",
     "games",
+    "startup",
     "astro-settings",
     "internet-games",
   ]);
+  expect(
+    flyouts
+      .querySelector('[data-program-id="program-access-defaults"] img')!
+      .getAttribute("src"),
+  ).toEndWith("/ProgramAccessDefaultsSmall.png");
+  expect(
+    flyouts
+      .querySelector('[data-program-id="windows-catalog"] img')!
+      .getAttribute("src"),
+  ).toEndWith("/WindowsCatalog.png");
+  expect(
+    flyouts
+      .querySelector('[data-program-id="windows-update"] img')!
+      .getAttribute("src"),
+  ).toEndWith("/WindowsUpdate.png");
 
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
@@ -478,14 +494,13 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
     .click();
-  const adventure = [
-    ...flyouts.querySelectorAll<HTMLButtonElement>("button"),
-  ].find((button) => button.textContent?.trim().startsWith("Adventure"))!;
-  adventure.click();
   const game = [
     ...flyouts.querySelectorAll<HTMLButtonElement>(".sm-game"),
   ].find((button) => button.textContent?.includes("Inside the Firewall"));
   expect(game).not.toBeNull();
+  expect(game!.querySelector("img")!.getAttribute("src")).toContain(
+    "inside-the-firewall",
+  );
   game!.click();
   await flushShell();
   expect(
