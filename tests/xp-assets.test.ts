@@ -18,6 +18,9 @@ type SourceRecord = {
     frame: string;
     pixelSha256: string;
   };
+  rendered?: {
+    pixelSha256: string;
+  };
 };
 
 const projectDirectory = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -37,6 +40,7 @@ const manifest = JSON.parse(
   resourceIcons: { output: string; resourceId: number }[];
   resourceBitmaps: { output: string; resourceId: number | string }[];
   resourcePngs?: { output: string; resourceId: number | string }[];
+  renderedAssets?: { output: string }[];
 };
 
 const sha256 = (content: Uint8Array) =>
@@ -59,6 +63,9 @@ describe("Windows XP asset provenance", () => {
         output.replace(/^site\//, ""),
       ),
       ...(manifest.resourcePngs ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.renderedAssets ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
     ];
@@ -112,6 +119,14 @@ describe("Windows XP asset provenance", () => {
         });
         expect(sha256(data), `${relativePath} pixels`).toBe(
           source.resource.pixelSha256,
+        );
+      }
+      if (source.rendered) {
+        const { data } = await sharp(content).ensureAlpha().raw().toBuffer({
+          resolveWithObject: true,
+        });
+        expect(sha256(data), `${relativePath} rendered pixels`).toBe(
+          source.rendered.pixelSha256,
         );
       }
     }

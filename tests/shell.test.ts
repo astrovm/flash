@@ -59,6 +59,18 @@ test("every enabled desktop menu action has a handler", () => {
 });
 test("window manager never discards windows silently", () =>
   absent(javascript, "MAX_OPEN_WINDOWS", "ensureWindowCapacity"));
+test("Start button uses the native XP rendered states without browser text", () => {
+  expect(elementById("start-button").attrs["aria-label"]).toBe("start");
+  absent(html, "start-flag", "start-text");
+  contains(
+    between(css, "#start-button {", "#task-buttons"),
+    'url("../assets/xp/StartButtonRendered.png")',
+    "width: 99px",
+    "height: 30px",
+    "background-position: 0 -30px",
+    "background-position: 0 -60px",
+  );
+});
 test("Flash games keep curated FPS defaults and allow user overrides", async () => {
   const games = await Bun.file(path("site/js/games.js")).text();
   contains(games, '"bike-mania": {', "frameRate: 60");

@@ -2397,5 +2397,21 @@
       "frame": "25x25",
       "pixelSha256": "c242281ae6aa54709fb25d3b8fdb7ca871bd16d38f9c6622bdc7f160f00fc919"
     }
+  },
+  "assets/xp/StartButtonRendered.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "959ad525483f765357ec7fc08344a77ccfd9bd954eb7678f9235d2d93aa779fe",
+    "rendered": {
+      "inputs": [
+        "I386/LUNA.MS_!BLUE_STARTBUTTON_BMP",
+        "I386/EXPLORER.EX_!BITMAP/143",
+        "I386/TAHOMA.TT_",
+        "I386/TAHOMABD.TT_"
+      ],
+      "capture": "Windows XP Explorer at 1024x768, 96 DPI, Luna Blue; normal, hot, and pressed states",
+      "frame": "99x90x32",
+      "pixelSha256": "855d5ed3ca725ca415d852b0965bcf4f9b0eb0eaa7712bf87055fe13cb6e8493"
+    }
   }
 }

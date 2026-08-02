@@ -47,6 +47,13 @@ type ResourcePng = DirectAsset & {
   resourceType: string;
   resourceId: number | string;
 };
+type RenderedAsset = DirectAsset & {
+  frame: string;
+  sha256: string;
+  pixelSha256: string;
+  inputs: string[];
+  capture: string;
+};
 type Manifest = {
   version: number;
   source: {
@@ -61,6 +68,7 @@ type Manifest = {
   resourceIcons: ResourceIcon[];
   resourceBitmaps: ResourceBitmap[];
   resourcePngs?: ResourcePng[];
+  renderedAssets?: RenderedAsset[];
   auditFiles: DirectAsset[];
 };
 type SourceRecord = {
@@ -72,6 +80,12 @@ type SourceRecord = {
     type: number | string;
     id: number | string;
     language: number;
+    frame: string;
+    pixelSha256: string;
+  };
+  rendered?: {
+    inputs: string[];
+    capture: string;
     frame: string;
     pixelSha256: string;
   };
@@ -521,6 +535,26 @@ try {
     };
   }
 
+  for (const asset of manifest.renderedAssets ?? []) {
+    const content = await readFile(join(projectDirectory, asset.output));
+    const { data } = await sharp(content).ensureAlpha().raw().toBuffer({
+      resolveWithObject: true,
+    });
+    if (sha256(content) !== asset.sha256 || sha256(data) !== asset.pixelSha256)
+      throw new Error(`${asset.output}: rendered XP capture differs`);
+    records[relative("site", asset.output)] = {
+      isoSha256: manifest.source.sha256,
+      member: `I386/${asset.member}`,
+      sha256: asset.sha256,
+      rendered: {
+        inputs: asset.inputs,
+        capture: asset.capture,
+        frame: asset.frame,
+        pixelSha256: asset.pixelSha256,
+      },
+    };
+  }
+
   for (const asset of manifest.auditFiles) {
     const content = await expandMember(isoPath, asset.member, workDirectory);
     const outputPath = join(auditDirectory, asset.output);
@@ -540,7 +574,7 @@ try {
     await copyFile(manifestPath, join(auditDirectory, "manifest.json"));
   }
   console.log(
-    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length + (manifest.resourcePngs?.length ?? 0)} web assets from the authenticated XP SP3 ISO.`,
+    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length + (manifest.resourcePngs?.length ?? 0) + (manifest.renderedAssets?.length ?? 0)} web assets from the authenticated XP SP3 ISO.`,
   );
 } finally {
   await rm(workDirectory, { force: true, recursive: true });
