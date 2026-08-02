@@ -188,6 +188,8 @@ const XP_ICON_PATHS = Object.freeze({
   "WindowsUpdate.png": "assets/xp/icons/WindowsUpdate.png",
   "WindowsUpdateMenu.png": "assets/xp/icons/WindowsUpdateMenu.png",
   "WindowsMediaPlayer.png": "assets/xp/icons/WindowsMediaPlayer.png",
+  "WindowsMessenger.png": "assets/xp/icons/WindowsMessenger.png",
+  "WindowsMessengerLarge.png": "assets/xp/icons/WindowsMessengerLarge.png",
   "WindowsMovieMaker.png": "assets/xp/icons/WindowsMovieMaker.png",
   "WordPad.png": "assets/xp/icons/WordPad.png",
   "Display.png": "assets/xp/icons/Display.png",
@@ -477,7 +479,7 @@ const XP_NATIVE_PROGRAMS = Object.freeze({
   },
   "__windows-messenger": {
     title: "Windows Messenger",
-    icon: "NetworkConnection.png",
+    icon: "WindowsMessenger.png",
     kind: "messenger",
   },
   "__windows-movie-maker": {
@@ -7671,6 +7673,194 @@ const createXPProgramContent = (programId) => {
     return content;
   }
 
+  if (programId === "__solitaire") {
+    content.className += " xp-solitaire";
+    content.innerHTML = `<div class="xp-solitaire-menu"><button type="button" data-new-game>Game</button><button type="button">Help</button><span>Score: <output data-score>0</output></span></div><div class="xp-solitaire-board"><button type="button" class="xp-solitaire-stock" aria-label="Draw from stock"></button><button type="button" class="xp-solitaire-waste empty" aria-label="Waste pile"></button><div class="xp-solitaire-spacer"></div><div class="xp-solitaire-foundations" aria-label="Foundations"></div><div class="xp-solitaire-tableau" aria-label="Tableau"></div></div>`;
+    const suits = ["♠", "♥", "♦", "♣"];
+    const redSuits = new Set(["♥", "♦"]);
+    const rankLabel = (rank) =>
+      rank === 1
+        ? "A"
+        : rank === 11
+          ? "J"
+          : rank === 12
+            ? "Q"
+            : rank === 13
+              ? "K"
+              : String(rank);
+    const cardMarkup = (card) =>
+      `<span>${rankLabel(card.rank)}</span><b>${card.suit}</b>`;
+    const stockButton = content.querySelector(".xp-solitaire-stock");
+    const wasteButton = content.querySelector(".xp-solitaire-waste");
+    const tableauElement = content.querySelector(".xp-solitaire-tableau");
+    const foundationsElement = content.querySelector(
+      ".xp-solitaire-foundations",
+    );
+    const score = content.querySelector("[data-score]");
+    wasteButton.dataset.baseClass = "xp-solitaire-waste";
+    let stock = [];
+    let waste = [];
+    let tableau = [];
+    let foundations = new Map();
+    let selected = null;
+
+    const renderCard = (button, card, faceUp = true) => {
+      button.className = `${button.dataset.baseClass || "xp-playing-card"}${faceUp ? " face-up" : " face-down"}${redSuits.has(card.suit) ? " red" : ""}`;
+      button.innerHTML = faceUp ? cardMarkup(card) : "";
+      button.setAttribute(
+        "aria-label",
+        faceUp ? `${rankLabel(card.rank)} of ${card.suit}` : "Face-down card",
+      );
+    };
+    const render = () => {
+      stockButton.classList.toggle("empty", stock.length === 0);
+      if (waste.length) renderCard(wasteButton, waste.at(-1));
+      else {
+        wasteButton.className = "xp-solitaire-waste empty";
+        wasteButton.replaceChildren();
+        wasteButton.setAttribute("aria-label", "Empty waste pile");
+      }
+      wasteButton.classList.toggle("selected", selected?.source === "waste");
+      foundationsElement.replaceChildren();
+      suits.forEach((suit) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "xp-solitaire-foundation empty";
+        button.dataset.baseClass = "xp-solitaire-foundation";
+        button.dataset.suit = suit;
+        const cards = foundations.get(suit) || [];
+        if (cards.length) renderCard(button, cards.at(-1));
+        else button.textContent = suit;
+        foundationsElement.appendChild(button);
+      });
+      tableauElement.replaceChildren();
+      tableau.forEach((column, columnIndex) => {
+        const pile = document.createElement("div");
+        pile.className = "xp-solitaire-column";
+        pile.dataset.column = String(columnIndex);
+        column.forEach((card, cardIndex) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.style.setProperty("--card-index", cardIndex);
+          renderCard(button, card, card.faceUp);
+          button.dataset.card = String(cardIndex);
+          if (
+            selected?.source === "tableau" &&
+            selected.column === columnIndex &&
+            selected.card === cardIndex
+          )
+            button.classList.add("selected");
+          pile.appendChild(button);
+        });
+        tableauElement.appendChild(pile);
+      });
+    };
+    const revealTop = (column) => {
+      if (column.at(-1)) column.at(-1).faceUp = true;
+    };
+    const selectedCard = () =>
+      selected?.source === "waste"
+        ? waste.at(-1)
+        : tableau[selected?.column]?.[selected?.card];
+    const removeSelected = () => {
+      if (selected.source === "waste") return waste.pop();
+      const cards = tableau[selected.column].splice(selected.card);
+      revealTop(tableau[selected.column]);
+      return cards;
+    };
+    const validTableauMove = (card, destination) => {
+      const top = destination.at(-1);
+      return top
+        ? top.faceUp &&
+            top.rank === card.rank + 1 &&
+            redSuits.has(top.suit) !== redSuits.has(card.suit)
+        : card.rank === 13;
+    };
+    stockButton.addEventListener("click", () => {
+      selected = null;
+      if (stock.length) {
+        const card = stock.pop();
+        card.faceUp = true;
+        waste.push(card);
+      } else if (waste.length) {
+        stock = waste.reverse().map((card) => ({ ...card, faceUp: false }));
+        waste = [];
+      }
+      render();
+    });
+    wasteButton.addEventListener("click", () => {
+      if (!waste.length) return;
+      selected = selected?.source === "waste" ? null : { source: "waste" };
+      render();
+    });
+    tableauElement.addEventListener("click", (event) => {
+      const pile = event.target.closest(".xp-solitaire-column");
+      const cardButton = event.target.closest("[data-card]");
+      if (!pile) return;
+      const column = Number(pile.dataset.column);
+      if (selected) {
+        const card = selectedCard();
+        if (card && validTableauMove(card, tableau[column])) {
+          const moved = removeSelected();
+          tableau[column].push(...(Array.isArray(moved) ? moved : [moved]));
+          score.textContent = String(Number(score.textContent) + 5);
+          selected = null;
+          render();
+          return;
+        }
+      }
+      if (!cardButton) return;
+      const cardIndex = Number(cardButton.dataset.card);
+      if (!tableau[column][cardIndex].faceUp) return;
+      selected = { source: "tableau", column, card: cardIndex };
+      render();
+    });
+    foundationsElement.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button || !selected) return;
+      const card = selectedCard();
+      const foundation = foundations.get(button.dataset.suit) || [];
+      if (
+        card?.suit === button.dataset.suit &&
+        card.rank === foundation.length + 1
+      ) {
+        removeSelected();
+        foundation.push(card);
+        foundations.set(card.suit, foundation);
+        score.textContent = String(Number(score.textContent) + 10);
+        selected = null;
+        render();
+      }
+    });
+    const newGame = () => {
+      const deck = suits.flatMap((suit) =>
+        Array.from({ length: 13 }, (_, index) => ({
+          suit,
+          rank: index + 1,
+          faceUp: false,
+        })),
+      );
+      for (let index = deck.length - 1; index > 0; index -= 1) {
+        const target = Math.floor(Math.random() * (index + 1));
+        [deck[index], deck[target]] = [deck[target], deck[index]];
+      }
+      tableau = Array.from({ length: 7 }, (_, column) => {
+        const cards = deck.splice(0, column + 1);
+        cards.at(-1).faceUp = true;
+        return cards;
+      });
+      stock = deck;
+      waste = [];
+      foundations = new Map();
+      selected = null;
+      score.textContent = "0";
+      render();
+    };
+    content.querySelector("[data-new-game]").addEventListener("click", newGame);
+    newGame();
+    return content;
+  }
+
   if (program.kind === "volume") {
     const { volume, isMuted } = getMasterVolume();
     content.innerHTML = `<div class="xp-volume-console"><div class="xp-volume-heading">Volume Control</div><label>Volume<input type="range" min="0" max="100" value="${volume}" orient="vertical" aria-label="Volume level"></label><label><input type="checkbox" ${isMuted ? "checked" : ""}> Mute all</label></div>`;
@@ -7797,6 +7987,135 @@ const createXPProgramContent = (programId) => {
     return content;
   }
 
+  if (program.kind === "mail") {
+    content.innerHTML = `<div class="xp-mail-toolbar"><button type="button" data-mail-new>New Mail</button><button type="button" data-mail-reply disabled>Reply</button><button type="button" data-mail-delete disabled>Delete</button></div><div class="xp-mail-layout"><aside class="xp-mail-folders" aria-label="Folders"></aside><main class="xp-mail-workspace"></main></div>`;
+    const folders = {
+      Inbox: [
+        {
+          from: "Outlook Express Team",
+          subject: "Welcome to Outlook Express 6",
+          body: "Outlook Express is ready to manage mail stored on this computer.",
+        },
+      ],
+      Outbox: [],
+      "Sent Items": [],
+      "Deleted Items": [],
+      Drafts: [],
+    };
+    const folderPane = content.querySelector(".xp-mail-folders");
+    const workspace = content.querySelector(".xp-mail-workspace");
+    let currentFolder = "Inbox";
+    const renderFolders = () => {
+      folderPane.replaceChildren();
+      Object.entries(folders).forEach(([name, messages]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = name === currentFolder ? "selected" : "";
+        button.dataset.folder = name;
+        button.textContent = `${name}${messages.length ? ` (${messages.length})` : ""}`;
+        folderPane.appendChild(button);
+      });
+    };
+    const renderFolder = () => {
+      renderFolders();
+      workspace.innerHTML = `<table class="xp-mail-list"><thead><tr><th>From</th><th>Subject</th></tr></thead><tbody></tbody></table><article class="xp-mail-preview"><p>Select a message to read it.</p></article>`;
+      const body = workspace.querySelector("tbody");
+      folders[currentFolder].forEach((message, index) => {
+        const row = document.createElement("tr");
+        row.dataset.message = String(index);
+        const from = document.createElement("td");
+        const subject = document.createElement("td");
+        from.textContent = message.from || message.to;
+        subject.textContent = message.subject || "(no subject)";
+        row.append(from, subject);
+        body.appendChild(row);
+      });
+    };
+    const openComposer = () => {
+      workspace.innerHTML = `<form class="xp-mail-compose"><label>To: <input name="to" type="email" aria-label="To" required></label><label>Subject: <input name="subject" aria-label="Subject"></label><textarea name="body" aria-label="Message body"></textarea><div><button type="submit">Send</button><button type="button" data-save-draft>Save Draft</button></div></form>`;
+      const form = workspace.querySelector("form");
+      const storeMessage = (folder) => {
+        folders[folder].push({
+          from: "Administrator",
+          to: form.elements.to.value,
+          subject: form.elements.subject.value,
+          body: form.elements.body.value,
+        });
+        currentFolder = folder;
+        renderFolder();
+      };
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        storeMessage("Sent Items");
+      });
+      form
+        .querySelector("[data-save-draft]")
+        .addEventListener("click", () => storeMessage("Drafts"));
+      form.elements.to.focus();
+    };
+    folderPane.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-folder]");
+      if (!button) return;
+      currentFolder = button.dataset.folder;
+      renderFolder();
+    });
+    workspace.addEventListener("click", (event) => {
+      const row = event.target.closest("[data-message]");
+      if (!row) return;
+      const message = folders[currentFolder][Number(row.dataset.message)];
+      workspace.querySelector(".xp-mail-preview").innerHTML =
+        `<h3></h3><p class="xp-mail-from"></p><div class="xp-mail-body"></div>`;
+      workspace.querySelector("h3").textContent = message.subject;
+      workspace.querySelector(".xp-mail-from").textContent =
+        `From: ${message.from || "Administrator"}`;
+      workspace.querySelector(".xp-mail-body").textContent = message.body;
+    });
+    content
+      .querySelector("[data-mail-new]")
+      .addEventListener("click", openComposer);
+    renderFolder();
+    return content;
+  }
+
+  if (program.kind === "messenger") {
+    content.innerHTML = `<div class="xp-messenger-account"><img src="${XP_ICON_PATHS["WindowsMessengerLarge.png"]}" alt=""><div><b>Administrator</b><label>Status: <select aria-label="Status"><option>Online</option><option>Busy</option><option>Appear Offline</option></select></label></div></div><div class="xp-messenger-body"><aside><h3>My Contacts</h3><button type="button" data-contact="Windows XP Support">● Windows XP Support</button><button type="button" data-add-contact>Add a Contact</button></aside><main><div class="xp-messenger-history" aria-live="polite"><p>Select a contact to start a conversation.</p></div><form><input aria-label="Message" disabled><button type="submit" disabled>Send</button></form></main></div>`;
+    const history = content.querySelector(".xp-messenger-history");
+    const form = content.querySelector("form");
+    const input = form.querySelector("input");
+    const send = form.querySelector("button");
+    let contact = null;
+    content
+      .querySelector("[data-contact]")
+      .addEventListener("click", (event) => {
+        contact = event.currentTarget.dataset.contact;
+        history.innerHTML = `<h3></h3><p class="system-message">This contact is offline. Messages remain on this computer.</p>`;
+        history.querySelector("h3").textContent = contact;
+        input.disabled = false;
+        send.disabled = false;
+        input.focus();
+      });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const message = input.value.trim();
+      if (!message || !contact) return;
+      const paragraph = document.createElement("p");
+      const name = document.createElement("b");
+      name.textContent = "Administrator says: ";
+      paragraph.append(name, message);
+      history.appendChild(paragraph);
+      input.value = "";
+      history.scrollTop = history.scrollHeight;
+    });
+    content
+      .querySelector("[data-add-contact]")
+      .addEventListener("click", () => {
+        const address = window.prompt?.("Enter the contact's e-mail address:");
+        if (!address) return;
+        history.textContent = `${address} was added to your local contact list.`;
+      });
+    return content;
+  }
+
   if (program.kind === "defaults") {
     content.innerHTML = `<div class="xp-program-panel"><h2>Choose a configuration</h2><label><input type="radio" name="defaults" checked> Microsoft Windows</label><label><input type="radio" name="defaults"> Non-Microsoft</label><label><input type="radio" name="defaults"> Custom</label><button type="button">OK</button><p class="xp-program-status" aria-live="polite"></p></div>`;
     content.querySelector("button").addEventListener("click", () => {
@@ -7843,11 +8162,16 @@ const openXPProgram = (programId) => {
     media: [600, 420],
     disk: [430, 420],
     information: [700, 500],
+    mail: [720, 520],
+    messenger: [500, 460],
+    solitaire: [720, 520],
   };
   const [preferredWidth, preferredHeight] =
     programId === "__minesweeper"
       ? preferredSizes.minesweeper
-      : preferredSizes[program.kind] || [640, 470];
+      : programId === "__solitaire"
+        ? preferredSizes.solitaire
+        : preferredSizes[program.kind] || [640, 470];
   if (programId === "__minesweeper") {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;

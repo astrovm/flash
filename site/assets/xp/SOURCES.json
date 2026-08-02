@@ -552,6 +552,32 @@
       "pixelSha256": "ec18d1970ce785ca173bfef113693833abec81644d222b8fe13be3a5befc93d1"
     }
   },
+  "assets/xp/icons/WindowsMessenger.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSSETUP.CAB!/msmsgs.exe",
+    "sha256": "02877b12950cafc9429e6bdccc02447929db95a75cb93e5a3b5d47f41a190a42",
+    "resource": {
+      "parentSha256": "deba83978850f17b33a3c4c06c5e707b9a3faca30fe0dfc5a9425ef2ca592473",
+      "type": 14,
+      "id": 1,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "202b3c98802ad5609d5e2241298807f8ce2ed5eee5045051e2351b68d632bc7e"
+    }
+  },
+  "assets/xp/icons/WindowsMessengerLarge.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSSETUP.CAB!/msmsgs.exe",
+    "sha256": "fb73598986dffbe23b23150eafe317d4ed44c2cbc9e2e5bbf2bc62ce102e4bf9",
+    "resource": {
+      "parentSha256": "deba83978850f17b33a3c4c06c5e707b9a3faca30fe0dfc5a9425ef2ca592473",
+      "type": 14,
+      "id": 1,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "7a3e178c006f57f2c186f6e7c12c4420e2ca581c5b7fb5426b795a88a6037f56"
+    }
+  },
   "assets/xp/icons/RemoteAssistance.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/RCIMLBY.EX_",

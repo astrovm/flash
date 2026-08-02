@@ -402,6 +402,28 @@
       "output": "site/assets/xp/icons/OutlookExpress.png"
     },
     {
+      "member": "MMSSETUP.CAB",
+      "cabMember": "msmsgs.exe",
+      "expandedName": "msmsgs.exe",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsMessenger.png"
+    },
+    {
+      "member": "MMSSETUP.CAB",
+      "cabMember": "msmsgs.exe",
+      "expandedName": "msmsgs.exe",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsMessengerLarge.png"
+    },
+    {
       "member": "RCIMLBY.EX_",
       "expandedName": "rcimlby.exe",
       "resourceType": 14,

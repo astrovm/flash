@@ -581,6 +581,29 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
     .click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="solitaire"]')!
+    .click();
+  const solitaireWindow = shell.document.querySelector(
+    '.xp-window[data-game="__solitaire"]',
+  )!;
+  expect(
+    solitaireWindow.querySelectorAll(".xp-solitaire-tableau > div"),
+  ).toHaveLength(7);
+  solitaireWindow
+    .querySelector<HTMLButtonElement>(".xp-solitaire-stock")!
+    .click();
+  expect(
+    solitaireWindow
+      .querySelector(".xp-solitaire-waste")!
+      .classList.contains("empty"),
+  ).toBeFalse();
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
   const adventure = [
     ...flyouts.querySelectorAll<HTMLButtonElement>(".start-program-folder"),
   ].find((button) => button.textContent?.trim().startsWith("Adventure"));
@@ -603,6 +626,57 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       '.xp-window[data-game="inside-the-firewall"] iframe',
     ),
   ).not.toBeNull();
+});
+
+test("Outlook Express composes mail and Windows Messenger sends local messages", async () => {
+  const shell = await login(await loadShell());
+  const openRootProgram = (programId: string) => {
+    shell.document.getElementById("start-button")!.click();
+    shell.document.getElementById("all-programs-button")!.click();
+    shell.document
+      .getElementById("start-menu-flyouts")!
+      .querySelector<HTMLButtonElement>(`[data-program-id="${programId}"]`)!
+      .click();
+  };
+
+  openRootProgram("outlook-express");
+  const outlook = shell.document.querySelector(
+    '.xp-window[data-game="__outlook-express"]',
+  )!;
+  outlook.querySelector<HTMLButtonElement>("[data-mail-new]")!.click();
+  const form = outlook.querySelector<HTMLFormElement>(".xp-mail-compose")!;
+  form.elements.namedItem("to")!.value = "friend@example.com";
+  form.elements.namedItem("subject")!.value = "Hello from XP";
+  form.elements.namedItem("body")!.value = "This message stays local.";
+  form.dispatchEvent(new shell.window.Event("submit", { bubbles: true }));
+  expect(outlook.querySelector(".xp-mail-folders")!.textContent).toContain(
+    "Sent Items (1)",
+  );
+  expect(outlook.querySelector(".xp-mail-list")!.textContent).toContain(
+    "Hello from XP",
+  );
+
+  openRootProgram("windows-messenger");
+  const messenger = shell.document.querySelector(
+    '.xp-window[data-game="__windows-messenger"]',
+  )!;
+  expect(
+    messenger.querySelector<HTMLImageElement>(".title-icon img")!.src,
+  ).toEndWith("/WindowsMessenger.png");
+  expect(
+    messenger.querySelector<HTMLImageElement>(".xp-messenger-account img")!.src,
+  ).toEndWith("/WindowsMessengerLarge.png");
+  messenger.querySelector<HTMLButtonElement>("[data-contact]")!.click();
+  const message = messenger.querySelector<HTMLInputElement>(
+    'input[aria-label="Message"]',
+  )!;
+  message.value = "Are you there?";
+  message
+    .closest("form")!
+    .dispatchEvent(new shell.window.Event("submit", { bubbles: true }));
+  expect(
+    messenger.querySelector(".xp-messenger-history")!.textContent,
+  ).toContain("Administrator says: Are you there?");
 });
 
 test("restored XP utilities expose dedicated working controls", async () => {

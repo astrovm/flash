@@ -14177,6 +14177,296 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   color: #ff0000;
 }
 
+.xp-solitaire {
+  padding: 0;
+  overflow: hidden;
+  background: #087b3d;
+}
+
+.xp-solitaire-menu {
+  display: flex;
+  height: 24px;
+  align-items: center;
+  border-bottom: 1px solid #808080;
+  background: #ece9d8;
+}
+
+.xp-solitaire-menu button {
+  height: 22px;
+  padding: 1px 8px;
+  border: 0;
+  background: transparent;
+}
+
+.xp-solitaire-menu span {
+  margin-left: auto;
+  padding-right: 8px;
+}
+
+.xp-solitaire-board {
+  display: grid;
+  height: calc(100% - 24px);
+  grid-template-columns: 72px 72px 1fr auto;
+  grid-template-rows: 104px 1fr;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 12px;
+  background: #087b3d;
+}
+
+.xp-solitaire-stock,
+.xp-solitaire-waste,
+.xp-solitaire-foundation,
+.xp-playing-card {
+  box-sizing: border-box;
+  width: 70px;
+  height: 96px;
+  min-width: 0;
+  padding: 5px;
+  border: 1px solid #111;
+  border-radius: 5px;
+}
+
+.xp-solitaire-stock,
+.xp-playing-card.face-down {
+  background:
+    repeating-linear-gradient(45deg, #fff 0 2px, transparent 2px 5px), #1648a8;
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+.xp-solitaire-stock.empty,
+.xp-solitaire-waste.empty,
+.xp-solitaire-foundation.empty {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 32px;
+}
+
+.xp-playing-card.face-up,
+.xp-solitaire-waste:not(.empty),
+.xp-solitaire-foundation:not(.empty) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: #fff;
+  color: #000;
+  font:
+    bold 18px "Times New Roman",
+    serif;
+  text-align: left;
+}
+
+.xp-playing-card.red,
+.xp-solitaire-waste.red,
+.xp-solitaire-foundation.red {
+  color: #c40000;
+}
+
+.xp-solitaire-foundations {
+  display: grid;
+  grid-template-columns: repeat(4, 70px);
+  gap: 8px;
+}
+
+.xp-solitaire-tableau {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(7, 70px);
+  justify-content: space-between;
+}
+
+.xp-solitaire-column {
+  position: relative;
+  min-height: 260px;
+}
+
+.xp-solitaire-column .xp-playing-card {
+  position: absolute;
+  top: calc(var(--card-index) * 25px);
+  left: 0;
+}
+
+.xp-solitaire .selected {
+  outline: 3px solid #ffd800;
+  outline-offset: -4px;
+}
+
+.xp-mail-toolbar {
+  display: flex;
+  gap: 4px;
+  margin: -10px -10px 0;
+  padding: 6px;
+  border-bottom: 1px solid #aca899;
+}
+
+.xp-mail-layout {
+  display: grid;
+  height: calc(100% - 32px);
+  grid-template-columns: 150px 1fr;
+  margin: 0 -10px -10px;
+}
+
+.xp-mail-folders {
+  display: flex;
+  flex-direction: column;
+  padding-top: 6px;
+  border-right: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-mail-folders button {
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.xp-mail-folders button.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.xp-mail-workspace {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: minmax(110px, 42%) 1fr;
+  background: #fff;
+}
+
+.xp-mail-list {
+  width: 100%;
+  align-self: start;
+  border-collapse: collapse;
+}
+
+.xp-mail-list th,
+.xp-mail-list td {
+  padding: 5px 8px;
+  border-right: 1px solid #aca899;
+  border-bottom: 1px solid #aca899;
+  text-align: left;
+}
+
+.xp-mail-list tbody tr:hover {
+  background: #e8f0ff;
+}
+
+.xp-mail-preview {
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-top: 2px solid #7f9db9;
+}
+
+.xp-mail-compose {
+  display: grid;
+  grid-row: 1 / -1;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 6px;
+  padding: 10px;
+}
+
+.xp-mail-compose label {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: center;
+}
+
+.xp-mail-compose textarea {
+  resize: none;
+}
+
+.xp-messenger-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -10px -10px 8px;
+  padding: 10px;
+  border-bottom: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-messenger-account img {
+  width: 32px;
+  height: 32px;
+  image-rendering: auto;
+}
+
+.xp-messenger-account label {
+  display: block;
+  margin-top: 4px;
+}
+
+.xp-messenger-body {
+  display: grid;
+  height: calc(100% - 62px);
+  grid-template-columns: 170px 1fr;
+  gap: 8px;
+}
+
+.xp-messenger-body aside {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-messenger-body aside h3 {
+  margin: 0 0 8px;
+}
+
+.xp-messenger-body aside button {
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.xp-messenger-body aside [data-contact] {
+  color: #777;
+}
+
+.xp-messenger-body [data-add-contact] {
+  margin-top: auto;
+  color: #0645ad;
+}
+
+.xp-messenger-body main {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1fr auto;
+}
+
+.xp-messenger-history {
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-messenger-history h3,
+.xp-messenger-history p {
+  margin: 0 0 8px;
+}
+
+.xp-messenger-history .system-message {
+  color: #777;
+}
+
+.xp-messenger-body form {
+  display: flex;
+  gap: 4px;
+  padding-top: 6px;
+}
+
+.xp-messenger-body form input {
+  min-width: 0;
+  flex: 1;
+}
+
 .xp-volume-console {
   display: flex;
   height: calc(100% - 20px);
