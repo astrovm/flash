@@ -2658,6 +2658,202 @@ html[data-xp-appearance="silver"] {
   font-size: 13px;
 }
 
+.add-remove-programs-content {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 82px minmax(0, 1fr);
+  overflow: hidden;
+  color: #111;
+  font:
+    11px/14px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.add-remove-programs-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 3px;
+  background: #f2efdf;
+}
+
+.add-remove-programs-nav button {
+  display: flex;
+  width: 76px;
+  min-height: 77px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 6px 2px 4px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  line-height: 14px;
+  text-align: center;
+}
+
+.add-remove-programs-nav button.selected {
+  border-color: #7f9db9;
+  background: linear-gradient(90deg, #fff, #f8f8f3);
+}
+
+.add-remove-programs-nav button img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.add-remove-programs-main {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.add-remove-programs-toolbar {
+  display: grid;
+  height: 45px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 35px;
+  padding: 0 14px;
+}
+
+.add-remove-programs-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.add-remove-programs-toolbar select {
+  width: 112px;
+  height: 21px;
+  border: 1px solid #7f9db9;
+  font: inherit;
+}
+
+.add-remove-programs-list {
+  position: absolute;
+  top: 45px;
+  right: 13px;
+  bottom: 14px;
+  left: 12px;
+  border: 1px solid #9b9b8c;
+  background: #fff;
+}
+
+.add-new-program-section {
+  position: relative;
+  display: grid;
+  grid-template-columns: 31px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 14px 20px 5px;
+}
+
+.add-new-program-section + .add-new-program-section {
+  padding-top: 7px;
+}
+
+.add-new-program-section img {
+  width: 32px;
+  height: 32px;
+  margin-top: 20px;
+  object-fit: contain;
+}
+
+.add-new-program-section h2,
+.add-new-program-section p {
+  margin: 0 0 7px;
+  font:
+    11px Tahoma,
+    sans-serif;
+}
+
+.add-new-program-section .xp-btn {
+  min-width: 78px;
+  margin-top: 22px;
+}
+
+.program-defaults-intro {
+  padding: 3px 10px 0;
+}
+
+.program-defaults-intro p {
+  margin: 8px 0;
+}
+
+.program-defaults-list {
+  position: absolute;
+  top: 72px;
+  right: 11px;
+  bottom: 45px;
+  left: 10px;
+  border: 1px solid #9b9b8c;
+  background: #fff;
+}
+
+.program-defaults-list label {
+  display: grid;
+  height: 30px;
+  grid-template-columns: 18px 1fr 24px;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.program-defaults-list label.selected {
+  background: #f1efe2;
+}
+
+.program-defaults-list label > button {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #6d8fc3;
+  border-radius: 50%;
+  background: #fff;
+  color: #1553ae;
+  font:
+    700 13px Tahoma,
+    sans-serif;
+}
+
+.program-defaults-buttons {
+  position: absolute;
+  right: 11px;
+  bottom: 11px;
+  display: flex;
+  gap: 10px;
+}
+
+.program-defaults-buttons .xp-btn {
+  min-width: 72px;
+}
+
+.xp-dialog.windows-setup-wait-dialog {
+  top: -15px;
+  width: min(322px, calc(100vw - 16px));
+  height: 138px;
+}
+
+.windows-setup-wait-dialog .title-buttons {
+  display: none;
+}
+
+.windows-setup-wait-dialog .dlg-body {
+  display: grid;
+  place-items: center;
+}
+
 .control-panel-content {
   display: flex;
   min-height: 0;

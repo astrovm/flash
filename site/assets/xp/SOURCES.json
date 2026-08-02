@@ -1201,6 +1201,58 @@
       "pixelSha256": "979476ae361d60aec862e121ed54877893c8da15c51d490ab7765656d9e00bfd"
     }
   },
+  "assets/xp/system/ChangeRemovePrograms.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/APPWIZ.CP_",
+    "sha256": "2cbcda92391f22a223888a46ff68fa77e66a43f545b38ded7d818b13925b25e4",
+    "resource": {
+      "parentSha256": "ce3b41c28cf53a8d9a0dbfdbbbe68f0f881514bc786d5f3d892346a61b2f8262",
+      "type": 2,
+      "id": 101,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "8e2d14b6bee4cd6868410d79da06abb678e1e05b7f0f2f5ce4056cc1609e5fdb"
+    }
+  },
+  "assets/xp/system/AddNewPrograms.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/APPWIZ.CP_",
+    "sha256": "802e9b3675af44d304689fd8e8cc7dd9742e635d63c6d43c4da9c6b30659cc4e",
+    "resource": {
+      "parentSha256": "ce3b41c28cf53a8d9a0dbfdbbbe68f0f881514bc786d5f3d892346a61b2f8262",
+      "type": 2,
+      "id": 102,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "ed433ce15530b5789ed37c9546610f8af855b7517f2cd6a9370bd4fc702040ae"
+    }
+  },
+  "assets/xp/system/AddRemoveWindowsComponents.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/APPWIZ.CP_",
+    "sha256": "5e31db2a64ac646d7f53b4ba4624a4ebabd0a85912401ed35b1a7038ee410fd8",
+    "resource": {
+      "parentSha256": "ce3b41c28cf53a8d9a0dbfdbbbe68f0f881514bc786d5f3d892346a61b2f8262",
+      "type": 2,
+      "id": 103,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "7a38f00056af79ea3b3b2dff117e34db6216e71de2f8475726c6f01e9bdb66ad"
+    }
+  },
+  "assets/xp/system/ProgramAccessDefaults.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/APPWIZ.CP_",
+    "sha256": "960a4bad632f9795f3b7856d702ba5c449c0dabe8ce07f065a9223b30c48ab3e",
+    "resource": {
+      "parentSha256": "ce3b41c28cf53a8d9a0dbfdbbbe68f0f881514bc786d5f3d892346a61b2f8262",
+      "type": 2,
+      "id": 104,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "5d3ffee3f31e0977e7fbae1ca8d79a34ab5ed508b6c401e007cd5bfe9fe17e3b"
+    }
+  },
   "assets/xp/icons/Logout.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LOGONUI.EX_",

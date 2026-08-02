@@ -878,6 +878,38 @@
       "output": "site/assets/xp/icons/Restore.png"
     },
     {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 101,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/ChangeRemovePrograms.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 102,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/AddNewPrograms.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 103,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/AddRemoveWindowsComponents.png"
+    },
+    {
+      "member": "APPWIZ.CP_",
+      "expandedName": "appwiz.cpl",
+      "resourceType": 2,
+      "resourceId": 104,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/system/ProgramAccessDefaults.png"
+    },
+    {
       "member": "LOGONUI.EX_",
       "expandedName": "logonui.exe",
       "resourceType": 2,

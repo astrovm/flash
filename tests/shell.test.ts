@@ -473,6 +473,32 @@ test("User Accounts uses the native XP task page and account pictures", () => {
     ".user-account-choices",
   );
 });
+
+test("Add or Remove Programs matches the XP appwiz shell", () => {
+  contains(
+    javascript,
+    'title: "Add or Remove Programs"',
+    "const createAddRemoveProgramsContent = () =>",
+    'openSystemWindow("__add-remove-programs")',
+    "Currently installed programs:",
+    "Change or<br>Remove<br>Programs",
+    "Add New<br>Programs",
+    "Add/Remove<br>Windows<br>Components",
+    "Set Program<br>Access and<br>Defaults",
+    "assets/xp/system/ChangeRemovePrograms.png",
+    "assets/xp/system/AddNewPrograms.png",
+    "assets/xp/system/AddRemoveWindowsComponents.png",
+    "assets/xp/system/ProgramAccessDefaults.png",
+    'title: "Windows XP Setup"',
+  );
+  contains(
+    css,
+    ".add-remove-programs-content",
+    ".add-remove-programs-nav",
+    ".add-remove-programs-list",
+    ".program-defaults-list",
+  );
+});
 test("desktop renders system places then virtual files", () => {
   const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
   const start = javascript.indexOf("const entries = [", desktop);

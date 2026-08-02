@@ -204,6 +204,11 @@ const systemShortcuts = {
     icon: "assets/xp/icons/UserAccounts.png",
     desktop: false,
   },
+  "__add-remove-programs": {
+    title: "Add or Remove Programs",
+    icon: "assets/xp/icons/AddRemovePrograms.png",
+    desktop: false,
+  },
   __printers: {
     title: "Printers and Faxes",
     icon: "assets/xp/icons/PrintersAndFaxes.png",
@@ -2299,7 +2304,7 @@ const wireControlPanel = (win) => {
     printers: openPrintersAndFaxes,
     network: openNetworkStatus,
     users: () => openSystemWindow("__user-accounts"),
-    programs: () => openSystemWindow("__internet-games"),
+    programs: () => openSystemWindow("__add-remove-programs"),
     datetime: openDateTimeProperties,
     sounds: toggleTrayVolumePopup,
     accessibility: openProjectSettings,
@@ -2476,12 +2481,80 @@ const createUserAccountsContent = () => {
   return content;
 };
 
+const createAddRemoveProgramsContent = () => {
+  const content = document.createElement("div");
+  content.className = "add-remove-programs-content";
+  content.innerHTML = `
+    <nav class="add-remove-programs-nav" aria-label="Add or Remove Programs tasks">
+      <button type="button" data-add-remove-page="change" class="selected"><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><span>Change or<br>Remove<br>Programs</span></button>
+      <button type="button" data-add-remove-page="add"><img src="assets/xp/system/AddNewPrograms.png" alt=""><span>Add New<br>Programs</span></button>
+      <button type="button" data-add-remove-page="components"><img src="assets/xp/system/AddRemoveWindowsComponents.png" alt=""><span>Add/Remove<br>Windows<br>Components</span></button>
+      <button type="button" data-add-remove-page="defaults"><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><span>Set Program<br>Access and<br>Defaults</span></button>
+    </nav>
+    <main class="add-remove-programs-main"></main>`;
+  const main = content.querySelector(".add-remove-programs-main");
+  const selectPage = (page) =>
+    content
+      .querySelectorAll("[data-add-remove-page]")
+      .forEach((button) =>
+        button.classList.toggle(
+          "selected",
+          button.dataset.addRemovePage === page,
+        ),
+      );
+  const renderChange = () => {
+    selectPage("change");
+    main.innerHTML = `<div class="add-remove-programs-toolbar"><span>Currently installed programs:</span><label><input type="checkbox"> Show updates</label><label>Sort by: <select><option>Name</option><option>Size</option><option>Frequency of Use</option><option>Date Last Used</option></select></label></div><div class="add-remove-programs-list" aria-label="Currently installed programs"></div>`;
+  };
+  const renderAdd = () => {
+    selectPage("add");
+    main.innerHTML = `<section class="add-new-program-section"><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><div><h2>Add a program from CD-ROM or floppy disk</h2><p>To add a program from a CD-ROM or floppy disk, click CD or Floppy.</p></div><button type="button" class="xp-btn" data-add-remove-action="cd">CD or Floppy</button></section><section class="add-new-program-section"><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><div><h2>Add programs from Microsoft</h2><p>To add new Windows features, device drivers, and system updates over the Internet, click<br>Windows Update.</p></div><button type="button" class="xp-btn" data-add-remove-action="update">Windows Update</button></section>`;
+  };
+  const renderDefaults = () => {
+    selectPage("defaults");
+    main.innerHTML = `<div class="program-defaults-intro"><p>A program configuration specifies default programs for certain activities, such as Web browsing or sending e-mail, and which<br>programs are accessible from the Start menu, desktop, and other locations.</p><p>Choose a configuration:</p></div><div class="program-defaults-list"><label><input type="radio" name="program-default" value="microsoft"> Microsoft Windows <button type="button" aria-label="Expand Microsoft Windows">⌄</button></label><label><input type="radio" name="program-default" value="other"> Non-Microsoft <button type="button" aria-label="Expand Non-Microsoft">⌄</button></label><label class="selected"><input type="radio" name="program-default" value="custom" checked> Custom <button type="button" aria-label="Expand Custom">⌄</button></label></div><div class="program-defaults-buttons"><button type="button" class="xp-btn" data-add-remove-action="ok">OK</button><button type="button" class="xp-btn" data-add-remove-action="cancel">Cancel</button><button type="button" class="xp-btn" data-add-remove-action="help">Help</button></div>`;
+  };
+  content.addEventListener("click", (event) => {
+    const page = event.target.closest("[data-add-remove-page]")?.dataset
+      .addRemovePage;
+    if (page === "change") renderChange();
+    else if (page === "add") renderAdd();
+    else if (page === "components") {
+      selectPage("components");
+      const setup = XPDialogs.createDialog({ title: "Windows XP Setup" });
+      setup.el.classList.add("windows-setup-wait-dialog");
+      setup.body.innerHTML = "<p>Please wait...</p>";
+      setTimeout(() => setup.close("ready"), 1800);
+    } else if (page === "defaults") renderDefaults();
+    const action = event.target.closest("[data-add-remove-action]")?.dataset
+      .addRemoveAction;
+    if (action === "cd")
+      XPDialogs.alert(
+        "Please insert the program installation disc.",
+        "Install Program From Floppy Disk or CD-ROM",
+        "info",
+      );
+    else if (action === "update")
+      XPDialogs.alert(
+        "Windows Update is not available in this offline recreation.",
+        "Windows Update",
+        "info",
+      );
+    else if (action === "cancel") renderChange();
+    else if (action === "help") openHelpAndSupport();
+  });
+  renderChange();
+  return content;
+};
+
 const createSystemWindowContent = (shortcutId, win) => {
   const content = document.createElement("div");
   content.className = "explorer-content";
 
   if (shortcutId === "__control-panel") return createControlPanelContent();
   if (shortcutId === "__user-accounts") return createUserAccountsContent();
+  if (shortcutId === "__add-remove-programs")
+    return createAddRemoveProgramsContent();
 
   if (shortcutId === "__printers") {
     content.className = "explorer-content printers-content";
@@ -6414,11 +6487,13 @@ const openSystemWindow = (shortcutId) => {
   const isDisplayProperties = shortcutId === "__display-properties";
   const isControlPanel = shortcutId === "__control-panel";
   const isUserAccounts = shortcutId === "__user-accounts";
+  const isAddRemovePrograms = shortcutId === "__add-remove-programs";
   const isSearch = shortcutId === "__search";
   const isPrinters = shortcutId === "__printers";
   const isHelp = shortcutId === "__help";
   if (isDisplayProperties) el.classList.add("display-properties-window");
   if (isUserAccounts) el.classList.add("user-accounts-window");
+  if (isAddRemovePrograms) el.classList.add("add-remove-programs-window");
   const windowWidth = Math.min(
     isProjectSettings
       ? 540
@@ -6428,11 +6503,13 @@ const openSystemWindow = (shortcutId) => {
           ? 800
           : isUserAccounts
             ? 729
-            : isHelp
-              ? 768
-              : isDisplayProperties
-                ? 404
-                : 800,
+            : isAddRemovePrograms
+              ? 729
+              : isHelp
+                ? 768
+                : isDisplayProperties
+                  ? 404
+                  : 800,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -6444,11 +6521,13 @@ const openSystemWindow = (shortcutId) => {
           ? 600
           : isUserAccounts
             ? 530
-            : isHelp
-              ? 650
-              : isDisplayProperties
-                ? 454
-                : 600,
+            : isAddRemovePrograms
+              ? 530
+              : isHelp
+                ? 650
+                : isDisplayProperties
+                  ? 454
+                  : 600,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -6458,30 +6537,34 @@ const openSystemWindow = (shortcutId) => {
       ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
       : isUserAccounts
         ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
-        : isPrinters
-          ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-          : isHelp
-            ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-            : isSearch
+        : isAddRemovePrograms
+          ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
+          : isPrinters
+            ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+            : isHelp
               ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-              : isDisplayProperties
-                ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-                : Math.max(8, (desktopWidth - windowWidth) / 2)
+              : isSearch
+                ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+                : isDisplayProperties
+                  ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+                  : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
       ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
       : isUserAccounts
         ? Math.min(52, Math.max(8, desktopHeight - windowHeight))
-        : isPrinters
-          ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
-          : isHelp
-            ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
-            : isSearch
-              ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
-              : isDisplayProperties
-                ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
-                : Math.max(8, (desktopHeight - windowHeight) / 2)
+        : isAddRemovePrograms
+          ? Math.min(104, Math.max(8, desktopHeight - windowHeight))
+          : isPrinters
+            ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
+            : isHelp
+              ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
+              : isSearch
+                ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+                : isDisplayProperties
+                  ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+                  : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 
