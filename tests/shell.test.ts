@@ -396,6 +396,33 @@ test("Control Panel uses the XP category-view Explorer shell", () => {
   }
   contains(css, ".control-panel-content", ".control-panel-categories");
 });
+
+test("Appearance and Themes uses the native XP category page and routes", () => {
+  contains(
+    javascript,
+    "const renderAppearanceCategory = () =>",
+    '"Appearance and Themes"',
+    "Pick a task...",
+    "Change the computer's theme",
+    "Change the desktop background",
+    "Choose a screen saver",
+    "Change the screen resolution",
+    "or pick a Control Panel icon",
+    "assets/xp/icons/Display.png",
+    "assets/xp/icons/FolderOptions.png",
+    "assets/xp/icons/TaskbarAndStartMenu.png",
+    'openDisplayTab("desktop")',
+    'openDisplayTab("saver")',
+    'openDisplayTab("settings")',
+    "openTaskbarProperties();",
+  );
+  contains(
+    css,
+    ".control-panel-category-heading",
+    ".control-panel-task-links",
+    ".control-panel-category-icons",
+  );
+});
 test("desktop renders system places then virtual files", () => {
   const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
   const start = javascript.indexOf("const entries = [", desktop);

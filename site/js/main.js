@@ -2215,8 +2215,82 @@ const createControlPanelContent = () => {
 
 const wireControlPanel = (win) => {
   const content = win.el.querySelector(".control-panel-content");
+  const titleText = win.el.querySelector(".title-text");
+  const titleIcon = win.el.querySelector(".title-icon img");
+  const address = content.querySelector(".explorer-address input");
+  const addressIcon = content.querySelector(".explorer-address-field img");
+  const backButton = content.querySelector(
+    '.explorer-toolbar button[aria-label="Back"], .explorer-toolbar button:first-child',
+  );
+  const upButton = content.querySelector(
+    '.explorer-toolbar button[aria-label="Up"]',
+  );
+  backButton.dataset.controlPanelAction = "back";
+  upButton.dataset.controlPanelAction = "back";
+
+  const setWindowIdentity = (title, icon) => {
+    win.title = title;
+    win.icon = icon;
+    titleText.textContent = title;
+    titleIcon.src = icon;
+    address.value = title;
+    addressIcon.src = icon;
+    renderTaskButtons();
+  };
+
+  const openDisplayTab = (tab) => {
+    openSystemWindow("__display-properties");
+    openWindows
+      .get("__display-properties")
+      ?.el.querySelector(`#display-tab-${tab}`)
+      ?.click();
+  };
+
+  const renderAppearanceCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Appearance and Themes",
+      XP_ICON_PATHS["AppearanceAndThemes.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="fonts"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>Fonts</span></button>
+          <button type="button" data-control-panel-action="mouse"><span class="control-panel-small-glyph mouse-glyph" aria-hidden="true"></span><span>Mouse Pointers</span></button>
+          <button type="button" data-control-panel-action="contrast"><span class="control-panel-small-glyph contrast-glyph" aria-hidden="true"></span><span>High Contrast</span></button>
+          <button type="button" data-control-panel-action="user-picture"><img src="assets/xp/icons/UserAccounts.png" alt=""><span>User Account Picture</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="display-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Display</span></button>
+          <button type="button" data-control-panel-action="sound-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Sound</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/AppearanceAndThemes.png" alt=""><strong>Appearance and Themes</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="theme"><img src="assets/xp/icons/Go.png" alt=""><span>Change the computer's theme</span></button>
+        <button type="button" data-control-panel-action="desktop"><img src="assets/xp/icons/Go.png" alt=""><span>Change the desktop background</span></button>
+        <button type="button" data-control-panel-action="screen-saver"><img src="assets/xp/icons/Go.png" alt=""><span>Choose a screen saver</span></button>
+        <button type="button" data-control-panel-action="resolution"><img src="assets/xp/icons/Go.png" alt=""><span>Change the screen resolution</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons">
+        <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/Display.png" alt=""><span>Display</span></button>
+        <button type="button" data-control-panel-action="folder-options"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>Folder Options</span></button>
+        <button type="button" data-control-panel-action="taskbar-properties"><img src="assets/xp/icons/TaskbarAndStartMenu.png" alt=""><span>Taskbar and Start Menu</span></button>
+      </div>`;
+  };
+
   const actions = {
-    appearance: () => openSystemWindow("__display-properties"),
+    appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
     network: openNetworkStatus,
     users: openProjectSettings,
@@ -2263,6 +2337,36 @@ const wireControlPanel = (win) => {
         "Windows Update",
         "info",
       );
+    } else if (action === "back") {
+      closeGameWindow("__control-panel");
+      setTimeout(openControlPanel, 0);
+    } else if (action === "theme" || action === "display") {
+      openDisplayTab("themes");
+    } else if (action === "desktop") {
+      openDisplayTab("desktop");
+    } else if (action === "screen-saver") {
+      openDisplayTab("saver");
+    } else if (action === "resolution") {
+      openDisplayTab("settings");
+    } else if (action === "taskbar-properties") {
+      openTaskbarProperties();
+    } else if (action === "folder-options") {
+      XPDialogs.alert(
+        "Folder Options will be available from this Control Panel page.",
+        "Folder Options",
+        "info",
+      );
+    } else if (
+      [
+        "fonts",
+        "mouse",
+        "contrast",
+        "user-picture",
+        "display-help",
+        "sound-help",
+      ].includes(action)
+    ) {
+      openHelpAndSupport();
     }
   });
   content.querySelectorAll(".explorer-section-toggle").forEach((toggle) => {
@@ -6547,6 +6651,7 @@ const renderTaskButtons = () => {
   container.innerHTML = "";
 
   const appendTaskButton = ([gameId, win]) => {
+    const taskTitle = win.title || formatGameTitle(gameId);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className =
@@ -6554,10 +6659,10 @@ const renderTaskButtons = () => {
       (gameId === focusedGameId && !win.minimized ? " active" : "") +
       (win.needsAttention ? " needs-attention" : "");
     btn.dataset.game = gameId;
-    btn.title = formatGameTitle(gameId);
+    btn.title = taskTitle;
     btn.setAttribute(
       "aria-label",
-      `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
+      `${taskTitle}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
     );
     btn.setAttribute(
       "aria-pressed",
@@ -6565,10 +6670,12 @@ const renderTaskButtons = () => {
     );
 
     const icon = createGameIconElement(gameId, "task-icon");
+    const taskImage = icon.querySelector("img");
+    if (taskImage && win.icon) taskImage.src = win.icon;
 
     const label = document.createElement("span");
     label.className = "task-label";
-    label.textContent = formatGameTitle(gameId);
+    label.textContent = taskTitle;
 
     btn.append(icon, label);
     btn.addEventListener("click", () => activateTaskButton(gameId));

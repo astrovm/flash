@@ -255,6 +255,45 @@
       "pixelSha256": "4bb36c54a04bece67dcc1ecc44d7a84de3e76bcd394b5a59570c48c90ec3d4e6"
     }
   },
+  "assets/xp/icons/Display.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/DESK.CP_",
+    "sha256": "fe65341bbdfaafe0f2de6a94d24eee050cea6d706832403629553e0b16f65f33",
+    "resource": {
+      "parentSha256": "1fb5abae69103bf477f704189d75b0395f587234bfe94f9f79961d8fe2ce55ac",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "4769de7ef3753c027a398d20ed440e68a15acc11d3626cc295cd822b2a84573c"
+    }
+  },
+  "assets/xp/icons/FolderOptions.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "a442f02cb96f8286d07b6570c5f76340d50e2ee3dc75f199093d394be2481465",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 210,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "37ef1e6f632fda1819a62d3c5f4a84604b9ae1ec3d2f1b7bd1a70dfa009e0377"
+    }
+  },
+  "assets/xp/icons/TaskbarAndStartMenu.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "d6c776335476cf8d487b330245249209348a0e97d9bb8420bdb1ba19975f46fb",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 40,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "9f6c317873dfa3f9eccc10816317dae91feb053e8fc7b904b7c11a5d3a94d861"
+    }
+  },
   "assets/xp/icons/AccessibilityOptions.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

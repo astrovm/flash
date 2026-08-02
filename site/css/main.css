@@ -2621,6 +2621,152 @@ html[data-xp-appearance="silver"] {
   display: none;
 }
 
+.control-panel-category-page .control-panel-main {
+  padding: 8px 18px 18px;
+}
+
+.control-panel-category-heading {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 41px;
+  align-items: center;
+  gap: 7px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.control-panel-category-heading img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.control-panel-category-page .control-panel-main h1,
+.control-panel-category-page .control-panel-main h2 {
+  position: relative;
+  z-index: 1;
+  margin: 11px 0 9px 7px;
+  color: #fff;
+  font:
+    700 28px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.control-panel-category-page .control-panel-main h2 {
+  margin-top: 31px;
+}
+
+.control-panel-task-links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-left: 4px;
+}
+
+.control-panel-task-links button,
+.control-panel-category-icons button {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font:
+    700 11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  text-align: left;
+  text-shadow: 1px 1px rgba(35, 62, 143, 0.7);
+  cursor: var(--xp-cursor);
+}
+
+.control-panel-task-links button {
+  min-height: 25px;
+}
+
+.control-panel-task-links img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.control-panel-task-links button:hover span,
+.control-panel-task-links button:focus-visible span,
+.control-panel-category-icons button:hover span,
+.control-panel-category-icons button:focus-visible span {
+  text-decoration: underline;
+}
+
+.control-panel-category-icons {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 390px;
+  grid-template-columns: 180px 190px;
+  gap: 8px 10px;
+  margin-left: 4px;
+}
+
+.control-panel-category-icons button {
+  min-height: 38px;
+}
+
+.control-panel-category-icons img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.control-panel-category-page
+  .control-panel-sidebar
+  .explorer-section-body
+  > button {
+  min-height: 20px;
+  padding: 1px 0;
+}
+
+.control-panel-category-page .control-panel-sidebar .explorer-section-body img,
+.control-panel-small-glyph,
+.control-panel-help-glyph {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  object-fit: contain;
+}
+
+.control-panel-small-glyph {
+  border: 1px solid #6d88ad;
+  background: #fff;
+  box-shadow: inset 0 0 0 2px #222;
+}
+
+.control-panel-small-glyph.mouse-glyph {
+  border: 0;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(135deg, #f9f9f9 45%, #9da2a6 46% 55%, #fff 56%);
+  box-shadow: 0 0 0 1px #777;
+}
+
+.control-panel-small-glyph.contrast-glyph {
+  background: linear-gradient(90deg, #000 50%, #fff 50%);
+}
+
+.control-panel-help-glyph {
+  display: grid;
+  place-items: center;
+  border: 1px solid #7290bd;
+  background: #eef4ff;
+  color: #1454a5;
+  font-weight: 700;
+}
+
 .printers-body {
   display: grid;
   min-height: 0;
