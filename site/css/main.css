@@ -7355,6 +7355,163 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: min(458px, calc(100vh - 8px));
 }
 
+.mouse-properties-dialog {
+  width: min(404px, calc(100vw - 8px));
+  height: min(454px, calc(100vh - 8px));
+}
+
+.mouse-properties-dialog .dlg-body {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 28px);
+  padding: 7px;
+  background: var(--xp-dialog, #ece9d8);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.mouse-properties-tabs {
+  display: flex;
+  height: 23px;
+  align-items: flex-end;
+}
+
+.mouse-properties-tabs button {
+  height: 22px;
+  margin-right: -1px;
+  padding: 2px 7px;
+  border: 1px solid #919b9c;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#fff, #ece9d8);
+  font: inherit;
+}
+
+.mouse-properties-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 2;
+  height: 24px;
+  border-bottom-color: #ece9d8;
+}
+
+.mouse-properties-panels {
+  height: 354px;
+  margin-top: -1px;
+  padding: 12px 14px;
+  border: 1px solid #919b9c;
+  background: #ece9d8;
+}
+
+.mouse-properties-panels > section {
+  height: 100%;
+}
+
+.mouse-properties-panels fieldset {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 0 7px;
+  padding: 9px;
+  border: 1px solid #aaa;
+}
+
+.mouse-properties-panels legend {
+  color: #04e;
+}
+
+.mouse-properties-panels p {
+  margin: 7px 0;
+}
+
+.mouse-buttons-configuration {
+  height: 108px;
+}
+
+.mouse-buttons-configuration img {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  width: 98px;
+  height: 98px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.mouse-double-click {
+  height: 102px;
+}
+
+.mouse-double-click label {
+  display: flex;
+  width: 210px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mouse-double-click input[type="range"] {
+  width: 100px;
+}
+
+.mouse-double-click > button {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  width: 58px;
+  height: 58px;
+  background: #fff;
+  border: 1px solid #aaa;
+}
+
+.mouse-double-click > button img {
+  width: 28px;
+  height: 28px;
+}
+
+.mouse-click-lock {
+  height: 90px;
+}
+
+.mouse-click-lock > .xp-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+}
+
+.mouse-properties-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: -7px;
+  display: flex;
+  gap: 8px;
+}
+
+.mouse-pointer-list,
+.mouse-hardware-list {
+  box-sizing: border-box;
+  height: 170px;
+  margin: 5px 0;
+  padding: 4px;
+  overflow: auto;
+  border: 2px inset #fff;
+  background: #fff;
+  line-height: 20px;
+}
+
+.mouse-hardware-list strong,
+.mouse-hardware-list span {
+  display: flex;
+  justify-content: space-between;
+}
+
+[data-mouse-panel="pointers"] > label,
+[data-mouse-panel="pointer-options"] label,
+[data-mouse-panel="wheel"] label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 7px 0;
+}
+
 .internet-properties-dialog .dlg-body {
   position: relative;
   box-sizing: border-box;

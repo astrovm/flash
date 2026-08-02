@@ -2800,12 +2800,13 @@ const wireControlPanel = (win) => {
       );
     } else if (action === "internet-options") {
       openInternetProperties();
+    } else if (action === "mouse") {
+      openMouseProperties();
     } else if (
       action === "phone-modem" ||
       action === "add-hardware" ||
       action === "game-controllers" ||
       action === "keyboard" ||
-      action === "mouse" ||
       action === "scanners-cameras"
     ) {
       const hardwareLabels = {
@@ -7723,6 +7724,61 @@ const openTaskManager = () => {
   maximize.addEventListener("click", () =>
     dialog.el.classList.toggle("task-manager-maximized"),
   );
+};
+
+const openMouseProperties = (initialTab = "buttons") => {
+  const dialog = XPDialogs.createDialog({ title: "Mouse Properties" });
+  dialog.el.classList.add("mouse-properties-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(88, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(117, Math.max(4, window.innerHeight - 454))}px`,
+  });
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const tabs = ["Buttons", "Pointers", "Pointer Options", "Wheel", "Hardware"];
+  dialog.body.innerHTML = `
+    <div class="mouse-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-mouse-tab="${tab.toLowerCase().replace(" ", "-")}">${tab}</button>`).join("")}</div>
+    <div class="mouse-properties-panels">
+      <section data-mouse-panel="buttons">
+        <fieldset class="mouse-buttons-configuration"><legend>Button configuration</legend><label><input type="checkbox"> Switch primary and secondary buttons</label><p>Select this check box to make the button on the<br>right the one you use for primary functions such<br>as selecting and dragging.</p><img src="assets/xp/icons/Mouse.png" alt=""></fieldset>
+        <fieldset class="mouse-double-click"><legend>Double-click speed</legend><p>Double-click the folder to test your setting. If the<br>folder does not open or close, try using a slower<br>setting.</p><label>Speed: <span>Slow</span><input type="range" min="0" max="10" value="5"><span>Fast</span></label><button type="button" aria-label="Test double-click"><img src="assets/xp/icons/Fonts.png" alt=""></button></fieldset>
+        <fieldset class="mouse-click-lock"><legend>ClickLock</legend><label><input type="checkbox"> Turn on ClickLock</label><button class="xp-btn" disabled>Settings...</button><p>Enables you to highlight or drag without holding down the mouse<br>button. To set, briefly press the mouse button. To release, click the<br>mouse button again.</p></fieldset>
+      </section>
+      <section data-mouse-panel="pointers" hidden><label>Scheme:<select><option>Windows Default (system scheme)</option></select></label><fieldset><legend>Customize:</legend><div class="mouse-pointer-list">Normal Select<br>Help Select<br>Working in Background<br>Busy<br>Precision Select<br>Text Select<br>Handwriting<br>Unavailable</div><button class="xp-btn">Use Default</button><button class="xp-btn">Browse...</button></fieldset><label><input type="checkbox" checked> Enable pointer shadow</label></section>
+      <section data-mouse-panel="pointer-options" hidden><fieldset><legend>Motion</legend><p>Select a pointer speed:</p><label><span>Slow</span><input type="range" min="0" max="10" value="5"><span>Fast</span></label><label><input type="checkbox" checked> Enhance pointer precision</label></fieldset><fieldset><legend>Snap To</legend><label><input type="checkbox"> Automatically move pointer to the default button in a dialog box</label></fieldset><fieldset><legend>Visibility</legend><label><input type="checkbox"> Display pointer trails</label><label><input type="checkbox"> Hide pointer while typing</label><label><input type="checkbox" checked> Show location of pointer when I press the CTRL key</label></fieldset></section>
+      <section data-mouse-panel="wheel" hidden><fieldset><legend>Scrolling</legend><p>Roll the wheel one notch to scroll:</p><label><input type="radio" name="wheel-scroll" checked> The following number of lines at a time: <input type="number" value="3" min="1"></label><label><input type="radio" name="wheel-scroll"> One screen at a time</label></fieldset></section>
+      <section data-mouse-panel="hardware" hidden><label>Devices:</label><div class="mouse-hardware-list"><strong>Name <span>Type</span></strong><span>PS/2 Compatible Mouse <i>Mouse</i></span></div><fieldset><legend>Device Properties</legend><p>Manufacturer: Microsoft</p><p>Location: plugged into PS/2 mouse port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+    </div>
+    <div class="dlg-buttons mouse-properties-buttons"></div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-mouse-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.mouseTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-mouse-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.mousePanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-mouse-tab]")?.dataset.mouseTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+  activate(initialTab);
 };
 
 const openInternetProperties = (initialTab = "general") => {

@@ -437,6 +437,24 @@ test("Internet Properties matches the seven-tab XP applet", () => {
   contains(css, ".internet-properties-dialog", ".internet-properties-tabs");
 });
 
+test("Mouse Properties matches the five-tab XP applet", () => {
+  contains(
+    javascript,
+    'const openMouseProperties = (initialTab = "buttons") =>',
+    'title: "Mouse Properties"',
+    'data-mouse-panel="buttons"',
+    'data-mouse-panel="pointers"',
+    'data-mouse-panel="pointer-options"',
+    'data-mouse-panel="wheel"',
+    'data-mouse-panel="hardware"',
+    "Switch primary and secondary buttons",
+    "Double-click speed",
+    "Turn on ClickLock",
+    "openMouseProperties();",
+  );
+  contains(css, ".mouse-properties-dialog", ".mouse-properties-tabs");
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,
