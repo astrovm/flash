@@ -24,6 +24,16 @@
     "member": "I386/BLISS.JP_",
     "sha256": "aecf72dc2cb3efd15575f081af8907ff5138d5c342d76b23d3bdb5e4db567720"
   },
+  "assets/xp/system/UserAdministrator.bmp": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CHESS.BM_",
+    "sha256": "f5003282e999e6d9704b53812e3713723b37838efdcf8102901c14baa174257a"
+  },
+  "assets/xp/system/UserGuest.bmp": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/GUEST.BM_",
+    "sha256": "a1030522425b3258e21b3fd2a1dbafef2ed07154142dead7e9b7f4ae667c8726"
+  },
   "assets/xp/wallpapers/blue-lace-16.bmp": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/BLULAC16.BM_",

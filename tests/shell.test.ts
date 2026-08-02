@@ -448,6 +448,31 @@ test("Folder Options matches the four-tab XP shell applet", () => {
     ".folder-offline-panel",
   );
 });
+
+test("User Accounts uses the native XP task page and account pictures", () => {
+  contains(
+    javascript,
+    'title: "User Accounts"',
+    "const createUserAccountsContent = () =>",
+    'openSystemWindow("__user-accounts")',
+    "Pick a task...",
+    "Change an account",
+    "Create a new account",
+    "Change the way users log on or off",
+    "or pick an account to change",
+    "UserAdministrator.bmp",
+    "UserGuest.bmp",
+    "Computer administrator",
+    "Guest account is off",
+  );
+  contains(
+    css,
+    ".user-accounts-content",
+    ".user-accounts-toolbar",
+    ".user-accounts-sidebar",
+    ".user-account-choices",
+  );
+});
 test("desktop renders system places then virtual files", () => {
   const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
   const start = javascript.indexOf("const entries = [", desktop);

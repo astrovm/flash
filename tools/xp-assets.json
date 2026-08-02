@@ -22,6 +22,14 @@
     { "member": "AZUL.JP_", "output": "site/assets/xp/wallpapers/azul.jpg" },
     { "member": "BLISS.JP_", "output": "site/assets/xp/bliss.jpg" },
     {
+      "member": "CHESS.BM_",
+      "output": "site/assets/xp/system/UserAdministrator.bmp"
+    },
+    {
+      "member": "GUEST.BM_",
+      "output": "site/assets/xp/system/UserGuest.bmp"
+    },
+    {
       "member": "BLULAC16.BM_",
       "output": "site/assets/xp/wallpapers/blue-lace-16.bmp"
     },

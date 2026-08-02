@@ -2375,6 +2375,289 @@ html[data-xp-appearance="silver"] {
 
 /* Control Panel category view */
 
+.user-accounts-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  color: #111;
+  font:
+    11px/14px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.user-accounts-toolbar {
+  display: flex;
+  height: 33px;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  padding: 0 5px;
+  border-bottom: 1px solid #aaa;
+  background: #eeede5;
+}
+
+.user-accounts-toolbar button {
+  display: flex;
+  height: 29px;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 0;
+  background: transparent;
+  color: #555;
+  font: inherit;
+}
+
+.user-accounts-toolbar button:not(:disabled):hover {
+  border: 1px solid #316ac5;
+  background: #fff;
+}
+
+.user-accounts-toolbar button img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.user-accounts-toolbar button:disabled img {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.user-accounts-body {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 201px minmax(0, 1fr);
+}
+
+.user-accounts-sidebar {
+  padding: 12px;
+  background: linear-gradient(180deg, #7394de, #5981d2);
+}
+
+.user-accounts-sidebar section {
+  padding: 0 10px 6px;
+  background: #f4f7ff;
+}
+
+.user-accounts-sidebar h2 {
+  height: 23px;
+  margin: 0 -10px 5px;
+  padding: 4px 10px 0;
+  background: linear-gradient(90deg, #fff, #c7d7f5);
+  color: #154ba0;
+  font-size: 11px;
+}
+
+.user-accounts-sidebar button {
+  display: flex;
+  width: 100%;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+  border: 0;
+  background: transparent;
+  color: #0645c0;
+  font: inherit;
+  text-align: left;
+}
+
+.user-accounts-sidebar button span {
+  display: grid;
+  width: 14px;
+  height: 16px;
+  flex: none;
+  place-items: center;
+  border: 1px solid #7290bd;
+  background: #eef4ff;
+  color: #1454a5;
+  font-weight: 700;
+}
+
+.user-accounts-main {
+  position: relative;
+  min-width: 0;
+  overflow: auto;
+  background: #6375d6;
+  color: #fff;
+}
+
+.user-accounts-heading {
+  display: flex;
+  height: 33px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: linear-gradient(90deg, #2258b7, #577ada);
+  font-weight: 700;
+}
+
+.user-accounts-heading img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.user-accounts-page {
+  padding: 28px 22px;
+}
+
+.user-accounts-page h1,
+.user-accounts-page h2 {
+  margin: 0 0 22px;
+  color: #f4f4ff;
+  font:
+    700 28px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.user-accounts-page h2 {
+  margin-top: 31px;
+  font-size: 25px;
+}
+
+.user-account-task-links {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-left: 4px;
+}
+
+.user-account-task-links button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font:
+    11px Tahoma,
+    sans-serif;
+  text-align: left;
+  text-shadow: 1px 1px rgb(35 62 143 / 70%);
+}
+
+.user-account-task-links img {
+  width: 18px;
+  height: 18px;
+}
+
+.user-account-choices {
+  display: grid;
+  width: 445px;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-left: 18px;
+}
+
+.user-account-choices button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font:
+    11px Tahoma,
+    sans-serif;
+  text-align: left;
+}
+
+.user-account-choices button > img,
+.user-account-detail-title img {
+  width: 48px;
+  height: 48px;
+  padding: 3px;
+  border: 2px solid #fff;
+  background: #fff;
+  object-fit: cover;
+}
+
+.user-account-choices span,
+.user-account-detail-links {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-account-choices small {
+  display: block;
+  color: #f2f2ff;
+}
+
+.user-account-detail {
+  padding-top: 22px;
+}
+
+.user-account-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-account-detail-title h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.user-account-detail-links {
+  gap: 13px;
+  margin: 25px 0 0 68px;
+}
+
+.user-account-detail-links button {
+  width: max-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font:
+    700 12px Tahoma,
+    sans-serif;
+}
+
+.user-account-form,
+.user-account-logon {
+  max-width: 445px;
+}
+
+.user-account-form input {
+  width: 260px;
+  height: 22px;
+  border: 1px solid #7f9db9;
+  font:
+    12px Tahoma,
+    sans-serif;
+}
+
+.user-account-form .xp-btn,
+.user-account-logon .xp-btn {
+  float: right;
+  margin-top: 25px;
+}
+
+.user-account-logon label {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.user-account-logon label span,
+.user-account-logon label small {
+  display: block;
+}
+
+.user-account-logon label strong {
+  font-size: 13px;
+}
+
 .control-panel-content {
   display: flex;
   min-height: 0;

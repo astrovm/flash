@@ -199,6 +199,11 @@ const systemShortcuts = {
     icon: "assets/xp/icons/ControlPanel.png",
     desktop: false,
   },
+  "__user-accounts": {
+    title: "User Accounts",
+    icon: "assets/xp/icons/UserAccounts.png",
+    desktop: false,
+  },
   __printers: {
     title: "Printers and Faxes",
     icon: "assets/xp/icons/PrintersAndFaxes.png",
@@ -2293,7 +2298,7 @@ const wireControlPanel = (win) => {
     appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
     network: openNetworkStatus,
-    users: openProjectSettings,
+    users: () => openSystemWindow("__user-accounts"),
     programs: () => openSystemWindow("__internet-games"),
     datetime: openDateTimeProperties,
     sounds: toggleTrayVolumePopup,
@@ -2374,11 +2379,109 @@ const wireControlPanel = (win) => {
   });
 };
 
+const createUserAccountsContent = () => {
+  const content = document.createElement("div");
+  content.className = "user-accounts-content";
+  content.innerHTML = `
+    <div class="user-accounts-toolbar">
+      <button type="button" data-user-accounts-action="back" disabled><img src="assets/xp/icons/Back.png" alt=""> Back</button>
+      <button type="button" disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""></button>
+      <button type="button" data-user-accounts-action="home"><img src="assets/xp/icons/UserAccounts.png" alt=""> Home</button>
+    </div>
+    <div class="user-accounts-body">
+      <aside class="user-accounts-sidebar">
+        <section><h2>Learn About</h2>
+          <button type="button" data-user-accounts-action="help"><span>?</span> User accounts</button>
+          <button type="button" data-user-accounts-action="help"><span>?</span> User account types</button>
+          <button type="button" data-user-accounts-action="help"><span>?</span> Switching users</button>
+        </section>
+      </aside>
+      <main class="user-accounts-main"></main>
+    </div>`;
+  const main = content.querySelector(".user-accounts-main");
+  const back = content.querySelector('[data-user-accounts-action="back"]');
+  const home = content.querySelector('[data-user-accounts-action="home"]');
+  const renderHeader = () => `
+    <div class="user-accounts-heading"><img src="assets/xp/icons/UserAccounts.png" alt=""><strong>User Accounts</strong></div>`;
+  const renderHome = () => {
+    back.disabled = true;
+    home.disabled = true;
+    main.innerHTML = `${renderHeader()}
+      <div class="user-accounts-page">
+        <h1>Pick a task...</h1>
+        <div class="user-account-task-links">
+          <button type="button" data-user-accounts-action="change"><img src="assets/xp/icons/Go.png" alt="">Change an account</button>
+          <button type="button" data-user-accounts-action="create"><img src="assets/xp/icons/Go.png" alt="">Create a new account</button>
+          <button type="button" data-user-accounts-action="logon"><img src="assets/xp/icons/Go.png" alt="">Change the way users log on or off</button>
+        </div>
+        <h2>or pick an account to change</h2>
+        <div class="user-account-choices">
+          <button type="button" data-user-accounts-action="administrator"><img src="assets/xp/system/UserAdministrator.bmp" alt=""><span><strong>Administrator</strong><small>Computer administrator</small></span></button>
+          <button type="button" data-user-accounts-action="guest"><img src="assets/xp/system/UserGuest.bmp" alt=""><span><strong>Guest</strong><small>Guest account is off</small></span></button>
+        </div>
+      </div>`;
+  };
+  const renderAccount = (guest = false) => {
+    back.disabled = false;
+    home.disabled = false;
+    const name = guest ? "Guest" : "Administrator";
+    const image = guest
+      ? "assets/xp/system/UserGuest.bmp"
+      : "assets/xp/system/UserAdministrator.bmp";
+    main.innerHTML = `${renderHeader()}<div class="user-accounts-page user-account-detail">
+      <div class="user-account-detail-title"><img src="${image}" alt=""><h1>What do you want to change about ${name}'s account?</h1></div>
+      <div class="user-account-detail-links">
+        <button type="button">Change the name</button>
+        <button type="button">Create a password</button>
+        <button type="button">Change the picture</button>
+        <button type="button">Change the account type</button>
+        <button type="button">Delete the account</button>
+      </div>
+    </div>`;
+  };
+  const renderCreate = () => {
+    back.disabled = false;
+    home.disabled = false;
+    main.innerHTML = `${renderHeader()}<div class="user-accounts-page user-account-form">
+      <h1>Name the new account</h1>
+      <p>Type a name for the new account:</p>
+      <input type="text" aria-label="New account name">
+      <p>This name will appear on the Welcome screen and on the Start menu.</p>
+      <button type="button" class="xp-btn" data-user-accounts-action="home">Create Account</button>
+    </div>`;
+    main.querySelector("input").focus();
+  };
+  const renderLogon = () => {
+    back.disabled = false;
+    home.disabled = false;
+    main.innerHTML = `${renderHeader()}<div class="user-accounts-page user-account-logon">
+      <h1>Select logon and logoff options</h1>
+      <label><input type="checkbox" checked> <span><strong>Use the Welcome screen</strong><small>Clicking this option enables the Welcome screen.</small></span></label>
+      <label><input type="checkbox" checked> <span><strong>Use Fast User Switching</strong><small>Switch users without closing programs.</small></span></label>
+      <button type="button" class="xp-btn" data-user-accounts-action="home">Apply Options</button>
+    </div>`;
+  };
+  content.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-user-accounts-action]")?.dataset
+      .userAccountsAction;
+    if (action === "home" || action === "back") renderHome();
+    else if (action === "change" || action === "administrator")
+      renderAccount(false);
+    else if (action === "guest") renderAccount(true);
+    else if (action === "create") renderCreate();
+    else if (action === "logon") renderLogon();
+    else if (action === "help") openHelpAndSupport();
+  });
+  renderHome();
+  return content;
+};
+
 const createSystemWindowContent = (shortcutId, win) => {
   const content = document.createElement("div");
   content.className = "explorer-content";
 
   if (shortcutId === "__control-panel") return createControlPanelContent();
+  if (shortcutId === "__user-accounts") return createUserAccountsContent();
 
   if (shortcutId === "__printers") {
     content.className = "explorer-content printers-content";
@@ -6310,10 +6413,12 @@ const openSystemWindow = (shortcutId) => {
   const isInternetGames = shortcutId === "__internet-games";
   const isDisplayProperties = shortcutId === "__display-properties";
   const isControlPanel = shortcutId === "__control-panel";
+  const isUserAccounts = shortcutId === "__user-accounts";
   const isSearch = shortcutId === "__search";
   const isPrinters = shortcutId === "__printers";
   const isHelp = shortcutId === "__help";
   if (isDisplayProperties) el.classList.add("display-properties-window");
+  if (isUserAccounts) el.classList.add("user-accounts-window");
   const windowWidth = Math.min(
     isProjectSettings
       ? 540
@@ -6321,11 +6426,13 @@ const openSystemWindow = (shortcutId) => {
         ? 760
         : isControlPanel
           ? 800
-          : isHelp
-            ? 768
-            : isDisplayProperties
-              ? 404
-              : 800,
+          : isUserAccounts
+            ? 729
+            : isHelp
+              ? 768
+              : isDisplayProperties
+                ? 404
+                : 800,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -6335,11 +6442,13 @@ const openSystemWindow = (shortcutId) => {
         ? 540
         : isControlPanel
           ? 600
-          : isHelp
-            ? 650
-            : isDisplayProperties
-              ? 454
-              : 600,
+          : isUserAccounts
+            ? 530
+            : isHelp
+              ? 650
+              : isDisplayProperties
+                ? 454
+                : 600,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -6347,28 +6456,32 @@ const openSystemWindow = (shortcutId) => {
   el.style.left = `${
     isControlPanel
       ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
-      : isPrinters
-        ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-        : isHelp
-          ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-          : isSearch
+      : isUserAccounts
+        ? Math.min(147, Math.max(8, desktopWidth - windowWidth))
+        : isPrinters
+          ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+          : isHelp
             ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-            : isDisplayProperties
-              ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-              : Math.max(8, (desktopWidth - windowWidth) / 2)
+            : isSearch
+              ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+              : isDisplayProperties
+                ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+                : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
       ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
-      : isPrinters
-        ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
-        : isHelp
-          ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
-          : isSearch
-            ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
-            : isDisplayProperties
-              ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
-              : Math.max(8, (desktopHeight - windowHeight) / 2)
+      : isUserAccounts
+        ? Math.min(52, Math.max(8, desktopHeight - windowHeight))
+        : isPrinters
+          ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
+          : isHelp
+            ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
+            : isSearch
+              ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+              : isDisplayProperties
+                ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+                : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 
