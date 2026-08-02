@@ -2802,11 +2802,12 @@ const wireControlPanel = (win) => {
       openInternetProperties();
     } else if (action === "mouse") {
       openMouseProperties();
+    } else if (action === "keyboard") {
+      openKeyboardProperties();
     } else if (
       action === "phone-modem" ||
       action === "add-hardware" ||
       action === "game-controllers" ||
-      action === "keyboard" ||
       action === "scanners-cameras"
     ) {
       const hardwareLabels = {
@@ -7724,6 +7725,53 @@ const openTaskManager = () => {
   maximize.addEventListener("click", () =>
     dialog.el.classList.toggle("task-manager-maximized"),
   );
+};
+
+const openKeyboardProperties = (initialTab = "speed") => {
+  const dialog = XPDialogs.createDialog({ title: "Keyboard Properties" });
+  dialog.el.classList.add("keyboard-properties-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(110, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(144, Math.max(4, window.innerHeight - 454))}px`,
+  });
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="keyboard-properties-tabs" role="tablist"><button type="button" role="tab" data-keyboard-tab="speed">Speed</button><button type="button" role="tab" data-keyboard-tab="hardware">Hardware</button></div>
+    <div class="keyboard-properties-panels">
+      <section data-keyboard-panel="speed"><fieldset class="keyboard-repeat"><legend>Character repeat</legend><img class="keyboard-delay-icon" src="assets/xp/icons/KeyboardRepeatDelay.png" alt=""><img class="keyboard-rate-icon" src="assets/xp/icons/KeyboardRepeatRate.png" alt=""><label><b>Repeat delay:</b><span>Long</span><input type="range" min="0" max="10" value="7"><span>Short</span></label><label><b>Repeat rate:</b><span>Slow</span><input type="range" min="0" max="10" value="10"><span>Fast</span></label><label>Click here and hold down a key to test repeat rate:<input type="text"></label></fieldset><fieldset class="keyboard-cursor"><legend>Cursor blink rate</legend><i aria-hidden="true"></i><label><span>None</span><input type="range" min="0" max="10" value="6"><span>Fast</span></label></fieldset></section>
+      <section data-keyboard-panel="hardware" hidden><label>Devices:</label><div class="keyboard-hardware-list"><strong>Name <span>Type</span></strong><span>Standard 101/102-Key or Microsoft Natural PS/2 Keyboard <i>Keyboard</i></span></div><fieldset><legend>Device Properties</legend><p>Manufacturer: (Standard keyboards)</p><p>Location: plugged into keyboard port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+    </div><div class="dlg-buttons keyboard-properties-buttons"></div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-keyboard-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.keyboardTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-keyboard-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.keyboardPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-keyboard-tab]")?.dataset
+      .keyboardTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+  activate(initialTab);
 };
 
 const openMouseProperties = (initialTab = "buttons") => {

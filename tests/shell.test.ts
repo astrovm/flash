@@ -455,6 +455,24 @@ test("Mouse Properties matches the five-tab XP applet", () => {
   contains(css, ".mouse-properties-dialog", ".mouse-properties-tabs");
 });
 
+test("Keyboard Properties matches the two-tab XP applet", () => {
+  contains(
+    javascript,
+    'const openKeyboardProperties = (initialTab = "speed") =>',
+    'title: "Keyboard Properties"',
+    'data-keyboard-panel="speed"',
+    'data-keyboard-panel="hardware"',
+    "Character repeat",
+    "Repeat delay:",
+    "KeyboardRepeatDelay.png",
+    "KeyboardRepeatRate.png",
+    "Repeat rate:",
+    "Cursor blink rate",
+    "openKeyboardProperties();",
+  );
+  contains(css, ".keyboard-properties-dialog", ".keyboard-properties-tabs");
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,

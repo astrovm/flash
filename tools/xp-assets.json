@@ -471,6 +471,26 @@
       "member": "MAIN.CP_",
       "expandedName": "main.cpl",
       "resourceType": 14,
+      "resourceId": 105,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/KeyboardRepeatDelay.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 106,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/KeyboardRepeatRate.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
       "resourceId": 100,
       "width": 32,
       "height": 32,

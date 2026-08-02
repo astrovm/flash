@@ -642,6 +642,32 @@
       "pixelSha256": "1acc578d629c4ba74fe5c8e1f6e15a58a7f6f01107f4e83705ed9cd5d167a7c4"
     }
   },
+  "assets/xp/icons/KeyboardRepeatDelay.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "c5323254ec8bf160b60a8de9f08ab5d493f409fdcb58c3fc673cff17903ea77f",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 105,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "d49abac3df3742394ae6e8af4e28fe5d5b2da74c251cf0d96835050794931d71"
+    }
+  },
+  "assets/xp/icons/KeyboardRepeatRate.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "33d42f06850502bfbd611582b28e71259b195f73ec7fee7400f18d1f638cae0a",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 106,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "eff8bcc95335c3f6f2b2f7cee8a7bea03e1bc33ea44d89872963a5aead5f0919"
+    }
+  },
   "assets/xp/icons/Mouse.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MAIN.CP_",

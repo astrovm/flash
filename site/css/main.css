@@ -7360,6 +7360,201 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: min(454px, calc(100vh - 8px));
 }
 
+.keyboard-properties-dialog {
+  width: min(404px, calc(100vw - 8px));
+  height: min(454px, calc(100vh - 8px));
+}
+
+.keyboard-properties-dialog .dlg-body {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 28px);
+  padding: 7px;
+  background: var(--xp-dialog, #ece9d8);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.keyboard-properties-tabs {
+  display: flex;
+  height: 23px;
+  align-items: flex-end;
+}
+
+.keyboard-properties-tabs button {
+  height: 22px;
+  margin-right: -1px;
+  padding: 2px 8px;
+  border: 1px solid #919b9c;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#fff, #ece9d8);
+  font: inherit;
+}
+
+.keyboard-properties-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 2;
+  height: 24px;
+  border-bottom-color: #ece9d8;
+}
+
+.keyboard-properties-panels {
+  height: 354px;
+  margin-top: -1px;
+  padding: 11px 14px;
+  border: 1px solid #919b9c;
+  background: #ece9d8;
+}
+
+.keyboard-properties-panels fieldset {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 0 10px;
+  padding: 14px 20px;
+  border: 1px solid #aaa;
+}
+
+.keyboard-properties-panels legend {
+  color: #04e;
+}
+
+.keyboard-repeat {
+  height: 230px;
+}
+
+.keyboard-repeat > img {
+  position: absolute;
+  left: 20px;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.keyboard-delay-icon {
+  top: 19px;
+}
+
+.keyboard-rate-icon {
+  top: 96px;
+}
+
+.keyboard-repeat label {
+  position: absolute;
+  right: 20px;
+  left: 72px;
+  display: grid;
+  grid-template-columns: 35px 190px 35px;
+  align-items: center;
+  margin: 0;
+}
+
+.keyboard-repeat label:nth-of-type(1) {
+  top: 19px;
+}
+
+.keyboard-repeat label:nth-of-type(2) {
+  top: 96px;
+}
+
+.keyboard-repeat label b {
+  grid-column: 1 / -1;
+  margin-bottom: 4px;
+  font-weight: 400;
+}
+
+.keyboard-repeat label input[type="range"] {
+  grid-column: 2;
+  width: 190px;
+}
+
+.keyboard-repeat label:last-child {
+  top: 166px;
+  right: 20px;
+  left: 20px;
+  display: block;
+}
+
+.keyboard-repeat label:last-child input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 24px;
+  margin-top: 5px;
+}
+
+.keyboard-cursor {
+  height: 78px;
+}
+
+.keyboard-cursor i {
+  position: absolute;
+  top: 32px;
+  left: 31px;
+  width: 1px;
+  height: 14px;
+  background: #111;
+}
+
+.keyboard-cursor label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.keyboard-cursor input {
+  width: 180px;
+}
+
+.keyboard-properties-dialog input[type="range"] {
+  height: 22px;
+  margin-top: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.keyboard-properties-dialog input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border: 1px solid #888;
+  background: repeating-linear-gradient(90deg, #888 0 1px, #fff 1px 9px);
+}
+
+.keyboard-properties-dialog input[type="range"]::-webkit-slider-thumb {
+  width: 12px;
+  height: 20px;
+  margin-top: -9px;
+  appearance: none;
+  border: 1px solid #3d8134;
+  background: linear-gradient(90deg, #78ca65, #efffeb, #55a747);
+  clip-path: polygon(0 0, 100% 0, 100% 68%, 50% 100%, 0 68%);
+}
+
+.keyboard-properties-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: -14px;
+  display: flex;
+  gap: 8px;
+}
+
+.keyboard-hardware-list {
+  box-sizing: border-box;
+  height: 175px;
+  margin: 5px 0 12px;
+  padding: 4px;
+  overflow: auto;
+  border: 2px inset #fff;
+  background: #fff;
+}
+
+.keyboard-hardware-list strong,
+.keyboard-hardware-list span {
+  display: flex;
+  justify-content: space-between;
+}
+
 .mouse-properties-dialog .dlg-body {
   position: relative;
   box-sizing: border-box;
