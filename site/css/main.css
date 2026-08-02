@@ -13867,6 +13867,232 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   background: #0a246a;
 }
 
+/* Native XP applications launched from All Programs. */
+.xp-native-program-window .window-content,
+.xp-native-program {
+  min-width: 0;
+  min-height: 0;
+}
+
+.xp-native-program {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 10px;
+  overflow: auto;
+  background: #ece9d8;
+  color: #000;
+  font:
+    12px Tahoma,
+    sans-serif;
+}
+
+.xp-program-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-content: start;
+  gap: 10px;
+  min-height: calc(100% - 20px);
+  padding: 18px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-program-panel > img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.xp-program-panel h2,
+.xp-program-panel p,
+.xp-program-panel label,
+.xp-program-panel .xp-program-workspace,
+.xp-program-panel .xp-program-actions {
+  grid-column: 2;
+  margin: 0;
+}
+
+.xp-program-panel label {
+  display: block;
+  margin: 4px 0;
+}
+
+.xp-program-actions {
+  align-self: end;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px !important;
+}
+
+.xp-program-actions button,
+.xp-program-toolbar button {
+  min-width: 76px;
+}
+
+.xp-calculator-display {
+  box-sizing: border-box;
+  width: 100%;
+  height: 28px;
+  margin-bottom: 10px;
+  padding: 3px 6px;
+  text-align: right;
+  font:
+    16px "Courier New",
+    monospace;
+}
+
+.xp-calculator-keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.xp-calculator-keys button {
+  min-height: 34px;
+}
+
+.xp-calculator-keys button:nth-child(-n + 3) {
+  color: #b00000;
+}
+
+.xp-terminal-output,
+.xp-terminal-prompt {
+  display: block;
+  margin: -10px -10px 0;
+  padding: 8px;
+  background: #000;
+  color: #c0c0c0;
+  font:
+    13px "Courier New",
+    monospace;
+  white-space: pre-wrap;
+}
+
+.xp-terminal-output {
+  height: calc(100% - 36px);
+  overflow: auto;
+}
+
+.xp-terminal-prompt {
+  display: flex;
+  margin-top: 0;
+}
+
+.xp-terminal-prompt input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: #000;
+  color: #c0c0c0;
+  font: inherit;
+}
+
+.xp-editor-toolbar,
+.xp-paint-toolbar,
+.xp-program-toolbar,
+.xp-browser-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: -10px -10px 8px;
+  padding: 5px;
+  border-bottom: 1px solid #aca899;
+}
+
+.xp-editor-page {
+  box-sizing: border-box;
+  min-height: calc(100% - 34px);
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font:
+    14px "Times New Roman",
+    serif;
+}
+
+.xp-paint-canvas {
+  display: block;
+  max-width: 100%;
+  border: 1px solid #808080;
+  background: #fff;
+  cursor: crosshair;
+}
+
+.xp-keyboard-output {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 6px;
+}
+
+.xp-keyboard-keys {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.xp-keyboard-keys button {
+  min-height: 32px;
+}
+
+.xp-address-form {
+  padding: 8px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-address-form input {
+  margin-right: 6px;
+}
+
+.xp-address-list {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.xp-address-list th,
+.xp-address-list td {
+  padding: 5px 8px;
+  border: 1px solid #aca899;
+  text-align: left;
+}
+
+.xp-character-grid {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  margin: 8px 0;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-character-grid button {
+  min-width: 0;
+  height: 27px;
+  padding: 0;
+}
+
+.xp-browser-toolbar label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+}
+
+.xp-browser-toolbar input {
+  flex: 1;
+}
+
+.xp-browser-page {
+  min-height: calc(100% - 42px);
+  padding: 18px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
 html[data-xp-appearance="classic"][data-xp-start-menu="classic"] #start-menu,
 html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
   .start-menu-body,

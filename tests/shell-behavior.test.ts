@@ -460,6 +460,13 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     "accessories",
     "games",
     "startup",
+    "internet-explorer",
+    "msn",
+    "outlook-express",
+    "remote-assistance",
+    "windows-media-player",
+    "windows-messenger",
+    "windows-movie-maker",
     "astro-settings",
     "internet-games",
   ]);
@@ -489,10 +496,56 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
     .click();
+  const accessories = flyouts.querySelectorAll(".start-program-flyout")[1]!;
+  const accessoryIds = [
+    ...accessories.querySelectorAll<HTMLElement>("[data-program-id]"),
+  ].map((item) => item.dataset.programId);
+  for (const programId of [
+    "accessibility",
+    "communications",
+    "entertainment",
+    "system-tools",
+    "address-book",
+    "calculator",
+    "command-prompt",
+    "notepad",
+    "paint",
+    "wordpad",
+  ]) {
+    expect(accessoryIds).toContain(programId);
+  }
+  const calculator = accessories.querySelector<HTMLButtonElement>(
+    '[data-program-id="calculator"]',
+  )!;
+  calculator.click();
+  const calculatorWindow = shell.document.querySelector(
+    '.xp-window[data-game="__calculator"]',
+  )!;
+  const calculatorKeys = [
+    ...calculatorWindow.querySelectorAll<HTMLButtonElement>(
+      ".xp-calculator-keys button",
+    ),
+  ];
+  for (const key of ["2", "+", "3", "="]) {
+    calculatorKeys.find((button) => button.textContent === key)!.click();
+  }
+  expect(
+    calculatorWindow.querySelector<HTMLInputElement>(".xp-calculator-display")!
+      .value,
+  ).toBe("5");
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
+    .click();
   const notepad = flyouts.querySelector<HTMLButtonElement>(
     '[data-program-id="notepad"]',
   )!;
   expect(notepad).not.toBeNull();
+  expect(notepad.querySelector("img")!.getAttribute("src")).toEndWith(
+    "/Notepad.png",
+  );
   notepad.click();
   expect(shell.document.querySelector(".notepad-window")).not.toBeNull();
 
