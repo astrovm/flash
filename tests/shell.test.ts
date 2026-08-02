@@ -75,8 +75,7 @@ test("caption controls select every native Luna sprite state", () => {
   const controls = between(css, ".title-buttons {", "/* ---- Game application");
   contains(
     controls,
-    "align-self: flex-start",
-    "margin-top: 4px",
+    "margin-right: 2px",
     "--caption-glyph-y: -13px",
     "--caption-button-y: -21px",
     "--caption-glyph-y: -39px",
