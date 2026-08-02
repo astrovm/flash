@@ -290,7 +290,7 @@ test("virtual folders use desktop sized folder icons", () => {
   contains(javascript, 'return addImage("NewFolder.png")');
   contains(css, ".desktop-icon .explorer-item-icon img");
   expect(css).toMatch(
-    /\.desktop-icon \.explorer-item-icon img\s*\{[^}]*width:\s*38px/,
+    /\.desktop-icon \.explorer-item-icon img\s*\{[^}]*width:\s*32px/,
   );
 });
 test("text files open in filesystem backed notepad", () => {
