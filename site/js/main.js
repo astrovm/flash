@@ -109,6 +109,7 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
 });
 const XP_ICON_PATHS = Object.freeze({
   "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
+  "AccessibilitySound.png": "assets/xp/icons/AccessibilitySound.png",
   "AddressBook.png": "assets/xp/icons/AddressBook.png",
   "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
   "AppearanceAndThemes.png": "assets/xp/icons/AppearanceAndThemes.png",
@@ -125,6 +126,12 @@ const XP_ICON_PATHS = Object.freeze({
   "Go.png": "assets/xp/icons/Go.png",
   "HelpAndSupport.png": "assets/xp/icons/HelpAndSupport.png",
   "InternetOptions.png": "assets/xp/icons/InternetOptions.png",
+  "InternetExplorer.png": "assets/xp/icons/InternetExplorer.png",
+  "InternetBackgammon.png": "assets/xp/icons/InternetBackgammon.png",
+  "InternetCheckers.png": "assets/xp/icons/InternetCheckers.png",
+  "InternetHearts.png": "assets/xp/icons/InternetHearts.png",
+  "InternetReversi.png": "assets/xp/icons/InternetReversi.png",
+  "InternetSpades.png": "assets/xp/icons/InternetSpades.png",
   "LocalDisk.png": "assets/xp/icons/LocalDisk.png",
   "OpticalDrive.png": "assets/xp/icons/OpticalDrive.png",
   "Logout.png": "assets/xp/icons/Logout.png",
@@ -157,6 +164,7 @@ const XP_ICON_PATHS = Object.freeze({
   "RecentDocuments.png": "assets/xp/icons/RecentDocuments.png",
   "RemoteDesktopConnection.png": "assets/xp/icons/RemoteDesktopConnection.png",
   "RemoteDesktop.png": "assets/xp/icons/RemoteDesktop.png",
+  "RemoteAssistance.png": "assets/xp/icons/RemoteAssistance.png",
   "RemovableMedia.png": "assets/xp/icons/RemovableMedia.png",
   "Restore.png": "assets/xp/icons/Restore.png",
   "Run.png": "assets/xp/icons/Run.png",
@@ -179,12 +187,22 @@ const XP_ICON_PATHS = Object.freeze({
   "WindowsExplorer.png": "assets/xp/icons/WindowsExplorer.png",
   "WindowsUpdate.png": "assets/xp/icons/WindowsUpdate.png",
   "WindowsUpdateMenu.png": "assets/xp/icons/WindowsUpdateMenu.png",
+  "WindowsMediaPlayer.png": "assets/xp/icons/WindowsMediaPlayer.png",
+  "WindowsMovieMaker.png": "assets/xp/icons/WindowsMovieMaker.png",
   "WordPad.png": "assets/xp/icons/WordPad.png",
   "Display.png": "assets/xp/icons/Display.png",
   "Magnifier.png": "assets/xp/icons/Magnifier.png",
+  "Minesweeper.png": "assets/xp/icons/Minesweeper.png",
+  "MSN.png": "assets/xp/icons/MSN.png",
   "Notepad.png": "assets/xp/icons/Notepad.png",
   "OnScreenKeyboard.png": "assets/xp/icons/OnScreenKeyboard.png",
+  "OutlookExpress.png": "assets/xp/icons/OutlookExpress.png",
+  "FreeCell.png": "assets/xp/icons/FreeCell.png",
+  "Hearts.png": "assets/xp/icons/Hearts.png",
+  "Pinball.png": "assets/xp/icons/Pinball.png",
   "ScheduledTasks.png": "assets/xp/icons/ScheduledTasks.png",
+  "Solitaire.png": "assets/xp/icons/Solitaire.png",
+  "SpiderSolitaire.png": "assets/xp/icons/SpiderSolitaire.png",
   "TaskbarAndStartMenu.png": "assets/xp/icons/TaskbarAndStartMenu.png",
   "ExplorerProperties.png": "assets/xp/icons/ExplorerProperties.png",
   "MyComputer.png": "assets/xp/icons/MyComputer.png",
@@ -365,7 +383,7 @@ const XP_NATIVE_PROGRAMS = Object.freeze({
   },
   "__windows-media-player": {
     title: "Windows Media Player",
-    icon: "SoundsSpeechAudio.png",
+    icon: "WindowsMediaPlayer.png",
     kind: "media",
   },
   __backup: { title: "Backup", icon: "RemovableMedia.png", kind: "wizard" },
@@ -443,18 +461,18 @@ const XP_NATIVE_PROGRAMS = Object.freeze({
   __wordpad: { title: "WordPad", icon: "WordPad.png", kind: "editor" },
   "__internet-explorer": {
     title: "Internet Explorer",
-    icon: "InternetOptions.png",
+    icon: "InternetExplorer.png",
     kind: "browser",
   },
-  __msn: { title: "MSN", icon: "NetworkAndInternet.png", kind: "browser" },
+  __msn: { title: "MSN", icon: "MSN.png", kind: "browser" },
   "__outlook-express": {
     title: "Outlook Express",
-    icon: "AddressBook.png",
+    icon: "OutlookExpress.png",
     kind: "mail",
   },
   "__remote-assistance": {
     title: "Remote Assistance",
-    icon: "RemoteDesktop.png",
+    icon: "RemoteAssistance.png",
     kind: "wizard",
   },
   "__windows-messenger": {
@@ -464,58 +482,58 @@ const XP_NATIVE_PROGRAMS = Object.freeze({
   },
   "__windows-movie-maker": {
     title: "Windows Movie Maker",
-    icon: "Paint.png",
+    icon: "WindowsMovieMaker.png",
     kind: "movie",
   },
   __freecell: {
     title: "FreeCell",
-    icon: "ProgramFolder.png",
+    icon: "FreeCell.png",
     kind: "native-game",
   },
-  __hearts: { title: "Hearts", icon: "ProgramFolder.png", kind: "native-game" },
+  __hearts: { title: "Hearts", icon: "Hearts.png", kind: "native-game" },
   "__internet-backgammon": {
     title: "Internet Backgammon",
-    icon: "ProgramFolder.png",
+    icon: "InternetBackgammon.png",
     kind: "native-game",
   },
   "__internet-checkers": {
     title: "Internet Checkers",
-    icon: "ProgramFolder.png",
+    icon: "InternetCheckers.png",
     kind: "native-game",
   },
   "__internet-hearts": {
     title: "Internet Hearts",
-    icon: "ProgramFolder.png",
+    icon: "InternetHearts.png",
     kind: "native-game",
   },
   "__internet-reversi": {
     title: "Internet Reversi",
-    icon: "ProgramFolder.png",
+    icon: "InternetReversi.png",
     kind: "native-game",
   },
   "__internet-spades": {
     title: "Internet Spades",
-    icon: "ProgramFolder.png",
+    icon: "InternetSpades.png",
     kind: "native-game",
   },
   __minesweeper: {
     title: "Minesweeper",
-    icon: "ProgramFolder.png",
+    icon: "Minesweeper.png",
     kind: "native-game",
   },
   __pinball: {
     title: "Pinball",
-    icon: "ProgramFolder.png",
+    icon: "Pinball.png",
     kind: "native-game",
   },
   __solitaire: {
     title: "Solitaire",
-    icon: "ProgramFolder.png",
+    icon: "Solitaire.png",
     kind: "native-game",
   },
   "__spider-solitaire": {
     title: "Spider Solitaire",
-    icon: "ProgramFolder.png",
+    icon: "SpiderSolitaire.png",
     kind: "native-game",
   },
 });
@@ -7543,6 +7561,213 @@ const createXPProgramContent = (programId) => {
     return content;
   }
 
+  if (programId === "__minesweeper") {
+    content.className += " xp-minesweeper";
+    content.innerHTML = `<div class="xp-minesweeper-menu"><button type="button">Game</button><button type="button">Help</button></div><div class="xp-minesweeper-panel"><output data-mines aria-label="Mines remaining">010</output><button type="button" data-reset aria-label="New game">🙂</button><output data-time aria-label="Elapsed time">000</output></div><div class="xp-minesweeper-board" role="grid" aria-label="Minesweeper board"></div>`;
+    const board = content.querySelector(".xp-minesweeper-board");
+    const mineCounter = content.querySelector("[data-mines]");
+    const timeCounter = content.querySelector("[data-time]");
+    const reset = content.querySelector("[data-reset]");
+    const mineIndexes = new Set([2, 8, 19, 25, 33, 48, 56, 63, 75, 79]);
+    let flags = 0;
+    let elapsed = 0;
+    let timer = null;
+    let finished = false;
+    const neighbors = (index) => {
+      const row = Math.floor(index / 9);
+      const column = index % 9;
+      const result = [];
+      for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+        for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+          if (!rowOffset && !columnOffset) continue;
+          const nextRow = row + rowOffset;
+          const nextColumn = column + columnOffset;
+          if (nextRow < 0 || nextRow > 8 || nextColumn < 0 || nextColumn > 8)
+            continue;
+          result.push(nextRow * 9 + nextColumn);
+        }
+      }
+      return result;
+    };
+    const stopTimer = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+    const startTimer = () => {
+      if (timer || finished) return;
+      timer = setInterval(() => {
+        if (!content.isConnected) return stopTimer();
+        elapsed = Math.min(999, elapsed + 1);
+        timeCounter.textContent = String(elapsed).padStart(3, "0");
+      }, 1000);
+    };
+    const reveal = (index) => {
+      const cell = board.children[index];
+      if (
+        finished ||
+        cell.classList.contains("revealed") ||
+        cell.dataset.flagged
+      )
+        return;
+      startTimer();
+      cell.classList.add("revealed");
+      if (mineIndexes.has(index)) {
+        cell.textContent = "✹";
+        cell.classList.add("mine");
+        reset.textContent = "☹";
+        finished = true;
+        stopTimer();
+        mineIndexes.forEach((mine) => {
+          board.children[mine].textContent = "✹";
+          board.children[mine].classList.add("revealed", "mine");
+        });
+        return;
+      }
+      const nearby = neighbors(index).filter((neighbor) =>
+        mineIndexes.has(neighbor),
+      ).length;
+      if (nearby) {
+        cell.textContent = String(nearby);
+        cell.dataset.count = String(nearby);
+      } else {
+        neighbors(index).forEach(reveal);
+      }
+      if (board.querySelectorAll(".revealed:not(.mine)").length === 71) {
+        reset.textContent = "😎";
+        finished = true;
+        stopTimer();
+      }
+    };
+    const initialize = () => {
+      stopTimer();
+      elapsed = 0;
+      flags = 0;
+      finished = false;
+      timeCounter.textContent = "000";
+      mineCounter.textContent = "010";
+      reset.textContent = "🙂";
+      board.replaceChildren();
+      for (let index = 0; index < 81; index += 1) {
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.setAttribute("role", "gridcell");
+        cell.setAttribute("aria-label", `Covered cell ${index + 1}`);
+        cell.addEventListener("click", () => reveal(index));
+        cell.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+          if (finished || cell.classList.contains("revealed")) return;
+          const flagged = cell.dataset.flagged === "true";
+          if (!flagged && flags === 10) return;
+          cell.dataset.flagged = flagged ? "" : "true";
+          cell.textContent = flagged ? "" : "⚑";
+          flags += flagged ? -1 : 1;
+          mineCounter.textContent = String(10 - flags).padStart(3, "0");
+        });
+        board.appendChild(cell);
+      }
+    };
+    reset.addEventListener("click", initialize);
+    initialize();
+    return content;
+  }
+
+  if (program.kind === "volume") {
+    const { volume, isMuted } = getMasterVolume();
+    content.innerHTML = `<div class="xp-volume-console"><div class="xp-volume-heading">Volume Control</div><label>Volume<input type="range" min="0" max="100" value="${volume}" orient="vertical" aria-label="Volume level"></label><label><input type="checkbox" ${isMuted ? "checked" : ""}> Mute all</label></div>`;
+    const slider = content.querySelector('input[type="range"]');
+    const mute = content.querySelector('input[type="checkbox"]');
+    const apply = () => setMasterVolume(Number(slider.value), mute.checked);
+    slider.addEventListener("input", apply);
+    mute.addEventListener("change", apply);
+    return content;
+  }
+
+  if (program.kind === "recorder") {
+    content.innerHTML = `<div class="xp-recorder-display"><output aria-label="Recording time">0.00 sec</output><div class="xp-recorder-wave" aria-hidden="true"></div></div><div class="xp-recorder-controls"><button type="button" data-action="record" aria-label="Record">●</button><button type="button" data-action="stop" aria-label="Stop">■</button><button type="button" data-action="play" aria-label="Play">▶</button></div><p class="xp-program-status" aria-live="polite">Stopped</p>`;
+    const output = content.querySelector("output");
+    const status = content.querySelector(".xp-program-status");
+    let elapsed = 0;
+    let timer = null;
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+      status.textContent = "Stopped";
+    };
+    content
+      .querySelector('[data-action="record"]')
+      .addEventListener("click", () => {
+        stop();
+        elapsed = 0;
+        status.textContent = "Recording";
+        content.querySelector(".xp-recorder-wave").classList.add("active");
+        timer = setInterval(() => {
+          if (!content.isConnected) return stop();
+          elapsed += 0.1;
+          output.textContent = `${elapsed.toFixed(2)} sec`;
+        }, 100);
+      });
+    content
+      .querySelector('[data-action="stop"]')
+      .addEventListener("click", () => {
+        stop();
+        content.querySelector(".xp-recorder-wave").classList.remove("active");
+      });
+    content
+      .querySelector('[data-action="play"]')
+      .addEventListener("click", () => {
+        stop();
+        status.textContent = elapsed
+          ? "Playing recorded sound"
+          : "No recorded sound";
+      });
+    return content;
+  }
+
+  if (program.kind === "media") {
+    content.innerHTML = `<div class="xp-media-screen"><div class="xp-media-logo">Windows Media Player</div><p data-track>Windows XP Startup</p></div><div class="xp-media-controls"><button type="button" data-media="play" aria-label="Play">▶</button><button type="button" data-media="stop" aria-label="Stop">■</button><input type="range" min="0" max="100" value="70" aria-label="Player volume"></div>`;
+    const audio = new Audio("assets/xp/sounds/startup.wav");
+    const volume = content.querySelector('input[type="range"]');
+    volume.addEventListener(
+      "input",
+      () => (audio.volume = Number(volume.value) / 100),
+    );
+    content
+      .querySelector('[data-media="play"]')
+      .addEventListener("click", () => audio.play());
+    content
+      .querySelector('[data-media="stop"]')
+      .addEventListener("click", () => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+    return content;
+  }
+
+  if (program.kind === "disk") {
+    content.innerHTML = `<div class="xp-disk-header"><img src="${XP_ICON_PATHS[program.icon]}" alt=""><div><b>${program.title}</b><p>Local Disk (C:)</p></div></div><fieldset><legend>Files to delete</legend><label><input type="checkbox" data-size="18" checked> Downloaded Program Files <span>18 KB</span></label><label><input type="checkbox" data-size="1536" checked> Temporary Internet Files <span>1,536 KB</span></label><label><input type="checkbox" data-size="64"> Recycle Bin <span>64 KB</span></label><label><input type="checkbox" data-size="2944" checked> Temporary files <span>2,944 KB</span></label></fieldset><p>You can free up <b data-disk-total>4,498 KB</b> of disk space.</p><button type="button" data-disk-clean>OK</button><p class="xp-program-status" aria-live="polite"></p>`;
+    const updateTotal = () => {
+      const total = [
+        ...content.querySelectorAll('input[type="checkbox"]:checked'),
+      ].reduce((sum, checkbox) => sum + Number(checkbox.dataset.size), 0);
+      content.querySelector("[data-disk-total]").textContent =
+        `${total.toLocaleString()} KB`;
+    };
+    content
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((checkbox) => checkbox.addEventListener("change", updateTotal));
+    content.querySelector("[data-disk-clean]").addEventListener("click", () => {
+      const total = content.querySelector("[data-disk-total]").textContent;
+      content.querySelector(".xp-program-status").textContent =
+        `${total} of temporary data was cleaned.`;
+    });
+    return content;
+  }
+
+  if (program.kind === "information") {
+    content.innerHTML = `<div class="xp-system-information"><aside><button type="button" class="selected">System Summary</button><button type="button">Hardware Resources</button><button type="button">Components</button><button type="button">Software Environment</button></aside><table><tbody><tr><th>OS Name</th><td>Microsoft Windows XP Professional</td></tr><tr><th>Version</th><td>5.1.2600 Service Pack 3 Build 2600</td></tr><tr><th>System Manufacturer</th><td>Astro VM</td></tr><tr><th>System Type</th><td>X86-based PC</td></tr><tr><th>Total Physical Memory</th><td>512.00 MB</td></tr><tr><th>Display</th><td>${window.innerWidth} × ${window.innerHeight}</td></tr></tbody></table></div>`;
+    return content;
+  }
+
   if (program.kind === "remote") {
     content.innerHTML = `<div class="xp-program-panel"><img src="${XP_ICON_PATHS[program.icon]}" alt=""><p>Enter the name of the remote computer.</p><label>Computer: <input aria-label="Computer"></label><button type="button">Connect</button><p class="xp-program-status" aria-live="polite"></p></div>`;
     content.querySelector("button").addEventListener("click", () => {
@@ -7610,14 +7835,25 @@ const openXPProgram = (programId) => {
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
-  const windowWidth = Math.min(
-    program.kind === "calculator" ? 260 : 640,
-    desktopWidth - 16,
-  );
-  const windowHeight = Math.min(
-    program.kind === "calculator" ? 330 : 470,
-    desktopHeight - 16,
-  );
+  const preferredSizes = {
+    calculator: [260, 330],
+    minesweeper: [184, 250],
+    volume: [250, 360],
+    recorder: [450, 190],
+    media: [600, 420],
+    disk: [430, 420],
+    information: [700, 500],
+  };
+  const [preferredWidth, preferredHeight] =
+    programId === "__minesweeper"
+      ? preferredSizes.minesweeper
+      : preferredSizes[program.kind] || [640, 470];
+  if (programId === "__minesweeper") {
+    el.style.minWidth = `${preferredWidth}px`;
+    el.style.minHeight = `${preferredHeight}px`;
+  }
+  const windowWidth = Math.min(preferredWidth, desktopWidth - 16);
+  const windowHeight = Math.min(preferredHeight, desktopHeight - 16);
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
   el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;

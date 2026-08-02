@@ -485,6 +485,11 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       .querySelector('[data-program-id="windows-update"] img')!
       .getAttribute("src"),
   ).toEndWith("/WindowsUpdate.png");
+  expect(
+    flyouts
+      .querySelector('[data-program-id="internet-explorer"] img')!
+      .getAttribute("src"),
+  ).toEndWith("/InternetExplorer.png");
   for (const programId of ["accessories", "games", "startup"]) {
     expect(
       flyouts
@@ -554,6 +559,28 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
     .click();
+  const minesweeper = flyouts.querySelector<HTMLButtonElement>(
+    '[data-program-id="minesweeper"]',
+  )!;
+  expect(minesweeper.querySelector("img")!.getAttribute("src")).toEndWith(
+    "/Minesweeper.png",
+  );
+  minesweeper.click();
+  const minesweeperWindow = shell.document.querySelector(
+    '.xp-window[data-game="__minesweeper"]',
+  )!;
+  const mineCells = minesweeperWindow.querySelectorAll<HTMLButtonElement>(
+    ".xp-minesweeper-board [role='gridcell']",
+  );
+  expect(mineCells).toHaveLength(81);
+  mineCells[40]!.click();
+  expect(mineCells[40]!.classList.contains("revealed")).toBeTrue();
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
   const adventure = [
     ...flyouts.querySelectorAll<HTMLButtonElement>(".start-program-folder"),
   ].find((button) => button.textContent?.trim().startsWith("Adventure"));
@@ -576,6 +603,49 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       '.xp-window[data-game="inside-the-firewall"] iframe',
     ),
   ).not.toBeNull();
+});
+
+test("restored XP utilities expose dedicated working controls", async () => {
+  const shell = await login(await loadShell());
+  const openEntertainment = () => {
+    shell.document.getElementById("start-button")!.click();
+    shell.document.getElementById("all-programs-button")!.click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+    flyouts
+      .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
+      .click();
+    flyouts
+      .querySelector<HTMLButtonElement>('[data-program-id="entertainment"]')!
+      .click();
+    return flyouts;
+  };
+
+  let flyouts = openEntertainment();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="volume-control"]')!
+    .click();
+  const volume = shell.document.querySelector<HTMLInputElement>(
+    '.xp-window[data-game="__volume-control"] input[type="range"]',
+  )!;
+  volume.value = "35";
+  volume.dispatchEvent(new shell.window.Event("input", { bubbles: true }));
+  expect(shell.window.localStorage.getItem("volume")).toBe("35");
+
+  flyouts = openEntertainment();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="sound-recorder"]')!
+    .click();
+  const recorder = shell.document.querySelector(
+    '.xp-window[data-game="__sound-recorder"]',
+  )!;
+  recorder.querySelector<HTMLButtonElement>('[data-action="record"]')!.click();
+  expect(recorder.querySelector(".xp-recorder-wave")!.classList).toContain(
+    "active",
+  );
+  recorder.querySelector<HTMLButtonElement>('[data-action="stop"]')!.click();
+  expect(recorder.querySelector(".xp-recorder-wave")!.classList).not.toContain(
+    "active",
+  );
 });
 
 test("Taskbar Properties applies Classic Start menu independently and switches previews", async () => {

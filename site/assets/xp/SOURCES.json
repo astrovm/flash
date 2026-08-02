@@ -513,6 +513,227 @@
       "pixelSha256": "0a09032ecc102bb86a5c3f449e0eead2b8fe812f46f9fb6e8ac779d6416baedb"
     }
   },
+  "assets/xp/icons/InternetExplorer.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/IEXPLORE.EX_",
+    "sha256": "6ce6169fbc93749f71ac833c5f08ca6b7a44988340e59fb5716aee73c708a027",
+    "resource": {
+      "parentSha256": "814a37d89a79aa3975308e723bc1a3a67360323b7e3584de00896fe7c59bbb8e",
+      "type": 14,
+      "id": 32528,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "d24b8dca8e18040c672b40c7443031fdc9088432c9866b9be8ffe6a7731761d0"
+    }
+  },
+  "assets/xp/icons/MSN.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSNSUSII.EX_",
+    "sha256": "0f615442d9e31be1abb9f48e84783bc7e573e6ea087000a84d79baa20f76449f",
+    "resource": {
+      "parentSha256": "4ecd3f8b60c60870cdd67abf319b373c3438bb7bceac46209b2c87bd5e73a3f6",
+      "type": 14,
+      "id": 3000,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "3a9f34bc0e07a81b84e79fc9b7f0de02636b94dd5064e5da3f691947cdf81664"
+    }
+  },
+  "assets/xp/icons/OutlookExpress.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSIMN.EX_",
+    "sha256": "a6af211ef2d13c97ed1f8163c667eeba74f270dc4657415d00bd92f4bbeeef1f",
+    "resource": {
+      "parentSha256": "5c60d72118528ee01cce426a686b32f949a0153919868aaf388f32f8f6233a9c",
+      "type": 14,
+      "id": 2,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "ec18d1970ce785ca173bfef113693833abec81644d222b8fe13be3a5befc93d1"
+    }
+  },
+  "assets/xp/icons/RemoteAssistance.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/RCIMLBY.EX_",
+    "sha256": "d8bb903867531d6a2d28879f1d3a6a09fa70e516a01053ebed3b679ad046b4a8",
+    "resource": {
+      "parentSha256": "5cedd1217e74f90a2677c8d00d26b962b64a0908a40fc33d8a24f3a6663075eb",
+      "type": 14,
+      "id": 201,
+      "language": 1033,
+      "frame": "16x15x32",
+      "pixelSha256": "3658fe39b20be85d034eac6bd7beea9426f7eb9d799b51e1d7c2ab52ec1c492e"
+    }
+  },
+  "assets/xp/icons/WindowsMediaPlayer.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WMPLAYER.EX_",
+    "sha256": "dabc5b73853d714bf2590a5358fd010d6b58d6e0083359e490bf233ae741b5f4",
+    "resource": {
+      "parentSha256": "8db6e6b9437f429321dbf0008541469e71e21937a60796ccb9fac65adff0007f",
+      "type": 14,
+      "id": "IDR_MAINFRAME",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "dab5fc59b0e106edfa4e60b1820dd672d4665931d9827f186532838d843f21d0"
+    }
+  },
+  "assets/xp/icons/WindowsMovieMaker.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MOVIEMK.EX_",
+    "sha256": "d82551299a1675d3905375b70246b8f67275e77ed8c330a8ffcc8defef11ef0b",
+    "resource": {
+      "parentSha256": "7fbc6f8fa4de27ba15f9802ce4dbde3209010cd2bc5d855f533ececf6ed69789",
+      "type": 14,
+      "id": 128,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "b473fc56a068e2e75797f2c319c974a6e67b4405beb90d64c60904b14670cef1"
+    }
+  },
+  "assets/xp/icons/FreeCell.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FREECELL.EX_",
+    "sha256": "1dda32ab81b0570c437ab8eec77c493f088fe10315c676498f645998ed3ed011",
+    "resource": {
+      "parentSha256": "ba517f623b778f4b842f559ea344cb64d3cae9de172aecfa4e330c733baad601",
+      "type": 14,
+      "id": 601,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "e1b23c5f439bf119437ef665d89da3683114d40c213339eca8eff98211bf9b96"
+    }
+  },
+  "assets/xp/icons/Hearts.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSHEARTS.EX_",
+    "sha256": "21f3aa987ecf259d2c084e3a67fbade91900dd783e69d9a188527f41260e7b12",
+    "resource": {
+      "parentSha256": "df1f92fa1102e7956867a47f27c76f2ca404a354a01387b7165745e9c41f0d7e",
+      "type": 14,
+      "id": 31234,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "27e425d38db242fd3c0abc7a0fdba0986e73a07ea856b63e1ff9aa684790abe0"
+    }
+  },
+  "assets/xp/icons/InternetBackgammon.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/BCKGZM.EX_",
+    "sha256": "4f1058e1d9aed6717bef6b1c79de265b4bbe6aefb06f9772ce434231b482bed6",
+    "resource": {
+      "parentSha256": "570f319af061bb12652ee0a49fd702ee7037db6a02ca52ee6ec29a2f8d74bf6f",
+      "type": 14,
+      "id": "IDI_ICON",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "38e158286e2ac254880ded8a0eee43942f9aa6534fdb658fc583e75a1a56e3ea"
+    }
+  },
+  "assets/xp/icons/InternetCheckers.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CHKRZM.EX_",
+    "sha256": "9854526f7e94b0e122fdd99c25700c5743f21bc5ac920b42b7ae48df5acaa9f3",
+    "resource": {
+      "parentSha256": "971be06ce14c306921ae6b03ff2eb8dee598cdfee6ed2f43879ca4f579dc2521",
+      "type": 14,
+      "id": "IDI_ICON",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "3f1d4a89a29c6851bea9e7b55964da1cdd9e2c4f4573bde8299b1023433269c7"
+    }
+  },
+  "assets/xp/icons/InternetHearts.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HRTZZM.EX_",
+    "sha256": "f133ae1f18c03395779ddce8777e9414a4d1af1faa216a6c8a1b6c6fb34656b5",
+    "resource": {
+      "parentSha256": "098de42eb3d95eafbbc132293e2a18edd5ec7de1a73571b527fad55d5bca2064",
+      "type": 14,
+      "id": "IDI_ICON",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "aab5bb9d8b1537221e72885a278e09793576af5ad5edefde50879e4ab85945df"
+    }
+  },
+  "assets/xp/icons/InternetReversi.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/RVSEZM.EX_",
+    "sha256": "16befc0913d30dcbebe2ded55a41952d4ee12a41e4144265327fce8290ca2505",
+    "resource": {
+      "parentSha256": "3b107c9d7cf38ecb2f600d6563fe71fe1641f572d6808e3bb4bd5d9c9338381b",
+      "type": 14,
+      "id": "IDI_ICON",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "f1a5e4c50d71acd448120202ccc434295048d7a61a87bf382b4d1154b4fb591e"
+    }
+  },
+  "assets/xp/icons/InternetSpades.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHVLZM.EX_",
+    "sha256": "9e578497d79ad39be59949639ba1b2518b377d586fd0ff38b6884289674170e8",
+    "resource": {
+      "parentSha256": "d51a05f0ab95a46678bd296a969f83720249e298057f6a685b5e6814727a0902",
+      "type": 14,
+      "id": "IDI_ICON",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "012fbdac42a08be243d96c2f7c48e6b35c5b90734fa42a009b23bb8f101cfec6"
+    }
+  },
+  "assets/xp/icons/Minesweeper.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "fd3e4806b118b76819e788bc80a4cc7f720e48b935574a3d3c3e2a3df87c9531",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "c1b5c67f3d0a4a3e8bd0071c7e8df31922d84763b8b494b010ef975671b0063e"
+    }
+  },
+  "assets/xp/icons/Pinball.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PINBALL.EX_",
+    "sha256": "bce7bf6f7b067ef9c7f64875d7e92ba49a6d37821877d72520efad2e42bd761f",
+    "resource": {
+      "parentSha256": "2bbc8234685fe2f6324040af6ea20123cf00c4a56882ce0d9074f0beefac67bc",
+      "type": 14,
+      "id": "ICON_1",
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "6a0977df2f75d8fe0c0bff973c4ae500bf324710b6db910b4bce005651660065"
+    }
+  },
+  "assets/xp/icons/Solitaire.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SOL.EX_",
+    "sha256": "48bf72c135a8ab074576ae85be58bb2228cff63a4a6e4a4b707632567f4302f4",
+    "resource": {
+      "parentSha256": "a6fc95a5b288593c9559bd177ec43bf9b30d8a98cf19e82bf5a1ba5600857f04",
+      "type": 14,
+      "id": 500,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "12246f154c76d166e05f1bfb47d3d861f913d303896637186cb0698e234fd081"
+    }
+  },
+  "assets/xp/icons/SpiderSolitaire.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "95e535b67656ed1f09a643aa2ccc2e70d82298dd74264dbcac883d00b2e87695",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 14,
+      "id": 103,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "0b1fe9c6db3b22581a13fb9a1d3bdacdeb046274fb0e12d383a0e726ab0850ef"
+    }
+  },
   "assets/xp/icons/AppearanceAndThemes.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

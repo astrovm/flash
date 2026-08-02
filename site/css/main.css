@@ -14093,6 +14093,245 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   background: #fff;
 }
 
+.xp-minesweeper {
+  padding: 0;
+  overflow: hidden;
+  background: #c0c0c0;
+  font-family: Tahoma, sans-serif;
+}
+
+.xp-minesweeper-menu {
+  display: flex;
+  height: 22px;
+}
+
+.xp-minesweeper-menu button {
+  padding: 1px 7px;
+  border: 0;
+  background: transparent;
+}
+
+.xp-minesweeper-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px;
+  padding: 4px 6px;
+  border: 3px inset #fff;
+}
+
+.xp-minesweeper-panel output {
+  min-width: 42px;
+  padding: 1px 3px;
+  background: #000;
+  color: #f00;
+  font:
+    22px "Courier New",
+    monospace;
+  text-align: right;
+}
+
+.xp-minesweeper-panel [data-reset] {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.xp-minesweeper-board {
+  display: grid;
+  grid-template-columns: repeat(9, 18px);
+  width: max-content;
+  margin: 6px;
+  border: 3px inset #fff;
+}
+
+.xp-minesweeper-board button {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  min-width: 0;
+  padding: 0;
+  border: 2px outset #fff;
+  background: #c0c0c0;
+  font:
+    bold 12px Arial,
+    sans-serif;
+  line-height: 14px;
+}
+
+.xp-minesweeper-board button.revealed {
+  border: 1px solid #808080;
+}
+
+.xp-minesweeper-board button[data-count="1"] {
+  color: #0000ff;
+}
+
+.xp-minesweeper-board button[data-count="2"] {
+  color: #008000;
+}
+
+.xp-minesweeper-board button[data-count="3"],
+.xp-minesweeper-board button.mine {
+  color: #ff0000;
+}
+
+.xp-volume-console {
+  display: flex;
+  height: calc(100% - 20px);
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 2px outset #fff;
+}
+
+.xp-volume-heading {
+  width: 100%;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #808080;
+  text-align: center;
+}
+
+.xp-volume-console label:first-of-type {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.xp-volume-console input[type="range"] {
+  width: 150px;
+  margin: 65px -55px;
+  transform: rotate(-90deg);
+}
+
+.xp-recorder-display {
+  padding: 10px;
+  border: 2px inset #fff;
+  background: #000;
+  color: #00ff00;
+  text-align: right;
+}
+
+.xp-recorder-wave {
+  height: 20px;
+  margin-top: 5px;
+  background: linear-gradient(
+      90deg,
+      transparent 49%,
+      #00a000 50%,
+      transparent 51%
+    )
+    0 0 / 8px 100%;
+  opacity: 0.35;
+}
+
+.xp-recorder-wave.active {
+  opacity: 1;
+  animation: xp-recorder-pulse 0.35s steps(2) infinite;
+}
+
+@keyframes xp-recorder-pulse {
+  50% {
+    transform: scaleY(0.45);
+  }
+}
+
+.xp-recorder-controls,
+.xp-media-controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.xp-recorder-controls button,
+.xp-media-controls button {
+  min-width: 40px;
+}
+
+.xp-media-screen {
+  display: grid;
+  min-height: 260px;
+  place-content: center;
+  border: 2px inset #fff;
+  background: radial-gradient(circle, #345e9e, #071938 70%);
+  color: #fff;
+  text-align: center;
+}
+
+.xp-media-logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.xp-media-controls input {
+  margin-left: auto;
+}
+
+.xp-disk-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.xp-disk-header img {
+  width: 32px;
+  height: 32px;
+}
+
+.xp-disk-header p {
+  margin: 2px 0;
+}
+
+.xp-native-disk fieldset label {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 6px;
+  padding: 5px;
+}
+
+.xp-system-information {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 180px 1fr;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-system-information aside {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #7f9db9;
+}
+
+.xp-system-information aside button {
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.xp-system-information aside button.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.xp-system-information table {
+  align-self: start;
+  border-collapse: collapse;
+}
+
+.xp-system-information th,
+.xp-system-information td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #ece9d8;
+  text-align: left;
+}
+
 html[data-xp-appearance="classic"][data-xp-start-menu="classic"] #start-menu,
 html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
   .start-menu-body,
