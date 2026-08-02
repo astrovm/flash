@@ -463,6 +463,19 @@
       "pixelSha256": "44cd0688ceff17c274f2a4d352a4d1b77c2d8d01ba899334e4f972b5aa8fb069"
     }
   },
+  "assets/xp/icons/LogoffKey.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSGINA.DL_",
+    "sha256": "b3bacc899d731e83cfd818fcd81f311e648b149d87058423ceb99694bc5710a4",
+    "resource": {
+      "parentSha256": "651b16027b4f4b0ed2f827e32b7e66188cdb023db8c7b1a9a1a44063fb35b9de",
+      "type": 14,
+      "id": 21,
+      "language": 1033,
+      "frame": "32x32x8",
+      "pixelSha256": "7ce5392af27259537a3073a48e004e9d62a710c5b226f3ffa58a811f2b197648"
+    }
+  },
   "assets/xp/icons/LocalDisk.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",
@@ -799,6 +812,45 @@
       "language": 1033,
       "frame": "48x48x32",
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
+    }
+  },
+  "assets/xp/dialogs/ShutdownDialog.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSGINA.DL_",
+    "sha256": "f14432d98a86d8d3f4dbaf0f78374ed64178054eda383716a3e8257a0e39a6cf",
+    "resource": {
+      "parentSha256": "651b16027b4f4b0ed2f827e32b7e66188cdb023db8c7b1a9a1a44063fb35b9de",
+      "type": 2,
+      "id": 20142,
+      "language": 1033,
+      "frame": "313x198x32",
+      "pixelSha256": "ae1dd9e9195365adb583fdd58857f9afa88ff89986854bc7ec72b0bcd8700f42"
+    }
+  },
+  "assets/xp/dialogs/DialogFlag.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSGINA.DL_",
+    "sha256": "d0638988c97432760b07cf7acfe03684ed75c1606f181b50d47480ee992ac5d5",
+    "resource": {
+      "parentSha256": "651b16027b4f4b0ed2f827e32b7e66188cdb023db8c7b1a9a1a44063fb35b9de",
+      "type": 2,
+      "id": 20143,
+      "language": 1033,
+      "frame": "48x40x32",
+      "pixelSha256": "c4236825d79a69036993a626936185c637379faf5733f4ba764c72fdfc51eedc"
+    }
+  },
+  "assets/xp/dialogs/ShutdownIcons.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSGINA.DL_",
+    "sha256": "6f2431c8dbb62187f19d7031d23bf2072b37742b820c4deb30c82cd832e2b777",
+    "resource": {
+      "parentSha256": "651b16027b4f4b0ed2f827e32b7e66188cdb023db8c7b1a9a1a44063fb35b9de",
+      "type": 2,
+      "id": 20150,
+      "language": 1033,
+      "frame": "32x320x32",
+      "pixelSha256": "65bf48ea4579c82a980dd5568382558152453e2834e87325e480842e10bad307"
     }
   },
   "assets/xp/help/Toolbar.png": {

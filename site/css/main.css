@@ -6517,6 +6517,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   margin-top: min(191px, calc(50vh - 96px));
   color: #fff;
   border: 0;
+  background: #003399 url("../assets/xp/dialogs/ShutdownDialog.png") top left /
+    313px 198px no-repeat;
   box-shadow: none;
 }
 
@@ -6526,14 +6528,16 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   align-items: center;
   justify-content: space-between;
   padding: 0 10px 0 12px;
-  background: linear-gradient(180deg, #0752c8, #003399);
-  border-bottom: 1px solid #8da7e4;
+  background: transparent;
+  border-bottom: 0;
   font-size: 18px;
 }
 
 .dialog-flag {
-  width: 31px;
-  height: 31px;
+  width: 48px;
+  height: 40px;
+  background: url("../assets/xp/dialogs/DialogFlag.png") center / 48px 40px
+    no-repeat;
   filter: none;
 }
 
@@ -6544,7 +6548,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   justify-content: center;
   gap: 48px;
   padding: 16px;
-  background: linear-gradient(180deg, #85a7ed, #668bdc);
+  background: transparent;
 }
 
 .shutdown-actions {
@@ -6553,6 +6557,18 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .shutdown-actions button {
   transform: translateY(7px);
+}
+
+.system-dialog-actions:not(.shutdown-actions) {
+  gap: 60px;
+}
+
+.system-dialog-actions:not(.shutdown-actions) button:first-child {
+  transform: translate(3px, 7px);
+}
+
+.system-dialog-actions:not(.shutdown-actions) button:nth-child(2) {
+  transform: translate(1px, 7px);
 }
 
 .system-dialog-actions button {
@@ -6576,65 +6592,78 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    1px 2px 3px rgba(0, 0, 0, 0.4);
+  border: 0;
+  border-radius: 0;
+  background-image: url("../assets/xp/dialogs/ShutdownIcons.png");
+  background-repeat: no-repeat;
+  box-shadow: none;
 }
 
-.switch-user-icon,
 .restart-icon {
-  background: linear-gradient(180deg, #74d374, #15942c);
+  background-position: 0 -192px;
 }
 
-.switch-user-icon::before,
-.switch-user-icon::after {
-  content: "";
-  position: absolute;
-  left: 8px;
-  width: 18px;
-  height: 8px;
+.switch-user-icon {
   border: 2px solid #fff;
-  border-left: 0;
-  border-right: 0;
+  border-radius: 5px;
+  background: linear-gradient(#75d47a, #15972d);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 55%),
+    1px 2px 3px rgb(0 0 0 / 40%);
 }
 
 .switch-user-icon::before {
-  top: 7px;
+  content: "←";
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  color: #fff;
+  font:
+    700 17px Arial,
+    sans-serif;
+  line-height: 12px;
 }
 
 .switch-user-icon::after {
-  bottom: 7px;
+  content: "→";
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  color: #fff;
+  font:
+    700 17px Arial,
+    sans-serif;
+  line-height: 12px;
 }
 
 .system-dialog .xp-logoff-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0;
+  background: url("../assets/xp/dialogs/ShutdownIcons.png") 0 -96px no-repeat;
+  box-shadow: none;
 }
 
 .system-dialog .xp-logoff-icon::before {
-  left: 8px;
-  top: 14px;
-  width: 17px;
-  height: 7px;
+  inset: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: url("../assets/xp/icons/LogoffKey.png") center / 32px 32px
+    no-repeat;
 }
 
 .system-dialog .xp-logoff-icon::after {
-  right: 5px;
-  top: 11px;
-  border-width: 6px;
+  content: none;
 }
 
 .standby-icon {
-  background: linear-gradient(180deg, #ffd66b, #e79418);
+  background-position: 0 -160px;
 }
 
 .shutdown-icon {
-  border: 0;
-  border-radius: 0;
-  background: url("../assets/xp/icons/Power.png") center / 32px 32px no-repeat;
-  box-shadow: none;
+  background-position: 0 0;
 }
 
 .shutdown-icon::before,
@@ -6643,9 +6672,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .restart-icon::before {
-  content: "✣";
-  color: #fff;
-  font-size: 24px;
+  content: none;
 }
 
 .system-dialog-footer {
@@ -6654,8 +6681,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   align-items: center;
   justify-content: flex-end;
   padding: 0 12px;
-  background: linear-gradient(180deg, #0a4abb, #003399);
-  border-top: 1px solid #3759b4;
+  background: transparent;
+  border-top: 0;
 }
 
 .system-dialog-footer button {

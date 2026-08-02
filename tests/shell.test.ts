@@ -672,7 +672,8 @@ test("shutdown dialog uses the native XP geometry and grayscale fade", () => {
     "margin-top: min(191px, calc(50vh - 96px))",
     ".shutdown-actions button",
     "transform: translateY(7px)",
-    'url("../assets/xp/icons/Power.png")',
+    'url("../assets/xp/dialogs/ShutdownDialog.png")',
+    'url("../assets/xp/dialogs/ShutdownIcons.png")',
   );
 });
 test("shell paste uses one conflict aware progress helper", () =>

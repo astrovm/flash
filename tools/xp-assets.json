@@ -330,6 +330,16 @@
       "output": "site/assets/xp/icons/HelpAndSupport.png"
     },
     {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 14,
+      "resourceId": 21,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/LogoffKey.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
@@ -591,6 +601,27 @@
     }
   ],
   "resourceBitmaps": [
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 2,
+      "resourceId": 20142,
+      "output": "site/assets/xp/dialogs/ShutdownDialog.png"
+    },
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 2,
+      "resourceId": 20143,
+      "output": "site/assets/xp/dialogs/DialogFlag.png"
+    },
+    {
+      "member": "MSGINA.DL_",
+      "expandedName": "msgina.dll",
+      "resourceType": 2,
+      "resourceId": 20150,
+      "output": "site/assets/xp/dialogs/ShutdownIcons.png"
+    },
     {
       "member": "HELPCTR.EX_",
       "expandedName": "helpctr.exe",
