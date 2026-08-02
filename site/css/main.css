@@ -14111,6 +14111,18 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   background: transparent;
 }
 
+.xp-minesweeper-menu label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 7px;
+}
+
+.xp-minesweeper-menu select {
+  height: 20px;
+  font: inherit;
+}
+
 .xp-minesweeper-panel {
   display: flex;
   align-items: center;
@@ -14596,6 +14608,53 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
 
 .xp-mail-list tbody tr:hover {
   background: #e8f0ff;
+}
+
+.xp-mail-list tbody tr.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.xp-task-form {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.xp-task-form[hidden] {
+  display: none;
+}
+
+.xp-task-form label {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+}
+
+.xp-task-form > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.xp-task-list {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.xp-task-list th,
+.xp-task-list td {
+  padding: 5px 8px;
+  border: 1px solid #aca899;
+  text-align: left;
+}
+
+.xp-task-list td:last-child {
+  white-space: nowrap;
 }
 
 .xp-mail-preview {

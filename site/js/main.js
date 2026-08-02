@@ -7602,28 +7602,40 @@ const createXPProgramContent = (programId) => {
 
   if (programId === "__minesweeper") {
     content.className += " xp-minesweeper";
-    content.innerHTML = `<div class="xp-minesweeper-menu"><button type="button">Game</button><button type="button">Help</button></div><div class="xp-minesweeper-panel"><output data-mines aria-label="Mines remaining">010</output><button type="button" data-reset aria-label="New game">🙂</button><output data-time aria-label="Elapsed time">000</output></div><div class="xp-minesweeper-board" role="grid" aria-label="Minesweeper board"></div>`;
+    content.innerHTML = `<div class="xp-minesweeper-menu"><label>Game <select aria-label="Difficulty"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="expert">Expert</option></select></label><button type="button">Help</button></div><div class="xp-minesweeper-panel"><output data-mines aria-label="Mines remaining">010</output><button type="button" data-reset aria-label="New game">🙂</button><output data-time aria-label="Elapsed time">000</output></div><div class="xp-minesweeper-board" role="grid" aria-label="Minesweeper board"></div>`;
     const board = content.querySelector(".xp-minesweeper-board");
     const mineCounter = content.querySelector("[data-mines]");
     const timeCounter = content.querySelector("[data-time]");
     const reset = content.querySelector("[data-reset]");
-    const mineIndexes = new Set([2, 8, 19, 25, 33, 48, 56, 63, 75, 79]);
+    const difficulty = content.querySelector("[aria-label='Difficulty']");
+    const levels = {
+      beginner: { rows: 9, columns: 9, mines: 10 },
+      intermediate: { rows: 16, columns: 16, mines: 40 },
+      expert: { rows: 16, columns: 30, mines: 99 },
+    };
+    let level = levels.beginner;
+    let mineIndexes = null;
     let flags = 0;
     let elapsed = 0;
     let timer = null;
     let finished = false;
     const neighbors = (index) => {
-      const row = Math.floor(index / 9);
-      const column = index % 9;
+      const row = Math.floor(index / level.columns);
+      const column = index % level.columns;
       const result = [];
       for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
         for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
           if (!rowOffset && !columnOffset) continue;
           const nextRow = row + rowOffset;
           const nextColumn = column + columnOffset;
-          if (nextRow < 0 || nextRow > 8 || nextColumn < 0 || nextColumn > 8)
+          if (
+            nextRow < 0 ||
+            nextRow >= level.rows ||
+            nextColumn < 0 ||
+            nextColumn >= level.columns
+          )
             continue;
-          result.push(nextRow * 9 + nextColumn);
+          result.push(nextRow * level.columns + nextColumn);
         }
       }
       return result;
@@ -7640,6 +7652,16 @@ const createXPProgramContent = (programId) => {
         timeCounter.textContent = String(elapsed).padStart(3, "0");
       }, 1000);
     };
+    const placeMines = (firstIndex) => {
+      const excluded = new Set([firstIndex, ...neighbors(firstIndex)]);
+      mineIndexes = new Set();
+      while (mineIndexes.size < level.mines) {
+        const candidate = Math.floor(
+          Math.random() * (level.rows * level.columns),
+        );
+        if (!excluded.has(candidate)) mineIndexes.add(candidate);
+      }
+    };
     const reveal = (index) => {
       const cell = board.children[index];
       if (
@@ -7648,6 +7670,7 @@ const createXPProgramContent = (programId) => {
         cell.dataset.flagged
       )
         return;
+      if (!mineIndexes) placeMines(index);
       startTimer();
       cell.classList.add("revealed");
       if (mineIndexes.has(index)) {
@@ -7671,7 +7694,10 @@ const createXPProgramContent = (programId) => {
       } else {
         neighbors(index).forEach(reveal);
       }
-      if (board.querySelectorAll(".revealed:not(.mine)").length === 71) {
+      if (
+        board.querySelectorAll(".revealed:not(.mine)").length ===
+        level.rows * level.columns - level.mines
+      ) {
         reset.textContent = "😎";
         finished = true;
         stopTimer();
@@ -7682,11 +7708,20 @@ const createXPProgramContent = (programId) => {
       elapsed = 0;
       flags = 0;
       finished = false;
+      mineIndexes = null;
+      level = levels[difficulty.value];
       timeCounter.textContent = "000";
-      mineCounter.textContent = "010";
+      mineCounter.textContent = String(level.mines).padStart(3, "0");
       reset.textContent = "🙂";
       board.replaceChildren();
-      for (let index = 0; index < 81; index += 1) {
+      board.style.gridTemplateColumns = `repeat(${level.columns}, 18px)`;
+      const owner = content.closest(".xp-window");
+      if (owner) {
+        const desktop = getDesktopSize();
+        owner.style.width = `${Math.min(level.columns * 18 + 22, desktop.width - 16)}px`;
+        owner.style.height = `${Math.min(level.rows * 18 + 108, desktop.height - 16)}px`;
+      }
+      for (let index = 0; index < level.rows * level.columns; index += 1) {
         const cell = document.createElement("button");
         cell.type = "button";
         cell.setAttribute("role", "gridcell");
@@ -7696,16 +7731,20 @@ const createXPProgramContent = (programId) => {
           event.preventDefault();
           if (finished || cell.classList.contains("revealed")) return;
           const flagged = cell.dataset.flagged === "true";
-          if (!flagged && flags === 10) return;
+          if (!flagged && flags === level.mines) return;
           cell.dataset.flagged = flagged ? "" : "true";
           cell.textContent = flagged ? "" : "⚑";
           flags += flagged ? -1 : 1;
-          mineCounter.textContent = String(10 - flags).padStart(3, "0");
+          mineCounter.textContent = String(level.mines - flags).padStart(
+            3,
+            "0",
+          );
         });
         board.appendChild(cell);
       }
     };
     reset.addEventListener("click", initialize);
+    difficulty.addEventListener("change", initialize);
     initialize();
     return content;
   }
@@ -8214,6 +8253,68 @@ const createXPProgramContent = (programId) => {
     return content;
   }
 
+  if (program.kind === "tasks") {
+    content.innerHTML = `<div class="xp-program-toolbar"><button type="button" data-task-new>Add Scheduled Task</button></div><form class="xp-task-form" hidden><label>Task name: <input name="name" aria-label="Task name" required></label><label>Program: <select name="program" aria-label="Program"><option>Disk Cleanup</option><option>Notepad</option><option>System Information</option></select></label><label>Schedule: <select name="schedule" aria-label="Schedule"><option>Daily</option><option>Weekly</option><option>When I log on</option></select></label><div><button type="submit">Finish</button><button type="button" data-task-cancel>Cancel</button></div></form><table class="xp-task-list"><thead><tr><th>Name</th><th>Schedule</th><th>Next Run Time</th><th></th></tr></thead><tbody></tbody></table><p class="xp-program-status" aria-live="polite">Use Add Scheduled Task to schedule a program.</p>`;
+    const form = content.querySelector(".xp-task-form");
+    const body = content.querySelector("tbody");
+    const status = content.querySelector(".xp-program-status");
+    const tasks = [];
+    const renderTasks = () => {
+      body.replaceChildren();
+      tasks.forEach((task, index) => {
+        const row = document.createElement("tr");
+        row.dataset.task = String(index);
+        [task.name, task.schedule, task.nextRun].forEach((value) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        const actions = document.createElement("td");
+        actions.innerHTML = `<button type="button" data-task-run>Run</button><button type="button" data-task-delete>Delete</button>`;
+        row.appendChild(actions);
+        body.appendChild(row);
+      });
+    };
+    content.querySelector("[data-task-new]").addEventListener("click", () => {
+      form.hidden = false;
+      form.elements.name.focus();
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      tasks.push({
+        name: form.elements.name.value.trim(),
+        program: form.elements.program.value,
+        schedule: form.elements.schedule.value,
+        nextRun:
+          form.elements.schedule.value === "When I log on"
+            ? "At next logon"
+            : "Tomorrow at 9:00 AM",
+      });
+      status.textContent = `${form.elements.name.value.trim()} was scheduled.`;
+      form.reset();
+      form.hidden = true;
+      renderTasks();
+    });
+    form.querySelector("[data-task-cancel]").addEventListener("click", () => {
+      form.reset();
+      form.hidden = true;
+    });
+    body.addEventListener("click", (event) => {
+      const row = event.target.closest("[data-task]");
+      if (!row) return;
+      const index = Number(row.dataset.task);
+      if (event.target.closest("[data-task-run]")) {
+        status.textContent = `${tasks[index].name} ran ${tasks[index].program}.`;
+      } else if (event.target.closest("[data-task-delete]")) {
+        const [removed] = tasks.splice(index, 1);
+        status.textContent = `${removed.name} was deleted.`;
+        renderTasks();
+      }
+    });
+    renderTasks();
+    return content;
+  }
+
   if (program.kind === "information") {
     content.innerHTML = `<div class="xp-system-information"><aside><button type="button" class="selected" data-info-section="summary">System Summary</button><button type="button" data-info-section="hardware">Hardware Resources</button><button type="button" data-info-section="components">Components</button><button type="button" data-info-section="software">Software Environment</button></aside><table><tbody></tbody></table></div>`;
     const sections = {
@@ -8285,20 +8386,61 @@ const createXPProgramContent = (programId) => {
   }
 
   if (program.kind === "browser") {
-    content.innerHTML = `<div class="xp-browser-toolbar"><button type="button">Back</button><label>Address <input value="about:blank" aria-label="Address"></label><button type="button" data-go>Go</button></div><div class="xp-browser-page"><h1>${program.title}</h1><p>This offline recreation can display local pages without connecting to the internet.</p></div>`;
-    const navigate = () => {
-      const address = content.querySelector("input").value;
-      const page = content.querySelector(".xp-browser-page");
+    const homeAddress =
+      programId === "__msn" ? "http://www.msn.com/" : "about:home";
+    content.innerHTML = `<div class="xp-browser-toolbar"><button type="button" data-browser-back disabled>Back</button><button type="button" data-browser-forward disabled>Forward</button><button type="button" data-browser-home>Home</button><button type="button" data-browser-refresh>Refresh</button><label>Address <input value="${homeAddress}" aria-label="Address"></label><button type="button" data-go>Go</button></div><div class="xp-browser-page"></div>`;
+    const input = content.querySelector("input");
+    const page = content.querySelector(".xp-browser-page");
+    const back = content.querySelector("[data-browser-back]");
+    const forward = content.querySelector("[data-browser-forward]");
+    let history = [homeAddress];
+    let historyIndex = 0;
+    const render = (address) => {
+      input.value = address;
+      page.replaceChildren();
       const heading = document.createElement("h1");
       const message = document.createElement("p");
-      heading.textContent = address;
-      message.textContent = "The requested page is not available offline.";
-      page.replaceChildren(heading, message);
+      if (address === "about:home") {
+        heading.textContent = "Welcome to Internet Explorer";
+        message.textContent =
+          "Browse local pages or enter an address while this recreation is offline.";
+      } else if (address === "http://www.msn.com/") {
+        heading.textContent = "MSN";
+        message.textContent = "MSN is not available while working offline.";
+      } else {
+        heading.textContent = address;
+        message.textContent = "The requested page is not available offline.";
+      }
+      page.append(heading, message);
+      back.disabled = historyIndex === 0;
+      forward.disabled = historyIndex === history.length - 1;
     };
-    content.querySelector("[data-go]").addEventListener("click", navigate);
-    content.querySelector("input").addEventListener("keydown", (event) => {
+    const navigate = (address = input.value.trim()) => {
+      if (!address) return;
+      history = history.slice(0, historyIndex + 1);
+      history.push(address);
+      historyIndex = history.length - 1;
+      render(address);
+    };
+    content
+      .querySelector("[data-go]")
+      .addEventListener("click", () => navigate());
+    input.addEventListener("keydown", (event) => {
       if (event.key === "Enter") navigate();
     });
+    back.addEventListener("click", () => {
+      if (historyIndex > 0) render(history[--historyIndex]);
+    });
+    forward.addEventListener("click", () => {
+      if (historyIndex < history.length - 1) render(history[++historyIndex]);
+    });
+    content
+      .querySelector("[data-browser-home]")
+      .addEventListener("click", () => navigate(homeAddress));
+    content
+      .querySelector("[data-browser-refresh]")
+      .addEventListener("click", () => render(history[historyIndex]));
+    render(homeAddress);
     return content;
   }
 
@@ -8308,6 +8450,7 @@ const createXPProgramContent = (programId) => {
       Inbox: [
         {
           from: "Outlook Express Team",
+          email: "outlook-express@example.com",
           subject: "Welcome to Outlook Express 6",
           body: "Outlook Express is ready to manage mail stored on this computer.",
         },
@@ -8319,7 +8462,14 @@ const createXPProgramContent = (programId) => {
     };
     const folderPane = content.querySelector(".xp-mail-folders");
     const workspace = content.querySelector(".xp-mail-workspace");
+    const replyButton = content.querySelector("[data-mail-reply]");
+    const deleteButton = content.querySelector("[data-mail-delete]");
     let currentFolder = "Inbox";
+    let selectedMessage = null;
+    const updateMailActions = () => {
+      replyButton.disabled = !selectedMessage;
+      deleteButton.disabled = !selectedMessage;
+    };
     const renderFolders = () => {
       folderPane.replaceChildren();
       Object.entries(folders).forEach(([name, messages]) => {
@@ -8332,6 +8482,8 @@ const createXPProgramContent = (programId) => {
       });
     };
     const renderFolder = () => {
+      selectedMessage = null;
+      updateMailActions();
       renderFolders();
       workspace.innerHTML = `<table class="xp-mail-list"><thead><tr><th>From</th><th>Subject</th></tr></thead><tbody></tbody></table><article class="xp-mail-preview"><p>Select a message to read it.</p></article>`;
       const body = workspace.querySelector("tbody");
@@ -8346,9 +8498,12 @@ const createXPProgramContent = (programId) => {
         body.appendChild(row);
       });
     };
-    const openComposer = () => {
+    const openComposer = (initial = {}) => {
       workspace.innerHTML = `<form class="xp-mail-compose"><label>To: <input name="to" type="email" aria-label="To" required></label><label>Subject: <input name="subject" aria-label="Subject"></label><textarea name="body" aria-label="Message body"></textarea><div><button type="submit">Send</button><button type="button" data-save-draft>Save Draft</button></div></form>`;
       const form = workspace.querySelector("form");
+      form.elements.to.value = initial.to || "";
+      form.elements.subject.value = initial.subject || "";
+      form.elements.body.value = initial.body || "";
       const storeMessage = (folder) => {
         folders[folder].push({
           from: "Administrator",
@@ -8377,7 +8532,17 @@ const createXPProgramContent = (programId) => {
     workspace.addEventListener("click", (event) => {
       const row = event.target.closest("[data-message]");
       if (!row) return;
-      const message = folders[currentFolder][Number(row.dataset.message)];
+      selectedMessage = {
+        index: Number(row.dataset.message),
+        message: folders[currentFolder][Number(row.dataset.message)],
+      };
+      workspace
+        .querySelectorAll("[data-message]")
+        .forEach((candidate) =>
+          candidate.classList.toggle("selected", candidate === row),
+        );
+      updateMailActions();
+      const { message } = selectedMessage;
       workspace.querySelector(".xp-mail-preview").innerHTML =
         `<h3></h3><p class="xp-mail-from"></p><div class="xp-mail-body"></div>`;
       workspace.querySelector("h3").textContent = message.subject;
@@ -8387,7 +8552,25 @@ const createXPProgramContent = (programId) => {
     });
     content
       .querySelector("[data-mail-new]")
-      .addEventListener("click", openComposer);
+      .addEventListener("click", () => openComposer());
+    replyButton.addEventListener("click", () => {
+      if (!selectedMessage) return;
+      const { message } = selectedMessage;
+      openComposer({
+        to: message.email || message.to || "",
+        subject: message.subject?.startsWith("Re:")
+          ? message.subject
+          : `Re: ${message.subject || ""}`,
+        body: `\n\n----- Original Message -----\n${message.body || ""}`,
+      });
+    });
+    deleteButton.addEventListener("click", () => {
+      if (!selectedMessage) return;
+      const [message] = folders[currentFolder].splice(selectedMessage.index, 1);
+      if (currentFolder !== "Deleted Items")
+        folders["Deleted Items"].push(message);
+      renderFolder();
+    });
     renderFolder();
     return content;
   }
