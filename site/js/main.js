@@ -3203,12 +3203,7 @@ const createSystemWindowContent = (shortcutId, win) => {
           .forEach((item) => item.classList.toggle("selected"));
       if (command === "refresh") renderExplorerItems(win);
       if (command === "help-center") openHelpAndSupport();
-      if (command === "about-windows")
-        XPDialogs.alert(
-          "Microsoft Windows XP Professional",
-          "About Windows",
-          "info",
-        );
+      if (command === "about-windows") openAboutWindows();
       if (
         [
           "add-favorite",
@@ -9071,6 +9066,24 @@ const wireHelpAndSupport = (win) => {
 };
 
 const openHelpAndSupport = () => openSystemWindow("__help");
+
+const openAboutWindows = () => {
+  const dialog = XPDialogs.createDialog({ title: "About Windows" });
+  dialog.el.classList.add("about-windows-dialog");
+  dialog.body.innerHTML = `
+    <img class="about-windows-banner" src="assets/xp/AboutWindows.png" alt="Microsoft Windows XP Professional">
+    <div class="about-windows-copy">
+      <p>Microsoft ® Windows<br>Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)<br>Copyright © 2007 Microsoft Corporation</p>
+      <p>This product is licensed under the terms of the <a href="https://www.microsoft.com/useterms/" target="_blank" rel="noreferrer">End-User<br>License Agreement</a> to:</p>
+      <p class="about-windows-user">astro</p>
+      <hr>
+      <p>Physical memory available to Windows:&nbsp;&nbsp; 523,696 KB</p>
+    </div>
+  `;
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true, isCancel: true },
+  ]);
+};
 
 const openSearchDialog = () => openSystemWindow("__search");
 

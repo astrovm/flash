@@ -602,6 +602,13 @@
   ],
   "resourceBitmaps": [
     {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 131,
+      "output": "site/assets/xp/AboutWindows.png"
+    },
+    {
       "member": "MSGINA.DL_",
       "expandedName": "msgina.dll",
       "resourceType": 2,

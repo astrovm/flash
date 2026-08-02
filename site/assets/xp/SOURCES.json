@@ -814,6 +814,19 @@
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
     }
   },
+  "assets/xp/AboutWindows.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "d6877683fbf13ffd2cb42d2a4abd439715e906cae7c1612f2ceae3ae3e1e918c",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 2,
+      "id": 131,
+      "language": 1033,
+      "frame": "413x72x32",
+      "pixelSha256": "6f1a46bc2f6c748557920aa986db335c2155e0166b84a6e2c04b7bcb3a729dd6"
+    }
+  },
   "assets/xp/dialogs/ShutdownDialog.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MSGINA.DL_",

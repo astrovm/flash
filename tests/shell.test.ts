@@ -673,6 +673,21 @@ test("Help and Support Center uses the native XP home surface", () => {
     'url("../assets/xp/help/Toolbar.png")',
   );
 });
+test("About Windows uses the ISO shell32 banner and XP build copy", () => {
+  contains(
+    javascript,
+    "const openAboutWindows = () =>",
+    'src="assets/xp/AboutWindows.png"',
+    "Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)",
+    "Physical memory available to Windows",
+  );
+  contains(
+    css,
+    ".about-windows-dialog",
+    "width: min(418px",
+    "height: min(354px",
+  );
+});
 test("shutdown dialog uses the native XP geometry and grayscale fade", () => {
   contains(
     css,
