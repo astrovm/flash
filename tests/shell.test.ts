@@ -503,6 +503,31 @@ test("Date Time Language and Regional Options uses the native XP category page",
   );
 });
 
+test("Network and Internet Connections uses the native XP category page", () => {
+  contains(
+    javascript,
+    "const renderNetworkCategory = () =>",
+    "Set up or change your Internet connection",
+    "Create a connection to the network at your workplace",
+    "Set up or change your home or small office network",
+    "Set up a wireless network for a home or small office",
+    "Change Windows Firewall settings",
+    "assets/xp/icons/InternetOptions.png",
+    "assets/xp/icons/NetworkConnections.png",
+    "assets/xp/icons/NetworkSetupWizard.png",
+    "assets/xp/icons/WindowsFirewall.png",
+    "assets/xp/icons/WirelessNetworkSetupWizard.png",
+    "assets/xp/icons/MyNetworkPlacesSmall.png",
+    "assets/xp/icons/PrintersAndFaxesSmall.png",
+    "assets/xp/icons/RemoteDesktop.png",
+    "assets/xp/icons/PhoneAndModemOptions.png",
+    "Home or Small Office Networking",
+    "Network Diagnostics",
+    "network: renderNetworkCategory",
+  );
+  contains(css, ".network-category-icons");
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,

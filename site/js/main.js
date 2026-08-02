@@ -114,6 +114,7 @@ const XP_ICON_PATHS = Object.freeze({
   "Forward.png": "assets/xp/icons/Forward.png",
   "Go.png": "assets/xp/icons/Go.png",
   "HelpAndSupport.png": "assets/xp/icons/HelpAndSupport.png",
+  "InternetOptions.png": "assets/xp/icons/InternetOptions.png",
   "LocalDisk.png": "assets/xp/icons/LocalDisk.png",
   "OpticalDrive.png": "assets/xp/icons/OpticalDrive.png",
   "Logout.png": "assets/xp/icons/Logout.png",
@@ -125,6 +126,8 @@ const XP_ICON_PATHS = Object.freeze({
   "MyPictures.png": "assets/xp/icons/MyPictures.png",
   "NetworkAndInternet.png": "assets/xp/icons/NetworkAndInternet.png",
   "NetworkConnection.png": "assets/xp/icons/NetworkConnection.png",
+  "NetworkConnections.png": "assets/xp/icons/NetworkConnections.png",
+  "NetworkSetupWizard.png": "assets/xp/icons/NetworkSetupWizard.png",
   "NewFolder.png": "assets/xp/icons/NewFolder.png",
   "Power.png": "assets/xp/icons/Power.png",
   "PerformanceAndMaintenance.png":
@@ -138,6 +141,9 @@ const XP_ICON_PATHS = Object.freeze({
   "Restore.png": "assets/xp/icons/Restore.png",
   "Run.png": "assets/xp/icons/Run.png",
   "Search.png": "assets/xp/icons/Search.png",
+  "WindowsFirewall.png": "assets/xp/icons/WindowsFirewall.png",
+  "WirelessNetworkSetupWizard.png":
+    "assets/xp/icons/WirelessNetworkSetupWizard.png",
   "SecurityCenter.png": "assets/xp/icons/SecurityCenter.png",
   "SharedFolder.png": "assets/xp/icons/SharedFolder.png",
   "Up.png": "assets/xp/icons/Up.png",
@@ -2441,10 +2447,57 @@ const wireControlPanel = (win) => {
       </div>`;
   };
 
+  const renderNetworkCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Network and Internet Connections",
+      XP_ICON_PATHS["NetworkAndInternet.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="my-network-places"><img src="assets/xp/icons/MyNetworkPlacesSmall.png" alt=""><span>My Network Places</span></button>
+          <button type="button" data-control-panel-action="printers"><img src="assets/xp/icons/PrintersAndFaxesSmall.png" alt=""><span>Printers and Other Hardware</span></button>
+          <button type="button" data-control-panel-action="remote-desktop"><img src="assets/xp/icons/RemoteDesktop.png" alt=""><span>Remote Desktop</span></button>
+          <button type="button" data-control-panel-action="phone-modem"><img src="assets/xp/icons/PhoneAndModemOptions.png" alt=""><span>Phone and Modem Options</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="network-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Home or Small Office Networking</span></button>
+          <button type="button" data-control-panel-action="internet-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Internet Explorer</span></button>
+          <button type="button" data-control-panel-action="network-diagnostics"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Network Diagnostics</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/NetworkAndInternet.png" alt=""><strong>Network and Internet Connections</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links network-task-links">
+        <button type="button" data-control-panel-action="internet-connection"><img src="assets/xp/icons/Go.png" alt=""><span>Set up or change your Internet connection</span></button>
+        <button type="button" data-control-panel-action="workplace-connection"><img src="assets/xp/icons/Go.png" alt=""><span>Create a connection to the network at your workplace</span></button>
+        <button type="button" data-control-panel-action="home-network"><img src="assets/xp/icons/Go.png" alt=""><span>Set up or change your home or small office network</span></button>
+        <button type="button" data-control-panel-action="wireless-network"><img src="assets/xp/icons/Go.png" alt=""><span>Set up a wireless network for a home or small office</span></button>
+        <button type="button" data-control-panel-action="firewall"><img src="assets/xp/icons/Go.png" alt=""><span>Change Windows Firewall settings</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons network-category-icons">
+        <button type="button" data-control-panel-action="internet-options"><img src="assets/xp/icons/InternetOptions.png" alt=""><span>Internet Options</span></button>
+        <button type="button" data-control-panel-action="network-connections"><img src="assets/xp/icons/NetworkConnections.png" alt=""><span>Network Connections</span></button>
+        <button type="button" data-control-panel-action="network-setup"><img src="assets/xp/icons/NetworkSetupWizard.png" alt=""><span>Network Setup Wizard</span></button>
+        <button type="button" data-control-panel-action="firewall"><img src="assets/xp/icons/WindowsFirewall.png" alt=""><span>Windows Firewall</span></button>
+        <button type="button" data-control-panel-action="wireless-network"><img src="assets/xp/icons/WirelessNetworkSetupWizard.png" alt=""><span>Wireless Network Setup Wizard</span></button>
+      </div>`;
+  };
+
   const actions = {
     appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
-    network: openNetworkStatus,
+    network: renderNetworkCategory,
     users: () => openSystemWindow("__user-accounts"),
     programs: () => openSystemWindow("__add-remove-programs"),
     datetime: renderDateRegionalCategory,
@@ -2567,6 +2620,53 @@ const wireControlPanel = (win) => {
       );
     } else if (action === "date-time") {
       openDateTimeProperties();
+    } else if (
+      action === "network-connections" ||
+      action === "my-network-places"
+    ) {
+      openNetworkStatus();
+    } else if (action === "printers") {
+      openPrintersAndFaxes();
+    } else if (
+      action === "network-help" ||
+      action === "internet-help" ||
+      action === "network-diagnostics" ||
+      action === "remote-desktop"
+    ) {
+      openHelpAndSupport();
+    } else if (
+      [
+        "internet-connection",
+        "workplace-connection",
+        "home-network",
+        "network-setup",
+      ].includes(action)
+    ) {
+      XPDialogs.alert(
+        "The Network Setup Wizard is not available in this offline recreation.",
+        "Network Setup Wizard",
+        "info",
+      );
+    } else if (action === "wireless-network") {
+      XPDialogs.alert(
+        "The Wireless Network Setup Wizard is not available in this offline recreation.",
+        "Wireless Network Setup Wizard",
+        "info",
+      );
+    } else if (action === "firewall") {
+      XPDialogs.alert(
+        "Windows Firewall settings are not available in this offline recreation.",
+        "Windows Firewall",
+        "info",
+      );
+    } else if (action === "internet-options" || action === "phone-modem") {
+      XPDialogs.alert(
+        `${action === "internet-options" ? "Internet Options" : "Phone and Modem Options"} is not available in this offline recreation.`,
+        action === "internet-options"
+          ? "Internet Properties"
+          : "Phone and Modem Options",
+        "info",
+      );
     } else if (
       action === "regional-format" ||
       action === "languages" ||

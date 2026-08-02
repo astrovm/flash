@@ -421,6 +421,123 @@
       "pixelSha256": "2e7f2bf71fbf29d602ca2f04853d0b96afda96b7601e4a5dfb9769e2426b51e9"
     }
   },
+  "assets/xp/icons/InternetOptions.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/INETCPL.CP_",
+    "sha256": "353951b4c7558793481984d78d139976b5c4729966ee78dd0322a90d0c81c1bc",
+    "resource": {
+      "parentSha256": "699f4939d6d203d114a2111f5a33188e60ffc1f5808fa36592fa3cb46d68e32c",
+      "type": 14,
+      "id": 4487,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "99bfe264f2686768fd50904ffc6eaa29593ca080a56954e9c2d234ac550cada1"
+    }
+  },
+  "assets/xp/icons/NetworkConnections.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NETSHELL.DL_",
+    "sha256": "33fa3b77fabf0005820db9a5306663ebcab42e3af6b9da151e0f4b0284992138",
+    "resource": {
+      "parentSha256": "3c0bfa381cbc2c55b58a8942a7148a6c27e244d26313efb4708dd5858c689e02",
+      "type": 14,
+      "id": 0,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "e9716ed07ba58cd3a7c5d78a7991e2dd7e1ca2ecaea4001c28936507baf39e0e"
+    }
+  },
+  "assets/xp/icons/NetworkSetupWizard.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HNETWIZ.DL_",
+    "sha256": "d4690315745ef6c292c71181fed029b5303abab56704917001a27b3d5f80f4bf",
+    "resource": {
+      "parentSha256": "4a508409171581d0e7f82f6f7d43c3328a2762eb81ee4fbc2da08b1011e0e8a9",
+      "type": 14,
+      "id": 10000,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "ddc7c043c20eb95ecc82a3f43b6f3dbed70d93e37b917d4fbb716882cd6d138b"
+    }
+  },
+  "assets/xp/icons/WindowsFirewall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/XPSP2RES.DL_",
+    "sha256": "d39429ba783df10d998623d9a6e4ae278d23a284f361d954e6afd748e740e76b",
+    "resource": {
+      "parentSha256": "dea7c556ba9c91e056e6035e77a793a77e428d493518d1c6f796b003d4f07305",
+      "type": 14,
+      "id": 10605,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "21928fa68d6972ee7468bda1276cbb5e9834ef46213f1ac14ea5fd9595d562df"
+    }
+  },
+  "assets/xp/icons/WirelessNetworkSetupWizard.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/XPSP2RES.DL_",
+    "sha256": "845a763b1da76bfcbb553bf503ddc98045e999e31df823d2e8a51ea19c596ba4",
+    "resource": {
+      "parentSha256": "dea7c556ba9c91e056e6035e77a793a77e428d493518d1c6f796b003d4f07305",
+      "type": 14,
+      "id": 2026,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "96053e4041ad9d306ff033e47a4a8a21e2844c700ab4057c3d2ab7a665ff6135"
+    }
+  },
+  "assets/xp/icons/MyNetworkPlacesSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NETSHELL.DL_",
+    "sha256": "2cae04a44c919fcc5a0633c842b37c1f4139018014a2ce6689249cd13b2618e1",
+    "resource": {
+      "parentSha256": "3c0bfa381cbc2c55b58a8942a7148a6c27e244d26313efb4708dd5858c689e02",
+      "type": 14,
+      "id": 0,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "8b2a4384ba6d5590cbcd6b003460f99a86583bfb0e7d220ea625ce1da274b463"
+    }
+  },
+  "assets/xp/icons/PrintersAndFaxesSmall.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "c94f32671ba2ae65ba5094e40b6be936cb9bfcf84dbbaf43bed90234c3ef7c24",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 138,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "5d796c75d0a259c67f0c9053000f59cff8086e7a2265d30a62559fe3e34483dc"
+    }
+  },
+  "assets/xp/icons/RemoteDesktop.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/REMOTEPG.DL_",
+    "sha256": "aca5c3908b3a1771c91f900490da6b2ed0e417d660fe7970bc857c2cbd8776ab",
+    "resource": {
+      "parentSha256": "64afb0aa686fc589ce3a7e7f681c3b7e4c44f19661f998737f4a8df4ac7c23f4",
+      "type": 14,
+      "id": 500,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "350edc097bc4148b6631d042f783edb04ea372222b9cfbc4e7eaa74c1c5d1bfa"
+    }
+  },
+  "assets/xp/icons/PhoneAndModemOptions.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TELEPHON.CP_",
+    "sha256": "dafe29ed4ec85b2eff1dd31f495db5444e399c91ab1122b38ddcb71cc3068dff",
+    "resource": {
+      "parentSha256": "ad7a6d3a6eca994ce550362455fdeb0a71529994fa926ad70032ff0a4174a1e8",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "daeb976d10f801a840e55cd8805d156f3b83aa60c0db43994ef422a73157d498"
+    }
+  },
   "assets/xp/icons/PerformanceAndMaintenance.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

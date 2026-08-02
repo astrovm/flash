@@ -3553,6 +3553,10 @@ html[data-xp-appearance="silver"] {
   grid-template-columns: 223px 190px;
 }
 
+.network-category-icons {
+  grid-template-columns: 221px 190px;
+}
+
 .control-panel-category-icons img {
   width: 32px;
   height: 32px;
