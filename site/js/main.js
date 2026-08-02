@@ -21,7 +21,7 @@ let loggedIn = false;
 let shellInitialized = false;
 let suspended = false;
 let iconsBuilt = false;
-let placesBuilt = false;
+let renderedPlacesStyle = null;
 let screenSaverTimeout = null;
 let screenSaverWired = false;
 
@@ -35,11 +35,13 @@ let offlineManagerInitialization = Promise.resolve();
 let automaticOfflineDownloadQueue = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
+const START_MENU_STYLE_KEY = "startMenuStyle";
 const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
 const DESKTOP_SYSTEM_NAMES_KEY = "desktopSystemNames";
 const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings";
 const USER_STORAGE_KEYS = Object.freeze([
   DISPLAY_SETTINGS_KEY,
+  START_MENU_STYLE_KEY,
   "clockOffsetMs",
   "desktopIconPositions",
   "desktopLayoutSettings",
@@ -8357,6 +8359,19 @@ const openFolderOptions = () => {
     );
 };
 
+const getStartMenuStyle = () =>
+  localStorage.getItem(START_MENU_STYLE_KEY) === "classic"
+    ? "classic"
+    : "start";
+
+const applyStartMenuStyle = (style, persist = true) => {
+  const normalized = style === "classic" ? "classic" : "start";
+  document.documentElement.dataset.xpStartMenu = normalized;
+  renderedPlacesStyle = null;
+  if (persist) localStorage.setItem(START_MENU_STYLE_KEY, normalized);
+  closeStartMenu();
+};
+
 const openTaskbarProperties = () => {
   const dialog = XPDialogs.createDialog({
     title: "Taskbar and Start Menu Properties",
@@ -8369,6 +8384,7 @@ const openTaskbarProperties = () => {
   help.setAttribute("aria-label", "Help");
   help.addEventListener("click", openHelpAndSupport);
   dialog.el.querySelector(".title-buttons").prepend(help);
+  const currentStartMenuStyle = getStartMenuStyle();
   dialog.body.innerHTML = `
     <div class="taskbar-properties-tabs" role="tablist">
       <button type="button" role="tab" data-taskbar-properties-tab="taskbar" aria-selected="true">Taskbar</button>
@@ -8393,15 +8409,19 @@ const openTaskbarProperties = () => {
     </div>
     <div class="taskbar-properties-panel taskbar-start-menu-panel" data-taskbar-properties-panel="start-menu" hidden>
       <img class="taskbar-start-menu-preview" src="assets/xp/system/StartMenuPreview.png" alt="Start menu preview">
-      <label class="taskbar-start-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="start" checked> Start menu</label>
+      <label class="taskbar-start-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="start" ${currentStartMenuStyle === "start" ? "checked" : ""}> Start menu</label>
       <p class="taskbar-start-menu-description">Select this menu style for easy access to the<br>Internet, e-mail, and your favorite programs.</p>
-      <button type="button" class="xp-btn taskbar-start-customize">Customize...</button>
-      <label class="taskbar-classic-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="classic"> Classic Start menu</label>
+      <button type="button" class="xp-btn taskbar-start-customize" ${currentStartMenuStyle === "classic" ? "disabled" : ""}>Customize...</button>
+      <label class="taskbar-classic-menu-choice"><input type="radio" name="taskbar-start-menu-style" value="classic" ${currentStartMenuStyle === "classic" ? "checked" : ""}> Classic Start menu</label>
       <p class="taskbar-classic-menu-description">Select this option to use the menu style from<br>earlier versions of Windows.</p>
-      <button type="button" class="xp-btn taskbar-classic-customize" disabled>Customize...</button>
+      <button type="button" class="xp-btn taskbar-classic-customize" ${currentStartMenuStyle === "start" ? "disabled" : ""}>Customize...</button>
     </div>
     <div class="dlg-buttons taskbar-properties-buttons"></div>
   `;
+  if (currentStartMenuStyle === "classic") {
+    dialog.body.querySelector(".taskbar-start-menu-preview").src =
+      "assets/xp/system/ClassicStartMenuPreview.png";
+  }
   const tabs = [
     ...dialog.body.querySelectorAll("[data-taskbar-properties-tab]"),
   ];
@@ -8436,6 +8456,10 @@ const openTaskbarProperties = () => {
       document.getElementById("taskbar-clock").hidden =
         !dialog.body.querySelector('[data-taskbar-setting="show-clock"]')
           .checked;
+      applyStartMenuStyle(
+        dialog.body.querySelector('[name="taskbar-start-menu-style"]:checked')
+          .value,
+      );
       apply.disabled = true;
     },
   );
@@ -8457,6 +8481,9 @@ const openTaskbarProperties = () => {
     apply.disabled = false;
     if (event.target.name === "taskbar-start-menu-style") {
       const classic = event.target.value === "classic";
+      dialog.body.querySelector(".taskbar-start-menu-preview").src = classic
+        ? "assets/xp/system/ClassicStartMenuPreview.png"
+        : "assets/xp/system/StartMenuPreview.png";
       dialog.body.querySelector(".taskbar-start-customize").disabled = classic;
       dialog.body.querySelector(".taskbar-classic-customize").disabled =
         !classic;
@@ -10796,25 +10823,6 @@ const getProgramGroups = () => {
     ]);
 };
 
-const getUniqueCategoryMnemonics = (groups) => {
-  const used = new Set();
-  return new Map(
-    groups.map(([category]) => {
-      const index = [...category].findIndex(
-        (character) =>
-          /[\p{L}\p{N}]/u.test(character) && !used.has(character.toLowerCase()),
-      );
-      const marker = index < 0 ? 0 : index;
-      const key = category[marker].toLowerCase();
-      used.add(key);
-      return [
-        category,
-        `${category.slice(0, marker)}&${category.slice(marker)}`,
-      ];
-    }),
-  );
-};
-
 const openRecentDocuments = () => {
   const dialog = XPDialogs.createDialog({ title: "My Recent Documents" });
   const recentGames = Object.entries(getGameStats())
@@ -11347,16 +11355,25 @@ const startDestinationActions = {
 };
 
 const buildPlaces = () => {
-  if (placesBuilt) return;
-  placesBuilt = true;
-
   const container = document.getElementById("start-menu-places");
-  const createPlace = ({ id, label, icon, title = label }) => {
+  const style = getStartMenuStyle();
+  if (renderedPlacesStyle === style) return;
+  renderedPlacesStyle = style;
+  container.replaceChildren();
+
+  const createPlace = ({
+    id,
+    label,
+    icon,
+    title = label,
+    action,
+    children,
+  }) => {
     const { key } = XPDialogs.parseAccessKey(label);
     const item = document.createElement("button");
     item.className = "sm-place";
     item.type = "button";
-    item.dataset.startAction = id;
+    if (id) item.dataset.startAction = id;
     item.dataset.accessKey = key;
     item.title = XPDialogs.parseAccessKey(title).text;
 
@@ -11374,10 +11391,36 @@ const buildPlaces = () => {
     const text = document.createElement("span");
     setAccessKeyText(text, label);
     item.append(glyph, text);
-    item.addEventListener("click", () => {
-      closeStartMenu();
-      startDestinationActions[id]();
-    });
+    if (children) {
+      item.classList.add("classic-start-folder");
+      item.setAttribute("aria-haspopup", "menu");
+      const arrow = document.createElement("span");
+      arrow.className = "start-program-arrow";
+      arrow.textContent = "▶";
+      item.appendChild(arrow);
+      const open = (focusFirst = false) => {
+        openProgramSubmenu(children, item, 0);
+        if (focusFirst)
+          document
+            .querySelector("#start-menu-flyouts .start-program-flyout button")
+            ?.focus();
+      };
+      item.addEventListener("pointerenter", () => {
+        clearTimeout(startFlyoutTimer);
+        startFlyoutTimer = setTimeout(open, 220);
+      });
+      item.addEventListener("click", () => open(true));
+      item.addEventListener("keydown", (event) => {
+        if (!["ArrowRight", "Enter"].includes(event.key)) return;
+        event.preventDefault();
+        open(true);
+      });
+    } else {
+      item.addEventListener("click", () => {
+        closeStartMenu();
+        (action || startDestinationActions[id])();
+      });
+    }
     return item;
   };
 
@@ -11390,6 +11433,51 @@ const buildPlaces = () => {
     event.preventDefault();
     item.click();
   });
+
+  if (style === "classic") {
+    const documents = [
+      {
+        label: "My &Documents",
+        icon: "MyDocuments.png",
+        action: startDestinationActions.documents,
+      },
+      {
+        label: "My &Pictures",
+        icon: "MyPictures.png",
+        action: startDestinationActions.pictures,
+      },
+      {
+        label: "My &Music",
+        icon: "MyMusic.png",
+        action: startDestinationActions.music,
+      },
+    ];
+    const settings = [
+      {
+        label: "&Control Panel",
+        icon: "ControlPanel.png",
+        action: startDestinationActions.controlPanel,
+      },
+      {
+        label: "&Printers and Faxes",
+        icon: "PrintersAndFaxes.png",
+        action: startDestinationActions.printers,
+      },
+      {
+        label: "Taskbar and Start &Menu",
+        icon: "TaskbarAndStartMenu.png",
+        action: openTaskbarProperties,
+      },
+    ];
+    [
+      { label: "&Documents", icon: "RecentDocuments.png", children: documents },
+      { label: "&Settings", icon: "ControlPanel.png", children: settings },
+      { id: "search", label: "&Search", icon: "Search.png" },
+      { id: "help", label: "&Help and Support", icon: "HelpAndSupport.png" },
+      { id: "run", label: "&Run...", icon: "Run.png" },
+    ].forEach((definition) => container.appendChild(createPlace(definition)));
+    return;
+  }
 
   [
     ["documents", "My &Documents", "MyDocuments.png"],
@@ -11424,6 +11512,66 @@ const buildPlaces = () => {
 const buildPinnedPrograms = () => {
   const container = document.getElementById("start-menu-pinned");
   container.innerHTML = "";
+
+  const allProgramsLabel = document.querySelector(
+    "#all-programs-button > .all-programs-label",
+  );
+  const allProgramsButton = document.getElementById("all-programs-button");
+  allProgramsButton.querySelector(".all-programs-icon")?.remove();
+  if (getStartMenuStyle() === "classic") {
+    allProgramsLabel.textContent = "Programs";
+    const programsIcon = document.createElement("span");
+    programsIcon.className = "all-programs-icon";
+    const programsImage = document.createElement("img");
+    programsImage.src = XP_ICON_PATHS["Programs.png"];
+    programsImage.alt = "";
+    programsIcon.appendChild(programsImage);
+    allProgramsButton.prepend(programsIcon);
+    const createCommand = ({ label, icon, action }) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "sm-game classic-start-command";
+      const glyph = document.createElement("span");
+      glyph.className = "sm-game-icon has-image";
+      const image = document.createElement("img");
+      image.src = XP_ICON_PATHS[icon];
+      image.alt = "";
+      glyph.appendChild(image);
+      const title = document.createElement("span");
+      title.className = "sm-game-title";
+      title.textContent = label;
+      item.append(glyph, title);
+      item.addEventListener("click", () => {
+        closeStartMenu();
+        action();
+      });
+      return item;
+    };
+    [
+      {
+        label: "Set Program Access and Defaults",
+        icon: "AddRemovePrograms.png",
+        action: () => openSystemWindow("__add-remove-programs"),
+      },
+      {
+        label: "Windows Catalog",
+        icon: "Programs.png",
+        action: () =>
+          XPDialogs.alert(
+            "Windows Catalog is not available on this offline computer.",
+            "Windows Catalog",
+            "info",
+          ),
+      },
+      {
+        label: "Windows Update",
+        icon: "SecurityCenter.png",
+        action: () => openSystemWindow("__security-center"),
+      },
+    ].forEach((definition) => container.appendChild(createCommand(definition)));
+    return;
+  }
+  allProgramsLabel.textContent = "All Programs";
 
   const internetGames = document.createElement("button");
   internetGames.type = "button";
@@ -11526,20 +11674,199 @@ const wireStartFlyoutKeyboard = (panel, parentButton) => {
   });
 };
 
-const openProgramsFolder = (category, games, anchor) => {
+const getAllProgramsTree = () => {
+  const gameGroups = getProgramGroups().map(([category, games]) => ({
+    label: category,
+    icon: "Programs.png",
+    children: games.map((gameId) => ({ gameId })),
+  }));
+  return [
+    {
+      id: "program-access-defaults",
+      label: "Set Program Access and Defaults",
+      icon: "AddRemovePrograms.png",
+      action: () => openSystemWindow("__add-remove-programs"),
+    },
+    {
+      id: "windows-catalog",
+      label: "Windows Catalog",
+      icon: "Programs.png",
+      action: () =>
+        XPDialogs.alert(
+          "Windows Catalog is not available on this offline computer.",
+          "Windows Catalog",
+          "info",
+        ),
+    },
+    {
+      id: "windows-update",
+      label: "Windows Update",
+      icon: "SecurityCenter.png",
+      action: () => openSystemWindow("__security-center"),
+    },
+    { separator: true },
+    {
+      id: "accessories",
+      label: "Accessories",
+      icon: "Programs.png",
+      children: [
+        {
+          id: "notepad",
+          label: "Notepad",
+          icon: "Notepad.png",
+          action: openNotepad,
+        },
+        {
+          id: "windows-explorer",
+          label: "Windows Explorer",
+          icon: "MyDocuments.png",
+          action: () => openSystemWindow("__my-documents"),
+        },
+        {
+          id: "search",
+          label: "Search",
+          icon: "Search.png",
+          action: openSearchDialog,
+        },
+        {
+          id: "help",
+          label: "Help and Support",
+          icon: "HelpAndSupport.png",
+          action: openHelpAndSupport,
+        },
+        {
+          id: "system-tools",
+          label: "System Tools",
+          icon: "Programs.png",
+          children: [
+            {
+              id: "control-panel",
+              label: "Control Panel",
+              icon: "ControlPanel.png",
+              action: openControlPanel,
+            },
+            {
+              id: "display-properties",
+              label: "Display Properties",
+              icon: "Display.png",
+              action: () => openSystemWindow("__display-properties"),
+            },
+            {
+              id: "taskbar-properties",
+              label: "Taskbar and Start Menu",
+              icon: "TaskbarAndStartMenu.png",
+              action: openTaskbarProperties,
+            },
+            {
+              id: "printers",
+              label: "Printers and Faxes",
+              icon: "PrintersAndFaxes.png",
+              action: openPrintersAndFaxes,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "games",
+      label: "Games",
+      icon: "Programs.png",
+      children: gameGroups,
+    },
+    {
+      id: "astro-settings",
+      label: "Astro Flash Settings",
+      icon: "ControlPanel.png",
+      action: openProjectSettings,
+    },
+    {
+      id: "internet-games",
+      label: "Internet Games",
+      icon: "AddRemovePrograms.png",
+      action: () => openSystemWindow("__internet-games"),
+    },
+  ];
+};
+
+const createProgramMenuItem = (definition, depth) => {
+  if (definition.gameId) {
+    const item = createMenuGameItem(definition.gameId);
+    item.setAttribute("role", "menuitem");
+    return item;
+  }
+  const item = document.createElement("button");
+  item.type = "button";
+  item.className = definition.children
+    ? "start-program-item start-program-folder"
+    : "start-program-item";
+  item.setAttribute("role", "menuitem");
+  if (definition.id) item.dataset.programId = definition.id;
+  const icon = document.createElement("span");
+  icon.className = "start-program-icon";
+  if (definition.icon) {
+    const image = document.createElement("img");
+    image.src = XP_ICON_PATHS[definition.icon];
+    image.alt = "";
+    icon.appendChild(image);
+  }
+  const label = document.createElement("span");
+  const { key } = setAccessKeyText(label, definition.label);
+  item.dataset.accessKey = key;
+  item.append(icon, label);
+  if (definition.children) {
+    item.setAttribute("aria-haspopup", "menu");
+    const arrow = document.createElement("span");
+    arrow.className = "start-program-arrow";
+    arrow.textContent = "▶";
+    item.appendChild(arrow);
+    const open = (focusFirst = false) => {
+      openProgramSubmenu(definition.children, item, depth + 1);
+      if (focusFirst)
+        document
+          .querySelectorAll("#start-menu-flyouts .start-program-flyout")
+          [depth + 1]?.querySelector("button")
+          ?.focus();
+    };
+    item.addEventListener("pointerenter", () => {
+      clearTimeout(startFlyoutTimer);
+      startFlyoutTimer = setTimeout(open, 220);
+    });
+    item.addEventListener("click", () => open(true));
+    item.addEventListener("keydown", (event) => {
+      if (!["ArrowRight", "Enter"].includes(event.key)) return;
+      event.preventDefault();
+      open(true);
+    });
+  } else {
+    item.addEventListener("click", () => {
+      closeStartMenu();
+      definition.action();
+    });
+  }
+  return item;
+};
+
+const openProgramSubmenu = (definitions, anchor, depth = 0) => {
   const host = document.getElementById("start-menu-flyouts");
   [...host.querySelectorAll(".start-program-flyout")]
-    .slice(1)
+    .slice(depth)
     .forEach((panel) => panel.remove());
   const panel = document.createElement("div");
   panel.className = "start-program-flyout";
   panel.setAttribute("role", "menu");
-  games.forEach((gameId) => {
-    const item = createMenuGameItem(gameId);
-    item.setAttribute("role", "menuitem");
-    panel.appendChild(item);
+  panel.dataset.depth = String(depth);
+  definitions.forEach((definition) => {
+    if (definition.separator) {
+      const separator = document.createElement("span");
+      separator.className = "start-program-separator";
+      separator.setAttribute("role", "separator");
+      panel.appendChild(separator);
+    } else {
+      panel.appendChild(createProgramMenuItem(definition, depth));
+    }
   });
   host.appendChild(panel);
+  host.hidden = false;
   positionStartFlyout(panel, anchor);
   wireStartFlyoutKeyboard(panel, anchor);
   panel.addEventListener("pointerenter", () => clearTimeout(startFlyoutTimer));
@@ -11555,61 +11882,8 @@ const openAllPrograms = (focusFirst = false) => {
   host.replaceChildren();
   host.hidden = false;
   button.classList.add("active");
-  const panel = document.createElement("div");
-  panel.className = "start-program-flyout";
-  panel.setAttribute("role", "menu");
-  const groups = getProgramGroups();
-  const mnemonics = getUniqueCategoryMnemonics(groups);
-  groups.forEach(([category, games]) => {
-    const folder = document.createElement("button");
-    folder.type = "button";
-    folder.className = "start-program-folder";
-    folder.dataset.category = category;
-    folder.setAttribute("role", "menuitem");
-    folder.setAttribute("aria-haspopup", "menu");
-    const label = document.createElement("span");
-    const mnemonic = mnemonics.get(category);
-    const { key } = setAccessKeyText(label, mnemonic);
-    folder.dataset.accessKey = key;
-    const icon = document.createElement("span");
-    icon.textContent = categoryIcons[category] || categoryIcons.Other;
-    folder.append(
-      icon,
-      label,
-      Object.assign(document.createElement("span"), {
-        className: "start-program-arrow",
-        textContent: "▶",
-      }),
-    );
-    const open = (withFocus = false) => {
-      openProgramsFolder(category, games, folder);
-      if (withFocus)
-        host
-          .querySelectorAll(".start-program-flyout")[1]
-          ?.querySelector("button")
-          ?.focus();
-    };
-    folder.addEventListener("pointerenter", () => {
-      clearTimeout(startFlyoutTimer);
-      startFlyoutTimer = setTimeout(open, 220);
-    });
-    folder.addEventListener("click", () => open(true));
-    folder.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowRight" || event.key === "Enter") {
-        event.preventDefault();
-        open(true);
-      }
-    });
-    panel.appendChild(folder);
-  });
-  host.appendChild(panel);
-  positionStartFlyout(panel, button);
-  wireStartFlyoutKeyboard(panel, button);
-  panel.addEventListener("pointerenter", () => clearTimeout(startFlyoutTimer));
-  panel.addEventListener("pointerleave", () => {
-    startFlyoutTimer = setTimeout(closeAllPrograms, 420);
-  });
-  if (focusFirst) panel.querySelector("button")?.focus();
+  openProgramSubmenu(getAllProgramsTree(), button, 0);
+  if (focusFirst) host.querySelector(".start-program-flyout button")?.focus();
 };
 
 const toggleAllPrograms = () => {
@@ -11619,8 +11893,19 @@ const toggleAllPrograms = () => {
 };
 
 const openStartMenu = () => {
+  const classic = getStartMenuStyle() === "classic";
   buildPinnedPrograms();
+  buildPlaces();
   closeAllPrograms();
+  document.querySelector(".start-menu-user").textContent = classic
+    ? "Windows XP Professional"
+    : "astro";
+  document.getElementById("log-off-button").lastChild.textContent = classic
+    ? " Log Off astro..."
+    : " Log Off";
+  document.getElementById("turn-off-button").lastChild.textContent = classic
+    ? " Turn Off Computer..."
+    : " Turn Off Computer";
   document.getElementById("start-menu").hidden = false;
   document.getElementById("start-button").classList.add("active");
 };
@@ -11852,6 +12137,7 @@ const login = (playSound = true) => {
     loggedIn = true;
     showDesktop();
     applyDisplaySettings(getDisplaySettings());
+    applyStartMenuStyle(getStartMenuStyle(), false);
     applyFocusVolumes();
     if (playSound) {
       playXPSound("logon");

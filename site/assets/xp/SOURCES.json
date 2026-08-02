@@ -1956,6 +1956,19 @@
       "pixelSha256": "257e8c536080cbe47084bb0c0b4f1ac5aedba003d1451834e32d41e136441573"
     }
   },
+  "assets/xp/system/ClassicStartMenuPreview.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/EXPLORER.EX_",
+    "sha256": "314de801d436ce7a26cc4208e0bc9679e137fc5c4374153df61effb47dc4ba3a",
+    "resource": {
+      "parentSha256": "1e675cb7df214172f7eb0497f7275556038a0d09c6e5a3e6862c5e26885ef455",
+      "type": 2,
+      "id": 171,
+      "language": 1033,
+      "frame": "300x180x32",
+      "pixelSha256": "d661b20488af8304178896e5489b6aec44adb4587e65c7a3398cca7be77cfae9"
+    }
+  },
   "assets/xp/system/NotificationAreaPreview.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/EXPLORER.EX_",

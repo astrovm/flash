@@ -443,15 +443,45 @@ test("clock and network tray buttons open their corresponding dialogs", async ()
   expect(shell.document.getElementById("network-status-state")).not.toBeNull();
 });
 
-test("All Programs opens cascading menus and launches a game window", async () => {
+test("All Programs exposes system applications and games in the XP hierarchy", async () => {
   const shell = await login(await loadShell());
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
   const flyouts = shell.document.getElementById("start-menu-flyouts")!;
   expect(flyouts.hidden).toBeFalse();
+  expect(
+    [...flyouts.querySelectorAll<HTMLElement>("[data-program-id]")].map(
+      (item) => item.dataset.programId,
+    ),
+  ).toEqual([
+    "program-access-defaults",
+    "windows-catalog",
+    "windows-update",
+    "accessories",
+    "games",
+    "astro-settings",
+    "internet-games",
+  ]);
+
   flyouts
-    .querySelector<HTMLButtonElement>('[data-category="Adventure"]')!
+    .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
     .click();
+  const notepad = flyouts.querySelector<HTMLButtonElement>(
+    '[data-program-id="notepad"]',
+  )!;
+  expect(notepad).not.toBeNull();
+  notepad.click();
+  expect(shell.document.querySelector(".notepad-window")).not.toBeNull();
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
+  const adventure = [
+    ...flyouts.querySelectorAll<HTMLButtonElement>("button"),
+  ].find((button) => button.textContent?.trim().startsWith("Adventure"))!;
+  adventure.click();
   const game = [
     ...flyouts.querySelectorAll<HTMLButtonElement>(".sm-game"),
   ].find((button) => button.textContent?.includes("Inside the Firewall"));
@@ -463,6 +493,72 @@ test("All Programs opens cascading menus and launches a game window", async () =
       '.xp-window[data-game="inside-the-firewall"] iframe',
     ),
   ).not.toBeNull();
+});
+
+test("Taskbar Properties applies Classic Start menu independently and switches previews", async () => {
+  const shell = await login(await loadShell());
+  const { document, window } = shell;
+  document.getElementById("taskbar")!.dispatchEvent(
+    new window.MouseEvent("contextmenu", {
+      bubbles: true,
+      clientX: 400,
+      clientY: 740,
+    }),
+  );
+  document
+    .querySelector<HTMLButtonElement>('[data-taskbar-action="properties"]')!
+    .click();
+  const dialog = document.querySelector<HTMLElement>(
+    ".taskbar-properties-dialog",
+  )!;
+  dialog
+    .querySelector<HTMLButtonElement>(
+      '[data-taskbar-properties-tab="start-menu"]',
+    )!
+    .click();
+
+  const preview = dialog.querySelector<HTMLImageElement>(
+    ".taskbar-start-menu-preview",
+  )!;
+  expect(preview.src).toEndWith("/assets/xp/system/StartMenuPreview.png");
+  const classic = dialog.querySelector<HTMLInputElement>(
+    '[name="taskbar-start-menu-style"][value="classic"]',
+  )!;
+  classic.click();
+  expect(preview.src).toEndWith(
+    "/assets/xp/system/ClassicStartMenuPreview.png",
+  );
+  expect(
+    dialog.querySelector<HTMLButtonElement>(".taskbar-start-customize")!
+      .disabled,
+  ).toBeTrue();
+  expect(
+    dialog.querySelector<HTMLButtonElement>(".taskbar-classic-customize")!
+      .disabled,
+  ).toBeFalse();
+  dialog
+    .querySelector<HTMLButtonElement>(
+      '.taskbar-properties-buttons [data-action="ok"]',
+    )!
+    .click();
+
+  expect(window.localStorage.getItem("startMenuStyle")).toBe("classic");
+  expect(document.documentElement.dataset.xpStartMenu).toBe("classic");
+  expect(document.documentElement.dataset.xpAppearance).toBe("blue");
+  document.getElementById("start-button")!.click();
+  expect(document.querySelector(".start-menu-user")!.textContent).toBe(
+    "Windows XP Professional",
+  );
+  expect(
+    document.querySelector("#all-programs-button > .all-programs-label")!
+      .textContent,
+  ).toBe("Programs");
+  expect(document.getElementById("log-off-button")!.textContent).toContain(
+    "Log Off astro...",
+  );
+
+  document.documentElement.dataset.xpAppearance = "classic";
+  expect(document.documentElement.dataset.xpStartMenu).toBe("classic");
 });
 
 test("logoff and shutdown actions change the visible session screen", async () => {

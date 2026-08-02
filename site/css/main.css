@@ -12372,22 +12372,25 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 .start-program-flyout {
   position: fixed;
-  width: min(260px, 58vw);
-  max-height: min(420px, 72vh);
+  width: min(218px, 72vw);
+  max-height: min(520px, 78vh);
   overflow: auto;
-  padding: 3px;
+  padding: 2px;
   background: #fff;
-  border: 2px solid #1d58c7;
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.45);
+  border: 1px solid #8a8a8a;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.42);
   pointer-events: auto;
+  font:
+    11px Tahoma,
+    sans-serif;
 }
 .start-program-flyout button {
   width: 100%;
-  min-height: 28px;
+  min-height: 23px;
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 7px;
+  padding: 2px 6px;
   border: 0;
   background: #fff;
   color: #111;
@@ -12401,11 +12404,35 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   outline: none;
 }
 .start-program-folder {
-  font-weight: 700;
+  font-weight: 400;
 }
 .start-program-arrow {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 8px;
+}
+
+.start-program-icon,
+.start-program-flyout .sm-game-icon.has-image {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.start-program-icon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.start-program-separator {
+  display: block;
+  height: 1px;
+  margin: 3px 4px;
+  background: #aca899;
+}
+
+.start-program-flyout .play-count {
+  display: none;
 }
 
 .start-menu-search {
@@ -13612,4 +13639,242 @@ html[data-xp-appearance="classic"] .start-menu-footer button:hover {
   background: #d4d0c8;
   color: #000;
   font-size: 10px;
+}
+
+/* Start-menu style is independent from the active Windows theme. */
+html[data-xp-start-menu="classic"] #start-menu {
+  width: min(250px, 96vw);
+  border: 1px solid #808080;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.45);
+  overflow: visible;
+}
+
+html[data-xp-start-menu="classic"] #start-menu::before {
+  display: none;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-header {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 24px;
+  min-height: 0;
+  padding: 4px 2px;
+  border: 0;
+  background: linear-gradient(180deg, #000 0%, #07196d 58%, #003399 100%);
+}
+
+html[data-xp-start-menu="classic"] .start-menu-avatar {
+  display: none;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-user {
+  position: absolute;
+  bottom: 5px;
+  left: 4px;
+  margin: 0;
+  color: #fff;
+  font:
+    bold 15px Arial,
+    sans-serif;
+  letter-spacing: 0;
+  text-shadow: none;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+html[data-xp-start-menu="classic"] .start-menu-body {
+  min-height: 0;
+  max-height: none;
+  margin: 0 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  background: #fff;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-left,
+html[data-xp-start-menu="classic"] .start-menu-right {
+  width: auto;
+  flex: none;
+  padding: 0;
+  gap: 0;
+  border: 0;
+  background: #fff;
+  overflow: visible;
+}
+
+html[data-xp-start-menu="classic"] #start-menu-pinned {
+  flex: none;
+  padding: 0;
+  overflow: visible;
+}
+
+html[data-xp-start-menu="classic"] #start-menu-pinned .classic-start-command {
+  min-height: 33px;
+  gap: 7px;
+  padding: 3px 8px;
+  color: #000;
+  background: transparent;
+}
+
+html[data-xp-start-menu="classic"]
+  #start-menu-pinned
+  .classic-start-command:hover {
+  color: #fff;
+  background: #316ac5;
+}
+
+html[data-xp-start-menu="classic"]
+  #start-menu-pinned
+  .classic-start-command
+  .sm-game-icon.has-image {
+  width: 24px;
+  height: 24px;
+}
+
+html[data-xp-start-menu="classic"]
+  #start-menu-pinned
+  .classic-start-command
+  .sm-game-icon
+  img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+html[data-xp-start-menu="classic"] #all-programs-button {
+  height: 33px;
+  justify-content: flex-start;
+  gap: 7px;
+  padding: 0 8px;
+  border-top: 1px solid #aca899;
+  border-bottom: 1px solid #aca899;
+  background: transparent;
+  color: #000;
+  font-weight: 400;
+}
+
+html[data-xp-start-menu="classic"] #all-programs-button:hover,
+html[data-xp-start-menu="classic"] #all-programs-button.active {
+  color: #fff;
+  background: #316ac5;
+}
+
+html[data-xp-start-menu="classic"] .all-programs-arrow {
+  margin-left: auto;
+  border-top-width: 4px;
+  border-bottom-width: 4px;
+  border-left: 5px solid currentColor;
+  filter: none;
+}
+
+html[data-xp-start-menu="classic"] .all-programs-icon,
+html[data-xp-start-menu="classic"] .all-programs-icon img {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  object-fit: contain;
+}
+
+html[data-xp-start-menu="classic"] .sm-place {
+  min-height: 33px;
+  gap: 7px;
+  padding: 3px 8px;
+  border-radius: 0;
+  color: #000;
+  background: transparent;
+  font-weight: 400;
+}
+
+html[data-xp-start-menu="classic"] .sm-place:hover,
+html[data-xp-start-menu="classic"] .sm-place:focus-visible {
+  color: #fff;
+  background: #316ac5;
+  outline: 0;
+}
+
+html[data-xp-start-menu="classic"] .sm-place-icon,
+html[data-xp-start-menu="classic"] .sm-place-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-footer {
+  margin: 0 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  border-top: 1px solid #aca899;
+  background: #fff;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-footer button {
+  width: 100%;
+  min-height: 33px;
+  justify-content: flex-start;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 0;
+  color: #000;
+  text-shadow: none;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-footer button:hover {
+  color: #fff;
+  background: #316ac5;
+}
+
+html[data-xp-start-menu="classic"] .start-menu-footer .xp-power-icon,
+html[data-xp-start-menu="classic"] .start-menu-footer .xp-logoff-icon {
+  width: 24px;
+  height: 24px;
+}
+
+html[data-xp-appearance="classic"] .start-menu-left,
+html[data-xp-appearance="classic"] #all-programs-button,
+html[data-xp-appearance="classic"] .start-program-flyout,
+html[data-xp-appearance="classic"] .start-program-flyout button {
+  background: #d4d0c8;
+}
+
+html[data-xp-appearance="classic"] #all-programs-button:hover,
+html[data-xp-appearance="classic"] #all-programs-button.active {
+  color: #fff;
+  background: #0a246a;
+}
+
+html[data-xp-appearance="classic"] .start-program-flyout {
+  border-color: #808080;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #404040,
+    2px 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+html[data-xp-appearance="classic"] .start-program-flyout button:hover,
+html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
+  color: #fff;
+  background: #0a246a;
+}
+
+html[data-xp-appearance="classic"][data-xp-start-menu="classic"] #start-menu,
+html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
+  .start-menu-body,
+html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
+  .start-menu-left,
+html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
+  .start-menu-right,
+html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
+  .start-menu-footer {
+  background: #d4d0c8;
 }
