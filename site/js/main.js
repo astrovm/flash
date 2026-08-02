@@ -8785,7 +8785,8 @@ const saveBundledGameForOffline = (gameId) => {
     })
     .catch((error) => {
       console.warn(
-        `Could not save ${formatGameTitle(gameId)} for offline play:`,
+        "Could not save game for offline play:",
+        formatGameTitle(gameId),
         error,
       );
     });

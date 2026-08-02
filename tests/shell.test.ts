@@ -109,6 +109,11 @@ test("Flash games keep curated FPS defaults and allow user overrides", async () 
   contains(css, ".game-playback-settings", ".game-playback-row");
 });
 test("opening a bundled game queues a complete offline download", () => {
+  const offlineDownload = between(
+    javascript,
+    "const saveBundledGameForOffline =",
+    "const wireProjectSettings =",
+  );
   js(
     "let automaticOfflineDownloadQueue = Promise.resolve()",
     "saveBundledGameForOffline(gameId)",
@@ -116,6 +121,12 @@ test("opening a bundled game queues a complete offline download", () => {
     "offlineManager.getSnapshot().downloadedGameIds.includes(gameId)",
     "await offlineManager.downloadGame(gameId)",
   );
+  contains(
+    offlineDownload,
+    '"Could not save game for offline play:"',
+    "formatGameTitle(gameId)",
+  );
+  absent(offlineDownload, "`Could not save ${formatGameTitle(gameId)}");
   expect(
     javascript.indexOf("saveBundledGameForOffline(gameId)"),
   ).toBeGreaterThan(javascript.indexOf("switch (game.type)"));
