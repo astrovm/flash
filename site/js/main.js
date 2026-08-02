@@ -9781,6 +9781,27 @@ const selectDesktopIcon = (desktopId, additive = false) => {
   });
 };
 
+const findDesktopIconInDirection = (currentIcon, icons, key) => {
+  const currentRect = currentIcon.getBoundingClientRect();
+  const currentX = currentRect.left + currentRect.width / 2;
+  const currentY = currentRect.top + currentRect.height / 2;
+  const horizontal = key === "ArrowLeft" || key === "ArrowRight";
+  const sign = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
+
+  return icons
+    .filter((icon) => icon !== currentIcon)
+    .map((icon) => {
+      const rect = icon.getBoundingClientRect();
+      const dx = rect.left + rect.width / 2 - currentX;
+      const dy = rect.top + rect.height / 2 - currentY;
+      const primary = (horizontal ? dx : dy) * sign;
+      const perpendicular = Math.abs(horizontal ? dy : dx);
+      return { icon, primary, score: primary + perpendicular * 2 };
+    })
+    .filter(({ primary }) => primary > 1)
+    .sort((a, b) => a.score - b.score || a.primary - b.primary)[0]?.icon;
+};
+
 const clearDesktopSelection = () => {
   document.querySelectorAll(".desktop-icon.selected").forEach((icon) => {
     icon.classList.remove("selected");
@@ -12295,13 +12316,13 @@ document.addEventListener("keydown", (e) => {
       desktopIcon &&
       ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
     ) {
-      const current = desktopIcons.indexOf(desktopIcon);
-      const direction = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 1;
-      const target =
-        desktopIcons[
-          (current + direction + desktopIcons.length) % desktopIcons.length
-        ];
       e.preventDefault();
+      const target = findDesktopIconInDirection(
+        desktopIcon,
+        desktopIcons,
+        e.key,
+      );
+      if (!target) return;
       if (!e.ctrlKey && !e.shiftKey)
         selectDesktopIcon(target.dataset.desktopId);
       if (e.shiftKey) target.classList.add("selected");
