@@ -1056,12 +1056,20 @@ html[data-xp-appearance="silver"] {
   border: 0;
   border-radius: 0;
   background-color: transparent;
-  background-position:
-    center var(--caption-glyph-y),
-    center var(--caption-button-y);
-  background-size: contain;
+  background-position: center var(--caption-button-y);
+  background-size: 21px 168px;
   background-repeat: no-repeat;
   cursor: var(--xp-cursor);
+}
+
+.tb-btn::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background-position: center var(--caption-glyph-y);
+  background-size: 13px 104px;
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .xp-window.active .tb-btn:hover:not(:disabled) {
@@ -1102,35 +1110,27 @@ html[data-xp-appearance="silver"] {
 .minimize-btn,
 .maximize-btn,
 .restore-btn {
-  background-size:
-    13px 104px,
-    21px 168px;
+  background-image: url("../assets/xp/icons/CaptionButton.png");
 }
 
-.minimize-btn {
-  background-image:
-    url("../assets/xp/icons/Minimize.png"),
-    url("../assets/xp/icons/CaptionButton.png");
+.minimize-btn::after {
+  background-image: url("../assets/xp/icons/Minimize.png");
 }
 
-.maximize-btn {
-  background-image:
-    url("../assets/xp/icons/Maximize.png"),
-    url("../assets/xp/icons/CaptionButton.png");
+.maximize-btn::after {
+  background-image: url("../assets/xp/icons/Maximize.png");
 }
 
-.restore-btn {
-  background-image:
-    url("../assets/xp/icons/Restore.png"),
-    url("../assets/xp/icons/CaptionButton.png");
+.restore-btn::after {
+  background-image: url("../assets/xp/icons/Restore.png");
 }
 
 .close-btn {
-  background-image:
-    url("../assets/xp/icons/Close.png"), url("../assets/xp/icons/Exit.png");
-  background-size:
-    13px 104px,
-    21px 168px;
+  background-image: url("../assets/xp/icons/Exit.png");
+}
+
+.close-btn::after {
+  background-image: url("../assets/xp/icons/Close.png");
 }
 
 /* ---- Game application menu bar ---- */
