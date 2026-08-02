@@ -18,6 +18,7 @@ import sharp from "sharp";
 type DirectAsset = { member: string; output: string };
 type CabAsset = DirectAsset & { cabMember: string; bitmap?: boolean };
 type ResourceIcon = DirectAsset & {
+  cabMember?: string;
   expandedName: string;
   resourceType: number;
   resourceId: number | string;
@@ -163,6 +164,18 @@ async function extractCabAsset(
     .toBuffer();
 }
 
+async function extractDirectCabMember(
+  isoPath: string,
+  member: string,
+  cabMember: string,
+  workDirectory: string,
+): Promise<Uint8Array> {
+  const cabinet = run("7z", ["e", "-so", isoPath, `I386/${member}`]);
+  const cabinetPath = join(workDirectory, member);
+  await writeFile(cabinetPath, cabinet);
+  return run("cabextract", ["-p", "-F", cabMember, cabinetPath]);
+}
+
 async function firstFile(
   directory: string,
   extension: string,
@@ -198,7 +211,14 @@ async function extractIcon(
   icon: ResourceIcon,
   workDirectory: string,
 ): Promise<{ png: Uint8Array; parentSha256: string; pixelSha256: string }> {
-  const parent = await expandMember(isoPath, icon.member, workDirectory);
+  const parent = icon.cabMember
+    ? await extractDirectCabMember(
+        isoPath,
+        icon.member,
+        icon.cabMember,
+        workDirectory,
+      )
+    : await expandMember(isoPath, icon.member, workDirectory);
   const parentPath = join(workDirectory, icon.expandedName);
   await writeFile(parentPath, parent);
 
@@ -486,7 +506,7 @@ try {
     await verifyOrWrite(icon.output, extracted.png, extracted.pixelSha256);
     records[relative("site", icon.output)] = {
       isoSha256: manifest.source.sha256,
-      member: `I386/${icon.member}`,
+      member: `I386/${icon.member}${icon.cabMember ? `!/${icon.cabMember}` : ""}`,
       sha256: sha256(extracted.png),
       resource: {
         parentSha256: extracted.parentSha256,

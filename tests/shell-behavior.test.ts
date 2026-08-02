@@ -460,6 +460,13 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     "accessories",
     "games",
     "startup",
+    "internet-explorer",
+    "msn",
+    "outlook-express",
+    "remote-assistance",
+    "windows-media-player",
+    "windows-messenger",
+    "windows-movie-maker",
     "astro-settings",
     "internet-games",
   ]);
@@ -478,6 +485,11 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       .querySelector('[data-program-id="windows-update"] img')!
       .getAttribute("src"),
   ).toEndWith("/WindowsUpdate.png");
+  expect(
+    flyouts
+      .querySelector('[data-program-id="internet-explorer"] img')!
+      .getAttribute("src"),
+  ).toEndWith("/InternetExplorer.png");
   for (const programId of ["accessories", "games", "startup"]) {
     expect(
       flyouts
@@ -489,12 +501,103 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
     .click();
+  const accessories = flyouts.querySelectorAll(".start-program-flyout")[1]!;
+  const accessoryIds = [
+    ...accessories.querySelectorAll<HTMLElement>("[data-program-id]"),
+  ].map((item) => item.dataset.programId);
+  for (const programId of [
+    "accessibility",
+    "communications",
+    "entertainment",
+    "system-tools",
+    "address-book",
+    "calculator",
+    "command-prompt",
+    "notepad",
+    "paint",
+    "wordpad",
+  ]) {
+    expect(accessoryIds).toContain(programId);
+  }
+  const calculator = accessories.querySelector<HTMLButtonElement>(
+    '[data-program-id="calculator"]',
+  )!;
+  calculator.click();
+  const calculatorWindow = shell.document.querySelector(
+    '.xp-window[data-game="__calculator"]',
+  )!;
+  const calculatorKeys = [
+    ...calculatorWindow.querySelectorAll<HTMLButtonElement>(
+      ".xp-calculator-keys button",
+    ),
+  ];
+  for (const key of ["2", "+", "3", "="]) {
+    calculatorKeys.find((button) => button.textContent === key)!.click();
+  }
+  expect(
+    calculatorWindow.querySelector<HTMLInputElement>(".xp-calculator-display")!
+      .value,
+  ).toBe("5");
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
+    .click();
   const notepad = flyouts.querySelector<HTMLButtonElement>(
     '[data-program-id="notepad"]',
   )!;
   expect(notepad).not.toBeNull();
+  expect(notepad.querySelector("img")!.getAttribute("src")).toEndWith(
+    "/Notepad.png",
+  );
   notepad.click();
   expect(shell.document.querySelector(".notepad-window")).not.toBeNull();
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
+  const minesweeper = flyouts.querySelector<HTMLButtonElement>(
+    '[data-program-id="minesweeper"]',
+  )!;
+  expect(minesweeper.querySelector("img")!.getAttribute("src")).toEndWith(
+    "/Minesweeper.png",
+  );
+  minesweeper.click();
+  const minesweeperWindow = shell.document.querySelector(
+    '.xp-window[data-game="__minesweeper"]',
+  )!;
+  const mineCells = minesweeperWindow.querySelectorAll<HTMLButtonElement>(
+    ".xp-minesweeper-board [role='gridcell']",
+  );
+  expect(mineCells).toHaveLength(81);
+  mineCells[40]!.click();
+  expect(mineCells[40]!.classList.contains("revealed")).toBeTrue();
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="solitaire"]')!
+    .click();
+  const solitaireWindow = shell.document.querySelector(
+    '.xp-window[data-game="__solitaire"]',
+  )!;
+  expect(
+    solitaireWindow.querySelectorAll(".xp-solitaire-tableau > div"),
+  ).toHaveLength(7);
+  solitaireWindow
+    .querySelector<HTMLButtonElement>(".xp-solitaire-stock")!
+    .click();
+  expect(
+    solitaireWindow
+      .querySelector(".xp-solitaire-waste")!
+      .classList.contains("empty"),
+  ).toBeFalse();
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
@@ -523,6 +626,100 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       '.xp-window[data-game="inside-the-firewall"] iframe',
     ),
   ).not.toBeNull();
+});
+
+test("Outlook Express composes mail and Windows Messenger sends local messages", async () => {
+  const shell = await login(await loadShell());
+  const openRootProgram = (programId: string) => {
+    shell.document.getElementById("start-button")!.click();
+    shell.document.getElementById("all-programs-button")!.click();
+    shell.document
+      .getElementById("start-menu-flyouts")!
+      .querySelector<HTMLButtonElement>(`[data-program-id="${programId}"]`)!
+      .click();
+  };
+
+  openRootProgram("outlook-express");
+  const outlook = shell.document.querySelector(
+    '.xp-window[data-game="__outlook-express"]',
+  )!;
+  outlook.querySelector<HTMLButtonElement>("[data-mail-new]")!.click();
+  const form = outlook.querySelector<HTMLFormElement>(".xp-mail-compose")!;
+  form.elements.namedItem("to")!.value = "friend@example.com";
+  form.elements.namedItem("subject")!.value = "Hello from XP";
+  form.elements.namedItem("body")!.value = "This message stays local.";
+  form.dispatchEvent(new shell.window.Event("submit", { bubbles: true }));
+  expect(outlook.querySelector(".xp-mail-folders")!.textContent).toContain(
+    "Sent Items (1)",
+  );
+  expect(outlook.querySelector(".xp-mail-list")!.textContent).toContain(
+    "Hello from XP",
+  );
+
+  openRootProgram("windows-messenger");
+  const messenger = shell.document.querySelector(
+    '.xp-window[data-game="__windows-messenger"]',
+  )!;
+  expect(
+    messenger.querySelector<HTMLImageElement>(".title-icon img")!.src,
+  ).toEndWith("/WindowsMessenger.png");
+  expect(
+    messenger.querySelector<HTMLImageElement>(".xp-messenger-account img")!.src,
+  ).toEndWith("/WindowsMessengerLarge.png");
+  messenger.querySelector<HTMLButtonElement>("[data-contact]")!.click();
+  const message = messenger.querySelector<HTMLInputElement>(
+    'input[aria-label="Message"]',
+  )!;
+  message.value = "Are you there?";
+  message
+    .closest("form")!
+    .dispatchEvent(new shell.window.Event("submit", { bubbles: true }));
+  expect(
+    messenger.querySelector(".xp-messenger-history")!.textContent,
+  ).toContain("Administrator says: Are you there?");
+});
+
+test("restored XP utilities expose dedicated working controls", async () => {
+  const shell = await login(await loadShell());
+  const openEntertainment = () => {
+    shell.document.getElementById("start-button")!.click();
+    shell.document.getElementById("all-programs-button")!.click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+    flyouts
+      .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
+      .click();
+    flyouts
+      .querySelector<HTMLButtonElement>('[data-program-id="entertainment"]')!
+      .click();
+    return flyouts;
+  };
+
+  let flyouts = openEntertainment();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="volume-control"]')!
+    .click();
+  const volume = shell.document.querySelector<HTMLInputElement>(
+    '.xp-window[data-game="__volume-control"] input[type="range"]',
+  )!;
+  volume.value = "35";
+  volume.dispatchEvent(new shell.window.Event("input", { bubbles: true }));
+  expect(shell.window.localStorage.getItem("volume")).toBe("35");
+
+  flyouts = openEntertainment();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="sound-recorder"]')!
+    .click();
+  const recorder = shell.document.querySelector(
+    '.xp-window[data-game="__sound-recorder"]',
+  )!;
+  recorder.querySelector<HTMLButtonElement>('[data-action="record"]')!.click();
+  expect(recorder.querySelector(".xp-recorder-wave")!.classList).toContain(
+    "active",
+  );
+  recorder.querySelector<HTMLButtonElement>('[data-action="stop"]')!.click();
+  expect(recorder.querySelector(".xp-recorder-wave")!.classList).not.toContain(
+    "active",
+  );
 });
 
 test("Taskbar Properties applies Classic Start menu independently and switches previews", async () => {

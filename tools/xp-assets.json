@@ -372,6 +372,198 @@
       "output": "site/assets/xp/icons/Notepad.png"
     },
     {
+      "member": "IEXPLORE.EX_",
+      "expandedName": "iexplore.exe",
+      "resourceType": 14,
+      "resourceId": 32528,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetExplorer.png"
+    },
+    {
+      "member": "MSNSUSII.EX_",
+      "expandedName": "msnsusii.exe",
+      "resourceType": 14,
+      "resourceId": 3000,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/MSN.png"
+    },
+    {
+      "member": "MSIMN.EX_",
+      "expandedName": "msimn.exe",
+      "resourceType": 14,
+      "resourceId": 2,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/OutlookExpress.png"
+    },
+    {
+      "member": "MMSSETUP.CAB",
+      "cabMember": "msmsgs.exe",
+      "expandedName": "msmsgs.exe",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsMessenger.png"
+    },
+    {
+      "member": "MMSSETUP.CAB",
+      "cabMember": "msmsgs.exe",
+      "expandedName": "msmsgs.exe",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsMessengerLarge.png"
+    },
+    {
+      "member": "RCIMLBY.EX_",
+      "expandedName": "rcimlby.exe",
+      "resourceType": 14,
+      "resourceId": 201,
+      "width": 16,
+      "height": 15,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/RemoteAssistance.png"
+    },
+    {
+      "member": "WMPLAYER.EX_",
+      "expandedName": "wmplayer.exe",
+      "resourceType": 14,
+      "resourceId": "IDR_MAINFRAME",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsMediaPlayer.png"
+    },
+    {
+      "member": "MOVIEMK.EX_",
+      "expandedName": "moviemk.exe",
+      "resourceType": 14,
+      "resourceId": 128,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/WindowsMovieMaker.png"
+    },
+    {
+      "member": "FREECELL.EX_",
+      "expandedName": "freecell.exe",
+      "resourceType": 14,
+      "resourceId": 601,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/FreeCell.png"
+    },
+    {
+      "member": "MSHEARTS.EX_",
+      "expandedName": "mshearts.exe",
+      "resourceType": 14,
+      "resourceId": 31234,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Hearts.png"
+    },
+    {
+      "member": "BCKGZM.EX_",
+      "expandedName": "bckgzm.exe",
+      "resourceType": 14,
+      "resourceId": "IDI_ICON",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetBackgammon.png"
+    },
+    {
+      "member": "CHKRZM.EX_",
+      "expandedName": "chkrzm.exe",
+      "resourceType": 14,
+      "resourceId": "IDI_ICON",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetCheckers.png"
+    },
+    {
+      "member": "HRTZZM.EX_",
+      "expandedName": "hrtzzm.exe",
+      "resourceType": 14,
+      "resourceId": "IDI_ICON",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetHearts.png"
+    },
+    {
+      "member": "RVSEZM.EX_",
+      "expandedName": "rvsezm.exe",
+      "resourceType": 14,
+      "resourceId": "IDI_ICON",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetReversi.png"
+    },
+    {
+      "member": "SHVLZM.EX_",
+      "expandedName": "shvlzm.exe",
+      "resourceType": 14,
+      "resourceId": "IDI_ICON",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/InternetSpades.png"
+    },
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Minesweeper.png"
+    },
+    {
+      "member": "PINBALL.EX_",
+      "expandedName": "pinball.exe",
+      "resourceType": 14,
+      "resourceId": "ICON_1",
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Pinball.png"
+    },
+    {
+      "member": "SOL.EX_",
+      "expandedName": "sol.exe",
+      "resourceType": 14,
+      "resourceId": 500,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Solitaire.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 14,
+      "resourceId": 103,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SpiderSolitaire.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
