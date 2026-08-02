@@ -8953,14 +8953,16 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .mouse-properties-panels {
-  height: 354px;
+  box-sizing: border-box;
+  height: 358px;
   margin-top: -1px;
-  padding: 12px 14px;
+  padding: 14px;
   border: 1px solid #919b9c;
   background: #ece9d8;
 }
 
 .mouse-properties-panels > section {
+  position: relative;
   height: 100%;
 }
 
@@ -8968,7 +8970,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   position: relative;
   box-sizing: border-box;
   margin: 0 0 7px;
-  padding: 9px;
+  padding: 8px;
   border: 1px solid #aaa;
 }
 
@@ -8977,21 +8979,20 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .mouse-properties-panels p {
-  margin: 7px 0;
+  margin: 6px 0;
 }
 
 .mouse-buttons-configuration {
-  height: 108px;
+  height: 109px;
 }
 
 .mouse-buttons-configuration img {
   position: absolute;
-  top: 2px;
-  right: 8px;
-  width: 98px;
-  height: 98px;
-  object-fit: contain;
-  image-rendering: auto;
+  top: 10px;
+  right: 10px;
+  width: 83px;
+  height: 80px;
+  image-rendering: pixelated;
 }
 
 .mouse-double-click {
@@ -9000,19 +9001,19 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 
 .mouse-double-click label {
   display: flex;
-  width: 210px;
+  width: 235px;
   align-items: center;
   justify-content: space-between;
 }
 
 .mouse-double-click input[type="range"] {
-  width: 100px;
+  width: 101px;
 }
 
 .mouse-double-click > button {
   position: absolute;
   right: 12px;
-  bottom: 10px;
+  bottom: 11px;
   width: 58px;
   height: 58px;
   background: #fff;
@@ -9025,7 +9026,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .mouse-click-lock {
-  height: 90px;
+  height: 99px;
 }
 
 .mouse-click-lock > .xp-btn {
@@ -9037,36 +9038,343 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .mouse-properties-buttons {
   position: absolute;
   right: 8px;
-  bottom: -7px;
+  bottom: 6px;
   display: flex;
-  gap: 8px;
+  gap: 9px;
 }
 
-.mouse-pointer-list,
-.mouse-hardware-list {
+.mouse-properties-buttons button {
   box-sizing: border-box;
-  height: 170px;
-  margin: 5px 0;
-  padding: 4px;
+  width: 72px;
+  height: 21px;
+}
+
+.mouse-properties-dialog input[type="range"] {
+  height: 22px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.mouse-properties-dialog input[type="checkbox"],
+.mouse-properties-dialog input[type="radio"] {
+  accent-color: #21a121;
+}
+
+.mouse-properties-dialog input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+  background: #d4d0c8;
+}
+
+.mouse-properties-dialog input[type="range"]::-webkit-slider-thumb {
+  width: 11px;
+  height: 21px;
+  margin-top: -10px;
+  appearance: none;
+  border: 1px solid #3d8134;
+  background: linear-gradient(90deg, #78ca65, #efffeb, #55a747);
+  clip-path: polygon(0 0, 100% 0, 100% 68%, 50% 100%, 0 68%);
+}
+
+.mouse-scheme {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 267px;
+  height: 80px;
+}
+
+.mouse-scheme select {
+  box-sizing: border-box;
+  width: 247px;
+  height: 21px;
+}
+
+.mouse-scheme button {
+  position: absolute;
+  top: 46px;
+  width: 73px;
+  height: 21px;
+}
+
+.mouse-scheme button:first-of-type {
+  left: 100px;
+}
+
+.mouse-scheme button:last-of-type {
+  left: 181px;
+}
+
+.mouse-pointer-preview {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  box-sizing: border-box;
+  width: 80px;
+  height: 78px;
+  border: 1px solid #aaa;
+  background: #fff;
+}
+
+.mouse-pointer-preview img {
+  position: absolute;
+  top: 27px;
+  left: 31px;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.mouse-customize-label {
+  position: absolute;
+  top: 87px;
+  left: 0;
+  margin: 0 !important;
+}
+
+.mouse-pointer-list {
+  position: absolute;
+  top: 108px;
+  left: 0;
+  box-sizing: border-box;
+  width: 357px;
+  height: 184px;
   overflow: auto;
   border: 2px inset #fff;
   background: #fff;
-  line-height: 20px;
 }
 
-.mouse-hardware-list strong,
-.mouse-hardware-list span {
+.mouse-pointer-list > span {
   display: flex;
+  box-sizing: border-box;
+  height: 34px;
+  padding: 8px 6px;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+
+.mouse-pointer-list > span.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.mouse-pointer-list img {
+  width: 32px;
+  height: 32px;
+  margin-top: -7px;
+  image-rendering: pixelated;
+}
+
+.mouse-pointer-shadow,
+.mouse-pointer-default,
+.mouse-pointer-browse {
+  position: absolute;
+  top: 302px;
+}
+
+.mouse-pointer-shadow {
+  left: 0;
+}
+
+.mouse-pointer-default {
+  left: 199px;
+  width: 72px;
+  height: 21px;
+}
+
+.mouse-pointer-browse {
+  left: 280px;
+  width: 73px;
+  height: 21px;
+}
+
+.mouse-motion {
+  height: 93px;
+}
+
+.mouse-motion > img,
+.mouse-snap > img {
+  position: absolute;
+  top: 10px;
+  left: 7px;
+  width: 32px;
+  height: 32px;
+}
+
+.mouse-motion p {
+  margin: 1px 0 4px 43px;
+}
+
+.mouse-motion > label:first-of-type {
+  display: flex;
+  width: 177px;
+  margin-left: 43px;
+  align-items: center;
   justify-content: space-between;
 }
 
-[data-mouse-panel="pointers"] > label,
-[data-mouse-panel="pointer-options"] label,
-[data-mouse-panel="wheel"] label {
+.mouse-motion > label:first-of-type input {
+  width: 101px;
+}
+
+.mouse-motion > label:last-of-type {
+  display: block;
+  margin: 1px 0 0 43px;
+}
+
+.mouse-snap {
+  height: 61px;
+}
+
+.mouse-snap label {
+  display: block;
+  margin-left: 43px;
+}
+
+.mouse-visibility {
+  height: 158px;
+}
+
+.mouse-visibility > label {
+  position: relative;
   display: flex;
+  height: 52px;
+  padding-left: 43px;
+  align-items: flex-start;
+}
+
+.mouse-visibility > label img {
+  position: absolute;
+  top: -7px;
+  left: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.mouse-visibility > div {
+  position: absolute;
+  top: 41px;
+  left: 51px;
+  display: flex;
+  width: 184px;
   align-items: center;
-  gap: 6px;
-  margin: 7px 0;
+  justify-content: space-between;
+  color: #999;
+}
+
+.mouse-visibility > div input {
+  width: 101px;
+}
+
+.mouse-wheel-scroll {
+  height: 123px;
+}
+
+.mouse-wheel-scroll > img {
+  position: absolute;
+  top: 12px;
+  left: 7px;
+  width: 32px;
+  height: 32px;
+}
+
+.mouse-wheel-scroll p {
+  margin: 5px 0 9px 43px;
+}
+
+.mouse-wheel-scroll label {
+  display: block;
+  margin: 0 0 13px 43px;
+}
+
+.mouse-wheel-scroll > input[type="number"] {
+  position: absolute;
+  top: 63px;
+  left: 91px;
+  box-sizing: border-box;
+  width: 58px;
+  height: 23px;
+}
+
+.mouse-devices-label {
+  margin: 0 0 4px !important;
+}
+
+.mouse-hardware-list {
+  box-sizing: border-box;
+  width: 357px;
+  height: 76px;
+  overflow: hidden;
+  border: 2px inset #fff;
+  background: #fff;
+}
+
+.mouse-hardware-list strong,
+.mouse-hardware-list > span {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  height: 18px;
+  align-items: center;
+}
+
+.mouse-hardware-list strong {
+  padding-left: 7px;
+  border-bottom: 1px solid #aaa;
+  font-weight: normal;
+}
+
+.mouse-hardware-list strong span:first-child {
+  border-right: 1px solid #aaa;
+}
+
+.mouse-hardware-list > span {
+  position: relative;
+  padding-left: 21px;
+}
+
+.mouse-hardware-list > span.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.mouse-hardware-list img {
+  position: absolute;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+}
+
+.mouse-hardware-list i {
+  overflow: hidden;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mouse-device-properties {
+  height: 224px;
+  margin-top: 18px !important;
+}
+
+.mouse-device-properties p {
+  margin: 7px 0 !important;
+}
+
+.mouse-device-properties button {
+  position: absolute;
+  bottom: 10px;
+  width: 88px;
+  height: 21px;
+}
+
+.mouse-device-properties button:first-of-type {
+  right: 112px;
+}
+
+.mouse-device-properties button:last-of-type {
+  right: 12px;
 }
 
 .internet-properties-dialog .dlg-body {

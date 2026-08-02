@@ -457,6 +457,16 @@ test("Mouse Properties matches the five-tab XP applet", () => {
     "Switch primary and secondary buttons",
     "Double-click speed",
     "Turn on ClickLock",
+    "Windows Default (system scheme)",
+    "Enhance pointer precision",
+    "One screen at a time",
+    "HID-compliant mouse",
+    "assets/xp/system/MouseButtonConfiguration.png",
+    "assets/xp/system/MouseMotion.png",
+    "assets/xp/system/MouseWheel.png",
+    "assets/xp/system/MouseDevice.png",
+    "assets/xp/system/cursors/NormalSelect.png",
+    "assets/xp/system/cursors/WorkingInBackground.png",
     "openMouseProperties();",
   );
   contains(css, ".mouse-properties-dialog", ".mouse-properties-tabs");

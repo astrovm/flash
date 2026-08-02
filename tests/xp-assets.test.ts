@@ -33,6 +33,7 @@ const manifest = JSON.parse(
   source: { sha256: string };
   webAssets: { output: string }[];
   cabAssets?: { output: string }[];
+  cursorImages?: { output: string }[];
   resourceIcons: { output: string; resourceId: number }[];
   resourceBitmaps: { output: string; resourceId: number | string }[];
 };
@@ -45,6 +46,9 @@ describe("Windows XP asset provenance", () => {
     const outputs = [
       ...manifest.webAssets.map(({ output }) => output.replace(/^site\//, "")),
       ...(manifest.cabAssets ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.cursorImages ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
       ...manifest.resourceIcons.map(({ output }) =>

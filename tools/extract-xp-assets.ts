@@ -30,6 +30,10 @@ type ResourceBitmap = DirectAsset & {
   resourceType: number;
   resourceId: number | string;
   transparentColor?: [number, number, number];
+  colorMap?: Array<{
+    from: [number, number, number];
+    to: [number, number, number];
+  }>;
   indexedPalette?: {
     sourceShiftX: number;
     colors: Array<{
@@ -48,6 +52,7 @@ type Manifest = {
   };
   webAssets: DirectAsset[];
   cabAssets?: CabAsset[];
+  cursorImages?: DirectAsset[];
   resourceIcons: ResourceIcon[];
   resourceBitmaps: ResourceBitmap[];
   auditFiles: DirectAsset[];
@@ -148,6 +153,24 @@ async function firstFile(
   );
   if (!file) throw new Error(`No ${extension} file produced in ${directory}`);
   return join(directory, file);
+}
+
+async function extractCursorImage(
+  isoPath: string,
+  asset: DirectAsset,
+  workDirectory: string,
+): Promise<Uint8Array> {
+  const cursor = await expandMember(isoPath, asset.member, workDirectory);
+  const resourceKey = `${asset.member}-${basename(asset.output)}`.replace(
+    /[^a-zA-Z0-9._-]/g,
+    "-",
+  );
+  const cursorPath = join(workDirectory, `${resourceKey}.cur`);
+  const frameDirectory = join(workDirectory, `cursor-${resourceKey}`);
+  await writeFile(cursorPath, cursor);
+  await mkdir(frameDirectory);
+  run("icotool", ["-x", "-o", frameDirectory, cursorPath]);
+  return readFile(await firstFile(frameDirectory, ".png"));
 }
 
 async function extractIcon(
@@ -293,18 +316,22 @@ async function extractBitmap(
       }
     }
   } else {
+    const colorMap = new Map(
+      bitmap.colorMap?.map(({ from, to }) => [from.join(","), to]),
+    );
     for (let source = 0, target = 0; source < decoded.data.length;) {
       const red = decoded.data[source++];
       const green = decoded.data[source++];
       const blue = decoded.data[source++];
       const sourceAlpha = decoded.channels === 4 ? decoded.data[source++] : 255;
+      const mapped = colorMap.get(`${red},${green},${blue}`);
       const transparent =
         bitmap.transparentColor?.[0] === red &&
         bitmap.transparentColor[1] === green &&
         bitmap.transparentColor[2] === blue;
-      rgba[target++] = red;
-      rgba[target++] = green;
-      rgba[target++] = blue;
+      rgba[target++] = mapped?.[0] ?? red;
+      rgba[target++] = mapped?.[1] ?? green;
+      rgba[target++] = mapped?.[2] ?? blue;
       rgba[target++] = transparent ? 0 : sourceAlpha;
     }
   }
@@ -378,6 +405,16 @@ try {
     };
   }
 
+  for (const asset of manifest.cursorImages ?? []) {
+    const content = await extractCursorImage(isoPath, asset, workDirectory);
+    await verifyOrWrite(asset.output, content);
+    records[relative("site", asset.output)] = {
+      isoSha256: manifest.source.sha256,
+      member: `I386/${asset.member}`,
+      sha256: sha256(content),
+    };
+  }
+
   for (const icon of manifest.resourceIcons) {
     const extracted = await extractIcon(isoPath, icon, workDirectory);
     await verifyOrWrite(icon.output, extracted.png, extracted.pixelSha256);
@@ -433,7 +470,7 @@ try {
     await copyFile(manifestPath, join(auditDirectory, "manifest.json"));
   }
   console.log(
-    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length} web assets from the authenticated XP SP3 ISO.`,
+    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length} web assets from the authenticated XP SP3 ISO.`,
   );
 } finally {
   await rm(workDirectory, { force: true, recursive: true });

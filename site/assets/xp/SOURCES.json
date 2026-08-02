@@ -239,6 +239,46 @@
     "member": "I386/PCHDT_W3.CA_!/HCimgE43.bmp",
     "sha256": "a4ec420739a052340b2852ce0b736003631fc596c47750b473c2e94058596edc"
   },
+  "assets/xp/system/cursors/NormalSelect.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/ARROW_M.CU_",
+    "sha256": "377fd2fa1b1c7e36aaad163babfbddad4ed54afc5172aa5c4fa7afb822a60056"
+  },
+  "assets/xp/system/cursors/HelpSelect.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HELP_M.CU_",
+    "sha256": "bac91cd699f5281c16727fc440777aff79990f57396f9fe9bb5c001b3f0e5501"
+  },
+  "assets/xp/system/cursors/WorkingInBackground.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LAPPSTRT.CU_",
+    "sha256": "ac95517b64e4679ae963d32a7e59da053f10d89af40b3af442e02aad5743f4cd"
+  },
+  "assets/xp/system/cursors/Busy.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WAIT_M.CU_",
+    "sha256": "d0ffcd4435e25c98eed90d7270adc92a67914d9cdb957965c48a12e14a5d638a"
+  },
+  "assets/xp/system/cursors/PrecisionSelect.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CROSS_M.CU_",
+    "sha256": "f6dd0510c636ec4c21b3a92ae4f018ff3e3681f9fab5ec4a32dd534d4181d7d1"
+  },
+  "assets/xp/system/cursors/TextSelect.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/BEAM_M.CU_",
+    "sha256": "2f3c209be349ca71709b4d8d5af973f86d6bdf246b15322033a6f72f3830f30f"
+  },
+  "assets/xp/system/cursors/Handwriting.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PEN_M.CU_",
+    "sha256": "1a91e7657854f93e6b401e18c75f72ec3f848873ff1fdba307df412c831f6318"
+  },
+  "assets/xp/system/cursors/Unavailable.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NO_M.CU_",
+    "sha256": "0cc2f6fc4136eac71c037393d603fa10e7fe173cad969959f1ea642b6f2aa3d1"
+  },
   "assets/xp/icons/Notepad.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/NOTEPAD.EX_",
@@ -861,6 +901,110 @@
       "language": 1033,
       "frame": "32x32x32",
       "pixelSha256": "a57eb81492227735117451772909e81f64d4eb439cf783627052f2680aa79f25"
+    }
+  },
+  "assets/xp/system/MouseDevice.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "45f8ffddc26f2e91fea20eaaae2c140e37a4aab57d5641546b60f37abd11dbf1",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "1fedd4f381f66d4c4b372252b862957f12acfd3a34fbd8ae4a02f757cc74d979"
+    }
+  },
+  "assets/xp/system/MouseMotion.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "70df83fbf70eb71c35ec8e168ee83ef9a49668fff4fc85d7897d25aef02bb20a",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 104,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "b9ff687d536fd5095d9a509e00dbe8e29c5b25b891d05455e0e92e01300d2d20"
+    }
+  },
+  "assets/xp/system/MouseSnapTo.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "ae28382e8827c2a953102fcc1bc115d5f7137b114bdf39cdd92488558e20c228",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 108,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "b13e852aa41e1516526658601eec0ce0923e30d672e5f9e32370b345f8fd4275"
+    }
+  },
+  "assets/xp/system/MouseTrails.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "86f77cff89696c456276c81bc73aa9766855fde2278cf9b7dfd70b25a13d8131",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 600,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "5cb82611c8bd71f8db58c230d53597ed58154e9d1a94d6874538da4e4fb648ed"
+    }
+  },
+  "assets/xp/system/MouseHideWhileTyping.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "beaa8d792c2dd76a5a4f6edd22f9d84b04022328d7ae4df149b5dee3aae05db0",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 601,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "71fc454567c7327cb7f24587a73817de789026ea4c38a5abcfe1cffd1799a9b0"
+    }
+  },
+  "assets/xp/system/MouseLocate.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "5d2ca265f6c5189b19602a8491dbbe45f2ec24552b86d1d546b49656cd6a0239",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 602,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "da641114d12a460c57b64baa4df6fdefb99ee5bab4d21457f5e3774c0a9a87bb"
+    }
+  },
+  "assets/xp/system/MouseWheel.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "0a4d95f53e2d932ae5a4e44629662b9b7b6051b5ead9965dbf022e40a290414a",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 603,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "e784076b894da2f640e0674adb6f37fb8d5deef0d15be4662475e0ec4e6517fa"
+    }
+  },
+  "assets/xp/system/MouseDoubleClickFolder.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "a75b11d606191a23e554dd49931261fa5eaee49a2996137b3fa3a3066afdde15",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 605,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "653c3e3e1c62bbb0c60399289d5d4722dad13b3ded9a65f28028c48a31cc1206"
     }
   },
   "assets/xp/icons/PhoneAndModemOptionsLarge.png": {
@@ -1667,6 +1811,19 @@
       "language": 1033,
       "frame": "48x48x32",
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
+    }
+  },
+  "assets/xp/system/MouseButtonConfiguration.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "79345883bc6299a03e9e2af88a0f470154b97be9acf8d61060408446acd9db95",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 2,
+      "id": 100,
+      "language": 1033,
+      "frame": "83x80x32",
+      "pixelSha256": "34ee1c5f845c8584221ba41a40b278abe3dec98aa1054fdb5c95c629f0ecc4be"
     }
   },
   "assets/xp/system/SpeakerSettings.png": {

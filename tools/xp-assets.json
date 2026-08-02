@@ -156,6 +156,40 @@
       "output": "site/assets/xp/help/TopicHardware.png"
     }
   ],
+  "cursorImages": [
+    {
+      "member": "ARROW_M.CU_",
+      "output": "site/assets/xp/system/cursors/NormalSelect.png"
+    },
+    {
+      "member": "HELP_M.CU_",
+      "output": "site/assets/xp/system/cursors/HelpSelect.png"
+    },
+    {
+      "member": "LAPPSTRT.CU_",
+      "output": "site/assets/xp/system/cursors/WorkingInBackground.png"
+    },
+    {
+      "member": "WAIT_M.CU_",
+      "output": "site/assets/xp/system/cursors/Busy.png"
+    },
+    {
+      "member": "CROSS_M.CU_",
+      "output": "site/assets/xp/system/cursors/PrecisionSelect.png"
+    },
+    {
+      "member": "BEAM_M.CU_",
+      "output": "site/assets/xp/system/cursors/TextSelect.png"
+    },
+    {
+      "member": "PEN_M.CU_",
+      "output": "site/assets/xp/system/cursors/Handwriting.png"
+    },
+    {
+      "member": "NO_M.CU_",
+      "output": "site/assets/xp/system/cursors/Unavailable.png"
+    }
+  ],
   "resourceIcons": [
     {
       "member": "NOTEPAD.EX_",
@@ -636,6 +670,86 @@
       "height": 32,
       "bitDepth": 32,
       "output": "site/assets/xp/icons/Mouse.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/MouseDevice.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 104,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseMotion.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 108,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseSnapTo.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 600,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseTrails.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 601,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseHideWhileTyping.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 602,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseLocate.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 603,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseWheel.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
+      "resourceId": 605,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/MouseDoubleClickFolder.png"
     },
     {
       "member": "TELEPHON.CP_",
@@ -1259,6 +1373,20 @@
     }
   ],
   "resourceBitmaps": [
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 2,
+      "resourceId": 100,
+      "transparentColor": [0, 255, 255],
+      "colorMap": [
+        { "from": [255, 0, 255], "to": [49, 106, 197] },
+        { "from": [255, 255, 0], "to": [255, 255, 255] },
+        { "from": [128, 0, 128], "to": [0, 0, 0] },
+        { "from": [128, 128, 0], "to": [0, 0, 0] }
+      ],
+      "output": "site/assets/xp/system/MouseButtonConfiguration.png"
+    },
     {
       "member": "MMSYS.CP_",
       "expandedName": "mmsys.cpl",
