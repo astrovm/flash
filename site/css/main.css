@@ -662,6 +662,18 @@ html[data-xp-appearance="silver"] {
   --taskbar-gradient: linear-gradient(#8793a5, #596575);
 }
 
+/* Windows Classic is the native USER32 style, not a gray Luna skin. */
+html[data-xp-appearance="classic"] {
+  --xp-beige: #d4d0c8;
+  --xp-beige-dark: #aca899;
+  --titlebar-active: linear-gradient(90deg, #0a246a, #a6caf0);
+  --titlebar-inactive: linear-gradient(90deg, #808080, #c0c0c0);
+  --taskbar-gradient: #d4d0c8;
+  --tray-gradient: #d4d0c8;
+  --window-frame: none;
+  --window-frame-inactive: none;
+}
+
 /* ---- Desktop icons ---- */
 
 #desktop-icons {
@@ -13148,4 +13160,450 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
     font-size: 10px;
     padding: 1px;
   }
+}
+
+/* ============ Windows Classic visual style ============ */
+
+html[data-xp-appearance="classic"] #desktop {
+  bottom: 28px;
+}
+
+html[data-xp-appearance="classic"] .xp-window {
+  padding: 2px;
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #808080;
+}
+
+html[data-xp-appearance="classic"] .xp-window.active {
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #808080;
+}
+
+html[data-xp-appearance="classic"] .xp-window.maximized {
+  padding: 2px;
+}
+
+html[data-xp-appearance="classic"] .title-bar,
+html[data-xp-appearance="classic"] .xp-window.maximized .title-bar {
+  height: 18px;
+  min-height: 18px;
+  gap: 3px;
+  margin: 0;
+  padding: 1px 2px;
+  border-radius: 0;
+  background: var(--titlebar-inactive);
+  box-shadow: none;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0;
+  line-height: 16px;
+  text-shadow: none;
+}
+
+html[data-xp-appearance="classic"] .xp-window.active .title-bar {
+  background: var(--titlebar-active);
+}
+
+html[data-xp-appearance="classic"] .title-icon,
+html[data-xp-appearance="classic"] .title-icon img {
+  width: 16px;
+  height: 16px;
+}
+
+html[data-xp-appearance="classic"] .title-buttons {
+  gap: 2px;
+  margin-right: 0;
+}
+
+html[data-xp-appearance="classic"] .tb-btn,
+html[data-xp-appearance="classic"] .help-btn {
+  width: 16px;
+  height: 14px;
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #808080;
+}
+
+html[data-xp-appearance="classic"] .tb-btn:active:not(:disabled) {
+  box-shadow:
+    inset 1px 1px #808080,
+    inset -1px -1px #fff;
+}
+
+html[data-xp-appearance="classic"] .tb-btn::after {
+  inset: 0;
+  background: none;
+}
+
+html[data-xp-appearance="classic"] .minimize-btn::after {
+  content: "";
+  top: auto;
+  right: 3px;
+  bottom: 3px;
+  left: 3px;
+  height: 2px;
+  background: #000;
+}
+
+html[data-xp-appearance="classic"] .maximize-btn::after {
+  content: "";
+  inset: 2px 3px 3px;
+  border: 1px solid #000;
+  border-top-width: 2px;
+}
+
+html[data-xp-appearance="classic"] .restore-btn::after {
+  content: "";
+  inset: 3px 2px 2px 4px;
+  border: 1px solid #000;
+  box-shadow:
+    -2px 2px 0 -1px #d4d0c8,
+    -3px 3px 0 -1px #000;
+}
+
+html[data-xp-appearance="classic"] .close-btn::after {
+  content: "×";
+  display: grid;
+  place-items: center;
+  color: #000;
+  font:
+    bold 14px/12px Arial,
+    sans-serif;
+}
+
+html[data-xp-appearance="classic"] .help-btn::after {
+  content: "?";
+  display: grid;
+  inset: 0;
+  place-items: center;
+  color: #000;
+  background: none;
+  font:
+    bold 11px/12px Tahoma,
+    sans-serif;
+  text-shadow: none;
+}
+
+html[data-xp-appearance="classic"] #taskbar {
+  height: 28px;
+  align-items: center;
+  border-top: 1px solid #fff;
+  background: #d4d0c8;
+  box-shadow: inset 0 1px #d4d0c8;
+}
+
+#start-button > img,
+#start-button > span {
+  display: none;
+}
+
+html[data-xp-appearance="classic"] #start-button {
+  width: 54px;
+  height: 23px;
+  margin: 2px 3px 2px 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px 1px 2px;
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #808080;
+  color: #000;
+  font:
+    bold 11px Tahoma,
+    sans-serif;
+}
+
+html[data-xp-appearance="classic"] #start-button:hover {
+  background: #d4d0c8;
+}
+
+html[data-xp-appearance="classic"] #start-button.active,
+html[data-xp-appearance="classic"] #start-button:active {
+  padding: 2px 3px 0 3px;
+  background: #d4d0c8;
+  box-shadow:
+    inset 1px 1px #808080,
+    inset -1px -1px #fff;
+}
+
+html[data-xp-appearance="classic"] #start-button > img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+html[data-xp-appearance="classic"] #start-button > span {
+  display: inline;
+}
+
+html[data-xp-appearance="classic"] #task-buttons {
+  gap: 3px;
+  padding: 2px 3px;
+}
+
+html[data-xp-appearance="classic"] .task-button,
+html[data-xp-appearance="classic"] .task-button.active {
+  height: 22px;
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #808080;
+  color: #000;
+  text-shadow: none;
+}
+
+html[data-xp-appearance="classic"] .task-button.active,
+html[data-xp-appearance="classic"] .task-button[aria-pressed="true"] {
+  transform: none;
+  background-color: #fff;
+  background-image: radial-gradient(#c0c0c0 0.6px, transparent 0.7px);
+  background-size: 2px 2px;
+  box-shadow:
+    inset 1px 1px #808080,
+    inset -1px -1px #fff;
+}
+
+html[data-xp-appearance="classic"] .explorer-sidebar {
+  padding: 10px 12px 8px;
+  background: #d4d0c8;
+}
+
+html[data-xp-appearance="classic"] .explorer-sidebar section {
+  margin-bottom: 14px;
+  padding: 0 10px 8px;
+  border: 1px solid #fff;
+  border-right-color: #808080;
+  border-bottom-color: #808080;
+  border-radius: 0;
+  background: #f1f0e8;
+}
+
+html[data-xp-appearance="classic"] .explorer-sidebar h3 {
+  height: 22px;
+  margin: 0 -10px 4px;
+  border-bottom: 1px solid #aca899;
+  background: #d4d0c8;
+  color: #000;
+}
+
+html[data-xp-appearance="classic"]
+  .explorer-sidebar
+  h3
+  .explorer-section-toggle {
+  height: 22px;
+  padding: 2px 3px 2px 10px;
+  color: #000;
+}
+
+html[data-xp-appearance="classic"]
+  .explorer-sidebar
+  h3
+  .explorer-section-toggle
+  span[aria-hidden="true"] {
+  width: 13px;
+  height: 13px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+}
+
+html[data-xp-appearance="classic"]
+  .explorer-sidebar
+  .explorer-section-body
+  > button {
+  color: #000;
+}
+
+html[data-xp-appearance="classic"] #taskbar-tray {
+  height: 24px;
+  gap: 4px;
+  margin: 1px 2px 1px 4px;
+  padding: 0 5px;
+  border: 1px solid #808080;
+  border-right-color: #fff;
+  border-bottom-color: #fff;
+  background: #d4d0c8;
+  box-shadow: none;
+}
+
+html[data-xp-appearance="classic"] #taskbar-clock {
+  color: #000;
+  text-shadow: none;
+}
+
+html[data-xp-appearance="classic"] #start-menu {
+  width: min(380px, 96vw);
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #d4d0c8;
+  box-shadow: 2px -2px 3px rgba(0, 0, 0, 0.45);
+}
+
+html[data-xp-appearance="classic"] #start-menu::before {
+  display: none;
+}
+
+html[data-xp-appearance="classic"] .start-menu-header {
+  min-height: 42px;
+  padding: 6px 9px;
+  border: 0;
+  background: linear-gradient(90deg, #0a246a, #a6caf0);
+}
+
+html[data-xp-appearance="classic"] .start-menu-avatar {
+  display: none;
+}
+
+html[data-xp-appearance="classic"] .start-menu-user {
+  font-size: 16px;
+  font-style: italic;
+  text-shadow: 1px 1px #000;
+}
+
+html[data-xp-appearance="classic"] .start-menu-body {
+  min-height: 364px;
+  margin: 0;
+  border-bottom: 1px solid #808080;
+}
+
+html[data-xp-appearance="classic"] .start-menu-right {
+  background: #d4d0c8;
+  border-left-color: #808080;
+}
+
+html[data-xp-appearance="classic"] .sm-place {
+  border-radius: 0;
+  color: #000;
+}
+
+html[data-xp-appearance="classic"] .sm-place:hover {
+  background: #0a246a;
+  color: #fff;
+}
+
+html[data-xp-appearance="classic"] .sm-place-separator {
+  background: #808080;
+  box-shadow: 0 1px #fff;
+}
+
+html[data-xp-appearance="classic"] .start-menu-footer {
+  min-height: 32px;
+  margin: 0;
+  padding: 3px 5px;
+  background: #d4d0c8;
+}
+
+html[data-xp-appearance="classic"] .start-menu-footer button {
+  border-radius: 0;
+  color: #000;
+  text-shadow: none;
+}
+
+html[data-xp-appearance="classic"] .start-menu-footer button:hover {
+  border-color: #0a246a;
+  background: #0a246a;
+  color: #fff;
+}
+
+.display-theme-sample[data-appearance="classic"] {
+  background-color: #3a6ea5;
+  background-image: none !important;
+}
+
+.display-theme-sample[data-appearance="classic"]::after {
+  height: 20px;
+  border-top: 1px solid #fff;
+  background: #d4d0c8;
+}
+
+.display-theme-sample[data-appearance="classic"] .display-sample-window {
+  border: 3px ridge #d4d0c8;
+}
+
+.display-theme-sample[data-appearance="classic"]
+  .display-sample-window
+  > strong {
+  height: 18px;
+  width: calc(100% - 54px);
+  padding: 2px 3px;
+  background: linear-gradient(90deg, #0a246a, #a6caf0);
+  font:
+    bold 11px Tahoma,
+    sans-serif;
+}
+
+.display-theme-sample[data-appearance="classic"] .display-sample-window > i {
+  width: 16px;
+  height: 14px;
+  margin: 2px 1px 0 0;
+  border: 1px outset #fff;
+  border-radius: 0;
+  background: #d4d0c8;
+  color: #000;
+  font-size: 10px;
+}
+
+.display-theme-sample[data-appearance="classic"]
+  .display-sample-window
+  > i:last-of-type {
+  background: #d4d0c8;
+}
+
+.display-theme-sample[data-appearance="classic"] .display-sample-window > span {
+  padding: 2px;
+}
+
+.display-theme-sample[data-appearance="classic"] .sample-scroll-up {
+  top: 20px;
+}
+
+.display-theme-sample[data-appearance="classic"] .sample-scroll-thumb {
+  top: 38px;
+}
+
+.appearance-preview[data-appearance="classic"] {
+  background: #3a6ea5;
+}
+
+.appearance-preview[data-appearance="classic"] .appearance-window,
+.appearance-preview[data-appearance="classic"] .appearance-message {
+  border: 3px ridge #d4d0c8;
+}
+
+.appearance-preview[data-appearance="classic"] .appearance-window > strong,
+.appearance-preview[data-appearance="classic"] .appearance-message > strong {
+  height: 18px;
+  padding: 2px 3px;
+  background: linear-gradient(90deg, #0a246a, #a6caf0);
+  font:
+    bold 11px Tahoma,
+    sans-serif;
+}
+
+.appearance-preview[data-appearance="classic"] .appearance-window > i,
+.appearance-preview[data-appearance="classic"] .appearance-message > i {
+  width: 16px;
+  height: 14px;
+  margin-top: 2px;
+  border: 1px outset #fff;
+  border-radius: 0;
+  background: #d4d0c8;
+  color: #000;
+  font-size: 10px;
 }

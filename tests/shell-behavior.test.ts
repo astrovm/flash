@@ -127,6 +127,45 @@ test("desktop icons select and launch their actual destinations", async () => {
   ).not.toBeNull();
 });
 
+test("My Computer exposes the native desktop shell menu and opens Properties", async () => {
+  const shell = await login(await loadShell());
+  const icon = shell.document.querySelector<HTMLButtonElement>(
+    '[data-desktop-id="__my-computer"]',
+  )!;
+  icon.dispatchEvent(
+    new shell.window.MouseEvent("contextmenu", {
+      bubbles: true,
+      clientX: 40,
+      clientY: 30,
+    }),
+  );
+
+  const menu = shell.document.getElementById("desktop-context-menu")!;
+  expect(menu.hidden).toBeFalse();
+  const items = [...menu.querySelectorAll<HTMLButtonElement>("[data-action]")];
+  expect(items.map((item) => item.textContent!.trim())).toEqual([
+    "Open",
+    "Explore",
+    "Search...",
+    "Manage",
+    "Map Network Drive...",
+    "Disconnect Network Drive...",
+    "Create Shortcut",
+    "Delete",
+    "Rename",
+    "Properties",
+  ]);
+  expect(items.every((item) => !item.disabled)).toBeTrue();
+  expect(items[0].classList.contains("context-default")).toBeTrue();
+
+  menu
+    .querySelector<HTMLButtonElement>('[data-action="computer-properties"]')!
+    .click();
+  expect(
+    shell.document.querySelector(".system-properties-dialog"),
+  ).not.toBeNull();
+});
+
 test("Control Panel navigation opens applets and switches their tabs", async () => {
   const shell = await login(await loadShell());
   clickStartAction(shell, "controlPanel");
@@ -206,6 +245,59 @@ test("Display Properties applies and persists a selected wallpaper", async () =>
       .style.getPropertyValue("--desktop-background"),
   ).toContain("ascent.jpg");
   expect(apply.disabled).toBeTrue();
+});
+
+test("Windows Classic applies the native Classic appearance and solid desktop", async () => {
+  const shell = await login(await loadShell());
+  clickStartAction(shell, "controlPanel");
+  const controlPanel = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__control-panel"]',
+  )!;
+  controlPanel
+    .querySelector<HTMLButtonElement>(
+      '[data-control-panel-category="appearance"]',
+    )!
+    .click();
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="display"]')!
+    .click();
+
+  const display = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__display-properties"]',
+  )!;
+  const theme = display.querySelector<HTMLSelectElement>("#display-theme")!;
+  theme.value = "classic";
+  theme.dispatchEvent(new shell.window.Event("change", { bubbles: true }));
+
+  expect(
+    display.querySelector<HTMLElement>(".display-theme-sample")!.dataset
+      .appearance,
+  ).toBe("classic");
+  expect(
+    display.querySelector<HTMLSelectElement>("#display-window-style")!.value,
+  ).toBe("classic");
+  expect(
+    display.querySelector<HTMLSelectElement>("#display-appearance")!.value,
+  ).toBe("classic");
+
+  display
+    .querySelector<HTMLButtonElement>('[data-display-action="apply"]')!
+    .click();
+  const saved = JSON.parse(
+    shell.window.localStorage.getItem("displaySettings")!,
+  );
+  expect(saved).toMatchObject({
+    theme: "classic",
+    appearance: "classic",
+    wallpaper: "none",
+    backgroundColor: "#3a6ea5",
+  });
+  expect(shell.document.documentElement.dataset.xpAppearance).toBe("classic");
+  expect(
+    shell.document
+      .getElementById("desktop")!
+      .style.getPropertyValue("--desktop-background"),
+  ).toBe("none");
 });
 
 test("Run executes a shell command and closes after success", async () => {
