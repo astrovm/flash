@@ -252,10 +252,10 @@
       "output": "site/assets/xp/icons/WindowsUpdateMenu.png"
     },
     {
-      "member": "EXPLORER.EX_",
-      "expandedName": "explorer.exe",
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
       "resourceType": 14,
-      "resourceId": 107,
+      "resourceId": 37,
       "width": 16,
       "height": 16,
       "bitDepth": 32,
