@@ -473,6 +473,29 @@ test("Keyboard Properties matches the two-tab XP applet", () => {
   contains(css, ".keyboard-properties-dialog", ".keyboard-properties-tabs");
 });
 
+test("Game Controllers matches the native XP applet and child dialogs", () => {
+  contains(
+    javascript,
+    "const openGameControllers = () =>",
+    'title: "Game Controllers"',
+    "Installed game controllers",
+    "Controller</span><span>Status",
+    "openAddGameController(addController)",
+    'title: "Add Game Controller"',
+    "2-axis, 2-button joystick",
+    "Enable rudders and pedals",
+    'title: "Advanced Settings"',
+    "Preferred device:",
+    "openGameControllers();",
+  );
+  contains(
+    css,
+    ".game-controllers-dialog",
+    ".add-game-controller-dialog",
+    ".game-controller-advanced-dialog",
+  );
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,

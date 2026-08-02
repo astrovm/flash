@@ -2804,10 +2804,11 @@ const wireControlPanel = (win) => {
       openMouseProperties();
     } else if (action === "keyboard") {
       openKeyboardProperties();
+    } else if (action === "game-controllers") {
+      openGameControllers();
     } else if (
       action === "phone-modem" ||
       action === "add-hardware" ||
-      action === "game-controllers" ||
       action === "scanners-cameras"
     ) {
       const hardwareLabels = {
@@ -7772,6 +7773,133 @@ const openKeyboardProperties = (initialTab = "speed") => {
   ]);
   dialog.body.querySelector('[data-action="apply"]').disabled = true;
   activate(initialTab);
+};
+
+const addDialogHelpButton = (dialog) => {
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+};
+
+const openAdvancedGameControllerSettings = () => {
+  const dialog = XPDialogs.createDialog({ title: "Advanced Settings" });
+  dialog.el.classList.add("game-controller-advanced-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(28, Math.max(4, window.innerWidth - 335))}px`,
+    top: `${Math.min(80, Math.max(4, window.innerHeight - 171))}px`,
+  });
+  addDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <p>Select the device you want to use with older programs.</p>
+    <div class="game-controller-preferred"><img src="assets/xp/icons/GameControllers.png" alt=""><label>Preferred device:<select><option>(none)</option></select></label></div>`;
+  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.okCancel);
+};
+
+const openAddGameController = (onAdd) => {
+  const dialog = XPDialogs.createDialog({ title: "Add Game Controller" });
+  dialog.el.classList.add("add-game-controller-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(28, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(80, Math.max(4, window.innerHeight - 356))}px`,
+  });
+  addDialogHelpButton(dialog);
+  const controllerTypes = [
+    "2-axis, 2-button joystick",
+    "2-axis, 4-button joystick",
+    "2-button flight yoke",
+    "2-button flight yoke w/throttle",
+    "2-button gamepad",
+    "3-axis, 2-button joystick",
+    "3-axis, 4-button joystick",
+    "3-axis, 4-button flight yoke",
+    "3-axis, 4-button flight yoke w/throttle",
+    "4-button gamepad",
+  ];
+  dialog.body.innerHTML = `
+    <div class="add-game-controller-intro"><img src="assets/xp/icons/GameControllers.png" alt=""><p>Select a game controller from the list below, and then click OK. If<br>your game controller does not appear in the list, click Custom.</p></div>
+    <label class="game-controller-types">Game controllers:<select size="7">${controllerTypes.map((type) => `<option>${type}</option>`).join("")}</select></label>
+    <label class="game-controller-rudders"><input type="checkbox"> Enable rudders and pedals</label>
+    <button type="button" class="xp-btn game-controller-custom">Custom...</button>
+    <hr>`;
+  const select = dialog.body.querySelector("select");
+  select.selectedIndex = 0;
+  dialog.body
+    .querySelector(".game-controller-custom")
+    .addEventListener("click", () =>
+      XPDialogs.alert(
+        "Custom game controllers can be configured after compatible hardware is connected.",
+        "Custom Game Controller",
+      ),
+    );
+  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.okCancel);
+  dialog.onResult((result) => {
+    if (result === "ok") onAdd(select.value);
+  });
+};
+
+const openGameControllers = () => {
+  const dialog = XPDialogs.createDialog({ title: "Game Controllers" });
+  dialog.el.classList.add("game-controllers-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(25, Math.max(4, window.innerWidth - 383))}px`,
+    top: `${Math.min(51, Math.max(4, window.innerHeight - 369))}px`,
+  });
+  addDialogHelpButton(dialog);
+  dialog.body.innerHTML = `
+    <div class="game-controllers-intro"><img src="assets/xp/icons/GameControllers.png" alt=""><p>These settings help you configure the game controllers installed on<br>your computer.</p></div>
+    <fieldset><legend>Installed game controllers</legend><div class="game-controller-list" role="listbox" tabindex="0"><div class="game-controller-list-header"><span>Controller</span><span>Status</span></div><div class="game-controller-list-items"></div></div><div class="game-controller-actions"><button type="button" class="xp-btn" data-game-controller-action="add">Add...</button><button type="button" class="xp-btn" data-game-controller-action="remove" disabled>Remove</button><button type="button" class="xp-btn" data-game-controller-action="properties" disabled>Properties</button></div></fieldset>
+    <div class="game-controller-secondary"><button type="button" class="xp-btn" data-game-controller-action="advanced">Advanced...</button><button type="button" class="xp-btn" data-game-controller-action="troubleshoot">Troubleshoot...</button></div>`;
+  const items = dialog.body.querySelector(".game-controller-list-items");
+  const remove = dialog.body.querySelector(
+    '[data-game-controller-action="remove"]',
+  );
+  const properties = dialog.body.querySelector(
+    '[data-game-controller-action="properties"]',
+  );
+  let selected = null;
+  const addController = (name) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.innerHTML = `<span>${name}</span><span>OK</span>`;
+    item.addEventListener("click", () => {
+      items
+        .querySelectorAll("button")
+        .forEach((entry) =>
+          entry.setAttribute("aria-selected", String(entry === item)),
+        );
+      selected = item;
+      remove.disabled = false;
+      properties.disabled = false;
+    });
+    items.appendChild(item);
+    item.click();
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-game-controller-action]")
+      ?.dataset.gameControllerAction;
+    if (action === "add") openAddGameController(addController);
+    if (action === "advanced") openAdvancedGameControllerSettings();
+    if (action === "troubleshoot") openHelpAndSupport();
+    if (action === "remove" && selected) {
+      selected.remove();
+      selected = null;
+      remove.disabled = true;
+      properties.disabled = true;
+    }
+    if (action === "properties" && selected) {
+      XPDialogs.alert(
+        "This game controller is connected and working properly.",
+        "Game Controller Properties",
+      );
+    }
+  });
+  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.ok);
 };
 
 const openMouseProperties = (initialTab = "buttons") => {

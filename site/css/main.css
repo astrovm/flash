@@ -7555,6 +7555,227 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   justify-content: space-between;
 }
 
+.game-controllers-dialog {
+  width: min(383px, calc(100vw - 8px));
+  height: min(369px, calc(100vh - 8px));
+}
+
+.game-controllers-dialog .dlg-body,
+.add-game-controller-dialog .dlg-body,
+.game-controller-advanced-dialog .dlg-body {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 28px);
+  padding: 10px 13px;
+  background: var(--xp-dialog, #ece9d8);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.game-controllers-dialog .dlg-body {
+  padding-right: 11px;
+  padding-left: 11px;
+}
+
+.game-controllers-intro,
+.add-game-controller-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.game-controllers-intro img,
+.add-game-controller-intro img,
+.game-controller-preferred img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.game-controllers-intro p,
+.add-game-controller-intro p {
+  margin: 2px 0 0;
+}
+
+.game-controllers-intro p {
+  white-space: nowrap;
+}
+
+.game-controllers-dialog fieldset {
+  position: relative;
+  box-sizing: border-box;
+  height: 194px;
+  margin: 11px 0 0;
+  padding: 7px 9px 10px;
+  border: 1px solid #aaa;
+}
+
+.game-controllers-dialog legend {
+  color: #04e;
+}
+
+.game-controller-list {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  left: 9px;
+  height: 129px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.game-controller-list-header {
+  display: grid;
+  grid-template-columns: 1fr 84px;
+  height: 20px;
+  border-bottom: 1px solid #d6d2c2;
+  background: #ece9d8;
+}
+
+.game-controller-list-header span {
+  padding: 3px 9px;
+  border-right: 1px solid #fff;
+}
+
+.game-controller-list-items button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 84px;
+  padding: 2px 9px;
+  border: 0;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+}
+
+.game-controller-list-items button[aria-selected="true"] {
+  background: #316ac5;
+  color: #fff;
+}
+
+.game-controller-actions {
+  position: absolute;
+  top: 148px;
+  right: 11px;
+  left: 42px;
+  display: grid;
+  grid-template-columns: repeat(3, 96px);
+  justify-content: space-between;
+  margin: 0;
+}
+
+.game-controller-actions .xp-btn,
+.game-controller-secondary .xp-btn {
+  height: 22px;
+}
+
+.game-controller-secondary {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.game-controller-secondary .xp-btn {
+  width: 96px;
+}
+
+.game-controllers-dialog > .dlg-body > .dlg-buttons {
+  position: absolute;
+  right: 13px;
+  bottom: 10px;
+}
+
+.add-game-controller-dialog {
+  width: min(404px, calc(100vw - 8px));
+  height: min(356px, calc(100vh - 8px));
+}
+
+.add-game-controller-dialog .dlg-body {
+  padding-top: 11px;
+}
+
+.game-controller-types {
+  display: block;
+  margin-top: 29px;
+}
+
+.game-controller-types select {
+  display: block;
+  width: 100%;
+  height: 96px;
+  margin-top: 2px;
+  border: 1px solid #7f9db9;
+  font: inherit;
+}
+
+.game-controller-rudders {
+  display: block;
+  margin-top: 3px;
+}
+
+.game-controller-rudders input {
+  margin: 0 3px 0 0;
+  vertical-align: -2px;
+}
+
+.game-controller-custom {
+  position: absolute;
+  right: 13px;
+  bottom: 62px;
+  width: 73px;
+}
+
+.add-game-controller-dialog hr {
+  position: absolute;
+  right: 13px;
+  bottom: 42px;
+  left: 13px;
+  height: 1px;
+  border: 0;
+  background: #aca899;
+}
+
+.add-game-controller-dialog > .dlg-body > .dlg-buttons,
+.game-controller-advanced-dialog > .dlg-body > .dlg-buttons {
+  position: absolute;
+  right: 13px;
+  bottom: 11px;
+}
+
+.game-controller-advanced-dialog {
+  width: min(335px, calc(100vw - 8px));
+  height: min(171px, calc(100vh - 8px));
+}
+
+.game-controller-advanced-dialog .dlg-body > p {
+  margin: 0 0 13px;
+}
+
+.game-controller-preferred {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-controller-preferred label {
+  flex: 1;
+}
+
+.game-controller-preferred select {
+  display: block;
+  width: calc(100% + 4px);
+  height: 21px;
+  margin-top: 9px;
+  font: inherit;
+}
+
+.game-controller-advanced-dialog > .dlg-body > .dlg-buttons button {
+  height: 22px;
+}
+
 .mouse-properties-dialog .dlg-body {
   position: relative;
   box-sizing: border-box;
