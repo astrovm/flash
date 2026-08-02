@@ -879,6 +879,19 @@
       "pixelSha256": "1f334d082ece8f6f69f30beef58883cd4e043ac8388923bc4214942d7f16b317"
     }
   },
+  "assets/xp/system/RemoteSettings.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/REMOTEPG.DL_",
+    "sha256": "c0b54c0aef30b1e66c544e5ea6eb7ced18af70ff5db1d875cbe6e4ac4661e049",
+    "resource": {
+      "parentSha256": "64afb0aa686fc589ce3a7e7f681c3b7e4c44f19661f998737f4a8df4ac7c23f4",
+      "type": 14,
+      "id": 500,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "44db0f7c66f2ea1f574d44c4f0feca92e5e997f2985fed1b80029cd5c3ab7b99"
+    }
+  },
   "assets/xp/icons/WallpaperImage.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHIMGVW.DL_",

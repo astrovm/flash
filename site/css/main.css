@@ -5501,6 +5501,109 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   color: #aaa !important;
 }
 
+.system-remote-intro {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  display: flex;
+  gap: 5px;
+}
+
+.system-remote-intro img {
+  width: 32px;
+  height: 32px;
+}
+
+.system-remote-intro p {
+  margin-top: 1px;
+  line-height: 14px;
+}
+
+.system-remote-assistance,
+.system-remote-desktop {
+  left: 14px;
+  width: 365px;
+}
+
+.system-remote-assistance {
+  top: 56px;
+  height: 86px;
+}
+
+.system-remote-desktop {
+  top: 154px;
+  height: 198px;
+}
+
+.system-remote-assistance label,
+.system-remote-desktop label {
+  position: absolute;
+  top: 14px;
+  left: 7px;
+  white-space: nowrap;
+}
+
+.system-remote-assistance input,
+.system-remote-desktop input {
+  width: 13px;
+  height: 13px;
+  margin: 0 3px 0 0;
+  vertical-align: -2px;
+}
+
+.system-remote-assistance a {
+  position: absolute;
+  top: 35px;
+  left: 23px;
+}
+
+.system-remote-assistance .xp-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 11px;
+  width: 91px;
+  height: 22px;
+}
+
+.system-remote-computer {
+  position: absolute;
+  top: 34px;
+  left: 24px;
+  line-height: 23px;
+}
+
+.system-remote-computer span {
+  padding-left: 1px;
+}
+
+.system-remote-help {
+  position: absolute;
+  top: 76px;
+  left: 24px;
+}
+
+.system-remote-users {
+  position: absolute;
+  top: 98px;
+  right: 10px;
+  width: 142px;
+  height: 22px;
+}
+
+.system-remote-password {
+  position: absolute;
+  top: 128px;
+  left: 16px;
+  line-height: 14px;
+}
+
+.system-remote-firewall {
+  position: absolute;
+  top: 164px;
+  left: 16px;
+  line-height: 14px;
+}
+
 .system-properties-dialog .dlg-buttons {
   flex: none;
   margin: 5px 0 0;

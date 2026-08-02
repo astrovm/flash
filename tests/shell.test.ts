@@ -707,9 +707,11 @@ test("System Properties uses ISO artwork and native content for all seven tabs",
     'src="assets/xp/system/UpdateShield.png"',
     'src="assets/xp/system/UpdateEnabled.png"',
     'src="assets/xp/system/UpdateDisabled.png"',
+    'src="assets/xp/system/RemoteSettings.png"',
     'data-active-row="lower"',
     "].includes(tab.dataset.systemTab)",
-    '<section data-system-panel="remote" hidden></section>',
+    "Allow Remote Assistance invitations",
+    "Select Remote Users...",
     'aliases: ["sysdm.cpl", "system properties"]',
   );
   contains(

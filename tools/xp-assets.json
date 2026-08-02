@@ -650,6 +650,16 @@
       "output": "site/assets/xp/system/UpdateDisabled.png"
     },
     {
+      "member": "REMOTEPG.DL_",
+      "expandedName": "remotepg.dll",
+      "resourceType": 14,
+      "resourceId": 500,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/RemoteSettings.png"
+    },
+    {
       "member": "SHIMGVW.DL_",
       "expandedName": "shimgvw.dll",
       "resourceType": 14,

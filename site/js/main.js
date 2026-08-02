@@ -9183,7 +9183,22 @@ const openSystemProperties = () => {
         <div class="system-update-warning"><img src="assets/xp/system/UpdateDisabled.png" alt=""><p>Your computer will be more vulnerable unless you install updates<br>regularly.<br>Install updates from the <a href="https://update.microsoft.com/" target="_blank" rel="noreferrer">Windows Update Web site</a>.</p></div>
         <a class="system-updates-hidden" href="#">Offer updates again that I've previously hidden</a>
       </section>
-      <section data-system-panel="remote" hidden></section>
+      <section data-system-panel="remote" hidden>
+        <div class="system-remote-intro"><img src="assets/xp/system/RemoteSettings.png" alt=""><p>Select the ways that this computer can be used from another<br>location.</p></div>
+        <div class="system-properties-group system-remote-assistance"><span class="system-group-title">Remote Assistance</span>
+          <label><input type="checkbox" checked> Allow Remote Assistance invitations to be sent from this computer</label>
+          <a href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">What is Remote Assistance?</a>
+          <button type="button" class="xp-btn">Advanced...</button>
+        </div>
+        <div class="system-properties-group system-remote-desktop"><span class="system-group-title">Remote Desktop</span>
+          <label><input type="checkbox"> Allow users to connect remotely to this computer</label>
+          <p class="system-remote-computer">Full computer name:<br><span>astro-295e53a14</span></p>
+          <a class="system-remote-help" href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">What is Remote Desktop?</a>
+          <button type="button" class="xp-btn system-remote-users">Select Remote Users...</button>
+          <p class="system-remote-password">For users to connect remotely to this computer, the user account must<br>have a password.</p>
+          <p class="system-remote-firewall"><a href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">Windows Firewall</a> will be configured to allow Remote Desktop<br>connections to this computer.</p>
+        </div>
+      </section>
     </div>
   `;
   const tabs = [...dialog.body.querySelectorAll("[data-system-tab]")];
