@@ -359,15 +359,15 @@
   },
   "assets/xp/icons/ProgramFolder.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
-    "member": "I386/EXPLORER.EX_",
-    "sha256": "9dff00972079d9fe2a4fea4347c98f8fbde3ec1409b33903220bc1632ff54471",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "be9013bebb3446220eedc697f869f7d495d0d92017ab4d81ff770bf222b09adf",
     "resource": {
-      "parentSha256": "1e675cb7df214172f7eb0497f7275556038a0d09c6e5a3e6862c5e26885ef455",
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
       "type": 14,
-      "id": 107,
+      "id": 37,
       "language": 1033,
       "frame": "16x16x32",
-      "pixelSha256": "c44b8183c03b6d75131da797a5624534dad4e44724793811f30a17615c6c6a88"
+      "pixelSha256": "fb0cff36adafa8652e97ec67d900ae06dc9402529d06009336669bd82b275e05"
     }
   },
   "assets/xp/icons/WindowsExplorer.png": {

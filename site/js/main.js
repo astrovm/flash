@@ -10802,6 +10802,46 @@ const createMenuGameItem = (gameId) => {
   return item;
 };
 
+const getProgramGroups = () => {
+  const groups = {};
+  const addToGroup = (category, gameId) => {
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(gameId);
+  };
+
+  Object.entries(getGameStats())
+    .sort((left, right) => right[1].lastPlayed - left[1].lastPlayed)
+    .slice(0, 8)
+    .forEach(([gameId]) => {
+      if (gamesList[gameId]) addToGroup("Recently Played", gameId);
+    });
+
+  getFavorites().forEach((gameId) => {
+    if (gamesList[gameId]) addToGroup("Favorites", gameId);
+  });
+
+  Object.entries(gamesList).forEach(([gameId, game]) =>
+    addToGroup(game.category || "Other", gameId),
+  );
+
+  return Object.keys(groups)
+    .sort((left, right) => {
+      if (left === "Recently Played") return -1;
+      if (right === "Recently Played") return 1;
+      if (left === "Favorites") return -1;
+      if (right === "Favorites") return 1;
+      return left.localeCompare(right);
+    })
+    .map((category) => [
+      category,
+      groups[category]
+        .slice()
+        .sort((left, right) =>
+          formatGameTitle(left).localeCompare(formatGameTitle(right)),
+        ),
+    ]);
+};
+
 const openRecentDocuments = () => {
   const dialog = XPDialogs.createDialog({ title: "My Recent Documents" });
   const recentGames = Object.entries(getGameStats())
@@ -11661,12 +11701,12 @@ const openUnavailableXPProgram = (title) =>
   );
 
 const getAllProgramsTree = () => {
-  const games = Object.keys(gamesList)
-    .sort((left, right) =>
-      formatGameTitle(left).localeCompare(formatGameTitle(right)),
-    )
-    .map((gameId) => ({ gameId }));
   const programFolder = "ProgramFolder.png";
+  const gameGroups = getProgramGroups().map(([category, games]) => ({
+    label: category,
+    icon: programFolder,
+    children: games.map((gameId) => ({ gameId })),
+  }));
   return [
     {
       id: "program-access-defaults",
@@ -11819,7 +11859,7 @@ const getAllProgramsTree = () => {
       id: "games",
       label: "Games",
       icon: programFolder,
-      children: games,
+      children: gameGroups,
     },
     {
       id: "startup",
