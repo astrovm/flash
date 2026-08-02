@@ -71,6 +71,23 @@ test("Start button uses the native XP rendered states without browser text", () 
     "background-position: 0 -60px",
   );
 });
+test("caption controls select every native Luna sprite state", () => {
+  const controls = between(css, ".title-buttons {", "/* ---- Game application");
+  contains(
+    controls,
+    "align-self: flex-start",
+    "margin-top: 4px",
+    "--caption-glyph-y: -13px",
+    "--caption-button-y: -21px",
+    "--caption-glyph-y: -39px",
+    "--caption-button-y: -63px",
+    "--caption-glyph-y: -52px",
+    "--caption-button-y: -84px",
+    "--caption-glyph-y: -91px",
+    "--caption-button-y: -147px",
+  );
+  absent(controls, "brightness(", "saturate(");
+});
 test("Flash games keep curated FPS defaults and allow user overrides", async () => {
   const games = await Bun.file(path("site/js/games.js")).text();
   contains(games, '"bike-mania": {', "frameRate: 60");

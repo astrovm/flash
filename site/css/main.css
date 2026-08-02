@@ -1008,10 +1008,6 @@ html[data-xp-appearance="silver"] {
   background: var(--titlebar-active);
 }
 
-.xp-window:not(.active) .tb-btn {
-  filter: saturate(0.72) brightness(1.08);
-}
-
 .xp-window.maximized .title-bar {
   margin: 0;
   border-radius: 0;
@@ -1044,11 +1040,15 @@ html[data-xp-appearance="silver"] {
 
 .title-buttons {
   display: flex;
+  align-self: flex-start;
   align-items: center;
   gap: 2px;
+  margin-top: 4px;
 }
 
 .tb-btn {
+  --caption-glyph-y: 0px;
+  --caption-button-y: 0px;
   position: relative;
   width: 21px;
   height: 21px;
@@ -1057,18 +1057,47 @@ html[data-xp-appearance="silver"] {
   border: 0;
   border-radius: 3px;
   background-color: transparent;
-  background-position: center;
+  background-position:
+    center var(--caption-glyph-y),
+    center var(--caption-button-y);
   background-size: contain;
   background-repeat: no-repeat;
   cursor: var(--xp-cursor);
 }
 
-.tb-btn:hover {
-  filter: brightness(1.12);
+.xp-window.active .tb-btn:hover:not(:disabled) {
+  --caption-glyph-y: -13px;
+  --caption-button-y: -21px;
 }
 
-.tb-btn:active {
-  filter: brightness(0.92);
+.xp-window.active .tb-btn:active:not(:disabled) {
+  --caption-glyph-y: -26px;
+  --caption-button-y: -42px;
+}
+
+.xp-window.active .tb-btn:disabled {
+  --caption-glyph-y: -39px;
+  --caption-button-y: -63px;
+}
+
+.xp-window:not(.active) .tb-btn {
+  --caption-glyph-y: -52px;
+  --caption-button-y: -84px;
+}
+
+.xp-window:not(.active) .tb-btn:hover:not(:disabled) {
+  --caption-glyph-y: -65px;
+  --caption-button-y: -105px;
+}
+
+.xp-window:not(.active) .tb-btn:active:not(:disabled) {
+  --caption-glyph-y: -78px;
+  --caption-button-y: -126px;
+}
+
+.xp-window:not(.active) .tb-btn:disabled {
+  --caption-glyph-y: -91px;
+  --caption-button-y: -147px;
 }
 
 .minimize-btn,
@@ -1077,9 +1106,6 @@ html[data-xp-appearance="silver"] {
   background-size:
     13px 104px,
     21px 168px;
-  background-position:
-    center top,
-    center top;
 }
 
 .minimize-btn {
@@ -1106,9 +1132,6 @@ html[data-xp-appearance="silver"] {
   background-size:
     13px 104px,
     21px 168px;
-  background-position:
-    center top,
-    center top;
 }
 
 /* ---- Game application menu bar ---- */
