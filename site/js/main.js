@@ -36,6 +36,7 @@ let automaticOfflineDownloadQueue = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
 const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
+const DESKTOP_SYSTEM_NAMES_KEY = "desktopSystemNames";
 const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings";
 const USER_STORAGE_KEYS = Object.freeze([
   DISPLAY_SETTINGS_KEY,
@@ -43,6 +44,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   "desktopIconPositions",
   "desktopLayoutSettings",
   DESKTOP_SYSTEM_ICONS_KEY,
+  DESKTOP_SYSTEM_NAMES_KEY,
   "favorites",
   "gameStats",
   GAME_PLAYBACK_SETTINGS_KEY,
@@ -159,7 +161,6 @@ const XP_ICON_PATHS = Object.freeze({
   "RecyclerFull.png": "assets/xp/icons/RecyclerFull.png",
   "Shortcut.png": "assets/xp/icons/Shortcut.png",
 });
-const TASKBAR_HEIGHT = 30;
 let activeMonitorResolution = "auto";
 
 const categoryIcons = {
@@ -348,7 +349,7 @@ const isDisplaySettings = (value) =>
     )) &&
   ["center", "tile", "stretch"].includes(value.position) &&
   /^#[0-9a-f]{6}$/i.test(value.backgroundColor) &&
-  ["blue", "olive", "silver"].includes(value.appearance) &&
+  ["blue", "olive", "silver", "classic"].includes(value.appearance) &&
   (value.fontSize === undefined ||
     ["normal", "large", "extra-large"].includes(value.fontSize)) &&
   [
@@ -402,6 +403,16 @@ const getDesktopSystemIcons = () => ({
 const saveDesktopSystemIcons = (settings) =>
   writeJsonStorage(DESKTOP_SYSTEM_ICONS_KEY, settings);
 
+const getDesktopSystemNames = () =>
+  readJsonStorage(DESKTOP_SYSTEM_NAMES_KEY, {}, (value) =>
+    Object.values(value || {}).every(
+      (name) => typeof name === "string" && name.trim().length > 0,
+    ),
+  );
+
+const saveDesktopSystemNames = (settings) =>
+  writeJsonStorage(DESKTOP_SYSTEM_NAMES_KEY, settings);
+
 const saveDisplaySettings = (settings) => {
   try {
     localStorage.setItem(DISPLAY_SETTINGS_KEY, JSON.stringify(settings));
@@ -434,6 +445,9 @@ const getSimulatedMonitorSize = (resolution = activeMonitorResolution) => {
   };
 };
 
+const getTaskbarHeight = () =>
+  document.documentElement.dataset.xpAppearance === "classic" ? 28 : 30;
+
 // The selected XP resolution becomes a real, bounded monitor inside the
 // browser. On a smaller browser it is honestly limited to the available
 // viewport instead of pretending that off-screen space is usable.
@@ -463,7 +477,7 @@ const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
       Math.round((window.innerHeight - monitor.height) / 2),
     );
     desktop.style.width = `${monitor.width}px`;
-    desktop.style.height = `${Math.max(1, monitor.height - TASKBAR_HEIGHT)}px`;
+    desktop.style.height = `${Math.max(1, monitor.height - getTaskbarHeight())}px`;
     desktop.style.left = `${left}px`;
     desktop.style.top = `${top}px`;
     taskbar.style.width = `${monitor.width}px`;
@@ -3346,9 +3360,9 @@ const createSystemWindowContent = (shortcutId, win) => {
                     <div class="appearance-message"><strong>Message Box</strong><i>×</i><button type="button" tabindex="-1">OK</button></div>
                 </div>
                 <label class="display-control-label" for="display-window-style">Windows and buttons:</label>
-                <select id="display-window-style" disabled><option>Windows XP style</option></select>
+                <select id="display-window-style" disabled><option value="xp">Windows XP style</option><option value="classic">Windows Classic style</option></select>
                 <label class="display-control-label" for="display-appearance">Color scheme:</label>
-                <select id="display-appearance"><option value="blue">Default (blue)</option><option value="olive">Olive green</option><option value="silver">Silver</option></select>
+                <select id="display-appearance"><option value="blue">Default (blue)</option><option value="olive">Olive green</option><option value="silver">Silver</option><option value="classic">Windows Standard</option></select>
                 <label class="display-control-label" for="display-font-size">Font size:</label>
                         <select id="display-font-size"><option value="normal">Normal</option><option value="large">Large Fonts</option><option value="extra-large">Extra Large Fonts</option></select>
                 <div class="display-appearance-actions">
@@ -4720,12 +4734,14 @@ const wireDisplayProperties = (win) => {
     saverWait: content.querySelector("#display-saver-wait"),
     saverLogin: content.querySelector(".display-saver-login"),
     appearance: content.querySelector("#display-appearance"),
+    windowStyle: content.querySelector("#display-window-style"),
     fontSize: content.querySelector("#display-font-size"),
     resolution: content.querySelector("#display-resolution"),
     resolutionSlider: content.querySelector("#display-resolution-slider"),
     preview: content.querySelector(".display-preview-surface"),
     saverPreview: content.querySelector(".screen-saver-preview"),
     appearancePreview: content.querySelector(".appearance-preview"),
+    themeSample: content.querySelector(".display-theme-sample"),
     resolutionPreview: content.querySelector(".display-resolution-preview"),
     resolutionValue: content.querySelector(".display-resolution-value"),
     status: content.querySelector(".display-status"),
@@ -4744,9 +4760,9 @@ const wireDisplayProperties = (win) => {
       backgroundColor: "#3a6ea5",
     },
     classic: {
-      appearance: "silver",
-      wallpaper: "ascent",
-      backgroundColor: "#4b6f8f",
+      appearance: "classic",
+      wallpaper: "none",
+      backgroundColor: "#3a6ea5",
     },
     olive: {
       appearance: "olive",
@@ -4771,6 +4787,9 @@ const wireDisplayProperties = (win) => {
     controls.saverWait.value = String(pending.screenSaverWait);
     controls.saverLogin.checked = pending.requireLoginOnResume;
     controls.appearance.value = pending.appearance;
+    controls.appearance.disabled = pending.appearance === "classic";
+    controls.windowStyle.value =
+      pending.appearance === "classic" ? "classic" : "xp";
     controls.fontSize.value = pending.fontSize;
     controls.resolution.value = pending.resolution;
     controls.resolutionSlider.value = String(
@@ -4786,6 +4805,9 @@ const wireDisplayProperties = (win) => {
       pending.backgroundColor;
     controls.saverPreview.dataset.saver = pending.screenSaver;
     controls.appearancePreview.dataset.appearance = pending.appearance;
+    controls.themeSample.dataset.appearance = pending.appearance;
+    controls.themeSample.style.backgroundColor = pending.backgroundColor;
+    controls.themeSample.style.backgroundImage = displayBackground(pending);
     controls.resolutionPreview.dataset.resolution = pending.resolution;
     const monitor = getSimulatedMonitorSize(pending.resolution);
     controls.resolutionValue.textContent =
@@ -10154,7 +10176,7 @@ const buildDesktopIcons = () => {
     const label = document.createElement("span");
     label.className = "icon-label";
     label.textContent = system
-      ? formatGameTitle(id)
+      ? getDesktopSystemNames()[id] || formatGameTitle(id)
       : node.ext === ".game"
         ? node.name.slice(0, -node.ext.length)
         : node.name;
@@ -10249,6 +10271,37 @@ const beginDesktopRename = (id) => {
   });
   input.addEventListener("blur", () => finish(true), { once: true });
   document.addEventListener("pointerdown", onOutsidePointerDown, true);
+};
+
+const beginSystemDesktopRename = (id) => {
+  const icon = document.querySelector(
+    `.desktop-icon[data-desktop-id="${CSS.escape(id)}"]`,
+  );
+  const label = icon?.querySelector(".icon-label");
+  if (!icon || !label) return;
+  const input = document.createElement("input");
+  input.className = "desktop-rename";
+  input.value = label.textContent;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+  let finished = false;
+  const finish = (save) => {
+    if (finished) return;
+    finished = true;
+    const name = input.value.trim();
+    if (save && name) {
+      saveDesktopSystemNames({ ...getDesktopSystemNames(), [id]: name });
+    }
+    refreshDesktop();
+  };
+  input.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    finish(event.key === "Enter");
+  });
+  input.addEventListener("blur", () => finish(true), { once: true });
 };
 
 const addDesktopMenuItem = (
@@ -10357,6 +10410,24 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
     addDesktopMenuItem(menu, "Create Shortcut", "create-recycle-shortcut");
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Properties", "recycle-properties");
+  } else if (itemId === "__my-computer") {
+    addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
+    addDesktopMenuItem(menu, "Explore", "explore-my-computer");
+    addDesktopMenuItem(menu, "Search...", "search-my-computer");
+    addDesktopMenuItem(menu, "Manage", "manage-my-computer");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Map Network Drive...", "map-network-drive");
+    addDesktopMenuItem(
+      menu,
+      "Disconnect Network Drive...",
+      "disconnect-network-drive",
+    );
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Create Shortcut", "create-computer-shortcut");
+    addDesktopMenuItem(menu, "Delete", "hide-my-computer");
+    addDesktopMenuItem(menu, "Rename", "rename-my-computer");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "computer-properties");
   } else if (itemId) {
     addDesktopMenuItem(menu, "Open", "open");
     addDesktopSeparator(menu);
@@ -10533,6 +10604,45 @@ const setupDesktopContextMenu = () => {
       pasteIntoFolder(fs.DESKTOP);
     } else if (action === "open" && itemId) {
       openDesktopItem(itemId);
+    } else if (action === "explore-my-computer") {
+      openDesktopItem("__my-computer");
+    } else if (action === "search-my-computer") {
+      openSearchDialog();
+    } else if (action === "manage-my-computer") {
+      XPDialogs.alert(
+        "Computer Management is not available in this offline recreation.",
+        "Computer Management",
+        "info",
+      );
+    } else if (
+      action === "map-network-drive" ||
+      action === "disconnect-network-drive"
+    ) {
+      XPDialogs.alert(
+        "This Windows XP network feature is not available in Astro Flash.",
+        action === "map-network-drive"
+          ? "Map Network Drive"
+          : "Disconnect Network Drive",
+        "info",
+      );
+    } else if (action === "create-computer-shortcut") {
+      const shortcut = fileOps.createFile(
+        fs.DESKTOP,
+        "Shortcut to My Computer.game",
+        { app: "__my-computer" },
+      );
+      refreshDesktop();
+      selectDesktopIcon(shortcut.id);
+    } else if (action === "hide-my-computer") {
+      saveDesktopSystemIcons({
+        ...getDesktopSystemIcons(),
+        "__my-computer": false,
+      });
+      refreshDesktop();
+    } else if (action === "rename-my-computer") {
+      beginSystemDesktopRename("__my-computer");
+    } else if (action === "computer-properties") {
+      openSystemProperties();
     } else if (action === "explore" && itemId === "__recycle-bin") {
       openDesktopItem(itemId);
     } else if (action === "empty-recycle-bin") {
