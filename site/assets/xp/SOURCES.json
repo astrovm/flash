@@ -864,6 +864,19 @@
       "pixelSha256": "1acc578d629c4ba74fe5c8e1f6e15a58a7f6f01107f4e83705ed9cd5d167a7c4"
     }
   },
+  "assets/xp/system/KeyboardDevice.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MAIN.CP_",
+    "sha256": "5583bf60ee661f42bedfaa1afde64570fab96b7d76cde534730a10de72adaa73",
+    "resource": {
+      "parentSha256": "1f8fd4e1bb3870dced5cd52870db6e6846152a1c2c5102521bbbc1f1007d6192",
+      "type": 14,
+      "id": 200,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "fcb26b2ca038d71a65f00847cfc402280ad190434b242f652701fb1cb9761425"
+    }
+  },
   "assets/xp/icons/KeyboardRepeatDelay.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MAIN.CP_",

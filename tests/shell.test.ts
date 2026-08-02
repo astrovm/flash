@@ -483,6 +483,7 @@ test("Keyboard Properties matches the two-tab XP applet", () => {
     "Repeat delay:",
     "KeyboardRepeatDelay.png",
     "KeyboardRepeatRate.png",
+    "assets/xp/system/KeyboardDevice.png",
     "Repeat rate:",
     "Cursor blink rate",
     "openKeyboardProperties();",

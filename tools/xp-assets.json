@@ -645,6 +645,16 @@
       "member": "MAIN.CP_",
       "expandedName": "main.cpl",
       "resourceType": 14,
+      "resourceId": 200,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/KeyboardDevice.png"
+    },
+    {
+      "member": "MAIN.CP_",
+      "expandedName": "main.cpl",
+      "resourceType": 14,
       "resourceId": 105,
       "width": 32,
       "height": 32,

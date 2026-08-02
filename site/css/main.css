@@ -8011,7 +8011,8 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 }
 
 .keyboard-properties-panels {
-  height: 354px;
+  box-sizing: border-box;
+  height: 358px;
   margin-top: -1px;
   padding: 11px 14px;
   border: 1px solid #919b9c;
@@ -8144,25 +8145,95 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
 .keyboard-properties-buttons {
   position: absolute;
   right: 8px;
-  bottom: -14px;
+  bottom: 6px;
   display: flex;
-  gap: 8px;
+  gap: 9px;
+}
+
+.keyboard-properties-buttons button {
+  box-sizing: border-box;
+  width: 72px;
+  height: 21px;
+}
+
+.keyboard-devices-label {
+  margin: 0 0 4px;
 }
 
 .keyboard-hardware-list {
   box-sizing: border-box;
-  height: 175px;
-  margin: 5px 0 12px;
-  padding: 4px;
-  overflow: auto;
+  width: 357px;
+  height: 76px;
+  overflow: hidden;
   border: 2px inset #fff;
   background: #fff;
 }
 
 .keyboard-hardware-list strong,
-.keyboard-hardware-list span {
-  display: flex;
-  justify-content: space-between;
+.keyboard-hardware-list > span {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  height: 18px;
+  align-items: center;
+}
+
+.keyboard-hardware-list strong {
+  padding-left: 7px;
+  border-bottom: 1px solid #aaa;
+  font-weight: normal;
+}
+
+.keyboard-hardware-list strong span:first-child {
+  border-right: 1px solid #aaa;
+}
+
+.keyboard-hardware-list > span {
+  position: relative;
+  padding-left: 21px;
+}
+
+.keyboard-hardware-list > span.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.keyboard-hardware-list img {
+  position: absolute;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+}
+
+.keyboard-hardware-list i {
+  overflow: hidden;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyboard-device-properties {
+  height: 219px;
+  margin-top: 18px !important;
+  padding: 8px !important;
+}
+
+.keyboard-device-properties p {
+  margin: 7px 0;
+}
+
+.keyboard-device-properties button {
+  position: absolute;
+  bottom: 10px;
+  width: 88px;
+  height: 21px;
+}
+
+.keyboard-device-properties button:first-of-type {
+  right: 111px;
+}
+
+.keyboard-device-properties button:last-of-type {
+  right: 11px;
 }
 
 .game-controllers-dialog {

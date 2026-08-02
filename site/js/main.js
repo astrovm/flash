@@ -7740,8 +7740,8 @@ const openKeyboardProperties = (initialTab = "speed") => {
     <div class="keyboard-properties-tabs" role="tablist"><button type="button" role="tab" data-keyboard-tab="speed">Speed</button><button type="button" role="tab" data-keyboard-tab="hardware">Hardware</button></div>
     <div class="keyboard-properties-panels">
       <section data-keyboard-panel="speed"><fieldset class="keyboard-repeat"><legend>Character repeat</legend><img class="keyboard-delay-icon" src="assets/xp/icons/KeyboardRepeatDelay.png" alt=""><img class="keyboard-rate-icon" src="assets/xp/icons/KeyboardRepeatRate.png" alt=""><label><b>Repeat delay:</b><span>Long</span><input type="range" min="0" max="10" value="7"><span>Short</span></label><label><b>Repeat rate:</b><span>Slow</span><input type="range" min="0" max="10" value="10"><span>Fast</span></label><label>Click here and hold down a key to test repeat rate:<input type="text"></label></fieldset><fieldset class="keyboard-cursor"><legend>Cursor blink rate</legend><i aria-hidden="true"></i><label><span>None</span><input type="range" min="0" max="10" value="6"><span>Fast</span></label></fieldset></section>
-      <section data-keyboard-panel="hardware" hidden><label>Devices:</label><div class="keyboard-hardware-list"><strong>Name <span>Type</span></strong><span>Standard 101/102-Key or Microsoft Natural PS/2 Keyboard <i>Keyboard</i></span></div><fieldset><legend>Device Properties</legend><p>Manufacturer: (Standard keyboards)</p><p>Location: plugged into keyboard port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
-    </div><div class="dlg-buttons keyboard-properties-buttons"></div>`;
+      <section data-keyboard-panel="hardware" hidden><p class="keyboard-devices-label">Devices:</p><div class="keyboard-hardware-list" role="listbox"><strong><span>Name</span><span>Type</span></strong><span class="selected"><img src="assets/xp/system/KeyboardDevice.png" alt="">Standard 101/102-Key or Microsoft Natural PS/2 Keyboard <i>Keyboards</i></span></div><fieldset class="keyboard-device-properties"><legend>Device Properties</legend><p>Manufacturer: (Standard keyboards)</p><p>Location: plugged into keyboard port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
+    </div>`;
   const activate = (tab) => {
     dialog.body
       .querySelectorAll("[data-keyboard-tab]")
@@ -7765,6 +7765,7 @@ const openKeyboardProperties = (initialTab = "speed") => {
     { id: "cancel", label: "Cancel", isCancel: true },
     { id: "apply", label: "Apply" },
   ]);
+  dialog.body.lastElementChild.classList.add("keyboard-properties-buttons");
   dialog.body.querySelector('[data-action="apply"]').disabled = true;
   activate(initialTab);
 };
