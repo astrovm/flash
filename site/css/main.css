@@ -2854,6 +2854,132 @@ html[data-xp-appearance="silver"] {
   place-items: center;
 }
 
+.xp-dialog.accessibility-options-dialog {
+  position: absolute;
+  top: 146px;
+  left: 110px;
+  width: 366px;
+  height: 448px;
+}
+
+.accessibility-options-dialog .dlg-body {
+  position: relative;
+  height: 416px;
+  padding: 31px 8px 40px;
+  font:
+    11px Tahoma,
+    sans-serif;
+}
+
+.accessibility-tabs {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+}
+
+.accessibility-tabs button {
+  height: 20px;
+  padding: 1px 8px;
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: #ece9d8;
+  font: inherit;
+}
+
+.accessibility-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 1;
+  height: 22px;
+  margin-bottom: -2px;
+  border-top-color: #e68b2c;
+  background: #fff;
+}
+
+.accessibility-panels {
+  height: 100%;
+  padding: 7px 14px;
+  border: 1px solid #919b9c;
+  background: #fff;
+}
+
+.accessibility-panels fieldset {
+  position: relative;
+  min-height: 84px;
+  margin: 0 0 5px;
+  padding: 10px 9px 8px;
+  border: 1px solid #d0cab2;
+}
+
+.accessibility-panels legend {
+  color: #0046d5;
+}
+.accessibility-panels p {
+  margin: 2px 0 8px;
+  line-height: 13px;
+}
+.accessibility-panels label {
+  display: block;
+  margin: 5px 0;
+}
+.accessibility-panels fieldset > .xp-btn {
+  position: absolute;
+  right: 13px;
+  bottom: 11px;
+  min-width: 72px;
+}
+.accessibility-panels .disabled-copy {
+  color: #aaa;
+  margin-top: 17px;
+}
+.accessibility-panels select {
+  width: 168px;
+  margin-left: 18px;
+}
+.accessibility-panels .range-label {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: center;
+  margin: 10px 10px;
+  text-align: right;
+}
+.accessibility-panels [data-accessibility-panel="sound"] fieldset {
+  min-height: 142px;
+}
+.accessibility-panels
+  [data-accessibility-panel="display"]
+  fieldset:nth-of-type(2) {
+  min-height: 190px;
+}
+.accessibility-panels [data-accessibility-panel="general"] fieldset {
+  min-height: 0;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(1) {
+  height: 70px;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(2) {
+  height: 65px;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(3) {
+  height: 88px;
+}
+.accessibility-panels
+  [data-accessibility-panel="general"]
+  fieldset:nth-of-type(4) {
+  height: 62px;
+}
+.accessibility-options-dialog .dlg-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
 .control-panel-content {
   display: flex;
   min-height: 0;

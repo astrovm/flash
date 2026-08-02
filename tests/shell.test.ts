@@ -458,7 +458,14 @@ test("Accessibility Options uses the native XP category page", () => {
     "assets/xp/icons/Magnifier.png",
     "assets/xp/icons/OnScreenKeyboard.png",
     'data-control-panel-action="accessibility-options"',
+    'const openAccessibilityOptions = (initialTab = "keyboard") =>',
+    'data-accessibility-panel="keyboard"',
+    'data-accessibility-panel="sound"',
+    'data-accessibility-panel="display"',
+    'data-accessibility-panel="mouse"',
+    'data-accessibility-panel="general"',
   );
+  contains(css, ".accessibility-options-dialog", ".accessibility-tabs");
 });
 
 test("Folder Options matches the four-tab XP shell applet", () => {
