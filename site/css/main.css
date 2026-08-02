@@ -2390,7 +2390,7 @@ html[data-xp-appearance="silver"] {
 
 .user-accounts-toolbar {
   display: flex;
-  height: 33px;
+  height: 36px;
   flex: none;
   align-items: center;
   gap: 5px;
@@ -2440,6 +2440,7 @@ html[data-xp-appearance="silver"] {
 }
 
 .user-accounts-sidebar section {
+  margin-bottom: 10px;
   padding: 0 10px 6px;
   background: #f4f7ff;
 }
@@ -2592,61 +2593,194 @@ html[data-xp-appearance="silver"] {
   color: #f2f2ff;
 }
 
-.user-account-detail {
-  padding-top: 22px;
+.user-accounts-main.user-accounts-subpage {
+  overflow: hidden;
+  background: #fff;
+  color: #111;
 }
 
-.user-account-detail-title {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.user-account-detail-title h1 {
+.user-accounts-subpage h1 {
   margin: 0;
-  font-size: 22px;
+  color: #7292ed;
+  font:
+    24px/30px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.user-account-change,
+.user-account-administrator,
+.user-account-guest,
+.user-account-create,
+.user-account-logon {
+  position: relative;
+  padding: 22px 21px;
+}
+
+.user-account-picker {
+  display: grid;
+  width: 430px;
+  grid-template-columns: 225px 205px;
+  margin: 26px 0 0 10px;
+}
+
+.user-account-picker button,
+.user-account-summary {
+  display: flex;
+  height: 58px;
+  align-items: center;
+  gap: 13px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #0645c0;
+  font:
+    11px/13px Tahoma,
+    sans-serif;
+  text-align: left;
+}
+
+.user-account-picker button.selected {
+  border-color: #316ac5;
+}
+
+.user-account-picker img,
+.user-account-summary img,
+.user-account-sidebar-summary img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+
+.user-account-picker span,
+.user-account-picker small,
+.user-account-summary span,
+.user-account-summary small,
+.user-account-sidebar-summary span,
+.user-account-sidebar-summary small {
+  display: block;
+}
+
+.user-account-sidebar-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 1px 10px 13px;
+  color: #111;
+  font:
+    11px/13px Tahoma,
+    sans-serif;
+}
+
+.user-account-sidebar-summary img {
+  padding: 3px;
+  background: #fff;
+}
+
+.user-account-administrator h1 {
+  width: 440px;
+}
+
+.user-account-summary {
+  position: absolute;
+  top: 95px;
+  left: 260px;
 }
 
 .user-account-detail-links {
-  gap: 13px;
-  margin: 25px 0 0 68px;
+  gap: 18px;
+  margin: 14px 0 0 5px;
 }
 
 .user-account-detail-links button {
+  display: flex;
   width: max-content;
+  align-items: center;
+  gap: 5px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: #0645c0;
   font:
-    700 12px Tahoma,
+    11px Tahoma,
     sans-serif;
 }
 
-.user-account-form,
-.user-account-logon {
-  max-width: 445px;
+.user-account-detail-links img {
+  width: 14px;
+  height: 16px;
 }
 
-.user-account-form input {
-  width: 260px;
-  height: 22px;
-  border: 1px solid #7f9db9;
+.user-account-administrator > p {
+  margin-top: 48px;
+}
+
+.user-account-guest p {
+  margin: 11px 0 18px;
+}
+
+.user-account-create label {
+  display: block;
+  margin-top: 11px;
+}
+
+.user-account-create input {
+  display: block;
+  box-sizing: border-box;
+  width: 213px;
+  height: 18px;
+  margin-top: 3px;
+  border: 1px solid #111;
   font:
-    12px Tahoma,
+    11px Tahoma,
     sans-serif;
+  outline: 0;
+  box-shadow: none;
 }
 
-.user-account-form .xp-btn,
-.user-account-logon .xp-btn {
-  float: right;
-  margin-top: 25px;
+.user-account-create p {
+  margin: 9px 0 19px;
+}
+
+.user-account-create p button {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dotted #0645c0;
+  background: transparent;
+  color: #0645c0;
+  font: inherit;
+}
+
+.user-account-divider {
+  height: 1px;
+  background: #8aaaf3;
+}
+
+.user-account-page-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.user-account-page-buttons .xp-btn {
+  min-width: 45px;
+}
+
+.user-account-guest .user-account-page-buttons .xp-btn:first-child {
+  min-width: 194px;
 }
 
 .user-account-logon label {
   display: flex;
-  gap: 8px;
-  margin: 20px 0;
+  align-items: flex-start;
+  gap: 3px;
+  margin: 16px 4px 27px;
+}
+
+.user-account-logon label input {
+  margin: 1px 0 0;
+  accent-color: #179447;
 }
 
 .user-account-logon label span,
@@ -2655,7 +2789,20 @@ html[data-xp-appearance="silver"] {
 }
 
 .user-account-logon label strong {
-  font-size: 13px;
+  font-size: 11px;
+}
+
+.user-account-logon label small {
+  font-size: 11px;
+  line-height: 13px;
+}
+
+.user-account-logon .user-account-page-buttons {
+  margin-top: 12px;
+}
+
+.user-account-logon .user-account-page-buttons .xp-btn:first-child {
+  min-width: 98px;
 }
 
 .add-remove-programs-content {

@@ -2893,13 +2893,32 @@ const createUserAccountsContent = () => {
       <main class="user-accounts-main"></main>
     </div>`;
   const main = content.querySelector(".user-accounts-main");
+  const sidebar = content.querySelector(".user-accounts-sidebar");
   const back = content.querySelector('[data-user-accounts-action="back"]');
   const home = content.querySelector('[data-user-accounts-action="home"]');
   const renderHeader = () => `
     <div class="user-accounts-heading"><img src="assets/xp/icons/UserAccounts.png" alt=""><strong>User Accounts</strong></div>`;
+  const learnLink = (label) =>
+    `<button type="button" data-user-accounts-action="help"><span>?</span> ${label}</button>`;
+  const renderSidebar = (markup) => {
+    sidebar.innerHTML = markup;
+  };
+  const showSubpage = (sidebarMarkup, pageMarkup) => {
+    back.disabled = false;
+    home.disabled = false;
+    main.className = "user-accounts-main user-accounts-subpage";
+    renderSidebar(sidebarMarkup);
+    main.innerHTML = pageMarkup;
+  };
   const renderHome = () => {
     back.disabled = true;
     home.disabled = true;
+    main.className = "user-accounts-main";
+    renderSidebar(`<section><h2>Learn About</h2>
+      ${learnLink("User accounts")}
+      ${learnLink("User account types")}
+      ${learnLink("Switching users")}
+    </section>`);
     main.innerHTML = `${renderHeader()}
       <div class="user-accounts-page">
         <h1>Pick a task...</h1>
@@ -2915,52 +2934,53 @@ const createUserAccountsContent = () => {
         </div>
       </div>`;
   };
-  const renderAccount = (guest = false) => {
-    back.disabled = false;
-    home.disabled = false;
+  const accountChoice = (guest = false, selected = false) => {
     const name = guest ? "Guest" : "Administrator";
+    const detail = guest ? "Guest account is off" : "Computer administrator";
     const image = guest
       ? "assets/xp/system/UserGuest.bmp"
       : "assets/xp/system/UserAdministrator.bmp";
-    main.innerHTML = `${renderHeader()}<div class="user-accounts-page user-account-detail">
-      <div class="user-account-detail-title"><img src="${image}" alt=""><h1>What do you want to change about ${name}'s account?</h1></div>
-      <div class="user-account-detail-links">
-        <button type="button">Change the name</button>
-        <button type="button">Create a password</button>
-        <button type="button">Change the picture</button>
-        <button type="button">Change the account type</button>
-        <button type="button">Delete the account</button>
-      </div>
-    </div>`;
+    return `<button type="button" class="${selected ? "selected" : ""}" data-user-accounts-action="${guest ? "guest" : "administrator"}"><img src="${image}" alt=""><span><strong>${name}</strong><small>${detail}</small></span></button>`;
+  };
+  const renderChange = () => {
+    showSubpage(
+      `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="create">Create a new account</button></section>
+       <section><h2>Learn About</h2>${learnLink("User accounts")}</section>`,
+      `<div class="user-account-change"><h1>Pick an account to change</h1><div class="user-account-picker">${accountChoice(false, true)}${accountChoice(true)}</div></div>`,
+    );
+  };
+  const renderAccount = (guest = false) => {
+    if (guest) {
+      showSubpage(
+        `<div class="user-account-sidebar-summary"><img src="assets/xp/system/UserGuest.bmp" alt=""><span><strong>Guest</strong><small>Guest account is off</small></span></div><section><h2>Learn About</h2>${learnLink("Using the guest account")}</section>`,
+        `<div class="user-account-guest"><h1>Do you want to turn on the guest account?</h1><p>If you turn on the guest account, people who do not have an account can use the guest account to log on to the computer. Password-protected files, folders, or settings are not accessible to guest users.</p><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default">Turn On the Guest Account</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
+      );
+      return;
+    }
+    showSubpage(
+      `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="help">Manage my network passwords</button><button type="button" data-user-accounts-action="help">Prevent a forgotten password</button><button type="button" data-user-accounts-action="change">Change another account</button><button type="button" data-user-accounts-action="create">Create a new account</button></section><section><h2>Learn About</h2>${learnLink("Deleting your own account")}${learnLink("Switching users")}${learnLink("Using a .NET Passport")}</section>`,
+      `<div class="user-account-administrator"><h1>What do you want to change about your<br>account?</h1><div class="user-account-summary"><img src="assets/xp/system/UserAdministrator.bmp" alt=""><span><strong>Administrator</strong><small>Computer administrator</small></span></div><div class="user-account-detail-links"><button type="button"><img src="assets/xp/icons/Go.png" alt="">Create a password</button><button type="button"><img src="assets/xp/icons/Go.png" alt="">Change my picture</button><button type="button"><img src="assets/xp/icons/Go.png" alt="">Set up my account to use a .NET Passport</button></div><p>The administrator account is only visible on the Welcome screen when no other user accounts exist (except the guest account), or when you start your computer in Safe Mode.</p></div>`,
+    );
   };
   const renderCreate = () => {
-    back.disabled = false;
-    home.disabled = false;
-    main.innerHTML = `${renderHeader()}<div class="user-accounts-page user-account-form">
-      <h1>Name the new account</h1>
-      <p>Type a name for the new account:</p>
-      <input type="text" aria-label="New account name">
-      <p>This name will appear on the Welcome screen and on the Start menu.</p>
-      <button type="button" class="xp-btn" data-user-accounts-action="home">Create Account</button>
-    </div>`;
+    showSubpage(
+      "",
+      `<div class="user-account-create"><h1>Name the new account</h1><label for="new-account-name">Type a name for the new account:</label><input id="new-account-name" type="text" aria-label="New account name"><p>This name will appear on the <button type="button" data-user-accounts-action="help">Welcome screen</button> and on the <button type="button" data-user-accounts-action="help">Start menu</button>.</p><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default">Next &gt;</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
+    );
     main.querySelector("input").focus();
   };
   const renderLogon = () => {
-    back.disabled = false;
-    home.disabled = false;
-    main.innerHTML = `${renderHeader()}<div class="user-accounts-page user-account-logon">
-      <h1>Select logon and logoff options</h1>
-      <label><input type="checkbox" checked> <span><strong>Use the Welcome screen</strong><small>Clicking this option enables the Welcome screen.</small></span></label>
-      <label><input type="checkbox" checked> <span><strong>Use Fast User Switching</strong><small>Switch users without closing programs.</small></span></label>
-      <button type="button" class="xp-btn" data-user-accounts-action="home">Apply Options</button>
-    </div>`;
+    showSubpage(
+      `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="change">Manage accounts</button></section><section><h2>Learn About</h2>${learnLink("Logon options")}</section>`,
+      `<div class="user-account-logon"><h1>Select logon and logoff options</h1><label><input type="checkbox" checked><span><strong>Use the Welcome screen</strong><small>By using the Welcome screen, you can simply click your account name to log on. For added security, you can turn off this feature and use the classic logon prompt which requires users to type an account name.</small></span></label><label><input type="checkbox" checked><span><strong>Use Fast User Switching</strong><small>With Fast User Switching, you can quickly switch to another user account without having to close any programs. Then, when the other user is finished, you can switch back to your own account.</small></span></label><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default" data-user-accounts-action="home">Apply Options</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
+    );
   };
   content.addEventListener("click", (event) => {
     const action = event.target.closest("[data-user-accounts-action]")?.dataset
       .userAccountsAction;
     if (action === "home" || action === "back") renderHome();
-    else if (action === "change" || action === "administrator")
-      renderAccount(false);
+    else if (action === "change") renderChange();
+    else if (action === "administrator") renderAccount(false);
     else if (action === "guest") renderAccount(true);
     else if (action === "create") renderCreate();
     else if (action === "logon") renderLogon();

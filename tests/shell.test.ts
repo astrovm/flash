@@ -787,6 +787,13 @@ test("User Accounts uses the native XP task page and account pictures", () => {
     "UserGuest.bmp",
     "Computer administrator",
     "Guest account is off",
+    "Pick an account to change",
+    "What do you want to change about your<br>account?",
+    "Do you want to turn on the guest account?",
+    "Turn On the Guest Account",
+    "Name the new account",
+    "Select logon and logoff options",
+    "Use Fast User Switching",
   );
   contains(
     css,
@@ -794,6 +801,12 @@ test("User Accounts uses the native XP task page and account pictures", () => {
     ".user-accounts-toolbar",
     ".user-accounts-sidebar",
     ".user-account-choices",
+    ".user-accounts-main.user-accounts-subpage",
+    ".user-account-picker",
+    ".user-account-administrator",
+    ".user-account-guest",
+    ".user-account-create",
+    ".user-account-logon",
   );
 });
 
