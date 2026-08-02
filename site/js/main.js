@@ -2248,6 +2248,92 @@ const wireControlPanel = (win) => {
   );
   backButton.dataset.controlPanelAction = "back";
   upButton.dataset.controlPanelAction = "back";
+  const categoryGrid = content.querySelector(".control-panel-categories");
+  const categoryMarkup = categoryGrid.innerHTML;
+  const classicIconPaths = {
+    "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
+    "AddHardware.png": "assets/xp/icons/AddHardware.png",
+    "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
+    "AdministrativeTools.png": "assets/xp/icons/AdministrativeTools.png",
+    "UpdateEnabled.png": "assets/xp/system/UpdateEnabled.png",
+    "DateAndTime.png": "assets/xp/icons/DateAndTime.png",
+    "Display.png": "assets/xp/icons/Display.png",
+    "FolderOptions.png": "assets/xp/icons/FolderOptions.png",
+    "Fonts.png": "assets/xp/icons/Fonts.png",
+    "GameControllers.png": "assets/xp/icons/GameControllers.png",
+    "InternetOptions.png": "assets/xp/icons/InternetOptions.png",
+    "Keyboard.png": "assets/xp/icons/Keyboard.png",
+    "Mouse.png": "assets/xp/icons/Mouse.png",
+    "NetworkConnections.png": "assets/xp/icons/NetworkConnections.png",
+    "NetworkSetupWizard.png": "assets/xp/icons/NetworkSetupWizard.png",
+    "PhoneAndModemOptionsLarge.png":
+      "assets/xp/icons/PhoneAndModemOptionsLarge.png",
+    "PowerOptions.png": "assets/xp/icons/PowerOptions.png",
+    "PrintersAndFaxesLarge.png": "assets/xp/icons/PrintersAndFaxesLarge.png",
+    "RegionalAndLanguage.png": "assets/xp/icons/RegionalAndLanguage.png",
+    "ScannersAndCameras.png": "assets/xp/icons/ScannersAndCameras.png",
+    "ScheduledTasks.png": "assets/xp/icons/ScheduledTasks.png",
+    "SecurityCenter.png": "assets/xp/icons/SecurityCenter.png",
+    "SoundsAndAudioDevices.png": "assets/xp/icons/SoundsAndAudioDevices.png",
+    "Speech.png": "assets/xp/icons/Speech.png",
+    "System.png": "assets/xp/icons/System.png",
+    "TaskbarAndStartMenu.png": "assets/xp/icons/TaskbarAndStartMenu.png",
+    "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
+    "WindowsFirewall.png": "assets/xp/icons/WindowsFirewall.png",
+    "WirelessNetworkSetupWizard.png":
+      "assets/xp/icons/WirelessNetworkSetupWizard.png",
+  };
+  const classicItems = [
+    [
+      "accessibility-options",
+      "Accessibility Options",
+      "AccessibilityOptions.png",
+    ],
+    ["add-hardware", "Add Hardware", "AddHardware.png"],
+    ["programs", "Add or Remove Programs", "AddRemovePrograms.png"],
+    ["administrative-tools", "Administrative Tools", "AdministrativeTools.png"],
+    ["updates", "Automatic Updates", "UpdateEnabled.png"],
+    ["date-time", "Date and Time", "DateAndTime.png"],
+    ["display", "Display", "Display.png"],
+    ["folder-options", "Folder Options", "FolderOptions.png"],
+    ["fonts", "Fonts", "Fonts.png"],
+    ["game-controllers", "Game Controllers", "GameControllers.png"],
+    ["internet-options", "Internet Options", "InternetOptions.png"],
+    ["keyboard", "Keyboard", "Keyboard.png"],
+    ["mouse", "Mouse", "Mouse.png"],
+    ["network-connections", "Network Connections", "NetworkConnections.png"],
+    ["network-setup", "Network Setup Wizard", "NetworkSetupWizard.png"],
+    ["phone-modem", "Phone and Modem Options", "PhoneAndModemOptionsLarge.png"],
+    ["power-options", "Power Options", "PowerOptions.png"],
+    ["view-printers", "Printers and Faxes", "PrintersAndFaxesLarge.png"],
+    [
+      "regional-language",
+      "Regional and Language Options",
+      "RegionalAndLanguage.png",
+    ],
+    ["scanners-cameras", "Scanners and Cameras", "ScannersAndCameras.png"],
+    ["scheduled-tasks", "Scheduled Tasks", "ScheduledTasks.png"],
+    ["security-center", "Security Center", "SecurityCenter.png"],
+    ["sounds-audio", "Sounds and Audio Devices", "SoundsAndAudioDevices.png"],
+    ["speech", "Speech", "Speech.png"],
+    ["system", "System", "System.png"],
+    ["taskbar-properties", "Taskbar and Start Menu", "TaskbarAndStartMenu.png"],
+    ["users", "User Accounts", "UserAccounts.png"],
+    ["firewall", "Windows Firewall", "WindowsFirewall.png"],
+    [
+      "wireless-network",
+      "Wireless Network Setup Wizard",
+      "WirelessNetworkSetupWizard.png",
+    ],
+  ];
+  const renderClassicItems = () => {
+    categoryGrid.innerHTML = classicItems
+      .map(
+        ([action, label, icon]) =>
+          `<button type="button" data-control-panel-action="${action}" title="${label}"><img src="${classicIconPaths[icon]}" alt=""><span>${label}</span></button>`,
+      )
+      .join("");
+  };
 
   const setWindowIdentity = (title, icon) => {
     win.title = title;
@@ -2576,9 +2662,10 @@ const wireControlPanel = (win) => {
       .controlPanelAction;
     if (action === "classic") {
       const classic = content.classList.toggle("classic-view");
-      content.querySelector(".control-panel-main h1").textContent = classic
-        ? "Pick a Control Panel icon"
-        : "Pick a category";
+      content.querySelector(".control-panel-main h1").textContent =
+        "Pick a category";
+      if (classic) renderClassicItems();
+      else categoryGrid.innerHTML = categoryMarkup;
       event.target.closest("button").querySelector("span").textContent = classic
         ? "Switch to Category View"
         : "Switch to Classic View";
@@ -2597,6 +2684,8 @@ const wireControlPanel = (win) => {
         "Windows Update",
         "info",
       );
+    } else if (action === "security-center") {
+      openSystemWindow("__security-center");
     } else if (action === "back") {
       closeGameWindow("__control-panel");
       setTimeout(openControlPanel, 0);

@@ -397,6 +397,27 @@ test("Control Panel uses the XP category-view Explorer shell", () => {
   contains(css, ".control-panel-content", ".control-panel-categories");
 });
 
+test("Control Panel Classic View uses the native XP applet grid", () => {
+  contains(
+    javascript,
+    "const classicItems = [",
+    "Accessibility Options",
+    "Add Hardware",
+    "Administrative Tools",
+    "Automatic Updates",
+    "Game Controllers",
+    "Internet Options",
+    "Network Setup Wizard",
+    "Scanners and Cameras",
+    "Taskbar and Start Menu",
+    "Wireless Network Setup Wizard",
+    "const renderClassicItems = () =>",
+  );
+  expect(css).toMatch(
+    /\.control-panel-content\.classic-view \.control-panel-categories\s*\{[^}]*grid-template-columns:\s*repeat\(7, 75px\)/s,
+  );
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,

@@ -3409,6 +3409,7 @@ html[data-xp-appearance="silver"] {
 }
 
 .control-panel-content.classic-view .control-panel-main {
+  padding: 6px 2px;
   background: #fff;
   color: #111;
 }
@@ -3418,24 +3419,40 @@ html[data-xp-appearance="silver"] {
 }
 
 .control-panel-content.classic-view .control-panel-main h1 {
-  color: #215dc6;
-  font-size: 20px;
+  display: none;
 }
 
 .control-panel-content.classic-view .control-panel-categories {
   grid-auto-flow: row;
-  grid-template-columns: repeat(4, minmax(100px, 1fr));
-  grid-template-rows: repeat(3, 92px);
-  column-gap: 10px;
+  grid-template-columns: repeat(7, 75px);
+  grid-template-rows: repeat(5, 75px);
+  gap: 0;
 }
 
 .control-panel-content.classic-view .control-panel-categories button {
   display: flex;
+  min-height: 75px;
   flex-direction: column;
+  gap: 3px;
+  justify-content: flex-start;
+  padding: 0 2px;
   color: #111;
   font-weight: 400;
   text-align: center;
   text-shadow: none;
+}
+
+.control-panel-content.classic-view .control-panel-categories button img {
+  width: 32px;
+  height: 32px;
+}
+
+.control-panel-content.classic-view .control-panel-categories button span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 14px;
 }
 
 .control-panel-content.classic-view

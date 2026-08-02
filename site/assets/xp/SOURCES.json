@@ -707,6 +707,32 @@
       "pixelSha256": "946e12d8bebcd8fa89c74399af9b58689ac0391cc43d58f598e5dcf814d20bdd"
     }
   },
+  "assets/xp/icons/AddHardware.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HDWWIZ.CP_",
+    "sha256": "b60f5d3d82af5d4758ca248efc8c590b469cf09ba32ec1e872fa58db254783dd",
+    "resource": {
+      "parentSha256": "6e10ead8430679265358bab9f24816dd3653c7b177250dd5c6e5d4c24956486c",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "5ccf5d735328ab79c422992307c68cf090b136b85a52253e138fa29fac8bc255"
+    }
+  },
+  "assets/xp/icons/Fonts.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "b80b06ab8939d2d6f96b39d380d65e4ac3733a42ca245d3581804f7874b81d3a",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 39,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "fe77c5bd2229c89fa40700beede98873d23c38b831a5c7ba9f47f2a30da5dccf"
+    }
+  },
   "assets/xp/icons/DisplaySmall.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/DESK.CP_",

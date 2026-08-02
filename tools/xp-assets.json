@@ -518,6 +518,26 @@
       "output": "site/assets/xp/icons/AddHardwareSmall.png"
     },
     {
+      "member": "HDWWIZ.CP_",
+      "expandedName": "hdwwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AddHardware.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 39,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Fonts.png"
+    },
+    {
       "member": "DESK.CP_",
       "expandedName": "desk.cpl",
       "resourceType": 14,
