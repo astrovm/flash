@@ -3323,6 +3323,10 @@ html[data-xp-appearance="silver"] {
   min-height: 38px;
 }
 
+.sounds-category-icons {
+  grid-template-columns: 191px 190px;
+}
+
 .control-panel-category-icons img {
   width: 32px;
   height: 32px;

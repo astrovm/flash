@@ -486,6 +486,58 @@
       "pixelSha256": "f8535c7cee5d297351e0e00c8e207525f85c0bff9cdfc9de69b7019064165733"
     }
   },
+  "assets/xp/icons/SoundsAndAudioDevices.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "b6a58f5407372882dd106b42e521ecdc9afeb3da8b900dd1891d08c52e15e559",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 14,
+      "id": 3004,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "ba8da614a8e5c5b8dc1d449668248252911b119d8bcbbd5984ee0bd0d8a9430a"
+    }
+  },
+  "assets/xp/icons/AccessibilitySound.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "e9c8694f2ee027e3c10bbaaf56cfe01bcef609f884f728183181026f8d0485ef",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 14,
+      "id": 3004,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "8696c7d3b3cfcb935230ba39619efd3d4f81359a9589db785f5b26764b96174a"
+    }
+  },
+  "assets/xp/icons/AdvancedVolumeControls.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MMSYS.CP_",
+    "sha256": "f3dfa3bd01bf970674dab1167a3e279e3d94360c496c35168955f8f5042e838a",
+    "resource": {
+      "parentSha256": "bb9b488afc5eb0a7137a03ab0757c48261581797b8ee6a9c889c01f13eb3dfaf",
+      "type": 14,
+      "id": 4356,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "b8a93ffef601570c58e011dc366ea058c08a0a5c922199c4af4a5509922acc58"
+    }
+  },
+  "assets/xp/icons/Speech.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SAPI.CP_",
+    "sha256": "9c17787573a7fd996eac5037110daaf272af50f881853e7d77c00a446a54e352",
+    "resource": {
+      "parentSha256": "f8097c921b9d1a5ab51932ea111e3462d0fb00dcf985cd15b2fd47b76adcf11a",
+      "type": 14,
+      "id": 138,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "1c965ae7f832748419f1eeba56adb3742414418a33eb9d1ba2532526fd2e1359"
+    }
+  },
   "assets/xp/icons/UserAccounts.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

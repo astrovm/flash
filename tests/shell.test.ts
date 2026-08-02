@@ -468,6 +468,21 @@ test("Accessibility Options uses the native XP category page", () => {
   contains(css, ".accessibility-options-dialog", ".accessibility-tabs");
 });
 
+test("Sounds Speech and Audio Devices uses the native XP category page", () => {
+  contains(
+    javascript,
+    "const renderSoundsCategory = () =>",
+    "Adjust the system volume",
+    "Change the sound scheme",
+    "Change the speaker settings",
+    "Accessibility Sound Options",
+    "Advanced Volume Controls",
+    "assets/xp/icons/SoundsAndAudioDevices.png",
+    "assets/xp/icons/Speech.png",
+    'openAccessibilityOptions("sound")',
+  );
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,

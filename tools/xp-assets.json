@@ -348,6 +348,46 @@
       "output": "site/assets/xp/icons/SoundsSpeechAudio.png"
     },
     {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 3004,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/SoundsAndAudioDevices.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 3004,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AccessibilitySound.png"
+    },
+    {
+      "member": "MMSYS.CP_",
+      "expandedName": "mmsys.cpl",
+      "resourceType": 14,
+      "resourceId": 4356,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/AdvancedVolumeControls.png"
+    },
+    {
+      "member": "SAPI.CP_",
+      "expandedName": "sapi.cpl",
+      "resourceType": 14,
+      "resourceId": 138,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Speech.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,

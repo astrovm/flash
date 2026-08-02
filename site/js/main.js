@@ -2371,6 +2371,45 @@ const wireControlPanel = (win) => {
       </div>`;
   };
 
+  const renderSoundsCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Sounds, Speech, and Audio Devices",
+      XP_ICON_PATHS["SoundsSpeechAudio.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="accessibility-sound"><img src="assets/xp/icons/AccessibilitySound.png" alt=""><span>Accessibility Sound Options</span></button>
+          <button type="button" data-control-panel-action="advanced-volume"><img src="assets/xp/icons/AdvancedVolumeControls.png" alt=""><span>Advanced Volume Controls</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="sound-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Sound</span></button>
+          <button type="button" data-control-panel-action="dvd-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>DVD</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/SoundsSpeechAudio.png" alt=""><strong>Sounds, Speech, and Audio Devices</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links">
+        <button type="button" data-control-panel-action="system-volume"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust the system volume</span></button>
+        <button type="button" data-control-panel-action="sound-scheme"><img src="assets/xp/icons/Go.png" alt=""><span>Change the sound scheme</span></button>
+        <button type="button" data-control-panel-action="speaker-settings"><img src="assets/xp/icons/Go.png" alt=""><span>Change the speaker settings</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons sounds-category-icons">
+        <button type="button" data-control-panel-action="sounds-audio"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>Sounds and Audio Devices</span></button>
+        <button type="button" data-control-panel-action="speech"><img src="assets/xp/icons/Speech.png" alt=""><span>Speech</span></button>
+      </div>`;
+  };
+
   const actions = {
     appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
@@ -2378,7 +2417,7 @@ const wireControlPanel = (win) => {
     users: () => openSystemWindow("__user-accounts"),
     programs: () => openSystemWindow("__add-remove-programs"),
     datetime: openDateTimeProperties,
-    sounds: toggleTrayVolumePopup,
+    sounds: renderSoundsCategory,
     accessibility: renderAccessibilityCategory,
     performance: renderPerformanceCategory,
     security: () =>
@@ -2475,6 +2514,23 @@ const wireControlPanel = (win) => {
       XPDialogs.alert(
         `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in this offline recreation.`,
         action === "magnifier" ? "Magnifier" : "On-Screen Keyboard",
+        "info",
+      );
+    } else if (action === "accessibility-sound") {
+      openAccessibilityOptions("sound");
+    } else if (action === "system-volume" || action === "advanced-volume") {
+      toggleTrayVolumePopup();
+    } else if (action === "sound-help" || action === "dvd-help") {
+      openHelpAndSupport();
+    } else if (
+      ["sound-scheme", "speaker-settings", "sounds-audio", "speech"].includes(
+        action,
+      )
+    ) {
+      const speech = action === "speech";
+      XPDialogs.alert(
+        `${speech ? "Speech Properties" : "Sounds and Audio Devices Properties"} is not available in this offline recreation.`,
+        speech ? "Speech Properties" : "Sounds and Audio Devices Properties",
         "info",
       );
     } else if (
