@@ -688,7 +688,7 @@ test("About Windows uses the ISO shell32 banner and XP build copy", () => {
     "height: min(354px",
   );
 });
-test("System Properties uses the ISO sysdm artwork and seven XP tabs", () => {
+test("System Properties uses ISO artwork and native content for all seven tabs", () => {
   contains(
     javascript,
     "const openSystemProperties = () =>",
@@ -700,6 +700,16 @@ test("System Properties uses the ISO sysdm artwork and seven XP tabs", () => {
     'data-system-tab="restore"',
     'data-system-tab="updates"',
     'data-system-tab="remote"',
+    'src="assets/xp/system/ComputerName.png"',
+    'src="assets/xp/system/DeviceManager.png"',
+    'src="assets/xp/system/DriverSigning.png"',
+    'src="assets/xp/system/SystemRestore.png"',
+    'src="assets/xp/system/UpdateShield.png"',
+    'src="assets/xp/system/UpdateEnabled.png"',
+    'src="assets/xp/system/UpdateDisabled.png"',
+    'data-active-row="lower"',
+    "].includes(tab.dataset.systemTab)",
+    '<section data-system-panel="remote" hidden></section>',
     'aliases: ["sysdm.cpl", "system properties"]',
   );
   contains(

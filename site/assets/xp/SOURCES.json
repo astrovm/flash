@@ -788,6 +788,97 @@
       "pixelSha256": "cc389880bda593289863836e81a5e13b531e128b6bdbf5274be1dbe77216fbe7"
     }
   },
+  "assets/xp/system/ComputerName.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SYSDM.CP_",
+    "sha256": "17eeb8a4e32008f23f742937818b98fc201f189a40efbcc89072525082c3a479",
+    "resource": {
+      "parentSha256": "99bd5757aa68b6513313d97b1bf61bcc6e44f7bfae63f375b2afa47a06038067",
+      "type": 14,
+      "id": 6,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "b75a45af004ae58f9ff5dbb6f7e7f135a1c1e5285aa21d9c25af5a0981f0425c"
+    }
+  },
+  "assets/xp/system/DeviceManager.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HDWWIZ.CP_",
+    "sha256": "b60f5d3d82af5d4758ca248efc8c590b469cf09ba32ec1e872fa58db254783dd",
+    "resource": {
+      "parentSha256": "6e10ead8430679265358bab9f24816dd3653c7b177250dd5c6e5d4c24956486c",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "5ccf5d735328ab79c422992307c68cf090b136b85a52253e138fa29fac8bc255"
+    }
+  },
+  "assets/xp/system/DriverSigning.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SETUPAPI.DL_",
+    "sha256": "466ccb40dfd3afad68461143027bf485f39388837f96de58caaabb512482394b",
+    "resource": {
+      "parentSha256": "b1c5a16a73250dea900ff6ece71f604e2411b4fdfd497564beb7d867a75640bf",
+      "type": 14,
+      "id": 40,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "4d35af931aa83564ad79a83f13117cb4be7f62a40b156c0d309ad83072711964"
+    }
+  },
+  "assets/xp/system/SystemRestore.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SRCLIENT.DL_",
+    "sha256": "224ef30e2c8f597e32af367e85fbc0e2df105d626b2a8c73a3d85766b351935c",
+    "resource": {
+      "parentSha256": "7ff861f3e7a856fa444b94c669d5223d46994de9dd09e225aa2acc673578299c",
+      "type": 14,
+      "id": 0,
+      "language": 1033,
+      "frame": "24x32x32",
+      "pixelSha256": "60d231181153c2bd5c0bf0e7df63f58fa0af750bb23d8b98e1d96c6fcd2ebee7"
+    }
+  },
+  "assets/xp/system/UpdateShield.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WUAUCPL.CP_",
+    "sha256": "f35c5659d90fad9e94281ee282fd319ff8ee7ae6010ff55abd171a335660eac6",
+    "resource": {
+      "parentSha256": "edf549f4a6ec9b6e39ac4a4857740c91a7e39f8a61c283a06724607b5f9a3bc7",
+      "type": 14,
+      "id": 2,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "8e99b65a6e3bde420ae4e35328509598b2abe6971b4e78c1874d7d25dcdb9ff0"
+    }
+  },
+  "assets/xp/system/UpdateEnabled.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WUAUCPL.CP_",
+    "sha256": "fc9d399f90c6e8d6f288b9b815bef86b0f969d9cc17fc30fa7022bcab895ed45",
+    "resource": {
+      "parentSha256": "edf549f4a6ec9b6e39ac4a4857740c91a7e39f8a61c283a06724607b5f9a3bc7",
+      "type": 14,
+      "id": 3,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "62f1c439ce303268290a36745d67dcabef87e93c6fe305c2c0cf1598d0242055"
+    }
+  },
+  "assets/xp/system/UpdateDisabled.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WUAUCPL.CP_",
+    "sha256": "8f9e01de3995a34520aefdc71071988ae372185cb15cbe7ea90d46142e624664",
+    "resource": {
+      "parentSha256": "edf549f4a6ec9b6e39ac4a4857740c91a7e39f8a61c283a06724607b5f9a3bc7",
+      "type": 14,
+      "id": 5,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "1f334d082ece8f6f69f30beef58883cd4e043ac8388923bc4214942d7f16b317"
+    }
+  },
   "assets/xp/icons/WallpaperImage.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHIMGVW.DL_",

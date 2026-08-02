@@ -9101,7 +9101,7 @@ const openSystemProperties = () => {
   help.setAttribute("aria-label", "Help");
   dialog.el.querySelector(".title-buttons").prepend(help);
   dialog.body.innerHTML = `
-    <div class="system-properties-tabs" role="tablist">
+    <div class="system-properties-tabs" role="tablist" data-active-row="lower">
       <button type="button" role="tab" data-system-tab="restore">System Restore</button>
       <button type="button" role="tab" data-system-tab="updates">Automatic Updates</button>
       <button type="button" role="tab" data-system-tab="remote">Remote</button>
@@ -9120,36 +9120,70 @@ const openSystemProperties = () => {
         </div>
       </section>
       <section data-system-panel="computer-name" hidden>
-        <p>Windows uses the following information to identify your computer on the network.</p>
-        <fieldset><legend>Computer description</legend><input class="xp-input" aria-label="Computer description"></fieldset>
-        <p>Full computer name: <strong>astro-xp</strong><br>Workgroup: <strong>WORKGROUP</strong></p>
-        <button type="button" class="xp-btn">Change...</button>
+        <div class="system-computer-name-intro">
+          <img src="assets/xp/system/ComputerName.png" alt="">
+          <p>Windows uses the following information to identify your computer<br>on the network.</p>
+        </div>
+        <div class="system-computer-description">
+          <label for="system-computer-description">Computer description:</label>
+          <input id="system-computer-description" class="xp-input">
+          <p>For example: "Kitchen Computer" or "Mary's<br>Computer".</p>
+        </div>
+        <dl class="system-computer-identity">
+          <dt>Full computer name:</dt><dd>astro-295e53a14.</dd>
+          <dt>Workgroup:</dt><dd>WORKGROUP</dd>
+        </dl>
+        <div class="system-computer-action">
+          <p>To use the Network Identification Wizard to join a<br>domain and create a local user account, click Network<br>ID.</p>
+          <button type="button" class="xp-btn">Network ID</button>
+        </div>
+        <div class="system-computer-action system-computer-change">
+          <p>To rename this computer or join a domain, click Change.</p>
+          <button type="button" class="xp-btn">Change...</button>
+        </div>
       </section>
       <section data-system-panel="hardware" hidden>
-        <fieldset><legend>Device Manager</legend><p>The Device Manager lists all the hardware devices installed on your computer.</p><button type="button" class="xp-btn">Device Manager</button></fieldset>
-        <fieldset><legend>Drivers</legend><button type="button" class="xp-btn">Driver Signing</button></fieldset>
-        <fieldset><legend>Hardware Profiles</legend><button type="button" class="xp-btn">Hardware Profiles</button></fieldset>
+        <div class="system-properties-group system-hardware-group system-device-manager"><span class="system-group-title">Device Manager</span>
+          <img src="assets/xp/system/DeviceManager.png" alt="">
+          <p>The Device Manager lists all the hardware devices installed<br>on your computer. Use the Device Manager to change the<br>properties of any device.</p>
+          <button type="button" class="xp-btn">Device Manager</button>
+        </div>
+        <div class="system-properties-group system-hardware-group system-driver-signing"><span class="system-group-title">Drivers</span>
+          <img src="assets/xp/system/DriverSigning.png" alt="">
+          <p>Driver Signing lets you make sure that installed drivers are<br>compatible with Windows. Windows Update lets you set up<br>how Windows connects to Windows Update for drivers.</p>
+          <button type="button" class="xp-btn">Driver Signing</button>
+        </div>
       </section>
       <section data-system-panel="advanced" hidden>
-        <p>You must be logged on as an Administrator to make most of these changes.</p>
-        <fieldset><legend>Performance</legend><p>Visual effects, processor scheduling, memory usage, and virtual memory</p><button type="button" class="xp-btn">Settings</button></fieldset>
-        <fieldset><legend>User Profiles</legend><p>Desktop settings related to your logon</p><button type="button" class="xp-btn">Settings</button></fieldset>
-        <fieldset><legend>Startup and Recovery</legend><p>System startup, system failure, and debugging information</p><button type="button" class="xp-btn">Settings</button></fieldset>
+        <p class="system-advanced-intro">You must be logged on as an Administrator to make most of these changes.</p>
+        <div class="system-properties-group system-advanced-group"><span class="system-group-title">Performance</span><p>Visual effects, processor scheduling, memory usage, and virtual memory</p><button type="button" class="xp-btn">Settings</button></div>
+        <div class="system-properties-group system-advanced-group"><span class="system-group-title">User Profiles</span><p>Desktop settings related to your logon</p><button type="button" class="xp-btn">Settings</button></div>
+        <div class="system-properties-group system-advanced-group"><span class="system-group-title">Startup and Recovery</span><p>System startup, system failure, and debugging information</p><button type="button" class="xp-btn">Settings</button></div>
+        <div class="system-advanced-actions"><button type="button" class="xp-btn">Environment Variables</button><button type="button" class="xp-btn">Error Reporting</button></div>
       </section>
       <section data-system-panel="restore" hidden>
-        <p>System Restore can track and reverse harmful changes to your computer.</p>
-        <label><input type="checkbox"> Turn off System Restore on all drives</label>
+        <div class="system-restore-intro"><img src="assets/xp/system/SystemRestore.png" alt=""><p>System Restore can track and reverse harmful changes to your<br>computer.</p></div>
+        <label class="system-restore-off"><input type="checkbox"> Turn off System Restore</label>
+        <div class="system-properties-group system-restore-space"><span class="system-group-title">Disk space usage</span>
+          <p>Move the slider to the right to increase or to the left to decrease the<br>amount of disk space for System Restore. Decreasing the disk space<br>may reduce the number of available restore points.</p>
+          <div class="system-restore-slider-label"><span>Disk space to use:</span><span>Min</span><span>Max</span></div>
+          <input type="range" min="0" max="100" value="100" aria-label="Disk space to use">
+          <output>12% (981 MB)</output>
+        </div>
+        <div class="system-properties-group system-restore-status"><span class="system-group-title">Status</span><p><img class="system-drive-icon" src="assets/xp/icons/LocalDisk.png" alt=""> (C:) Monitoring</p></div>
       </section>
       <section data-system-panel="updates" hidden>
-        <p>Help protect your PC by keeping Windows up to date automatically.</p>
-        <label><input type="radio" name="system-updates" checked> Automatic (recommended)</label>
-        <label><input type="radio" name="system-updates"> Download updates for me, but let me choose when to install them.</label>
-        <label><input type="radio" name="system-updates"> Turn off Automatic Updates.</label>
+        <div class="system-updates-banner"><img src="assets/xp/system/UpdateShield.png" alt=""><span>Help protect your PC</span></div>
+        <p class="system-updates-copy">Windows can regularly check for important updates and install them for you.<br>(Turning on Automatic Updates may automatically update Windows Update<br>software first, before any other updates.)<br><a href="https://support.microsoft.com/windows" target="_blank" rel="noreferrer">How does Automatic Updates work?</a></p>
+        <label class="system-update-option system-update-auto"><input type="radio" name="system-updates" checked> <strong>Automatic (recommended)</strong></label>
+        <div class="system-update-detail"><img src="assets/xp/system/UpdateEnabled.png" alt=""><p>Automatically download recommended updates for my computer<br>and install them:</p><div><select disabled aria-label="Update frequency"><option>Every day</option></select><span>at</span><select disabled aria-label="Update time"><option>3:00 AM</option></select></div></div>
+        <label class="system-update-option"><input type="radio" name="system-updates"> Download updates for me, but let me choose when to install them.</label>
+        <label class="system-update-option"><input type="radio" name="system-updates"> Notify me but don't automatically download or install them.</label>
+        <label class="system-update-option"><input type="radio" name="system-updates"> Turn off Automatic Updates.</label>
+        <div class="system-update-warning"><img src="assets/xp/system/UpdateDisabled.png" alt=""><p>Your computer will be more vulnerable unless you install updates<br>regularly.<br>Install updates from the <a href="https://update.microsoft.com/" target="_blank" rel="noreferrer">Windows Update Web site</a>.</p></div>
+        <a class="system-updates-hidden" href="#">Offer updates again that I've previously hidden</a>
       </section>
-      <section data-system-panel="remote" hidden>
-        <fieldset><legend>Remote Assistance</legend><label><input type="checkbox" checked> Allow Remote Assistance invitations to be sent from this computer</label></fieldset>
-        <fieldset><legend>Remote Desktop</legend><label><input type="checkbox"> Allow users to connect remotely to this computer</label></fieldset>
-      </section>
+      <section data-system-panel="remote" hidden></section>
     </div>
   `;
   const tabs = [...dialog.body.querySelectorAll("[data-system-tab]")];
@@ -9165,6 +9199,13 @@ const openSystemProperties = () => {
       panels.forEach((panel) => {
         panel.hidden = panel.dataset.systemPanel !== tab.dataset.systemTab;
       });
+      dialog.body.querySelector(".system-properties-tabs").dataset.activeRow = [
+        "restore",
+        "updates",
+        "remote",
+      ].includes(tab.dataset.systemTab)
+        ? "upper"
+        : "lower";
     }),
   );
   help.addEventListener("click", openHelpAndSupport);

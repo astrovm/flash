@@ -580,6 +580,76 @@
       "output": "site/assets/xp/icons/ExplorerProperties.png"
     },
     {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 6,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/ComputerName.png"
+    },
+    {
+      "member": "HDWWIZ.CP_",
+      "expandedName": "hdwwiz.cpl",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/DeviceManager.png"
+    },
+    {
+      "member": "SETUPAPI.DL_",
+      "expandedName": "setupapi.dll",
+      "resourceType": 14,
+      "resourceId": 40,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/system/DriverSigning.png"
+    },
+    {
+      "member": "SRCLIENT.DL_",
+      "expandedName": "srclient.dll",
+      "resourceType": 14,
+      "resourceId": 0,
+      "width": 24,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/SystemRestore.png"
+    },
+    {
+      "member": "WUAUCPL.CP_",
+      "expandedName": "wuaucpl.cpl",
+      "resourceType": 14,
+      "resourceId": 2,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/UpdateShield.png"
+    },
+    {
+      "member": "WUAUCPL.CP_",
+      "expandedName": "wuaucpl.cpl",
+      "resourceType": 14,
+      "resourceId": 3,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/UpdateEnabled.png"
+    },
+    {
+      "member": "WUAUCPL.CP_",
+      "expandedName": "wuaucpl.cpl",
+      "resourceType": 14,
+      "resourceId": 5,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/system/UpdateDisabled.png"
+    },
+    {
       "member": "SHIMGVW.DL_",
       "expandedName": "shimgvw.dll",
       "resourceType": 14,

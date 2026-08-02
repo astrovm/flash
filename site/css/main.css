@@ -4928,12 +4928,54 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   width: 97px;
 }
 
+.system-properties-tabs[data-active-row="upper"] button:nth-child(1) {
+  top: 19px;
+  left: 0;
+  width: 140px;
+}
+
+.system-properties-tabs[data-active-row="upper"] button:nth-child(2) {
+  top: 19px;
+  left: 139px;
+  width: 155px;
+}
+
+.system-properties-tabs[data-active-row="upper"] button:nth-child(3) {
+  top: 19px;
+  left: 293px;
+  width: 107px;
+}
+
+.system-properties-tabs[data-active-row="upper"] button:nth-child(4) {
+  top: 0;
+  left: 0;
+  width: 85px;
+}
+
+.system-properties-tabs[data-active-row="upper"] button:nth-child(5) {
+  top: 0;
+  left: 84px;
+  width: 123px;
+}
+
+.system-properties-tabs[data-active-row="upper"] button:nth-child(6) {
+  top: 0;
+  left: 206px;
+  width: 95px;
+}
+
+.system-properties-tabs[data-active-row="upper"] button:nth-child(7) {
+  top: 0;
+  left: 300px;
+  width: 100px;
+}
+
 .system-properties-tabs button[aria-selected="true"] {
   z-index: 2;
   height: 21px;
   margin-top: -1px;
   border-bottom-color: #fff;
-  background: #fff;
+  background: #f5f3ed;
 }
 
 .system-properties-panels {
@@ -4941,7 +4983,7 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   flex: 1;
   margin-top: -1px;
   border: 1px solid #919b9c;
-  background: #fff;
+  background: #f5f3ed;
   box-shadow: inset 1px 1px #fff;
 }
 
@@ -4982,20 +5024,481 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   margin-left: 18px;
 }
 
-.system-properties-panels fieldset {
-  position: relative;
-  margin: 8px 0;
-  padding: 8px;
+.system-properties-panels p {
+  margin: 0;
 }
 
-.system-properties-panels fieldset .xp-btn,
-.system-properties-panels > section > .xp-btn {
-  float: right;
+.system-computer-name-intro {
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
 }
 
-.system-properties-panels label {
-  display: block;
-  margin: 10px 0;
+.system-computer-name-intro img {
+  width: 32px;
+  height: 32px;
+}
+
+.system-computer-name-intro p {
+  margin-top: 2px;
+  line-height: 14px;
+}
+
+.system-computer-description {
+  position: absolute;
+  top: 55px;
+  left: 14px;
+  width: 357px;
+}
+
+.system-computer-description label {
+  position: absolute;
+  top: 5px;
+  left: 0;
+}
+
+.system-computer-description input {
+  position: absolute;
+  top: 0;
+  left: 124px;
+  box-sizing: border-box;
+  width: 233px;
+  height: 21px;
+}
+
+.system-computer-description p {
+  position: absolute;
+  top: 27px;
+  left: 124px;
+  line-height: 14px;
+}
+
+.system-computer-identity {
+  position: absolute;
+  top: 111px;
+  left: 14px;
+  display: grid;
+  grid-template-columns: 124px 220px;
+  row-gap: 7px;
+  margin: 0;
+  line-height: 18px;
+}
+
+.system-computer-identity dt,
+.system-computer-identity dd {
+  margin: 0;
+  font-weight: normal;
+}
+
+.system-computer-action {
+  position: absolute;
+  top: 171px;
+  left: 14px;
+  width: 357px;
+}
+
+.system-computer-action p {
+  line-height: 14px;
+}
+
+.system-computer-action .xp-btn {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: 73px;
+}
+
+.system-computer-change {
+  top: 223px;
+}
+
+.system-computer-change .xp-btn {
+  top: -1px;
+}
+
+.system-properties-group {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid #d0d0bf;
+  padding: 0;
+}
+
+.system-group-title {
+  position: absolute;
+  top: -8px;
+  left: 7px;
+  padding: 0 2px;
+  background: #f5f3ed;
+  color: #003399;
+}
+
+.system-hardware-group {
+  left: 15px;
+  width: 363px;
+}
+
+.system-hardware-group img {
+  position: absolute;
+  top: 14px;
+  left: 9px;
+  width: 32px;
+  height: 32px;
+}
+
+.system-hardware-group p {
+  position: absolute;
+  top: 14px;
+  left: 57px;
+  line-height: 14px;
+}
+
+.system-hardware-group .xp-btn {
+  position: absolute;
+  height: 21px;
+}
+
+.system-device-manager {
+  top: 28px;
+  height: 96px;
+}
+
+.system-device-manager .xp-btn {
+  right: 11px;
+  bottom: 13px;
+  width: 145px;
+}
+
+.system-driver-signing {
+  top: 136px;
+  height: 100px;
+}
+
+.system-driver-signing .xp-btn {
+  bottom: 12px;
+  left: 51px;
+  width: 145px;
+}
+
+.system-advanced-intro {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+}
+
+.system-advanced-group {
+  left: 14px;
+  width: 363px;
+  height: 80px;
+}
+
+.system-advanced-group:nth-of-type(1) {
+  top: 45px;
+}
+
+.system-advanced-group:nth-of-type(2) {
+  top: 137px;
+}
+
+.system-advanced-group:nth-of-type(3) {
+  top: 230px;
+}
+
+.system-advanced-group p {
+  position: absolute;
+  top: 14px;
+  left: 10px;
+  white-space: nowrap;
+}
+
+.system-advanced-group .xp-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 12px;
+  width: 72px;
+  height: 21px;
+}
+
+.system-advanced-actions {
+  position: absolute;
+  top: 323px;
+  right: 22px;
+  display: flex;
+  gap: 7px;
+}
+
+.system-advanced-actions .xp-btn {
+  width: 126px;
+  height: 21px;
+  white-space: nowrap;
+}
+
+.system-restore-intro {
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  display: flex;
+  gap: 19px;
+}
+
+.system-restore-intro img {
+  width: 24px;
+  height: 32px;
+}
+
+.system-restore-intro p {
+  margin-top: 1px;
+  line-height: 14px;
+}
+
+.system-restore-off {
+  position: absolute;
+  top: 60px;
+  left: 14px;
+}
+
+.system-restore-off input,
+.system-update-option input {
+  width: 13px;
+  height: 13px;
+  margin: 0 4px 0 0;
+  vertical-align: -2px;
+}
+
+.system-restore-space {
+  top: 90px;
+  left: 14px;
+  width: 363px;
+  height: 124px;
+}
+
+.system-restore-space > p {
+  position: absolute;
+  top: 14px;
+  left: 9px;
+  line-height: 14px;
+}
+
+.system-restore-slider-label span {
+  position: absolute;
+}
+
+.system-restore-slider-label span:nth-child(1) {
+  top: 59px;
+  left: 20px;
+}
+
+.system-restore-slider-label span:nth-child(2) {
+  top: 77px;
+  left: 20px;
+}
+
+.system-restore-slider-label span:nth-child(3) {
+  top: 77px;
+  right: 72px;
+}
+
+.system-restore-space input[type="range"] {
+  position: absolute;
+  top: 78px;
+  left: 57px;
+  width: 193px;
+  height: 20px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.system-restore-space input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+  background: #c0c0c0;
+}
+
+.system-restore-space input[type="range"]::-webkit-slider-thumb {
+  width: 11px;
+  height: 20px;
+  margin-top: -10px;
+  appearance: none;
+  border: 1px solid #4a8f61;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #fff 0 66%, #d8f2df 66%);
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+}
+
+.system-restore-space::after {
+  position: absolute;
+  top: 99px;
+  left: 62px;
+  width: 182px;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #b8b8b8 0 1px,
+    transparent 1px 19px
+  );
+  content: "";
+}
+
+.system-restore-space output {
+  position: absolute;
+  top: 102px;
+  left: 121px;
+}
+
+.system-restore-status {
+  top: 237px;
+  left: 14px;
+  width: 365px;
+  height: 118px;
+}
+
+.system-restore-status p {
+  position: absolute;
+  top: 12px;
+  left: 9px;
+}
+
+.system-drive-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: -5px;
+}
+
+.system-updates-banner {
+  position: absolute;
+  top: 15px;
+  left: 14px;
+  width: 372px;
+  height: 27px;
+  background: linear-gradient(90deg, #1760dc, #0b43d4);
+  color: #fff;
+}
+
+.system-updates-banner img {
+  position: absolute;
+  top: -2px;
+  left: 2px;
+  width: 32px;
+  height: 32px;
+}
+
+.system-updates-banner span {
+  position: absolute;
+  top: 4px;
+  left: 39px;
+}
+
+.system-updates-copy {
+  position: absolute;
+  top: 47px;
+  left: 14px;
+  line-height: 14px;
+}
+
+.system-properties-panels a {
+  color: #003399;
+}
+
+.system-update-option {
+  position: absolute;
+  left: 14px;
+  white-space: nowrap;
+}
+
+.system-update-auto {
+  top: 119px;
+}
+
+.system-update-detail {
+  position: absolute;
+  top: 132px;
+  left: 32px;
+}
+
+.system-update-detail img {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.system-update-detail p {
+  position: absolute;
+  top: 1px;
+  left: 44px;
+  width: 330px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.system-update-detail > div {
+  position: absolute;
+  top: 36px;
+  left: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-update-detail select {
+  width: 126px;
+  height: 20px;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.system-update-detail select:last-child {
+  width: 85px;
+}
+
+.system-update-option:nth-of-type(2) {
+  top: 204px;
+}
+
+.system-update-option:nth-of-type(3) {
+  top: 232px;
+}
+
+.system-update-option:nth-of-type(4) {
+  top: 257px;
+}
+
+.system-update-warning {
+  position: absolute;
+  top: 273px;
+  left: 32px;
+}
+
+.system-update-warning img {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.system-update-warning p {
+  position: absolute;
+  top: 0;
+  left: 44px;
+  width: 330px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.system-updates-hidden {
+  position: absolute;
+  top: 332px;
+  left: 16px;
+  color: #aaa !important;
 }
 
 .system-properties-dialog .dlg-buttons {
