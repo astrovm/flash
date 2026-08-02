@@ -204,6 +204,11 @@ const systemShortcuts = {
     icon: "assets/xp/icons/PrintersAndFaxes.png",
     desktop: false,
   },
+  __help: {
+    title: "Help and Support Center",
+    icon: "assets/xp/icons/HelpAndSupport.png",
+    desktop: false,
+  },
   __notepad: {
     title: "Notepad",
     icon: "assets/xp/icons/Notepad.png",
@@ -2305,6 +2310,46 @@ const createSystemWindowContent = (shortcutId, win) => {
         </aside>
         <main class="printers-main"></main>
       </div>`;
+    return content;
+  }
+
+  if (shortcutId === "__help") {
+    content.className = "help-center-content";
+    content.innerHTML = `
+      <nav class="help-center-toolbar" aria-label="Help navigation">
+        <button type="button" disabled><span class="help-toolbar-icon help-toolbar-back"></span><span>Back</span><b aria-hidden="true">⌄</b></button>
+        <button type="button" disabled aria-label="Forward"><span class="help-toolbar-icon help-toolbar-forward"></span></button>
+        <button type="button" data-help-action="home" aria-label="Home"><span class="help-toolbar-icon help-toolbar-home"></span></button>
+        <button type="button" data-help-action="index"><span class="help-toolbar-icon help-toolbar-index"></span><span>Index</span></button>
+        <button type="button" data-help-action="favorites"><span class="help-toolbar-icon help-toolbar-favorites"></span><span>Favorites</span></button>
+        <button type="button" data-help-action="history"><span class="help-toolbar-icon help-toolbar-history"></span><span>History</span></button>
+        <button type="button" data-help-action="support"><span class="help-toolbar-icon help-toolbar-support"></span><span>Support</span></button>
+        <button type="button" data-help-action="options"><span class="help-toolbar-icon help-toolbar-options"></span><span>Options</span></button>
+      </nav>
+      <header class="help-center-search">
+        <form><label for="help-query">Search</label><input id="help-query" type="search"><button type="submit" aria-label="Search"><img src="assets/xp/icons/Go.png" alt=""></button><button type="button" class="help-search-options" data-help-action="search-options">Set search options</button></form>
+        <div class="help-center-brand"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><strong>Help and Support Center</strong><small>Windows XP Professional</small></div>
+      </header>
+      <main class="help-center-home">
+        <section class="help-topic-column">
+          <h1>Pick a Help topic</h1>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicComputer.png" alt=""><div><button data-help-topic>What's new in Windows XP</button><button data-help-topic>Music, video, games, and photos</button><button data-help-topic>Windows basics</button><button data-help-topic>Protecting your PC: security basics</button></div></div>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicNetwork.png" alt=""><div><button data-help-topic>Networking and the Web</button><button data-help-topic>Working remotely</button><button data-help-topic>System administration</button></div></div>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicAccessibility.png" alt=""><div><button data-help-topic>Customizing your computer</button><button data-help-topic>Accessibility</button></div></div>
+          <div class="help-topic-group"><img src="assets/xp/help/TopicHardware.png" alt=""><div><button data-help-topic>Printing and faxing</button><button data-help-topic>Performance and maintenance</button><button data-help-topic>Hardware</button><button data-help-topic>Fixing a problem</button><button data-help-topic>Send your feedback to Microsoft</button></div></div>
+        </section>
+        <section class="help-task-column">
+          <h1>Ask for assistance</h1>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Invite a friend to connect to your computer with <strong>Remote Assistance</strong></button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Get support, or find information in Windows XP <strong>newsgroups</strong></button>
+          <h1>Pick a task</h1>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Keep your computer up-to-date with <strong>Windows Update</strong></button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Find compatible hardware and software for Windows XP</button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Undo changes to your computer with <strong>System Restore</strong></button>
+          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Use <strong>Tools</strong> to view your computer information and diagnose problems</button>
+          <div class="help-did-you-know"><h1>Did you know?</h1><span>Updating...</span></div>
+        </section>
+      </main>`;
     return content;
   }
 
@@ -5784,6 +5829,7 @@ const openSystemWindow = (shortcutId) => {
   const isControlPanel = shortcutId === "__control-panel";
   const isSearch = shortcutId === "__search";
   const isPrinters = shortcutId === "__printers";
+  const isHelp = shortcutId === "__help";
   if (isDisplayProperties) el.classList.add("display-properties-window");
   const windowWidth = Math.min(
     isProjectSettings
@@ -5792,9 +5838,11 @@ const openSystemWindow = (shortcutId) => {
         ? 760
         : isControlPanel
           ? 800
-          : isDisplayProperties
-            ? 404
-            : 800,
+          : isHelp
+            ? 768
+            : isDisplayProperties
+              ? 404
+              : 800,
     desktopWidth - 16,
   );
   const windowHeight = Math.min(
@@ -5804,9 +5852,11 @@ const openSystemWindow = (shortcutId) => {
         ? 540
         : isControlPanel
           ? 600
-          : isDisplayProperties
-            ? 454
-            : 600,
+          : isHelp
+            ? 650
+            : isDisplayProperties
+              ? 454
+              : 600,
     desktopHeight - 16,
   );
   el.style.width = `${windowWidth}px`;
@@ -5816,22 +5866,26 @@ const openSystemWindow = (shortcutId) => {
       ? Math.min(44, Math.max(8, desktopWidth - windowWidth))
       : isPrinters
         ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-        : isSearch
+        : isHelp
           ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
-          : isDisplayProperties
-            ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
-            : Math.max(8, (desktopWidth - windowWidth) / 2)
+          : isSearch
+            ? Math.min(66, Math.max(8, desktopWidth - windowWidth))
+            : isDisplayProperties
+              ? Math.min(22, Math.max(8, desktopWidth - windowWidth))
+              : Math.max(8, (desktopWidth - windowWidth) / 2)
   }px`;
   el.style.top = `${
     isControlPanel
       ? Math.min(58, Math.max(8, desktopHeight - windowHeight))
       : isPrinters
         ? Math.min(29, Math.max(8, desktopHeight - windowHeight))
-        : isSearch
-          ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
-          : isDisplayProperties
-            ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
-            : Math.max(8, (desktopHeight - windowHeight) / 2)
+        : isHelp
+          ? Math.min(45, Math.max(8, desktopHeight - windowHeight))
+          : isSearch
+            ? Math.min(88, Math.max(8, desktopHeight - windowHeight))
+            : isDisplayProperties
+              ? Math.min(30, Math.max(8, desktopHeight - windowHeight))
+              : Math.max(8, (desktopHeight - windowHeight) / 2)
   }px`;
   document.getElementById("desktop").appendChild(el);
 
@@ -5878,6 +5932,7 @@ const openSystemWindow = (shortcutId) => {
   if (shortcutId === "__internet-games") wireInternetGames(win);
   if (shortcutId === "__control-panel") wireControlPanel(win);
   if (shortcutId === "__printers") wirePrintersAndFaxes(win);
+  if (shortcutId === "__help") wireHelpAndSupport(win);
   focusWindow(shortcutId);
 };
 
@@ -8588,26 +8643,52 @@ const wirePrintersAndFaxes = (win) => {
   });
 };
 
-const openHelpAndSupport = () => {
-  const dialog = XPDialogs.createDialog({
-    title: "Help and Support Center",
-    wide: true,
+const wireHelpAndSupport = (win) => {
+  const content = win.el.querySelector(".help-center-content");
+  const query = content.querySelector("#help-query");
+  const topics = [...content.querySelectorAll("[data-help-topic]")];
+  const filterTopics = () => {
+    const needle = query.value.trim().toLocaleLowerCase();
+    topics.forEach((topic) => {
+      topic.hidden =
+        Boolean(needle) &&
+        !topic.textContent.toLocaleLowerCase().includes(needle);
+    });
+  };
+  content.querySelector("form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    filterTopics();
   });
-  const heading = document.createElement("h2");
-  heading.textContent = "Astro Flash Help and Support";
-  const help = document.createElement("p");
-  help.textContent =
-    "Open games from the desktop or Start menu. Use F11 for full screen, and the taskbar to switch between open windows.";
-  const support = document.createElement("a");
-  support.href = "https://github.com/astrovm/flash/issues";
-  support.target = "_blank";
-  support.rel = "noopener noreferrer";
-  support.textContent = "Get support or send feedback";
-  dialog.body.append(heading, help, support);
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
+  content.addEventListener("click", (event) => {
+    const action =
+      event.target.closest("[data-help-action]")?.dataset.helpAction;
+    if (action === "home") {
+      query.value = "";
+      filterTopics();
+    } else if (action === "support") {
+      window.open(
+        "https://github.com/astrovm/flash/issues",
+        "_blank",
+        "noopener",
+      );
+    } else if (action) {
+      XPDialogs.alert(
+        `${event.target.closest("[data-help-action]").textContent.trim() || "This option"} is not available in the offline recreation.`,
+        "Help and Support Center",
+        "info",
+      );
+    }
+    const topic = event.target.closest("[data-help-topic]");
+    if (topic)
+      XPDialogs.alert(
+        `Help content for “${topic.textContent.trim()}” is not available in the offline recreation.`,
+        "Help and Support Center",
+        "info",
+      );
+  });
 };
+
+const openHelpAndSupport = () => openSystemWindow("__help");
 
 const openSearchDialog = () => openSystemWindow("__search");
 

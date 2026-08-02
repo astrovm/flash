@@ -32,6 +32,7 @@ const manifest = JSON.parse(
 ) as {
   source: { sha256: string };
   webAssets: { output: string }[];
+  cabAssets?: { output: string }[];
   resourceIcons: { output: string; resourceId: number }[];
   resourceBitmaps: { output: string; resourceId: number | string }[];
 };
@@ -43,6 +44,9 @@ describe("Windows XP asset provenance", () => {
   test("covers every committed extracted asset", () => {
     const outputs = [
       ...manifest.webAssets.map(({ output }) => output.replace(/^site\//, "")),
+      ...(manifest.cabAssets ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
       ...manifest.resourceIcons.map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
@@ -53,7 +57,9 @@ describe("Windows XP asset provenance", () => {
     expect(Object.keys(sources)).toEqual(outputs);
     for (const source of Object.values(sources)) {
       expect(source.isoSha256).toBe(manifest.source.sha256);
-      expect(source.member).toMatch(/^I386\/[A-Z0-9_]+(?:\.[A-Z0-9_]+)$/);
+      expect(source.member).toMatch(
+        /^I386\/[A-Z0-9_]+(?:\.[A-Z0-9_]+)(?:!\/[A-Za-z0-9_.-]+)?$/,
+      );
     }
 
     const xpFiles = [

@@ -643,6 +643,27 @@ test("Printers and Faxes uses the XP Explorer folder shell", () => {
     "grid-template-columns: 211px minmax(0, 1fr)",
   );
 });
+test("Help and Support Center uses the native XP home surface", () => {
+  contains(
+    javascript,
+    "__help: {",
+    'title: "Help and Support Center"',
+    'content.className = "help-center-content"',
+    'class="help-center-toolbar"',
+    'class="help-center-search"',
+    'class="help-center-home"',
+    'const openHelpAndSupport = () => openSystemWindow("__help")',
+    "const wireHelpAndSupport = (win) =>",
+  );
+  contains(
+    css,
+    ".help-center-content",
+    ".help-center-toolbar",
+    ".help-center-search",
+    ".help-center-home",
+    'url("../assets/xp/help/Toolbar.png")',
+  );
+});
 test("shell paste uses one conflict aware progress helper", () =>
   js(
     "const pasteIntoFolder = async (destinationId)",

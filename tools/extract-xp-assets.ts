@@ -16,6 +16,7 @@ import { decode as decodeBmp } from "@nktkas/bmp";
 import sharp from "sharp";
 
 type DirectAsset = { member: string; output: string };
+type CabAsset = DirectAsset & { cabMember: string; bitmap?: boolean };
 type ResourceIcon = DirectAsset & {
   expandedName: string;
   resourceType: number;
@@ -46,6 +47,7 @@ type Manifest = {
     language: number;
   };
   webAssets: DirectAsset[];
+  cabAssets?: CabAsset[];
   resourceIcons: ResourceIcon[];
   resourceBitmaps: ResourceBitmap[];
   auditFiles: DirectAsset[];
@@ -106,6 +108,34 @@ async function expandMember(
   const compressedPath = join(workDirectory, member);
   await writeFile(compressedPath, compressed);
   return run("cabextract", ["-p", compressedPath]);
+}
+
+async function extractCabAsset(
+  isoPath: string,
+  asset: CabAsset,
+  workDirectory: string,
+): Promise<Uint8Array> {
+  const cabinet = await expandMember(isoPath, asset.member, workDirectory);
+  const cabinetPath = join(
+    workDirectory,
+    `${asset.member}-${basename(asset.cabMember)}.cab`,
+  );
+  await writeFile(cabinetPath, cabinet);
+  const content = run("cabextract", ["-p", "-F", asset.cabMember, cabinetPath]);
+  if (!asset.bitmap) return content;
+  const decoded = decodeBmp(content);
+  const rgba = new Uint8Array(decoded.width * decoded.height * 4);
+  for (let source = 0, target = 0; source < decoded.data.length;) {
+    rgba[target++] = decoded.data[source++];
+    rgba[target++] = decoded.data[source++];
+    rgba[target++] = decoded.data[source++];
+    rgba[target++] = decoded.channels === 4 ? decoded.data[source++] : 255;
+  }
+  return sharp(rgba, {
+    raw: { width: decoded.width, height: decoded.height, channels: 4 },
+  })
+    .png()
+    .toBuffer();
 }
 
 async function firstFile(
@@ -338,6 +368,16 @@ try {
     }
   }
 
+  for (const asset of manifest.cabAssets ?? []) {
+    const content = await extractCabAsset(isoPath, asset, workDirectory);
+    await verifyOrWrite(asset.output, content);
+    records[relative("site", asset.output)] = {
+      isoSha256: manifest.source.sha256,
+      member: `I386/${asset.member}!/${asset.cabMember}`,
+      sha256: sha256(content),
+    };
+  }
+
   for (const icon of manifest.resourceIcons) {
     const extracted = await extractIcon(isoPath, icon, workDirectory);
     await verifyOrWrite(icon.output, extracted.png, extracted.pixelSha256);
@@ -393,7 +433,7 @@ try {
     await copyFile(manifestPath, join(auditDirectory, "manifest.json"));
   }
   console.log(
-    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + manifest.resourceIcons.length + manifest.resourceBitmaps.length} web assets from the authenticated XP SP3 ISO.`,
+    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length} web assets from the authenticated XP SP3 ISO.`,
   );
 } finally {
   await rm(workDirectory, { force: true, recursive: true });

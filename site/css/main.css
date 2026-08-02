@@ -2593,6 +2593,328 @@ html[data-xp-appearance="silver"] {
   grid-template-columns: 1fr;
 }
 
+.help-center-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  background: #6375d6;
+  color: #fff;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.help-center-toolbar {
+  display: flex;
+  height: 39px;
+  flex: none;
+  align-items: stretch;
+  padding: 0 6px;
+  border-bottom: 1px solid #aca899;
+  background: #ece9d8;
+  color: #000;
+}
+
+.help-center-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.help-center-toolbar button:nth-child(4),
+.help-center-toolbar button:nth-child(7) {
+  margin-left: 7px;
+  border-left-color: #aca899;
+  box-shadow: -2px 0 #fff;
+}
+
+.help-center-toolbar button:not(:disabled):hover {
+  border-color: #aca899;
+  background: linear-gradient(#fff, #ddd9c8);
+}
+
+.help-center-toolbar button:disabled {
+  color: #8c8c8c;
+}
+
+.help-center-toolbar button b {
+  color: #777;
+  font-size: 9px;
+}
+
+.help-toolbar-icon {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  background: url("../assets/xp/help/Toolbar.png") no-repeat;
+}
+
+.help-center-toolbar button:disabled .help-toolbar-icon {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.help-toolbar-forward {
+  background-position: -24px 0;
+}
+.help-toolbar-home {
+  background-position: -48px 0;
+}
+.help-toolbar-index {
+  background-position: -72px 0;
+}
+.help-toolbar-favorites {
+  background-position: -96px 0;
+}
+.help-toolbar-history {
+  background-position: -120px 0;
+}
+.help-toolbar-support {
+  background-position: -144px 0;
+}
+.help-toolbar-options {
+  background-position: -168px 0;
+}
+
+.help-center-search {
+  position: relative;
+  height: 66px;
+  flex: none;
+  border-bottom: 3px solid #9fb5ff;
+  background: #003399;
+}
+
+.help-center-search form {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: grid;
+  grid-template-columns: 62px 146px 24px;
+  grid-template-rows: 25px 18px;
+  align-items: center;
+  gap: 0 5px;
+}
+
+.help-center-search label {
+  font:
+    700 17px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.help-center-search input {
+  box-sizing: border-box;
+  width: 146px;
+  height: 25px;
+  padding: 2px 4px;
+  border: 2px inset #fff;
+  border-radius: 0;
+  background: #fff;
+  font: inherit;
+  appearance: none;
+}
+
+.help-center-search form > button[type="submit"] {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: translateX(-3px);
+}
+
+.help-center-search form > button[type="submit"] img {
+  width: 24px;
+  height: 24px;
+}
+
+.help-search-options {
+  grid-column: 2 / 4;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+}
+
+.help-search-options:hover {
+  text-decoration: underline;
+}
+
+.help-center-brand {
+  position: absolute;
+  top: 8px;
+  left: 465px;
+  display: grid;
+  grid-template-columns: 27px auto;
+  grid-template-rows: 29px 17px;
+  align-items: center;
+  column-gap: 4px;
+}
+
+.help-center-brand img {
+  width: 25px;
+  height: 25px;
+  grid-row: 1;
+}
+
+.help-center-brand strong {
+  font:
+    700 22px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+  white-space: nowrap;
+}
+
+.help-center-brand small {
+  grid-column: 2;
+  justify-self: end;
+  font-size: 10px;
+}
+
+.help-center-home {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 282px minmax(0, 1fr);
+  padding: 8px 16px;
+  overflow: auto;
+}
+
+.help-center-home h1 {
+  margin: 0 0 10px 1px;
+  color: #e8ebff;
+  font:
+    700 22px "Trebuchet MS",
+    Tahoma,
+    sans-serif;
+}
+
+.help-topic-group {
+  display: grid;
+  min-height: 82px;
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.help-topic-group:first-of-type {
+  min-height: 112px;
+}
+
+.help-topic-group:nth-of-type(2) {
+  min-height: 90px;
+}
+
+.help-topic-group:nth-of-type(3) {
+  min-height: 70px;
+}
+
+.help-topic-group img {
+  width: 48px;
+  height: 48px;
+  margin: 14px 0 0 4px;
+  object-fit: contain;
+}
+
+.help-topic-group:first-of-type img {
+  margin-top: 25px;
+}
+
+.help-topic-group:nth-of-type(2) img {
+  margin-top: 10px;
+}
+
+.help-topic-group:nth-of-type(3) img {
+  margin-top: 1px;
+}
+
+.help-topic-group:nth-of-type(4) img {
+  margin-top: 26px;
+}
+
+.help-topic-group > div {
+  padding-top: 3px;
+}
+
+.help-topic-group button {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 18px;
+  padding: 1px 0 1px 16px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+
+.help-topic-group button::before {
+  content: "•";
+  position: absolute;
+  left: 2px;
+  color: #fff;
+}
+
+.help-topic-group button:hover,
+.help-task-column > button:hover {
+  text-decoration: underline;
+}
+
+.help-task-column {
+  min-width: 0;
+}
+
+.help-task-column > h1:nth-of-type(2) {
+  margin-top: 14px;
+}
+
+.help-task-column > button {
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0 3px 5px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  text-align: left;
+}
+
+.help-task-column > button img {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.help-did-you-know {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.help-did-you-know h1 {
+  margin: 0;
+}
+
+.help-did-you-know span {
+  font-size: 10px;
+}
+
 .explorer-empty {
   color: #777;
 }

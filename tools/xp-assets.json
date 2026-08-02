@@ -122,6 +122,32 @@
     { "member": "TREBUC.TT_", "output": "site/css/fonts/trebuc.ttf" },
     { "member": "TREBUCBD.TT_", "output": "site/css/fonts/trebucbd.ttf" }
   ],
+  "cabAssets": [
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE40.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicComputer.png"
+    },
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE41.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicNetwork.png"
+    },
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE42.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicAccessibility.png"
+    },
+    {
+      "member": "PCHDT_W3.CA_",
+      "cabMember": "HCimgE43.bmp",
+      "bitmap": true,
+      "output": "site/assets/xp/help/TopicHardware.png"
+    }
+  ],
   "resourceIcons": [
     {
       "member": "NOTEPAD.EX_",
@@ -565,6 +591,14 @@
     }
   ],
   "resourceBitmaps": [
+    {
+      "member": "HELPCTR.EX_",
+      "expandedName": "helpctr.exe",
+      "resourceType": 2,
+      "resourceId": 300,
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/help/Toolbar.png"
+    },
     {
       "member": "TIMEDATE.CP_",
       "expandedName": "timedate.cpl",

@@ -209,6 +209,26 @@
     "member": "I386/TREBUCBD.TT_",
     "sha256": "73150ef5306b3651eac743ad570bc956c2ca41f5564e8700c8ae83928827441e"
   },
+  "assets/xp/help/TopicComputer.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PCHDT_W3.CA_!/HCimgE40.bmp",
+    "sha256": "13cb6bd07314e6f015a6b27056d3b042f0fad82a2334a2bcff898720730d9504"
+  },
+  "assets/xp/help/TopicNetwork.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PCHDT_W3.CA_!/HCimgE41.bmp",
+    "sha256": "0e5befb94043819169b015a92c8e00fc7ac9cdd55619152d00bc3825c9a0d75d"
+  },
+  "assets/xp/help/TopicAccessibility.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PCHDT_W3.CA_!/HCimgE42.bmp",
+    "sha256": "045fe8b88ea238d388e10dacea1a34ab94cf29b961a3edbc700bcecb1efbc789"
+  },
+  "assets/xp/help/TopicHardware.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/PCHDT_W3.CA_!/HCimgE43.bmp",
+    "sha256": "a4ec420739a052340b2852ce0b736003631fc596c47750b473c2e94058596edc"
+  },
   "assets/xp/icons/Notepad.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/NOTEPAD.EX_",
@@ -779,6 +799,19 @@
       "language": 1033,
       "frame": "48x48x32",
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
+    }
+  },
+  "assets/xp/help/Toolbar.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/HELPCTR.EX_",
+    "sha256": "3a990a6bbc93bdd01084b3fb1a908fbeb4f6ff89eb879b2055f0014d10a22a8d",
+    "resource": {
+      "parentSha256": "c72302fc8499940d2db9f4a3796728be345c5714b201567e25bc47fd42c6f27b",
+      "type": 2,
+      "id": 300,
+      "language": 1033,
+      "frame": "312x24x32",
+      "pixelSha256": "5aac53d2cf52bb23fca40497afd940a4e872da9260e2a973abac4e9f33fe25eb"
     }
   },
   "assets/xp/TimeZoneMap.png": {
