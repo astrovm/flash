@@ -424,6 +424,31 @@ test("Appearance and Themes uses the native XP category page and routes", () => 
   );
 });
 
+test("Performance and Maintenance uses the native XP category page", () => {
+  contains(
+    javascript,
+    "const renderPerformanceCategory = () =>",
+    '"Performance and Maintenance"',
+    "See basic information about your computer",
+    "Adjust visual effects",
+    "Free up space on your hard disk",
+    "Back up your data",
+    "Rearrange items on your hard disk to make programs run faster",
+    "Administrative Tools",
+    "Power Options",
+    "Scheduled Tasks",
+    "assets/xp/icons/System.png",
+    'data-control-panel-action="system-restore"',
+    "openSystemProperties();",
+  );
+  contains(
+    css,
+    ".control-panel-category-page",
+    ".control-panel-task-links",
+    ".control-panel-category-icons",
+  );
+});
+
 test("Folder Options matches the four-tab XP shell applet", () => {
   contains(
     javascript,

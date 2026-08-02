@@ -382,6 +382,58 @@
       "pixelSha256": "4d38aeb90f467d170731b72c6cda5a4f3be5550e94bc25aa572f6d14f6e1b0f3"
     }
   },
+  "assets/xp/icons/AdministrativeTools.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "6278672ee1d2f40159b570581539d3205c0664a42cb67ffb24c7a96824481776",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 37,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "22f551da4a8bb3943e46a3d8224f030b57815657a03688a9a921fa84333d4181"
+    }
+  },
+  "assets/xp/icons/PowerOptions.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/POWERCFG.CP_",
+    "sha256": "587d157c44c566d7872cdc6a7d555393aa5c6b34896c08047845209d0edd7b24",
+    "resource": {
+      "parentSha256": "047cfe207d031983ba6f86aa2a131c2187ee616738bd017fcd63bc887f4b425a",
+      "type": 14,
+      "id": 202,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "69b76df029b590d451a6653760af431cc2f7e3a94ac6a88e974b9555f70fd8cc"
+    }
+  },
+  "assets/xp/icons/ScheduledTasks.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSTASK.DL_",
+    "sha256": "f9917ef15e585d06b29e443fdac96b3d0d6fb6440da7095dd5f99aec885ff745",
+    "resource": {
+      "parentSha256": "1ebd42f10592d57a2c8562c641461de5288d9e900fe91a4a1800c9ab9034f2cd",
+      "type": 14,
+      "id": 100,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "45ea10f505282b960a72120818c1dacd4354204f4ce33290cf8656cad89422bc"
+    }
+  },
+  "assets/xp/icons/System.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SYSDM.CP_",
+    "sha256": "357e7233aac2aa6bc9cee6f456d9ea08aadd5eb7370ff0526ffe381d357f76c2",
+    "resource": {
+      "parentSha256": "99bd5757aa68b6513313d97b1bf61bcc6e44f7bfae63f375b2afa47a06038067",
+      "type": 14,
+      "id": 1,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "cafd5570a39d6920c564f5d774243e6153214209cf4e0eec841d62ec8d2bdd9c"
+    }
+  },
   "assets/xp/icons/PrintersAndHardware.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

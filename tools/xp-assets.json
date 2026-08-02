@@ -271,6 +271,46 @@
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
+      "resourceId": 37,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/AdministrativeTools.png"
+    },
+    {
+      "member": "POWERCFG.CP_",
+      "expandedName": "powercfg.cpl",
+      "resourceType": 14,
+      "resourceId": 202,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PowerOptions.png"
+    },
+    {
+      "member": "MSTASK.DL_",
+      "expandedName": "mstask.dll",
+      "resourceType": 14,
+      "resourceId": 100,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/ScheduledTasks.png"
+    },
+    {
+      "member": "SYSDM.CP_",
+      "expandedName": "sysdm.cpl",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/System.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
       "resourceId": 272,
       "width": 48,
       "height": 48,

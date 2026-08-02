@@ -2299,6 +2299,48 @@ const wireControlPanel = (win) => {
       </div>`;
   };
 
+  const renderPerformanceCategory = () => {
+    content.classList.add("control-panel-category-page");
+    content.classList.remove("classic-view", "folders-visible");
+    setWindowIdentity(
+      "Performance and Maintenance",
+      XP_ICON_PATHS["PerformanceAndMaintenance.png"],
+    );
+    backButton.disabled = false;
+    upButton.disabled = false;
+    content.querySelector(".control-panel-sidebar").innerHTML = `
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="file-types"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>File Types</span></button>
+          <button type="button" data-control-panel-action="system-restore"><img src="assets/xp/system/SystemRestore.png" alt=""><span>System Restore</span></button>
+        </div>
+      </section>
+      <section>
+        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
+        <div class="explorer-section-body">
+          <button type="button" data-control-panel-action="startup-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Startup and Shutdown</span></button>
+        </div>
+      </section>`;
+    content.querySelector(".control-panel-main").innerHTML = `
+      <div class="control-panel-category-heading"><img src="assets/xp/icons/PerformanceAndMaintenance.png" alt=""><strong>Performance and Maintenance</strong></div>
+      <h1>Pick a task...</h1>
+      <div class="control-panel-task-links performance-task-links">
+        <button type="button" data-control-panel-action="system-info"><img src="assets/xp/icons/Go.png" alt=""><span>See basic information about your computer</span></button>
+        <button type="button" data-control-panel-action="visual-effects"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust visual effects</span></button>
+        <button type="button" data-control-panel-action="disk-cleanup"><img src="assets/xp/icons/Go.png" alt=""><span>Free up space on your hard disk</span></button>
+        <button type="button" data-control-panel-action="backup"><img src="assets/xp/icons/Go.png" alt=""><span>Back up your data</span></button>
+        <button type="button" data-control-panel-action="defrag"><img src="assets/xp/icons/Go.png" alt=""><span>Rearrange items on your hard disk to make programs run faster</span></button>
+      </div>
+      <h2>or pick a Control Panel icon</h2>
+      <div class="control-panel-category-icons">
+        <button type="button" data-control-panel-action="administrative-tools"><img src="assets/xp/icons/AdministrativeTools.png" alt=""><span>Administrative Tools</span></button>
+        <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptions.png" alt=""><span>Power Options</span></button>
+        <button type="button" data-control-panel-action="scheduled-tasks"><img src="assets/xp/icons/ScheduledTasks.png" alt=""><span>Scheduled Tasks</span></button>
+        <button type="button" data-control-panel-action="system"><img src="assets/xp/icons/System.png" alt=""><span>System</span></button>
+      </div>`;
+  };
+
   const actions = {
     appearance: renderAppearanceCategory,
     printers: openPrintersAndFaxes,
@@ -2308,7 +2350,7 @@ const wireControlPanel = (win) => {
     datetime: openDateTimeProperties,
     sounds: toggleTrayVolumePopup,
     accessibility: openProjectSettings,
-    performance: openProjectSettings,
+    performance: renderPerformanceCategory,
     security: () =>
       XPDialogs.alert(
         "Firewall, Automatic Updates, and Virus Protection are monitored by Security Center.",
@@ -2317,6 +2359,15 @@ const wireControlPanel = (win) => {
       ),
   };
   content.addEventListener("click", (event) => {
+    const sectionToggle = event.target.closest(".explorer-section-toggle");
+    if (sectionToggle) {
+      const collapsed = sectionToggle
+        .closest("section")
+        .classList.toggle("collapsed");
+      sectionToggle.setAttribute("aria-expanded", String(!collapsed));
+      sectionToggle.querySelector("b").textContent = collapsed ? "⌄" : "⌃";
+      return;
+    }
     const category = event.target.closest("[data-control-panel-category]");
     if (category) {
       actions[category.dataset.controlPanelCategory]?.();
@@ -2362,6 +2413,48 @@ const wireControlPanel = (win) => {
       openTaskbarProperties();
     } else if (action === "folder-options") {
       openFolderOptions();
+    } else if (action === "file-types") {
+      openFolderOptions();
+      document
+        .querySelector(".folder-options-dialog [data-folder-tab='file-types']")
+        ?.click();
+    } else if (action === "system-info" || action === "system") {
+      openSystemProperties();
+    } else if (action === "visual-effects") {
+      openSystemProperties();
+      document
+        .querySelector(".system-properties-dialog [data-system-tab='advanced']")
+        ?.click();
+    } else if (action === "system-restore") {
+      openSystemProperties();
+      document
+        .querySelector(".system-properties-dialog [data-system-tab='restore']")
+        ?.click();
+    } else if (action === "startup-help") {
+      openHelpAndSupport();
+    } else if (
+      [
+        "disk-cleanup",
+        "backup",
+        "defrag",
+        "administrative-tools",
+        "power-options",
+        "scheduled-tasks",
+      ].includes(action)
+    ) {
+      const labels = {
+        "disk-cleanup": "Disk Cleanup",
+        backup: "Backup Utility",
+        defrag: "Disk Defragmenter",
+        "administrative-tools": "Administrative Tools",
+        "power-options": "Power Options Properties",
+        "scheduled-tasks": "Scheduled Tasks",
+      };
+      XPDialogs.alert(
+        `${labels[action]} is not available in this offline recreation.`,
+        labels[action],
+        "info",
+      );
     } else if (
       [
         "fonts",
@@ -2374,13 +2467,6 @@ const wireControlPanel = (win) => {
     ) {
       openHelpAndSupport();
     }
-  });
-  content.querySelectorAll(".explorer-section-toggle").forEach((toggle) => {
-    toggle.addEventListener("click", () => {
-      const collapsed = toggle.closest("section").classList.toggle("collapsed");
-      toggle.setAttribute("aria-expanded", String(!collapsed));
-      toggle.querySelector("b").textContent = collapsed ? "⌄" : "⌃";
-    });
   });
 };
 
