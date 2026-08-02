@@ -8,6 +8,7 @@ import {
   DEV_RELOAD_PATH,
   computeSourceFingerprint,
   createDevelopmentLiveReload,
+  createPreviewVersion,
   createRequestHandler,
   ensureDevelopmentBuild,
   watchDevelopmentBuild,
@@ -30,6 +31,15 @@ afterEach(async () => {
 });
 
 describe("development build synchronization", () => {
+  test("derives preview versions from the build fingerprint", () => {
+    expect(
+      createPreviewVersion(
+        "abcdef0123456789",
+        new Date("2026-08-02T12:00:00.000Z"),
+      ),
+    ).toBe("26.08.02-abcdef0");
+  });
+
   test("fingerprints build inputs but ignores unrelated files", async () => {
     const project = await makeTemporaryDirectory();
     await mkdir(join(project, "site"), { recursive: true });
@@ -120,6 +130,25 @@ describe("development build synchronization", () => {
       await readFile(join(output, DEV_BUILD_STATE), "utf8"),
     );
     expect(state.fingerprint).toBe("second");
+  });
+
+  test("passes a fingerprint-based version to preview builds", async () => {
+    const root = await makeTemporaryDirectory();
+    const versions: string[] = [];
+
+    await ensureDevelopmentBuild({
+      outputDir: join(root, "dist"),
+      fingerprint: async () => "1234567890abcdef",
+      releaseKey: async () => "ruffle-v1",
+      version: (fingerprint) => `preview-${fingerprint.slice(0, 7)}`,
+      builder: async ({ outputDir, version }) => {
+        versions.push(version as string);
+        await mkdir(outputDir as string, { recursive: true });
+        await writeFile(join(outputDir as string, "index.html"), "built");
+      },
+    });
+
+    expect(versions).toEqual(["preview-1234567"]);
   });
 });
 
@@ -232,6 +261,19 @@ describe("Bun request handler", () => {
     expect(worker).toContain("self.registration.unregister()");
     expect(response.headers.get("cache-control")).toContain("no-store");
     liveReload.close();
+  });
+
+  test("serves production HTML and service worker unchanged for preview", async () => {
+    const root = await makeTemporaryDirectory();
+    await writeFile(join(root, "index.html"), "<body>site</body>");
+    await writeFile(join(root, "sw.js"), "self.productionWorker = true;");
+    const handler = createRequestHandler(root);
+
+    const page = await handler(new Request("http://localhost/"));
+    expect(await page.text()).toBe("<body>site</body>");
+
+    const worker = await handler(new Request("http://localhost/sw.js"));
+    expect(await worker.text()).toBe("self.productionWorker = true;");
   });
 });
 

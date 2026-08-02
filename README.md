@@ -36,6 +36,17 @@ immediately when `dist/` is already current. Use
 `bun run dev -- --rebuild` to force a rebuild or `--no-sync` to serve the
 existing output unchanged.
 
+To test production service-worker and offline-update behavior with automatic
+rebuilds, run:
+
+```bash
+bun run preview
+```
+
+Preview serves the real production worker and gives each changed build a new
+local version. It intentionally does not reload the page after rebuilding; use
+**Settings > Updates > Check for Updates** to exercise the update flow.
+
 ## Project layout
 
 - `site/` — authored static site

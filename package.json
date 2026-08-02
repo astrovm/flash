@@ -4,6 +4,7 @@
     "test": "bun run typecheck && bun test && bun run validate:javascript && bun run validate:icons",
     "build": "bun tools/deploy.ts",
     "dev": "bun tools/dev-server.ts",
+    "preview": "bun tools/dev-server.ts --production",
     "deploy:worker": "wrangler deploy --config worker/wrangler.toml",
     "extract:xp-assets": "bun tools/extract-xp-assets.ts",
     "compare:xp-ui": "bun tools/compare-xp-ui.ts",

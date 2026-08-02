@@ -129,6 +129,7 @@ interface EnsureDevelopmentBuildOptions {
   fingerprint?: () => Promise<string>;
   releaseKey?: () => Promise<string>;
   builder?: (options: BuildOptions) => Promise<void>;
+  version?: (fingerprint: string) => string;
 }
 
 interface EnsureDevelopmentBuildResult {
@@ -293,6 +294,7 @@ export async function ensureDevelopmentBuild({
   fingerprint = () => computeSourceFingerprint(projectDir),
   releaseKey = currentRuffleReleaseKey,
   builder,
+  version,
 }: EnsureDevelopmentBuildOptions = {}): Promise<EnsureDevelopmentBuildResult> {
   const resolvedOutput = resolve(outputDir);
   const [sourceFingerprint, ruffleRelease, previousState] = await Promise.all([
@@ -324,6 +326,7 @@ export async function ensureDevelopmentBuild({
   const selectedBuilder = builder ?? (await import("./deploy")).build;
   await selectedBuilder({
     outputDir: resolvedOutput,
+    ...(version ? { version: version(sourceFingerprint) } : {}),
     ...(canReuseRuffle
       ? {
           download: (destinationJsDir: string) =>
@@ -345,6 +348,14 @@ export async function ensureDevelopmentBuild({
     `Development build synchronized in ${((performance.now() - startedAt) / 1000).toFixed(2)}s${canReuseRuffle ? " (reused Ruffle)" : ""}.`,
   );
   return { rebuilt: true, reusedRuffle: canReuseRuffle };
+}
+
+export function createPreviewVersion(
+  fingerprint: string,
+  date = new Date(),
+): string {
+  const [year, month, day] = date.toISOString().slice(0, 10).split("-");
+  return `${year.slice(2)}.${month}.${day}-${fingerprint.slice(0, 7)}`;
 }
 
 function noCacheHeaders(extra: HeadersInit = {}): Headers {
@@ -528,6 +539,7 @@ interface ServerArguments {
   force: boolean;
   hostname: string;
   port: number;
+  production: boolean;
   sync: boolean;
 }
 
@@ -537,6 +549,7 @@ function parseArguments(arguments_: string[]): ServerArguments {
     force: false,
     hostname: "127.0.0.1",
     port: 8000,
+    production: false,
     sync: true,
   };
   for (let index = 0; index < arguments_.length; index += 1) {
@@ -547,6 +560,10 @@ function parseArguments(arguments_: string[]): ServerArguments {
     }
     if (argument === "--no-sync") {
       parsed.sync = false;
+      continue;
+    }
+    if (argument === "--production") {
+      parsed.production = true;
       continue;
     }
     if (
@@ -579,10 +596,12 @@ function parseArguments(arguments_: string[]): ServerArguments {
 if (import.meta.main) {
   try {
     const arguments_ = parseArguments(Bun.argv.slice(2));
+    const version = arguments_.production ? createPreviewVersion : undefined;
     if (arguments_.sync) {
       await ensureDevelopmentBuild({
         outputDir: arguments_.directory,
         force: arguments_.force,
+        version,
       });
     } else if (
       !(await Bun.file(join(arguments_.directory, "index.html")).exists())
@@ -591,7 +610,9 @@ if (import.meta.main) {
         `${arguments_.directory} is not built; omit --no-sync or run \`bun run build\``,
       );
     }
-    const liveReload = createDevelopmentLiveReload();
+    const liveReload = arguments_.production
+      ? undefined
+      : createDevelopmentLiveReload();
     const server = Bun.serve({
       hostname: arguments_.hostname,
       port: arguments_.port,
@@ -608,7 +629,16 @@ if (import.meta.main) {
     if (arguments_.sync) {
       await watchDevelopmentBuild({
         outputDir: arguments_.directory,
-        onReload: () => liveReload.reload(),
+        rebuild: () =>
+          ensureDevelopmentBuild({
+            outputDir: arguments_.directory,
+            version,
+          }),
+        onReload: () => {
+          if (liveReload) liveReload.reload();
+          else
+            console.log("Preview update built; check for updates in the app.");
+        },
       });
       console.log("Watching source files for changes.");
     }
