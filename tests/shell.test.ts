@@ -664,6 +664,17 @@ test("Help and Support Center uses the native XP home surface", () => {
     'url("../assets/xp/help/Toolbar.png")',
   );
 });
+test("shutdown dialog uses the native XP geometry and grayscale fade", () => {
+  contains(
+    css,
+    "backdrop-filter: grayscale(1)",
+    "width: min(313px, calc(100vw - 24px))",
+    "margin-top: min(191px, calc(50vh - 96px))",
+    ".shutdown-actions button",
+    "transform: translateY(7px)",
+    'url("../assets/xp/icons/Power.png")',
+  );
+});
 test("shell paste uses one conflict aware progress helper", () =>
   js(
     "const pasteIntoFolder = async (destinationId)",
