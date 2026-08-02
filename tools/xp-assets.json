@@ -200,6 +200,16 @@
       "output": "site/assets/xp/icons/TaskbarAndStartMenu.png"
     },
     {
+      "member": "CSCUI.DL_",
+      "expandedName": "cscui.dll",
+      "resourceType": 14,
+      "resourceId": 1200,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/icons/OfflineFiles.png"
+    },
+    {
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,

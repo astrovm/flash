@@ -423,6 +423,31 @@ test("Appearance and Themes uses the native XP category page and routes", () => 
     ".control-panel-category-icons",
   );
 });
+
+test("Folder Options matches the four-tab XP shell applet", () => {
+  contains(
+    javascript,
+    "const openFolderOptions = () =>",
+    'title: "Folder Options"',
+    'data-folder-options-tab="general"',
+    'data-folder-options-tab="view"',
+    'data-folder-options-tab="file-types"',
+    'data-folder-options-tab="offline"',
+    "Show common tasks in folders",
+    "Advanced settings:",
+    "Registered file types:",
+    "Fast User Switching is enabled on this computer.",
+    "assets/xp/icons/OfflineFiles.png",
+  );
+  contains(
+    css,
+    ".folder-options-dialog",
+    ".folder-options-panel",
+    ".folder-advanced-list",
+    ".folder-file-types-list",
+    ".folder-offline-panel",
+  );
+});
 test("desktop renders system places then virtual files", () => {
   const desktop = javascript.indexOf("const buildDesktopIcons = () =>");
   const start = javascript.indexOf("const entries = [", desktop);

@@ -2351,11 +2351,7 @@ const wireControlPanel = (win) => {
     } else if (action === "taskbar-properties") {
       openTaskbarProperties();
     } else if (action === "folder-options") {
-      XPDialogs.alert(
-        "Folder Options will be available from this Control Panel page.",
-        "Folder Options",
-        "info",
-      );
+      openFolderOptions();
     } else if (
       [
         "fonts",
@@ -6802,6 +6798,156 @@ const openTaskManager = () => {
     list.appendChild(item);
   });
   dialog.body.append(heading, list);
+};
+
+const openFolderOptions = () => {
+  const dialog = XPDialogs.createDialog({ title: "Folder Options" });
+  dialog.el.classList.add("folder-options-dialog");
+  const parentRect = openWindows
+    .get("__control-panel")
+    ?.el.getBoundingClientRect();
+  if (parentRect) {
+    Object.assign(dialog.el.style, {
+      position: "fixed",
+      left: `${parentRect.left}px`,
+      top: `${parentRect.top}px`,
+    });
+  }
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  dialog.body.innerHTML = `
+    <div class="folder-options-tabs" role="tablist" aria-label="Folder Options">
+      <button type="button" role="tab" data-folder-options-tab="general" aria-selected="true">General</button>
+      <button type="button" role="tab" data-folder-options-tab="view" aria-selected="false" tabindex="-1">View</button>
+      <button type="button" role="tab" data-folder-options-tab="file-types" aria-selected="false" tabindex="-1">File Types</button>
+      <button type="button" role="tab" data-folder-options-tab="offline" aria-selected="false" tabindex="-1">Offline Files</button>
+    </div>
+    <div class="folder-options-panel" data-folder-options-panel="general">
+      <fieldset><legend>Tasks</legend><img src="assets/xp/icons/TaskbarAndStartMenu.png" alt="">
+        <label><input type="radio" name="folder-tasks" checked> Show common tasks in folders</label>
+        <label><input type="radio" name="folder-tasks"> Use Windows classic folders</label>
+      </fieldset>
+      <fieldset><legend>Browse folders</legend><img src="assets/xp/icons/FolderOptions.png" alt="">
+        <label><input type="radio" name="browse-folders" checked> Open each folder in the same window</label>
+        <label><input type="radio" name="browse-folders"> Open each folder in its own window</label>
+      </fieldset>
+      <fieldset class="folder-click-options"><legend>Click items as follows</legend><span class="folder-click-illustration" aria-hidden="true"></span>
+        <label><input type="radio" name="click-items"> Single-click to open an item (point to select)</label>
+        <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles consistent with my browser</label>
+        <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles only when I point at them</label>
+        <label><input type="radio" name="click-items" checked> Double-click to open an item (single-click to select)</label>
+      </fieldset>
+      <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
+    </div>
+    <div class="folder-options-panel folder-view-panel" data-folder-options-panel="view" hidden>
+      <fieldset class="folder-views-group"><legend>Folder views</legend><img src="assets/xp/icons/FolderOptions.png" alt=""><p>You can apply the view (such as Details or Tiles) that<br>you are using for this folder to all folders.</p><button type="button" class="xp-btn" disabled>Apply to All Folders</button><button type="button" class="xp-btn">Reset All Folders</button></fieldset>
+      <label class="folder-advanced-label">Advanced settings:</label>
+      <div class="folder-advanced-list">
+        <strong>📁 Files and Folders</strong>
+        <label><input type="checkbox" checked> Automatically search for network folders and printers</label>
+        <label><input type="checkbox" checked> Display file size information in folder tips</label>
+        <label><input type="checkbox" checked> Display simple folder view in Explorer's Folders list</label>
+        <label><input type="checkbox"> Display the contents of system folders</label>
+        <label><input type="checkbox" checked> Display the full path in the address bar</label>
+        <label><input type="checkbox"> Display the full path in the title bar</label>
+        <label><input type="checkbox"> Do not cache thumbnails</label>
+        <strong>📁 Hidden files and folders</strong>
+        <label class="folder-indented"><input type="radio" name="hidden-files" checked> Do not show hidden files and folders</label>
+        <label class="folder-indented"><input type="radio" name="hidden-files"> Show hidden files and folders</label>
+        <label><input type="checkbox" checked> Hide extensions for known file types</label>
+        <label><input type="checkbox" checked> Hide protected operating system files (Recommended)</label>
+      </div>
+      <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
+    </div>
+    <div class="folder-options-panel folder-file-types-panel" data-folder-options-panel="file-types" hidden>
+      <p>Registered file types:</p>
+      <div class="folder-file-types-list" role="listbox" aria-label="Registered file types">
+        <div class="folder-file-types-head"><span>Extensions</span><span>File Types</span></div>
+        <button type="button" class="selected"><img src="assets/xp/icons/LocalDisk.png" alt=""><span>(NONE)</span><span>AudioCD</span></button>
+        <button type="button"><img src="assets/xp/icons/LocalDisk.png" alt=""><span>(NONE)</span><span>Drive</span></button>
+        <button type="button"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>(NONE)</span><span>DVD</span></button>
+        <button type="button"><img src="assets/xp/icons/SharedFolder.png" alt=""><span>(NONE)</span><span>File Folder</span></button>
+        <button type="button"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>(NONE)</span><span>Folder</span></button>
+        <button type="button"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><span>(NONE)</span><span>Help and Support Center protocol</span></button>
+      </div>
+      <button type="button" class="xp-btn folder-file-new">New</button><button type="button" class="xp-btn folder-file-delete" disabled>Delete</button>
+      <fieldset class="folder-file-details"><legend>Details for 'AudioCD' file type</legend><label>Opens with:</label><button type="button" class="xp-btn" disabled>Change...</button><p>To change settings that affect all 'AudioCD' files, click Advanced.</p><button type="button" class="xp-btn">Advanced</button></fieldset>
+    </div>
+    <div class="folder-options-panel folder-offline-panel" data-folder-options-panel="offline" hidden>
+      <img src="assets/xp/icons/OfflineFiles.png" alt=""><p>Use Offline Files to work with files and programs stored on the<br>network even when you are not connected.</p>
+      <p>Fast User Switching is enabled on this computer. &nbsp;Offline Files<br>cannot be enabled while Fast User Switching is enabled.</p>
+      <p>To change your Fast User Switching setting, open User Accounts<br>in Control Panel and select "Change the way users log on or off."</p>
+    </div>
+    <div class="dlg-buttons folder-options-buttons"></div>`;
+
+  const tabs = [...dialog.body.querySelectorAll("[data-folder-options-tab]")];
+  const panels = [
+    ...dialog.body.querySelectorAll("[data-folder-options-panel]"),
+  ];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) => {
+        const selected =
+          entry.dataset.folderOptionsTab === tab.dataset.folderOptionsTab;
+        entry.setAttribute("aria-selected", String(selected));
+        entry.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach((panel) => {
+        panel.hidden =
+          panel.dataset.folderOptionsPanel !== tab.dataset.folderOptionsTab;
+      });
+    }),
+  );
+  const buttons = dialog.body.querySelector(".folder-options-buttons");
+  const apply = XPDialogs.createDialogButton(
+    { id: "apply", label: "Apply" },
+    () => {
+      apply.disabled = true;
+    },
+  );
+  apply.disabled = true;
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  dialog.defaultButton = ok;
+  buttons.append(ok, cancel, apply);
+  dialog.body.addEventListener("change", () => {
+    apply.disabled = false;
+  });
+  dialog.body.querySelectorAll(".folder-restore-defaults").forEach((button) =>
+    button.addEventListener("click", () => {
+      dialog.body
+        .querySelectorAll('input[type="checkbox"]')
+        .forEach((input) => (input.checked = input.defaultChecked));
+      dialog.body
+        .querySelectorAll('input[type="radio"]')
+        .forEach((input) => (input.checked = input.defaultChecked));
+      apply.disabled = false;
+    }),
+  );
+  dialog.body
+    .querySelectorAll(".folder-file-types-list button")
+    .forEach((button) =>
+      button.addEventListener("click", () => {
+        dialog.body
+          .querySelectorAll(".folder-file-types-list button")
+          .forEach((entry) =>
+            entry.classList.toggle("selected", entry === button),
+          );
+      }),
+    );
 };
 
 const openTaskbarProperties = () => {

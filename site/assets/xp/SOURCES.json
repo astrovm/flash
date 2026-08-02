@@ -294,6 +294,19 @@
       "pixelSha256": "9f6c317873dfa3f9eccc10816317dae91feb053e8fc7b904b7c11a5d3a94d861"
     }
   },
+  "assets/xp/icons/OfflineFiles.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CSCUI.DL_",
+    "sha256": "2745f5ec2afab3f7d6c076e778507846527b3fb1bf832f51bac3412ad5c2bddf",
+    "resource": {
+      "parentSha256": "15c050965a7377cde1178a0c28c3e05b16838a1d7deb1dd190e3c5d58511f5ac",
+      "type": 14,
+      "id": 1200,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "5a1ea24ceee882211905eb89d60fd87de9c8370f83d0a4f6a77025011fe3fe96"
+    }
+  },
   "assets/xp/icons/AccessibilityOptions.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

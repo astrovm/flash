@@ -5755,6 +5755,377 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   margin: 5px 0 0;
 }
 
+.folder-options-dialog {
+  width: min(384px, calc(100vw - 8px));
+  height: min(479px, calc(100vh - 8px));
+}
+
+.folder-options-dialog .dlg-body {
+  position: relative;
+  display: block;
+  flex: 1;
+  padding: 0;
+}
+
+.folder-options-tabs {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 7px;
+  display: flex;
+}
+
+.folder-options-tabs button {
+  height: 20px;
+  margin-right: -1px;
+  padding: 1px 7px 2px;
+  border: 1px solid #919b9c;
+  border-radius: 3px 3px 0 0;
+  background: var(--xp-beige);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.folder-options-tabs button[aria-selected="true"] {
+  z-index: 1;
+  height: 21px;
+  margin-top: -1px;
+  border-bottom-color: #f5f3ed;
+  background: #f5f3ed;
+}
+
+.folder-options-panel {
+  position: absolute;
+  top: 28px;
+  right: 7px;
+  bottom: 38px;
+  left: 6px;
+  border: 1px solid #919b9c;
+  background: #f5f3ed;
+  box-shadow: inset 1px 1px #fff;
+  font:
+    11px/14px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.folder-options-panel[hidden] {
+  display: none;
+}
+
+.folder-options-panel fieldset {
+  position: absolute;
+  left: 13px;
+  box-sizing: border-box;
+  width: 338px;
+  margin: 0;
+  padding: 8px 8px 5px 49px;
+  border: 1px solid #d0d0bf;
+}
+
+.folder-options-panel legend {
+  margin-left: -42px;
+  padding: 0 3px;
+  color: #003399;
+}
+
+.folder-options-panel fieldset > img {
+  position: absolute;
+  top: 14px;
+  left: 9px;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.folder-options-panel fieldset label {
+  display: block;
+  height: 19px;
+  white-space: nowrap;
+}
+
+.folder-options-dialog input[type="checkbox"],
+.folder-options-dialog input[type="radio"] {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  margin: 0 3px 0 0;
+  appearance: none;
+  border: 1px solid #1f6098;
+  background: #fff;
+  vertical-align: -2px;
+}
+
+.folder-options-dialog input[type="radio"] {
+  border-radius: 50%;
+}
+
+.folder-options-dialog input[type="radio"]:checked::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #36a84a;
+  content: "";
+}
+
+.folder-options-dialog input[type="checkbox"]:checked::after {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  color: #008000;
+  content: "✓";
+  font:
+    bold 14px Arial,
+    sans-serif;
+}
+
+.folder-options-dialog input:disabled {
+  border-color: #aaa;
+  background: #eee;
+}
+
+.folder-options-panel > fieldset:nth-of-type(1) {
+  top: 18px;
+  height: 55px;
+}
+
+.folder-options-panel > fieldset:nth-of-type(2) {
+  top: 90px;
+  height: 55px;
+}
+
+.folder-options-panel > fieldset.folder-click-options {
+  top: 162px;
+  height: 93px;
+  padding-left: 49px;
+}
+
+.folder-click-options .folder-suboption {
+  margin-left: 19px;
+  color: #999;
+}
+
+.folder-click-illustration {
+  position: absolute;
+  top: 14px;
+  left: 11px;
+  width: 25px;
+  height: 31px;
+  border: 1px solid #777;
+  background: linear-gradient(135deg, #fff 0 54%, #e5e5e5 55% 100%);
+}
+
+.folder-click-illustration::after {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  color: #000;
+  content: "↖";
+  font:
+    24px Arial,
+    sans-serif;
+}
+
+.folder-restore-defaults {
+  position: absolute;
+  right: 13px;
+  bottom: 85px;
+  width: 106px;
+}
+
+.folder-view-panel .folder-views-group {
+  top: 14px;
+  height: 84px;
+  padding: 3px 8px 5px 69px;
+}
+
+.folder-view-panel .folder-views-group legend {
+  margin-left: -62px;
+}
+
+.folder-view-panel .folder-views-group > img {
+  top: 18px;
+  left: 15px;
+}
+
+.folder-views-group p {
+  margin: 0 0 5px;
+}
+
+.folder-views-group .xp-btn:first-of-type {
+  width: 114px;
+  margin-right: 12px;
+}
+
+.folder-views-group .xp-btn:last-of-type {
+  width: 114px;
+}
+
+.folder-advanced-label {
+  position: absolute;
+  top: 113px;
+  left: 13px;
+}
+
+.folder-advanced-list {
+  position: absolute;
+  top: 132px;
+  right: 17px;
+  left: 13px;
+  height: 194px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  padding: 3px 5px;
+}
+
+.folder-advanced-list strong,
+.folder-advanced-list label {
+  display: block;
+  min-height: 16px;
+  white-space: nowrap;
+}
+
+.folder-advanced-list .folder-indented {
+  padding-left: 18px;
+}
+
+.folder-view-panel > .folder-restore-defaults {
+  right: 17px;
+  bottom: 12px;
+}
+
+.folder-file-types-panel > p {
+  margin: 10px 13px 3px;
+}
+
+.folder-file-types-list {
+  position: absolute;
+  top: 30px;
+  right: 17px;
+  left: 13px;
+  height: 134px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.folder-file-types-head,
+.folder-file-types-list button {
+  display: grid;
+  grid-template-columns: 20px 55px minmax(0, 1fr);
+  min-width: 100%;
+  min-height: 18px;
+  align-items: center;
+  border: 0;
+  background: #fff;
+  font:
+    11px Tahoma,
+    sans-serif;
+  text-align: left;
+}
+
+.folder-file-types-head {
+  grid-template-columns: 65px minmax(0, 1fr);
+  border-bottom: 1px solid #aaa;
+  background: #f1f0e8;
+}
+
+.folder-file-types-head span {
+  padding: 1px 4px;
+  border-right: 1px solid #aaa;
+}
+
+.folder-file-types-list button img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.folder-file-types-list button.selected {
+  background: #316ac5;
+  color: #fff;
+}
+
+.folder-file-new,
+.folder-file-delete {
+  position: absolute;
+  top: 178px;
+  width: 73px;
+}
+
+.folder-file-new {
+  right: 98px;
+}
+
+.folder-file-delete {
+  right: 17px;
+}
+
+.folder-options-panel.folder-file-types-panel > fieldset.folder-file-details {
+  top: 228px;
+  height: 136px;
+  padding: 14px 10px;
+}
+
+.folder-file-details legend {
+  margin-left: -3px;
+}
+
+.folder-file-details label,
+.folder-file-details p {
+  margin: 0 0 13px;
+}
+
+.folder-file-details .xp-btn:first-of-type {
+  position: absolute;
+  top: 13px;
+  right: 10px;
+}
+
+.folder-file-details .xp-btn:last-of-type {
+  position: absolute;
+  right: 10px;
+  bottom: 11px;
+}
+
+.folder-offline-panel {
+  padding: 12px 13px;
+}
+
+.folder-offline-panel > img {
+  float: left;
+  width: 32px;
+  height: 32px;
+  margin: 0 10px 15px 0;
+  object-fit: contain;
+}
+
+.folder-offline-panel p {
+  margin: 0 0 28px;
+}
+
+.folder-offline-panel p:first-of-type {
+  margin-bottom: 28px;
+}
+
+.folder-options-buttons {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  margin: 0;
+}
+
+.folder-options-buttons .xp-btn {
+  width: 73px;
+  min-width: 73px;
+}
+
 .taskbar-properties-dialog {
   width: min(403px, calc(100vw - 8px));
   height: min(454px, calc(100vh - 8px));
