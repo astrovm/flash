@@ -2798,8 +2798,9 @@ const wireControlPanel = (win) => {
         "Windows Firewall",
         "info",
       );
+    } else if (action === "internet-options") {
+      openInternetProperties();
     } else if (
-      action === "internet-options" ||
       action === "phone-modem" ||
       action === "add-hardware" ||
       action === "game-controllers" ||
@@ -2815,14 +2816,12 @@ const wireControlPanel = (win) => {
         "scanners-cameras": "Scanners and Cameras",
       };
       const label =
-        action === "internet-options"
-          ? "Internet Options"
-          : action === "phone-modem"
-            ? "Phone and Modem Options"
-            : hardwareLabels[action];
+        action === "phone-modem"
+          ? "Phone and Modem Options"
+          : hardwareLabels[action];
       XPDialogs.alert(
         `${label} is not available in this offline recreation.`,
-        action === "internet-options" ? "Internet Properties" : label,
+        label,
         "info",
       );
     } else if (
@@ -7724,6 +7723,73 @@ const openTaskManager = () => {
   maximize.addEventListener("click", () =>
     dialog.el.classList.toggle("task-manager-maximized"),
   );
+};
+
+const openInternetProperties = (initialTab = "general") => {
+  const dialog = XPDialogs.createDialog({ title: "Internet Properties" });
+  dialog.el.classList.add("internet-properties-dialog");
+  Object.assign(dialog.el.style, {
+    position: "fixed",
+    left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
+    top: `${Math.min(58, Math.max(4, window.innerHeight - 458))}px`,
+  });
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.setAttribute("aria-label", "Help");
+  help.addEventListener("click", openHelpAndSupport);
+  dialog.el.querySelector(".title-buttons").prepend(help);
+  const tabs = [
+    "General",
+    "Security",
+    "Privacy",
+    "Content",
+    "Connections",
+    "Programs",
+    "Advanced",
+  ];
+  dialog.body.innerHTML = `
+    <div class="internet-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-internet-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div>
+    <div class="internet-properties-panels">
+      <section data-internet-panel="general">
+        <fieldset><legend>Home page</legend><img src="assets/xp/icons/InternetOptions.png" alt=""><p>You can change which page to use for your home page.</p><label>Address: <input type="text" value="isapi/redir.dll?prd=ie&amp;pver=6&amp;ar=msnhome"></label><div><button class="xp-btn" disabled>Use Current</button><button class="xp-btn">Use Default</button><button class="xp-btn">Use Blank</button></div></fieldset>
+        <fieldset><legend>Temporary Internet files</legend><img src="assets/xp/icons/FolderOptions.png" alt=""><p>Pages you view on the Internet are stored in a special folder<br>for quick viewing later.</p><div><button class="xp-btn">Delete Cookies...</button><button class="xp-btn">Delete Files...</button><button class="xp-btn">Settings...</button></div></fieldset>
+        <fieldset><legend>History</legend><img src="assets/xp/icons/RecentDocuments.png" alt=""><p>The History folder contains links to pages you've visited, for<br>quick access to recently viewed pages.</p><label>Days to keep pages in history: <input type="number" value="20" min="0"></label><button class="xp-btn">Clear History</button></fieldset>
+        <div class="internet-general-actions"><button class="xp-btn">Colors...</button><button class="xp-btn">Fonts...</button><button class="xp-btn">Languages...</button><button class="xp-btn">Accessibility...</button></div>
+      </section>
+      <section data-internet-panel="security" hidden><p>Select a Web content zone to specify its security settings.</p><div class="internet-zone-list"><button>Internet</button><button>Local intranet</button><button>Trusted sites</button><button>Restricted sites</button></div><fieldset><legend>Security level for this zone</legend><p>Security level for this zone: <strong>Medium</strong></p><input type="range" min="0" max="3" value="2"><button class="xp-btn">Custom Level...</button><button class="xp-btn">Default Level</button></fieldset></section>
+      <section data-internet-panel="privacy" hidden><p>Settings</p><fieldset><legend>Internet zone</legend><input type="range" min="0" max="5" value="3"><h2>Medium</h2><p>Blocks third-party cookies that do not have a compact privacy policy.</p></fieldset><button class="xp-btn">Sites...</button><button class="xp-btn">Import...</button><button class="xp-btn">Advanced...</button></section>
+      <section data-internet-panel="content" hidden><fieldset><legend>Content Advisor</legend><p>Control the Internet content that can be viewed on this computer.</p><button class="xp-btn">Enable...</button></fieldset><fieldset><legend>Certificates</legend><p>Use certificates for encrypted connections and identification.</p><button class="xp-btn">Certificates...</button><button class="xp-btn">Publishers...</button></fieldset><fieldset><legend>Personal information</legend><button class="xp-btn">AutoComplete...</button></fieldset></section>
+      <section data-internet-panel="connections" hidden><p>To set up an Internet connection, click the Setup button.</p><button class="xp-btn">Setup...</button><div class="internet-connection-list"></div><button class="xp-btn">Add...</button><button class="xp-btn" disabled>Remove...</button><button class="xp-btn" disabled>Settings...</button><fieldset><legend>Local Area Network (LAN) settings</legend><p>LAN settings do not apply to dial-up connections.</p><button class="xp-btn">LAN Settings...</button></fieldset></section>
+      <section data-internet-panel="programs" hidden><fieldset><legend>Internet programs</legend><p>You can specify which programs Windows automatically uses for each Internet service.</p>${["HTML editor:", "E-mail:", "Newsgroups:", "Internet call:", "Calendar:", "Contact list:"].map((label) => `<label>${label}<select><option></option></select></label>`).join("")}</fieldset><button class="xp-btn">Reset Web Settings...</button></section>
+      <section data-internet-panel="advanced" hidden><button class="xp-btn">Restore Defaults</button><p>Settings:</p><div class="internet-advanced-list">${["Accessibility", "Always expand ALT text for images", "Browsing", "Disable script debugging", "Display a notification about every script error", "Enable folder view for FTP sites", "Enable page transitions", "HTTP 1.1 settings", "Multimedia", "Play animations in web pages", "Play sounds in web pages", "Security"].map((label, index) => (index % 4 === 0 ? `<strong>${label}</strong>` : `<label><input type="checkbox" ${index % 3 ? "checked" : ""}> ${label}</label>`)).join("")}</div></section>
+    </div>
+    <div class="dlg-buttons internet-properties-buttons"></div>`;
+  const activate = (tab) => {
+    dialog.body
+      .querySelectorAll("[data-internet-tab]")
+      .forEach((button) =>
+        button.setAttribute(
+          "aria-selected",
+          String(button.dataset.internetTab === tab),
+        ),
+      );
+    dialog.body.querySelectorAll("[data-internet-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.internetPanel !== tab;
+    });
+  };
+  dialog.body.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-internet-tab]")?.dataset
+      .internetTab;
+    if (tab) activate(tab);
+  });
+  XPDialogs.addButtonRow(dialog, [
+    { id: "ok", label: "OK", isDefault: true },
+    { id: "cancel", label: "Cancel", isCancel: true },
+    { id: "apply", label: "Apply" },
+  ]);
+  dialog.body.querySelector('[data-action="apply"]').disabled = true;
+  activate(initialTab);
 };
 
 const openFolderOptions = () => {

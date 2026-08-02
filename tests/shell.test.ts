@@ -418,6 +418,25 @@ test("Control Panel Classic View uses the native XP applet grid", () => {
   );
 });
 
+test("Internet Properties matches the seven-tab XP applet", () => {
+  contains(
+    javascript,
+    'const openInternetProperties = (initialTab = "general") =>',
+    'title: "Internet Properties"',
+    'data-internet-panel="general"',
+    'data-internet-panel="security"',
+    'data-internet-panel="privacy"',
+    'data-internet-panel="content"',
+    'data-internet-panel="connections"',
+    'data-internet-panel="programs"',
+    'data-internet-panel="advanced"',
+    "Temporary Internet files",
+    "Days to keep pages in history:",
+    "openInternetProperties();",
+  );
+  contains(css, ".internet-properties-dialog", ".internet-properties-tabs");
+});
+
 test("Appearance and Themes uses the native XP category page and routes", () => {
   contains(
     javascript,

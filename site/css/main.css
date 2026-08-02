@@ -7350,6 +7350,180 @@ html[data-xp-menu-shadows="false"] .desktop-context-menu {
   height: min(479px, calc(100vh - 8px));
 }
 
+.internet-properties-dialog {
+  width: min(404px, calc(100vw - 8px));
+  height: min(458px, calc(100vh - 8px));
+}
+
+.internet-properties-dialog .dlg-body {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(100% - 28px);
+  padding: 7px;
+  background: var(--xp-dialog, #ece9d8);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.internet-properties-tabs {
+  display: flex;
+  height: 23px;
+  align-items: flex-end;
+}
+
+.internet-properties-tabs button {
+  height: 22px;
+  margin-right: -1px;
+  padding: 2px 5px;
+  border: 1px solid #919b9c;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#fff, #ece9d8);
+  font: inherit;
+}
+
+.internet-properties-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 2;
+  height: 24px;
+  border-bottom-color: #ece9d8;
+}
+
+.internet-properties-panels {
+  height: 359px;
+  margin-top: -1px;
+  padding: 12px 14px;
+  border: 1px solid #919b9c;
+  background: #ece9d8;
+}
+
+.internet-properties-panels > section {
+  height: 100%;
+}
+
+.internet-properties-panels fieldset {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0 0 7px;
+  padding: 9px 10px 8px 50px;
+  border: 1px solid #aaa;
+}
+
+.internet-properties-panels legend {
+  margin-left: -42px;
+  color: #04e;
+}
+
+.internet-properties-panels fieldset > img {
+  position: absolute;
+  top: 12px;
+  left: 10px;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.internet-properties-panels fieldset p {
+  margin: 0 0 7px;
+}
+
+.internet-properties-panels fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.internet-properties-panels fieldset input[type="text"] {
+  min-width: 0;
+  flex: 1;
+}
+
+.internet-properties-panels fieldset > div,
+.internet-general-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.internet-properties-panels fieldset:nth-of-type(1) {
+  min-height: 96px;
+  margin-bottom: -2px;
+}
+
+.internet-properties-panels fieldset:nth-of-type(2) {
+  min-height: 90px;
+}
+
+.internet-properties-panels fieldset:nth-of-type(3) {
+  min-height: 94px;
+}
+
+.internet-properties-panels input[type="number"] {
+  width: 39px;
+}
+
+.internet-properties-panels fieldset:nth-of-type(3) > .xp-btn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
+
+.internet-general-actions {
+  justify-content: space-between;
+}
+
+.internet-general-actions .xp-btn {
+  min-width: 81px;
+}
+
+.internet-properties-buttons {
+  position: absolute;
+  right: 8px;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.internet-zone-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 12px 0;
+}
+
+.internet-zone-list button {
+  height: 58px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.internet-connection-list,
+.internet-advanced-list {
+  height: 118px;
+  margin: 8px 0;
+  overflow: auto;
+  border: 2px inset #fff;
+  background: #fff;
+}
+
+.internet-advanced-list {
+  height: 260px;
+  padding: 4px;
+}
+
+.internet-advanced-list strong,
+.internet-advanced-list label,
+[data-internet-panel="programs"] label {
+  display: flex;
+  margin: 3px 0;
+}
+
+[data-internet-panel="programs"] label select {
+  margin-left: auto;
+  width: 220px;
+}
+
 .folder-options-dialog .dlg-body {
   position: relative;
   display: block;
