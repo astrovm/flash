@@ -21,6 +21,96 @@ permissions:
   contents: read
 
 jobs:
+  apply-copy-fix:
+    if: github.event_name == 'pull_request' && github.head_ref == 'fix/misleading-offline-copy'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out pull request branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.3.14"
+
+      - name: Replace misleading offline copy
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path("site/js/main.js")
+          text = path.read_text()
+          replacements = [
+              (
+                  "Check this offline Windows XP recreation for available local updates.",
+                  "Check Astro Flash Collection for available updates.",
+              ),
+              (
+                  "Browse local pages or enter an address while this recreation is offline.",
+                  "Browse the built-in pages available in Astro Flash Collection.",
+              ),
+              (
+                  "MSN is not available while working offline.",
+                  "MSN is not available in Astro Flash Collection.",
+              ),
+              (
+                  "The requested page is not available offline.",
+                  "The requested page is not available in Astro Flash Collection.",
+              ),
+              (
+                  "Windows Catalog is not available on this offline computer.",
+                  "Windows Catalog is not available in Astro Flash Collection.",
+              ),
+              ("This offline Windows XP recreation", "Astro Flash Collection"),
+              ("this offline recreation", "Astro Flash Collection"),
+              ("the offline recreation", "Astro Flash Collection"),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count == 0:
+                  raise SystemExit(f"Expected copy was not found: {old!r}")
+              print(f"Replacing {count} occurrence(s): {old}")
+              text = text.replace(old, new)
+
+          forbidden = (
+              "offline recreation",
+              "offline Windows XP recreation",
+              "this recreation is offline",
+              "this offline computer",
+          )
+          remaining = [phrase for phrase in forbidden if phrase in text]
+          if remaining:
+              raise SystemExit(f"Misleading copy remains: {remaining}")
+
+          path.write_text(text)
+          PY
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check formatting and lint
+        run: bun run quality
+
+      - name: Run tests
+        run: bun run test
+
+      - name: Commit the copy fix
+        shell: bash
+        run: |
+          git checkout "origin/${{ github.event.pull_request.base.ref }}" -- .github/workflows/pages.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/js/main.js .github/workflows/pages.yml
+          git commit -m "Fix misleading offline recreation copy"
+          git push origin "HEAD:${{ github.head_ref }}"
+
   build:
     runs-on: ubuntu-latest
     steps:
