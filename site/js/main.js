@@ -324,8 +324,7 @@ const XP_NATIVE_PROGRAMS = Object.freeze({
     title: "Windows Update",
     icon: "WindowsUpdate.png",
     kind: "update",
-    description:
-      "Check this offline Windows XP recreation for available local updates.",
+    description: "Check Astro Flash Collection for available local updates.",
   },
   "__accessibility-wizard": {
     title: "Accessibility Wizard",
@@ -2991,7 +2990,7 @@ const wireControlPanel = (win) => {
       openHelpAndSupport();
     } else if (action === "updates") {
       XPDialogs.alert(
-        "This offline Windows XP recreation does not connect to Windows Update.",
+        "Astro Flash Collection does not connect to Windows Update.",
         "Windows Update",
         "info",
       );
@@ -3046,7 +3045,7 @@ const wireControlPanel = (win) => {
       openHelpAndSupport();
     } else if (action === "magnifier" || action === "on-screen-keyboard") {
       XPDialogs.alert(
-        `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in this offline recreation.`,
+        `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in Astro Flash Collection.`,
         action === "magnifier" ? "Magnifier" : "On-Screen Keyboard",
         "info",
       );
@@ -3064,7 +3063,7 @@ const wireControlPanel = (win) => {
       openSoundsAudioProperties("volume");
     } else if (action === "speech") {
       XPDialogs.alert(
-        "Speech Properties is not available in this offline recreation.",
+        "Speech Properties is not available in Astro Flash Collection.",
         "Speech Properties",
         "info",
       );
@@ -3097,19 +3096,19 @@ const wireControlPanel = (win) => {
       ].includes(action)
     ) {
       XPDialogs.alert(
-        "The Network Setup Wizard is not available in this offline recreation.",
+        "The Network Setup Wizard is not available in Astro Flash Collection.",
         "Network Setup Wizard",
         "info",
       );
     } else if (action === "wireless-network") {
       XPDialogs.alert(
-        "The Wireless Network Setup Wizard is not available in this offline recreation.",
+        "The Wireless Network Setup Wizard is not available in Astro Flash Collection.",
         "Wireless Network Setup Wizard",
         "info",
       );
     } else if (action === "firewall") {
       XPDialogs.alert(
-        "Windows Firewall settings are not available in this offline recreation.",
+        "Windows Firewall settings are not available in Astro Flash Collection.",
         "Windows Firewall",
         "info",
       );
@@ -3140,7 +3139,7 @@ const wireControlPanel = (win) => {
           ? "Phone and Modem Options"
           : hardwareLabels[action];
       XPDialogs.alert(
-        `${label} is not available in this offline recreation.`,
+        `${label} is not available in Astro Flash Collection.`,
         label,
         "info",
       );
@@ -3165,7 +3164,7 @@ const wireControlPanel = (win) => {
         "scheduled-tasks": "Scheduled Tasks",
       };
       XPDialogs.alert(
-        `${labels[action]} is not available in this offline recreation.`,
+        `${labels[action]} is not available in Astro Flash Collection.`,
         labels[action],
         "info",
       );
@@ -3356,7 +3355,7 @@ const createAddRemoveProgramsContent = () => {
       );
     else if (action === "update")
       XPDialogs.alert(
-        "Windows Update is not available in this offline recreation.",
+        "Windows Update is not available in Astro Flash Collection.",
         "Windows Update",
         "info",
       );
@@ -4370,7 +4369,7 @@ const createSystemWindowContent = (shortcutId, win) => {
         ].includes(command)
       )
         XPDialogs.alert(
-          "This Windows XP feature is not available in Astro Flash.",
+          "This Windows XP feature is not available in Astro Flash Collection.",
           commandButton.textContent.trim() || "Windows Explorer",
           "info",
         );
@@ -4418,7 +4417,7 @@ const createSystemWindowContent = (shortcutId, win) => {
         ].includes(subcommand)
       )
         XPDialogs.alert(
-          "This Windows XP feature is not available in Astro Flash.",
+          "This Windows XP feature is not available in Astro Flash Collection.",
           subcommandButton.textContent.trim() || "Windows Explorer",
           "info",
         );
@@ -4906,7 +4905,7 @@ const openMonitorPropertiesDialog = (ownerWindow) => {
       <fieldset><legend>Compatibility</legend><p>Some programs might not operate properly unless you restart the<br>computer after changing display settings.</p><p>After I change display settings:</p><label><input type="radio" name="display-compatibility"> Restart the computer before applying the new display settings</label><label><input type="radio" name="display-compatibility" checked> Apply the new display settings without restarting</label><label><input type="radio" name="display-compatibility"> Ask me before applying the new display settings</label><p>Some games and other programs must be run in 256-color mode.<br>Learn more about <u>running programs in 256-color mode</u>.</p></fieldset>
     </section>
     <section class="monitor-property-panel" id="monitor-adapter-panel" role="tabpanel" data-monitor-panel="adapter" hidden>
-      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Astro Flash virtual display</p></fieldset>
+      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Browser virtual display</p></fieldset>
       <fieldset><legend>Adapter</legend><p>This desktop uses the browser's active graphics adapter.</p><button type="button" class="xp-property-button" disabled>List All Modes...</button></fieldset>
     </section>
     <section class="monitor-property-panel" id="monitor-monitor-panel" role="tabpanel" data-monitor-panel="monitor" hidden>
@@ -5153,7 +5152,7 @@ const wireDisplayProperties = (win) => {
         win,
         controls.theme.value === "online" ? "Windows Themes" : "Open Theme",
         controls.theme.value === "online"
-          ? "More themes are not available in this offline desktop."
+          ? "More themes are not available in Astro Flash Collection."
           : "Select Windows XP or Windows Classic to change the current theme.",
       );
       controls.theme.value = pending.theme;
@@ -5903,7 +5902,8 @@ const createInternetGameCard = (game, win, { installed = false } = {}) => {
         ? "Not compatible"
         : "Install";
     if (includedGameId && !gamesList[gameId]) {
-      action.title = "This game is already included with Astro Flash.";
+      action.title =
+        "This game is already included with Astro Flash Collection.";
     }
     action.disabled = game.potentiallyCompatible === false;
     action.addEventListener("click", async () => {
@@ -8402,14 +8402,14 @@ const createXPProgramContent = (programId) => {
       const message = document.createElement("p");
       if (address === "about:home") {
         heading.textContent = "Welcome to Internet Explorer";
-        message.textContent =
-          "Browse local pages or enter an address while this recreation is offline.";
+        message.textContent = "Browse local pages or enter an address.";
       } else if (address === "http://www.msn.com/") {
         heading.textContent = "MSN";
-        message.textContent = "MSN is not available while working offline.";
+        message.textContent = "MSN is not available while offline.";
       } else {
         heading.textContent = address;
-        message.textContent = "The requested page is not available offline.";
+        message.textContent =
+          "The requested page is not available while offline.";
       }
       page.append(heading, message);
       back.disabled = historyIndex === 0;
@@ -10404,7 +10404,8 @@ const offlineStatusText = (state) => {
     "update-available": state.enabled
       ? "An update is downloading..."
       : "An update is available.",
-    "update-ready": "An update is ready. Restart Astro Flash to apply it.",
+    "update-ready":
+      "An update is ready. Restart Astro Flash Collection to apply it.",
     "repair-required":
       "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
@@ -10440,7 +10441,7 @@ const maybePromptForUpdate = (state) => {
   }
   promptedUpdateVersion = state.availableVersion;
   XPDialogs.confirm(
-    `Astro Flash ${state.availableVersion} is ready.\nRestart now to apply the update?`,
+    `Astro Flash Collection ${state.availableVersion} is ready.\nRestart now to apply the update?`,
     "Astro Flash Update",
     "info",
   ).then((accepted) => {
@@ -10520,7 +10521,7 @@ const wireProjectSettings = (win) => {
       </fieldset>
       <fieldset>
         <legend>Storage</legend>
-        <p>Astro Flash is using <strong data-project-value="storage"></strong> of browser storage.</p>
+        <p>Astro Flash Collection is using <strong data-project-value="storage"></strong> of browser storage.</p>
       </fieldset>
       <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send suggestions or report a problem</a>
     </section>
@@ -10859,11 +10860,11 @@ const wireProjectSettings = (win) => {
       state.phase === "checking"
         ? "Checking for updates..."
         : state.updateReady
-          ? `Astro Flash ${state.availableVersion || "update"} is ready to install.`
+          ? `Astro Flash Collection ${state.availableVersion || "update"} is ready to install.`
           : state.availableVersion
-            ? `Astro Flash ${state.availableVersion} is available.`
+            ? `Astro Flash Collection ${state.availableVersion} is available.`
             : state.lastChecked
-              ? "Astro Flash is up to date."
+              ? "Astro Flash Collection is up to date."
               : "Updates have not been checked yet.";
     if (state.error) {
       updateStatus.textContent = state.error;
@@ -10978,7 +10979,7 @@ const wireProjectSettings = (win) => {
   });
   resetButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
-      "Reset Astro Flash to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
+      "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
       "Reset Astro Flash",
       "warning",
     );
@@ -12308,7 +12309,7 @@ const setupDesktopContextMenu = () => {
       openSearchDialog();
     } else if (action === "manage-my-computer") {
       XPDialogs.alert(
-        "Computer Management is not available in this offline recreation.",
+        "Computer Management is not available in Astro Flash Collection.",
         "Computer Management",
         "info",
       );
@@ -12317,7 +12318,7 @@ const setupDesktopContextMenu = () => {
       action === "disconnect-network-drive"
     ) {
       XPDialogs.alert(
-        "This Windows XP network feature is not available in Astro Flash.",
+        "This Windows XP network feature is not available in Astro Flash Collection.",
         action === "map-network-drive"
           ? "Map Network Drive"
           : "Disconnect Network Drive",
@@ -12560,7 +12561,7 @@ const wirePrintersAndFaxes = (win) => {
     if (action === "add" || action === "fax") {
       XPDialogs.message({
         title: action === "add" ? "Add Printer Wizard" : "Fax Setup Wizard",
-        text: "This setup wizard is not available in the offline recreation.",
+        text: "This setup wizard is not available in Astro Flash Collection.",
         icon: "info",
       });
     } else if (action === "search") openSearchDialog();
@@ -12617,7 +12618,7 @@ const wireHelpAndSupport = (win) => {
       );
     } else if (action) {
       XPDialogs.alert(
-        `${event.target.closest("[data-help-action]").textContent.trim() || "This option"} is not available in the offline recreation.`,
+        `${event.target.closest("[data-help-action]").textContent.trim() || "This option"} is not available in Astro Flash Collection.`,
         "Help and Support Center",
         "info",
       );
@@ -12625,7 +12626,7 @@ const wireHelpAndSupport = (win) => {
     const topic = event.target.closest("[data-help-topic]");
     if (topic)
       XPDialogs.alert(
-        `Help content for “${topic.textContent.trim()}” is not available in the offline recreation.`,
+        `Help content for “${topic.textContent.trim()}” is not available in Astro Flash Collection.`,
         "Help and Support Center",
         "info",
       );
@@ -13207,7 +13208,7 @@ const buildPinnedPrograms = () => {
         icon: "WindowsCatalogMenu.png",
         action: () =>
           XPDialogs.alert(
-            "Windows Catalog is not available on this offline computer.",
+            "Windows Catalog is not available in Astro Flash Collection.",
             "Windows Catalog",
             "info",
           ),
