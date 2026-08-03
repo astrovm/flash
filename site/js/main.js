@@ -4905,7 +4905,7 @@ const openMonitorPropertiesDialog = (ownerWindow) => {
       <fieldset><legend>Compatibility</legend><p>Some programs might not operate properly unless you restart the<br>computer after changing display settings.</p><p>After I change display settings:</p><label><input type="radio" name="display-compatibility"> Restart the computer before applying the new display settings</label><label><input type="radio" name="display-compatibility" checked> Apply the new display settings without restarting</label><label><input type="radio" name="display-compatibility"> Ask me before applying the new display settings</label><p>Some games and other programs must be run in 256-color mode.<br>Learn more about <u>running programs in 256-color mode</u>.</p></fieldset>
     </section>
     <section class="monitor-property-panel" id="monitor-adapter-panel" role="tabpanel" data-monitor-panel="adapter" hidden>
-      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Astro Flash virtual display</p></fieldset>
+      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Browser virtual display</p></fieldset>
       <fieldset><legend>Adapter</legend><p>This desktop uses the browser's active graphics adapter.</p><button type="button" class="xp-property-button" disabled>List All Modes...</button></fieldset>
     </section>
     <section class="monitor-property-panel" id="monitor-monitor-panel" role="tabpanel" data-monitor-panel="monitor" hidden>
@@ -10404,7 +10404,8 @@ const offlineStatusText = (state) => {
     "update-available": state.enabled
       ? "An update is downloading..."
       : "An update is available.",
-    "update-ready": "An update is ready. Restart Astro Flash to apply it.",
+    "update-ready":
+      "An update is ready. Restart Astro Flash Collection to apply it.",
     "repair-required":
       "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
@@ -10440,7 +10441,7 @@ const maybePromptForUpdate = (state) => {
   }
   promptedUpdateVersion = state.availableVersion;
   XPDialogs.confirm(
-    `Astro Flash ${state.availableVersion} is ready.\nRestart now to apply the update?`,
+    `Astro Flash Collection ${state.availableVersion} is ready.\nRestart now to apply the update?`,
     "Astro Flash Update",
     "info",
   ).then((accepted) => {
@@ -10520,7 +10521,7 @@ const wireProjectSettings = (win) => {
       </fieldset>
       <fieldset>
         <legend>Storage</legend>
-        <p>Astro Flash is using <strong data-project-value="storage"></strong> of browser storage.</p>
+        <p>Astro Flash Collection is using <strong data-project-value="storage"></strong> of browser storage.</p>
       </fieldset>
       <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send suggestions or report a problem</a>
     </section>
@@ -10859,11 +10860,11 @@ const wireProjectSettings = (win) => {
       state.phase === "checking"
         ? "Checking for updates..."
         : state.updateReady
-          ? `Astro Flash ${state.availableVersion || "update"} is ready to install.`
+          ? `Astro Flash Collection ${state.availableVersion || "update"} is ready to install.`
           : state.availableVersion
-            ? `Astro Flash ${state.availableVersion} is available.`
+            ? `Astro Flash Collection ${state.availableVersion} is available.`
             : state.lastChecked
-              ? "Astro Flash is up to date."
+              ? "Astro Flash Collection is up to date."
               : "Updates have not been checked yet.";
     if (state.error) {
       updateStatus.textContent = state.error;
@@ -10978,7 +10979,7 @@ const wireProjectSettings = (win) => {
   });
   resetButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
-      "Reset Astro Flash to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
+      "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
       "Reset Astro Flash",
       "warning",
     );
