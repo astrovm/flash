@@ -1,7 +1,7 @@
 # Astro Flash Collection
 
-A Windows XP-style desktop for playing classic browser games with Ruffle,
-js-dos, ScummVM, and embedded web runtimes.
+Boot Windows XP in your browser and play classic games with Ruffle, js-dos,
+ScummVM, and embedded web runtimes.
 
 [Open Astro Flash Collection](https://flash.4st.li/)
 
