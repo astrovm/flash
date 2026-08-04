@@ -39,7 +39,10 @@
   },
   "dependencies": {
     "@nktkas/bmp": "4.0.0",
+    "@ruffle-rs/ruffle": "0.4.1",
     "fflate": "0.8.3",
-    "sharp": "^0.35.3"
+    "js-dos": "8.4.1",
+    "sharp": "^0.35.3",
+    "webtorrent": "3.0.21"
   }
 }

@@ -1,36 +1,29 @@
-import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PROJECT_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
-export const RUFFLE_RELEASE_PATH = join(
-  PROJECT_DIR,
-  "tools",
-  "ruffle-release.json",
-);
-export const RUFFLE_LATEST_RELEASE_URL =
-  "https://api.github.com/repos/ruffle-rs/ruffle/releases/latest";
-const RUFFLE_ASSET_SUFFIX = "-web-selfhosted.zip";
+export const PACKAGE_JSON_PATH = join(PROJECT_DIR, "package.json");
+export const RUFFLE_PACKAGE = "@ruffle-rs/ruffle";
+export const RUFFLE_NPM_REGISTRY_URL =
+  "https://registry.npmjs.org/@ruffle-rs/ruffle";
 
-type RuffleAsset = {
-  name?: string;
-  digest?: string;
-  browser_download_url?: string;
-};
-
-type GithubRelease = {
-  tag_name?: string;
-  draft?: boolean;
-  prerelease?: boolean;
-  assets?: RuffleAsset[];
-};
-
-export type RuffleRelease = { tag: string; asset: string; sha256: string };
 export type FetchLike = (
   input: string,
   init?: RequestInit,
 ) => Promise<Response>;
+
+type PackageJson = {
+  dependencies?: Record<string, string>;
+  [key: string]: unknown;
+};
+
+type NpmPackageMetadata = {
+  "dist-tags"?: {
+    latest?: string;
+    [tag: string]: string | undefined;
+  };
+};
 
 async function fetchOrThrow(
   fetchImpl: FetchLike,
@@ -46,62 +39,66 @@ async function fetchOrThrow(
   return response;
 }
 
-export async function getReleaseMetadata(
+export async function getLatestStableVersion(
   fetchImpl: FetchLike = fetch,
-): Promise<RuffleRelease> {
-  const release = (await (
-    await fetchOrThrow(fetchImpl, RUFFLE_LATEST_RELEASE_URL, 30_000)
-  ).json()) as GithubRelease;
-  const tag = release.tag_name ?? "";
-  if (release.draft || release.prerelease || !/^v\d+\.\d+\.\d+$/.test(tag)) {
-    throw new Error("GitHub did not return a stable semantic Ruffle release");
+): Promise<string> {
+  const metadata = (await (
+    await fetchOrThrow(fetchImpl, RUFFLE_NPM_REGISTRY_URL, 30_000)
+  ).json()) as NpmPackageMetadata;
+  const version = metadata["dist-tags"]?.latest ?? "";
+  if (!/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error("npm did not return a stable semantic Ruffle version");
   }
-
-  const asset = release.assets?.find((item) =>
-    item.name?.endsWith(RUFFLE_ASSET_SUFFIX),
-  );
-  if (!asset?.name) {
-    throw new Error("Stable Ruffle release has no self-hosted web package");
-  }
-
-  let checksum = asset.digest?.startsWith("sha256:")
-    ? asset.digest.slice("sha256:".length)
-    : "";
-  if (!checksum) {
-    if (!asset.browser_download_url) {
-      throw new Error("Stable Ruffle release has no valid SHA-256 digest");
-    }
-    const archive = await fetchOrThrow(
-      fetchImpl,
-      asset.browser_download_url,
-      120_000,
-    );
-    checksum = createHash("sha256")
-      .update(Buffer.from(await archive.arrayBuffer()))
-      .digest("hex");
-  }
-  if (!/^[a-f0-9]{64}$/.test(checksum)) {
-    throw new Error("Stable Ruffle release has no valid SHA-256 digest");
-  }
-
-  return { tag, asset: asset.name, sha256: checksum };
+  return version;
 }
 
-export async function updateReleaseFile(
-  path = RUFFLE_RELEASE_PATH,
+export function readPinnedVersion(packageJson: PackageJson): string {
+  const version = packageJson.dependencies?.[RUFFLE_PACKAGE];
+  if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error(
+      `package.json must pin ${RUFFLE_PACKAGE} to a stable semantic version`,
+    );
+  }
+  return version;
+}
+
+export async function updatePackagePin(
+  packageJsonPath = PACKAGE_JSON_PATH,
   fetchImpl: FetchLike = fetch,
+  install: (projectDir: string) => void = runBunInstall,
 ): Promise<boolean> {
-  const latest = await getReleaseMetadata(fetchImpl);
-  const current = JSON.parse(await readFile(path, "utf8")) as RuffleRelease;
-  if (JSON.stringify(latest) === JSON.stringify(current)) {
-    console.log(`Ruffle ${latest.tag} is already pinned.`);
+  const latest = await getLatestStableVersion(fetchImpl);
+  const packageJson = JSON.parse(
+    await readFile(packageJsonPath, "utf8"),
+  ) as PackageJson;
+  const current = readPinnedVersion(packageJson);
+  if (current === latest) {
+    console.log(`Ruffle ${latest} is already pinned.`);
     return false;
   }
-  await writeFile(path, `${JSON.stringify(latest, null, 2)}\n`);
-  console.log(`Updated Ruffle pin from ${current.tag} to ${latest.tag}.`);
+  packageJson.dependencies = {
+    ...packageJson.dependencies,
+    [RUFFLE_PACKAGE]: latest,
+  };
+  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  install(dirname(packageJsonPath));
+  console.log(`Updated Ruffle pin from ${current} to ${latest}.`);
   return true;
 }
 
+export function runBunInstall(projectDir: string): void {
+  const result = Bun.spawnSync(["bun", "install"], {
+    cwd: projectDir,
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  if (!result.success) {
+    throw new Error(
+      `bun install failed after updating ${RUFFLE_PACKAGE}: ${result.stderr.toString()}`,
+    );
+  }
+}
+
 if (import.meta.main) {
-  await updateReleaseFile();
+  await updatePackagePin();
 }

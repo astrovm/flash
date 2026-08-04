@@ -46,7 +46,6 @@ describe("development build synchronization", () => {
     await mkdir(join(project, "tools"), { recursive: true });
     await writeFile(join(project, "site", "index.html"), "one");
     await writeFile(join(project, "tools", "deploy.ts"), "build");
-    await writeFile(join(project, "tools", "ruffle-release.json"), "{}");
     await writeFile(join(project, "workbox-config.ts"), "config");
     await writeFile(join(project, "package.json"), "{}");
     await writeFile(join(project, "bun.lock"), "lock");

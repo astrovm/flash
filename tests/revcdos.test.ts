@@ -35,7 +35,7 @@ test("ships authenticated engine and torrent artifacts without game media", asyn
     await file("site/iframe/revcdos/modules/cheats.js").exists(),
   ).toBeTrue();
   expect(
-    await file("site/vendor/webtorrent/3.0.21/webtorrent.min.js").exists(),
+    await file("node_modules/webtorrent/dist/webtorrent.min.js").exists(),
   ).toBeTrue();
   expect(await file("site/iframe/revcdos/cover.jpg").exists()).toBeFalse();
   expect(await file("site/iframe/revcdos/intro.mp4").exists()).toBeFalse();

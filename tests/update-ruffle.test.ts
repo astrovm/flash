@@ -3,9 +3,10 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  getReleaseMetadata,
+  getLatestStableVersion,
   type FetchLike,
-  updateReleaseFile,
+  readPinnedVersion,
+  updatePackagePin,
 } from "../tools/update-ruffle.ts";
 
 const temporaryDirectories: string[] = [];
@@ -17,44 +18,29 @@ afterEach(async () => {
   );
 });
 
-function response(payload: unknown, content = ""): Response {
-  return new Response(content || JSON.stringify(payload), { status: 200 });
+function response(payload: unknown): Response {
+  return new Response(JSON.stringify(payload), { status: 200 });
 }
 
-function fetchFor(release: unknown): FetchLike {
-  return async () => response(release);
+function fetchFor(payload: unknown): FetchLike {
+  return async () => response(payload);
 }
 
 describe("update-ruffle", () => {
-  test("stable releases use the API digest", async () => {
-    const metadata = await getReleaseMetadata(
+  test("stable releases use the npm latest tag", async () => {
+    const version = await getLatestStableVersion(
       fetchFor({
-        tag_name: "v0.4.2",
-        draft: false,
-        prerelease: false,
-        assets: [
-          {
-            name: "ruffle-0.4.2-web-selfhosted.zip",
-            digest: `sha256:${"b".repeat(64)}`,
-          },
-        ],
+        "dist-tags": { latest: "0.4.2", nightly: "0.5.0-nightly.2026.8.4" },
       }),
     );
-    expect(metadata).toEqual({
-      tag: "v0.4.2",
-      asset: "ruffle-0.4.2-web-selfhosted.zip",
-      sha256: "b".repeat(64),
-    });
+    expect(version).toBe("0.4.2");
   });
 
-  test("rejects prereleases", async () => {
+  test("rejects non-semantic latest tags", async () => {
     await expect(
-      getReleaseMetadata(
+      getLatestStableVersion(
         fetchFor({
-          tag_name: "v0.4.2",
-          draft: false,
-          prerelease: true,
-          assets: [],
+          "dist-tags": { latest: "0.5.0-nightly.2026.8.4" },
         }),
       ),
     ).rejects.toThrow("stable semantic");
@@ -63,24 +49,44 @@ describe("update-ruffle", () => {
   test("only writes the pin when it changes", async () => {
     const directory = await mkdtemp(join(tmpdir(), "update-ruffle-"));
     temporaryDirectories.push(directory);
-    const releasePath = join(directory, "ruffle.json");
+    const packageJsonPath = join(directory, "package.json");
     const current = {
-      tag: "v0.4.1",
-      asset: "ruffle-0.4.1-web-selfhosted.zip",
-      sha256: "a".repeat(64),
+      dependencies: {
+        "@ruffle-rs/ruffle": "0.4.1",
+      },
     };
-    await writeFile(releasePath, JSON.stringify(current));
+    await writeFile(packageJsonPath, JSON.stringify(current));
+    let installs = 0;
     expect(
-      await updateReleaseFile(
-        releasePath,
+      await updatePackagePin(
+        packageJsonPath,
         fetchFor({
-          tag_name: current.tag,
-          draft: false,
-          prerelease: false,
-          assets: [{ name: current.asset, digest: `sha256:${current.sha256}` }],
+          "dist-tags": { latest: "0.4.1" },
         }),
+        () => {
+          installs += 1;
+        },
       ),
     ).toBeFalse();
-    expect(JSON.parse(await readFile(releasePath, "utf8"))).toEqual(current);
+    expect(JSON.parse(await readFile(packageJsonPath, "utf8"))).toEqual(
+      current,
+    );
+    expect(installs).toBe(0);
+
+    expect(
+      await updatePackagePin(
+        packageJsonPath,
+        fetchFor({
+          "dist-tags": { latest: "0.4.2" },
+        }),
+        () => {
+          installs += 1;
+        },
+      ),
+    ).toBeTrue();
+    expect(
+      readPinnedVersion(JSON.parse(await readFile(packageJsonPath, "utf8"))),
+    ).toBe("0.4.2");
+    expect(installs).toBe(1);
   });
 });

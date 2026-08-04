@@ -21,7 +21,6 @@ export const DEV_RELOAD_PATH = "/__dev/reload";
 const BUILD_INPUTS = [
   "site",
   "tools/deploy.ts",
-  "tools/ruffle-release.json",
   "workbox-config.ts",
   "package.json",
   "bun.lock",
@@ -211,10 +210,14 @@ export async function computeSourceFingerprint(
   return digest.digest("hex");
 }
 
-async function currentRuffleReleaseKey(): Promise<string> {
-  return createHash("sha256")
-    .update(await readFile(join(PROJECT_DIR, "tools", "ruffle-release.json")))
-    .digest("hex");
+async function currentRuffleReleaseKey(
+  projectDir = PROJECT_DIR,
+): Promise<string> {
+  const packageJson = JSON.parse(
+    await readFile(join(projectDir, "package.json"), "utf8"),
+  ) as { dependencies?: Record<string, string> };
+  const version = packageJson.dependencies?.["@ruffle-rs/ruffle"] ?? "";
+  return createHash("sha256").update(version).digest("hex");
 }
 
 async function readBuildState(

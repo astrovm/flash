@@ -32,7 +32,7 @@ jobs:
         id: changes
         shell: bash
         run: |
-          if git diff --quiet -- tools/ruffle-release.json; then
+          if git diff --quiet -- package.json bun.lock; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -44,7 +44,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          version="$(bun -e 'console.log((await Bun.file("tools/ruffle-release.json").json()).tag)')"
+          version="$(bun -e 'console.log(JSON.parse(await Bun.file("package.json").text()).dependencies["@ruffle-rs/ruffle"])')"
           branch="deps/ruffle-${version}"
           if [ "$(gh pr list --state all --head "$branch" --json number --jq length)" -ne 0 ]; then
             echo "A pull request for ${version} already exists."
@@ -53,12 +53,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add tools/ruffle-release.json
+          git add package.json bun.lock
           git commit -m "Update Ruffle to ${version}"
           git push origin "$branch"
           gh pr create \
             --base main \
             --head "$branch" \
             --title "Update Ruffle to ${version}" \
-            --body "Updates the pinned stable self-hosted Ruffle release and checksum. This pull request is intentionally not auto-merged."
+            --body "Updates the pinned \`@ruffle-rs/ruffle\` npm package. This pull request is intentionally not auto-merged."
           gh workflow run pages.yml --ref "$branch"
