@@ -17,7 +17,6 @@
     "quality": "bun run format:check && bun run lint",
     "sync:icons": "bun tools/sync-game-icons.ts",
     "typecheck": "tsc --noEmit",
-    "update:ruffle": "bun tools/update-ruffle.ts",
     "validate:icons": "bun tools/validate-icons.ts --require-all",
     "validate:javascript": "bun tools/validate-javascript.ts",
     "verify:xp-assets": "bun tools/extract-xp-assets.ts --check",

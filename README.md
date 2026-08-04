@@ -90,8 +90,7 @@ bun run deploy:worker
 ```
 
 Ruffle, js-dos, and WebTorrent are pinned in `package.json` and copied into the
-build output from `node_modules`. A weekly workflow checks for new stable Ruffle
-releases and opens a reviewable pull request.
+build output from `node_modules`.
 
 ## Contributing
 
