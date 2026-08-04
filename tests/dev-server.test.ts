@@ -80,17 +80,17 @@ describe("development build synchronization", () => {
     let reusedBootstrap = "";
     const builder = async ({
       outputDir,
-      download,
+      installRuffle,
     }: {
       outputDir?: string;
-      download?: (jsDir: string) => Promise<void>;
+      installRuffle?: (jsDir: string) => Promise<void>;
     }) => {
       builds += 1;
       await mkdir(join(outputDir as string, "js"), { recursive: true });
       await writeFile(join(outputDir as string, "index.html"), "built");
-      if (download) {
+      if (installRuffle) {
         const stagingJs = join(root, "staging-js");
-        await download(stagingJs);
+        await installRuffle(stagingJs);
         reusedBootstrap = await readFile(join(stagingJs, "ruffle.js"), "utf8");
       }
       await writeFile(

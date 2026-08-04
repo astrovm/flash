@@ -57,7 +57,7 @@ async function makeSource(root: string): Promise<void> {
   await writeFiles(root, {
     "index.html": [
       '<script src="js/ruffle.js?v=old"></script>',
-      '<script src="vendor/fflate/0.8.3/index.js?v=old"></script>',
+      '<script src="vendor/fflate/index.js?v=old"></script>',
       '<script src="js/games.js?v=old"></script>',
       '<script src="js/flash-url-router.js?v=old"></script>',
       '<script src="js/storage-policy.js?v=old"></script>',
@@ -103,10 +103,10 @@ async function makeSource(root: string): Promise<void> {
     "assets/xp/bliss.jpg": "wallpaper",
     "assets/xp/sounds/startup.wav": "sound",
     "favicon.ico": "favicon",
-    "vendor/fflate/0.8.3/index.js": "fflate",
-    "vendor/js-dos/8.4.1/js-dos.js": "js-dos",
-    "vendor/js-dos/8.4.1/emulators/wdosbox.wasm": "wasm",
-    "vendor/webtorrent/3.0.21/webtorrent.min.js": "webtorrent",
+    "vendor/fflate/index.js": "fflate",
+    "vendor/js-dos/js-dos.js": "js-dos",
+    "vendor/js-dos/emulators/wdosbox.wasm": "wasm",
+    "vendor/webtorrent/webtorrent.min.js": "webtorrent",
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
@@ -193,7 +193,6 @@ describe("npm runtime installation", () => {
     });
     await writeFiles(webtorrentSource, {
       "dist/webtorrent.min.js": "torrent",
-      LICENSE: "mit",
     });
 
     await installJsDos(output, jsDosSource);
@@ -210,9 +209,6 @@ describe("npm runtime installation", () => {
       ),
     ).toBe("box-wasm");
     expect(await readFile(paths.webtorrentJs, "utf8")).toBe("torrent");
-    expect(
-      await readFile(join(paths.webtorrentJs, "..", "LICENSE"), "utf8"),
-    ).toBe("mit");
   });
 });
 
@@ -439,7 +435,7 @@ describe("atomic build", () => {
       sourceDir: source,
       outputDir: output,
       version: "26.07.28-abcdef1",
-      download: async (jsDir) => addGeneratedRuntime(join(jsDir, "..")),
+      installRuffle: async (jsDir) => addGeneratedRuntime(join(jsDir, "..")),
       generate: addGeneratedRuntime,
     });
 
@@ -472,7 +468,7 @@ describe("atomic build", () => {
         sourceDir: source,
         outputDir: output,
         version: "26.07.28-abcdef1",
-        download: async () => {
+        installRuffle: async () => {
           throw new Error("network failed");
         },
       }),

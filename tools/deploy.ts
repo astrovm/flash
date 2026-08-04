@@ -27,10 +27,11 @@ import workboxConfig from "../workbox-config";
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const SOURCE_DIR = join(PROJECT_DIR, "site");
 export const DEFAULT_OUTPUT_DIR = join(PROJECT_DIR, "dist");
-export const FFLATE_VERSION = "0.8.3";
-export const JS_DOS_VERSION = "8.4.1";
-export const WEBTORRENT_VERSION = "3.0.21";
 export const RUFFLE_PACKAGE = "@ruffle-rs/ruffle";
+/** Build-output paths for npm browser assets (unversioned; lockfile pins versions). */
+export const FFLATE_JS_PATH = "vendor/fflate/index.js";
+export const JS_DOS_ROOT_PATH = "vendor/js-dos";
+export const WEBTORRENT_JS_PATH = "vendor/webtorrent/webtorrent.min.js";
 const NODE_MODULES = join(PROJECT_DIR, "node_modules");
 const FFLATE_SOURCE = join(NODE_MODULES, "fflate");
 const JS_DOS_SOURCE = join(NODE_MODULES, "js-dos");
@@ -139,21 +140,15 @@ export class BuildPaths {
   }
 
   get fflateJs() {
-    return join(this.root, "vendor", "fflate", FFLATE_VERSION, "index.js");
+    return join(this.root, ...FFLATE_JS_PATH.split("/"));
   }
 
   get jsDosRoot() {
-    return join(this.root, "vendor", "js-dos", JS_DOS_VERSION);
+    return join(this.root, ...JS_DOS_ROOT_PATH.split("/"));
   }
 
   get webtorrentJs() {
-    return join(
-      this.root,
-      "vendor",
-      "webtorrent",
-      WEBTORRENT_VERSION,
-      "webtorrent.min.js",
-    );
+    return join(this.root, ...WEBTORRENT_JS_PATH.split("/"));
   }
 }
 
@@ -216,15 +211,10 @@ export async function installFflate(
   sourceDir = FFLATE_SOURCE,
 ): Promise<void> {
   const sourceJavaScript = join(sourceDir, "umd", "index.js");
-  const sourceLicense = join(sourceDir, "LICENSE");
   await requirePackageFile(sourceJavaScript, "fflate");
-  await requirePackageFile(sourceLicense, "fflate");
-  const destination = join(outputDir, "vendor", "fflate", FFLATE_VERSION);
+  const destination = join(outputDir, "vendor", "fflate");
   await mkdir(destination, { recursive: true });
   await cp(sourceJavaScript, join(destination, "index.js"), {
-    preserveTimestamps: true,
-  });
-  await cp(sourceLicense, join(destination, "LICENSE"), {
     preserveTimestamps: true,
   });
 }
@@ -234,7 +224,7 @@ export async function installJsDos(
   sourceDir = JS_DOS_SOURCE,
 ): Promise<void> {
   const sourceRoot = join(sourceDir, "dist");
-  const destination = join(outputDir, "vendor", "js-dos", JS_DOS_VERSION);
+  const destination = join(outputDir, ...JS_DOS_ROOT_PATH.split("/"));
   for (const relativePath of JS_DOS_RUNTIME_FILES) {
     const source = join(sourceRoot, relativePath);
     await requirePackageFile(source, "js-dos");
@@ -242,7 +232,7 @@ export async function installJsDos(
     await mkdir(dirname(target), { recursive: true });
     await cp(source, target, { preserveTimestamps: true });
   }
-  console.log(`  - Installed js-dos ${JS_DOS_VERSION}`);
+  console.log("  - Installed js-dos");
 }
 
 export async function installWebtorrent(
@@ -250,23 +240,13 @@ export async function installWebtorrent(
   sourceDir = WEBTORRENT_SOURCE,
 ): Promise<void> {
   const sourceJavaScript = join(sourceDir, "dist", "webtorrent.min.js");
-  const sourceLicense = join(sourceDir, "LICENSE");
   await requirePackageFile(sourceJavaScript, "webtorrent");
-  await requirePackageFile(sourceLicense, "webtorrent");
-  const destination = join(
-    outputDir,
-    "vendor",
-    "webtorrent",
-    WEBTORRENT_VERSION,
-  );
+  const destination = join(outputDir, "vendor", "webtorrent");
   await mkdir(destination, { recursive: true });
   await cp(sourceJavaScript, join(destination, "webtorrent.min.js"), {
     preserveTimestamps: true,
   });
-  await cp(sourceLicense, join(destination, "LICENSE"), {
-    preserveTimestamps: true,
-  });
-  console.log(`  - Installed WebTorrent ${WEBTORRENT_VERSION}`);
+  console.log("  - Installed WebTorrent");
 }
 
 export async function installRuffle(
@@ -452,11 +432,14 @@ export async function updateHtml(
       `Could not update asset reference matching ${pattern.source}`,
     );
   }
-  const fflatePattern = /vendor\/fflate\/0\.8\.3\/index\.js(?:\?v=[^"]+)?"?/g;
+  const fflatePattern = new RegExp(
+    `${FFLATE_JS_PATH.replaceAll(".", "\\.")}(?:\\?v=[^"]+)?"?`,
+    "g",
+  );
   content = await replaceExactlyOnce(
     content,
     fflatePattern,
-    `vendor/fflate/0.8.3/index.js?v=${fflateHash}"`,
+    `${FFLATE_JS_PATH}?v=${fflateHash}"`,
     "Could not update fflate asset reference",
   );
   await writeFile(paths.html, content);
@@ -878,7 +861,10 @@ export async function validateOutput(outputDir: string): Promise<void> {
       throw new Error(`Build output has an invalid content hash for ${asset}`);
     }
   }
-  if (!/vendor\/fflate\/0\.8\.3\/index\.js\?v=[a-f0-9]{8}"/.test(html)) {
+  const fflateReference = new RegExp(
+    `${FFLATE_JS_PATH.replaceAll(".", "\\.")}\\?v=[a-f0-9]{8}"`,
+  );
+  if (!fflateReference.test(html)) {
     throw new Error("Build output has no versioned fflate reference");
   }
   const staticFiles = [
@@ -1073,7 +1059,7 @@ export interface BuildOptions {
   revision?: string;
   sourceDir?: string;
   version?: string;
-  download?: (jsDir: string) => Promise<void>;
+  installRuffle?: (jsDir: string) => Promise<void>;
   generate?: (outputDir: string, version?: string) => Promise<void>;
 }
 
@@ -1082,7 +1068,7 @@ export async function build({
   revision = "HEAD",
   sourceDir = SOURCE_DIR,
   version,
-  download = installRuffle,
+  installRuffle: installRuffleRuntime = installRuffle,
   generate = (directory, buildVersion) =>
     generateServiceWorker(directory, generateSW, buildVersion),
 }: BuildOptions = {}): Promise<void> {
@@ -1113,7 +1099,7 @@ export async function build({
     await installFflate(stagingDir);
     await installJsDos(stagingDir);
     await installWebtorrent(stagingDir);
-    await download(paths.js);
+    await installRuffleRuntime(paths.js);
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
     await writeVersionMetadata(paths, deploymentVersion);

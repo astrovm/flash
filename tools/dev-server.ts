@@ -213,11 +213,26 @@ export async function computeSourceFingerprint(
 async function currentRuffleReleaseKey(
   projectDir = PROJECT_DIR,
 ): Promise<string> {
-  const packageJson = JSON.parse(
-    await readFile(join(projectDir, "package.json"), "utf8"),
-  ) as { dependencies?: Record<string, string> };
-  const version = packageJson.dependencies?.["@ruffle-rs/ruffle"] ?? "";
-  return createHash("sha256").update(version).digest("hex");
+  // Use the lock-resolved install, not the package.json caret range.
+  try {
+    const packageJson = JSON.parse(
+      await readFile(
+        join(
+          projectDir,
+          "node_modules",
+          "@ruffle-rs",
+          "ruffle",
+          "package.json",
+        ),
+        "utf8",
+      ),
+    ) as { version?: string };
+    return createHash("sha256")
+      .update(packageJson.version ?? "missing")
+      .digest("hex");
+  } catch {
+    return createHash("sha256").update("missing").digest("hex");
+  }
 }
 
 async function readBuildState(
@@ -332,7 +347,7 @@ export async function ensureDevelopmentBuild({
     ...(version ? { version: version(sourceFingerprint) } : {}),
     ...(canReuseRuffle
       ? {
-          download: (destinationJsDir: string) =>
+          installRuffle: (destinationJsDir: string) =>
             copyRuffleRuntime(sourceJsDir, destinationJsDir),
         }
       : {}),
