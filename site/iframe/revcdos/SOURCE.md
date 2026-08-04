@@ -24,8 +24,8 @@ Automatic downloads use the torrent metadata published by DOS.Zone at
 `489dae72cb4433fadd7d38a12bb52a23b5a7cc1e`). The torrent metadata contains file
 names, hashes, and tracker addresses, but not the game data itself.
 
-The browser downloader is WebTorrent 3.0.21. Its bundled source and MIT license
-are stored under `site/vendor/webtorrent/3.0.21/`.
+The browser downloader is WebTorrent from the `webtorrent` npm package.
+The build copies its browser bundle into `vendor/webtorrent/`.
 
 The DOS.Zone Team attribution, in-game logo, and `jsdos-cloud-sdk.js` cloud-save
 integration required by the upstream project are preserved.

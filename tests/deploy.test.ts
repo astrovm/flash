@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { createHash } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
@@ -12,16 +11,15 @@ import {
 import { join, relative } from "node:path";
 import { tmpdir } from "node:os";
 
-import { zipSync } from "fflate";
-
 import {
   BuildPaths,
   PRECACHE_FILE_SUFFIXES,
   build,
-  downloadRuffle,
   generateServiceWorker,
   getDeploymentVersion,
-  loadRuffleRelease,
+  installJsDos,
+  installRuffle,
+  installWebtorrent,
   updateHtml,
   validateOutput,
   writeOfflineGameManifest,
@@ -44,28 +42,6 @@ afterEach(async () => {
   );
 });
 
-function makeRuffleArchive({
-  includeCore = true,
-  includeWasm = true,
-}: {
-  includeCore?: boolean;
-  includeWasm?: boolean;
-} = {}): Uint8Array {
-  return zipSync({
-    "ruffle.js": new TextEncoder().encode("ruffle"),
-    "ruffle.js.map": new TextEncoder().encode("map"),
-    ...(includeCore
-      ? { "core.ruffle.abc123.js": new TextEncoder().encode("core") }
-      : {}),
-    ...(includeWasm ? { "abc123.wasm": new TextEncoder().encode("wasm") } : {}),
-    "nested/ignored.js": new TextEncoder().encode("ignored"),
-  });
-}
-
-function archiveResponse(archive: Uint8Array): Response {
-  return new Response(archive.slice().buffer as ArrayBuffer);
-}
-
 async function writeFiles(
   root: string,
   files: Record<string, string | Uint8Array>,
@@ -81,7 +57,7 @@ async function makeSource(root: string): Promise<void> {
   await writeFiles(root, {
     "index.html": [
       '<script src="js/ruffle.js?v=old"></script>',
-      '<script src="vendor/fflate/0.8.3/index.js?v=old"></script>',
+      '<script src="vendor/fflate/index.js?v=old"></script>',
       '<script src="js/games.js?v=old"></script>',
       '<script src="js/flash-url-router.js?v=old"></script>',
       '<script src="js/storage-policy.js?v=old"></script>',
@@ -127,7 +103,10 @@ async function makeSource(root: string): Promise<void> {
     "assets/xp/bliss.jpg": "wallpaper",
     "assets/xp/sounds/startup.wav": "sound",
     "favicon.ico": "favicon",
-    "vendor/fflate/0.8.3/index.js": "fflate",
+    "vendor/fflate/index.js": "fflate",
+    "vendor/js-dos/js-dos.js": "js-dos",
+    "vendor/js-dos/emulators/wdosbox.wasm": "wasm",
+    "vendor/webtorrent/webtorrent.min.js": "webtorrent",
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
@@ -165,71 +144,71 @@ async function fileSnapshot(root: string): Promise<Map<string, Uint8Array>> {
   return snapshot;
 }
 
-describe("Ruffle release handling", () => {
-  test("accepts complete pinned metadata", async () => {
+describe("npm runtime installation", () => {
+  test("copies Ruffle runtime files from a package directory", async () => {
     const root = await makeTemporaryDirectory();
-    const metadata = join(root, "ruffle.json");
-    await writeFile(
-      metadata,
-      JSON.stringify({
-        tag: "v0.4.1",
-        asset: "ruffle-0.4.1-web-selfhosted.zip",
-        sha256: "a".repeat(64),
-      }),
+    const source = join(root, "package");
+    const jsDir = join(root, "js");
+    await writeFiles(source, {
+      "ruffle.js": "ruffle",
+      "ruffle.js.map": "map",
+      "core.ruffle.abc123.js": "core",
+      "abc123.wasm": "wasm",
+      "nested/ignored.js": "ignored",
+      "README.md": "docs",
+    });
+    await installRuffle(jsDir, source);
+
+    expect(await Bun.file(join(jsDir, "ruffle.js")).exists()).toBeTrue();
+    expect(await Bun.file(join(jsDir, "abc123.wasm")).exists()).toBeTrue();
+    expect(await Bun.file(join(jsDir, "ignored.js")).exists()).toBeFalse();
+    expect(await Bun.file(join(jsDir, "README.md")).exists()).toBeFalse();
+  });
+
+  test("rejects incomplete Ruffle packages", async () => {
+    const root = await makeTemporaryDirectory();
+    const source = join(root, "package");
+    await writeFiles(source, {
+      "ruffle.js": "ruffle",
+      "core.ruffle.abc123.js": "core",
+    });
+    await expect(installRuffle(join(root, "js"), source)).rejects.toThrow(
+      "missing required runtime",
     );
-    expect((await loadRuffleRelease(metadata)).tag).toBe("v0.4.1");
   });
 
-  test("rejects invalid metadata", async () => {
+  test("copies js-dos and WebTorrent browser assets", async () => {
     const root = await makeTemporaryDirectory();
-    const metadata = join(root, "ruffle.json");
-    await writeFile(metadata, '{"tag":"nightly"}');
-    expect(loadRuffleRelease(metadata)).rejects.toThrow(
-      "tag, asset, and sha256",
+    const jsDosSource = join(root, "js-dos");
+    const webtorrentSource = join(root, "webtorrent");
+    const output = join(root, "out");
+    await writeFiles(jsDosSource, {
+      "dist/js-dos.js": "player",
+      "dist/js-dos.css": "css",
+      "dist/emulators/emulators.js": "emulators",
+      "dist/emulators/wdosbox.js": "box",
+      "dist/emulators/wdosbox.wasm": "box-wasm",
+      "dist/emulators/wlibzip.js": "zip",
+      "dist/emulators/wlibzip.wasm": "zip-wasm",
+    });
+    await writeFiles(webtorrentSource, {
+      "dist/webtorrent.min.js": "torrent",
+    });
+
+    await installJsDos(output, jsDosSource);
+    await installWebtorrent(output, webtorrentSource);
+
+    const paths = new BuildPaths(output);
+    expect(await readFile(join(paths.jsDosRoot, "js-dos.js"), "utf8")).toBe(
+      "player",
     );
-  });
-
-  test("verifies checksum and extracts only root runtime files", async () => {
-    const root = await makeTemporaryDirectory();
-    const archive = makeRuffleArchive();
-    const release = {
-      tag: "v0.4.1",
-      asset: "ruffle-0.4.1-web-selfhosted.zip",
-      sha256: createHash("sha256").update(archive).digest("hex"),
-    };
-    const fetcher = async () => archiveResponse(archive);
-    await downloadRuffle(join(root, "js"), release, fetcher);
-
-    expect(await Bun.file(join(root, "js", "ruffle.js")).exists()).toBeTrue();
-    expect(await Bun.file(join(root, "js", "abc123.wasm")).exists()).toBeTrue();
-    expect(await Bun.file(join(root, "js", "ignored.js")).exists()).toBeFalse();
-  });
-
-  test("rejects checksum mismatches and incomplete runtimes", async () => {
-    const root = await makeTemporaryDirectory();
-    const completeArchive = makeRuffleArchive();
-    const incompleteArchive = makeRuffleArchive({ includeWasm: false });
-    const baseRelease = {
-      tag: "v0.4.1",
-      asset: "ruffle-0.4.1-web-selfhosted.zip",
-    };
-    await expect(
-      downloadRuffle(
-        join(root, "mismatch"),
-        { ...baseRelease, sha256: "0".repeat(64) },
-        async () => archiveResponse(completeArchive),
+    expect(
+      await readFile(
+        join(paths.jsDosRoot, "emulators", "wdosbox.wasm"),
+        "utf8",
       ),
-    ).rejects.toThrow("checksum mismatch");
-    await expect(
-      downloadRuffle(
-        join(root, "incomplete"),
-        {
-          ...baseRelease,
-          sha256: createHash("sha256").update(incompleteArchive).digest("hex"),
-        },
-        async () => archiveResponse(incompleteArchive),
-      ),
-    ).rejects.toThrow("missing required runtime");
+    ).toBe("box-wasm");
+    expect(await readFile(paths.webtorrentJs, "utf8")).toBe("torrent");
   });
 });
 
@@ -456,7 +435,7 @@ describe("atomic build", () => {
       sourceDir: source,
       outputDir: output,
       version: "26.07.28-abcdef1",
-      download: async (jsDir) => addGeneratedRuntime(join(jsDir, "..")),
+      installRuffle: async (jsDir) => addGeneratedRuntime(join(jsDir, "..")),
       generate: addGeneratedRuntime,
     });
 
@@ -489,7 +468,7 @@ describe("atomic build", () => {
         sourceDir: source,
         outputDir: output,
         version: "26.07.28-abcdef1",
-        download: async () => {
+        installRuffle: async () => {
           throw new Error("network failed");
         },
       }),

@@ -21,23 +21,32 @@ import {
 } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { unzipSync } from "fflate";
 import { generateSW } from "workbox-build";
 import workboxConfig from "../workbox-config";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const SOURCE_DIR = join(PROJECT_DIR, "site");
 export const DEFAULT_OUTPUT_DIR = join(PROJECT_DIR, "dist");
-export const RUFFLE_RELEASE_PATH = join(
-  PROJECT_DIR,
-  "tools",
-  "ruffle-release.json",
-);
-const RUFFLE_DOWNLOAD_ROOT =
-  "https://github.com/ruffle-rs/ruffle/releases/download";
+export const RUFFLE_PACKAGE = "@ruffle-rs/ruffle";
+/** Build-output paths for npm browser assets (unversioned; lockfile pins versions). */
+export const FFLATE_JS_PATH = "vendor/fflate/index.js";
+export const JS_DOS_ROOT_PATH = "vendor/js-dos";
+export const WEBTORRENT_JS_PATH = "vendor/webtorrent/webtorrent.min.js";
+const NODE_MODULES = join(PROJECT_DIR, "node_modules");
+const FFLATE_SOURCE = join(NODE_MODULES, "fflate");
+const JS_DOS_SOURCE = join(NODE_MODULES, "js-dos");
+const WEBTORRENT_SOURCE = join(NODE_MODULES, "webtorrent");
+const RUFFLE_SOURCE = join(NODE_MODULES, ...RUFFLE_PACKAGE.split("/"));
 const RUFFLE_FILE_SUFFIXES = [".js", ".js.map", ".wasm"];
-export const FFLATE_VERSION = "0.8.3";
-const FFLATE_SOURCE = join(PROJECT_DIR, "node_modules", "fflate");
+const JS_DOS_RUNTIME_FILES = [
+  "js-dos.js",
+  "js-dos.css",
+  "emulators/emulators.js",
+  "emulators/wdosbox.js",
+  "emulators/wdosbox.wasm",
+  "emulators/wlibzip.js",
+  "emulators/wlibzip.wasm",
+];
 export const PRECACHE_FILE_SUFFIXES = new Set([
   ".ttf",
   ".woff",
@@ -64,17 +73,7 @@ export const PRECACHE_FILE_SUFFIXES = new Set([
 ]);
 const APP_VERSION_PATTERN = /const APP_VERSION = "[^"]+";/g;
 
-type Fetcher = (
-  input: string | URL | Request,
-  init?: RequestInit,
-) => Promise<Response>;
 type WorkboxGenerator = typeof generateSW;
-
-export interface RuffleRelease {
-  tag: string;
-  asset: string;
-  sha256: string;
-}
 
 interface OfflineFile {
   bytes: number;
@@ -141,7 +140,15 @@ export class BuildPaths {
   }
 
   get fflateJs() {
-    return join(this.root, "vendor", "fflate", FFLATE_VERSION, "index.js");
+    return join(this.root, ...FFLATE_JS_PATH.split("/"));
+  }
+
+  get jsDosRoot() {
+    return join(this.root, ...JS_DOS_ROOT_PATH.split("/"));
+  }
+
+  get webtorrentJs() {
+    return join(this.root, ...WEBTORRENT_JS_PATH.split("/"));
   }
 }
 
@@ -188,104 +195,93 @@ async function replaceExactlyOnce(
   return content.replace(pattern, replacement);
 }
 
+async function requirePackageFile(
+  path: string,
+  packageName: string,
+): Promise<void> {
+  if (!(await isFile(path))) {
+    throw new Error(
+      `${packageName} is not installed; run \`bun install --frozen-lockfile\``,
+    );
+  }
+}
+
 export async function installFflate(
   outputDir: string,
   sourceDir = FFLATE_SOURCE,
 ): Promise<void> {
   const sourceJavaScript = join(sourceDir, "umd", "index.js");
-  const sourceLicense = join(sourceDir, "LICENSE");
-  if (!(await isFile(sourceJavaScript)) || !(await isFile(sourceLicense))) {
-    throw new Error(
-      "fflate is not installed; run `bun install --frozen-lockfile`",
-    );
-  }
-  const destination = join(outputDir, "vendor", "fflate", FFLATE_VERSION);
+  await requirePackageFile(sourceJavaScript, "fflate");
+  const destination = join(outputDir, "vendor", "fflate");
   await mkdir(destination, { recursive: true });
   await cp(sourceJavaScript, join(destination, "index.js"), {
     preserveTimestamps: true,
   });
-  await cp(sourceLicense, join(destination, "LICENSE"), {
+}
+
+export async function installJsDos(
+  outputDir: string,
+  sourceDir = JS_DOS_SOURCE,
+): Promise<void> {
+  const sourceRoot = join(sourceDir, "dist");
+  const destination = join(outputDir, ...JS_DOS_ROOT_PATH.split("/"));
+  for (const relativePath of JS_DOS_RUNTIME_FILES) {
+    const source = join(sourceRoot, relativePath);
+    await requirePackageFile(source, "js-dos");
+    const target = join(destination, relativePath);
+    await mkdir(dirname(target), { recursive: true });
+    await cp(source, target, { preserveTimestamps: true });
+  }
+  console.log("  - Installed js-dos");
+}
+
+export async function installWebtorrent(
+  outputDir: string,
+  sourceDir = WEBTORRENT_SOURCE,
+): Promise<void> {
+  const sourceJavaScript = join(sourceDir, "dist", "webtorrent.min.js");
+  await requirePackageFile(sourceJavaScript, "webtorrent");
+  const destination = join(outputDir, "vendor", "webtorrent");
+  await mkdir(destination, { recursive: true });
+  await cp(sourceJavaScript, join(destination, "webtorrent.min.js"), {
     preserveTimestamps: true,
   });
+  console.log("  - Installed WebTorrent");
 }
 
-export async function loadRuffleRelease(
-  path = RUFFLE_RELEASE_PATH,
-): Promise<RuffleRelease> {
-  const release = JSON.parse(
-    await readFile(path, "utf8"),
-  ) as Partial<RuffleRelease>;
-  const keys = Object.keys(release).sort();
-  if (keys.join(",") !== "asset,sha256,tag") {
-    throw new Error(
-      "Ruffle release metadata must contain tag, asset, and sha256",
-    );
-  }
-  if (!/^v\d+\.\d+\.\d+$/.test(release.tag ?? "")) {
-    throw new Error("Ruffle release tag is invalid");
-  }
-  if (!release.asset?.endsWith("-web-selfhosted.zip")) {
-    throw new Error("Ruffle release asset is not the self-hosted web package");
-  }
-  if (!/^[a-f0-9]{64}$/.test(release.sha256 ?? "")) {
-    throw new Error("Ruffle release checksum is invalid");
-  }
-  return release as RuffleRelease;
-}
-
-export function ruffleDownloadUrl(release: RuffleRelease): string {
-  return `${RUFFLE_DOWNLOAD_ROOT}/${release.tag}/${release.asset}`;
-}
-
-export async function downloadRuffle(
+export async function installRuffle(
   jsDir: string,
-  release?: RuffleRelease,
-  fetcher: Fetcher = fetch,
+  sourceDir = RUFFLE_SOURCE,
 ): Promise<void> {
-  const selectedRelease = release ?? (await loadRuffleRelease());
   await mkdir(jsDir, { recursive: true });
-  console.log(`Downloading Ruffle ${selectedRelease.tag}...`);
-
-  const response = await fetcher(ruffleDownloadUrl(selectedRelease), {
-    signal: AbortSignal.timeout(120_000),
-  });
-  if (!response.ok) {
-    throw new Error(`Could not download Ruffle: HTTP ${response.status}`);
-  }
-  const archiveBytes = new Uint8Array(await response.arrayBuffer());
-  const actualChecksum = createHash("sha256")
-    .update(archiveBytes)
-    .digest("hex");
-  if (actualChecksum !== selectedRelease.sha256) {
+  let names: string[];
+  try {
+    names = await readdir(sourceDir);
+  } catch {
     throw new Error(
-      `Ruffle archive checksum mismatch: expected ${selectedRelease.sha256}, got ${actualChecksum}`,
+      `${RUFFLE_PACKAGE} is not installed; run \`bun install --frozen-lockfile\``,
     );
   }
-
-  const archive = unzipSync(archiveBytes);
-  const files = Object.entries(archive).filter(([name]) => {
-    const normalized = name.replaceAll("\\", "/");
-    return (
-      !normalized.endsWith("/") &&
-      !normalized.includes("/") &&
-      RUFFLE_FILE_SUFFIXES.some((suffix) => normalized.endsWith(suffix))
-    );
-  });
-  const names = files.map(([name]) => name);
+  const files = names.filter((name) =>
+    RUFFLE_FILE_SUFFIXES.some((suffix) => name.endsWith(suffix)),
+  );
   if (
-    !names.includes("ruffle.js") ||
-    !names.some(
+    !files.includes("ruffle.js") ||
+    !files.some(
       (name) => name.startsWith("core.ruffle.") && name.endsWith(".js"),
     ) ||
-    !names.some((name) => name.endsWith(".wasm"))
+    !files.some((name) => name.endsWith(".wasm"))
   ) {
     throw new Error(
-      "Downloaded Ruffle package is missing required runtime files",
+      `${RUFFLE_PACKAGE} is missing required runtime files; reinstall dependencies`,
     );
   }
-
   await Promise.all(
-    files.map(([name, content]) => writeFile(join(jsDir, name), content)),
+    files.map((name) =>
+      cp(join(sourceDir, name), join(jsDir, name), {
+        preserveTimestamps: true,
+      }),
+    ),
   );
   console.log(`  - Installed ${files.length} Ruffle runtime files`);
 }
@@ -434,11 +430,14 @@ export async function updateHtml(
       `Could not update asset reference matching ${pattern.source}`,
     );
   }
-  const fflatePattern = /vendor\/fflate\/0\.8\.3\/index\.js(?:\?v=[^"]+)?"?/g;
+  const fflatePattern = new RegExp(
+    `${FFLATE_JS_PATH.replaceAll(".", "\\.")}(?:\\?v=[^"]+)?"?`,
+    "g",
+  );
   content = await replaceExactlyOnce(
     content,
     fflatePattern,
-    `vendor/fflate/0.8.3/index.js?v=${fflateHash}"`,
+    `${FFLATE_JS_PATH}?v=${fflateHash}"`,
     "Could not update fflate asset reference",
   );
   await writeFile(paths.html, content);
@@ -809,6 +808,9 @@ export async function validateOutput(outputDir: string): Promise<void> {
     paths.versionJson,
     join(outputDir, "sw.js"),
     paths.fflateJs,
+    join(paths.jsDosRoot, "js-dos.js"),
+    join(paths.jsDosRoot, "emulators", "wdosbox.wasm"),
+    paths.webtorrentJs,
   ];
   const missing = (
     await Promise.all(
@@ -857,7 +859,10 @@ export async function validateOutput(outputDir: string): Promise<void> {
       throw new Error(`Build output has an invalid content hash for ${asset}`);
     }
   }
-  if (!/vendor\/fflate\/0\.8\.3\/index\.js\?v=[a-f0-9]{8}"/.test(html)) {
+  const fflateReference = new RegExp(
+    `${FFLATE_JS_PATH.replaceAll(".", "\\.")}\\?v=[a-f0-9]{8}"`,
+  );
+  if (!fflateReference.test(html)) {
     throw new Error("Build output has no versioned fflate reference");
   }
   const staticFiles = [
@@ -1052,7 +1057,7 @@ export interface BuildOptions {
   revision?: string;
   sourceDir?: string;
   version?: string;
-  download?: (jsDir: string) => Promise<void>;
+  installRuffle?: (jsDir: string) => Promise<void>;
   generate?: (outputDir: string, version?: string) => Promise<void>;
 }
 
@@ -1061,7 +1066,7 @@ export async function build({
   revision = "HEAD",
   sourceDir = SOURCE_DIR,
   version,
-  download = downloadRuffle,
+  installRuffle: installRuffleRuntime = installRuffle,
   generate = (directory, buildVersion) =>
     generateServiceWorker(directory, generateSW, buildVersion),
 }: BuildOptions = {}): Promise<void> {
@@ -1090,7 +1095,9 @@ export async function build({
     });
     const paths = new BuildPaths(stagingDir);
     await installFflate(stagingDir);
-    await download(paths.js);
+    await installJsDos(stagingDir);
+    await installWebtorrent(stagingDir);
+    await installRuffleRuntime(paths.js);
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
     await writeVersionMetadata(paths, deploymentVersion);
