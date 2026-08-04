@@ -72,62 +72,31 @@ describe("development build synchronization", () => {
     expect(await computeSourceFingerprint(project)).not.toBe(initial);
   });
 
-  test("skips an unchanged build and reuses the pinned Ruffle runtime", async () => {
+  test("skips an unchanged build and rebuilds when the fingerprint changes", async () => {
     const root = await makeTemporaryDirectory();
     const output = join(root, "dist");
     let sourceFingerprint = "first";
     let builds = 0;
-    let reusedBootstrap = "";
-    const builder = async ({
-      outputDir,
-      installRuffle,
-    }: {
-      outputDir?: string;
-      installRuffle?: (jsDir: string) => Promise<void>;
-    }) => {
+    const builder = async ({ outputDir }: { outputDir?: string }) => {
       builds += 1;
       await mkdir(join(outputDir as string, "js"), { recursive: true });
       await writeFile(join(outputDir as string, "index.html"), "built");
-      if (installRuffle) {
-        const stagingJs = join(root, "staging-js");
-        await installRuffle(stagingJs);
-        reusedBootstrap = await readFile(join(stagingJs, "ruffle.js"), "utf8");
-      }
-      await writeFile(
-        join(outputDir as string, "js", "ruffle.1234abcd.js"),
-        "ruffle",
-      );
-      await writeFile(
-        join(outputDir as string, "js", "core.ruffle.abc.js"),
-        "core",
-      );
-      await writeFile(join(outputDir as string, "js", "abc.wasm"), "wasm");
     };
     const options = {
       outputDir: output,
       fingerprint: async () => sourceFingerprint,
-      releaseKey: async () => "v1:asset:checksum",
       builder,
     };
 
-    expect(await ensureDevelopmentBuild(options)).toEqual({
-      rebuilt: true,
-      reusedRuffle: false,
-    });
-    expect(await ensureDevelopmentBuild(options)).toEqual({
-      rebuilt: false,
-      reusedRuffle: false,
-    });
+    expect(await ensureDevelopmentBuild(options)).toEqual({ rebuilt: true });
+    expect(await ensureDevelopmentBuild(options)).toEqual({ rebuilt: false });
     sourceFingerprint = "second";
-    expect(await ensureDevelopmentBuild(options)).toEqual({
-      rebuilt: true,
-      reusedRuffle: true,
-    });
+    expect(await ensureDevelopmentBuild(options)).toEqual({ rebuilt: true });
     expect(builds).toBe(2);
-    expect(reusedBootstrap).toBe("ruffle");
     const state = JSON.parse(
       await readFile(join(output, DEV_BUILD_STATE), "utf8"),
     );
+    expect(state.schema).toBe(2);
     expect(state.fingerprint).toBe("second");
   });
 
@@ -138,7 +107,6 @@ describe("development build synchronization", () => {
     await ensureDevelopmentBuild({
       outputDir: join(root, "dist"),
       fingerprint: async () => "1234567890abcdef",
-      releaseKey: async () => "ruffle-v1",
       version: (fingerprint) => `preview-${fingerprint.slice(0, 7)}`,
       builder: async ({ outputDir, version }) => {
         versions.push(version as string);
@@ -293,7 +261,7 @@ describe("development source watching", () => {
       projectDir: project,
       rebuild: async () => {
         builds += 1;
-        return { rebuilt: true, reusedRuffle: false };
+        return { rebuilt: true };
       },
     });
 

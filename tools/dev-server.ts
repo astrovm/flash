@@ -1,12 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  cp,
-  mkdir,
-  readFile,
-  readdir,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -115,9 +108,8 @@ export function createDevelopmentLiveReload(): DevelopmentLiveReload {
 }
 
 interface DevBuildState {
-  schema: 1;
+  schema: 2;
   fingerprint: string;
-  ruffleRelease: string;
   generatedAt: string;
 }
 
@@ -126,14 +118,12 @@ interface EnsureDevelopmentBuildOptions {
   force?: boolean;
   projectDir?: string;
   fingerprint?: () => Promise<string>;
-  releaseKey?: () => Promise<string>;
   builder?: (options: BuildOptions) => Promise<void>;
   version?: (fingerprint: string) => string;
 }
 
 interface EnsureDevelopmentBuildResult {
   rebuilt: boolean;
-  reusedRuffle: boolean;
 }
 
 function gitOutput(
@@ -210,31 +200,6 @@ export async function computeSourceFingerprint(
   return digest.digest("hex");
 }
 
-async function currentRuffleReleaseKey(
-  projectDir = PROJECT_DIR,
-): Promise<string> {
-  // Use the lock-resolved install, not the package.json caret range.
-  try {
-    const packageJson = JSON.parse(
-      await readFile(
-        join(
-          projectDir,
-          "node_modules",
-          "@ruffle-rs",
-          "ruffle",
-          "package.json",
-        ),
-        "utf8",
-      ),
-    ) as { version?: string };
-    return createHash("sha256")
-      .update(packageJson.version ?? "missing")
-      .digest("hex");
-  } catch {
-    return createHash("sha256").update("missing").digest("hex");
-  }
-}
-
 async function readBuildState(
   outputDir: string,
 ): Promise<DevBuildState | null> {
@@ -242,9 +207,8 @@ async function readBuildState(
     const state = JSON.parse(
       await readFile(join(outputDir, DEV_BUILD_STATE), "utf8"),
     ) as Partial<DevBuildState>;
-    return state.schema === 1 &&
+    return state.schema === 2 &&
       typeof state.fingerprint === "string" &&
-      typeof state.ruffleRelease === "string" &&
       typeof state.generatedAt === "string"
       ? (state as DevBuildState)
       : null;
@@ -253,88 +217,25 @@ async function readBuildState(
   }
 }
 
-async function hasRuffleRuntime(jsDir: string): Promise<boolean> {
-  try {
-    const names = await readdir(jsDir);
-    return (
-      names.some(
-        (name) =>
-          name === "ruffle.js" || /^ruffle\.[a-f0-9]{8}\.js$/.test(name),
-      ) &&
-      names.some(
-        (name) => name.startsWith("core.ruffle.") && name.endsWith(".js"),
-      ) &&
-      names.some((name) => name.endsWith(".wasm"))
-    );
-  } catch {
-    return false;
-  }
-}
-
-async function copyRuffleRuntime(
-  sourceJsDir: string,
-  destinationJsDir: string,
-): Promise<void> {
-  const sourceNames = await readdir(sourceJsDir);
-  const ruffleBootstrap = sourceNames.find(
-    (name) => name === "ruffle.js" || /^ruffle\.[a-f0-9]{8}\.js$/.test(name),
-  );
-  if (!ruffleBootstrap) {
-    throw new Error("Existing Ruffle runtime has no bootstrap script");
-  }
-  const names = sourceNames.filter(
-    (name) =>
-      name === "ruffle.js.map" ||
-      name.startsWith("core.ruffle.") ||
-      name.endsWith(".wasm"),
-  );
-  await mkdir(destinationJsDir, { recursive: true });
-  await Promise.all([
-    cp(
-      join(sourceJsDir, ruffleBootstrap),
-      join(destinationJsDir, "ruffle.js"),
-      {
-        preserveTimestamps: true,
-      },
-    ),
-    ...names.map((name) =>
-      cp(join(sourceJsDir, name), join(destinationJsDir, name), {
-        preserveTimestamps: true,
-      }),
-    ),
-  ]);
-}
-
 export async function ensureDevelopmentBuild({
   outputDir = DEFAULT_OUTPUT_DIR,
   force = false,
   projectDir = PROJECT_DIR,
   fingerprint = () => computeSourceFingerprint(projectDir),
-  releaseKey = currentRuffleReleaseKey,
   builder,
   version,
 }: EnsureDevelopmentBuildOptions = {}): Promise<EnsureDevelopmentBuildResult> {
   const resolvedOutput = resolve(outputDir);
-  const [sourceFingerprint, ruffleRelease, previousState] = await Promise.all([
+  const [sourceFingerprint, previousState] = await Promise.all([
     fingerprint(),
-    releaseKey(),
     readBuildState(resolvedOutput),
   ]);
   const hasIndex = await Bun.file(join(resolvedOutput, "index.html")).exists();
-  if (
-    !force &&
-    hasIndex &&
-    previousState?.fingerprint === sourceFingerprint &&
-    previousState.ruffleRelease === ruffleRelease
-  ) {
+  if (!force && hasIndex && previousState?.fingerprint === sourceFingerprint) {
     console.log("Development build is already in sync.");
-    return { rebuilt: false, reusedRuffle: false };
+    return { rebuilt: false };
   }
 
-  const sourceJsDir = join(resolvedOutput, "js");
-  const canReuseRuffle =
-    previousState?.ruffleRelease === ruffleRelease &&
-    (await hasRuffleRuntime(sourceJsDir));
   const startedAt = performance.now();
   console.log(
     hasIndex
@@ -345,17 +246,10 @@ export async function ensureDevelopmentBuild({
   await selectedBuilder({
     outputDir: resolvedOutput,
     ...(version ? { version: version(sourceFingerprint) } : {}),
-    ...(canReuseRuffle
-      ? {
-          installRuffle: (destinationJsDir: string) =>
-            copyRuffleRuntime(sourceJsDir, destinationJsDir),
-        }
-      : {}),
   });
   const state: DevBuildState = {
-    schema: 1,
+    schema: 2,
     fingerprint: sourceFingerprint,
-    ruffleRelease,
     generatedAt: new Date().toISOString(),
   };
   await writeFile(
@@ -363,9 +257,9 @@ export async function ensureDevelopmentBuild({
     `${JSON.stringify(state)}\n`,
   );
   console.log(
-    `Development build synchronized in ${((performance.now() - startedAt) / 1000).toFixed(2)}s${canReuseRuffle ? " (reused Ruffle)" : ""}.`,
+    `Development build synchronized in ${((performance.now() - startedAt) / 1000).toFixed(2)}s.`,
   );
-  return { rebuilt: true, reusedRuffle: canReuseRuffle };
+  return { rebuilt: true };
 }
 
 export function createPreviewVersion(

@@ -262,10 +262,8 @@ export async function installRuffle(
       `${RUFFLE_PACKAGE} is not installed; run \`bun install --frozen-lockfile\``,
     );
   }
-  const files = names.filter(
-    (name) =>
-      !name.includes(sep) &&
-      RUFFLE_FILE_SUFFIXES.some((suffix) => name.endsWith(suffix)),
+  const files = names.filter((name) =>
+    RUFFLE_FILE_SUFFIXES.some((suffix) => name.endsWith(suffix)),
   );
   if (
     !files.includes("ruffle.js") ||
