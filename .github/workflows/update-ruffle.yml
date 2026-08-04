@@ -44,7 +44,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          version="$(bun -e 'console.log(JSON.parse(await Bun.file("package.json").text()).dependencies["@ruffle-rs/ruffle"])')"
+          version="$(bun -e 'const v=JSON.parse(await Bun.file("package.json").text()).dependencies["@ruffle-rs/ruffle"]; console.log(String(v).replace(/^\^/, ""))')"
           branch="deps/ruffle-${version}"
           if [ "$(gh pr list --state all --head "$branch" --json number --jq length)" -ne 0 ]; then
             echo "A pull request for ${version} already exists."

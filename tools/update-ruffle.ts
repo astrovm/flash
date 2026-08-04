@@ -52,14 +52,24 @@ export async function getLatestStableVersion(
   return version;
 }
 
+const PINNED_VERSION_PATTERN = /^\^?(\d+\.\d+\.\d+)$/;
+
 export function readPinnedVersion(packageJson: PackageJson): string {
   const version = packageJson.dependencies?.[RUFFLE_PACKAGE];
-  if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
+  const match = version?.match(PINNED_VERSION_PATTERN);
+  if (!match) {
     throw new Error(
       `package.json must pin ${RUFFLE_PACKAGE} to a stable semantic version`,
     );
   }
-  return version;
+  return match[1];
+}
+
+export function pinnedDependencyRange(version: string): string {
+  if (!/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error(`Invalid Ruffle version: ${version}`);
+  }
+  return `^${version}`;
 }
 
 export async function updatePackagePin(
@@ -78,7 +88,7 @@ export async function updatePackagePin(
   }
   packageJson.dependencies = {
     ...packageJson.dependencies,
-    [RUFFLE_PACKAGE]: latest,
+    [RUFFLE_PACKAGE]: pinnedDependencyRange(latest),
   };
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   install(dirname(packageJsonPath));
@@ -87,7 +97,8 @@ export async function updatePackagePin(
 }
 
 export function runBunInstall(projectDir: string): void {
-  const result = Bun.spawnSync(["bun", "install"], {
+  // Allow brand-new stable releases through Bun's default 24h minimum-release-age.
+  const result = Bun.spawnSync(["bun", "install", "--minimum-release-age=0"], {
     cwd: projectDir,
     stderr: "pipe",
     stdout: "pipe",

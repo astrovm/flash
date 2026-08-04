@@ -4,12 +4,12 @@
   "workspaces": {
     "": {
       "dependencies": {
-        "@nktkas/bmp": "4.0.0",
-        "@ruffle-rs/ruffle": "0.4.1",
-        "fflate": "0.8.3",
-        "js-dos": "8.4.1",
+        "@nktkas/bmp": "^4.0.0",
+        "@ruffle-rs/ruffle": "^0.5.0",
+        "fflate": "^0.8.3",
+        "js-dos": "^8.4.1",
         "sharp": "^0.35.3",
-        "webtorrent": "3.0.21",
+        "webtorrent": "^3.0.21",
       },
       "devDependencies": {
         "@eslint/js": "10.0.1",
@@ -442,7 +442,7 @@
 
     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.62.2", "", { "os": "win32", "cpu": "x64" }, "sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA=="],
 
-    "@ruffle-rs/ruffle": ["@ruffle-rs/ruffle@0.4.1", "", {}, "sha512-XkMR0GAu6cMb3dp4xRwVG08q6UDf3aD7dp7ur3YkH+8m9J2XY2iazDRAh6kBS6MKrXE8tPYI+6GR+8iygZcyFg=="],
+    "@ruffle-rs/ruffle": ["@ruffle-rs/ruffle@0.5.0", "", {}, "sha512-BBlfXsOkUXtB1wMUC5y27v6SRdDsuVYdPzGq80MzmF1QWryHkWYZh4I7I22uura07TFNzBeb5RKsyjct3JTjLA=="],
 
     "@silentbot1/nat-api": ["@silentbot1/nat-api@0.4.9", "", { "dependencies": { "chrome-dgram": "^3.0.6", "cross-fetch-ponyfill": "^1.0.3", "debug": "^4.4.0", "default-gateway": "^7.2.2", "unordered-array-remove": "^1.0.2", "xml2js": "^0.6.2" } }, "sha512-Bm2Fr0sJyGr4B/XgKjQxjGe7Rzs/OlK91OIHsghObxhP3Y4j2y8o7Xjlledu/pxzFEIWaTbZIBSl8ABqoP/WhQ=="],
 

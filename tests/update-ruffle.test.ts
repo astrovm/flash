@@ -52,7 +52,7 @@ describe("update-ruffle", () => {
     const packageJsonPath = join(directory, "package.json");
     const current = {
       dependencies: {
-        "@ruffle-rs/ruffle": "0.4.1",
+        "@ruffle-rs/ruffle": "^0.4.1",
       },
     };
     await writeFile(packageJsonPath, JSON.stringify(current));
@@ -84,9 +84,9 @@ describe("update-ruffle", () => {
         },
       ),
     ).toBeTrue();
-    expect(
-      readPinnedVersion(JSON.parse(await readFile(packageJsonPath, "utf8"))),
-    ).toBe("0.4.2");
+    const updated = JSON.parse(await readFile(packageJsonPath, "utf8"));
+    expect(updated.dependencies["@ruffle-rs/ruffle"]).toBe("^0.4.2");
+    expect(readPinnedVersion(updated)).toBe("0.4.2");
     expect(installs).toBe(1);
   });
 });
