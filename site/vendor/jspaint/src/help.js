@@ -388,7 +388,7 @@ function $Iframe(options) {
 				message.innerHTML = `<a target="_blank">Save this url in the Wayback Machine</a>`;
 				message.querySelector("a").href =
 					"https://web.archive.org/save/https://98.js.org/" +
-					iframe.src.replace(/.*https:\/\/98.js.org\/?/, "");
+					iframe.src.replace(/.*https:\/\/98\.js\.org\/?/, "");
 				message.querySelector("a").style.color = "blue";
 			}
 
@@ -504,4 +504,3 @@ $(window).on("pointerup dragend blur", function (e) {
 });
 
 export { show_help };
-

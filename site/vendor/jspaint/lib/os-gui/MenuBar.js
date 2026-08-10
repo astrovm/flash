@@ -992,7 +992,7 @@ function MenuBar(menus) {
 		menu_popup_el.addEventListener("update", update_position_from_containing_bounds);
 		// update_position_from_containing_bounds(); // will be called when the menu is opened
 
-		const menu_id = menus_key.replace("&", "").replace(/ /g, "-").toLowerCase();
+		const menu_id = menus_key.replaceAll("&", "").replace(/ /g, "-").toLowerCase();
 		menu_button_el.classList.add(`${menu_id}-menu-button`);
 		// menu_popup_el.id = `${menu_id}-menu-popup-${uid()}`; // id is set by MenuPopup and changing it breaks the `data-semantic-parent` relationship
 		menu_popup_el.style.display = "none";

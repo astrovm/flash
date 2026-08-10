@@ -1412,7 +1412,7 @@ const menus = {
 };
 
 for (const [top_level_menu_key, menu] of Object.entries(menus)) {
-	const top_level_menu_name = top_level_menu_key.replace(/&/, "");
+	const top_level_menu_name = top_level_menu_key.replace(/&/g, "");
 	const add_literal_navigation_speech_recognition = (menu, ancestor_names) => {
 		for (const menu_item of menu) {
 			if (menu_item !== MENU_DIVIDER) {
