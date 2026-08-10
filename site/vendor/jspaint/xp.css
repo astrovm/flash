@@ -1,0 +1,102 @@
+:root {
+  --ButtonFace: #ece9d8;
+  --ButtonText: #000;
+  --Window: #fff;
+  --WindowText: #000;
+  --GrayText: #aca899;
+  --Highlight: #316ac5;
+  --HighlightText: #fff;
+  --Menu: #fff;
+  --MenuText: #000;
+  --AppWorkspace: #808080;
+}
+
+html,
+body,
+.jspaint {
+  font: 11px Tahoma, sans-serif;
+}
+
+body,
+.jspaint,
+.component-area,
+.status-area {
+  background: #ece9d8 !important;
+}
+
+.menus {
+  min-height: 20px;
+  padding: 0 2px;
+  border-bottom: 1px solid #aca899;
+  background: #ece9d8 !important;
+}
+
+.menu-button {
+  min-width: 0;
+  height: 19px;
+  padding: 1px 6px 2px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 11px Tahoma, sans-serif;
+}
+
+.menu-button:hover,
+.menu-button[aria-expanded="true"] {
+  color: #fff;
+  background: #316ac5;
+}
+
+.horizontal > .component-area {
+  width: 56px;
+  border-right: 1px solid #aca899;
+}
+
+.horizontal > .component-area.right {
+  display: none;
+}
+
+.tools-component {
+  box-sizing: border-box;
+  width: 56px;
+  height: 273px;
+  padding: 3px 5px 0;
+}
+
+.component-area.bottom,
+.colors-component.wide {
+  height: 47px;
+}
+
+.canvas-area {
+  padding: 3px;
+  background: #808080;
+}
+
+.status-area {
+  box-sizing: border-box;
+  height: 22px;
+  min-height: 22px;
+  padding: 3px 2px 2px;
+  border-top: 1px solid #fff;
+  font: 11px Tahoma, sans-serif;
+}
+
+.status-text,
+.status-coordinates {
+  border: 1px solid #aca899;
+  box-shadow: inset 1px 1px #fff;
+  line-height: 15px;
+}
+
+.floating-buttons,
+.news-indicator,
+.extras-menu-button {
+  display: none !important;
+}
+
+.status-area,
+.component-area.bottom {
+  margin-left: 0;
+  padding-left: 0;
+}

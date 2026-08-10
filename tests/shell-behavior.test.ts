@@ -640,6 +640,27 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).not.toBeNull();
 });
 
+test("Paint launches JS Paint and owns supported picture file associations", async () => {
+  const shell = await login(await loadShell());
+  const picture = shell.window.VirtualFS.createFile(
+    shell.window.VirtualFS.MY_PICTURES,
+    "sample.png",
+    { content: "data:image/png;base64,iVBORw0KGgo=" },
+  );
+
+  expect(shell.window.VirtualFS.open(picture.id)).toBeTrue();
+  const paintWindow = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__paint"]',
+  )!;
+  const frame =
+    paintWindow.querySelector<HTMLIFrameElement>(".xp-paint-frame")!;
+
+  expect(paintWindow).not.toBeNull();
+  expect(frame).not.toBeNull();
+  expect(frame.getAttribute("src")).toBe("vendor/jspaint/index.html");
+  expect(frame.title).toBe("Microsoft Paint drawing area");
+});
+
 test("Outlook Express composes mail and Windows Messenger sends local messages", async () => {
   const shell = await login(await loadShell());
   const openRootProgram = (programId: string) => {
