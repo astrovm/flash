@@ -6633,7 +6633,7 @@ var FileSpec = function FileSpecClosure() {
     get filename() {
       if (!this._filename && this.root) {
         var filename = pickPlatformItem(this.root) || "unnamed";
-        this._filename = (0, _util.stringToPDFString)(filename).replace(/\\\\/g, "\\").replace(/\\\//g, "/").replace(/\\/g, "/");
+        this._filename = (0, _util.stringToPDFString)(filename).replace(/\\+\/?/g, "/");
       }
 
       return this._filename;

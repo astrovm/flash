@@ -10850,7 +10850,7 @@ module.exports = function({fileContentString}) {
 module.exports.write = function(palette) {
   var alpha, color, color_type, components, i, item, j, len, len1, name, ref, ref1, ref2, serialize_str, str;
   serialize_str = function(str) {
-    return `'${str.replace(/[\r\n]+/g, " ").replace(/'/g, "\\'")}'`;
+    return `'${str.replace(/[\r\n]+/g, " ").replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
   };
   str = "##sK1 palette\n";
   str += "palette()\n";
@@ -11800,4 +11800,3 @@ module.exports = AnyPalette;
 
 },{"./Color":36,"./Palette":37,"./formats/Adobe":38,"./formats/AdobeColorTable":39,"./formats/CSS":40,"./formats/ColorSchemer":41,"./formats/GIMP":42,"./formats/Homesite":43,"./formats/KolourPaint":44,"./formats/Paint.NET":45,"./formats/PaintShopPro":46,"./formats/RIFF":47,"./formats/SKP":48,"./formats/SPL":49,"./formats/StarCraft":50,"./formats/StarCraftPadded":51,"./formats/StarOffice":52,"./formats/sketchpalette":53,"./formats/tabular":54,"./formats/theme":55,"fs":"fs","path":"path"}]},{},[57])(57)
 });
-
