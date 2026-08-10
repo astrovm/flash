@@ -2132,6 +2132,7 @@
   ],
   "auditFiles": [
     { "member": "APPWIZ.CP_", "output": "system/appwiz.cpl" },
+    { "member": "MSPAINT.EX_", "output": "system/mspaint.exe" },
     { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
     { "member": "EXPLORER.EX_", "output": "system/explorer.exe" },
     { "member": "MYDOCS.DL_", "output": "system/mydocs.dll" },

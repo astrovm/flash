@@ -9,6 +9,7 @@
   --Menu: #fff;
   --MenuText: #000;
   --AppWorkspace: #808080;
+  --scrollbar-size: 17px;
 }
 
 html,
@@ -25,6 +26,8 @@ body,
 }
 
 .menus {
+  box-sizing: border-box;
+  height: 21px;
   min-height: 20px;
   padding: 0 2px;
   border-bottom: 1px solid #aca899;
@@ -63,9 +66,15 @@ body,
   padding: 3px 5px 0;
 }
 
+.tool-options {
+  width: 40px;
+  height: 62px;
+  margin-top: 8px;
+}
+
 .component-area.bottom,
 .colors-component.wide {
-  height: 47px;
+  height: 48px;
 }
 
 .canvas-area {
@@ -75,8 +84,8 @@ body,
 
 .status-area {
   box-sizing: border-box;
-  height: 22px;
-  min-height: 22px;
+  height: 28px;
+  min-height: 28px;
   padding: 3px 2px 2px;
   border-top: 1px solid #fff;
   font: 11px Tahoma, sans-serif;
@@ -86,7 +95,7 @@ body,
 .status-coordinates {
   border: 1px solid #aca899;
   box-shadow: inset 1px 1px #fff;
-  line-height: 15px;
+  line-height: 21px;
 }
 
 .floating-buttons,
@@ -99,4 +108,20 @@ body,
 .component-area.bottom {
   margin-left: 0;
   padding-left: 0;
+}
+
+::-webkit-scrollbar-button:horizontal:decrement {
+  background-position: -24px 3px;
+}
+
+::-webkit-scrollbar-button:horizontal:increment {
+  background-position: -15px 3px;
+}
+
+::-webkit-scrollbar-button:vertical:decrement {
+  background-position: -6px 3px;
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+  background-position: 3px 3px;
 }

@@ -14017,6 +14017,15 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   overflow: hidden;
 }
 
+.xp-native-paint-window {
+  min-width: 274px;
+  min-height: 410px;
+}
+
+.xp-native-paint-window .title-bar {
+  height: 26px;
+}
+
 .xp-paint-frame {
   display: block;
   width: 100%;

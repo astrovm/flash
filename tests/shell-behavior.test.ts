@@ -659,6 +659,11 @@ test("Paint launches JS Paint and owns supported picture file associations", asy
   expect(frame).not.toBeNull();
   expect(frame.getAttribute("src")).toBe("vendor/jspaint/index.html");
   expect(frame.title).toBe("Microsoft Paint drawing area");
+  expect(paintWindow.classList.contains("xp-native-paint-window")).toBeTrue();
+  expect(paintWindow.style.width).toBe("274px");
+  expect(paintWindow.style.height).toBe("410px");
+  expect(paintWindow.style.left).toBe("0px");
+  expect(paintWindow.style.top).toBe("0px");
 });
 
 test("Outlook Express composes mail and Windows Messenger sends local messages", async () => {

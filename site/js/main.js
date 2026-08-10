@@ -8624,6 +8624,7 @@ const openXPProgram = (programId) => {
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   const el = createWindowElement(programId);
   el.classList.add("xp-native-program-window");
+  if (program.kind === "paint") el.classList.add("xp-native-paint-window");
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
@@ -8640,7 +8641,7 @@ const openXPProgram = (programId) => {
     messenger: [500, 460],
     solitaire: [720, 520],
     freecell: [760, 540],
-    paint: [640, 470],
+    paint: [274, 410],
   };
   const [preferredWidth, preferredHeight] =
     programId === "__minesweeper"
@@ -8654,12 +8655,24 @@ const openXPProgram = (programId) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
-  const windowWidth = Math.min(preferredWidth, desktopWidth - 16);
-  const windowHeight = Math.min(preferredHeight, desktopHeight - 16);
+  const windowWidth =
+    desktopWidth > 16
+      ? Math.min(preferredWidth, desktopWidth - 16)
+      : preferredWidth;
+  const windowHeight =
+    desktopHeight > 16
+      ? Math.min(preferredHeight, desktopHeight - 16)
+      : preferredHeight;
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  el.style.left =
+    program.kind === "paint"
+      ? "0px"
+      : `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
+  el.style.top =
+    program.kind === "paint"
+      ? "0px"
+      : `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
   const content = el.querySelector(".window-content");
   content.replaceWith(createXPProgramContent(programId));
   document.getElementById("desktop").appendChild(el);
