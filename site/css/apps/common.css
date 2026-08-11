@@ -7,7 +7,7 @@
 .xp-about-banner {
   display: block;
   width: calc(100% + 18px);
-  height: 105px;
+  height: 72px;
   margin: 0 -9px 12px;
   object-fit: fill;
   image-rendering: auto;
@@ -27,10 +27,14 @@
   object-fit: contain;
 }
 .xp-about-license {
-  margin: 9px 0 38px 46px;
+  margin: 9px 0 29px 46px;
   font:
     11px/14px Tahoma,
     sans-serif;
+}
+.xp-about-license span {
+  display: block;
+  margin: 8px 0 0 15px;
 }
 .xp-about-memory {
   margin: 0 3px 17px 46px;

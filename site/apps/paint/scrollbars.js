@@ -44,6 +44,9 @@ const createScrollbar = (shell, viewport, axis) => {
   };
   const update = () => {
     const { maximum, thumbLength, travel } = metrics();
+    bar.hidden = maximum === 0;
+    shell.classList.toggle(`has-${axis}-scrollbar`, maximum > 0);
+    thumb.hidden = maximum === 0;
     const position = maximum ? (travel * viewport[scrollKey]) / maximum : 0;
     thumb.style[sizeKey] = `${thumbLength}px`;
     thumb.style[positionKey] = `${position}px`;
@@ -100,6 +103,9 @@ export const installPaintScrollbars = (shell, viewport, canvas) => {
   const observer = new ResizeObserver(update);
   observer.observe(viewport);
   observer.observe(canvas);
-  requestAnimationFrame(update);
+  requestAnimationFrame(() => {
+    update();
+    requestAnimationFrame(update);
+  });
   return () => observer.disconnect();
 };

@@ -14,6 +14,15 @@ const buttonRow = (dialogs, dialog, accept) => {
   dialog.defaultButton = ok;
 };
 
+const addHelpButton = (dialog) => {
+  const help = document.createElement("button");
+  help.type = "button";
+  help.className = "tb-btn help-btn";
+  help.title = "Help";
+  help.setAttribute("aria-label", "Help");
+  dialog.el.querySelector(".title-buttons").prepend(help);
+};
+
 const numericInput = (name, value, suffix = "%") =>
   `<label><span>${name}:</span><input name="${name.toLowerCase()}" type="number" value="${value}"><span>${suffix}</span></label>`;
 
@@ -24,6 +33,7 @@ export const showTransformDialog = (dialogs, kind) =>
       title: flip ? "Flip and Rotate" : "Stretch and Skew",
       onCancel: () => dialog.close(null),
     });
+    addHelpButton(dialog);
     dialog.el.classList.add("paint-transform-dialog");
     dialog.body.innerHTML = flip
       ? `<fieldset><legend>Flip or rotate</legend>
@@ -64,6 +74,7 @@ export const showAttributesDialog = (dialogs, { width, height }) =>
       title: "Attributes",
       onCancel: () => dialog.close(null),
     });
+    addHelpButton(dialog);
     dialog.el.classList.add("paint-attributes-dialog");
     dialog.body.innerHTML = `<p>Width: <input name="width" type="number" min="1" max="4096" value="${width}"></p>
       <p>Height: <input name="height" type="number" min="1" max="4096" value="${height}"></p>
@@ -84,6 +95,7 @@ export const showEditColorsDialog = (dialogs, colors, selected) =>
       title: "Edit Colors",
       onCancel: () => dialog.close(null),
     });
+    addHelpButton(dialog);
     dialog.el.classList.add("paint-edit-colors-dialog");
     const heading = document.createElement("div");
     heading.textContent = "Basic colors:";
