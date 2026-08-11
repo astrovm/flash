@@ -379,7 +379,7 @@ export async function updateHtml(
   const entrypointMarkup = await readFile(paths.html, "utf8");
   const entrypoints = [
     ...entrypointMarkup.matchAll(
-      /\b(?:src|href)="((?:js|css)\/[^"?]+\.(?:js|css))(?:\?v=[^"]+)?"/g,
+      /\b(?:src|href)="((?:apps|js|css)\/[^"?]+\.(?:js|css))(?:\?v=[^"]+)?"/g,
     ),
   ].map((match) => match[1]);
   for (const relativePath of new Set(entrypoints)) {
@@ -387,23 +387,23 @@ export async function updateHtml(
       mutableAssets[`entry:${relativePath}`] = relativePath;
     }
   }
-  const nestedReferenceFiles = [
-    "apps/paint/index.html",
-    "apps/paint/paint.css",
-  ];
+  const applicationsDirectory = join(paths.root, "apps");
+  const applicationReferenceFiles = (
+    (await isDirectory(applicationsDirectory))
+      ? await walkFiles(applicationsDirectory)
+      : []
+  )
+    .filter((path) => [".css", ".html", ".js"].includes(extname(path)))
+    .map((path) => relative(paths.root, path).split(sep).join("/"));
   const referenceFiles = [
-    ...Object.values(mutableAssets).filter(
-      (path) => path !== "js/ruffle.js" && path !== "js/offline-worker.js",
-    ),
-    "index.html",
-    ...((await isFile(paths.captureHtml)) ? ["capture.html"] : []),
-    ...(
-      await Promise.all(
-        nestedReferenceFiles.map(async (path) =>
-          (await isFile(join(paths.root, path))) ? path : null,
-        ),
-      )
-    ).filter((path): path is string => path !== null),
+    ...new Set([
+      ...Object.values(mutableAssets).filter(
+        (path) => path !== "js/ruffle.js" && path !== "js/offline-worker.js",
+      ),
+      ...applicationReferenceFiles,
+      "index.html",
+      ...((await isFile(paths.captureHtml)) ? ["capture.html"] : []),
+    ]),
   ];
   for (const referencePath of referenceFiles) {
     const absolutePath = join(paths.root, referencePath);
@@ -921,18 +921,6 @@ export async function validateOutput(outputDir: string): Promise<void> {
         ]
       : []),
   ];
-  for (const relativePath of [
-    "apps/paint/index.html",
-    "apps/paint/paint.css",
-  ]) {
-    const path = join(outputDir, relativePath);
-    if (await isFile(path)) {
-      referenceDocuments.push({
-        content: await readFile(path, "utf8"),
-        path,
-      });
-    }
-  }
   for (const match of html.matchAll(
     /(?:src|href)="((?:js|css)\/[^"]+\.(?:js|css))"/g,
   )) {

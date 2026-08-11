@@ -1,0 +1,45 @@
+.xp-about-dialog {
+  width: 420px;
+}
+.xp-about-dialog .dlg-body {
+  padding: 0 9px 9px;
+}
+.xp-about-banner {
+  display: block;
+  width: calc(100% + 18px);
+  height: 105px;
+  margin: 0 -9px 12px;
+  object-fit: fill;
+  image-rendering: auto;
+}
+.xp-about-product {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
+  min-height: 74px;
+  font:
+    11px/18px Tahoma,
+    sans-serif;
+}
+.xp-about-product > img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+.xp-about-license {
+  margin: 9px 0 38px 46px;
+  font:
+    11px/14px Tahoma,
+    sans-serif;
+}
+.xp-about-memory {
+  margin: 0 3px 17px 46px;
+  padding-top: 9px;
+  border-top: 1px solid #aca899;
+  font:
+    11px Tahoma,
+    sans-serif;
+}
+.xp-about-dialog .dlg-buttons {
+  padding: 0;
+}

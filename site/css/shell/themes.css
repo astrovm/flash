@@ -814,12 +814,6 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
     serif;
 }
 
-.xp-native-program.xp-native-paint {
-  height: 100%;
-  padding: 0;
-  overflow: hidden;
-}
-
 .xp-native-paint-window {
   min-width: 274px;
   min-height: 410px;
@@ -834,14 +828,6 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
 .xp-native-paint-window.maximized .title-bar {
   height: 26px;
   padding-left: 8px;
-}
-
-.xp-paint-frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #ece9d8;
 }
 
 .xp-keyboard-output {

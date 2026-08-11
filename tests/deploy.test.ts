@@ -68,6 +68,7 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/file-operations.js?v=old"></script>',
       '<script src="js/dialogs.js?v=old"></script>',
       '<script src="js/offline.js?v=old"></script>',
+      '<script type="module" src="apps/index.js"></script>',
       '<script src="js/shell/desktop.js"></script>',
       '<script src="js/main.js?v=old"></script>',
       '<link rel="stylesheet" href="css/main.css?v=old">',
@@ -91,6 +92,8 @@ async function makeSource(root: string): Promise<void> {
     "js/dialogs.js": "dialogs",
     "js/offline.js": "offline",
     "js/offline-worker.js": "offline worker",
+    "apps/index.js": "application registry",
+    "apps/catalog.js": 'const icon = "assets/xp/icons/paint.png";',
     "js/shell/desktop.js": "desktop shell",
     "js/main.js": [
       'const APP_VERSION = "old";',
@@ -102,12 +105,6 @@ async function makeSource(root: string): Promise<void> {
     ].join("\n"),
     "css/shell/desktop.css": ".desktop { display: block; }",
     "css/fonts/test.ttf": "font",
-    "apps/paint/index.html": [
-      '<img src="../../assets/xp/about.png">',
-      '<img src="../../assets/xp/icons/paint.png">',
-    ].join("\n"),
-    "apps/paint/paint.css":
-      'button { background: url("../../assets/xp/icons/paint.png"); }',
     "assets/icons/game.png": "icon",
     "assets/icons/SOURCES.json": "{}",
     "assets/xp/bliss.jpg": "wallpaper",
@@ -261,6 +258,7 @@ describe("build metadata", () => {
     expect(html).toContain(`${hashedAssets.fileOperationsJs}"`);
     expect(html).toContain(`${hashedAssets.mainCss}"`);
     expect(html).toContain(`${hashedAssets["entry:js/shell/desktop.js"]}"`);
+    expect(html).toContain(`${hashedAssets["entry:apps/index.js"]}"`);
     expect(html).toContain(`${hashedAssets["entry:css/shell/desktop.css"]}"`);
     const capture = await readFile(paths.captureHtml, "utf8");
     expect(capture).toContain(`${hashedAssets.ruffle}"`);
@@ -287,22 +285,11 @@ describe("build metadata", () => {
     expect(await readFile(join(root, hashedAssets.mainJs), "utf8")).toMatch(
       /assets\/xp\/sounds\/startup\.[a-f0-9]{8}\.wav/,
     );
-    const paintHtml = await readFile(
-      join(root, "apps/paint/index.html"),
-      "utf8",
-    );
-    const paintCss = await readFile(join(root, "apps/paint/paint.css"), "utf8");
-    expect(paintHtml).toMatch(
-      /\.\.\/\.\.\/assets\/xp\/about\.[a-f0-9]{8}\.png/,
-    );
-    expect(paintHtml).toMatch(
-      /\.\.\/\.\.\/assets\/xp\/icons\/paint\.[a-f0-9]{8}\.png/,
-    );
-    expect(paintCss).toMatch(
-      /\.\.\/\.\.\/assets\/xp\/icons\/paint\.[a-f0-9]{8}\.png/,
-    );
     expect(await readFile(join(root, hashedAssets.mainCss), "utf8")).toMatch(
       /fonts\/test\.[a-f0-9]{8}\.ttf/,
+    );
+    expect(await readFile(join(root, "apps/catalog.js"), "utf8")).toMatch(
+      /assets\/xp\/icons\/paint\.[a-f0-9]{8}\.png/,
     );
     expect(await readFile(join(root, hashedAssets.mainCss), "utf8")).toMatch(
       /\.\.\/assets\/xp\/bliss\.[a-f0-9]{8}\.jpg/,

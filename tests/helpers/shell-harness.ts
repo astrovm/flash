@@ -16,14 +16,10 @@ const scripts = [
 ];
 
 const shellScripts = [
-  "site/js/apps/registry.js",
   "site/js/main.js",
   "site/js/shell/window-manager.js",
-  "site/js/apps/system-windows.js",
   "site/js/apps/display-properties.js",
   "site/js/apps/explorer.js",
-  "site/js/apps/notepad.js",
-  "site/js/apps/program-content.js",
   "site/js/apps/programs.js",
   "site/js/shell/taskbar.js",
   "site/js/shell/system-tray.js",
@@ -144,6 +140,31 @@ export async function loadShell() {
     }) as typeof animation.addEventListener;
     return animation as unknown as Animation;
   };
+  window.HTMLCanvasElement.prototype.getContext = function getContext() {
+    const width = this.width;
+    const height = this.height;
+    const image = new Uint8ClampedArray(width * height * 4);
+    return {
+      canvas: this,
+      beginPath() {},
+      closePath() {},
+      drawImage() {},
+      ellipse() {},
+      fillRect() {},
+      getImageData() {
+        return { data: image, width, height };
+      },
+      lineTo() {},
+      moveTo() {},
+      putImageData() {},
+      rect() {},
+      stroke() {},
+    } as unknown as CanvasRenderingContext2D;
+  };
+  window.HTMLCanvasElement.prototype.toDataURL = () => "data:image/png;base64,";
+  window.HTMLCanvasElement.prototype.toBlob = function toBlob(callback) {
+    callback(new window.Blob([], { type: "image/png" }));
+  };
 
   for (const path of scripts) {
     const script = document.createElement("script");
@@ -203,6 +224,18 @@ export async function loadShell() {
     )
   ).join("\n");
   document.body.appendChild(script);
+
+  const applicationBundle = await Bun.build({
+    entrypoints: [new URL("site/apps/index.js", projectDirectory).pathname],
+    format: "iife",
+    target: "browser",
+  });
+  if (!applicationBundle.success) {
+    throw new Error(applicationBundle.logs.join("\n"));
+  }
+  const applicationScript = document.createElement("script");
+  applicationScript.textContent = await applicationBundle.outputs[0].text();
+  document.body.appendChild(applicationScript);
 
   if (scriptErrors.length) throw scriptErrors[0];
 

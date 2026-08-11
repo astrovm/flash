@@ -1,34 +1,11 @@
-"use strict";
+import { defineApplication } from "../core/application.js";
 
-const openNotepad = (file = null) => {
-  const existing = openWindows.get(NOTEPAD_ID);
-  if (existing) {
-    const switchDocument = async () => {
-      if (!(await existing.confirmSaveChanges())) return;
-      existing.loadDocument(file);
-      restoreWindow(NOTEPAD_ID);
-      focusWindow(NOTEPAD_ID);
-    };
-    switchDocument();
-    return;
-  }
-
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
-  const el = createWindowElement(NOTEPAD_ID);
-  el.classList.add("notepad-window");
-  el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
-    node.remove(),
-  );
-  const windowWidth = Math.min(768, desktopWidth - 16);
-  const windowHeight = Math.min(530, desktopHeight - 16);
-  el.style.width = `${windowWidth}px`;
-  el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.min(44, Math.max(8, desktopWidth - windowWidth))}px`;
-  el.style.top = `${Math.min(58, Math.max(8, desktopHeight - windowHeight))}px`;
-
-  const content = el.querySelector(".window-content");
+const mountNotepad = (context, instance) => {
+  const { file, window: win } = instance;
+  const { dialogs: XPDialogs, fileOps, fs, setAccessKeyText } = context;
+  const el = win.el;
+  const content = document.createElement("div");
   content.className = "notepad-content";
-  content.replaceChildren();
 
   const menuBar = document.createElement("div");
   menuBar.className = "notepad-menu-bar";
@@ -42,34 +19,14 @@ const openNotepad = (file = null) => {
   status.className = "notepad-status";
   status.hidden = true;
   content.append(menuBar, editor, status);
-  document.getElementById("desktop").appendChild(el);
-
-  const win = {
-    gameId: NOTEPAD_ID,
-    el,
-    type: "system",
-    player: null,
-    minimized: false,
-    maximized: false,
-    prevRect: null,
-    zIndex: 0,
-    lastUsed: Date.now(),
-    nodeId: null,
-    dirty: false,
-    maximizeBtn: el.querySelector(".maximize-btn"),
-    favoriteBtn: null,
-    volumeBtn: null,
-  };
-  openWindows.set(NOTEPAD_ID, win);
+  win.nodeId = null;
+  win.dirty = false;
 
   const updateTitle = () => {
     const node = win.nodeId && fs.getNode(win.nodeId);
     const documentName = node?.name || "Untitled";
     const title = `${documentName} - Notepad`;
-    systemShortcuts[NOTEPAD_ID].title = title;
-    el.querySelector(".title-text").textContent = title;
-    renderTaskButtons();
-    updateDocumentTitle();
+    context.setTitle(title);
   };
 
   const updateStatus = () => {
@@ -154,9 +111,6 @@ const openNotepad = (file = null) => {
     return save();
   };
 
-  Object.assign(win, { loadDocument, confirmSaveChanges });
-  win.beforeClose = confirmSaveChanges;
-
   const insertText = (text) => {
     editor.setRangeText(
       text,
@@ -182,7 +136,7 @@ const openNotepad = (file = null) => {
     },
     save,
     "save-as": saveAs,
-    exit: () => closeGameWindow(NOTEPAD_ID),
+    exit: () => context.close(),
     undo: () => {
       editor.focus();
       document.execCommand("undo");
@@ -350,28 +304,31 @@ const openNotepad = (file = null) => {
     }
   });
 
-  wireSystemWindowControls(win);
   loadDocument(file);
-  focusWindow(NOTEPAD_ID);
+  return {
+    element: content,
+    beforeClose: confirmSaveChanges,
+    async openFile(node) {
+      if (!(await confirmSaveChanges())) return false;
+      loadDocument(node);
+      return true;
+    },
+    unmount() {},
+  };
 };
 
-fs.registerFileType(".txt", (file) => openNotepad(file));
-
-fs.registerFolderHandler((folder) => {
-  openSystemWindow("__my-documents");
-  const win = openWindows.get("__my-documents");
-  if (win) navigateExplorer(win, folder.id);
-});
-
-// Keep open explorer windows in sync with filesystem changes.
-fs.subscribe(() => {
-  openWindows.forEach((win) => {
-    if (win.type !== "system" || !win.currentFolderId) return;
-    if (!fs.getNode(win.currentFolderId)) {
-      win.currentFolderId = fs.MY_COMPUTER;
-    }
-    renderExplorerItems(win);
-  });
-  if (iconsBuilt) buildDesktopIcons();
-  renderTaskButtons();
+export const notepadApplication = defineApplication({
+  id: "__notepad",
+  title: "Notepad",
+  icon: "Notepad.png",
+  kind: "notepad",
+  fileTypes: [".txt"],
+  window: {
+    width: 768,
+    height: 530,
+    left: 44,
+    top: 58,
+    className: "notepad-window",
+  },
+  mount: mountNotepad,
 });

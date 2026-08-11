@@ -7,7 +7,7 @@ ScummVM, and embedded web runtimes.
 
 ## Highlights
 
-- Authentic Windows XP shell, Explorer, Notepad, themes, and display settings
+- Authentic Windows XP shell, Explorer, Paint, Notepad, themes, and settings
 - Draggable game windows, task switching, fullscreen, and volume controls
 - Favorites, recently played games, categories, search, and deep links
 - Automatic offline support with optional per-game downloads
@@ -49,10 +49,10 @@ local version. It intentionally does not reload the page after rebuilding; use
 
 ## Project layout
 
-- `site/js/shell/` — desktop, window, taskbar, Start menu, and session behavior
-- `site/js/apps/` — application registry and native XP application behavior
+- `site/apps/` — first-party applications, manifests, and lifecycle modules
+- `site/js/shell/` — desktop, windows, taskbar, Start menu, and shell services
+- `site/js/apps/` — temporary shell adapters used by application modules
 - `site/css/shell/` and `site/css/apps/` — shell and application presentation
-- `site/apps/paint/` — maintained first-party Paint application
 - `site/assets/xp/` — assets extracted from the configured Windows XP source media
 - `worker/` — Cloudflare Worker for the Internet Games catalog
 - `tools/` — build, validation, and asset maintenance scripts
