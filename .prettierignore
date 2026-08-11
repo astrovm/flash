@@ -17,3 +17,7 @@ site/apps/paint/help/
 site/apps/paint/lib/
 site/apps/paint/src/
 site/apps/paint/styles/
+# Pinball's C++ sources and generated Emscripten runtime retain their native
+# formatting. Astro-owned module, tests, and build tools remain covered.
+native/pinball/
+site/apps/pinball/runtime/

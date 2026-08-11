@@ -7,7 +7,7 @@ ScummVM, and embedded web runtimes.
 
 ## Highlights
 
-- Authentic Windows XP shell, Explorer, Paint, Notepad, Solitaire, themes, and settings
+- Authentic Windows XP shell, Explorer, Paint, Notepad, Solitaire, Pinball, themes, and settings
 - Draggable game windows, task switching, fullscreen, and volume controls
 - Favorites, recently played games, categories, search, and deep links
 - Automatic offline support with optional per-game downloads
@@ -50,6 +50,7 @@ local version. It intentionally does not reload the page after rebuilding; use
 ## Project layout
 
 - `site/apps/` — first-party applications, manifests, and lifecycle modules
+- `native/pinball/` — MIT Space Cadet source used to build the first-party WebAssembly runtime
 - `site/js/shell/` — desktop, windows, taskbar, Start menu, and shell services
 - `site/js/apps/` — temporary shell adapters used by application modules
 - `site/css/shell/` and `site/css/apps/` — shell and application presentation
@@ -63,6 +64,8 @@ local version. It intentionally does not reload the page after rebuilding; use
 
 Included games are defined in `site/js/games.js`. Ruffle games use `type: "swf"`;
 embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
+Windows XP Pinball is a first-party application mounted directly from
+`site/apps/pinball/`.
 
 The Windows XP shell is cached automatically. Opening an included game queues a
 complete background download for offline play. Games can also be downloaded or

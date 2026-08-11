@@ -81,6 +81,7 @@ export default defineConfig(
       "site/apps/system/**/*.js",
       "site/apps/notepad/**/*.js",
       "site/apps/paint/index.js",
+      "site/apps/pinball/index.js",
     ],
     extends: [js.configs.recommended],
     languageOptions: {
