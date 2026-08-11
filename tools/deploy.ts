@@ -512,6 +512,7 @@ export function isOptionalOfflinePath(relativePath: string): boolean {
     path.startsWith("swf/") ||
     path.startsWith("iframe/") ||
     path.startsWith("dos/") ||
+    path.startsWith("vendor/boxedwine/") ||
     path.startsWith("vendor/scummvm/") ||
     (path.startsWith("js/") &&
       (path.endsWith(".wasm") ||
@@ -575,6 +576,7 @@ export async function versionGamePackages(
   const gameRuntimes: Record<string, string> = {
     "pink-panther-hokus-pokus": "scummvm",
     "pink-panther-passport-to-peril": "scummvm",
+    solitaire: "boxedwine",
   };
   const packages: VersionedGamePackages = {};
   for (const gameId of [...gameIds].sort()) {
@@ -643,6 +645,7 @@ export async function writeOfflineGameManifest(
     .toSorted();
 
   const sharedRuntimes = {
+    boxedwine: [join(paths.root, "vendor", "boxedwine", "26R1")],
     scummvm: [
       join(paths.root, "iframe", "scummvm"),
       join(paths.root, "vendor", "scummvm", "2026.3.0"),

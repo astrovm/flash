@@ -1,0 +1,8 @@
+BoxedWine 26R1 (tag 26R1.0)
+Commit: d7d5a1421bd781a81cbdf8f222cced11a7ebd76e
+License: GNU General Public License version 2
+Complete corresponding source: https://github.com/danoon2/Boxedwine/tree/26R1.0
+Official release: https://github.com/danoon2/Boxedwine/releases/tag/26R1.0
+Official Web runtime: https://boxedwine.org/v/26R1/wine11/st/
+
+The adjacent LICENSE-BOXEDWINE.txt file contains the BoxedWine license.
