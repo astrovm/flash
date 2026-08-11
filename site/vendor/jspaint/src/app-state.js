@@ -14,7 +14,7 @@
 const default_magnification = 1;
 
 /** @type {Tool} */
-const default_tool = window.get_tool_by_id(window.TOOL_PENCIL);
+const default_tool = window.get_tool_by_id("TOOL_SELECT");
 
 const default_canvas_width = 512;
 const default_canvas_height = 384;

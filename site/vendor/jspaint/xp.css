@@ -45,8 +45,8 @@ body,
 
 .menus {
   box-sizing: border-box;
-  height: 21px;
-  min-height: 20px;
+  height: 23px;
+  min-height: 23px;
   padding: 0 2px;
   border-bottom: 1px solid #aca899;
   background: #ece9d8 !important;
@@ -68,6 +68,13 @@ body,
   background: #316ac5;
 }
 
+@media (min-width: 600px) {
+  .menus {
+    height: 20px;
+    min-height: 20px;
+  }
+}
+
 .horizontal > .component-area {
   width: 56px;
   border-right: 1px solid #aca899;
@@ -75,6 +82,60 @@ body,
 
 .horizontal > .component-area.right {
   display: none;
+}
+
+.horizontal {
+  position: relative;
+}
+
+.horizontal > .xp-scroll-button {
+  position: absolute;
+  z-index: 20;
+  box-sizing: border-box;
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  min-height: 17px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background-color: transparent;
+  background-image:
+    url("images/xp/ScrollArrowGlyphs.png"),
+    url("images/xp/ScrollArrows.png");
+  background-repeat: no-repeat;
+  background-size: 9px 144px, 17px 272px;
+}
+
+.horizontal > .xp-scroll-button.xp-scroll-up {
+  top: 0;
+  right: 0;
+  background-position: center 0, center 0;
+}
+
+.horizontal > .xp-scroll-button.xp-scroll-down {
+  right: 0;
+  bottom: 17px;
+  background-position: center -36px, center -68px;
+}
+
+.horizontal > .xp-scroll-button.xp-scroll-left {
+  bottom: 0;
+  left: 57px;
+  background-position: center -72px, center -136px;
+}
+
+.horizontal > .xp-scroll-button.xp-scroll-right {
+  right: 17px;
+  bottom: 0;
+  background-position: center -108px, center -204px;
+}
+
+@media (max-width: 200px) {
+  .horizontal > .xp-scroll-button.xp-scroll-left {
+    left: 0;
+  }
 }
 
 .tools-component {
@@ -90,6 +151,19 @@ body,
   margin-top: 8px;
 }
 
+.transparent-mode-option,
+.transparent-mode-option.use-svg {
+  background-image: url("images/xp/SelectionOptions.png");
+}
+
+.choose-transparent-mode > :nth-child(1) .transparent-mode-option {
+  background-position: 0 0 !important;
+}
+
+.choose-transparent-mode > :nth-child(2) .transparent-mode-option {
+  background-position: -36px 0 !important;
+}
+
 .component-area.bottom,
 .colors-component.wide {
   height: 48px;
@@ -102,8 +176,8 @@ body,
 
 .status-area {
   box-sizing: border-box;
-  height: 28px;
-  min-height: 28px;
+  height: 22px;
+  min-height: 22px;
   padding: 3px 2px 2px;
   border-top: 1px solid #fff;
   font: 11px Tahoma, sans-serif;
@@ -114,6 +188,10 @@ body,
   border: 1px solid #aca899;
   box-shadow: inset 1px 1px #fff;
   line-height: 21px;
+}
+
+.status-coordinates:empty {
+  display: none;
 }
 
 .floating-buttons,
@@ -128,18 +206,65 @@ body,
   padding-left: 0;
 }
 
-::-webkit-scrollbar-button:horizontal:decrement {
-  background-position: -24px 3px;
+.canvas-area::-webkit-scrollbar {
+  background: #f7f7f5;
 }
 
-::-webkit-scrollbar-button:horizontal:increment {
-  background-position: -15px 3px;
+.canvas-area::-webkit-scrollbar-track-piece:horizontal {
+  background: url("images/xp/ScrollShaftHorizontal.png") 0 0 / 100%
+    400% no-repeat;
 }
 
-::-webkit-scrollbar-button:vertical:decrement {
-  background-position: -6px 3px;
+.canvas-area::-webkit-scrollbar-track-piece:vertical {
+  background: url("images/xp/ScrollShaftVertical.png") 0 0 / 100%
+    400% no-repeat;
 }
 
-::-webkit-scrollbar-button:vertical:increment {
-  background-position: 3px 3px;
+.canvas-area::-webkit-scrollbar-thumb:horizontal {
+  border: 0;
+  box-shadow: none;
+  background:
+    linear-gradient(#9fb5d2, #9fb5d2) calc(50% - 2px) center / 1px 8px no-repeat,
+    linear-gradient(#fff, #fff) 50% center / 1px 8px no-repeat,
+    linear-gradient(#9fb5d2, #9fb5d2) calc(50% + 2px) center / 1px 8px no-repeat,
+    url("images/xp/ScrollThumbHorizontal.png") 0 0 / 100% 400%
+      no-repeat;
+}
+
+.canvas-area::-webkit-scrollbar-thumb:vertical {
+  border: 0;
+  box-shadow: none;
+  background:
+    linear-gradient(#9fb5d2, #9fb5d2) center calc(50% - 2px) / 8px 1px no-repeat,
+    linear-gradient(#fff, #fff) center 50% / 8px 1px no-repeat,
+    linear-gradient(#9fb5d2, #9fb5d2) center calc(50% + 2px) / 8px 1px no-repeat,
+    url("images/xp/ScrollThumbVertical.png") 0 0 / 100% 400%
+      no-repeat;
+}
+
+.canvas-area::-webkit-scrollbar-button {
+  border: 0;
+  box-shadow: none;
+  background-color: transparent;
+  background-image:
+    url("images/xp/ScrollArrowGlyphs.png"),
+    url("images/xp/ScrollArrows.png");
+  background-repeat: no-repeat;
+  background-size: 9px 144px, 17px 272px;
+}
+
+.canvas-area::-webkit-scrollbar-button:vertical:decrement {
+  background-position: center 0, center 0;
+}
+
+.canvas-area::-webkit-scrollbar-button:vertical:increment {
+  background-position: center -36px, center -68px;
+}
+
+.canvas-area::-webkit-scrollbar-button:horizontal:decrement {
+  background-position: center -72px, center -136px;
+}
+
+.canvas-area::-webkit-scrollbar-button:horizontal:increment {
+  background-position: center -108px, center -204px;
 }

@@ -42,6 +42,9 @@ function update_$swatch($swatch, new_color) {
 	const swatch_canvas = /** @type {PixelCanvas} */ (
 		$swatch.find("canvas")[0]
 	);
+	const is_solid_color = typeof new_color === "string";
+	$swatch.css("background-color", is_solid_color ? new_color : "");
+	$(swatch_canvas).css("visibility", is_solid_color ? "hidden" : "");
 	requestAnimationFrame(() => {
 		swatch_canvas.width = $swatch.innerWidth();
 		swatch_canvas.height = $swatch.innerHeight();
@@ -170,4 +173,3 @@ export {
 	$Swatch,
 	update_$swatch
 };
-
