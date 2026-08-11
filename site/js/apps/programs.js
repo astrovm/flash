@@ -25,6 +25,10 @@ const applicationContext = (win) => ({
   getDesktopSize,
   getMasterVolume,
   setMasterVolume,
+  setSize(width, height) {
+    win.el.style.width = `${width}px`;
+    win.el.style.height = `${height}px`;
+  },
   setTitle(title) {
     win.title = title;
     if (systemShortcuts[win.gameId]) systemShortcuts[win.gameId].title = title;

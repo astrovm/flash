@@ -1,16 +1,16 @@
 .xp-native-winamp-window {
   width: 275px;
   min-width: 275px;
-  min-height: 116px;
+  min-height: 14px;
   padding: 0;
   overflow: visible;
   border-radius: 0;
   background: transparent;
-  box-shadow: 2px 2px 8px rgb(0 0 0 / 55%);
+  box-shadow: none;
 }
 
 .xp-native-winamp-window.active {
-  box-shadow: 2px 2px 8px rgb(0 0 0 / 55%);
+  box-shadow: none;
 }
 
 .xp-native-winamp-window .resize-handle {
@@ -44,7 +44,7 @@
 }
 
 .winamp-main {
-  background: url("../../apps/winamp/skin/MAIN.BMP") 0 0 / 275px 116px no-repeat;
+  background: url("../../apps/winamp/skin/MAIN.png") 0 0 / 275px 116px no-repeat;
 }
 
 .winamp-title-bar {
@@ -55,13 +55,13 @@
   margin: 0;
   padding: 0;
   border-radius: 0;
-  background: url("../../apps/winamp/skin/TITLEBAR.BMP") -27px -15px no-repeat;
+  background: url("../../apps/winamp/skin/TITLEBAR.png") -27px -15px no-repeat;
   box-shadow: none;
   touch-action: none;
 }
 
 .xp-native-winamp-window.active .winamp-title-bar {
-  background: url("../../apps/winamp/skin/TITLEBAR.BMP") -27px 0 no-repeat;
+  background: url("../../apps/winamp/skin/TITLEBAR.png") -27px 0 no-repeat;
 }
 
 .winamp-title-bar .title-icon {
@@ -98,7 +98,7 @@
   top: 3px;
   width: 9px;
   height: 9px;
-  background-image: url("../../apps/winamp/skin/TITLEBAR.BMP");
+  background-image: url("../../apps/winamp/skin/TITLEBAR.png");
 }
 
 .winamp-options {
@@ -167,7 +167,7 @@
   left: 26px;
   width: 9px;
   height: 9px;
-  background-image: url("../../apps/winamp/skin/PLAYPAUS.BMP");
+  background-image: url("../../apps/winamp/skin/PLAYPAUS.png");
   background-position: -18px 0;
 }
 
@@ -192,7 +192,7 @@
   width: 9px;
   height: 13px;
   flex: none;
-  background: url("../../apps/winamp/skin/NUMBERS.BMP") 0 0 no-repeat;
+  background: url("../../apps/winamp/skin/NUMBERS.png") 0 0 no-repeat;
 }
 
 .winamp-time i {
@@ -276,7 +276,7 @@
   left: 239px;
   width: 29px;
   height: 12px;
-  background-image: url("../../apps/winamp/skin/MONOSTER.BMP");
+  background-image: url("../../apps/winamp/skin/MONOSTER.png");
   background-position: 0 0;
 }
 
@@ -301,7 +301,7 @@
   top: 57px;
   left: 107px;
   width: 68px;
-  background: url("../../apps/winamp/skin/VOLUME.BMP") 0 0 no-repeat;
+  background: url("../../apps/winamp/skin/VOLUME.png") 0 0 no-repeat;
 }
 
 .winamp-volume input {
@@ -313,7 +313,7 @@
   top: 57px;
   left: 177px;
   width: 38px;
-  background: url("../../apps/winamp/skin/BALANCE.BMP") -9px 0 no-repeat;
+  background: url("../../apps/winamp/skin/BALANCE.png") -9px 0 no-repeat;
 }
 
 .winamp-balance input {
@@ -326,7 +326,7 @@
   height: 11px;
   appearance: none;
   border: 0;
-  background: url("../../apps/winamp/skin/VOLUME.BMP") -15px -422px no-repeat;
+  background: url("../../apps/winamp/skin/VOLUME.png") -15px -422px no-repeat;
 }
 
 .winamp-slider input:active::-webkit-slider-thumb {
@@ -338,7 +338,7 @@
   top: 58px;
   width: 23px;
   height: 12px;
-  background-image: url("../../apps/winamp/skin/SHUFREP.BMP");
+  background-image: url("../../apps/winamp/skin/SHUFREP.png");
 }
 
 .winamp-eq-toggle {
@@ -362,7 +362,7 @@
   left: 16px;
   width: 248px;
   height: 10px;
-  background: url("../../apps/winamp/skin/POSBAR.BMP") 0 0 no-repeat;
+  background: url("../../apps/winamp/skin/POSBAR.png") 0 0 no-repeat;
 }
 
 .winamp-position::-webkit-slider-thumb {
@@ -370,7 +370,7 @@
   height: 10px;
   appearance: none;
   border: 0;
-  background: url("../../apps/winamp/skin/POSBAR.BMP") -248px 0 no-repeat;
+  background: url("../../apps/winamp/skin/POSBAR.png") -248px 0 no-repeat;
 }
 
 .winamp-position:active::-webkit-slider-thumb {
@@ -384,7 +384,7 @@
   top: 88px;
   width: 23px;
   height: 18px;
-  background-image: url("../../apps/winamp/skin/CBUTTONS.BMP");
+  background-image: url("../../apps/winamp/skin/CBUTTONS.png");
 }
 
 .winamp-actions .previous {
@@ -429,7 +429,7 @@
   left: 136px;
   width: 22px;
   height: 16px;
-  background-image: url("../../apps/winamp/skin/CBUTTONS.BMP");
+  background-image: url("../../apps/winamp/skin/CBUTTONS.png");
   background-position: -114px 0;
 }
 
@@ -441,7 +441,7 @@
 .winamp-repeat {
   top: 89px;
   height: 15px;
-  background-image: url("../../apps/winamp/skin/SHUFREP.BMP");
+  background-image: url("../../apps/winamp/skin/SHUFREP.png");
 }
 
 .winamp-shuffle {
@@ -474,7 +474,7 @@
 }
 
 .winamp-equalizer {
-  background: url("../../apps/winamp/skin/EQMAIN.BMP") 0 0 / 275px 315px
+  background: url("../../apps/winamp/skin/EQMAIN.png") 0 0 / 275px 315px
     no-repeat;
 }
 
@@ -483,7 +483,7 @@
   left: 264px;
   width: 9px;
   height: 9px;
-  background-image: url("../../apps/winamp/skin/EQMAIN.BMP");
+  background-image: url("../../apps/winamp/skin/EQMAIN.png");
   background-position: 0 -116px;
 }
 
@@ -495,7 +495,7 @@
 .winamp-eq-auto {
   top: 18px;
   height: 12px;
-  background-image: url("../../apps/winamp/skin/EQMAIN.BMP");
+  background-image: url("../../apps/winamp/skin/EQMAIN.png");
 }
 
 .winamp-eq-on {
@@ -560,7 +560,7 @@
   height: 11px;
   appearance: none;
   border: 0;
-  background: url("../../apps/winamp/skin/EQMAIN.BMP") 0 -164px no-repeat;
+  background: url("../../apps/winamp/skin/EQMAIN.png") 0 -164px no-repeat;
 }
 
 .winamp-eq-sliders input:active::-webkit-slider-thumb {
@@ -586,7 +586,7 @@
 .winamp-playlist-top em,
 .winamp-playlist-top strong {
   height: 20px;
-  background-image: url("../../apps/winamp/skin/PLEDIT.BMP");
+  background-image: url("../../apps/winamp/skin/PLEDIT.png");
   background-repeat: no-repeat;
 }
 
@@ -637,7 +637,7 @@
   display: block;
   width: 100%;
   height: 29px;
-  background-image: url("../../apps/winamp/skin/PLEDIT.BMP");
+  background-image: url("../../apps/winamp/skin/PLEDIT.png");
   background-repeat: no-repeat;
 }
 
@@ -705,16 +705,16 @@
 
 .winamp-playlist-bottom i {
   width: 125px;
-  background: url("../../apps/winamp/skin/PLEDIT.BMP") 0 -72px no-repeat;
+  background: url("../../apps/winamp/skin/PLEDIT.png") 0 -72px no-repeat;
 }
 .winamp-playlist-bottom b {
   width: 0;
   flex: 1;
-  background: url("../../apps/winamp/skin/PLEDIT.BMP") -179px 0 repeat-x;
+  background: url("../../apps/winamp/skin/PLEDIT.png") -179px 0 repeat-x;
 }
 .winamp-playlist-bottom span {
   width: 150px;
-  background: url("../../apps/winamp/skin/PLEDIT.BMP") -126px -72px no-repeat;
+  background: url("../../apps/winamp/skin/PLEDIT.png") -126px -72px no-repeat;
 }
 
 .winamp-playlist-close {
@@ -723,7 +723,7 @@
   right: 2px;
   width: 9px;
   height: 9px;
-  background-image: url("../../apps/winamp/skin/PLEDIT.BMP");
+  background-image: url("../../apps/winamp/skin/PLEDIT.png");
   background-position: -52px -42px;
   opacity: 0;
 }
@@ -734,12 +734,12 @@
 
 .winamp-add,
 .winamp-remove,
-.winamp-new-list {
+.winamp-list-options {
   z-index: 2;
   bottom: 12px;
   width: 22px;
   height: 18px;
-  background-image: url("../../apps/winamp/skin/PLEDIT.BMP");
+  background-image: none;
 }
 
 .winamp-add {
@@ -750,18 +750,45 @@
   left: 43px;
   background-position: -54px -149px;
 }
-.winamp-new-list {
+.winamp-list-options {
   right: 22px;
-  background-position: -204px -111px;
 }
-.winamp-add:active {
-  background-position: -23px -149px;
+
+.winamp-add:active,
+.winamp-remove:active,
+.winamp-list-options:active {
+  background: rgb(255 255 255 / 12%);
 }
-.winamp-remove:active {
-  background-position: -77px -149px;
+
+.winamp-playlist-menu {
+  position: absolute;
+  z-index: 4;
+  right: 18px;
+  bottom: 28px;
+  width: 74px;
+  padding: 2px;
+  border: 1px solid #a7a7b9;
+  background: #202035;
+  box-shadow: 2px 2px #000;
 }
-.winamp-new-list:active {
-  background-position: -227px -111px;
+
+.winamp-playlist-menu button {
+  display: block;
+  width: 100%;
+  padding: 3px 7px;
+  border: 0;
+  color: #fff;
+  background: transparent;
+  font:
+    10px Arial,
+    sans-serif;
+  text-align: left;
+}
+
+.winamp-playlist-menu button:hover,
+.winamp-playlist-menu button:focus-visible {
+  background: #3434a0;
+  outline: 0;
 }
 
 .winamp-playlist-time {
@@ -784,8 +811,7 @@
   height: 14px;
 }
 
-.winamp-app.equalizer-hidden.playlist-hidden,
-.winamp-app.windowshade {
+.winamp-app.equalizer-hidden.playlist-hidden {
   height: 116px;
 }
 

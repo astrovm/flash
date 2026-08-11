@@ -950,10 +950,7 @@ const getAllProgramsTree = () => {
           id: "entertainment",
           label: "Entertainment",
           icon: programFolder,
-          children: [
-            xpProgramMenuItem("__volume-control"),
-            xpProgramMenuItem("__winamp"),
-          ],
+          children: [xpProgramMenuItem("__volume-control")],
         },
         {
           id: "system-tools",
@@ -1002,6 +999,12 @@ const getAllProgramsTree = () => {
       label: "Startup",
       icon: programFolder,
       children: [],
+    },
+    {
+      id: "winamp",
+      label: "Winamp",
+      icon: programFolder,
+      children: [xpProgramMenuItem("__winamp")],
     },
     { separator: true },
     {

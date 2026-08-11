@@ -462,16 +462,25 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     "accessories",
     "games",
     "startup",
+    "winamp",
     "astro-settings",
     "internet-games",
   ]);
-  for (const programId of ["accessories", "games", "startup"]) {
+  for (const programId of ["accessories", "games", "startup", "winamp"]) {
     expect(
       flyouts
         .querySelector(`[data-program-id="${programId}"] img`)!
         .getAttribute("src"),
     ).toEndWith("/ProgramFolder.png");
   }
+
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="winamp"]')!
+    .click();
+  const winampGroup = flyouts.querySelectorAll(".start-program-flyout")[1]!;
+  expect(
+    winampGroup.querySelector<HTMLElement>('[data-program-id="winamp"]'),
+  ).not.toBeNull();
 
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
