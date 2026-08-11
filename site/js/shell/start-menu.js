@@ -942,8 +942,6 @@ const getAllProgramsTree = () => {
   }));
   return [
     xpProgramMenuItem("__program-access-defaults", "program-access-defaults"),
-    xpProgramMenuItem("__windows-catalog", "windows-catalog"),
-    xpProgramMenuItem("__windows-update", "windows-update"),
     { separator: true },
     {
       id: "accessories",
@@ -954,25 +952,13 @@ const getAllProgramsTree = () => {
           id: "accessibility",
           label: "Accessibility",
           icon: programFolder,
-          children: [
-            xpProgramMenuItem("__accessibility-wizard"),
-            xpProgramMenuItem("__magnifier"),
-            xpProgramMenuItem("__narrator"),
-            xpProgramMenuItem("__on-screen-keyboard"),
-            xpProgramMenuItem("__utility-manager"),
-          ],
+          children: [xpProgramMenuItem("__on-screen-keyboard")],
         },
         {
           id: "communications",
           label: "Communications",
           icon: programFolder,
-          children: [
-            xpProgramMenuItem("__hyperterminal"),
-            xpProgramMenuItem("__network-connections"),
-            xpProgramMenuItem("__network-setup-wizard"),
-            xpProgramMenuItem("__new-connection-wizard"),
-            xpProgramMenuItem("__wireless-network-setup-wizard"),
-          ],
+          children: [xpProgramMenuItem("__hyperterminal")],
         },
         {
           id: "entertainment",
@@ -990,11 +976,9 @@ const getAllProgramsTree = () => {
           label: "System Tools",
           icon: programFolder,
           children: [
-            xpProgramMenuItem("__backup"),
             xpProgramMenuItem("__character-map"),
             xpProgramMenuItem("__disk-cleanup"),
             xpProgramMenuItem("__disk-defragmenter"),
-            xpProgramMenuItem("__files-settings-transfer"),
             xpProgramMenuItem("__scheduled-tasks"),
             {
               id: "security-center",
@@ -1003,7 +987,6 @@ const getAllProgramsTree = () => {
               action: () => openSystemWindow("__security-center"),
             },
             xpProgramMenuItem("__system-information"),
-            xpProgramMenuItem("__system-restore"),
           ],
         },
         xpProgramMenuItem("__address-book"),
@@ -1016,10 +999,7 @@ const getAllProgramsTree = () => {
           action: openNotepad,
         },
         xpProgramMenuItem("__paint"),
-        xpProgramMenuItem("__program-compatibility-wizard"),
         xpProgramMenuItem("__remote-desktop", "remote-desktop-connection"),
-        xpProgramMenuItem("__synchronize"),
-        xpProgramMenuItem("__tour-windows-xp"),
         {
           id: "windows-explorer",
           label: "Windows Explorer",
@@ -1035,16 +1015,8 @@ const getAllProgramsTree = () => {
       icon: programFolder,
       children: [
         xpProgramMenuItem("__freecell"),
-        xpProgramMenuItem("__hearts"),
-        xpProgramMenuItem("__internet-backgammon"),
-        xpProgramMenuItem("__internet-checkers"),
-        xpProgramMenuItem("__internet-hearts"),
-        xpProgramMenuItem("__internet-reversi"),
-        xpProgramMenuItem("__internet-spades"),
         xpProgramMenuItem("__minesweeper"),
-        xpProgramMenuItem("__pinball"),
         xpProgramMenuItem("__solitaire"),
-        xpProgramMenuItem("__spider-solitaire"),
         { separator: true },
         ...gameGroups,
       ],
@@ -1058,10 +1030,8 @@ const getAllProgramsTree = () => {
     xpProgramMenuItem("__internet-explorer"),
     xpProgramMenuItem("__msn"),
     xpProgramMenuItem("__outlook-express"),
-    xpProgramMenuItem("__remote-assistance"),
     xpProgramMenuItem("__windows-media-player"),
     xpProgramMenuItem("__windows-messenger"),
-    xpProgramMenuItem("__windows-movie-maker"),
     { separator: true },
     {
       id: "astro-settings",
