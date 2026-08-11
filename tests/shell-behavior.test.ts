@@ -296,6 +296,11 @@ test("Display Properties applies and persists a selected wallpaper", async () =>
     shell.document
       .getElementById("desktop")!
       .style.getPropertyValue("--desktop-background"),
+  ).toContain('url("/assets/xp/wallpapers/ascent.jpg")');
+  expect(
+    shell.document
+      .getElementById("desktop")!
+      .style.getPropertyValue("--desktop-background"),
   ).toContain("ascent.jpg");
   expect(apply.disabled).toBeTrue();
 });
