@@ -147,10 +147,6 @@ button.solitaire-pile {
   grid-column: 2;
 }
 
-.solitaire-foundation:nth-of-type(4) {
-  grid-column: 4;
-}
-
 .solitaire-card {
   position: absolute;
   top: 0;
