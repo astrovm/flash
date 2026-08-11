@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "source": {
+    "edition": "Windows XP Professional SP3 x86 VL (English)",
+    "iso": "en_windows_xp_professional_with_service_pack_3_x86_cd_vl_x14-73974.iso",
+    "sha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927"
+  },
+  "package": {
+    "path": "SpaceCadetPinball.data",
+    "sha256": "fd2651e27e0595beb815a69b37b27d39b6105e1f524f7885b57b92dc3239917d",
+    "bytes": 2329937
+  },
+  "files": {
+    "SOUND29.WAV": {
+      "member": "I386/SOUND29.WA_",
+      "sha256": "82752afe3c0ff97a44a14537a04dc2b4a3268029c870aa3d6b7c99bd75f4e09e",
+      "start": 0,
+      "end": 10364
+    },
+    "SOUND560.WAV": {
+      "member": "I386/SOUND560.WA_",
+      "sha256": "b58eb770edd2d79984cb2969a5de8e5c06a3b743c7da5b7ce0a30ba88679f157",
+      "start": 10364,
+      "end": 39368
+    },
+    "SOUND30.WAV": {
+      "member": "I386/SOUND30.WA_",
+      "sha256": "2dc3ed509cb16722208e430c74aa7aaae5dd9eeab78b8e07ff3d85feec87d2fc",
+      "start": 39368,
+      "end": 61938
+    },
+    "SOUND54.WAV": {
+      "member": "I386/SOUND54.WA_",
+      "sha256": "e622e340fc0e41e1d05223e06cc59765aa1ccaf0956eb9c320a4f43d07d75965",
+      "start": 61938,
+      "end": 80188
+    },
+    "SOUND12.WAV": {
+      "member": "I386/SOUND12.WA_",
+      "sha256": "9902227bb6cedede8636c99688391d1a0a77428193e3a12dd7fb12401a598d5a",
+      "start": 80188,
+      "end": 84484
+    },
+    "SOUND17.WAV": {
+      "member": "I386/SOUND17.WA_",
+      "sha256": "6e3be18204f5ab9874e86b70896012d416057b4c14dda492929539f11d31c990",
+      "start": 84484,
+      "end": 86574
+    },
+    "SOUND27.WAV": {
+      "member": "I386/SOUND27.WA_",
+      "sha256": "a56953cf0ff543930fe3d32787b330ff7339e2f8e93b2fff9389cd6a799439e2",
+      "start": 86574,
+      "end": 106816
+    },
+    "SOUND22.WAV": {
+      "member": "I386/SOUND22.WA_",
+      "sha256": "1b5b2e369409d2fab0f2bcc38de99b340f6c7f6dc8f40b4103afe57a0dbebb2a",
+      "start": 106816,
+      "end": 114192
+    },
+    "SOUND104.WAV": {
+      "member": "I386/SOUND104.WA_",
+      "sha256": "f38173fe132752208196194c4a37390f7ba0024ca0e69e38c49b3f1546550c06",
+      "start": 114192,
+      "end": 115418
+    },
+    "SOUND42.WAV": {
+      "member": "I386/SOUND42.WA_",
+      "sha256": "7c4b053ed4b725d1ac4cf4e78fcc196a00d759f1cfb9fbb77d321e9e9c208ff9",
+      "start": 115418,
+      "end": 144558
+    },
+    "SOUND112.WAV": {
+      "member": "I386/SOUND112.WA_",
+      "sha256": "0ebb658081295dd5421fbcb9d8418786bf0566a0393e1dc78a0cf82205bb0af3",
+      "start": 144558,
+      "end": 145382
+    },
+    "SOUND24.WAV": {
+      "member": "I386/SOUND24.WA_",
+      "sha256": "501c4ad9d6a8600c3b206c5bbefe5fc0e27eb15cc3f14b767ae57c0bf04a0339",
+      "start": 145382,
+      "end": 157488
+    },
+    "SOUND49D.WAV": {
+      "member": "I386/SOUND49D.WA_",
+      "sha256": "0d43ac8a5991e426b3cbb7b95893bd05e59b2df8054d16cab0530b26195302a8",
+      "start": 157488,
+      "end": 160818
+    },
+    "PINBALL.MID": {
+      "member": "I386/PINBALL.MI_",
+      "sha256": "b030f95b0d3b7b582a8c030ce548e11ab9457e2281f615af1e291401ffb0be41",
+      "start": 160818,
+      "end": 269425
+    },
+    "SOUND3.WAV": {
+      "member": "I386/SOUND3.WA_",
+      "sha256": "81832bc5b34359bc87173dc234cbb30ea23aa541814809ad16eb1ba9bd7335af",
+      "start": 269425,
+      "end": 292283
+    },
+    "SOUND16.WAV": {
+      "member": "I386/SOUND16.WA_",
+      "sha256": "4552eada8e87c3c6dc448f61749ab10e218d786addf62d3abc6df982bdb4b17e",
+      "start": 292283,
+      "end": 293329
+    },
+    "SOUND43.WAV": {
+      "member": "I386/SOUND43.WA_",
+      "sha256": "1c194db61e7d19febf3f714cdfed0253d5f5d10ebca43c6d6afc974d33e5f8e4",
+      "start": 293329,
+      "end": 316125
+    },
+    "SOUND26.WAV": {
+      "member": "I386/SOUND26.WA_",
+      "sha256": "1a6fbd0dd59a2a1b60617d6359ba2270e55b0b6b806b16b3997d902edb342091",
+      "start": 316125,
+      "end": 323431
+    },
+    "SOUND20.WAV": {
+      "member": "I386/SOUND20.WA_",
+      "sha256": "d9967a5ec4104c9e470e02163e07e0f34b313578d302c9a849972f81f328ecfe",
+      "start": 323431,
+      "end": 332081
+    },
+    "SOUND111.WAV": {
+      "member": "I386/SOUND111.WA_",
+      "sha256": "0fb48d73a1dd8070388f11410d8844eb570507f19d0c5d6108176664844f1cb2",
+      "start": 332081,
+      "end": 332971
+    },
+    "SOUND8.WAV": {
+      "member": "I386/SOUND8.WA_",
+      "sha256": "1c457b41c4b5f7a35e6b539caec28520515b297eb1e23069173e7cdc5c0ae61c",
+      "start": 332971,
+      "end": 335073
+    },
+    "SOUND5.WAV": {
+      "member": "I386/SOUND5.WA_",
+      "sha256": "e0d2932bdf94581ccb0b5c38421755299db01d0f594f59c5696c1f466ac86d06",
+      "start": 335073,
+      "end": 338253
+    },
+    "SOUND58.WAV": {
+      "member": "I386/SOUND58.WA_",
+      "sha256": "0bfe131b571e699e3664ca1e81041d6034a99526e1b7a1b6295ced21345c16e3",
+      "start": 338253,
+      "end": 341661
+    },
+    "FONT.DAT": {
+      "member": "I386/FONT.DA_",
+      "sha256": "ba89418be9aed5d7f5bc197c00fab4cacf3aff23a1ddc0de134010414acf2d0b",
+      "start": 341661,
+      "end": 345608
+    },
+    "TAHOMA.TTF": {
+      "member": "I386/TAHOMA.TT_",
+      "sha256": "08f45bf539954d3252df97a2ae563362ed2ad5ebe05f2d1f2bc54b931e4d0550",
+      "start": 345608,
+      "end": 729412
+    },
+    "SOUND1.WAV": {
+      "member": "I386/SOUND1.WA_",
+      "sha256": "6b2b9e2bdd1ca7854c44d93f86167b6f54fbd0cd702aee47a46b5807a74d4571",
+      "start": 729412,
+      "end": 784902
+    },
+    "PINBALL2.MID": {
+      "member": "I386/PINBALL2.MI_",
+      "sha256": "9f575c7e2b0af4802b25281a29541455f5c03e810cc5016226f93746358c0169",
+      "start": 784902,
+      "end": 813790
+    },
+    "SOUND28.WAV": {
+      "member": "I386/SOUND28.WA_",
+      "sha256": "75df525487b896b9b54e34280dedaab92de9db32645911efe49fc0d5d2e60c3a",
+      "start": 813790,
+      "end": 822440
+    },
+    "SOUND13.WAV": {
+      "member": "I386/SOUND13.WA_",
+      "sha256": "0f537e4c5c1b5c48185c9c02cfa101dafad9111d20bfbfc3ad4bfefe82978818",
+      "start": 822440,
+      "end": 830474
+    },
+    "SOUND735.WAV": {
+      "member": "I386/SOUND735.WA_",
+      "sha256": "818a768c131235701b66c73f7c18bad23f5ae67e66adfe1b3d39818d6107ba4e",
+      "start": 830474,
+      "end": 857742
+    },
+    "SOUND105.WAV": {
+      "member": "I386/SOUND105.WA_",
+      "sha256": "61f8dcdba2b0313b078db1982cbc2f7763c5c5287a796341644d87fb5515a051",
+      "start": 857742,
+      "end": 859710
+    },
+    "SOUND181.WAV": {
+      "member": "I386/SOUND181.WA_",
+      "sha256": "26fec6a697974a63d7c61afb56a9f5fdbdb416e100e093d9c344c17f6299345e",
+      "start": 859710,
+      "end": 887182
+    },
+    "WAVEMIX.INF": {
+      "member": "I386/WAVEMIX.INF",
+      "sha256": "bf36d27869f1a95dd07e36651e0a1f7f62441900a4dfa7f6ed4595cf54586b9d",
+      "start": 887182,
+      "end": 889869
+    },
+    "SOUND240.WAV": {
+      "member": "I386/SOUND240.WA_",
+      "sha256": "9f23780634d86c4e5d4fa24a369c1ad674112a55013c705a540350f3b70d36f9",
+      "start": 889869,
+      "end": 904469
+    },
+    "SOUND9.WAV": {
+      "member": "I386/SOUND9.WA_",
+      "sha256": "2b48a5c3ba88b0af5b8abc2a833e2d36d63ee4ceae893b396481884eed931aa1",
+      "start": 904469,
+      "end": 924567
+    },
+    "SOUND18.WAV": {
+      "member": "I386/SOUND18.WA_",
+      "sha256": "12c46563839b43ea562d7ed581b0ee20e8069f3109435ef33a72e24f429e6336",
+      "start": 924567,
+      "end": 928553
+    },
+    "SOUND21.WAV": {
+      "member": "I386/SOUND21.WA_",
+      "sha256": "2029fdff1153308e251d9c12c4eed3904147e3940fd01549814cd9672b849c42",
+      "start": 928553,
+      "end": 937747
+    },
+    "SOUND6.WAV": {
+      "member": "I386/SOUND6.WA_",
+      "sha256": "75302e43a7c17ad28c2453921b205f3f5f33d51ab2c2d591b562b878ac77ae6b",
+      "start": 937747,
+      "end": 942123
+    },
+    "SOUND45.WAV": {
+      "member": "I386/SOUND45.WA_",
+      "sha256": "260bb8f813f271f4b1dbc0abbe20b8a23fbc8d710047609e94ef9d3665591aac",
+      "start": 942123,
+      "end": 951893
+    },
+    "SOUND50.WAV": {
+      "member": "I386/SOUND50.WA_",
+      "sha256": "4f20e2a9926e0422e970d080bb87631d961993e8080e725d47cb561679191ac9",
+      "start": 951893,
+      "end": 963967
+    },
+    "SOUND999.WAV": {
+      "member": "I386/SOUND999.WA_",
+      "sha256": "d8e4b015f88edff148d97e96887a2ebeb117ac6fb788e6fd896199379eed75a6",
+      "start": 963967,
+      "end": 970709
+    },
+    "SOUND528.WAV": {
+      "member": "I386/SOUND528.WA_",
+      "sha256": "047f84940741466d7e322651a73dc237a82bd15df99a5dca11bb5394c5dea138",
+      "start": 970709,
+      "end": 979641
+    },
+    "SOUND243.WAV": {
+      "member": "I386/SOUND243.WA_",
+      "sha256": "49998ec981bb7c20d2b299cfc99af3f43113d3464d6b9245091bee3b69528d4e",
+      "start": 979641,
+      "end": 1000353
+    },
+    "PINBALL.DAT": {
+      "member": "I386/PINBALL.DA_",
+      "sha256": "42defd5d2a339a3953fe643716aff4e35b2cea7a3e54505c82d1e78d5325bc04",
+      "start": 1000353,
+      "end": 1929053
+    },
+    "SOUND53.WAV": {
+      "member": "I386/SOUND53.WA_",
+      "sha256": "d6ec9cf630b991d4a8b5a4065d6bf6688f051db0365d41d7598c1089a37ba26b",
+      "start": 1929053,
+      "end": 1938075
+    },
+    "SOUND131.WAV": {
+      "member": "I386/SOUND131.WA_",
+      "sha256": "74b86b262c3dbb8e366d859786f434eb603ae20a3c5098187effb03a41c5e6de",
+      "start": 1938075,
+      "end": 1939365
+    },
+    "SOUND19.WAV": {
+      "member": "I386/SOUND19.WA_",
+      "sha256": "297892c4fc6a854675e2243863a7b3f9be9b7ba17cfdf6932deeb6e5a9b78977",
+      "start": 1939365,
+      "end": 1944595
+    },
+    "SOUND39.WAV": {
+      "member": "I386/SOUND39.WA_",
+      "sha256": "f179ef987a8f1046e039853a70736a321b99806d9313ca1eb9545be8600fe140",
+      "start": 1944595,
+      "end": 1972877
+    },
+    "SOUND35.WAV": {
+      "member": "I386/SOUND35.WA_",
+      "sha256": "53d3a97f9f0fe2573dab3dfb5d8272d8c4479c1a2b08ab3d228fdfc0bc0c67ec",
+      "start": 1972877,
+      "end": 1992375
+    },
+    "SOUND713.WAV": {
+      "member": "I386/SOUND713.WA_",
+      "sha256": "292605cfdf32af50de7179aca4ca3b89ba7d576278b22ebd7b43b38d372bc81c",
+      "start": 1992375,
+      "end": 2006967
+    },
+    "SOUND38.WAV": {
+      "member": "I386/SOUND38.WA_",
+      "sha256": "ee9b2af62332f4c3cee322305a71514f4d1fb9e27934c59fe14f1df02d9c5cae",
+      "start": 2006967,
+      "end": 2019991
+    },
+    "SOUND108.WAV": {
+      "member": "I386/SOUND108.WA_",
+      "sha256": "b5c15daa4ddb807c193fdd3c52e8d0a14afdbcaf51a6e7bafa999f76df027d76",
+      "start": 2019991,
+      "end": 2027745
+    },
+    "SOUND55.WAV": {
+      "member": "I386/SOUND55.WA_",
+      "sha256": "5e88cbd94dc5089703b76fddb5fbfe5dae9a01f353f73e7cc942486733c27414",
+      "start": 2027745,
+      "end": 2049635
+    },
+    "SOUND57.WAV": {
+      "member": "I386/SOUND57.WA_",
+      "sha256": "39ea0686bab814af4a5948a324d572510cfa44e6cad0864ad8f2b8374cd811b4",
+      "start": 2049635,
+      "end": 2080137
+    },
+    "SOUND7.WAV": {
+      "member": "I386/SOUND7.WA_",
+      "sha256": "7a9ecebe58055fe42c4af7f9b3b319439f85c3cd745d1e245ad4db19c0e34783",
+      "start": 2080137,
+      "end": 2106579
+    },
+    "SOUND68.WAV": {
+      "member": "I386/SOUND68.WA_",
+      "sha256": "a2e556a065b7a6ec4ff18d78cc750c1bf043678d4e0afe184033472c5598f146",
+      "start": 2106579,
+      "end": 2138981
+    },
+    "SOUND136.WAV": {
+      "member": "I386/SOUND136.WA_",
+      "sha256": "b734733533d4b0179d9c3cc2d14449d33576e9ef11ca419391a9c44dee6d5c20",
+      "start": 2138981,
+      "end": 2158263
+    },
+    "SOUND34.WAV": {
+      "member": "I386/SOUND34.WA_",
+      "sha256": "7d840d49e32c8d4338ddfafff85f0cc05abc9824f56279a3bbcad1d91dadd73b",
+      "start": 2158263,
+      "end": 2159783
+    },
+    "SOUND827.WAV": {
+      "member": "I386/SOUND827.WA_",
+      "sha256": "551b9e899cd45c0ad8401e48c714bf2ab749a733b2964e9a701b613e6694aa95",
+      "start": 2159783,
+      "end": 2207013
+    },
+    "SOUND36.WAV": {
+      "member": "I386/SOUND36.WA_",
+      "sha256": "95b24b62d7e99e92227a41808b9d4489e82cad0a13d93d1d89458aea837fa81f",
+      "start": 2207013,
+      "end": 2240861
+    },
+    "SOUND25.WAV": {
+      "member": "I386/SOUND25.WA_",
+      "sha256": "89b018e05246cad3ec1ebd8ce0b33619e45049244f255fa1a9786c3000522d5f",
+      "start": 2240861,
+      "end": 2266565
+    },
+    "SOUND65.WAV": {
+      "member": "I386/SOUND65.WA_",
+      "sha256": "3e99e9254694893ae78728c6a8a55c5f435600480ed402c82240f67881f6443a",
+      "start": 2266565,
+      "end": 2284241
+    },
+    "SOUND563.WAV": {
+      "member": "I386/SOUND563.WA_",
+      "sha256": "19cd370a9f58fa01761ca1e45fae4901055c62ad9d7563642df5c483a2872a9a",
+      "start": 2284241,
+      "end": 2308433
+    },
+    "SOUND4.WAV": {
+      "member": "I386/SOUND4.WA_",
+      "sha256": "83ef8fa7563a5ef1e2d138e7f4878ce0cac0bf74e17251910c2237e355115df0",
+      "start": 2308433,
+      "end": 2325059
+    },
+    "SOUND14.WAV": {
+      "member": "I386/SOUND14.WA_",
+      "sha256": "f6bd098350ad28571427ae7535da76ec13def5a0d24cd33a4259fc93177861bf",
+      "start": 2325059,
+      "end": 2328061
+    },
+    "SOUND49.WAV": {
+      "member": "I386/SOUND49.WA_",
+      "sha256": "45e9471c6bee296f231de1645c5c538b58493110c9aa9a28c7ffe01ca3f95019",
+      "start": 2328061,
+      "end": 2329937
+    }
+  }
+}

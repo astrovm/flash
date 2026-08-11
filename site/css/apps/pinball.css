@@ -1,0 +1,42 @@
+.pinball-window {
+  min-width: min(386px, calc(100% - 8px));
+  min-height: min(304px, calc(100% - 8px));
+}
+
+.pinball-content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.pinball-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  image-rendering: auto;
+  background: #000;
+}
+
+.pinball-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  color: #fff;
+  background: #000;
+  font:
+    11px Tahoma,
+    sans-serif;
+  text-align: center;
+}
+
+.pinball-loading progress {
+  width: 180px;
+}

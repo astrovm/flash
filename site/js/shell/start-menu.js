@@ -1016,6 +1016,7 @@ const getAllProgramsTree = () => {
       children: [
         xpProgramMenuItem("__freecell"),
         xpProgramMenuItem("__minesweeper"),
+        xpProgramMenuItem("__pinball"),
         xpProgramMenuItem("__solitaire"),
         { separator: true },
         ...gameGroups,
