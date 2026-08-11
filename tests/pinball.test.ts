@@ -4,7 +4,12 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
+import {
+  cleanupShells,
+  flushShell,
+  loadShell,
+  login,
+} from "./helpers/shell-harness";
 
 const projectDirectory = join(dirname(fileURLToPath(import.meta.url)), "..");
 const runtimeDirectory = join(
@@ -51,6 +56,65 @@ describe("3D Pinball application", () => {
     expect(
       shell.document.querySelector('.xp-window[data-game="__pinball"] canvas'),
     ).toBe(canvas);
+  });
+
+  test("suspends all audio on close and resumes it with the existing runtime", async () => {
+    const shell = await login(await loadShell());
+    const calls: string[] = [];
+    let runtimeModule: { onRuntimeInitialized(): void } | undefined;
+    const openPinball = () => {
+      click(shell.document.getElementById("start-button"));
+      click(shell.document.getElementById("all-programs-button"));
+      const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+      click(flyouts.querySelector('[data-program-id="games"]'));
+      click(flyouts.querySelector('[data-program-id="pinball"]'));
+    };
+    Object.assign(shell.window, {
+      AstroPinballModule: async (module: { onRuntimeInitialized(): void }) => {
+        runtimeModule = module;
+        Object.assign(module, {
+          SDL2: {
+            audioContext: {
+              resume: () => calls.push("resume audio"),
+              suspend: () => calls.push("suspend audio"),
+            },
+          },
+          pauseMainLoop: () => calls.push("pause main loop"),
+          resumeMainLoop: () => calls.push("resume main loop"),
+        });
+        return module;
+      },
+    });
+
+    openPinball();
+    const runtimeScript = shell.document.querySelector(
+      'script[src$="/apps/pinball/runtime/SpaceCadetPinball.js"]',
+    ) as unknown as { dispatchEvent(event: unknown): boolean };
+    runtimeScript.dispatchEvent(new shell.window.Event("load"));
+
+    const window = shell.document.querySelector(
+      '.xp-window[data-game="__pinball"]',
+    )!;
+    click(window.querySelector(".close-btn"));
+    expect(calls).toEqual([]);
+
+    runtimeModule!.onRuntimeInitialized();
+    await flushShell();
+    expect(calls).toEqual(["pause main loop", "suspend audio"]);
+
+    openPinball();
+    expect(calls).toEqual([
+      "pause main loop",
+      "suspend audio",
+      "resume audio",
+      "resume main loop",
+    ]);
+
+    const reopenedWindow = shell.document.querySelector(
+      '.xp-window[data-game="__pinball"]',
+    )!;
+    click(reopenedWindow.querySelector(".close-btn"));
+    expect(calls.slice(-2)).toEqual(["pause main loop", "suspend audio"]);
   });
 
   test("packages only byte-authenticated resources from the XP ISO", async () => {
