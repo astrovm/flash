@@ -435,6 +435,19 @@
       "pixelSha256": "7a6542d26569cc6451d6b911bcc163f467866e442bcdb055ad530e7cae5add07"
     }
   },
+  "assets/xp/icons/PaintLarge.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSPAINT.EX_",
+    "sha256": "fa4dbe2da053d4e53ad58b198c5976450088fdef4738e5fd0dbb54d84e3832d3",
+    "resource": {
+      "parentSha256": "4a8b0fd56eef260471a1284161ecbba3bb0cdd8b240b932a94b85077ae8c2f43",
+      "type": 14,
+      "id": 2,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "62335281c12d8a3bb4dd43cb797ffccd1c5133d6b8819d49953bfed5cc9fc2c2"
+    }
+  },
   "assets/xp/icons/ProgramCompatibilityWizard.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/COMPATUI.DL_",

@@ -1565,11 +1565,8 @@ function show_about_paint() {
 		minimizeButton: false,
 	});
 	$about_paint_window.addClass("about-paint squish");
-	if (is_pride_month) {
-		$("#about-paint-icon").attr("src", "./images/icons/gay-es-paint-128x128.png");
-	}
-
-	$about_paint_window.$content.append($about_paint_content.show()).css({ padding: "15px" });
+	$about_paint_window.$content.append($about_paint_content.show());
+	$about_paint_window.setDimensions({ outerWidth: 419, outerHeight: 354 });
 
 	$("#jspaint-update-status-area").removeAttr("hidden");
 

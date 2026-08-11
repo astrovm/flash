@@ -479,37 +479,6 @@ const $H = $(E("div")).addClass("horizontal").appendTo($V);
 const $canvas_area = $(E("div")).addClass("canvas-area inset-deep").appendTo($H);
 window.$canvas_area = $canvas_area;
 
-const scroll_directions = {
-	up: { top: -16, left: 0 },
-	down: { top: 16, left: 0 },
-	left: { top: 0, left: -16 },
-	right: { top: 0, left: 16 },
-};
-const scroll_buttons = Object.entries(scroll_directions).map(([direction, delta]) => {
-	const button = E("button");
-	button.className = `xp-scroll-button xp-scroll-${direction}`;
-	button.type = "button";
-	button.tabIndex = -1;
-	button.setAttribute("aria-hidden", "true");
-	button.addEventListener("pointerdown", (event) => {
-		event.preventDefault();
-		$canvas_area[0].scrollBy(delta);
-	});
-	$H.append(button);
-	return button;
-});
-const update_scroll_buttons = () => {
-	const has_horizontal_scrollbar = $canvas_area[0].scrollWidth > $canvas_area[0].clientWidth;
-	const has_vertical_scrollbar = $canvas_area[0].scrollHeight > $canvas_area[0].clientHeight;
-	scroll_buttons.forEach((button) => {
-		const vertical = button.classList.contains("xp-scroll-up") || button.classList.contains("xp-scroll-down");
-		button.hidden = vertical ? !has_vertical_scrollbar : !has_horizontal_scrollbar;
-	});
-};
-new ResizeObserver(update_scroll_buttons).observe($canvas_area[0]);
-new ResizeObserver(update_scroll_buttons).observe(main_canvas);
-requestAnimationFrame(update_scroll_buttons);
-
 const $canvas = $(main_canvas).appendTo($canvas_area);
 window.$canvas = $canvas;
 $canvas.css("touch-action", "none");

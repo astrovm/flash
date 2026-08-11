@@ -312,6 +312,16 @@
       "output": "site/assets/xp/icons/Paint.png"
     },
     {
+      "member": "MSPAINT.EX_",
+      "expandedName": "mspaint.exe",
+      "resourceType": 14,
+      "resourceId": 2,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PaintLarge.png"
+    },
+    {
       "member": "COMPATUI.DL_",
       "expandedName": "compatui.dll",
       "resourceType": 14,

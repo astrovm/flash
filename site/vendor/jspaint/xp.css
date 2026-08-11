@@ -84,60 +84,6 @@ body,
   display: none;
 }
 
-.horizontal {
-  position: relative;
-}
-
-.horizontal > .xp-scroll-button {
-  position: absolute;
-  z-index: 20;
-  box-sizing: border-box;
-  width: 17px;
-  min-width: 17px;
-  height: 17px;
-  min-height: 17px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background-color: transparent;
-  background-image:
-    url("images/xp/ScrollArrowGlyphs.png"),
-    url("images/xp/ScrollArrows.png");
-  background-repeat: no-repeat;
-  background-size: 9px 144px, 17px 272px;
-}
-
-.horizontal > .xp-scroll-button.xp-scroll-up {
-  top: 0;
-  right: 0;
-  background-position: center 0, center 0;
-}
-
-.horizontal > .xp-scroll-button.xp-scroll-down {
-  right: 0;
-  bottom: 17px;
-  background-position: center -36px, center -68px;
-}
-
-.horizontal > .xp-scroll-button.xp-scroll-left {
-  bottom: 0;
-  left: 57px;
-  background-position: center -72px, center -136px;
-}
-
-.horizontal > .xp-scroll-button.xp-scroll-right {
-  right: 17px;
-  bottom: 0;
-  background-position: center -108px, center -204px;
-}
-
-@media (max-width: 200px) {
-  .horizontal > .xp-scroll-button.xp-scroll-left {
-    left: 0;
-  }
-}
-
 .tools-component {
   box-sizing: border-box;
   width: 56px;
@@ -267,4 +213,168 @@ body,
 
 .canvas-area::-webkit-scrollbar-button:horizontal:increment {
   background-position: center -108px, center -204px;
+}
+
+/* JS Paint's dialog host defaults to Windows 98 chrome. Paint in XP uses
+ * Luna dialog frames and the same extracted caption sprites as the shell. */
+html body .os-window:not(.maximized) {
+  box-sizing: border-box;
+  padding: 0;
+  border: 3px solid #0054e3;
+  border-top: 0;
+  border-radius: 7px 7px 0 0;
+  background: #ece9d8;
+  box-shadow: 2px 3px 6px rgb(0 0 0 / 30%);
+}
+
+html body .os-window .window-titlebar {
+  box-sizing: border-box;
+  height: 27px;
+  min-height: 27px;
+  padding: 3px 2px 3px 5px;
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(180deg, #3d95ff 0, #0054e3 18%, #0065ef 72%, #003ddc 100%);
+  color: #fff;
+  font: bold 13px/21px Tahoma, sans-serif;
+  text-shadow: 1px 1px #0f3d91;
+}
+
+html body .os-window .window-title-area,
+html body .os-window .window-title {
+  height: 21px;
+  padding: 0;
+  line-height: 21px;
+}
+
+html body .os-window .window-button {
+  position: relative;
+  box-sizing: border-box;
+  width: 21px;
+  height: 21px;
+  min-width: 21px;
+  margin: 0 0 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: url("../../assets/xp/icons/CaptionButton.png");
+  background-position: center 0;
+  background-size: 21px 168px;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+
+html body .os-window .window-action-close {
+  background-image: url("../../assets/xp/icons/Exit.png");
+}
+
+html body .os-window .window-button:hover {
+  background-position-y: -21px;
+}
+
+html body .os-window .window-button:active {
+  background-position-y: -42px;
+}
+
+html body .os-window .window-button-icon {
+  position: absolute;
+  inset: 4px;
+  width: 13px;
+  height: 13px;
+  background-position: center 0;
+  background-size: 13px 104px;
+  background-repeat: no-repeat;
+}
+
+html body .os-window .window-action-minimize .window-button-icon {
+  background-image: url("../../assets/xp/icons/Minimize.png");
+}
+
+html body .os-window .window-action-maximize .window-button-icon {
+  background-image: url("../../assets/xp/icons/Maximize.png");
+}
+
+html body .os-window .window-action-close .window-button-icon {
+  background-image: url("../../assets/xp/icons/Close.png");
+}
+
+html body .os-window .window-button-icon::before,
+html body .os-window .window-button-icon::after {
+  display: none;
+}
+
+html body .about-paint.os-window {
+  width: 419px !important;
+  height: 354px !important;
+}
+
+html body .about-paint .window-content {
+  position: relative;
+  box-sizing: border-box;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #ece9d8;
+  font: 11px Tahoma, sans-serif;
+}
+
+#about-paint {
+  width: 413px;
+  margin: 0;
+}
+
+#about-paint-banner {
+  display: block;
+  width: 413px;
+  height: 72px;
+  border: 0;
+}
+
+#about-paint-product {
+  display: flex;
+  gap: 10px;
+  margin: 13px 9px 0 15px;
+}
+
+#about-paint-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+#about-paint-product p,
+#about-paint-license p {
+  margin: 0 0 3px;
+}
+
+#about-paint-license {
+  margin: 34px 12px 0 52px;
+}
+
+#about-paint-license a {
+  color: #0000ff;
+}
+
+#about-paint-user {
+  margin: 4px 0 20px 15px !important;
+}
+
+#about-paint-license hr {
+  height: 0;
+  margin: 0 0 10px;
+  border: 0;
+  border-top: 1px solid #aca899;
+  border-bottom: 1px solid #fff;
+}
+
+html body #close-about-paint {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  box-sizing: border-box;
+  width: 73px;
+  min-height: 22px;
+  margin: 0;
+  padding: 2px 8px;
+  float: none;
+  font: 11px Tahoma, sans-serif;
 }
