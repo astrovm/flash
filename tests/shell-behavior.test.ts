@@ -460,18 +460,14 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     ),
   ).toEqual([
     "program-access-defaults",
-    "windows-catalog",
-    "windows-update",
     "accessories",
     "games",
     "startup",
     "internet-explorer",
     "msn",
     "outlook-express",
-    "remote-assistance",
     "windows-media-player",
     "windows-messenger",
-    "windows-movie-maker",
     "astro-settings",
     "internet-games",
   ]);
@@ -480,16 +476,6 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       .querySelector('[data-program-id="program-access-defaults"] img')!
       .getAttribute("src"),
   ).toEndWith("/ProgramAccessDefaultsSmall.png");
-  expect(
-    flyouts
-      .querySelector('[data-program-id="windows-catalog"] img')!
-      .getAttribute("src"),
-  ).toEndWith("/WindowsCatalog.png");
-  expect(
-    flyouts
-      .querySelector('[data-program-id="windows-update"] img')!
-      .getAttribute("src"),
-  ).toEndWith("/WindowsUpdate.png");
   expect(
     flyouts
       .querySelector('[data-program-id="internet-explorer"] img')!
@@ -643,6 +629,68 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
       '.xp-window[data-game="inside-the-firewall"] iframe',
     ),
   ).not.toBeNull();
+});
+
+test("placeholder-only applications are not installed or exposed by the shell", async () => {
+  const shell = await login(await loadShell());
+  const removedApplicationIds = [
+    "__accessibility-wizard",
+    "__magnifier",
+    "__narrator",
+    "__utility-manager",
+    "__program-compatibility-wizard",
+    "__synchronize",
+    "__tour-windows-xp",
+    "__network-connections",
+    "__network-setup-wizard",
+    "__new-connection-wizard",
+    "__wireless-network-setup-wizard",
+    "__remote-assistance",
+    "__hearts",
+    "__internet-backgammon",
+    "__internet-checkers",
+    "__internet-hearts",
+    "__internet-reversi",
+    "__internet-spades",
+    "__pinball",
+    "__spider-solitaire",
+    "__windows-catalog",
+    "__windows-update",
+    "__backup",
+    "__files-settings-transfer",
+    "__system-restore",
+    "__windows-movie-maker",
+  ];
+
+  for (const applicationId of removedApplicationIds) {
+    expect(shell.window.XPApplicationRegistry.has(applicationId)).toBeFalse();
+    expect(
+      shell.document.querySelector(
+        `.desktop-icon[data-system-id="${applicationId}"]`,
+      ),
+    ).toBeNull();
+  }
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+  for (const folder of [
+    "accessories",
+    "accessibility",
+    "communications",
+    "system-tools",
+    "games",
+  ]) {
+    flyouts
+      .querySelector<HTMLButtonElement>(`[data-program-id="${folder}"]`)
+      ?.click();
+  }
+  const exposedIds = [
+    ...flyouts.querySelectorAll<HTMLElement>("[data-program-id]"),
+  ].map((item) => item.dataset.programId);
+  for (const applicationId of removedApplicationIds) {
+    expect(exposedIds).not.toContain(applicationId.slice(2));
+  }
 });
 
 test("Paint mounts natively and owns supported picture file associations", async () => {
