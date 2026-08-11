@@ -9,7 +9,6 @@ const PROGRAM_RENDERERS = Object.freeze({
   keyboard: renderers.renderKeyboard,
   "address-book": renderers.renderAddressBook,
   "character-map": renderers.renderCharacterMap,
-  "id:__solitaire": renderers.renderIdSolitaire,
   "id:__freecell": renderers.renderIdFreecell,
   volume: renderers.renderVolume,
   recorder: renderers.renderRecorder,

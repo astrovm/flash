@@ -7,7 +7,7 @@ ScummVM, and embedded web runtimes.
 
 ## Highlights
 
-- Authentic Windows XP shell, Explorer, Paint, Notepad, themes, and settings
+- Authentic Windows XP shell, Explorer, Paint, Notepad, Solitaire, themes, and settings
 - Draggable game windows, task switching, fullscreen, and volume controls
 - Favorites, recently played games, categories, search, and deep links
 - Automatic offline support with optional per-game downloads

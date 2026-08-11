@@ -1796,6 +1796,454 @@
   ],
   "resourceBitmaps": [
     {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 1,
+      "output": "site/assets/xp/solitaire/cards/1.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 2,
+      "output": "site/assets/xp/solitaire/cards/2.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 3,
+      "output": "site/assets/xp/solitaire/cards/3.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 4,
+      "output": "site/assets/xp/solitaire/cards/4.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 5,
+      "output": "site/assets/xp/solitaire/cards/5.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 6,
+      "output": "site/assets/xp/solitaire/cards/6.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 7,
+      "output": "site/assets/xp/solitaire/cards/7.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 8,
+      "output": "site/assets/xp/solitaire/cards/8.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 9,
+      "output": "site/assets/xp/solitaire/cards/9.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 10,
+      "output": "site/assets/xp/solitaire/cards/10.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 11,
+      "output": "site/assets/xp/solitaire/cards/11.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 12,
+      "output": "site/assets/xp/solitaire/cards/12.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 13,
+      "output": "site/assets/xp/solitaire/cards/13.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 14,
+      "output": "site/assets/xp/solitaire/cards/14.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 15,
+      "output": "site/assets/xp/solitaire/cards/15.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 16,
+      "output": "site/assets/xp/solitaire/cards/16.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 17,
+      "output": "site/assets/xp/solitaire/cards/17.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 18,
+      "output": "site/assets/xp/solitaire/cards/18.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 19,
+      "output": "site/assets/xp/solitaire/cards/19.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 20,
+      "output": "site/assets/xp/solitaire/cards/20.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 21,
+      "output": "site/assets/xp/solitaire/cards/21.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 22,
+      "output": "site/assets/xp/solitaire/cards/22.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 23,
+      "output": "site/assets/xp/solitaire/cards/23.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 24,
+      "output": "site/assets/xp/solitaire/cards/24.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 25,
+      "output": "site/assets/xp/solitaire/cards/25.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 26,
+      "output": "site/assets/xp/solitaire/cards/26.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 27,
+      "output": "site/assets/xp/solitaire/cards/27.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 28,
+      "output": "site/assets/xp/solitaire/cards/28.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 29,
+      "output": "site/assets/xp/solitaire/cards/29.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 30,
+      "output": "site/assets/xp/solitaire/cards/30.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 31,
+      "output": "site/assets/xp/solitaire/cards/31.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 32,
+      "output": "site/assets/xp/solitaire/cards/32.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 33,
+      "output": "site/assets/xp/solitaire/cards/33.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 34,
+      "output": "site/assets/xp/solitaire/cards/34.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 35,
+      "output": "site/assets/xp/solitaire/cards/35.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 36,
+      "output": "site/assets/xp/solitaire/cards/36.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 37,
+      "output": "site/assets/xp/solitaire/cards/37.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 38,
+      "output": "site/assets/xp/solitaire/cards/38.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 39,
+      "output": "site/assets/xp/solitaire/cards/39.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 40,
+      "output": "site/assets/xp/solitaire/cards/40.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 41,
+      "output": "site/assets/xp/solitaire/cards/41.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 42,
+      "output": "site/assets/xp/solitaire/cards/42.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 43,
+      "output": "site/assets/xp/solitaire/cards/43.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 44,
+      "output": "site/assets/xp/solitaire/cards/44.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 45,
+      "output": "site/assets/xp/solitaire/cards/45.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 46,
+      "output": "site/assets/xp/solitaire/cards/46.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 47,
+      "output": "site/assets/xp/solitaire/cards/47.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 48,
+      "output": "site/assets/xp/solitaire/cards/48.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 49,
+      "output": "site/assets/xp/solitaire/cards/49.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 50,
+      "output": "site/assets/xp/solitaire/cards/50.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 51,
+      "output": "site/assets/xp/solitaire/cards/51.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 52,
+      "output": "site/assets/xp/solitaire/cards/52.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 54,
+      "output": "site/assets/xp/solitaire/backs/54.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 55,
+      "output": "site/assets/xp/solitaire/backs/55.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 56,
+      "output": "site/assets/xp/solitaire/backs/56.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 57,
+      "output": "site/assets/xp/solitaire/backs/57.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 58,
+      "output": "site/assets/xp/solitaire/backs/58.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 59,
+      "output": "site/assets/xp/solitaire/backs/59.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 60,
+      "output": "site/assets/xp/solitaire/backs/60.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 61,
+      "output": "site/assets/xp/solitaire/backs/61.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 62,
+      "output": "site/assets/xp/solitaire/backs/62.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 63,
+      "output": "site/assets/xp/solitaire/backs/63.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 64,
+      "output": "site/assets/xp/solitaire/backs/64.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 65,
+      "output": "site/assets/xp/solitaire/backs/65.png"
+    },
+    {
       "member": "MSPAINT.EX_",
       "expandedName": "mspaint.exe",
       "resourceType": 2,

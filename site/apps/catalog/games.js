@@ -5,8 +5,4 @@ const game = (id, title, icon, window) =>
 
 export const nativeGameApplications = [
   game("__freecell", "FreeCell", "FreeCell.png", { width: 760, height: 540 }),
-  game("__solitaire", "Solitaire", "Solitaire.png", {
-    width: 720,
-    height: 520,
-  }),
 ];
