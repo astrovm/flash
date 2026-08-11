@@ -941,34 +941,18 @@ const getAllProgramsTree = () => {
     children: games.map((gameId) => ({ gameId })),
   }));
   return [
-    xpProgramMenuItem("__program-access-defaults", "program-access-defaults"),
-    { separator: true },
     {
       id: "accessories",
       label: "Accessories",
       icon: programFolder,
       children: [
         {
-          id: "accessibility",
-          label: "Accessibility",
-          icon: programFolder,
-          children: [xpProgramMenuItem("__on-screen-keyboard")],
-        },
-        {
-          id: "communications",
-          label: "Communications",
-          icon: programFolder,
-          children: [xpProgramMenuItem("__hyperterminal")],
-        },
-        {
           id: "entertainment",
           label: "Entertainment",
           icon: programFolder,
           children: [
-            xpProgramMenuItem("__sound-recorder"),
             xpProgramMenuItem("__volume-control"),
             xpProgramMenuItem("__winamp"),
-            xpProgramMenuItem("__windows-media-player"),
           ],
         },
         {
@@ -976,20 +960,14 @@ const getAllProgramsTree = () => {
           label: "System Tools",
           icon: programFolder,
           children: [
-            xpProgramMenuItem("__character-map"),
-            xpProgramMenuItem("__disk-cleanup"),
-            xpProgramMenuItem("__disk-defragmenter"),
-            xpProgramMenuItem("__scheduled-tasks"),
             {
               id: "security-center",
               label: "Security Center",
               icon: "SecurityCenter.png",
               action: () => openSystemWindow("__security-center"),
             },
-            xpProgramMenuItem("__system-information"),
           ],
         },
-        xpProgramMenuItem("__address-book"),
         xpProgramMenuItem("__calculator"),
         xpProgramMenuItem("__command-prompt"),
         {
@@ -999,14 +977,12 @@ const getAllProgramsTree = () => {
           action: openNotepad,
         },
         xpProgramMenuItem("__paint"),
-        xpProgramMenuItem("__remote-desktop", "remote-desktop-connection"),
         {
           id: "windows-explorer",
           label: "Windows Explorer",
           icon: "WindowsExplorer.png",
           action: () => openSystemWindow("__my-documents"),
         },
-        xpProgramMenuItem("__wordpad"),
       ],
     },
     {
@@ -1014,7 +990,6 @@ const getAllProgramsTree = () => {
       label: "Games",
       icon: programFolder,
       children: [
-        xpProgramMenuItem("__freecell"),
         xpProgramMenuItem("__minesweeper"),
         xpProgramMenuItem("__pinball"),
         xpProgramMenuItem("__solitaire"),
@@ -1028,11 +1003,6 @@ const getAllProgramsTree = () => {
       icon: programFolder,
       children: [],
     },
-    xpProgramMenuItem("__internet-explorer"),
-    xpProgramMenuItem("__msn"),
-    xpProgramMenuItem("__outlook-express"),
-    xpProgramMenuItem("__windows-media-player"),
-    xpProgramMenuItem("__windows-messenger"),
     { separator: true },
     {
       id: "astro-settings",
