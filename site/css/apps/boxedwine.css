@@ -1,0 +1,16 @@
+.xp-native-program-window .boxedwine-app-host {
+  overflow: hidden;
+}
+
+.boxedwine-app-host > .boxedwine-app-frame {
+  position: absolute;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  left: 0;
+  display: block;
+  border: 0;
+  transform: translate(var(--boxedwine-left, 0), var(--boxedwine-top, 0))
+    scale(var(--boxedwine-scale, 1));
+  transform-origin: top left;
+}

@@ -11,7 +11,14 @@ import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
 const require = createRequire(import.meta.url);
 const { unzipSync } = require("fflate");
 const projectDirectory = join(dirname(fileURLToPath(import.meta.url)), "..");
-const runtimeDirectory = join(projectDirectory, "site", "iframe", "solitaire");
+const appDirectory = join(projectDirectory, "site", "iframe", "solitaire");
+const runtimeDirectory = join(
+  projectDirectory,
+  "site",
+  "vendor",
+  "boxedwine",
+  "26R1",
+);
 const sha256 = (content: Uint8Array) =>
   createHash("sha256").update(content).digest("hex");
 
@@ -34,7 +41,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     };
 
     const solitaireWindow = launchSolitaire(shell);
-    const frame = solitaireWindow.querySelector(".boxedwine-solitaire-frame");
+    const frame = solitaireWindow.querySelector(".boxedwine-app-frame");
     const url = new URL(frame.src);
 
     expect(solitaireWindow.style.width).toBe("592px");
@@ -42,11 +49,13 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.querySelector(".title-text").textContent).toBe(
       "Solitaire",
     );
-    expect(url.pathname).toBe("/iframe/solitaire-build-123/index.html");
-    expect(url.searchParams.get("root")).toBe("boxedwine");
-    expect(url.searchParams.get("app")).toBe("xp-solitaire");
-    expect(url.searchParams.get("p")).toBe("sol.exe");
-    expect(url.searchParams.has("env")).toBeFalse();
+    expect(url.pathname).toBe("/vendor/boxedwine/26R1/index.html");
+    expect(new URL(url.searchParams.get("appRoot")).pathname).toBe(
+      "/iframe/solitaire-build-123/",
+    );
+    expect(url.searchParams.get("archive")).toBe("xp-solitaire");
+    expect(url.searchParams.get("executable")).toBe("sol.exe");
+    expect(url.searchParams.get("frameTop")).toBe("32");
     expect(url.searchParams.get("sound")).toBe("false");
     expect(solitaireWindow.querySelectorAll(".resize-handle")).toHaveLength(8);
     const maximize = solitaireWindow.querySelector(".maximize-btn");
@@ -62,7 +71,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
   test("stops the emulator when its window closes", async () => {
     const shell = await login(await loadShell());
     const solitaireWindow = launchSolitaire(shell);
-    const frame = solitaireWindow.querySelector(".boxedwine-solitaire-frame");
+    const frame = solitaireWindow.querySelector(".boxedwine-app-frame");
 
     solitaireWindow.querySelector(".close-btn").click();
 
@@ -89,8 +98,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     };
 
     const solitaireWindow = launchSolitaire(shell);
-    const host = solitaireWindow.querySelector(".boxedwine-solitaire-host");
-    const frame = host.querySelector(".boxedwine-solitaire-frame");
+    const host = solitaireWindow.querySelector(".boxedwine-app-host");
+    const frame = host.querySelector(".boxedwine-app-frame");
     Object.defineProperties(host, {
       clientWidth: { configurable: true, value: 1372 },
       clientHeight: { configurable: true, value: 812 },
@@ -99,35 +108,40 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     resize();
 
     expect(observed).toBe(host);
-    expect(frame.style.getPropertyValue("--solitaire-scale")).toBe("2");
-    expect(frame.style.getPropertyValue("--solitaire-left")).toBe("100px");
-    expect(frame.style.getPropertyValue("--solitaire-top")).toBe("0px");
+    expect(frame.style.getPropertyValue("--boxedwine-scale")).toBe("2");
+    expect(frame.style.getPropertyValue("--boxedwine-left")).toBe("100px");
+    expect(frame.style.getPropertyValue("--boxedwine-top")).toBe("0px");
 
     solitaireWindow.querySelector(".close-btn").click();
     expect(disconnected).toBeTrue();
   });
 
   test("packages the pinned runtime and only the two required XP files", async () => {
-    const sources = JSON.parse(
+    const runtimeSources = JSON.parse(
       await readFile(join(runtimeDirectory, "SOURCES.json"), "utf8"),
+    );
+    const appSources = JSON.parse(
+      await readFile(join(appDirectory, "SOURCES.json"), "utf8"),
     );
 
     for (const [filename, expectedHash] of Object.entries(
-      sources.boxedWine.files,
+      runtimeSources.files,
     )) {
       const content = await readFile(join(runtimeDirectory, filename));
       expect(sha256(content), filename).toBe(expectedHash);
     }
 
     const packageBytes = await readFile(
-      join(runtimeDirectory, sources.windowsXp.package.file),
+      join(appDirectory, appSources.windowsXp.package.file),
     );
-    expect(packageBytes.length).toBe(sources.windowsXp.package.bytes);
-    expect(sha256(packageBytes)).toBe(sources.windowsXp.package.sha256);
+    expect(packageBytes.length).toBe(appSources.windowsXp.package.bytes);
+    expect(sha256(packageBytes)).toBe(appSources.windowsXp.package.sha256);
 
     const files = unzipSync(packageBytes);
     expect(Object.keys(files).sort()).toEqual(["cards.dll", "sol.exe"]);
-    for (const [filename, source] of Object.entries(sources.windowsXp.files)) {
+    for (const [filename, source] of Object.entries(
+      appSources.windowsXp.files,
+    )) {
       expect(sha256(files[filename]), filename).toBe(source.sha256);
     }
   });

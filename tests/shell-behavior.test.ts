@@ -586,10 +586,12 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     '.xp-window[data-game="__solitaire"]',
   )!;
   const solitaireFrame = solitaireWindow.querySelector<HTMLIFrameElement>(
-    ".boxedwine-solitaire-frame",
+    ".boxedwine-app-frame",
   )!;
   expect(solitaireFrame).not.toBeNull();
-  expect(new URL(solitaireFrame.src).searchParams.get("p")).toBe("sol.exe");
+  expect(new URL(solitaireFrame.src).searchParams.get("executable")).toBe(
+    "sol.exe",
+  );
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();

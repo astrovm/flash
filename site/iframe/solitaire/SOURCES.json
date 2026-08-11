@@ -1,19 +1,5 @@
 {
-  "boxedWine": {
-    "release": "26R1",
-    "tag": "26R1.0",
-    "commit": "d7d5a1421bd781a81cbdf8f222cced11a7ebd76e",
-    "license": "GPL-2.0",
-    "releaseUrl": "https://github.com/danoon2/Boxedwine/releases/tag/26R1.0",
-    "sourceUrl": "https://github.com/danoon2/Boxedwine/tree/26R1.0",
-    "runtimeUrl": "https://boxedwine.org/v/26R1/wine11/st/",
-    "files": {
-      "boxedwine-shell.js": "4eb37b1fe78c81451a22bc67485ac5e151b243912775596299b6736cd2c1678c",
-      "boxedwine.js": "5f4fd46d509d60a669961cfb405669c9aa001769ca551aada878c7c75eb62586",
-      "boxedwine.wasm": "d4148bda3955e0378de56719c716610f2e1daffd3581d0a2085970ba4df1decf",
-      "boxedwine.zip": "5d251b6d53cad1c31de254c5285603d193f91bc3129b9c9ba39c4cc65a24edb3"
-    }
-  },
+  "runtime": "boxedwine",
   "windowsXp": {
     "source": "User-supplied Windows XP Professional SP3 source-media ISO",
     "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BoxedWine application runner</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #008000;
+      }
+
+      .emscripten {
+        display: block;
+        margin: 0;
+      }
+
+      canvas.emscripten {
+        border: 0;
+        padding: 0;
+        transform: translateY(calc(-1px * var(--boxedwine-frame-top, 0)));
+      }
+
+      #dropzone {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const value = (name, pattern) => {
+          const result = params.get(name) || "";
+          if (!pattern.test(result)) throw new Error(`Invalid ${name}`);
+          return result;
+        };
+        const appRoot = new URL(params.get("appRoot") || "", location.href);
+        if (appRoot.origin !== location.origin) {
+          throw new Error("The application package must use the same origin");
+        }
+        const frameTop = value("frameTop", /^\d{1,3}$/);
+        document.documentElement.style.setProperty(
+          "--boxedwine-frame-top",
+          frameTop,
+        );
+        window.BoxedWineRunnerConfig = Object.freeze({
+          appRoot: appRoot.href.endsWith("/")
+            ? appRoot.href
+            : `${appRoot.href}/`,
+          archive: value("archive", /^[a-z0-9][a-z0-9-]*$/),
+          executable: value("executable", /^[a-z0-9_. -]+\.exe$/i),
+          resolution: value("resolution", /^\d{3,4}x\d{3,4}$/),
+          sound: value("sound", /^(?:true|false)$/),
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="loading">
+      <div id="spinner"></div>
+      <div id="status">Downloading...</div>
+      <progress id="progress"></progress>
+    </div>
+    <div class="hidden">
+      <button id="startbtn" type="button" onclick="start()">Start</button>
+      <button id="uploadbtn" type="button"></button>
+      <input id="upload" type="file" multiple />
+      <button id="downloadbtn" type="button"></button>
+      <a id="modalLink"></a><a id="modalLinkExe"></a>
+      <span id="sound-checkbox"><input id="soundToggle" type="checkbox" /></span>
+      <input id="pointerLock" type="checkbox" />
+      <input id="showConsole" type="checkbox" />
+      <input id="resize" type="checkbox" />
+      <textarea id="output"></textarea>
+      <input id="selectedItem" />
+      <div id="tree"></div>
+      <div id="loadStatus"></div>
+      <a id="openModalExeClick"></a>
+      <div id="message"></div>
+      <div id="items"></div>
+    </div>
+    <div id="dropzone">
+      <div>
+        <canvas
+          class="emscripten"
+          id="canvas"
+          oncontextmenu="event.preventDefault()"
+        ></canvas>
+      </div>
+    </div>
+    <script src="boxedwine-shell.js"></script>
+    <script>
+      (() => {
+        const runner = window.BoxedWineRunnerConfig;
+        Config.locateAppBaseUrl = runner.appRoot;
+        Config.urlParams = [
+          "root=boxedwine",
+          `app=${runner.archive}`,
+          `p=${runner.executable}`,
+          `sound=${runner.sound}`,
+          `resolution=${runner.resolution}`,
+        ].join("&");
+        delete window.BoxedWineRunnerConfig;
+      })();
+    </script>
+    <script async src="boxedwine.js"></script>
+  </body>
+</html>
