@@ -98,6 +98,48 @@ type SourceRecord = {
   };
 };
 
+const decodeOs2Bitmap = (bitmapFile: Uint8Array) => {
+  const buffer = Buffer.from(bitmapFile);
+  const headerSize = buffer.readUInt32LE(14);
+  if (headerSize !== 12) return null;
+  const width = buffer.readUInt16LE(18);
+  const height = buffer.readUInt16LE(20);
+  const bitsPerPixel = buffer.readUInt16LE(24);
+  if (![1, 4, 8, 24].includes(bitsPerPixel)) {
+    throw new Error(`Unsupported OS/2 bitmap depth: ${bitsPerPixel}`);
+  }
+  const paletteEntries = bitsPerPixel <= 8 ? 1 << bitsPerPixel : 0;
+  const palette = Array.from({ length: paletteEntries }, (_, index) => {
+    const offset = 26 + index * 3;
+    return [buffer[offset + 2], buffer[offset + 1], buffer[offset], 255];
+  });
+  const pixelOffset = buffer.readUInt32LE(10);
+  const rowStride = Math.ceil((width * bitsPerPixel) / 32) * 4;
+  const rgba = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y += 1) {
+    const sourceY = height - y - 1;
+    const row = pixelOffset + sourceY * rowStride;
+    for (let x = 0; x < width; x += 1) {
+      let color;
+      if (bitsPerPixel === 24) {
+        const offset = row + x * 3;
+        color = [buffer[offset + 2], buffer[offset + 1], buffer[offset], 255];
+      } else {
+        const byte = buffer[row + Math.floor((x * bitsPerPixel) / 8)];
+        const index =
+          bitsPerPixel === 1
+            ? (byte >> (7 - (x % 8))) & 1
+            : bitsPerPixel === 4
+              ? (byte >> (x % 2 ? 0 : 4)) & 0x0f
+              : byte;
+        color = palette[index];
+      }
+      rgba.set(color, (y * width + x) * 4);
+    }
+  }
+  return { width, height, rgba };
+};
+
 const projectDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const manifestPath = join(projectDirectory, "tools", "xp-assets.json");
 const sourcesPath = join(
@@ -304,6 +346,7 @@ async function extractBitmap(
   ]);
 
   const bitmapFile = await readFile(await firstFile(bitmapDirectory, ".bmp"));
+  const os2Bitmap = decodeOs2Bitmap(bitmapFile);
   const decoded = decodeBmp(bitmapFile);
   const rgba = new Uint8Array(decoded.width * decoded.height * 4);
   if (bitmap.indexedPalette) {
@@ -361,6 +404,8 @@ async function extractBitmap(
         rgba.set(color, (targetY * decoded.width + targetX) * 4);
       }
     }
+  } else if (os2Bitmap) {
+    rgba.set(os2Bitmap.rgba);
   } else {
     const colorMap = new Map(
       bitmap.colorMap?.map(({ from, to }) => [from.join(","), to]),
@@ -373,8 +418,8 @@ async function extractBitmap(
       const mapped = colorMap.get(`${red},${green},${blue}`);
       const transparent =
         bitmap.transparentColor?.[0] === red &&
-        bitmap.transparentColor[1] === green &&
-        bitmap.transparentColor[2] === blue;
+        bitmap.transparentColor?.[1] === green &&
+        bitmap.transparentColor?.[2] === blue;
       rgba[target++] = mapped?.[0] ?? red;
       rgba[target++] = mapped?.[1] ?? green;
       rgba[target++] = mapped?.[2] ?? blue;

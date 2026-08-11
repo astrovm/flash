@@ -8,6 +8,7 @@ import { paintApplication } from "./paint/index.js";
 import { notepadApplication } from "./notepad/index.js";
 import { winampApplication } from "./winamp/index.js";
 import { minesweeperApplication } from "./minesweeper/index.js";
+import { solitaireApplication } from "./solitaire/index.js";
 
 export const applicationRegistry = createApplicationRegistry([
   ...accessoryApplications,
@@ -19,6 +20,7 @@ export const applicationRegistry = createApplicationRegistry([
   notepadApplication,
   paintApplication,
   winampApplication,
+  solitaireApplication,
 ]);
 
 window.AstroShellApplications.install(applicationRegistry);

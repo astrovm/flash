@@ -5,7 +5,6 @@ export { renderEditor } from "./editor.js";
 export { renderKeyboard } from "./keyboard.js";
 export { renderAddressBook } from "./address-book.js";
 export { renderCharacterMap } from "./character-map.js";
-export { renderIdSolitaire } from "./id---solitaire.js";
 export { renderIdFreecell } from "./id---freecell.js";
 export { renderVolume } from "./volume.js";
 export { renderRecorder } from "./recorder.js";
