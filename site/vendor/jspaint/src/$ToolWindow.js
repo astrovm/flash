@@ -93,6 +93,18 @@ function $DialogWindow(title) {
 		// helpButton: @TODO
 	}));
 	$w.addClass("dialog-window");
+	$w.$help = $(E("button"))
+		.addClass("window-help-button window-action-help window-button")
+		.attr({
+			type: "button",
+			title: "Help",
+			"aria-label": "Context Help",
+		})
+		.append("<span class='window-button-icon'>?</span>")
+		.insertBefore($w.$x);
+	$w.$help.on("click", () => {
+		$w.$content.focus();
+	});
 
 	// I don't know why type inference isn't working here. It seems to infer HTMLDivElement but not HTMLFormElement.
 	// Both are in HTMLElementTagNameMap...
@@ -160,4 +172,3 @@ function $DialogWindow(title) {
 }
 
 export { $DialogWindow, $ToolWindow, make_window_supporting_scale };
-

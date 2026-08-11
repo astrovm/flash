@@ -298,6 +298,18 @@ html body .os-window .window-action-close .window-button-icon {
   background-image: url("../../assets/xp/icons/Close.png");
 }
 
+html body .os-window .window-action-help .window-button-icon {
+  inset: 0;
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  background: none;
+  color: #fff;
+  font: bold 15px/19px Tahoma, sans-serif;
+  text-shadow: 1px 1px #124ba0;
+}
+
 html body .os-window .window-button-icon::before,
 html body .os-window .window-button-icon::after {
   display: none;
