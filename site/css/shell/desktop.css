@@ -1,0 +1,400 @@
+/* ============ Desktop ============ */
+
+#desktop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  overflow: hidden;
+  background-color: var(--desktop-color, #3a6ea5);
+  background-image: var(--desktop-background, url("../../assets/xp/bliss.jpg"));
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+#desktop[data-monitor-resolution]:not([data-monitor-resolution="auto"]) {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.7),
+    0 8px 26px rgba(0, 0, 0, 0.55);
+}
+
+#desktop[data-monitor-limited="true"] {
+  box-shadow:
+    0 0 0 2px #f2c94c,
+    0 8px 26px rgba(0, 0, 0, 0.55);
+}
+
+#desktop[data-wallpaper-position="center"] {
+  background-size: auto;
+  background-repeat: no-repeat;
+}
+
+#desktop[data-wallpaper-position="tile"] {
+  background-size: auto;
+  background-repeat: repeat;
+}
+
+#screen-saver-overlay {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  background: #000;
+}
+
+#screen-saver-overlay[data-saver="marquee"]::after {
+  content: "Astro Flash";
+  position: absolute;
+  top: 45%;
+  left: 0;
+  width: 100%;
+  color: #0f0;
+  font: bold clamp(20px, 5vw, 48px) monospace;
+  text-align: center;
+  animation: saver-marquee 8s linear infinite;
+}
+
+#screen-saver-overlay[data-saver="stars"] {
+  background-image:
+    radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 60%, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 45% 20%, #fff 0 1px, transparent 2px);
+  background-size:
+    130px 100px,
+    170px 140px,
+    210px 180px;
+  animation: saver-stars 12s linear infinite;
+}
+
+#screen-saver-overlay[data-saver="windows-xp"] {
+  background: #000 url("../../assets/xp/BootLogo.png") center / min(34%, 320px)
+    auto no-repeat;
+}
+
+@keyframes saver-marquee {
+  from {
+    transform: translateX(-35%);
+  }
+  to {
+    transform: translateX(35%);
+  }
+}
+@keyframes saver-stars {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      130px 100px,
+      -170px 140px,
+      210px -180px;
+  }
+}
+
+html[data-xp-appearance="olive"] {
+  --titlebar-active: linear-gradient(#8da64a, #526e20 55%, #3e5716);
+  --taskbar-gradient: linear-gradient(#6f8c35, #405817);
+}
+
+html[data-xp-appearance="silver"] {
+  --titlebar-active: linear-gradient(#a7b0bf, #6d7788 55%, #535d6c);
+  --taskbar-gradient: linear-gradient(#8793a5, #596575);
+}
+
+/* Windows Classic is the native USER32 style, not a gray Luna skin. */
+html[data-xp-appearance="classic"] {
+  --xp-beige: #d4d0c8;
+  --xp-beige-dark: #aca899;
+  --titlebar-active: linear-gradient(90deg, #0a246a, #a6caf0);
+  --titlebar-inactive: linear-gradient(90deg, #808080, #c0c0c0);
+  --taskbar-gradient: #d4d0c8;
+  --tray-gradient: #d4d0c8;
+  --window-frame: none;
+  --window-frame-inactive: none;
+}
+
+/* ---- Desktop icons ---- */
+
+#desktop-icons {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  outline: none;
+}
+
+#desktop-icons.desktop-icons-overflow {
+  overflow-y: auto;
+}
+
+#desktop-icons::after {
+  content: "";
+  position: absolute;
+  top: var(--desktop-icon-overflow-height, 0);
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.desktop-icon {
+  position: absolute;
+  width: 76px;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 1px 3px;
+  background: none;
+  border: 1px solid transparent;
+  cursor: var(--xp-cursor);
+  touch-action: none;
+  user-select: none;
+}
+
+.desktop-icon:focus {
+  outline: none;
+}
+
+.desktop-icon .icon-glyph {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.desktop-icon .icon-glyph.has-image {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.desktop-icon .explorer-item-icon,
+.desktop-icon .explorer-item-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.desktop-icon .icon-glyph.has-image:not(.system-icon)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("../../assets/xp/icons/Shortcut.png") center / contain
+    no-repeat;
+  pointer-events: none;
+}
+
+.game-icon-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.system-glyph-notepad {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #334f72;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 5px, #7999b8 5px 6px),
+    #f7f3dc;
+  box-shadow:
+    inset 3px 0 #fff,
+    1px 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.system-glyph-notepad::before {
+  content: "";
+  position: absolute;
+  inset: -3px 3px auto;
+  height: 5px;
+  border: 1px solid #555;
+  background: repeating-linear-gradient(90deg, #777 0 2px, #ddd 2px 4px);
+}
+
+.title-icon.system-glyph-notepad,
+.task-icon.system-glyph-notepad {
+  width: 14px;
+  height: 14px;
+}
+
+.title-icon.system-glyph-notepad::before,
+.task-icon.system-glyph-notepad::before {
+  inset: -2px 1px auto;
+  height: 3px;
+}
+
+.desktop-icon .icon-label {
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 1px 1px 2px #000;
+  padding: 1px 3px;
+  max-width: 74px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.desktop-icon.selected .icon-glyph {
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.desktop-icon.selected .icon-glyph.has-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(11, 97, 206, 0.55);
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+
+.desktop-icon .icon-glyph.has-image:not(.system-icon)::after {
+  z-index: 2;
+}
+
+/* Like Windows XP, a selected icon reveals its full label text. */
+.desktop-icon.selected .icon-label {
+  background: #0b61ce;
+  outline: 1px dotted #fff;
+  text-shadow: none;
+  -webkit-line-clamp: unset;
+}
+
+.desktop-icon.selected:focus .icon-label {
+  outline: 1px dotted #fff;
+}
+
+.explorer-items:focus {
+  outline: none;
+}
+
+#desktop-icons:not(:focus-within) .desktop-icon.selected .icon-label {
+  background: #7f7f7f;
+  outline-color: #fff;
+}
+
+.desktop-rename {
+  width: 74px;
+  margin-top: 1px;
+  border: 1px solid #fff;
+  outline: 1px solid #0b61ce;
+  background: #fff;
+  color: #000;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  text-align: center;
+}
+
+#desktop-selection {
+  position: absolute;
+  z-index: 900;
+  border: 1px dotted #fff;
+  background: rgba(49, 106, 197, 0.2);
+  pointer-events: none;
+}
+
+.xp-context-menu {
+  position: absolute;
+  z-index: 2500;
+  min-width: 128px;
+  padding: 2px 2px 3px;
+  background: #fff;
+  border: 1px solid #aca899;
+  box-shadow:
+    2px 2px 3px rgba(0, 0, 0, 0.35),
+    inset 1px 1px 0 #fff;
+  color: #000;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-context-menu button {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 20px;
+  padding: 2px 22px 2px 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.context-check {
+  display: inline-block;
+  width: 15px;
+  color: currentColor;
+  font-size: 15px;
+  line-height: 14px;
+  text-align: center;
+}
+
+.context-label {
+  display: inline-block;
+  line-height: 16px;
+}
+
+.xp-context-menu button:not(:disabled):hover,
+.xp-context-menu button:not(:disabled):focus-visible {
+  background: #316ac5;
+  color: #fff;
+  outline: 0;
+}
+
+.xp-context-menu button:disabled {
+  color: #aca899;
+  text-shadow: 1px 1px #fff;
+}
+
+.xp-context-menu button.context-default {
+  font-weight: 700;
+}
+
+.context-separator {
+  display: block;
+  height: 1px;
+  margin: 1px 2px;
+  background: #aca899;
+  box-shadow: 0 1px #fff;
+}
+
+.context-arrow {
+  position: absolute;
+  right: 7px;
+  top: 6px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid currentColor;
+}
+
+.context-parent {
+  position: relative;
+}
+
+.context-submenu {
+  position: absolute;
+  display: none;
+  z-index: 2501;
+}
+
+.context-parent.open > .context-submenu {
+  display: block;
+}

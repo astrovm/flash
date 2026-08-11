@@ -1,0 +1,47 @@
+/* ============ Scrollbars (authentic XP) ============ */
+
+#start-menu-programs::-webkit-scrollbar,
+.start-menu-right::-webkit-scrollbar,
+#desktop-icons::-webkit-scrollbar,
+.explorer-sidebar::-webkit-scrollbar,
+.explorer-main::-webkit-scrollbar,
+.notepad-editor::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+
+#start-menu-programs::-webkit-scrollbar-corner,
+.start-menu-right::-webkit-scrollbar-corner,
+#desktop-icons::-webkit-scrollbar-corner,
+.explorer-sidebar::-webkit-scrollbar-corner,
+.explorer-main::-webkit-scrollbar-corner,
+.notepad-editor::-webkit-scrollbar-corner {
+  background: #dfdfdf;
+}
+
+#start-menu-programs::-webkit-scrollbar-track,
+.start-menu-right::-webkit-scrollbar-track,
+#desktop-icons::-webkit-scrollbar-track,
+.explorer-sidebar::-webkit-scrollbar-track,
+.explorer-main::-webkit-scrollbar-track,
+.notepad-editor::-webkit-scrollbar-track {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -0.5 17 1' shape-rendering='crispEdges'%3E%3Cpath stroke='%23eeede5' d='M0 0h1m15 0h1'/%3E%3Cpath stroke='%23f3f1ec' d='M1 0h1'/%3E%3Cpath stroke='%23f4f1ec' d='M2 0h1'/%3E%3Cpath stroke='%23f4f3ee' d='M3 0h1'/%3E%3Cpath stroke='%23f5f4ef' d='M4 0h1'/%3E%3Cpath stroke='%23f6f5f0' d='M5 0h1'/%3E%3Cpath stroke='%23f7f7f3' d='M6 0h1'/%3E%3Cpath stroke='%23f9f8f4' d='M7 0h1'/%3E%3Cpath stroke='%23f9f9f7' d='M8 0h1'/%3E%3Cpath stroke='%23fbfbf8' d='M9 0h1'/%3E%3Cpath stroke='%23fbfbf9' d='M10 0h2'/%3E%3Cpath stroke='%23fdfdfa' d='M12 0h1'/%3E%3Cpath stroke='%23fefefb' d='M13 0h3'/%3E%3C/svg%3E");
+}
+
+#start-menu-programs::-webkit-scrollbar-thumb,
+.start-menu-right::-webkit-scrollbar-thumb,
+#desktop-icons::-webkit-scrollbar-thumb,
+.explorer-sidebar::-webkit-scrollbar-thumb,
+.explorer-main::-webkit-scrollbar-thumb,
+.notepad-editor::-webkit-scrollbar-thumb {
+  background-position: 50%;
+  background-repeat: no-repeat;
+  background-color: #c8d6fb;
+  background-size: 7px;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  box-shadow:
+    inset -3px 0 #bad1fc,
+    inset 1px 1px #b7caf5;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -0.5 7 8' shape-rendering='crispEdges'%3E%3Cpath stroke='%23eef4fe' d='M0 0h6M0 2h6M0 4h6M0 6h6'/%3E%3Cpath stroke='%23bad1fc' d='M6 0h1M6 2h1M6 4h1'/%3E%3Cpath stroke='%23c8d6fb' d='M0 1h1M0 3h1M0 5h1M0 7h1'/%3E%3Cpath stroke='%238cb0f8' d='M1 1h6M1 3h6M1 5h6M1 7h6'/%3E%3Cpath stroke='%23bad3fc' d='M6 6h1'/%3E%3C/svg%3E");
+}

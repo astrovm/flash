@@ -1,0 +1,996 @@
+"use strict";
+
+// ============================================
+// Desktop Icons
+// ============================================
+
+const DESKTOP_ICON_METRICS = Object.freeze({
+  regular: { width: 76, height: 74, gap: 6, margin: 8 },
+  compact: { width: 60, height: 58, gap: 4, margin: 4 },
+});
+let desktopDragged = false;
+
+const getDesktopIconMetrics = (container) =>
+  container.clientWidth <= 480
+    ? DESKTOP_ICON_METRICS.compact
+    : DESKTOP_ICON_METRICS.regular;
+
+const getDesktopIconPositions = () => {
+  const positions = readJsonStorage(
+    "desktopIconPositions",
+    {},
+    (positions) => positions && typeof positions === "object",
+  );
+  let migrated = false;
+  fs.getChildren(fs.DESKTOP).forEach((node) => {
+    if (!node.app || !gamesList[node.app] || !positions[node.app]) return;
+    if (!positions[node.id]) positions[node.id] = positions[node.app];
+    delete positions[node.app];
+    migrated = true;
+  });
+  if (migrated) writeJsonStorage("desktopIconPositions", positions);
+  return positions;
+};
+
+const saveDesktopIconPosition = (icon) => {
+  const positions = getDesktopIconPositions();
+  positions[icon.dataset.desktopId] = {
+    left: icon.offsetLeft,
+    top: icon.offsetTop,
+  };
+  writeJsonStorage("desktopIconPositions", positions);
+};
+
+const selectDesktopIcon = (desktopId, additive = false) => {
+  document.querySelectorAll(".desktop-icon").forEach((el) => {
+    const shouldSelect = el.dataset.desktopId === desktopId;
+    el.classList.toggle(
+      "selected",
+      additive
+        ? el.classList.contains("selected") || shouldSelect
+        : shouldSelect,
+    );
+  });
+};
+
+const findDesktopIconInDirection = (currentIcon, icons, key) => {
+  const currentRect = currentIcon.getBoundingClientRect();
+  const currentX = currentRect.left + currentRect.width / 2;
+  const currentY = currentRect.top + currentRect.height / 2;
+  const horizontal = key === "ArrowLeft" || key === "ArrowRight";
+  const sign = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
+
+  return icons
+    .filter((icon) => icon !== currentIcon)
+    .map((icon) => {
+      const rect = icon.getBoundingClientRect();
+      const dx = rect.left + rect.width / 2 - currentX;
+      const dy = rect.top + rect.height / 2 - currentY;
+      const primary = (horizontal ? dx : dy) * sign;
+      const perpendicular = Math.abs(horizontal ? dy : dx);
+      return { icon, primary, score: primary + perpendicular * 2 };
+    })
+    .filter(({ primary }) => primary > 1)
+    .sort((a, b) => a.score - b.score || a.primary - b.primary)[0]?.icon;
+};
+
+const clearDesktopSelection = () => {
+  document.querySelectorAll(".desktop-icon.selected").forEach((icon) => {
+    icon.classList.remove("selected");
+  });
+};
+
+const getSelectedDesktopIds = () =>
+  [...document.querySelectorAll(".desktop-icon.selected")].map(
+    (icon) => icon.dataset.desktopId,
+  );
+
+const getSelectedFilesystemIds = () =>
+  getSelectedDesktopIds().filter((id) => !!fs.getNode(id));
+
+const getDesktopSelectionEligibility = () => {
+  const selectedIds = getSelectedDesktopIds();
+  const filesystemIds = selectedIds.filter((id) => !!fs.getNode(id));
+  const allFilesystem =
+    filesystemIds.length > 0 && filesystemIds.length === selectedIds.length;
+  const movable =
+    allFilesystem && filesystemIds.every((id) => !fs.isProtected(id));
+  return { selectedIds, filesystemIds, allFilesystem, movable };
+};
+
+const layoutDesktopIcons = (force = false) => {
+  const container = document.getElementById("desktop-icons");
+  if (!container) return;
+
+  const positions = force ? {} : getDesktopIconPositions();
+  const metrics = getDesktopIconMetrics(container);
+  const { width, height, gap, margin } = metrics;
+  const usableWidth = Math.max(container.clientWidth - margin * 2, width);
+  const usableHeight = Math.max(container.clientHeight - margin * 2, height);
+  const columns = Math.max(1, Math.floor((usableWidth + gap) / (width + gap)));
+  const rows = Math.max(1, Math.floor((usableHeight + gap) / (height + gap)));
+  const icons = Array.from(container.querySelectorAll(".desktop-icon"));
+  const overflowsViewport = icons.length > columns * rows;
+  const requiredRows = overflowsViewport
+    ? Math.ceil(icons.length / columns)
+    : rows;
+  const maxTop = Math.max(
+    container.clientHeight - height,
+    margin + (requiredRows - 1) * (height + gap),
+  );
+  const placed = [];
+  const overlapsPlaced = (left, top) =>
+    placed.some(
+      (rect) =>
+        left < rect.left + width &&
+        left + width > rect.left &&
+        top < rect.top + height &&
+        top + height > rect.top,
+    );
+  const firstFreeGridSlot = () => {
+    for (let row = 0; row < requiredRows; row += 1) {
+      for (let column = 0; column < columns; column += 1) {
+        const left = margin + column * (width + gap);
+        const top = margin + row * (height + gap);
+        if (!overlapsPlaced(left, top)) return { left, top };
+      }
+    }
+    return { left: margin, top: margin + requiredRows * (height + gap) };
+  };
+  container.classList.toggle("desktop-icons-overflow", overflowsViewport);
+  container.style.setProperty(
+    "--desktop-icon-overflow-height",
+    `${margin + requiredRows * (height + gap)}px`,
+  );
+
+  icons.forEach((icon, index) => {
+    const saved = positions[icon.dataset.desktopId];
+    const column = overflowsViewport
+      ? index % columns
+      : Math.floor(index / rows);
+    const row = overflowsViewport ? Math.floor(index / columns) : index % rows;
+    let fallbackLeft = margin + column * (width + gap);
+    let fallbackTop = margin + row * (height + gap);
+    // The Recycle Bin anchors to the bottom-right corner unless the
+    // user has dragged it somewhere else.
+    if (icon.dataset.desktopId === "__recycle-bin") {
+      if (!overflowsViewport) {
+        fallbackLeft = container.clientWidth - width - margin;
+        fallbackTop = container.clientHeight - height - margin;
+      }
+    }
+    const savedLeft = saved?.left;
+    const savedTop = saved?.top;
+    const savedIsValid =
+      Number.isFinite(savedLeft) &&
+      Number.isFinite(savedTop) &&
+      savedLeft >= 0 &&
+      savedLeft <= container.clientWidth - width &&
+      savedTop >= 0 &&
+      savedTop <= maxTop &&
+      !overlapsPlaced(savedLeft, savedTop);
+    let left = savedIsValid ? savedLeft : fallbackLeft;
+    let top = savedIsValid ? savedTop : fallbackTop;
+    left = Math.max(0, Math.min(left, container.clientWidth - width));
+    top = Math.max(0, Math.min(top, maxTop));
+    if (overlapsPlaced(left, top)) ({ left, top } = firstFreeGridSlot());
+    placed.push({ left, top });
+    icon.style.left = `${left}px`;
+    icon.style.top = `${top}px`;
+  });
+
+  if (force) {
+    localStorage.removeItem("desktopIconPositions");
+  }
+};
+
+const findDesktopDropTarget = (clientX, clientY, draggedIds) => {
+  for (const element of document.elementsFromPoint(clientX, clientY)) {
+    const target = element.closest?.(
+      "[data-drop-action], [data-drop-destination-id]",
+    );
+    if (!target) continue;
+    if (target.dataset.dropAction === "recycle") {
+      return { action: "recycle", element: target };
+    }
+    const destinationId = target.dataset.dropDestinationId;
+    if (
+      destinationId === fs.DESKTOP ||
+      draggedIds.has(destinationId) ||
+      fs.getNode(destinationId)?.type !== "folder"
+    ) {
+      continue;
+    }
+    return { action: "move", element: target, destinationId };
+  }
+  return null;
+};
+
+const wireDesktopIconDrag = (icon) => {
+  icon.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+
+    const additive = event.ctrlKey || event.metaKey;
+    if (!icon.classList.contains("selected")) {
+      selectDesktopIcon(icon.dataset.desktopId, additive);
+    }
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const selected = [
+      ...document.querySelectorAll(".desktop-icon.selected"),
+    ].map((item) => ({
+      item,
+      left: item.offsetLeft,
+      top: item.offsetTop,
+    }));
+    const container = document.getElementById("desktop-icons");
+    const eligibility = getDesktopSelectionEligibility();
+    const draggedIds = new Set(eligibility.filesystemIds);
+    let dropTarget = null;
+    desktopDragged = false;
+
+    const onMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+      if (!desktopDragged && Math.hypot(deltaX, deltaY) < 4) return;
+
+      desktopDragged = true;
+      const groupLeft = Math.min(...selected.map(({ left }) => left));
+      const groupTop = Math.min(...selected.map(({ top }) => top));
+      const groupRight = Math.max(
+        ...selected.map(({ item, left }) => left + item.offsetWidth),
+      );
+      const groupBottom = Math.max(
+        ...selected.map(({ item, top }) => top + item.offsetHeight),
+      );
+      const clampedX = Math.max(
+        -groupLeft,
+        Math.min(deltaX, container.clientWidth - groupRight),
+      );
+      const clampedY = Math.max(
+        -groupTop,
+        Math.min(deltaY, container.clientHeight - groupBottom),
+      );
+      selected.forEach(({ item, left: startLeft, top: startTop }) => {
+        const left = startLeft + clampedX;
+        const top = startTop + clampedY;
+        item.style.left = `${left}px`;
+        item.style.top = `${top}px`;
+      });
+
+      dropTarget?.element.classList.remove("drop-target");
+      dropTarget = eligibility.movable
+        ? findDesktopDropTarget(
+            moveEvent.clientX,
+            moveEvent.clientY,
+            draggedIds,
+          )
+        : null;
+      dropTarget?.element.classList.add("drop-target");
+    };
+
+    const onUp = async (upEvent) => {
+      icon.removeEventListener("pointermove", onMove);
+      icon.removeEventListener("pointerup", onUp);
+      icon.removeEventListener("pointercancel", onUp);
+      dropTarget?.element.classList.remove("drop-target");
+      dropTarget =
+        eligibility.movable && upEvent.type === "pointerup"
+          ? findDesktopDropTarget(upEvent.clientX, upEvent.clientY, draggedIds)
+          : null;
+      if (desktopDragged) {
+        if (dropTarget) {
+          if (dropTarget.action === "recycle") {
+            fileOps.removeToBin(eligibility.filesystemIds);
+          } else {
+            fileOps.cut(eligibility.filesystemIds);
+            await pasteIntoFolder(dropTarget.destinationId);
+          }
+        } else {
+          const { alignToGrid } = getDesktopLayoutSettings();
+          selected.forEach(({ item }) => {
+            if (alignToGrid) {
+              const metrics = getDesktopIconMetrics(container);
+              item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
+              item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
+            }
+            saveDesktopIconPosition(item);
+          });
+        }
+      }
+    };
+
+    try {
+      icon.setPointerCapture(event.pointerId);
+    } catch (error) {
+      /* pointer capture unsupported */
+    }
+
+    icon.addEventListener("pointermove", onMove);
+    icon.addEventListener("pointerup", onUp);
+    icon.addEventListener("pointercancel", onUp);
+  });
+};
+
+const wireDesktopSelectionRectangle = () => {
+  const container = document.getElementById("desktop-icons");
+  const rectangle = document.getElementById("desktop-selection");
+
+  container.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || event.target !== container) return;
+
+    container.focus({ preventScroll: true });
+    closeDesktopContextMenu();
+    const additive = event.ctrlKey || event.metaKey;
+    const initialSelection = new Set(
+      Array.from(document.querySelectorAll(".desktop-icon.selected")).map(
+        (icon) => icon.dataset.desktopId,
+      ),
+    );
+    if (!additive) {
+      clearDesktopSelection();
+    }
+
+    const bounds = container.getBoundingClientRect();
+    const startX = event.clientX - bounds.left;
+    const startY = event.clientY - bounds.top;
+    rectangle.hidden = false;
+    rectangle.style.left = `${startX}px`;
+    rectangle.style.top = `${startY}px`;
+    rectangle.style.width = "0";
+    rectangle.style.height = "0";
+
+    const onMove = (moveEvent) => {
+      const currentX = Math.max(
+        0,
+        Math.min(moveEvent.clientX - bounds.left, bounds.width),
+      );
+      const currentY = Math.max(
+        0,
+        Math.min(moveEvent.clientY - bounds.top, bounds.height),
+      );
+      const left = Math.min(startX, currentX);
+      const top = Math.min(startY, currentY);
+      const width = Math.abs(currentX - startX);
+      const height = Math.abs(currentY - startY);
+
+      Object.assign(rectangle.style, {
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+      });
+
+      document.querySelectorAll(".desktop-icon").forEach((icon) => {
+        const intersects =
+          icon.offsetLeft < left + width &&
+          icon.offsetLeft + icon.offsetWidth > left &&
+          icon.offsetTop < top + height &&
+          icon.offsetTop + icon.offsetHeight > top;
+        icon.classList.toggle(
+          "selected",
+          intersects ||
+            (additive && initialSelection.has(icon.dataset.desktopId)),
+        );
+      });
+    };
+
+    const onUp = () => {
+      container.removeEventListener("pointermove", onMove);
+      container.removeEventListener("pointerup", onUp);
+      container.removeEventListener("pointercancel", onUp);
+      rectangle.hidden = true;
+    };
+
+    try {
+      container.setPointerCapture(event.pointerId);
+    } catch (error) {
+      /* pointer capture unsupported */
+    }
+
+    container.addEventListener("pointermove", onMove);
+    container.addEventListener("pointerup", onUp);
+    container.addEventListener("pointercancel", onUp);
+    event.preventDefault();
+  });
+};
+
+const buildDesktopIcons = () => {
+  const wasBuilt = iconsBuilt;
+  iconsBuilt = true;
+
+  const container = document.getElementById("desktop-icons");
+  container.hidden = getDesktopLayoutSettings().showIcons === false;
+  container.replaceChildren();
+  // System places stay available even though regular desktop files are
+  // rendered directly from VirtualFS.DESKTOP.
+  const desktopItems = [
+    "__my-computer",
+    "__my-documents",
+    "__internet-games",
+    "__astro-settings",
+  ].filter(
+    (id) =>
+      systemShortcuts[id]?.desktop !== false &&
+      getDesktopSystemIcons()[id] !== false,
+  );
+  const recycleBinItems = ["__recycle-bin"].filter(
+    (id) => systemShortcuts[id]?.desktop !== false,
+  );
+  const desktopSort = getDesktopLayoutSettings().sort;
+  const desktopNodeSortName = (node) =>
+    node.ext === ".game" ? node.name.slice(0, -node.ext.length) : node.name;
+  const compareDesktopNodeNames = (a, b) =>
+    desktopNodeSortName(a).localeCompare(desktopNodeSortName(b), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+  const compareDesktopNodes = (a, b) => {
+    if (desktopSort === "size")
+      return a.size - b.size || compareDesktopNodeNames(a, b);
+    if (desktopSort === "type")
+      return (
+        (a.ext || a.type).localeCompare(b.ext || b.type) ||
+        compareDesktopNodeNames(a, b)
+      );
+    if (desktopSort === "modified")
+      return b.modified - a.modified || compareDesktopNodeNames(a, b);
+    return compareDesktopNodeNames(a, b);
+  };
+  const entries = [
+    ...desktopItems.map((id) => ({ id, system: true })),
+    ...fs
+      .getChildren(fs.DESKTOP)
+      .slice()
+      .sort(compareDesktopNodes)
+      .map((node) => ({ id: node.id, node })),
+    // Recycle Bin is anchored independently, so keep it after flowing
+    // entries to avoid leaving an unused grid slot near the first game.
+    ...recycleBinItems.map((id) => ({ id, system: true })),
+  ];
+
+  entries.forEach(({ id, system, node }) => {
+    const icon = document.createElement("button");
+    icon.type = "button";
+    icon.className = "desktop-icon";
+    icon.dataset.desktopId = id;
+    if (system) icon.dataset.systemId = id;
+    if (node?.type === "folder") icon.dataset.dropDestinationId = node.id;
+    if (id === "__recycle-bin") icon.dataset.dropAction = "recycle";
+
+    const glyph = system
+      ? createGameIconElement(id, "icon-glyph")
+      : node.app && gamesList[node.app]
+        ? createGameIconElement(node.app, "icon-glyph")
+        : createExplorerIcon(node);
+    glyph.classList.add("icon-glyph");
+
+    const label = document.createElement("span");
+    label.className = "icon-label";
+    label.textContent = system
+      ? getDesktopSystemNames()[id] || formatGameTitle(id)
+      : node.ext === ".game"
+        ? node.name.slice(0, -node.ext.length)
+        : node.name;
+
+    icon.append(glyph, label);
+    icon.addEventListener("click", (event) => {
+      if (!desktopDragged) {
+        selectDesktopIcon(id, event.ctrlKey || event.metaKey);
+      }
+    });
+    icon.addEventListener("dblclick", () => {
+      if (!desktopDragged) {
+        openDesktopItem(id);
+      }
+    });
+    icon.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        openDesktopItem(id);
+      }
+    });
+    wireDesktopIconDrag(icon);
+    container.appendChild(icon);
+  });
+
+  if (!wasBuilt) wireDesktopSelectionRectangle();
+  if (!wasBuilt) wireFolderDropTarget(container, fs.DESKTOP);
+  requestAnimationFrame(() =>
+    layoutDesktopIcons(getDesktopLayoutSettings().autoArrange),
+  );
+};
+
+const closeDesktopContextMenu = () => {
+  const menu = document.getElementById("desktop-context-menu");
+  if (menu) menu.hidden = true;
+};
+
+const getDesktopLayoutSettings = () =>
+  readJsonStorage("desktopLayoutSettings", {
+    sort: "name",
+    autoArrange: false,
+    alignToGrid: true,
+    showIcons: true,
+  });
+
+const saveDesktopLayoutSettings = (settings) =>
+  writeJsonStorage("desktopLayoutSettings", settings);
+
+const refreshDesktop = () => {
+  const icons = document.getElementById("desktop-icons");
+  icons.classList.remove("desktop-refresh");
+  requestAnimationFrame(() => icons.classList.add("desktop-refresh"));
+  buildDesktopIcons();
+};
+
+const beginDesktopRename = (id) => {
+  const icon = document.querySelector(
+    `.desktop-icon[data-desktop-id="${CSS.escape(id)}"]`,
+  );
+  const node = fs.getNode(id);
+  if (!icon || !node || node.protected) return;
+  const label = icon.querySelector(".icon-label");
+  const input = document.createElement("input");
+  input.className = "desktop-rename";
+  input.value = node.name;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+  let finished = false;
+  function finish(save) {
+    if (finished) return;
+    finished = true;
+    document.removeEventListener("pointerdown", onOutsidePointerDown, true);
+    if (save) {
+      try {
+        fileOps.rename(id, input.value);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    refreshDesktop();
+  }
+  function onOutsidePointerDown(event) {
+    if (!input.contains(event.target)) finish(true);
+  }
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      finish(event.key === "Enter");
+    }
+  });
+  input.addEventListener("blur", () => finish(true), { once: true });
+  document.addEventListener("pointerdown", onOutsidePointerDown, true);
+};
+
+const beginSystemDesktopRename = (id) => {
+  const icon = document.querySelector(
+    `.desktop-icon[data-desktop-id="${CSS.escape(id)}"]`,
+  );
+  const label = icon?.querySelector(".icon-label");
+  if (!icon || !label) return;
+  const input = document.createElement("input");
+  input.className = "desktop-rename";
+  input.value = label.textContent;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+  let finished = false;
+  const finish = (save) => {
+    if (finished) return;
+    finished = true;
+    const name = input.value.trim();
+    if (save && name) {
+      saveDesktopSystemNames({ ...getDesktopSystemNames(), [id]: name });
+    }
+    refreshDesktop();
+  };
+  input.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    finish(event.key === "Enter");
+  });
+  input.addEventListener("blur", () => finish(true), { once: true });
+};
+
+const addDesktopMenuItem = (
+  menu,
+  label,
+  action,
+  { disabled = false, checked = false, defaultItem = false } = {},
+) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.role = "menuitem";
+  button.dataset.action = action;
+  button.disabled = disabled;
+  button.classList.toggle("context-default", defaultItem);
+  button.setAttribute("role", checked ? "menuitemcheckbox" : "menuitem");
+  if (checked) button.setAttribute("aria-checked", "true");
+  const gutter = document.createElement("span");
+  gutter.className = "context-check";
+  gutter.textContent = checked ? "✓" : "";
+  const text = document.createElement("span");
+  text.className = "context-label";
+  text.textContent = label;
+  button.append(gutter, text);
+  menu.appendChild(button);
+};
+
+const addDesktopSubmenu = (menu, label, buildItems) => {
+  const parent = document.createElement("div");
+  parent.className = "context-parent";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.role = "menuitem";
+  button.className = "context-submenu-button";
+  button.setAttribute("aria-haspopup", "menu");
+  button.setAttribute("aria-expanded", "false");
+  const gutter = document.createElement("span");
+  gutter.className = "context-check";
+  const text = document.createElement("span");
+  text.className = "context-label";
+  text.textContent = label;
+  button.append(gutter, text);
+  const arrow = document.createElement("span");
+  arrow.className = "context-arrow";
+  button.appendChild(arrow);
+  const child = document.createElement("div");
+  child.className = "xp-context-menu context-submenu";
+  child.setAttribute("role", "menu");
+  buildItems(child);
+  const open = () => {
+    parent.classList.add("open");
+    button.setAttribute("aria-expanded", "true");
+    child.style.left = "100%";
+    child.style.top = "-2px";
+    const rect = child.getBoundingClientRect();
+    if (rect.right > window.innerWidth)
+      child.style.left = `${-child.offsetWidth + 2}px`;
+  };
+  const close = () => {
+    parent.classList.remove("open");
+    button.setAttribute("aria-expanded", "false");
+  };
+  parent.addEventListener("pointerenter", open);
+  parent.addEventListener("pointerleave", close);
+  button.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      open();
+      child.querySelector("button:not(:disabled)")?.focus();
+    }
+  });
+  child.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      close();
+      button.focus();
+    }
+  });
+  parent.append(button, child);
+  menu.appendChild(parent);
+};
+
+const addDesktopSeparator = (menu) => {
+  const separator = document.createElement("span");
+  separator.className = "context-separator";
+  separator.setAttribute("aria-hidden", "true");
+  menu.appendChild(separator);
+};
+
+const renderDesktopContextMenu = (menu, itemId = null) => {
+  const {
+    filesystemIds: selectedFsIds,
+    allFilesystem,
+    movable,
+  } = getDesktopSelectionEligibility();
+  const settings = getDesktopLayoutSettings();
+  menu.replaceChildren();
+  menu.dataset.itemId = itemId || "";
+
+  if (itemId === "__recycle-bin") {
+    addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
+    addDesktopMenuItem(menu, "Explore", "explore");
+    addDesktopMenuItem(menu, "Empty Recycle Bin", "empty-recycle-bin", {
+      disabled: !fs.getChildren(fs.RECYCLE_BIN).length,
+    });
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Create Shortcut", "create-recycle-shortcut");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "recycle-properties");
+  } else if (itemId === "__my-computer") {
+    addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
+    addDesktopMenuItem(menu, "Explore", "explore-my-computer");
+    addDesktopMenuItem(menu, "Search...", "search-my-computer");
+    addDesktopMenuItem(menu, "Manage", "manage-my-computer");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Map Network Drive...", "map-network-drive");
+    addDesktopMenuItem(
+      menu,
+      "Disconnect Network Drive...",
+      "disconnect-network-drive",
+    );
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Create Shortcut", "create-computer-shortcut");
+    addDesktopMenuItem(menu, "Delete", "hide-my-computer");
+    addDesktopMenuItem(menu, "Rename", "rename-my-computer");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "computer-properties");
+  } else if (itemId) {
+    addDesktopMenuItem(menu, "Open", "open");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Cut", "cut", { disabled: !movable });
+    addDesktopMenuItem(menu, "Copy", "copy", { disabled: !allFilesystem });
+    addDesktopMenuItem(menu, "Delete", "delete", { disabled: !movable });
+    addDesktopMenuItem(menu, "Rename", "rename", {
+      disabled: !movable || selectedFsIds.length !== 1,
+    });
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "item-properties", {
+      disabled: selectedFsIds.length !== 1,
+    });
+  } else {
+    addDesktopSubmenu(menu, "Arrange Icons By", (submenu) => {
+      addDesktopMenuItem(submenu, "Name", "sort-name", {
+        checked: settings.sort === "name",
+      });
+      addDesktopMenuItem(submenu, "Size", "sort-size", {
+        checked: settings.sort === "size",
+      });
+      addDesktopMenuItem(submenu, "Type", "sort-type", {
+        checked: settings.sort === "type",
+      });
+      addDesktopMenuItem(submenu, "Modified", "sort-modified", {
+        checked: settings.sort === "modified",
+      });
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Auto Arrange", "auto-arrange", {
+        checked: settings.autoArrange,
+      });
+      addDesktopMenuItem(submenu, "Align to Grid", "align-grid", {
+        checked: settings.alignToGrid,
+      });
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Show Desktop Icons", "show-icons", {
+        checked: settings.showIcons !== false,
+      });
+    });
+    addDesktopMenuItem(menu, "Refresh", "refresh");
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Paste", "paste", {
+      disabled: !fileOps.canPaste(fs.DESKTOP),
+    });
+    addDesktopMenuItem(menu, "Paste Shortcut", "paste-shortcut", {
+      disabled: true,
+    });
+    addDesktopSeparator(menu);
+    addDesktopSubmenu(menu, "New", (submenu) => {
+      addDesktopMenuItem(submenu, "Folder", "new-folder");
+      addDesktopMenuItem(submenu, "Text Document", "new-text");
+      addDesktopMenuItem(submenu, "Bitmap Image", "new-bitmap");
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Upload from Computer...", "upload");
+    });
+    addDesktopSeparator(menu);
+    addDesktopMenuItem(menu, "Properties", "properties");
+  }
+};
+
+const openDesktopContextMenu = (clientX, clientY, itemId = null) => {
+  const desktop = document.getElementById("desktop");
+  const menu = document.getElementById("desktop-context-menu");
+  const bounds = desktop.getBoundingClientRect();
+
+  closeStartMenu();
+  renderDesktopContextMenu(menu, itemId);
+  menu.hidden = false;
+  menu.style.left = "0";
+  menu.style.top = "0";
+
+  const left = Math.max(
+    0,
+    Math.min(clientX - bounds.left, bounds.width - menu.offsetWidth - 2),
+  );
+  const top = Math.max(
+    0,
+    Math.min(clientY - bounds.top, bounds.height - menu.offsetHeight - 2),
+  );
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  menu.querySelector("button:not(:disabled)")?.focus();
+};
+
+const setupDesktopContextMenu = () => {
+  const desktop = document.getElementById("desktop");
+  const menu = document.getElementById("desktop-context-menu");
+
+  desktop.addEventListener("contextmenu", (event) => {
+    if (event.target.closest(".xp-window, #start-menu")) return;
+    event.preventDefault();
+    const icon = event.target.closest(".desktop-icon");
+    if (!icon) {
+      clearDesktopSelection();
+    } else if (!icon.classList.contains("selected")) {
+      selectDesktopIcon(icon.dataset.desktopId);
+    }
+    openDesktopContextMenu(
+      event.clientX,
+      event.clientY,
+      icon?.dataset.desktopId || null,
+    );
+  });
+
+  menu.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-action]")?.dataset.action;
+    if (!action) return;
+
+    const itemId = menu.dataset.itemId || null;
+    const selectedFsIds = getSelectedFilesystemIds();
+    if (action.startsWith("sort-")) {
+      saveDesktopLayoutSettings({
+        ...getDesktopLayoutSettings(),
+        sort: action.slice(5),
+        autoArrange: true,
+      });
+      layoutDesktopIcons(true);
+    } else if (action === "auto-arrange") {
+      const settings = getDesktopLayoutSettings();
+      saveDesktopLayoutSettings({
+        ...settings,
+        autoArrange: !settings.autoArrange,
+      });
+      if (!settings.autoArrange) layoutDesktopIcons(true);
+    } else if (action === "align-grid") {
+      const settings = getDesktopLayoutSettings();
+      saveDesktopLayoutSettings({
+        ...settings,
+        alignToGrid: !settings.alignToGrid,
+      });
+    } else if (action === "show-icons") {
+      const settings = getDesktopLayoutSettings();
+      const showIcons = settings.showIcons === false;
+      saveDesktopLayoutSettings({ ...settings, showIcons });
+      document.getElementById("desktop-icons").hidden = !showIcons;
+    } else if (action === "refresh") {
+      refreshDesktop();
+    } else if (
+      action === "new-folder" ||
+      action === "new-text" ||
+      action === "new-bitmap"
+    ) {
+      const node =
+        action === "new-folder"
+          ? fileOps.createFolder(fs.DESKTOP, "New Folder")
+          : fileOps.createFile(
+              fs.DESKTOP,
+              action === "new-bitmap"
+                ? "New Bitmap Image.bmp"
+                : "New Text Document.txt",
+            );
+      refreshDesktop();
+      selectDesktopIcon(node.id);
+      beginDesktopRename(node.id);
+    } else if (action === "upload") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.multiple = true;
+      input.addEventListener(
+        "change",
+        async () => {
+          for (const file of input.files) {
+            fileOps.createFile(fs.DESKTOP, file.name, {
+              content: file.type.startsWith("text/") ? await file.text() : "",
+              size: file.size,
+            });
+          }
+          refreshDesktop();
+        },
+        { once: true },
+      );
+      input.click();
+    } else if (action === "paste") {
+      pasteIntoFolder(fs.DESKTOP);
+    } else if (action === "open" && itemId) {
+      openDesktopItem(itemId);
+    } else if (action === "explore-my-computer") {
+      openDesktopItem("__my-computer");
+    } else if (action === "search-my-computer") {
+      openSearchDialog();
+    } else if (action === "manage-my-computer") {
+      XPDialogs.alert(
+        "Computer Management is not available in Astro Flash Collection.",
+        "Computer Management",
+        "info",
+      );
+    } else if (
+      action === "map-network-drive" ||
+      action === "disconnect-network-drive"
+    ) {
+      XPDialogs.alert(
+        "This Windows XP network feature is not available in Astro Flash Collection.",
+        action === "map-network-drive"
+          ? "Map Network Drive"
+          : "Disconnect Network Drive",
+        "info",
+      );
+    } else if (action === "create-computer-shortcut") {
+      const shortcut = fileOps.createFile(
+        fs.DESKTOP,
+        "Shortcut to My Computer.game",
+        { app: "__my-computer" },
+      );
+      refreshDesktop();
+      selectDesktopIcon(shortcut.id);
+    } else if (action === "hide-my-computer") {
+      saveDesktopSystemIcons({
+        ...getDesktopSystemIcons(),
+        "__my-computer": false,
+      });
+      refreshDesktop();
+    } else if (action === "rename-my-computer") {
+      beginSystemDesktopRename("__my-computer");
+    } else if (action === "computer-properties") {
+      openSystemProperties();
+    } else if (action === "explore" && itemId === "__recycle-bin") {
+      openDesktopItem(itemId);
+    } else if (action === "empty-recycle-bin") {
+      confirmEmptyRecycleBin();
+    } else if (action === "create-recycle-shortcut") {
+      const shortcut = fileOps.createFile(
+        fs.DESKTOP,
+        "Shortcut to Recycle Bin.game",
+        { app: "__recycle-bin" },
+      );
+      selectDesktopIcon(shortcut.id);
+    } else if (action === "recycle-properties") {
+      openShellProperties(fs.RECYCLE_BIN);
+    } else if (action === "cut") {
+      fileOps.cut(selectedFsIds);
+    } else if (action === "copy") {
+      fileOps.copy(selectedFsIds);
+    } else if (action === "delete") {
+      XPDialogs.confirm(
+        selectedFsIds.length === 1
+          ? "Are you sure you want to send this item to the Recycle Bin?"
+          : "Are you sure you want to send these items to the Recycle Bin?",
+        "Confirm File Delete",
+        "warning",
+      ).then((yes) => yes && confirmRecycleDelete(selectedFsIds));
+    } else if (action === "rename" && selectedFsIds[0]) {
+      beginDesktopRename(selectedFsIds[0]);
+    } else if (action === "item-properties" && selectedFsIds[0]) {
+      openShellProperties(selectedFsIds[0]);
+    } else if (action === "properties") {
+      openSystemWindow("__display-properties");
+    }
+    closeDesktopContextMenu();
+  });
+  menu.addEventListener("keydown", (event) => {
+    const items = [...menu.querySelectorAll("button:not(:disabled)")];
+    const current = items.indexOf(document.activeElement);
+    if (event.key === "Escape") {
+      closeDesktopContextMenu();
+      return;
+    }
+    if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+      event.preventDefault();
+      const target =
+        event.key === "Home"
+          ? items[0]
+          : event.key === "End"
+            ? items.at(-1)
+            : items[
+                (current +
+                  (event.key === "ArrowDown" ? 1 : -1) +
+                  items.length) %
+                  items.length
+              ];
+      target?.focus();
+    }
+  });
+};

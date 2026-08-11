@@ -10,3 +10,10 @@ site/iframe/revcdos/index.js
 site/iframe/revcdos/jsdos-cloud-sdk.js
 site/swf/
 site/vendor/
+# Paint is maintained in-tree, but its imported engine and historical help
+# pages retain their original formatting. Astro-owned integration files remain
+# covered by Prettier.
+site/apps/paint/help/
+site/apps/paint/lib/
+site/apps/paint/src/
+site/apps/paint/styles/

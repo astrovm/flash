@@ -657,7 +657,7 @@ test("Paint launches JS Paint and owns supported picture file associations", asy
 
   expect(paintWindow).not.toBeNull();
   expect(frame).not.toBeNull();
-  expect(frame.getAttribute("src")).toBe("vendor/jspaint/index.html");
+  expect(frame.getAttribute("src")).toBe("apps/paint/index.html");
   expect(frame.title).toBe("Microsoft Paint drawing area");
   expect(paintWindow.classList.contains("xp-native-paint-window")).toBeTrue();
   expect(paintWindow.style.width).toBe("640px");

@@ -2359,7 +2359,7 @@
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
     }
   },
-  "vendor/jspaint/images/xp/SelectionOptions.png": {
+  "assets/xp/paint/SelectionOptions.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MSPAINT.EX_",
     "sha256": "7e3e4666d9c531c5da3a5e0d59fa5475b6a829f9d2a7dfba3067450b2a864677",
@@ -2372,7 +2372,7 @@
       "pixelSha256": "30b0fba109b5ca44342a1322ad649113bdcce92b208ab7e0ebd98c8cb2eab2fb"
     }
   },
-  "vendor/jspaint/images/xp/ScrollArrows.png": {
+  "assets/xp/paint/ScrollArrows.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
     "sha256": "62e1e97c44414cd12870f6533f3d74eeb9451072edd0417117ffbb42674c92a7",
@@ -2385,7 +2385,7 @@
       "pixelSha256": "675fc5ed472379178bbb3d4130ddac614e2fcc0cfed7f0191f556b8099e768f0"
     }
   },
-  "vendor/jspaint/images/xp/ScrollArrowGlyphs.png": {
+  "assets/xp/paint/ScrollArrowGlyphs.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
     "sha256": "c9838268554cdfaa3b0556ec86358471998af944ac89891074275c58c4a014fa",
@@ -2398,7 +2398,7 @@
       "pixelSha256": "f7af1609514864e7998e70c7d92fdc18789bb42277049f2ae76f6f39d1670693"
     }
   },
-  "vendor/jspaint/images/xp/ScrollShaftHorizontal.png": {
+  "assets/xp/paint/ScrollShaftHorizontal.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
     "sha256": "0111d1dd3b01945a8531e9377c3319491aca8157ee1338d597a26e9054e95fdd",
@@ -2411,7 +2411,7 @@
       "pixelSha256": "90073622bc0d7427e56f914206f7d5e708aaa3b855c1cfa22eb2191846dcba6d"
     }
   },
-  "vendor/jspaint/images/xp/ScrollShaftVertical.png": {
+  "assets/xp/paint/ScrollShaftVertical.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
     "sha256": "334d641ed9ba6cbd4f0633a41fc8402061d1f6a5bcf01bf6a44bb926d8c68df3",
@@ -2424,7 +2424,7 @@
       "pixelSha256": "cd982597f9ff777ac9bcfe1a05470323d192c9f00bf3f740fdcc88146c6e016e"
     }
   },
-  "vendor/jspaint/images/xp/ScrollThumbHorizontal.png": {
+  "assets/xp/paint/ScrollThumbHorizontal.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
     "sha256": "94112847afeb516e2d098e69c8ab440fa25c90af960a23c512c701376f888848",
@@ -2437,7 +2437,7 @@
       "pixelSha256": "19a9901a433034596256899827ccb6f53fb189d192aa238a35a77e299ce08e7f"
     }
   },
-  "vendor/jspaint/images/xp/ScrollThumbVertical.png": {
+  "assets/xp/paint/ScrollThumbVertical.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
     "sha256": "6baeac83cb2c40827fcf29515c7d8423992e485785225b1965a63819a78376f2",

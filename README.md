@@ -49,7 +49,11 @@ local version. It intentionally does not reload the page after rebuilding; use
 
 ## Project layout
 
-- `site/` — authored static site
+- `site/js/shell/` — desktop, window, taskbar, Start menu, and session behavior
+- `site/js/apps/` — application registry and native XP application behavior
+- `site/css/shell/` and `site/css/apps/` — shell and application presentation
+- `site/apps/paint/` — maintained first-party Paint application
+- `site/assets/xp/` — assets extracted from the configured Windows XP source media
 - `worker/` — Cloudflare Worker for the Internet Games catalog
 - `tools/` — build, validation, and asset maintenance scripts
 - `tests/` — Bun/TypeScript tests

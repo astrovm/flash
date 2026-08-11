@@ -1800,14 +1800,14 @@
       "expandedName": "mspaint.exe",
       "resourceType": 2,
       "resourceId": 863,
-      "output": "site/vendor/jspaint/images/xp/SelectionOptions.png"
+      "output": "site/assets/xp/paint/SelectionOptions.png"
     },
     {
       "member": "LUNA.MS_",
       "expandedName": "Luna.msstyles",
       "resourceType": 2,
       "resourceId": "BLUE_SCROLLARROWS_BMP",
-      "output": "site/vendor/jspaint/images/xp/ScrollArrows.png"
+      "output": "site/assets/xp/paint/ScrollArrows.png"
     },
     {
       "member": "LUNA.MS_",
@@ -1815,35 +1815,35 @@
       "resourceType": 2,
       "resourceId": "BLUE_SCROLLARROWGLYPHS_BMP",
       "transparentColor": [255, 0, 255],
-      "output": "site/vendor/jspaint/images/xp/ScrollArrowGlyphs.png"
+      "output": "site/assets/xp/paint/ScrollArrowGlyphs.png"
     },
     {
       "member": "LUNA.MS_",
       "expandedName": "Luna.msstyles",
       "resourceType": 2,
       "resourceId": "BLUE_SCROLLSHAFTHORIZONTAL_BMP",
-      "output": "site/vendor/jspaint/images/xp/ScrollShaftHorizontal.png"
+      "output": "site/assets/xp/paint/ScrollShaftHorizontal.png"
     },
     {
       "member": "LUNA.MS_",
       "expandedName": "Luna.msstyles",
       "resourceType": 2,
       "resourceId": "BLUE_SCROLLSHAFTVERTICAL_BMP",
-      "output": "site/vendor/jspaint/images/xp/ScrollShaftVertical.png"
+      "output": "site/assets/xp/paint/ScrollShaftVertical.png"
     },
     {
       "member": "LUNA.MS_",
       "expandedName": "Luna.msstyles",
       "resourceType": 2,
       "resourceId": "BLUE_SCROLLTHUMBHORIZONTAL_BMP",
-      "output": "site/vendor/jspaint/images/xp/ScrollThumbHorizontal.png"
+      "output": "site/assets/xp/paint/ScrollThumbHorizontal.png"
     },
     {
       "member": "LUNA.MS_",
       "expandedName": "Luna.msstyles",
       "resourceType": 2,
       "resourceId": "BLUE_SCROLLTHUMBVERTICAL_BMP",
-      "output": "site/vendor/jspaint/images/xp/ScrollThumbVertical.png"
+      "output": "site/assets/xp/paint/ScrollThumbVertical.png"
     },
     {
       "member": "MAIN.CP_",
