@@ -9,6 +9,16 @@ const state = {
   promise: null,
 };
 
+const pauseRuntime = (module) => {
+  module?.pauseMainLoop?.();
+  module?.SDL2?.audioContext?.suspend?.();
+};
+
+const resumeRuntime = (module) => {
+  module?.SDL2?.audioContext?.resume?.();
+  module?.resumeMainLoop?.();
+};
+
 const createCanvas = (context) => {
   const canvas = document.createElement("canvas");
   canvas.id = "canvas";
@@ -149,11 +159,15 @@ const mountPinball = (context) => {
     content.append(state.canvas);
     state.canvas.style.visibility = "visible";
     loading.hidden = true;
-    state.module?.resumeMainLoop?.();
+    resumeRuntime(state.module);
     state.canvas.focus();
   } else {
     loadRuntime(context, status, progress)
-      .then(() => {
+      .then((module) => {
+        if (!content.isConnected) {
+          pauseRuntime(module);
+          return;
+        }
         loading.hidden = true;
         requestAnimationFrame(resize);
       })
@@ -184,7 +198,7 @@ const mountPinball = (context) => {
     element: content,
     unmount() {
       resizeObserver.disconnect();
-      state.module?.pauseMainLoop?.();
+      pauseRuntime(state.module);
     },
   };
 };
