@@ -27,12 +27,14 @@ const applicationContext = (win) => ({
   setTitle(title) {
     win.title = title;
     if (systemShortcuts[win.gameId]) systemShortcuts[win.gameId].title = title;
-    win.el.querySelector(".title-text").textContent = title;
+    const titleText = win.el.querySelector(".title-text");
+    if (titleText) titleText.textContent = title;
     renderTaskButtons();
     updateDocumentTitle();
   },
   setAccessKeyText,
   close: () => closeGameWindow(win.gameId),
+  minimize: () => minimizeWindow(win.gameId),
   openFile: (options) => XPDialogs.openFile(options),
   saveFile: (options) => XPDialogs.saveFile(options),
   myPictures: fs.MY_PICTURES,
@@ -108,7 +110,12 @@ const openXPProgram = (programId, options = {}) => {
   el.querySelector(".window-content").replaceWith(mounted.element);
   document.getElementById("desktop").appendChild(el);
   openWindows.set(programId, win);
-  wireSystemWindowControls(win);
+  if (program.window.customChrome) {
+    win.el.addEventListener("pointerdown", () => focusWindow(win.gameId));
+    wireDrag(win);
+  } else {
+    wireSystemWindowControls(win);
+  }
   focusWindow(programId);
   return win;
 };

@@ -967,6 +967,7 @@ const getAllProgramsTree = () => {
           children: [
             xpProgramMenuItem("__sound-recorder"),
             xpProgramMenuItem("__volume-control"),
+            xpProgramMenuItem("__winamp"),
             xpProgramMenuItem("__windows-media-player"),
           ],
         },
@@ -1064,7 +1065,9 @@ const createProgramMenuItem = (definition, depth) => {
   icon.className = "start-program-icon";
   if (definition.icon) {
     const image = document.createElement("img");
-    image.src = XP_ICON_PATHS[definition.icon];
+    image.src = definition.icon.includes("/")
+      ? definition.icon
+      : XP_ICON_PATHS[definition.icon];
     image.alt = "";
     icon.appendChild(image);
   }

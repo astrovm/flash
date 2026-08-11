@@ -314,7 +314,9 @@ window.AstroShellApplications = Object.freeze({
       const existing = systemShortcuts[id];
       systemShortcuts[id] = {
         title: application.title,
-        icon: XP_ICON_PATHS[application.icon],
+        icon: application.icon.includes("/")
+          ? application.icon
+          : XP_ICON_PATHS[application.icon],
         ...(existing && Object.hasOwn(existing, "desktop")
           ? { desktop: existing.desktop }
           : {}),
