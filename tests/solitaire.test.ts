@@ -1,5 +1,5 @@
 // @ts-nocheck -- the browser game model is intentionally authored as native JavaScript.
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 
 import {
   canPlaceOnFoundation,
@@ -7,6 +7,9 @@ import {
   createDeck,
   createSolitaireGame,
 } from "../site/apps/solitaire/model.js";
+import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
+
+afterEach(cleanupShells);
 
 const card = (rank: number, suit: string, faceUp = true) => ({
   id: 1,
@@ -112,5 +115,64 @@ describe("Windows XP Solitaire rules", () => {
         { type: "foundation", suit: "hearts" },
       ),
     ).toBeFalse();
+  });
+});
+
+describe("Windows XP Solitaire shell integration", () => {
+  const launchSolitaire = (shell) => {
+    shell.document.getElementById("start-button").click();
+    shell.document.getElementById("all-programs-button").click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts");
+    flyouts.querySelector('[data-program-id="games"]').click();
+    flyouts.querySelector('[data-program-id="solitaire"]').click();
+    return shell.document.querySelector('.xp-window[data-game="__solitaire"]');
+  };
+
+  test("auto-moves a card after the browser double-click sequence", async () => {
+    const shell = await login(await loadShell());
+    const originalRandom = Math.random;
+    let solitaireWindow;
+    try {
+      Math.random = () => 0;
+      solitaireWindow = launchSolitaire(shell);
+    } finally {
+      Math.random = originalRandom;
+    }
+
+    const ace = solitaireWindow.querySelector('[aria-label="Ace of clubs"]');
+    expect(ace).not.toBeNull();
+    ace.click();
+    ace.click();
+    ace.dispatchEvent(
+      new shell.window.MouseEvent("dblclick", { bubbles: true }),
+    );
+
+    expect(
+      solitaireWindow.querySelector(
+        '.solitaire-foundation[data-suit="clubs"] [aria-label="Ace of clubs"]',
+      ),
+    ).not.toBeNull();
+  });
+
+  test("persists options after close and reopen", async () => {
+    const shell = await login(await loadShell());
+    let solitaireWindow = launchSolitaire(shell);
+    solitaireWindow.querySelector(".solitaire-menu-trigger").click();
+    solitaireWindow.querySelector('[data-solitaire-command="options"]').click();
+    const options = shell.document.querySelector(".solitaire-options-dialog");
+    options.querySelector('input[name="solitaire-draw"][value="1"]').click();
+    options.querySelector('[data-option="timed"]').click();
+    options.querySelector('[data-action="ok"]').click();
+
+    solitaireWindow.querySelector(".close-btn").click();
+    expect(solitaireWindow.isConnected).toBeFalse();
+    solitaireWindow = launchSolitaire(shell);
+    solitaireWindow.querySelector(".solitaire-menu-trigger").click();
+    solitaireWindow.querySelector('[data-solitaire-command="options"]').click();
+    const reopened = shell.document.querySelector(".solitaire-options-dialog");
+    expect(
+      reopened.querySelector('input[name="solitaire-draw"][value="1"]').checked,
+    ).toBeTrue();
+    expect(reopened.querySelector('[data-option="timed"]').checked).toBeFalse();
   });
 });

@@ -503,6 +503,15 @@ const mountSolitaire = (context) => {
     render();
     return true;
   };
+  const renderSelection = () => {
+    const source = selected ? JSON.stringify(selected) : null;
+    for (const card of board.querySelectorAll("[data-solitaire-source]")) {
+      card.classList.toggle(
+        "selected",
+        source !== null && card.dataset.solitaireSource === source,
+      );
+    }
+  };
   const chooseOrMove = (source, destination = null) => {
     if (
       selected &&
@@ -512,7 +521,7 @@ const mountSolitaire = (context) => {
       return;
     }
     selected = source;
-    render();
+    renderSelection();
   };
 
   const playWinAnimation = () => {
@@ -708,7 +717,7 @@ const mountSolitaire = (context) => {
       commands.undo();
     } else if (event.key === "Escape" && selected) {
       selected = null;
-      render();
+      renderSelection();
     }
   });
 
