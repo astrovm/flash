@@ -115,9 +115,14 @@ body,
   height: 48px;
 }
 
-.canvas-area {
+.canvas-scroll-shell > .canvas-area {
+  position: absolute !important;
+  inset: 0 var(--scrollbar-size) var(--scrollbar-size) 0;
   padding: 3px;
   background: #808080;
+  right: var(--scrollbar-size);
+  bottom: var(--scrollbar-size);
+  scrollbar-width: none;
 }
 
 .status-area {
@@ -153,76 +158,112 @@ body,
 }
 
 .canvas-area::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.xp-canvas-scrollbar {
+  position: absolute;
+  display: flex;
+  z-index: 4;
   background: #f7f7f5;
 }
 
-.canvas-area::-webkit-scrollbar-track-piece:horizontal {
-  background: url("images/xp/ScrollShaftHorizontal.png") 0 0 / 100%
-    400% no-repeat;
+.xp-canvas-scrollbar.vertical {
+  top: 0;
+  right: 0;
+  bottom: var(--scrollbar-size);
+  width: var(--scrollbar-size);
+  flex-direction: column;
 }
 
-.canvas-area::-webkit-scrollbar-track-piece:vertical {
-  background: url("images/xp/ScrollShaftVertical.png") 0 0 / 100%
-    400% no-repeat;
+.xp-canvas-scrollbar.horizontal {
+  left: 0;
+  right: var(--scrollbar-size);
+  bottom: 0;
+  height: var(--scrollbar-size);
+  flex-direction: row;
 }
 
-.canvas-area::-webkit-scrollbar-thumb:horizontal {
+.xp-scroll-arrow {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
   border: 0;
-  box-shadow: none;
-  background:
-    linear-gradient(#9fb5d2, #9fb5d2) calc(50% - 2px) center / 1px 8px no-repeat,
-    linear-gradient(#fff, #fff) 50% center / 1px 8px no-repeat,
-    linear-gradient(#9fb5d2, #9fb5d2) calc(50% + 2px) center / 1px 8px no-repeat,
-    url("images/xp/ScrollThumbHorizontal.png") 0 0 / 100% 400%
-      no-repeat;
-}
-
-.canvas-area::-webkit-scrollbar-thumb:vertical {
-  border: 0;
-  box-shadow: none;
-  background:
-    linear-gradient(#9fb5d2, #9fb5d2) center calc(50% - 2px) / 8px 1px no-repeat,
-    linear-gradient(#fff, #fff) center 50% / 8px 1px no-repeat,
-    linear-gradient(#9fb5d2, #9fb5d2) center calc(50% + 2px) / 8px 1px no-repeat,
-    url("images/xp/ScrollThumbVertical.png") 0 0 / 100% 400%
-      no-repeat;
-}
-
-.canvas-area::-webkit-scrollbar-button {
-  border: 0;
+  border-radius: 0;
   box-shadow: none;
   background-color: transparent;
-  background-image:
-    url("images/xp/ScrollArrowGlyphs.png"),
-    url("images/xp/ScrollArrows.png");
+  background-image: url("images/xp/ScrollArrowGlyphs.png"), url("images/xp/ScrollArrows.png");
   background-repeat: no-repeat;
   background-size: 9px 144px, 17px 272px;
 }
 
-.canvas-area::-webkit-scrollbar-button:vertical:decrement {
-  background-position: center 0, center 0;
+.xp-scroll-up { background-position: center 0, center 0; }
+.xp-scroll-down { background-position: center -36px, center -68px; }
+.xp-scroll-left { background-position: center -72px, center -136px; }
+.xp-scroll-right { background-position: center -108px, center -204px; }
+.xp-scroll-up:disabled { background-position: center -27px, center -51px; }
+.xp-scroll-down:disabled { background-position: center -63px, center -119px; }
+.xp-scroll-left:disabled { background-position: center -99px, center -187px; }
+.xp-scroll-right:disabled { background-position: center -135px, center -255px; }
+
+.xp-scroll-arrow:disabled {
+  opacity: 1;
 }
 
-.canvas-area::-webkit-scrollbar-button:vertical:increment {
-  background-position: center -36px, center -68px;
+.xp-scroll-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
 }
 
-.canvas-area::-webkit-scrollbar-button:horizontal:decrement {
-  background-position: center -72px, center -136px;
+.xp-canvas-scrollbar.vertical .xp-scroll-track {
+  background: url("images/xp/ScrollShaftVertical.png") 0 0 / 17px 68px repeat-y;
 }
 
-.canvas-area::-webkit-scrollbar-button:horizontal:increment {
-  background-position: center -108px, center -204px;
+.xp-canvas-scrollbar.horizontal .xp-scroll-track {
+  background: url("images/xp/ScrollShaftHorizontal.png") 0 0 / 17px 68px repeat-x;
 }
 
-.canvas-area::-webkit-scrollbar-button:horizontal:start:increment,
-.canvas-area::-webkit-scrollbar-button:horizontal:end:decrement,
-.canvas-area::-webkit-scrollbar-button:vertical:start:increment,
-.canvas-area::-webkit-scrollbar-button:vertical:end:decrement {
-  display: none;
+.xp-scroll-thumb {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #8ba4c9;
+  border-radius: 2px;
 }
 
-.canvas-area::-webkit-scrollbar-corner {
+.xp-canvas-scrollbar.vertical .xp-scroll-thumb {
+  left: 1px;
+  width: 15px;
+  min-height: 8px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 2px, #fff 2px 3px, #9fb5d2 3px 4px) center / 8px 12px no-repeat,
+    linear-gradient(to right, #f7faff, #c8dcf5 48%, #a9c7ed 52%, #d5e4f7);
+  box-shadow: inset 1px 0 #fff, inset -1px 0 #9fb5d2;
+}
+
+.xp-canvas-scrollbar.horizontal .xp-scroll-thumb {
+  top: 1px;
+  height: 15px;
+  min-width: 8px;
+  background:
+    repeating-linear-gradient(to right, transparent 0 2px, #fff 2px 3px, #9fb5d2 3px 4px) center / 12px 8px no-repeat,
+    linear-gradient(to bottom, #f7faff, #c8dcf5 48%, #a9c7ed 52%, #d5e4f7);
+  box-shadow: inset 0 1px #fff, inset 0 -1px #9fb5d2;
+}
+
+.xp-scroll-corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
   background: #ece9d8;
 }
 

@@ -476,7 +476,8 @@ window.$app = $app;
 const $V = $(E("div")).addClass("vertical").appendTo($app);
 const $H = $(E("div")).addClass("horizontal").appendTo($V);
 
-const $canvas_area = $(E("div")).addClass("canvas-area inset-deep").appendTo($H);
+const $canvas_scroll_shell = $(E("div")).addClass("canvas-scroll-shell").appendTo($H);
+const $canvas_area = $(E("div")).addClass("canvas-area inset-deep").appendTo($canvas_scroll_shell);
 window.$canvas_area = $canvas_area;
 
 const $canvas = $(main_canvas).appendTo($canvas_area);

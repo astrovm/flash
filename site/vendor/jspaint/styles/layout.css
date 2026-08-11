@@ -617,10 +617,17 @@ whereas it breaks component docking calculations if used to shift the colors box
 	gap: 10px;
 }
 
+.canvas-scroll-shell {
+	flex: 1;
+	position: relative;
+	min-width: 0;
+	min-height: 0;
+}
 .canvas-area {
 	flex: 1;
 	display: block !important;
-	position: relative;
+	position: absolute;
+	inset: 0;
 	overflow: auto;
 	padding: 3px;
 	direction: ltr/*rtl:ignore*/;
