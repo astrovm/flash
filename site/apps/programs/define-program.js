@@ -24,14 +24,14 @@ const PROGRAM_RENDERERS = Object.freeze({
   mail: renderers.renderMail,
   messenger: renderers.renderMessenger,
   defaults: renderers.renderDefaults,
-  generic: renderers.renderGeneric,
 });
 
 export const defineProgram = (metadata) => {
   const renderer =
-    PROGRAM_RENDERERS[`id:${metadata.id}`] ||
-    PROGRAM_RENDERERS[metadata.kind] ||
-    PROGRAM_RENDERERS.generic;
+    PROGRAM_RENDERERS[`id:${metadata.id}`] || PROGRAM_RENDERERS[metadata.kind];
+  if (!renderer) {
+    throw new Error(`No renderer registered for application: ${metadata.id}`);
+  }
   return defineApplication({
     ...metadata,
     mount(context, instance) {

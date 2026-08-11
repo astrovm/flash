@@ -12,30 +12,6 @@ export const communicationApplications = [
     { window: { width: 560, height: 420 } },
   ),
   program(
-    "__network-connections",
-    "Network Connections",
-    "NetworkConnections.png",
-    "network",
-  ),
-  program(
-    "__network-setup-wizard",
-    "Network Setup Wizard",
-    "NetworkSetupWizard.png",
-    "wizard",
-  ),
-  program(
-    "__new-connection-wizard",
-    "New Connection Wizard",
-    "NetworkConnection.png",
-    "wizard",
-  ),
-  program(
-    "__wireless-network-setup-wizard",
-    "Wireless Network Setup Wizard",
-    "WirelessNetworkSetupWizard.png",
-    "wizard",
-  ),
-  program(
     "__internet-explorer",
     "Internet Explorer",
     "InternetExplorer.png",
@@ -48,12 +24,6 @@ export const communicationApplications = [
     "OutlookExpress.png",
     "mail",
     { window: { width: 720, height: 520 } },
-  ),
-  program(
-    "__remote-assistance",
-    "Remote Assistance",
-    "RemoteAssistance.png",
-    "wizard",
   ),
   program(
     "__windows-messenger",

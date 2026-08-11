@@ -20,4 +20,3 @@ export { renderBrowser } from "./browser.js";
 export { renderMail } from "./mail.js";
 export { renderMessenger } from "./messenger.js";
 export { renderDefaults } from "./defaults.js";
-export { renderGeneric } from "./generic.js";
