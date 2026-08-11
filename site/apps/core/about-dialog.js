@@ -1,6 +1,6 @@
 export const showXPAboutDialog = (
   dialogs,
-  { title, product, version, copyright, icon },
+  { title, product, version, copyright, icon, licensedTo = "astro" },
 ) => {
   const dialog = dialogs.createDialog({ title, wide: true });
   dialog.el.classList.add("xp-about-dialog");
@@ -32,6 +32,9 @@ export const showXPAboutDialog = (
   licenseLink.rel = "noreferrer";
   licenseLink.textContent = "End-User License Agreement";
   license.append(licenseLink, " to:");
+  const licensee = document.createElement("span");
+  licensee.textContent = licensedTo;
+  license.append(licensee);
 
   const memory = document.createElement("p");
   memory.className = "xp-about-memory";

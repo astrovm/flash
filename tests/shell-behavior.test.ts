@@ -663,6 +663,11 @@ test("Paint mounts natively and owns supported picture file associations", async
   expect(paintWindow.querySelector(".paint-toolbox")).not.toBeNull();
   expect(paintWindow.querySelector("canvas.paint-canvas")).not.toBeNull();
   expect(paintWindow.querySelectorAll(".paint-scrollbar")).toHaveLength(2);
+  expect(
+    paintWindow.querySelector<HTMLButtonElement>(".paint-tool.selected")!
+      .dataset.tool,
+  ).toBe("rect-select");
+  expect(paintWindow.querySelectorAll(".paint-status span")).toHaveLength(3);
   expect(paintWindow.classList.contains("xp-native-paint-window")).toBeTrue();
   expect(paintWindow.style.width).toBe("760px");
   expect(paintWindow.style.height).toBe("560px");
@@ -684,6 +689,26 @@ test("Paint mounts natively and owns supported picture file associations", async
   expect(
     paintWindow.querySelector('[data-paint-command="wallpaper-tiled"]'),
   ).not.toBeNull();
+  paintWindow
+    .querySelector<HTMLButtonElement>('[data-paint-command="open"]')!
+    .click();
+  await flushShell();
+  const openDialog = shell.document.querySelector<HTMLElement>(
+    '.xp-dialog[aria-label="Open"]',
+  )!;
+  expect(
+    [...openDialog.querySelectorAll<HTMLElement>(".dlg-file-item")].some(
+      (item) => item.textContent?.trim().endsWith("sample.png"),
+    ),
+  ).toBeTrue();
+  openDialog
+    .querySelectorAll<HTMLButtonElement>(".dlg-buttons button")[1]
+    .click();
+  menuButton("File").click();
+  paintWindow
+    .querySelector<HTMLButtonElement>('[data-paint-command="new"]')!
+    .click();
+  await flushShell();
 
   menuButton("Colors").click();
   paintWindow
@@ -692,6 +717,7 @@ test("Paint mounts natively and owns supported picture file associations", async
   const editColors = shell.document.querySelector<HTMLElement>(
     ".paint-edit-colors-dialog",
   )!;
+  expect(editColors.querySelector(".help-btn")).not.toBeNull();
   expect(
     editColors.querySelectorAll(".paint-edit-color-grid button"),
   ).toHaveLength(48);

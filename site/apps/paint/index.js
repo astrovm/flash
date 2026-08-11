@@ -131,14 +131,14 @@ const MENU_ITEMS = {
     separator,
     disabled("scanner", "From Scanner or Camera..."),
     separator,
-    disabled("print-preview", "Print Preview"),
-    disabled("page-setup", "Page Setup..."),
-    disabled("print", "Print...", "Ctrl+P"),
+    ["print-preview", "Print Preview"],
+    ["page-setup", "Page Setup..."],
+    ["print", "Print...", "Ctrl+P"],
     separator,
-    disabled("send", "Send..."),
+    ["send", "Send..."],
     separator,
-    ["wallpaper-tiled", "Set As Background (Tiled)"],
-    ["wallpaper-centered", "Set As Background (Centered)"],
+    disabled("wallpaper-tiled", "Set As Background (Tiled)"),
+    disabled("wallpaper-centered", "Set As Background (Centered)"),
     separator,
     disabled("recent", "Recent File"),
     separator,
@@ -259,7 +259,7 @@ const mountPaint = (shell, instance) => {
   let fileId = null;
   let fileName = "untitled";
   let dirty = false;
-  let tool = "pencil";
+  let tool = "rect-select";
   const panelState = {
     toolbox: true,
     colorbox: true,
@@ -267,6 +267,12 @@ const mountPaint = (shell, instance) => {
     opaque: true,
   };
   const setTitle = () => shell.setTitle(`${fileName} - Paint`);
+  const updateFileCommandState = () => {
+    for (const command of ["wallpaper-tiled", "wallpaper-centered"]) {
+      const item = root.querySelector(`[data-paint-command="${command}"]`);
+      if (item) item.disabled = !fileId;
+    }
+  };
 
   const body = document.createElement("div");
   body.className = "paint-body";
@@ -290,7 +296,7 @@ const mountPaint = (shell, instance) => {
   const status = document.createElement("div");
   status.className = "paint-status";
   status.dataset.paintPanel = "status";
-  status.innerHTML = `<span data-paint-help>For Help, click Help Topics on the Help Menu.</span><span data-paint-position></span>`;
+  status.innerHTML = `<span data-paint-help>For Help, click Help Topics on the Help Menu.</span><span data-paint-position></span><span data-paint-size></span>`;
   const engine = createCanvasEngine({
     canvas,
     frame: canvasFrame,
@@ -411,6 +417,7 @@ const mountPaint = (shell, instance) => {
       fileName = file.name;
       dirty = false;
       setTitle();
+      updateFileCommandState();
     } catch {
       shell.showMessage(
         "Paint",
@@ -440,6 +447,7 @@ const mountPaint = (shell, instance) => {
     fileName = file.name;
     dirty = false;
     setTitle();
+    updateFileCommandState();
     return true;
   };
   const confirmSaveChanges = async () => {
@@ -462,14 +470,13 @@ const mountPaint = (shell, instance) => {
       fileName = "untitled";
       dirty = false;
       setTitle();
+      updateFileCommandState();
     } else if (command === "open") {
       if (!(await confirmSaveChanges())) return;
       const file = await shell.openFile({
         title: "Open",
         startFolder: shell.myPictures,
-        filter: (node) =>
-          node.type === "folder" ||
-          /\.(bmp|dib|gif|jpe?g|png)$/i.test(node.name),
+        filter: [".bmp", ".dib", ".gif", ".jpg", ".jpeg", ".png"],
       });
       if (file) await loadFile(file);
     } else if (command === "save") await save(false);
@@ -507,13 +514,18 @@ const mountPaint = (shell, instance) => {
       shell.setWallpaper(canvas.toDataURL());
     else if (command === "view-bitmap")
       root.classList.toggle("paint-bitmap-view");
+    else if (["print-preview", "page-setup", "print", "send"].includes(command))
+      shell.showMessage(
+        "Paint",
+        "This command is not available in this browser.",
+      );
     else if (command === "about")
       showXPAboutDialog(shell.dialogs, {
         title: "About Paint",
         product: "Microsoft ® Paint",
         version: "Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)",
         copyright: "Copyright © 2007 Microsoft Corporation",
-        icon: shell.XP_ICON_PATHS["PaintLarge.png"],
+        icon: "assets/xp/icons/PaintLarge.png",
       });
     else if (command === "help")
       shell.showMessage(
@@ -543,6 +555,7 @@ const mountPaint = (shell, instance) => {
 
   root.append(createMenuBar(run, (command) => panelState[command]));
   root.append(body, colors, status);
+  updateFileCommandState();
   const removeScrollbars = installPaintScrollbars(
     workspaceShell,
     workspace,
