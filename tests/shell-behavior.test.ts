@@ -669,13 +669,51 @@ test("Paint mounts natively and owns supported picture file associations", async
   expect(paintWindow.style.left).toBe("0px");
   expect(paintWindow.style.top).toBe("0px");
 
-  [
-    ...paintWindow.querySelectorAll<HTMLButtonElement>(
-      ".paint-menu-group > button",
-    ),
-  ]
-    .find((button) => button.textContent === "Help")!
+  const menuButton = (label: string) =>
+    [
+      ...paintWindow.querySelectorAll<HTMLButtonElement>(
+        ".paint-menu-group > button",
+      ),
+    ].find((button) => button.textContent === label)!;
+  menuButton("File").click();
+  expect(
+    paintWindow.querySelector<HTMLButtonElement>(
+      '[data-paint-command="scanner"]',
+    )!.disabled,
+  ).toBeTrue();
+  expect(
+    paintWindow.querySelector('[data-paint-command="wallpaper-tiled"]'),
+  ).not.toBeNull();
+
+  menuButton("Colors").click();
+  paintWindow
+    .querySelector<HTMLButtonElement>('[data-paint-command="edit-colors"]')!
     .click();
+  const editColors = shell.document.querySelector<HTMLElement>(
+    ".paint-edit-colors-dialog",
+  )!;
+  expect(
+    editColors.querySelectorAll(".paint-edit-color-grid button"),
+  ).toHaveLength(48);
+  editColors
+    .querySelectorAll<HTMLButtonElement>(".dlg-buttons button")[1]
+    .click();
+
+  menuButton("Image").click();
+  paintWindow
+    .querySelector<HTMLButtonElement>('[data-paint-command="attributes"]')!
+    .click();
+  const attributes = shell.document.querySelector<HTMLElement>(
+    ".paint-attributes-dialog",
+  )!;
+  expect(
+    attributes.querySelector<HTMLInputElement>('[name="width"]')!.value,
+  ).toBe("516");
+  attributes
+    .querySelectorAll<HTMLButtonElement>(".dlg-buttons button")[1]
+    .click();
+
+  menuButton("Help").click();
   paintWindow
     .querySelector<HTMLButtonElement>('[data-paint-command="about"]')!
     .click();

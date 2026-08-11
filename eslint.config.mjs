@@ -35,13 +35,7 @@ const sharedDeclarationPattern = `^(?:${[...sharedDeclarations]
 
 export default defineConfig(
   {
-    ignores: [
-      "dist/",
-      "site/apps/paint/lib/",
-      "site/apps/paint/src/",
-      "site/iframe/inside-the-firewall/",
-      "site/vendor/",
-    ],
+    ignores: ["dist/", "site/iframe/inside-the-firewall/", "site/vendor/"],
   },
   {
     files: ["eslint.config.mjs"],

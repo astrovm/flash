@@ -48,14 +48,26 @@
 }
 .paint-menu button {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 16px 1fr auto;
   width: 100%;
   min-width: 0;
-  padding: 3px 18px 3px 22px;
+  padding: 3px 18px 3px 2px;
   border: 0;
   background: #fff;
   font: inherit;
   text-align: left;
+}
+.paint-menu button:disabled {
+  color: #aca899;
+  text-shadow: 1px 1px #fff;
+}
+.paint-menu button:disabled:hover {
+  background: #fff;
+  color: #aca899;
+}
+.paint-menu-check {
+  color: inherit;
+  font-weight: bold;
 }
 .paint-menu button:hover {
   background: #316ac5;
@@ -88,6 +100,33 @@
   margin: 4px 3px 0;
   border: 2px inset #fff;
   background: #ece9d8;
+}
+.paint-tool-option {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 14px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.paint-tool-option::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--paint-option-size);
+  height: var(--paint-option-size);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #000;
+}
+.paint-tool-option.selected {
+  background: #000080;
+}
+.paint-tool-option.selected::after {
+  background: #fff;
 }
 .paint-tool-options:is([data-tool="select"], [data-tool="rect-select"])::before,
 .paint-tool-options:is([data-tool="select"], [data-tool="rect-select"])::after {
@@ -282,6 +321,7 @@
   height: 0;
 }
 .paint-canvas-frame {
+  position: relative;
   display: inline-block;
   padding: 0;
   border-right: 3px solid #c0c0c0;
@@ -294,6 +334,32 @@
   image-rendering: pixelated;
   touch-action: none;
 }
+.paint-canvas.zoomed {
+  width: 200%;
+  height: 200%;
+}
+.paint-selection {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px dashed #000;
+  pointer-events: none;
+}
+.paint-text-editor {
+  position: absolute;
+  z-index: 3;
+  width: 160px;
+  min-height: 52px;
+  padding: 1px;
+  border: 1px dashed #000;
+  outline: 0;
+  resize: both;
+  overflow: hidden;
+  background: transparent;
+  color: #000;
+  font:
+    13px Arial,
+    sans-serif;
+}
 .paint-color-box {
   display: flex;
   flex: 0 0 44px;
@@ -305,8 +371,8 @@
 }
 .paint-palette-grid {
   display: grid;
-  grid-template-columns: repeat(14, 16px);
-  grid-template-rows: repeat(2, 16px);
+  grid-template-columns: repeat(14, 15px);
+  grid-template-rows: repeat(2, 15px);
   gap: 1px;
 }
 .paint-current-colors {
@@ -336,11 +402,102 @@
   background: var(--paint-primary);
 }
 .paint-swatch {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   min-width: 0;
   padding: 0;
   border: 1px inset #fff;
+}
+
+.paint-transform-dialog {
+  width: 310px;
+}
+.paint-transform-dialog .dlg-body,
+.paint-attributes-dialog .dlg-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.paint-transform-dialog fieldset,
+.paint-attributes-dialog fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.paint-transform-dialog fieldset label {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 5px;
+}
+.paint-transform-dialog input[type="number"],
+.paint-attributes-dialog input[type="number"] {
+  width: 64px;
+}
+.paint-transform-dialog .dlg-buttons,
+.paint-attributes-dialog .dlg-buttons {
+  grid-column: 1 / -1;
+}
+.paint-attributes-dialog {
+  width: 290px;
+}
+.paint-attributes-dialog p {
+  margin: 3px 0;
+}
+.paint-edit-colors-dialog {
+  width: 246px;
+}
+.paint-edit-colors-dialog .dlg-body {
+  padding: 8px;
+}
+.paint-edit-color-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 19px);
+  gap: 4px 6px;
+  margin: 4px 0 17px;
+}
+.paint-edit-color-grid button,
+.paint-custom-colors i {
+  box-sizing: border-box;
+  width: 19px;
+  height: 18px;
+  min-width: 0;
+  padding: 0;
+  border: 2px solid #fff;
+  outline: 1px solid #808080;
+}
+.paint-edit-color-grid button.selected {
+  outline: 2px dotted #000;
+  outline-offset: 1px;
+}
+.paint-custom-colors {
+  display: grid;
+  grid-template-columns: repeat(8, 19px);
+  gap: 4px 6px;
+  margin: 4px 0 17px;
+}
+.paint-custom-colors i {
+  display: block;
+  background: #fff;
+}
+.paint-edit-colors-dialog .dlg-body > button {
+  width: 100%;
+  margin-bottom: 7px;
+}
+.paint-edit-colors-dialog .dlg-buttons {
+  justify-content: flex-start;
+}
+.paint-bitmap-view > :not(.paint-body),
+.paint-bitmap-view .paint-toolbox,
+.paint-bitmap-view .paint-scrollbar,
+.paint-bitmap-view .paint-scroll-corner {
+  display: none;
+}
+.paint-bitmap-view .paint-workspace {
+  inset: 0;
+  padding: 0;
+  background: #000;
 }
 .paint-status {
   display: grid;
