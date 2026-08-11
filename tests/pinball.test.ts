@@ -70,9 +70,7 @@ describe("3D Pinball application", () => {
       click(flyouts.querySelector('[data-program-id="pinball"]'));
     };
     Object.assign(shell.window, {
-      AstroPinballModule: async (module: {
-        onRuntimeInitialized(): void;
-      }) => {
+      AstroPinballModule: async (module: { onRuntimeInitialized(): void }) => {
         runtimeModule = module;
         Object.assign(module, {
           SDL2: {
