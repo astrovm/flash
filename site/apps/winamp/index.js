@@ -95,7 +95,8 @@ const mountWinamp = (shell, instance) => {
       <div class="winamp-playlist-bottom" aria-hidden="true"><i></i><b></b><span></span></div>
       <button class="winamp-sprite winamp-add" type="button" aria-label="Add file"></button>
       <button class="winamp-sprite winamp-remove" type="button" aria-label="Remove selected track"></button>
-      <button class="winamp-sprite winamp-new-list" type="button" aria-label="New playlist"></button>
+      <button class="winamp-sprite winamp-list-options" type="button" aria-label="Playlist options"></button>
+      <div class="winamp-playlist-menu" hidden><button type="button" data-playlist-command="new">New list</button></div>
       <output class="winamp-playlist-time">0:00</output>
     </section>`;
 
@@ -112,6 +113,16 @@ const mountWinamp = (shell, instance) => {
   let repeat = false;
   let eqEnabled = true;
   let audioGraph = null;
+
+  const updateWindowSize = () => {
+    const visiblePanels = root.querySelectorAll(
+      ".winamp-panel:not([hidden])",
+    ).length;
+    shell.setSize(
+      275,
+      root.classList.contains("windowshade") ? 14 : visiblePanels * 116,
+    );
+  };
 
   const updateTime = () => {
     const seconds = audio.currentTime || 0;
@@ -275,9 +286,10 @@ const mountWinamp = (shell, instance) => {
     .querySelector(".winamp-minimize")
     .addEventListener("click", shell.minimize);
   root.querySelector(".winamp-close").addEventListener("click", shell.close);
-  root
-    .querySelector(".winamp-shade")
-    .addEventListener("click", () => root.classList.toggle("windowshade"));
+  root.querySelector(".winamp-shade").addEventListener("click", () => {
+    root.classList.toggle("windowshade");
+    updateWindowSize();
+  });
   root.querySelector(".winamp-options").addEventListener("click", () => {
     const menu = root.querySelector(".winamp-menu");
     menu.hidden = !menu.hidden;
@@ -334,6 +346,7 @@ const mountWinamp = (shell, instance) => {
     event.currentTarget.classList.toggle("selected", !panel.hidden);
     event.currentTarget.setAttribute("aria-pressed", String(!panel.hidden));
     root.classList.toggle("equalizer-hidden", panel.hidden);
+    updateWindowSize();
   });
   root
     .querySelector(".winamp-playlist-toggle")
@@ -343,6 +356,7 @@ const mountWinamp = (shell, instance) => {
       event.currentTarget.classList.toggle("selected", !panel.hidden);
       event.currentTarget.setAttribute("aria-pressed", String(!panel.hidden));
       root.classList.toggle("playlist-hidden", panel.hidden);
+      updateWindowSize();
     });
   root
     .querySelector(".winamp-eq-close")
@@ -415,7 +429,7 @@ const mountWinamp = (shell, instance) => {
     } else if (selectedIndex < activeIndex) activeIndex -= 1;
     updatePlaylist();
   });
-  root.querySelector(".winamp-new-list").addEventListener("click", () => {
+  const clearPlaylist = () => {
     audio.pause();
     audio.removeAttribute("src");
     tracks = [];
@@ -425,7 +439,18 @@ const mountWinamp = (shell, instance) => {
     shell.setTitle("Winamp");
     setPlaybackState("stopped");
     updatePlaylist();
+  };
+  root.querySelector(".winamp-list-options").addEventListener("click", () => {
+    const menu = root.querySelector(".winamp-playlist-menu");
+    menu.hidden = !menu.hidden;
   });
+  root
+    .querySelector(".winamp-playlist-menu")
+    .addEventListener("click", (event) => {
+      root.querySelector(".winamp-playlist-menu").hidden = true;
+      if (event.target.closest("button")?.dataset.playlistCommand === "new")
+        clearPlaylist();
+    });
   audio.addEventListener("timeupdate", updateTime);
   audio.addEventListener("loadedmetadata", () => {
     if (tracks[activeIndex]) tracks[activeIndex].duration = audio.duration;

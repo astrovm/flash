@@ -66,10 +66,17 @@ test("Winamp mounts with native 2.91 panels and plays associated audio", async (
   expect(
     win.querySelector<HTMLElement>(".winamp-equalizer")!.hidden,
   ).toBeTrue();
+  expect(win.style.height).toBe("232px");
   eqToggle.click();
   expect(
     win.querySelector<HTMLElement>(".winamp-equalizer")!.hidden,
   ).toBeFalse();
+  expect(win.style.height).toBe("348px");
+
+  win.querySelector<HTMLButtonElement>(".winamp-shade")!.click();
+  expect(win.style.height).toBe("14px");
+  win.querySelector<HTMLButtonElement>(".winamp-shade")!.click();
+  expect(win.style.height).toBe("348px");
 });
 
 test("Winamp loads playlists and owns each browser-supported media type", async () => {
@@ -117,6 +124,13 @@ test("Winamp loads playlists and owns each browser-supported media type", async 
     });
     expect(fs.open(file.id)).toBeTrue();
   }
+
+  win.querySelector<HTMLButtonElement>(".winamp-list-options")!.click();
+  const playlistMenu = win.querySelector<HTMLElement>(".winamp-playlist-menu")!;
+  expect(playlistMenu.hidden).toBeFalse();
+  playlistMenu.querySelector<HTMLButtonElement>("button")!.click();
+  expect(win.querySelectorAll(".winamp-playlist li")).toHaveLength(0);
+  expect(playlistMenu.hidden).toBeTrue();
 
   win.querySelector<HTMLButtonElement>(".winamp-close")!.click();
   expect(win.isConnected).toBeFalse();
