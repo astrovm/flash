@@ -1,14 +1,32 @@
-:root {
+/* JS Paint appends its classic (Windows 98) theme after this stylesheet.
+ * The extra type selector keeps the XP system palette authoritative without
+ * changing the vendored theme loader. */
+html:root {
+  --ActiveBorder: #d4d0c8;
+  --ActiveTitle: #0054e3;
   --ButtonFace: #ece9d8;
+  --ButtonAlternateFace: #b5b5b5;
+  --ButtonDkShadow: #716f64;
+  --ButtonHilight: #fff;
+  --ButtonLight: #f1efe2;
+  --ButtonShadow: #aca899;
   --ButtonText: #000;
-  --Window: #fff;
-  --WindowText: #000;
+  --GradientActiveTitle: #3d95ff;
+  --GradientInactiveTitle: #9db9eb;
   --GrayText: #aca899;
-  --Highlight: #316ac5;
-  --HighlightText: #fff;
+  --Hilight: #316ac5;
+  --HilightText: #fff;
+  --InactiveBorder: #d4d0c8;
+  --InactiveTitle: #7a96df;
+  --InfoText: #000;
+  --InfoWindow: #ffffe1;
   --Menu: #fff;
   --MenuText: #000;
   --AppWorkspace: #808080;
+  --Scrollbar: #d4d0c8;
+  --Window: #fff;
+  --WindowFrame: #000;
+  --WindowText: #000;
   --scrollbar-size: 17px;
 }
 
