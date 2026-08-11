@@ -65,7 +65,7 @@ void options::init()
 	}
 
 	Options.Sounds = 1;
-	Options.Music = 1;
+	Options.Music = 0;
 	Options.FullScreen = 0;
 	Options.LeftFlipperKeyDft = SDLK_z;
 	Options.RightFlipperKeyDft = SDLK_SLASH;
