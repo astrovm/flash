@@ -36,6 +36,7 @@ let automaticOfflineDownloadQueue = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
 const START_MENU_STYLE_KEY = "startMenuStyle";
+const WINDOW_PLACEMENTS_KEY = "windowPlacements";
 const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
 const DESKTOP_SYSTEM_NAMES_KEY = "desktopSystemNames";
 const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings";
@@ -50,6 +51,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   "favorites",
   "gameStats",
   GAME_PLAYBACK_SETTINGS_KEY,
+  WINDOW_PLACEMENTS_KEY,
   "gameVolumes",
   "isMuted",
   "runHistory",
@@ -1008,6 +1010,66 @@ const getDesktopSize = () => {
   return { width: desktop.clientWidth, height: desktop.clientHeight };
 };
 
+const isWindowPlacement = (value) =>
+  value &&
+  typeof value === "object" &&
+  Number.isFinite(value.left) &&
+  Number.isFinite(value.top) &&
+  Number.isFinite(value.width) &&
+  value.width > 0 &&
+  Number.isFinite(value.height) &&
+  value.height > 0;
+
+const isWindowPlacementMap = (value) =>
+  value &&
+  typeof value === "object" &&
+  !Array.isArray(value) &&
+  Object.values(value).every(isWindowPlacement);
+
+const getWindowPlacements = () =>
+  readJsonStorage(WINDOW_PLACEMENTS_KEY, {}, isWindowPlacementMap);
+
+const parseWindowLength = (value, fallback) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const persistWindowPlacement = (win) => {
+  const source = win.maximized && win.prevRect ? win.prevRect : win.el.style;
+  const placement = {
+    left: parseWindowLength(source.left, win.el.offsetLeft),
+    top: parseWindowLength(source.top, win.el.offsetTop),
+    width: parseWindowLength(source.width, win.el.offsetWidth),
+    height: parseWindowLength(source.height, win.el.offsetHeight),
+  };
+  if (!isWindowPlacement(placement)) return;
+  writeJsonStorage(WINDOW_PLACEMENTS_KEY, {
+    ...getWindowPlacements(),
+    [win.gameId]: placement,
+  });
+};
+
+const restoreWindowPlacement = (win) => {
+  const saved = getWindowPlacements()[win.gameId];
+  if (!saved) return;
+  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const width =
+    desktopWidth > 0 ? Math.min(saved.width, desktopWidth) : saved.width;
+  const height =
+    desktopHeight > 0 ? Math.min(saved.height, desktopHeight) : saved.height;
+  Object.assign(win.el.style, {
+    width: `${width}px`,
+    height: `${height}px`,
+    left: `${saved.left}px`,
+    top: `${saved.top}px`,
+  });
+  if (desktopWidth > 0 && desktopHeight > 0) {
+    const position = clampWindowPosition(win, saved.left, saved.top);
+    win.el.style.left = `${position.left}px`;
+    win.el.style.top = `${position.top}px`;
+  }
+};
+
 // Keep at least part of the title bar reachable inside the work area,
 // matching how Windows XP constrains window positions.
 const clampWindowPosition = (win, left, top) => {
@@ -1779,6 +1841,7 @@ const toggleMaximize = (gameId) => {
       width: win.el.style.width,
       height: win.el.style.height,
     };
+    persistWindowPlacement(win);
     win.el.classList.add("maximized");
     win.maximized = true;
   } else {
@@ -1832,6 +1895,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
       });
     return;
   }
+  persistWindowPlacement(win);
   win.el.remove();
   openWindows.delete(gameId);
 
@@ -1844,6 +1908,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
 };
 
 const wireDrag = (win) => {
+  restoreWindowPlacement(win);
   const bar = win.el.querySelector(".title-bar");
   const titleIcon = bar.querySelector(".title-icon");
 
@@ -1926,6 +1991,7 @@ const wireDrag = (win) => {
           height: win.el.style.height,
         };
       }
+      persistWindowPlacement(win);
     };
 
     try {
@@ -2049,6 +2115,7 @@ const wireResize = (win) => {
           nextPointer = { x: ev.clientX, y: ev.clientY };
         }
         updateSize();
+        persistWindowPlacement(win);
       };
 
       try {
@@ -8641,7 +8708,7 @@ const openXPProgram = (programId) => {
     messenger: [500, 460],
     solitaire: [720, 520],
     freecell: [760, 540],
-    paint: [274, 410],
+    paint: [640, 480],
   };
   const [preferredWidth, preferredHeight] =
     programId === "__minesweeper"
