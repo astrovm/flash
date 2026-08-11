@@ -1,28 +1,56 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createInterface } from "node:readline";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const gitDirectoryResult = spawnSync(
+  "git",
+  ["rev-parse", "--path-format=absolute", "--git-common-dir"],
+  { cwd: projectDirectory, encoding: "utf8" },
+);
+const commonGitDirectory =
+  gitDirectoryResult.status === 0 ? gitDirectoryResult.stdout.trim() : "";
+const sharedProjectDirectory = commonGitDirectory
+  ? dirname(commonGitDirectory)
+  : projectDirectory;
 const isoPath = resolve(
-  projectDirectory,
+  sharedProjectDirectory,
   "source-media/en_windows_xp_professional_with_service_pack_3_x86_cd_vl_x14-73974.iso",
 );
 const diskPath = resolve(
-  projectDirectory,
+  sharedProjectDirectory,
   "source-media/xp-vm/windows-xp.qcow2",
 );
-const snapshotOption = Bun.argv.indexOf("--snapshot");
-const snapshotName =
-  snapshotOption === -1 ? undefined : Bun.argv[snapshotOption + 1];
-if (snapshotOption !== -1 && !snapshotName)
-  throw new Error("--snapshot requires a snapshot name");
+let instanceName = `agent-${process.pid}`;
+let snapshotName: string | undefined;
+let writeBase = false;
+const arguments_ = Bun.argv.slice(2);
+for (let index = 0; index < arguments_.length; index += 1) {
+  const argument = arguments_[index];
+  if (argument === "--instance") {
+    instanceName = arguments_[index + 1] || "";
+    if (!instanceName) throw new Error("--instance requires a name");
+    index += 1;
+  } else if (argument === "--snapshot") {
+    snapshotName = arguments_[index + 1];
+    if (!snapshotName) throw new Error("--snapshot requires a name");
+    index += 1;
+  } else if (argument === "--write-base") {
+    writeBase = true;
+  } else {
+    throw new Error(`Unknown argument: ${argument}`);
+  }
+}
+const screenshotInstance = instanceName
+  .replace(/[^a-zA-Z0-9._-]+/g, "-")
+  .replace(/^-+|-+$/g, "");
 
 const qemu = spawn(
   "qemu-system-i386",
   [
     "-name",
-    "Astro XP Reference",
+    `Astro XP Reference (${instanceName})`,
     "-machine",
     "pc,accel=tcg",
     "-cpu",
@@ -31,6 +59,7 @@ const qemu = spawn(
     "1",
     "-m",
     "512",
+    ...(writeBase ? [] : ["-snapshot"]),
     "-drive",
     `file=${diskPath},format=qcow2,if=ide`,
     "-cdrom",
@@ -107,7 +136,9 @@ createInterface({ input: qemu.stdout }).on("line", (line) => {
 
 await greeting;
 await execute("qmp_capabilities");
-console.log("XP VM controller ready. Type 'help' for commands.");
+console.log(
+  `XP VM controller ready (${writeBase ? "base disk writable" : "temporary changes"}). Type 'help' for commands.`,
+);
 
 async function pressKey(qcode: string) {
   await execute("input-send-event", {
@@ -159,8 +190,9 @@ for await (const input of commands) {
       );
     } else if (command === "screenshot") {
       const filename = resolve(
-        projectDirectory,
-        args[0] || "source-media/xp-reference/current.png",
+        sharedProjectDirectory,
+        args[0] ||
+          `source-media/xp-reference/current-${screenshotInstance || "agent"}.png`,
       );
       await execute("screendump", { filename, format: "png" });
       console.log(filename);
