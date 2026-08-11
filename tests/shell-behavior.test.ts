@@ -585,61 +585,11 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   const solitaireWindow = shell.document.querySelector(
     '.xp-window[data-game="__solitaire"]',
   )!;
-  expect(
-    solitaireWindow.querySelectorAll(".solitaire-tableau > div"),
-  ).toHaveLength(7);
-  solitaireWindow.querySelector<HTMLButtonElement>(".solitaire-stock")!.click();
-  expect(
-    solitaireWindow
-      .querySelector(".solitaire-waste")!
-      .classList.contains("empty"),
-  ).toBeFalse();
-  solitaireWindow
-    .querySelector<HTMLButtonElement>(".solitaire-menu-trigger")!
-    .click();
-  expect(
-    solitaireWindow.querySelector<HTMLButtonElement>(
-      '[data-solitaire-command="undo"]',
-    )!.disabled,
-  ).toBeFalse();
-  solitaireWindow
-    .querySelector<HTMLButtonElement>('[data-solitaire-command="options"]')!
-    .click();
-  const solitaireOptions = shell.document.querySelector(
-    ".solitaire-options-dialog",
+  const solitaireFrame = solitaireWindow.querySelector<HTMLIFrameElement>(
+    ".boxedwine-solitaire-frame",
   )!;
-  expect(
-    solitaireOptions.querySelector<HTMLInputElement>(
-      'input[name="solitaire-draw"][value="3"]',
-    )!.checked,
-  ).toBeTrue();
-  expect(
-    solitaireOptions.querySelector<HTMLInputElement>(
-      'input[name="solitaire-scoring"][value="standard"]',
-    )!.checked,
-  ).toBeTrue();
-  solitaireOptions
-    .querySelector<HTMLButtonElement>('[data-action="cancel"]')!
-    .click();
-  solitaireWindow
-    .querySelector<HTMLButtonElement>(".solitaire-menu-trigger")!
-    .click();
-  solitaireWindow
-    .querySelector<HTMLButtonElement>('[data-solitaire-command="deck"]')!
-    .click();
-  const solitaireDeck = shell.document.querySelector(".solitaire-deck-dialog")!;
-  expect(solitaireDeck.querySelectorAll(".solitaire-deck-choice")).toHaveLength(
-    12,
-  );
-  solitaireDeck
-    .querySelector<HTMLButtonElement>('[data-card-back="54"]')!
-    .click();
-  solitaireDeck.querySelector<HTMLButtonElement>('[data-action="ok"]')!.click();
-  expect(
-    solitaireWindow
-      .querySelector<HTMLImageElement>(".solitaire-stock img")!
-      .getAttribute("src"),
-  ).toEndWith("/54.png");
+  expect(solitaireFrame).not.toBeNull();
+  expect(new URL(solitaireFrame.src).searchParams.get("p")).toBe("sol.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
