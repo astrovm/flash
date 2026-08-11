@@ -98,9 +98,17 @@ async function makeSource(root: string): Promise<void> {
       'body { background: url("../assets/xp/bliss.jpg"); }',
     ].join("\n"),
     "css/fonts/test.ttf": "font",
+    "vendor/jspaint/index.html": [
+      '<img src="../../assets/xp/about.png">',
+      '<img src="../../assets/xp/icons/paint.png">',
+    ].join("\n"),
+    "vendor/jspaint/xp.css":
+      'button { background: url("../../assets/xp/icons/paint.png"); }',
     "assets/icons/game.png": "icon",
     "assets/icons/SOURCES.json": "{}",
     "assets/xp/bliss.jpg": "wallpaper",
+    "assets/xp/about.png": "about",
+    "assets/xp/icons/paint.png": "paint",
     "assets/xp/sounds/startup.wav": "sound",
     "favicon.ico": "favicon",
     "vendor/fflate/index.js": "fflate",
@@ -272,6 +280,23 @@ describe("build metadata", () => {
     );
     expect(await readFile(join(root, hashedAssets.mainJs), "utf8")).toMatch(
       /assets\/xp\/sounds\/startup\.[a-f0-9]{8}\.wav/,
+    );
+    const paintHtml = await readFile(
+      join(root, "vendor/jspaint/index.html"),
+      "utf8",
+    );
+    const paintCss = await readFile(
+      join(root, "vendor/jspaint/xp.css"),
+      "utf8",
+    );
+    expect(paintHtml).toMatch(
+      /\.\.\/\.\.\/assets\/xp\/about\.[a-f0-9]{8}\.png/,
+    );
+    expect(paintHtml).toMatch(
+      /\.\.\/\.\.\/assets\/xp\/icons\/paint\.[a-f0-9]{8}\.png/,
+    );
+    expect(paintCss).toMatch(
+      /\.\.\/\.\.\/assets\/xp\/icons\/paint\.[a-f0-9]{8}\.png/,
     );
     expect(await readFile(join(root, hashedAssets.mainCss), "utf8")).toMatch(
       /fonts\/test\.[a-f0-9]{8}\.ttf/,

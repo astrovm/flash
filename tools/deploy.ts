@@ -376,25 +376,37 @@ export async function updateHtml(
     mainJs: "js/main.js",
     mainCss: "css/main.css",
   };
+  const nestedReferenceFiles = [
+    "vendor/jspaint/index.html",
+    "vendor/jspaint/xp.css",
+  ];
   const referenceFiles = [
     ...Object.values(mutableAssets).filter(
       (path) => path !== "js/ruffle.js" && path !== "js/offline-worker.js",
     ),
     "index.html",
     ...((await isFile(paths.captureHtml)) ? ["capture.html"] : []),
+    ...(
+      await Promise.all(
+        nestedReferenceFiles.map(async (path) =>
+          (await isFile(join(paths.root, path))) ? path : null,
+        ),
+      )
+    ).filter((path): path is string => path !== null),
   ];
   for (const referencePath of referenceFiles) {
     const absolutePath = join(paths.root, referencePath);
     let content = await readFile(absolutePath, "utf8");
     for (const [originalPath, hashedPath] of staticAssets) {
       content = content.replaceAll(originalPath, hashedPath);
-      if (referencePath.startsWith("css/")) {
-        const originalCssPath = relative("css", originalPath)
-          .split(sep)
-          .join("/");
-        const hashedCssPath = relative("css", hashedPath).split(sep).join("/");
-        content = content.replaceAll(originalCssPath, hashedCssPath);
-      }
+      const referenceDirectory = dirname(referencePath);
+      const originalRelativePath = relative(referenceDirectory, originalPath)
+        .split(sep)
+        .join("/");
+      const hashedRelativePath = relative(referenceDirectory, hashedPath)
+        .split(sep)
+        .join("/");
+      content = content.replaceAll(originalRelativePath, hashedRelativePath);
     }
     await writeFile(absolutePath, content);
   }
@@ -898,6 +910,18 @@ export async function validateOutput(outputDir: string): Promise<void> {
         ]
       : []),
   ];
+  for (const relativePath of [
+    "vendor/jspaint/index.html",
+    "vendor/jspaint/xp.css",
+  ]) {
+    const path = join(outputDir, relativePath);
+    if (await isFile(path)) {
+      referenceDocuments.push({
+        content: await readFile(path, "utf8"),
+        path,
+      });
+    }
+  }
   for (const match of html.matchAll(
     /(?:src|href)="((?:js|css)\/[^"]+\.(?:js|css))"/g,
   )) {
@@ -908,7 +932,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
   }
   for (const document of referenceDocuments) {
     for (const match of document.content.matchAll(
-      /(?:\.\.\/)?assets\/[^"'`()\s]+|fonts\/[^"'`()\s]+|favicon[^"'`()\s]+/g,
+      /(?:\.\.\/)*assets\/[^"'`()\s]+|fonts\/[^"'`()\s]+|favicon[^"'`()\s]+/g,
     )) {
       const reference = match[0];
       if (!/\.[a-f0-9]{8}\.[^./]+$/.test(reference)) {
@@ -919,10 +943,9 @@ export async function validateOutput(outputDir: string): Promise<void> {
           )}: ${reference}`,
         );
       }
-      const target = reference.startsWith("../")
-        ? join(outputDir, reference.slice(3))
-        : reference.startsWith("fonts/")
-          ? join(outputDir, "css", reference)
+      const target =
+        reference.startsWith("../") || reference.startsWith("fonts/")
+          ? join(dirname(document.path), reference)
           : join(outputDir, reference);
       if (!(await isFile(target))) {
         throw new Error(

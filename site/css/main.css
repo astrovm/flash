@@ -13989,7 +13989,6 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
 }
 
 .xp-editor-toolbar,
-.xp-paint-toolbar,
 .xp-program-toolbar,
 .xp-browser-toolbar {
   display: flex;
@@ -14012,12 +14011,34 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
     serif;
 }
 
-.xp-paint-canvas {
+.xp-native-program.xp-native-paint {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.xp-native-paint-window {
+  min-width: 274px;
+  min-height: 410px;
+}
+
+.xp-native-paint-window .title-bar {
+  height: 29px;
+  margin: 0;
+  padding-left: 5px;
+}
+
+.xp-native-paint-window.maximized .title-bar {
+  height: 26px;
+  padding-left: 8px;
+}
+
+.xp-paint-frame {
   display: block;
-  max-width: 100%;
-  border: 1px solid #808080;
-  background: #fff;
-  cursor: crosshair;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ece9d8;
 }
 
 .xp-keyboard-output {

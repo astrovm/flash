@@ -312,6 +312,16 @@
       "output": "site/assets/xp/icons/Paint.png"
     },
     {
+      "member": "MSPAINT.EX_",
+      "expandedName": "mspaint.exe",
+      "resourceType": 14,
+      "resourceId": 2,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/PaintLarge.png"
+    },
+    {
       "member": "COMPATUI.DL_",
       "expandedName": "compatui.dll",
       "resourceType": 14,
@@ -1786,6 +1796,56 @@
   ],
   "resourceBitmaps": [
     {
+      "member": "MSPAINT.EX_",
+      "expandedName": "mspaint.exe",
+      "resourceType": 2,
+      "resourceId": 863,
+      "output": "site/vendor/jspaint/images/xp/SelectionOptions.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SCROLLARROWS_BMP",
+      "output": "site/vendor/jspaint/images/xp/ScrollArrows.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SCROLLARROWGLYPHS_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/vendor/jspaint/images/xp/ScrollArrowGlyphs.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SCROLLSHAFTHORIZONTAL_BMP",
+      "output": "site/vendor/jspaint/images/xp/ScrollShaftHorizontal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SCROLLSHAFTVERTICAL_BMP",
+      "output": "site/vendor/jspaint/images/xp/ScrollShaftVertical.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SCROLLTHUMBHORIZONTAL_BMP",
+      "output": "site/vendor/jspaint/images/xp/ScrollThumbHorizontal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SCROLLTHUMBVERTICAL_BMP",
+      "output": "site/vendor/jspaint/images/xp/ScrollThumbVertical.png"
+    },
+    {
       "member": "MAIN.CP_",
       "expandedName": "main.cpl",
       "resourceType": 2,
@@ -2132,6 +2192,7 @@
   ],
   "auditFiles": [
     { "member": "APPWIZ.CP_", "output": "system/appwiz.cpl" },
+    { "member": "MSPAINT.EX_", "output": "system/mspaint.exe" },
     { "member": "SHELL32.DL_", "output": "system/shell32.dll" },
     { "member": "EXPLORER.EX_", "output": "system/explorer.exe" },
     { "member": "MYDOCS.DL_", "output": "system/mydocs.dll" },

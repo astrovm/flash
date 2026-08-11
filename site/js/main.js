@@ -36,6 +36,7 @@ let automaticOfflineDownloadQueue = Promise.resolve();
 
 const DISPLAY_SETTINGS_KEY = "displaySettings";
 const START_MENU_STYLE_KEY = "startMenuStyle";
+const WINDOW_PLACEMENTS_KEY = "windowPlacements";
 const DESKTOP_SYSTEM_ICONS_KEY = "desktopSystemIcons";
 const DESKTOP_SYSTEM_NAMES_KEY = "desktopSystemNames";
 const GAME_PLAYBACK_SETTINGS_KEY = "gamePlaybackSettings";
@@ -50,6 +51,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   "favorites",
   "gameStats",
   GAME_PLAYBACK_SETTINGS_KEY,
+  WINDOW_PLACEMENTS_KEY,
   "gameVolumes",
   "isMuted",
   "runHistory",
@@ -1008,6 +1010,66 @@ const getDesktopSize = () => {
   return { width: desktop.clientWidth, height: desktop.clientHeight };
 };
 
+const isWindowPlacement = (value) =>
+  value &&
+  typeof value === "object" &&
+  Number.isFinite(value.left) &&
+  Number.isFinite(value.top) &&
+  Number.isFinite(value.width) &&
+  value.width > 0 &&
+  Number.isFinite(value.height) &&
+  value.height > 0;
+
+const isWindowPlacementMap = (value) =>
+  value &&
+  typeof value === "object" &&
+  !Array.isArray(value) &&
+  Object.values(value).every(isWindowPlacement);
+
+const getWindowPlacements = () =>
+  readJsonStorage(WINDOW_PLACEMENTS_KEY, {}, isWindowPlacementMap);
+
+const parseWindowLength = (value, fallback) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const persistWindowPlacement = (win) => {
+  const source = win.maximized && win.prevRect ? win.prevRect : win.el.style;
+  const placement = {
+    left: parseWindowLength(source.left, win.el.offsetLeft),
+    top: parseWindowLength(source.top, win.el.offsetTop),
+    width: parseWindowLength(source.width, win.el.offsetWidth),
+    height: parseWindowLength(source.height, win.el.offsetHeight),
+  };
+  if (!isWindowPlacement(placement)) return;
+  writeJsonStorage(WINDOW_PLACEMENTS_KEY, {
+    ...getWindowPlacements(),
+    [win.gameId]: placement,
+  });
+};
+
+const restoreWindowPlacement = (win) => {
+  const saved = getWindowPlacements()[win.gameId];
+  if (!saved) return;
+  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const width =
+    desktopWidth > 0 ? Math.min(saved.width, desktopWidth) : saved.width;
+  const height =
+    desktopHeight > 0 ? Math.min(saved.height, desktopHeight) : saved.height;
+  Object.assign(win.el.style, {
+    width: `${width}px`,
+    height: `${height}px`,
+    left: `${saved.left}px`,
+    top: `${saved.top}px`,
+  });
+  if (desktopWidth > 0 && desktopHeight > 0) {
+    const position = clampWindowPosition(win, saved.left, saved.top);
+    win.el.style.left = `${position.left}px`;
+    win.el.style.top = `${position.top}px`;
+  }
+};
+
 // Keep at least part of the title bar reachable inside the work area,
 // matching how Windows XP constrains window positions.
 const clampWindowPosition = (win, left, top) => {
@@ -1779,6 +1841,7 @@ const toggleMaximize = (gameId) => {
       width: win.el.style.width,
       height: win.el.style.height,
     };
+    persistWindowPlacement(win);
     win.el.classList.add("maximized");
     win.maximized = true;
   } else {
@@ -1832,6 +1895,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
       });
     return;
   }
+  persistWindowPlacement(win);
   win.el.remove();
   openWindows.delete(gameId);
 
@@ -1844,6 +1908,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
 };
 
 const wireDrag = (win) => {
+  restoreWindowPlacement(win);
   const bar = win.el.querySelector(".title-bar");
   const titleIcon = bar.querySelector(".title-icon");
 
@@ -1926,6 +1991,7 @@ const wireDrag = (win) => {
           height: win.el.style.height,
         };
       }
+      persistWindowPlacement(win);
     };
 
     try {
@@ -2049,6 +2115,7 @@ const wireResize = (win) => {
           nextPointer = { x: ev.clientX, y: ev.clientY };
         }
         updateSize();
+        persistWindowPlacement(win);
       };
 
       try {
@@ -7511,36 +7578,11 @@ const createXPProgramContent = (programId) => {
   }
 
   if (program.kind === "paint") {
-    content.innerHTML = `<div class="xp-paint-toolbar"><label>Color <input type="color" value="#000000"></label><button type="button">Clear</button></div><canvas class="xp-paint-canvas" width="560" height="340" aria-label="Paint canvas"></canvas>`;
-    const canvas = content.querySelector("canvas");
-    const context = canvas.getContext?.("2d");
-    if (context) {
-      context.fillStyle = "white";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      let drawing = false;
-      const draw = (event) => {
-        if (!drawing) return;
-        const bounds = canvas.getBoundingClientRect();
-        context.lineTo(event.clientX - bounds.left, event.clientY - bounds.top);
-        context.stroke();
-      };
-      canvas.addEventListener("pointerdown", (event) => {
-        drawing = true;
-        const bounds = canvas.getBoundingClientRect();
-        context.beginPath();
-        context.moveTo(event.clientX - bounds.left, event.clientY - bounds.top);
-        context.strokeStyle = content.querySelector(
-          'input[type="color"]',
-        ).value;
-        canvas.setPointerCapture?.(event.pointerId);
-      });
-      canvas.addEventListener("pointermove", draw);
-      canvas.addEventListener("pointerup", () => (drawing = false));
-      content.querySelector("button").addEventListener("click", () => {
-        context.fillStyle = "white";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-      });
-    }
+    const frame = document.createElement("iframe");
+    frame.className = "xp-paint-frame";
+    frame.src = "vendor/jspaint/index.html";
+    frame.title = "Microsoft Paint drawing area";
+    content.appendChild(frame);
     return content;
   }
 
@@ -8649,6 +8691,7 @@ const openXPProgram = (programId) => {
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   const el = createWindowElement(programId);
   el.classList.add("xp-native-program-window");
+  if (program.kind === "paint") el.classList.add("xp-native-paint-window");
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
@@ -8665,6 +8708,7 @@ const openXPProgram = (programId) => {
     messenger: [500, 460],
     solitaire: [720, 520],
     freecell: [760, 540],
+    paint: [640, 480],
   };
   const [preferredWidth, preferredHeight] =
     programId === "__minesweeper"
@@ -8678,12 +8722,24 @@ const openXPProgram = (programId) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
-  const windowWidth = Math.min(preferredWidth, desktopWidth - 16);
-  const windowHeight = Math.min(preferredHeight, desktopHeight - 16);
+  const windowWidth =
+    desktopWidth > 16
+      ? Math.min(preferredWidth, desktopWidth - 16)
+      : preferredWidth;
+  const windowHeight =
+    desktopHeight > 16
+      ? Math.min(preferredHeight, desktopHeight - 16)
+      : preferredHeight;
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  el.style.left =
+    program.kind === "paint"
+      ? "0px"
+      : `${Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
+  el.style.top =
+    program.kind === "paint"
+      ? "0px"
+      : `${Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
   const content = el.querySelector(".window-content");
   content.replaceWith(createXPProgramContent(programId));
   document.getElementById("desktop").appendChild(el);
@@ -8705,6 +8761,135 @@ const openXPProgram = (programId) => {
   wireSystemWindowControls(win);
   focusWindow(programId);
 };
+
+const dataUrlFromBlob = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result), {
+      once: true,
+    });
+    reader.addEventListener("error", () => reject(reader.error), {
+      once: true,
+    });
+    reader.readAsDataURL(blob);
+  });
+
+const browserFileFromVirtualFile = async (file, paintWindow) => {
+  const response = await fetch(file.content);
+  const blob = await response.blob();
+  return new paintWindow.File([blob], file.name, { type: blob.type });
+};
+
+const installPaintFileHooks = (paintWindow) => {
+  const child = paintWindow.el.querySelector(".xp-paint-frame").contentWindow;
+  child.systemHooks.readBlobFromHandle = (fileId) =>
+    browserFileFromVirtualFile(fs.getNode(fileId), child);
+  child.systemHooks.writeBlobToHandle = async (fileId, blob) => {
+    const file = fs.getNode(fileId);
+    if (!file) return false;
+    fs.setContent(file.id, await dataUrlFromBlob(blob));
+    return true;
+  };
+  child.systemHooks.showOpenFileDialog = async ({ formats }) => {
+    const extensions = new Set(
+      formats.flatMap((format) => format.extensions).map((ext) => `.${ext}`),
+    );
+    const file = await XPDialogs.openFile({
+      title: "Open",
+      startFolder: fs.MY_PICTURES,
+      filter: (node) => node.type === "folder" || extensions.has(node.ext),
+    });
+    if (!file) return {};
+    return {
+      file: await browserFileFromVirtualFile(file, child),
+      fileHandle: file.id,
+    };
+  };
+  child.systemHooks.showSaveFileDialog = async ({
+    formats,
+    defaultFileName,
+    defaultFileFormatID,
+    getBlob,
+    savedCallbackUnreliable,
+  }) => {
+    const destination = await XPDialogs.saveFile({
+      title: "Save As",
+      startFolder: fs.MY_PICTURES,
+      defaultName: defaultFileName,
+    });
+    if (!destination) return;
+    const extension = destination.name.includes(".")
+      ? destination.name.split(".").at(-1).toLowerCase()
+      : "";
+    const format =
+      formats.find((candidate) => candidate.extensions.includes(extension)) ||
+      formats.find((candidate) => candidate.formatID === defaultFileFormatID) ||
+      formats[0];
+    const fileName = extension
+      ? destination.name
+      : `${destination.name}.${format.extensions[0]}`;
+    const blob = await getBlob(format.formatID);
+    const content = await dataUrlFromBlob(blob);
+    const file = destination.existingId
+      ? fs.setContent(destination.existingId, content)
+      : fs.createFile(destination.parentId, fileName, { content });
+    savedCallbackUnreliable?.({
+      newFileName: file.name,
+      newFileFormatID: format.formatID,
+      newFileHandle: file.id,
+      newBlob: blob,
+    });
+  };
+};
+
+const openPaintFile = (file) => {
+  openXPProgram("__paint");
+  const paintWindow = openWindows.get("__paint");
+  paintWindow.pendingFile = file;
+  const child = paintWindow.el.querySelector(".xp-paint-frame").contentWindow;
+  if (child?.open_from_file && child.systemHooks) {
+    installPaintFileHooks(paintWindow);
+    child.systemHooks
+      .readBlobFromHandle(file.id)
+      .then((browserFile) => child.open_from_file(browserFile, file.id));
+    paintWindow.pendingFile = null;
+  }
+};
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== window.location.origin) return;
+  const paintWindow = openWindows.get("__paint");
+  const paintFrame = paintWindow?.el.querySelector(".xp-paint-frame");
+  if (!paintFrame || event.source !== paintFrame.contentWindow) return;
+  if (event.data?.type === "xp-paint-title") {
+    paintWindow.title = event.data.title;
+    paintWindow.el.querySelector(".title-text").textContent = event.data.title;
+    renderTaskButtons();
+  } else if (event.data?.type === "xp-paint-ready") {
+    installPaintFileHooks(paintWindow);
+    if (paintWindow.pendingFile) {
+      const file = paintWindow.pendingFile;
+      paintFrame.contentWindow.systemHooks
+        .readBlobFromHandle(file.id)
+        .then((browserFile) =>
+          paintFrame.contentWindow.open_from_file(browserFile, file.id),
+        );
+      paintWindow.pendingFile = null;
+    }
+  } else if (event.data?.type === "xp-paint-close") {
+    closeGameWindow("__paint");
+  } else if (event.data?.type === "xp-paint-wallpaper") {
+    const desktop = document.getElementById("desktop");
+    desktop.style.backgroundImage = `url(${event.data.dataUrl})`;
+    desktop.style.backgroundRepeat =
+      event.data.mode === "tile" ? "repeat" : "no-repeat";
+    desktop.style.backgroundPosition = "center";
+    desktop.style.backgroundSize = "auto";
+  }
+});
+
+for (const extension of [".bmp", ".dib", ".gif", ".jpg", ".jpeg", ".png"])
+  fs.registerFileType(extension, openPaintFile);
 
 const openSystemWindow = (shortcutId) => {
   const existing = openWindows.get(shortcutId);

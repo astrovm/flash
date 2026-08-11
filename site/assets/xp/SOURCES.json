@@ -435,6 +435,19 @@
       "pixelSha256": "7a6542d26569cc6451d6b911bcc163f467866e442bcdb055ad530e7cae5add07"
     }
   },
+  "assets/xp/icons/PaintLarge.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSPAINT.EX_",
+    "sha256": "fa4dbe2da053d4e53ad58b198c5976450088fdef4738e5fd0dbb54d84e3832d3",
+    "resource": {
+      "parentSha256": "4a8b0fd56eef260471a1284161ecbba3bb0cdd8b240b932a94b85077ae8c2f43",
+      "type": 14,
+      "id": 2,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "62335281c12d8a3bb4dd43cb797ffccd1c5133d6b8819d49953bfed5cc9fc2c2"
+    }
+  },
   "assets/xp/icons/ProgramCompatibilityWizard.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/COMPATUI.DL_",
@@ -2344,6 +2357,97 @@
       "language": 1033,
       "frame": "48x48x32",
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
+    }
+  },
+  "vendor/jspaint/images/xp/SelectionOptions.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSPAINT.EX_",
+    "sha256": "7e3e4666d9c531c5da3a5e0d59fa5475b6a829f9d2a7dfba3067450b2a864677",
+    "resource": {
+      "parentSha256": "4a8b0fd56eef260471a1284161ecbba3bb0cdd8b240b932a94b85077ae8c2f43",
+      "type": 2,
+      "id": 863,
+      "language": 1033,
+      "frame": "72x23x32",
+      "pixelSha256": "30b0fba109b5ca44342a1322ad649113bdcce92b208ab7e0ebd98c8cb2eab2fb"
+    }
+  },
+  "vendor/jspaint/images/xp/ScrollArrows.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "62e1e97c44414cd12870f6533f3d74eeb9451072edd0417117ffbb42674c92a7",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SCROLLARROWS_BMP",
+      "language": 1033,
+      "frame": "17x272x32",
+      "pixelSha256": "675fc5ed472379178bbb3d4130ddac614e2fcc0cfed7f0191f556b8099e768f0"
+    }
+  },
+  "vendor/jspaint/images/xp/ScrollArrowGlyphs.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "c9838268554cdfaa3b0556ec86358471998af944ac89891074275c58c4a014fa",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SCROLLARROWGLYPHS_BMP",
+      "language": 1033,
+      "frame": "9x144x32",
+      "pixelSha256": "f7af1609514864e7998e70c7d92fdc18789bb42277049f2ae76f6f39d1670693"
+    }
+  },
+  "vendor/jspaint/images/xp/ScrollShaftHorizontal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "0111d1dd3b01945a8531e9377c3319491aca8157ee1338d597a26e9054e95fdd",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SCROLLSHAFTHORIZONTAL_BMP",
+      "language": 1033,
+      "frame": "17x68x32",
+      "pixelSha256": "90073622bc0d7427e56f914206f7d5e708aaa3b855c1cfa22eb2191846dcba6d"
+    }
+  },
+  "vendor/jspaint/images/xp/ScrollShaftVertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "334d641ed9ba6cbd4f0633a41fc8402061d1f6a5bcf01bf6a44bb926d8c68df3",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SCROLLSHAFTVERTICAL_BMP",
+      "language": 1033,
+      "frame": "17x68x32",
+      "pixelSha256": "cd982597f9ff777ac9bcfe1a05470323d192c9f00bf3f740fdcc88146c6e016e"
+    }
+  },
+  "vendor/jspaint/images/xp/ScrollThumbHorizontal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "94112847afeb516e2d098e69c8ab440fa25c90af960a23c512c701376f888848",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SCROLLTHUMBHORIZONTAL_BMP",
+      "language": 1033,
+      "frame": "22x60x32",
+      "pixelSha256": "19a9901a433034596256899827ccb6f53fb189d192aa238a35a77e299ce08e7f"
+    }
+  },
+  "vendor/jspaint/images/xp/ScrollThumbVertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6baeac83cb2c40827fcf29515c7d8423992e485785225b1965a63819a78376f2",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SCROLLTHUMBVERTICAL_BMP",
+      "language": 1033,
+      "frame": "15x88x32",
+      "pixelSha256": "ec42f96a0d1128ada2ddc1bd1ba248607e18236561c130ef5107057ce5e48d06"
     }
   },
   "assets/xp/system/MouseButtonConfiguration.png": {
