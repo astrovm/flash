@@ -47,6 +47,17 @@ Preview serves the real production worker and gives each changed build a new
 local version. It intentionally does not reload the page after rebuilding; use
 **Settings > Updates > Check for Updates** to exercise the update flow.
 
+### XP reference VM
+
+Start an isolated XP reference VM:
+
+```bash
+bun run xp:vm --instance <name>
+```
+
+VM changes are temporary by default, so multiple sessions can share the base
+disk. Use `--write-base` only when changes must be saved to that disk.
+
 ## Project layout
 
 - `site/apps/` — first-party applications, manifests, and lifecycle modules
