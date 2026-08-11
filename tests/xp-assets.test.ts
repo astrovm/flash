@@ -40,6 +40,7 @@ const manifest = JSON.parse(
   resourceIcons: { output: string; resourceId: number }[];
   resourceBitmaps: { output: string; resourceId: number | string }[];
   resourcePngs?: { output: string; resourceId: number | string }[];
+  resourceFiles?: { output: string; resourceId: number | string }[];
   renderedAssets?: { output: string }[];
 };
 
@@ -63,6 +64,9 @@ describe("Windows XP asset provenance", () => {
         output.replace(/^site\//, ""),
       ),
       ...(manifest.resourcePngs ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
+      ...(manifest.resourceFiles ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
       ...(manifest.renderedAssets ?? []).map(({ output }) =>
@@ -113,7 +117,7 @@ describe("Windows XP asset provenance", () => {
         join(projectDirectory, "site", relativePath),
       );
       expect(sha256(content), relativePath).toBe(source.sha256);
-      if (source.resource) {
+      if (source.resource && source.resource.frame !== "raw") {
         const { data } = await sharp(content).ensureAlpha().raw().toBuffer({
           resolveWithObject: true,
         });

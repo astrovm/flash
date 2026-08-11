@@ -2853,6 +2853,45 @@
       "pixelSha256": "c2a7d56e27b6d25ed490aff2bc546b6981589de6d6f3b4a1d254e77cc182e611"
     }
   },
+  "assets/xp/minesweeper/Tiles.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "f0b3ca3eb2a249a414ad75506c5586c83ef60629aebc59d3fbc651962df31ac9",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": 2,
+      "id": 410,
+      "language": 1033,
+      "frame": "16x256x32",
+      "pixelSha256": "5208679ed39e2963a0abefc4240f312f1d337a19c5b32061c0e7d29ed0a5d3e5"
+    }
+  },
+  "assets/xp/minesweeper/Digits.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "76bd4c64ed5375d4d9302d91eb21ce5db355fc0eef173914404b91a9d4484b20",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": 2,
+      "id": 420,
+      "language": 1033,
+      "frame": "13x276x32",
+      "pixelSha256": "0bedf94d446d5722a8b9716f1d4cb3015d73e978de3844b62ee34034ad660e54"
+    }
+  },
+  "assets/xp/minesweeper/Faces.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "dfaef3323ab7ff7a6cb3226ba1133397f959d6e17ef36b4f32d1a2019eec0ce9",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": 2,
+      "id": 430,
+      "language": 1033,
+      "frame": "24x120x32",
+      "pixelSha256": "3dfa996afefd52204446895907763f84426a39c10ae676adf822d555bd74267b"
+    }
+  },
   "assets/xp/system/SecurityHelp.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/WSCUI.CP_",
@@ -2994,6 +3033,45 @@
       "language": 1033,
       "frame": "25x25",
       "pixelSha256": "c242281ae6aa54709fb25d3b8fdb7ca871bd16d38f9c6622bdc7f160f00fc919"
+    }
+  },
+  "assets/xp/minesweeper/Click.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "a8689af3b0f5bac05bbee73d90b855ddaee06d9146d1914c053cf4b9102a5bd2",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": "WAVE",
+      "id": 432,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "a8689af3b0f5bac05bbee73d90b855ddaee06d9146d1914c053cf4b9102a5bd2"
+    }
+  },
+  "assets/xp/minesweeper/Lose.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "2394cbf4a4f6a15b5662b1b87a1e3119e474597b407518b47741da193583ad45",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": "WAVE",
+      "id": 433,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "2394cbf4a4f6a15b5662b1b87a1e3119e474597b407518b47741da193583ad45"
+    }
+  },
+  "assets/xp/minesweeper/Win.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/WINMINE.EX_",
+    "sha256": "d492324891bbfd582a9d230f5720d1ea65bd06b69e10db5c44ddc7d6b172cc75",
+    "resource": {
+      "parentSha256": "bcff89311d792f6428468e813ac6929a346a979f907071c302f418d128eaaf41",
+      "type": "WAVE",
+      "id": 434,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "d492324891bbfd582a9d230f5720d1ea65bd06b69e10db5c44ddc7d6b172cc75"
     }
   },
   "assets/xp/StartButtonRendered.png": {

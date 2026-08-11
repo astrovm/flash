@@ -2101,6 +2101,27 @@
       "resourceType": 2,
       "resourceId": 127,
       "output": "site/assets/xp/WindowsWordmark.png"
+    },
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": 2,
+      "resourceId": 410,
+      "output": "site/assets/xp/minesweeper/Tiles.png"
+    },
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": 2,
+      "resourceId": 420,
+      "output": "site/assets/xp/minesweeper/Digits.png"
+    },
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": 2,
+      "resourceId": 430,
+      "output": "site/assets/xp/minesweeper/Faces.png"
     }
   ],
   "resourcePngs": [
@@ -2180,6 +2201,29 @@
       "resourceType": "PNG",
       "resourceId": 110,
       "output": "site/assets/xp/system/SecurityCenterSmall.png"
+    }
+  ],
+  "resourceFiles": [
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": "WAVE",
+      "resourceId": 432,
+      "output": "site/assets/xp/minesweeper/Click.wav"
+    },
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": "WAVE",
+      "resourceId": 433,
+      "output": "site/assets/xp/minesweeper/Lose.wav"
+    },
+    {
+      "member": "WINMINE.EX_",
+      "expandedName": "winmine.exe",
+      "resourceType": "WAVE",
+      "resourceId": 434,
+      "output": "site/assets/xp/minesweeper/Win.wav"
     }
   ],
   "renderedAssets": [
