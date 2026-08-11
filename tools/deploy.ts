@@ -360,7 +360,7 @@ export async function updateHtml(
     }),
   );
 
-  const mutableAssets = {
+  const mutableAssets: Record<string, string> = {
     ruffle: "js/ruffle.js",
     gamesJs: "js/games.js",
     flashUrlRouterJs: "js/flash-url-router.js",
@@ -376,9 +376,20 @@ export async function updateHtml(
     mainJs: "js/main.js",
     mainCss: "css/main.css",
   };
+  const entrypointMarkup = await readFile(paths.html, "utf8");
+  const entrypoints = [
+    ...entrypointMarkup.matchAll(
+      /\b(?:src|href)="((?:js|css)\/[^"?]+\.(?:js|css))(?:\?v=[^"]+)?"/g,
+    ),
+  ].map((match) => match[1]);
+  for (const relativePath of new Set(entrypoints)) {
+    if (!Object.values(mutableAssets).includes(relativePath)) {
+      mutableAssets[`entry:${relativePath}`] = relativePath;
+    }
+  }
   const nestedReferenceFiles = [
-    "vendor/jspaint/index.html",
-    "vendor/jspaint/xp.css",
+    "apps/paint/index.html",
+    "apps/paint/paint.css",
   ];
   const referenceFiles = [
     ...Object.values(mutableAssets).filter(
@@ -911,8 +922,8 @@ export async function validateOutput(outputDir: string): Promise<void> {
       : []),
   ];
   for (const relativePath of [
-    "vendor/jspaint/index.html",
-    "vendor/jspaint/xp.css",
+    "apps/paint/index.html",
+    "apps/paint/paint.css",
   ]) {
     const path = join(outputDir, relativePath);
     if (await isFile(path)) {

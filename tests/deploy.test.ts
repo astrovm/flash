@@ -68,8 +68,10 @@ async function makeSource(root: string): Promise<void> {
       '<script src="js/file-operations.js?v=old"></script>',
       '<script src="js/dialogs.js?v=old"></script>',
       '<script src="js/offline.js?v=old"></script>',
+      '<script src="js/shell/desktop.js"></script>',
       '<script src="js/main.js?v=old"></script>',
       '<link rel="stylesheet" href="css/main.css?v=old">',
+      '<link rel="stylesheet" href="css/shell/desktop.css">',
       '<link rel="icon" href="favicon.ico">',
       '<img src="assets/xp/bliss.jpg">',
     ].join("\n"),
@@ -89,6 +91,7 @@ async function makeSource(root: string): Promise<void> {
     "js/dialogs.js": "dialogs",
     "js/offline.js": "offline",
     "js/offline-worker.js": "offline worker",
+    "js/shell/desktop.js": "desktop shell",
     "js/main.js": [
       'const APP_VERSION = "old";',
       'const sound = "assets/xp/sounds/startup.wav";',
@@ -97,12 +100,13 @@ async function makeSource(root: string): Promise<void> {
       '@font-face { src: url("fonts/test.ttf"); }',
       'body { background: url("../assets/xp/bliss.jpg"); }',
     ].join("\n"),
+    "css/shell/desktop.css": ".desktop { display: block; }",
     "css/fonts/test.ttf": "font",
-    "vendor/jspaint/index.html": [
+    "apps/paint/index.html": [
       '<img src="../../assets/xp/about.png">',
       '<img src="../../assets/xp/icons/paint.png">',
     ].join("\n"),
-    "vendor/jspaint/xp.css":
+    "apps/paint/paint.css":
       'button { background: url("../../assets/xp/icons/paint.png"); }',
     "assets/icons/game.png": "icon",
     "assets/icons/SOURCES.json": "{}",
@@ -256,6 +260,8 @@ describe("build metadata", () => {
     expect(html).toContain(`${hashedAssets.gameDataJs}"`);
     expect(html).toContain(`${hashedAssets.fileOperationsJs}"`);
     expect(html).toContain(`${hashedAssets.mainCss}"`);
+    expect(html).toContain(`${hashedAssets["entry:js/shell/desktop.js"]}"`);
+    expect(html).toContain(`${hashedAssets["entry:css/shell/desktop.css"]}"`);
     const capture = await readFile(paths.captureHtml, "utf8");
     expect(capture).toContain(`${hashedAssets.ruffle}"`);
     expect(capture).toContain(`${hashedAssets.gamesJs}"`);
@@ -282,13 +288,10 @@ describe("build metadata", () => {
       /assets\/xp\/sounds\/startup\.[a-f0-9]{8}\.wav/,
     );
     const paintHtml = await readFile(
-      join(root, "vendor/jspaint/index.html"),
+      join(root, "apps/paint/index.html"),
       "utf8",
     );
-    const paintCss = await readFile(
-      join(root, "vendor/jspaint/xp.css"),
-      "utf8",
-    );
+    const paintCss = await readFile(join(root, "apps/paint/paint.css"), "utf8");
     expect(paintHtml).toMatch(
       /\.\.\/\.\.\/assets\/xp\/about\.[a-f0-9]{8}\.png/,
     );

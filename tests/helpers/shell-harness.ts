@@ -15,6 +15,24 @@ const scripts = [
   "site/js/offline.js",
 ];
 
+const shellScripts = [
+  "site/js/apps/registry.js",
+  "site/js/main.js",
+  "site/js/shell/window-manager.js",
+  "site/js/apps/system-windows.js",
+  "site/js/apps/display-properties.js",
+  "site/js/apps/explorer.js",
+  "site/js/apps/notepad.js",
+  "site/js/apps/program-content.js",
+  "site/js/apps/programs.js",
+  "site/js/shell/taskbar.js",
+  "site/js/shell/system-tray.js",
+  "site/js/shell/desktop.js",
+  "site/js/shell/start-menu.js",
+  "site/js/shell/session.js",
+  "site/js/shell/bootstrap.js",
+];
+
 const activeWindows = new Set<Window>();
 
 export const flushShell = () =>
@@ -173,11 +191,18 @@ export async function loadShell() {
     async downloadGame() {},
   });
 
-  const main = document.createElement("script");
-  main.textContent = await Bun.file(
-    new URL("site/js/main.js", projectDirectory),
-  ).text();
-  document.body.appendChild(main);
+  // Happy DOM evaluates separately injected classic scripts in isolated lexical
+  // environments. Real browsers share one global lexical environment, so join
+  // the ordered shell modules before evaluation to preserve browser semantics.
+  const script = document.createElement("script");
+  script.textContent = (
+    await Promise.all(
+      shellScripts.map((path) =>
+        Bun.file(new URL(path, projectDirectory)).text(),
+      ),
+    )
+  ).join("\n");
+  document.body.appendChild(script);
 
   if (scriptErrors.length) throw scriptErrors[0];
 

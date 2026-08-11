@@ -3,7 +3,7 @@ import { Window } from "happy-dom";
 
 test("Paint announces readiness only after image loading and menus exist", async () => {
   const window = new Window({
-    url: "http://127.0.0.1/vendor/jspaint/",
+    url: "http://127.0.0.1/apps/paint/",
     settings: {
       enableJavaScriptEvaluation: true,
       suppressInsecureJavaScriptEnvironmentWarning: true,
@@ -21,7 +21,7 @@ test("Paint announces readiness only after image loading and menus exist", async
   }) as typeof window.postMessage;
 
   const source = await Bun.file(
-    new URL("../site/vendor/jspaint/xp-integration.js", import.meta.url),
+    new URL("../site/apps/paint/integration.js", import.meta.url),
   ).text();
   Function("window", "document", source)(window, window.document);
 
@@ -44,7 +44,7 @@ test("Paint announces readiness only after image loading and menus exist", async
 
 test("Paint uses one custom scrollbar per axis and scrolls with its arrows", async () => {
   const window = new Window({
-    url: "http://127.0.0.1/vendor/jspaint/",
+    url: "http://127.0.0.1/apps/paint/",
     settings: {
       enableJavaScriptEvaluation: true,
       suppressInsecureJavaScriptEnvironmentWarning: true,
@@ -82,7 +82,7 @@ test("Paint uses one custom scrollbar per axis and scrolls with its arrows", asy
   });
 
   const source = await Bun.file(
-    new URL("../site/vendor/jspaint/xp-integration.js", import.meta.url),
+    new URL("../site/apps/paint/integration.js", import.meta.url),
   ).text();
   Function(
     "window",

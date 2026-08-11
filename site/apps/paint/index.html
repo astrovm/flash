@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' data: blob:"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>untitled - Paint</title>
+    <link href="styles/normalize.css" rel="stylesheet" />
+    <link href="styles/layout.css" rel="stylesheet" />
+    <link href="lib/os-gui/build/layout.css" rel="stylesheet" />
+    <link href="lib/98.css/98.custom-build.css" rel="stylesheet" />
+    <link href="paint.css" rel="stylesheet" />
+    <script src="bootstrap.js"></script>
+    <script src="src/error-handling-basic.js"></script>
+    <script type="module" src="src/theme.js"></script>
+  </head>
+  <body>
+    <div id="about-paint" hidden>
+      <img
+        id="about-paint-banner"
+        src="../../assets/xp/AboutWindows.png"
+        width="413"
+        height="72"
+        alt="Microsoft Windows XP Professional"
+      />
+      <div id="about-paint-product">
+        <img
+          id="about-paint-icon"
+          src="../../assets/xp/icons/PaintLarge.png"
+          width="32"
+          height="32"
+          alt=""
+        />
+        <div>
+          <p>Microsoft ® Paint</p>
+          <p>Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)</p>
+          <p>Copyright © 2007 Microsoft Corporation</p>
+        </div>
+      </div>
+      <div id="about-paint-license">
+        <p>
+          This product is licensed under the terms of the
+          <a
+            href="https://www.microsoft.com/useterms/"
+            target="_blank"
+            rel="noreferrer"
+            >End-User<br />License Agreement</a
+          >
+          to:
+        </p>
+        <p id="about-paint-user">astro</p>
+        <hr />
+        <p>Physical memory available to Windows:&nbsp;&nbsp; 523,696 KB</p>
+      </div>
+    </div>
+    <div id="news" hidden></div>
+
+    <script src="lib/jquery-3.4.1.min.js"></script>
+    <script src="lib/gif.js/gif.js"></script>
+    <script src="lib/pako-2.0.3.min.js"></script>
+    <script src="lib/UPNG.js"></script>
+    <script src="lib/UTIF.js"></script>
+    <script src="lib/bmp.js"></script>
+    <script src="lib/anypalette-0.6.0.js"></script>
+    <script src="lib/FileSaver.js"></script>
+    <script src="lib/font-detective.js"></script>
+    <script src="lib/libtess.min.js"></script>
+    <script src="lib/os-gui/parse-theme.js"></script>
+    <script src="lib/os-gui/$Window.js"></script>
+    <script src="lib/os-gui/MenuBar.js"></script>
+    <script src="lib/imagetracer_v1.2.5.js"></script>
+    <script src="src/app-localization.js"></script>
+    <script type="module" src="src/msgbox.js"></script>
+    <script type="module" src="src/functions.js"></script>
+    <script type="module" src="src/helpers.js"></script>
+    <script type="module" src="src/storage.js"></script>
+    <script type="module" src="src/$Component.js"></script>
+    <script type="module" src="src/$ToolWindow.js"></script>
+    <script type="module" src="src/error-handling-enhanced.js"></script>
+    <script type="module" src="src/$ToolBox.js"></script>
+    <script type="module" src="src/$ColorBox.js"></script>
+    <script type="module" src="src/$FontBox.js"></script>
+    <script type="module" src="src/Handles.js"></script>
+    <script type="module" src="src/OnCanvasObject.js"></script>
+    <script type="module" src="src/OnCanvasSelection.js"></script>
+    <script type="module" src="src/OnCanvasTextBox.js"></script>
+    <script type="module" src="src/OnCanvasHelperLayer.js"></script>
+    <script type="module" src="src/image-manipulation.js"></script>
+    <script type="module" src="src/tool-options.js"></script>
+    <script type="module" src="src/tools.js"></script>
+    <script type="module" src="src/color-data.js"></script>
+    <script type="module" src="src/edit-colors.js"></script>
+    <script type="module" src="src/file-format-data.js"></script>
+    <script type="module" src="src/manage-storage.js"></script>
+    <script type="module" src="src/imgur.js"></script>
+    <script type="module" src="src/help.js"></script>
+    <script type="module" src="src/simulate-random-gestures.js"></script>
+    <script type="module" src="src/menus.js"></script>
+    <script type="module" src="src/speech-recognition.js"></script>
+    <script defer src="src/app-state.js"></script>
+    <script type="module" src="src/app.js"></script>
+    <script type="module" src="integration.js"></script>
+  </body>
+</html>

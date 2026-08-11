@@ -1,0 +1,532 @@
+"use strict";
+
+// ============================================
+// Archived URL routing https://github.com/ruffle-rs/ruffle/issues/1486
+// ============================================
+
+const flashUrlRouter = window.AstroFlashUrlRouter.create(
+  window.FLASH_GAMES,
+  window.location.href,
+);
+
+const { fetch: originalFetch } = window;
+const routedFetch = flashUrlRouter.wrapFetch(originalFetch, (routed) => {
+  console.log(`URL routed: ${routed.originalUrl} => ${routed.localUrl}`);
+});
+window.fetch = async (...args) => {
+  const originalRequest = args[0];
+  // Bundled routes are exact and authoritative. Resolve them before the
+  // installed-game fallback, which may probe every legacy package remotely.
+  if (flashUrlRouter.resolve(originalRequest)) {
+    return routedFetch(...args);
+  }
+  if (gameLibraryReady && gameLibrary && !gameLibraryError) {
+    try {
+      const installedResponse = await gameLibrary.match(originalRequest);
+      if (installedResponse) {
+        const originalUrl =
+          originalRequest instanceof Request
+            ? new URL(originalRequest.url)
+            : new URL(originalRequest, window.location.href);
+        return flashUrlRouter.spoofResponseUrl(installedResponse, originalUrl);
+      }
+    } catch (error) {
+      console.error("Installed game resource lookup failed:", error);
+    }
+  }
+  return routedFetch(...args);
+};
+
+// ============================================
+// Global Event Listeners
+// ============================================
+
+let altTabOrder = null;
+let altTabIndex = 0;
+const getMruWindows = () =>
+  [...openWindows.values()].sort((a, b) => b.zIndex - a.zIndex);
+const cycleShellWindow = (direction = 1, showSwitcher = false) => {
+  const windows = showSwitcher && altTabOrder ? altTabOrder : getMruWindows();
+  if (!windows.length) return;
+  if (showSwitcher && !altTabOrder) {
+    altTabOrder = windows;
+    altTabIndex = windows.findIndex((win) => win.gameId === focusedGameId);
+  }
+  const order = altTabOrder || windows;
+  if (!showSwitcher)
+    altTabIndex = order.findIndex((win) => win.gameId === focusedGameId);
+  altTabIndex = (altTabIndex + direction + order.length) % order.length;
+  const win = order[altTabIndex];
+  restoreWindow(win.gameId);
+  focusWindow(win.gameId);
+  if (showSwitcher) {
+    let switcher = document.getElementById("window-switcher");
+    if (!switcher) {
+      switcher = document.createElement("div");
+      switcher.id = "window-switcher";
+      document.body.appendChild(switcher);
+    }
+    switcher.textContent = formatGameTitle(win.gameId);
+    switcher.hidden = false;
+  }
+};
+const finishAltTab = () => {
+  altTabOrder = null;
+  altTabIndex = 0;
+  document.getElementById("window-switcher")?.setAttribute("hidden", "");
+};
+const isEditableTarget = (target) =>
+  /^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName || "") ||
+  target?.isContentEditable;
+const typeaheadState = new WeakMap();
+const normalizeTypeaheadText = (value) =>
+  String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase();
+const cycleTypeaheadItem = (event, scope, items, getLabel) => {
+  if (
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.isComposing ||
+    Array.from(event.key).length !== 1
+  )
+    return null;
+
+  const key = normalizeTypeaheadText(event.key);
+  if (!key) return null;
+  const matches = items.filter((item) =>
+    normalizeTypeaheadText(getLabel(item)).startsWith(key),
+  );
+  if (!matches.length) return null;
+
+  const previous = typeaheadState.get(scope);
+  const repeated =
+    previous?.key === key &&
+    matches.includes(previous.target) &&
+    document.activeElement === previous.target;
+  const target = repeated
+    ? matches[(matches.indexOf(previous.target) + 1) % matches.length]
+    : matches[0];
+  typeaheadState.set(scope, { key, target });
+  event.preventDefault();
+  return target;
+};
+const typeaheadItemLabel = (item) =>
+  item.getAttribute("aria-label") ||
+  item.querySelector(
+    ".icon-label, .menu-item-label, .context-label, .sm-game-title, b",
+  )?.textContent ||
+  item.textContent;
+const confirmPermanentDelete = (ids) =>
+  XPDialogs.confirm(
+    ids.length === 1
+      ? "Are you sure you want to permanently delete this item?"
+      : "Are you sure you want to permanently delete these items?",
+    "Confirm File Delete",
+    "warning",
+  ).then((yes) => yes && ids.forEach((id) => fs.destroy(id)));
+
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (event.defaultPrevented || isEditableTarget(event.target)) return;
+    const active = document.activeElement;
+    let scope = active?.closest?.('[role="menu"], [role="menubar"]');
+    const startMenu = document.getElementById("start-menu");
+    if (
+      !scope &&
+      !startMenu.hidden &&
+      (startMenu.contains(active) || active?.id === "start-button")
+    ) {
+      scope = startMenu;
+    }
+    if (!scope) return;
+
+    const items = [...scope.querySelectorAll("button:not(:disabled)")].filter(
+      (item) => {
+        if (!item.getClientRects().length) return false;
+        if (scope === startMenu) return startMenu.contains(item);
+        return item.closest('[role="menu"], [role="menubar"]') === scope;
+      },
+    );
+    const target = cycleTypeaheadItem(event, scope, items, typeaheadItemLabel);
+    if (!target) return;
+    target.focus();
+    event.stopImmediatePropagation();
+  },
+  true,
+);
+
+gameLibraryInitialization = initializeGameLibrary();
+
+window.addEventListener("load", async () => {
+  initializeOfflineMode();
+  await gameLibraryInitialization;
+  setupScreenFlow();
+  setupDesktopContextMenu();
+  setupWindowSystemMenu();
+  setupTaskbarContextMenu();
+  setupSystemTray();
+  document
+    .getElementById("start-button")
+    .addEventListener("click", toggleStartMenu);
+});
+
+window.addEventListener("resize", () => {
+  closeTrayVolumePopup();
+  applySimulatedMonitor(activeMonitorResolution);
+  if (iconsBuilt) {
+    layoutDesktopIcons();
+  }
+  if (loggedIn) {
+    keepWindowsInWorkArea();
+    renderTaskButtons();
+  }
+});
+
+window.addEventListener("hashchange", () => {
+  if (!loggedIn) return;
+
+  const gameId = getHashGameId();
+  if (gameId) {
+    openGameWindow(gameId);
+  } else {
+    // Empty hash means "back to desktop"
+    minimizeAllWindows();
+  }
+});
+
+// Close the start menu when clicking outside of it
+document.addEventListener("pointerdown", (e) => {
+  if (suspended) return;
+  if (!e.target.closest(".explorer-chrome")) closeExplorerMenu();
+  if (!e.target.closest("#desktop-context-menu")) {
+    closeDesktopContextMenu();
+  }
+
+  if (
+    !e.target.closest("#window-system-menu") &&
+    !e.target.closest(".title-icon")
+  ) {
+    closeWindowSystemMenu();
+  }
+
+  if (
+    !e.target.closest("#taskbar-context-menu") &&
+    !e.target.closest("#taskbar-overflow-menu") &&
+    !e.target.closest(".task-button")
+  ) {
+    closeTaskbarMenus();
+  }
+
+  if (
+    !e.target.closest("#tray-volume-popup") &&
+    !e.target.closest("#tray-volume-button")
+  ) {
+    closeTrayVolumePopup();
+  }
+
+  if (!e.target.closest(".game-menu-bar") && !e.target.closest(".game-menu")) {
+    document.querySelectorAll(".game-menu:not([hidden])").forEach((menu) => {
+      menu.hidden = true;
+      menu.parentElement
+        ?.querySelector(
+          `.game-menu-button[data-game-menu="${menu.dataset.gameMenu}"]`,
+        )
+        ?.setAttribute("aria-expanded", "false");
+    });
+  }
+  const startMenu = document.getElementById("start-menu");
+  if (startMenu.hidden) return;
+  if (
+    !e.target.closest("#start-menu") &&
+    !e.target.closest("#start-menu-flyouts") &&
+    !e.target.closest("#start-button")
+  ) {
+    closeStartMenu();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (suspended) {
+    if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
+      e.preventDefault();
+      setSuspended(false);
+    }
+    return;
+  }
+
+  // Dialogs and editable controls own their keyboard semantics. Do not
+  // steal browser text editing or modal access keys for shell shortcuts.
+  if (
+    e.defaultPrevented ||
+    document.querySelector(
+      ".xp-dialog-overlay, .system-dialog-overlay:not([hidden])",
+    ) ||
+    isEditableTarget(e.target)
+  )
+    return;
+
+  if (e.altKey && e.key === "Tab") {
+    e.preventDefault();
+    cycleShellWindow(e.shiftKey ? -1 : 1, true);
+    return;
+  }
+  if (e.altKey && e.key === "Escape") {
+    e.preventDefault();
+    cycleShellWindow(1, false);
+    return;
+  }
+
+  const desktopIcon = document.activeElement?.closest?.(".desktop-icon");
+  const desktopHasFocus =
+    desktopIcon || document.activeElement?.id === "desktop-icons";
+  if (desktopHasFocus) {
+    const desktopIcons = [...document.querySelectorAll(".desktop-icon")];
+    const typeaheadTarget = cycleTypeaheadItem(
+      e,
+      document.getElementById("desktop-icons"),
+      desktopIcons,
+      typeaheadItemLabel,
+    );
+    if (typeaheadTarget) {
+      selectDesktopIcon(typeaheadTarget.dataset.desktopId);
+      typeaheadTarget.focus();
+      return;
+    }
+    const {
+      filesystemIds: selectedFsIds,
+      allFilesystem,
+      movable,
+    } = getDesktopSelectionEligibility();
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+      e.preventDefault();
+      document
+        .querySelectorAll(".desktop-icon")
+        .forEach((icon) => icon.classList.add("selected"));
+      return;
+    }
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "c" &&
+      allFilesystem
+    ) {
+      e.preventDefault();
+      fileOps.copy(selectedFsIds);
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x" && movable) {
+      e.preventDefault();
+      fileOps.cut(selectedFsIds);
+      return;
+    }
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "v" &&
+      fileOps.canPaste(fs.DESKTOP)
+    ) {
+      e.preventDefault();
+      pasteIntoFolder(fs.DESKTOP);
+      return;
+    }
+    if (e.key === "Delete" && movable) {
+      e.preventDefault();
+      if (e.shiftKey) confirmPermanentDelete(selectedFsIds);
+      else confirmRecycleDelete(selectedFsIds);
+      return;
+    }
+    if (e.key === "F2" && movable && selectedFsIds.length === 1) {
+      e.preventDefault();
+      beginDesktopRename(selectedFsIds[0]);
+      return;
+    }
+    if (e.shiftKey && e.key === "F10") {
+      e.preventDefault();
+      const rect =
+        desktopIcon?.getBoundingClientRect() ||
+        document.getElementById("desktop").getBoundingClientRect();
+      openDesktopContextMenu(
+        rect.left + 8,
+        rect.top + 8,
+        desktopIcon?.dataset.desktopId || null,
+      );
+      return;
+    }
+    if (
+      desktopIcon &&
+      ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
+    ) {
+      e.preventDefault();
+      const target = findDesktopIconInDirection(
+        desktopIcon,
+        desktopIcons,
+        e.key,
+      );
+      if (!target) return;
+      if (!e.ctrlKey && !e.shiftKey)
+        selectDesktopIcon(target.dataset.desktopId);
+      if (e.shiftKey) target.classList.add("selected");
+      target.focus();
+      return;
+    }
+  }
+
+  const explorerSurface = document.activeElement?.closest?.(".explorer-items");
+  const explorerItem = document.activeElement?.closest?.(".explorer-item");
+  const explorerWin =
+    explorerSurface &&
+    [...openWindows.values()].find((win) => win.el.contains(explorerSurface));
+  if (explorerWin) {
+    const explorerItems = [
+      ...explorerSurface.querySelectorAll(".explorer-item"),
+    ];
+    const typeaheadTarget = cycleTypeaheadItem(
+      e,
+      explorerSurface,
+      explorerItems,
+      typeaheadItemLabel,
+    );
+    if (typeaheadTarget) {
+      explorerItems.forEach((item) => item.classList.remove("selected"));
+      typeaheadTarget.classList.add("selected");
+      typeaheadTarget.focus();
+      return;
+    }
+    const selected = selectedExplorerNodes(explorerWin);
+    const protectedSelection = selected.some((id) => fs.isProtected(id));
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+      e.preventDefault();
+      explorerWin.el
+        .querySelectorAll(".explorer-item")
+        .forEach((item) => item.classList.add("selected"));
+      return;
+    }
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "c" &&
+      selected.length
+    ) {
+      e.preventDefault();
+      fileOps.copy(selected);
+      return;
+    }
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "x" &&
+      selected.length &&
+      !protectedSelection
+    ) {
+      e.preventDefault();
+      fileOps.cut(selected);
+      return;
+    }
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      e.key.toLowerCase() === "v" &&
+      fileOps.canPaste(explorerWin.currentFolderId)
+    ) {
+      e.preventDefault();
+      pasteIntoFolder(explorerWin.currentFolderId);
+      return;
+    }
+    if (e.key === "F2" && selected.length === 1 && !protectedSelection) {
+      e.preventDefault();
+      const name = window.prompt("Rename", fs.getNode(selected[0]).name);
+      if (name !== null) fileOps.rename(selected[0], name);
+      return;
+    }
+    if (e.key === "Delete" && selected.length && !protectedSelection) {
+      e.preventDefault();
+      if (e.shiftKey) confirmPermanentDelete(selected);
+      else if (explorerWin.currentFolderId === fs.RECYCLE_BIN)
+        XPDialogs.confirm(
+          "Are you sure you want to permanently delete the selected items?",
+          "Confirm File Delete",
+          "warning",
+        ).then((yes) => yes && fileOps.permanentlyDelete(selected));
+      else confirmRecycleDelete(selected);
+      return;
+    }
+    if (e.shiftKey && e.key === "F10") {
+      e.preventDefault();
+      const rect = explorerItem.getBoundingClientRect();
+      openExplorerContextMenu(explorerWin, rect.left, rect.bottom);
+      return;
+    }
+  }
+
+  if (e.key === "F11" && focusedGameId) {
+    const win = openWindows.get(focusedGameId);
+    if (win?.type !== "system" && win?.player) {
+      e.preventDefault();
+      toggleFullscreen(win.player);
+    }
+    return;
+  }
+
+  const taskButton = document.activeElement?.closest?.(".task-button");
+  if (
+    taskButton &&
+    ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)
+  ) {
+    const buttons = [
+      ...document.querySelectorAll("#task-buttons .task-button"),
+    ];
+    const current = buttons.indexOf(taskButton);
+    const target =
+      e.key === "Home"
+        ? buttons[0]
+        : e.key === "End"
+          ? buttons.at(-1)
+          : buttons[
+              (current + (e.key === "ArrowLeft" ? -1 : 1) + buttons.length) %
+                buttons.length
+            ];
+    e.preventDefault();
+    target?.focus();
+    return;
+  }
+
+  if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
+    e.preventDefault();
+    toggleStartMenu();
+    return;
+  }
+
+  if (e.altKey && e.key === "F4" && focusedGameId) {
+    e.preventDefault();
+    closeGameWindow(focusedGameId);
+    return;
+  }
+
+  if (e.altKey && e.key === "F4" && !focusedGameId) {
+    e.preventDefault();
+    showShutdownDialog();
+    return;
+  }
+
+  if (e.altKey && (e.key === " " || e.code === "Space") && focusedGameId) {
+    e.preventDefault();
+    const win = openWindows.get(focusedGameId);
+    if (win && !win.minimized) {
+      const rect = win.el.getBoundingClientRect();
+      openWindowSystemMenu(win, rect.left + 6, rect.top + 28);
+    }
+    return;
+  }
+
+  if (e.key === "Escape") {
+    closeWindowSystemMenu();
+    closeTaskbarMenus();
+    hideSystemDialogs();
+    closeStartMenu();
+    closeTrayVolumePopup();
+  }
+});
+
+document.addEventListener("keyup", (e) => {
+  if (e.key === "Alt") finishAltTab();
+});

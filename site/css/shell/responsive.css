@@ -1,0 +1,94 @@
+/* ============ Small screens ============ */
+
+@media (max-width: 560px) {
+  .welcome-panel {
+    flex-direction: column;
+    gap: 22px;
+    margin-top: 110px;
+  }
+
+  .welcome-instruction {
+    text-align: center;
+  }
+
+  .start-menu-right {
+    width: 128px;
+  }
+
+  #all-programs-panel {
+    left: 0;
+    bottom: 38px;
+    width: 100%;
+  }
+
+  #task-buttons {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  #taskbar-tray {
+    gap: 3px;
+    margin-left: 3px;
+    padding: 0 4px;
+  }
+
+  .task-button {
+    --task-button-min-width: 48px;
+  }
+
+  #task-buttons {
+    --task-overflow-min-width: 58px;
+  }
+
+  .explorer-content {
+    grid-template-columns: 1fr;
+  }
+
+  .explorer-sidebar {
+    display: none;
+  }
+
+  .explorer-main {
+    padding: 12px;
+  }
+
+  .explorer-items {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .desktop-icon {
+    width: 60px;
+    min-height: 58px;
+    gap: 2px;
+    padding: 2px 0;
+  }
+
+  .desktop-icon .icon-glyph {
+    font-size: 26px;
+  }
+  .desktop-icon .icon-glyph.has-image {
+    width: 30px;
+    height: 30px;
+  }
+  .desktop-icon .icon-label {
+    max-width: 58px;
+    font-size: 10px;
+    line-height: 1.05;
+  }
+}
+
+@media (max-width: 360px) {
+  #tray-network-button {
+    display: none;
+  }
+  #taskbar-tray {
+    margin-left: 1px;
+    padding: 0 2px;
+  }
+  #taskbar-clock {
+    font-size: 10px;
+    padding: 1px;
+  }
+}
