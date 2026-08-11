@@ -1566,7 +1566,7 @@ function show_about_paint() {
 	});
 	$about_paint_window.addClass("about-paint squish");
 	$about_paint_window.$content.append($about_paint_content.show());
-	$about_paint_window.setDimensions({ outerWidth: 419, outerHeight: 354 });
+	$about_paint_window.setDimensions({ outerWidth: 419, outerHeight: 353 });
 
 	$("#jspaint-update-status-area").removeAttr("hidden");
 

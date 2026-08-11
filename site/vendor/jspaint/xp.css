@@ -215,6 +215,17 @@ body,
   background-position: center -108px, center -204px;
 }
 
+.canvas-area::-webkit-scrollbar-button:horizontal:start:increment,
+.canvas-area::-webkit-scrollbar-button:horizontal:end:decrement,
+.canvas-area::-webkit-scrollbar-button:vertical:start:increment,
+.canvas-area::-webkit-scrollbar-button:vertical:end:decrement {
+  display: none;
+}
+
+.canvas-area::-webkit-scrollbar-corner {
+  background: #ece9d8;
+}
+
 /* JS Paint's dialog host defaults to Windows 98 chrome. Paint in XP uses
  * Luna dialog frames and the same extracted caption sprites as the shell. */
 html body .os-window:not(.maximized) {
@@ -229,8 +240,8 @@ html body .os-window:not(.maximized) {
 
 html body .os-window .window-titlebar {
   box-sizing: border-box;
-  height: 27px;
-  min-height: 27px;
+  height: 28px;
+  min-height: 28px;
   padding: 3px 2px 3px 5px;
   border-radius: 7px 7px 0 0;
   background: linear-gradient(180deg, #3d95ff 0, #0054e3 18%, #0065ef 72%, #003ddc 100%);
@@ -317,7 +328,7 @@ html body .os-window .window-button-icon::after {
 
 html body .about-paint.os-window {
   width: 419px !important;
-  height: 354px !important;
+  height: 353px !important;
 }
 
 html body .about-paint .window-content {
@@ -344,7 +355,7 @@ html body .about-paint .window-content {
 #about-paint-product {
   display: flex;
   gap: 10px;
-  margin: 13px 9px 0 15px;
+  margin: 15px 9px 0 15px;
 }
 
 #about-paint-icon {
@@ -359,7 +370,7 @@ html body .about-paint .window-content {
 }
 
 #about-paint-license {
-  margin: 34px 12px 0 52px;
+  margin: 45px 12px 0 52px;
 }
 
 #about-paint-license a {
@@ -381,7 +392,7 @@ html body .about-paint .window-content {
 html body #close-about-paint {
   position: absolute;
   right: 9px;
-  bottom: 9px;
+  bottom: 11px;
   box-sizing: border-box;
   width: 73px;
   min-height: 22px;

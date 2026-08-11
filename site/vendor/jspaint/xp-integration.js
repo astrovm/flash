@@ -108,7 +108,19 @@ window.addEventListener("message", async (event) => {
   }
 });
 
-matchXPMenuStructure();
-publishTitle();
-window.setInterval(publishTitle, 500);
-window.parent.postMessage({ type: "xp-paint-ready" }, window.location.origin);
+function announceReady() {
+  if (
+    typeof window.open_from_file !== "function" ||
+    !window.systemHooks ||
+    !document.querySelector(".jspaint .menu-button")
+  ) {
+    window.requestAnimationFrame(announceReady);
+    return;
+  }
+  matchXPMenuStructure();
+  publishTitle();
+  window.setInterval(publishTitle, 500);
+  window.parent.postMessage({ type: "xp-paint-ready" }, window.location.origin);
+}
+
+announceReady();
