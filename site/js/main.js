@@ -307,12 +307,21 @@ const systemShortcuts = {
   },
 };
 
-XPApplicationRegistry.entries().forEach(([id, program]) => {
-  systemShortcuts[id] = {
-    title: program.title,
-    icon: XP_ICON_PATHS[program.icon],
-    desktop: false,
-  };
+window.AstroShellApplications = Object.freeze({
+  install(registry) {
+    window.XPApplicationRegistry = registry;
+    registry.entries().forEach(([id, application]) => {
+      const existing = systemShortcuts[id];
+      systemShortcuts[id] = {
+        title: application.title,
+        icon: XP_ICON_PATHS[application.icon],
+        ...(existing && Object.hasOwn(existing, "desktop")
+          ? { desktop: existing.desktop }
+          : {}),
+      };
+    });
+    window.AstroApplicationHost.installFileAssociations(registry);
+  },
 });
 
 // ============================================

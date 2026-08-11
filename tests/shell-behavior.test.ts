@@ -645,7 +645,7 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).not.toBeNull();
 });
 
-test("Paint launches JS Paint and owns supported picture file associations", async () => {
+test("Paint mounts natively and owns supported picture file associations", async () => {
   const shell = await login(await loadShell());
   const picture = shell.window.VirtualFS.createFile(
     shell.window.VirtualFS.MY_PICTURES,
@@ -657,18 +657,37 @@ test("Paint launches JS Paint and owns supported picture file associations", asy
   const paintWindow = shell.document.querySelector<HTMLElement>(
     '.xp-window[data-game="__paint"]',
   )!;
-  const frame =
-    paintWindow.querySelector<HTMLIFrameElement>(".xp-paint-frame")!;
-
   expect(paintWindow).not.toBeNull();
-  expect(frame).not.toBeNull();
-  expect(frame.getAttribute("src")).toBe("apps/paint/index.html");
-  expect(frame.title).toBe("Microsoft Paint drawing area");
+  expect(paintWindow.querySelector("iframe")).toBeNull();
+  expect(paintWindow.querySelector(".paint-menu-bar")).not.toBeNull();
+  expect(paintWindow.querySelector(".paint-toolbox")).not.toBeNull();
+  expect(paintWindow.querySelector("canvas.paint-canvas")).not.toBeNull();
+  expect(paintWindow.querySelectorAll(".paint-scrollbar")).toHaveLength(2);
   expect(paintWindow.classList.contains("xp-native-paint-window")).toBeTrue();
-  expect(paintWindow.style.width).toBe("640px");
-  expect(paintWindow.style.height).toBe("480px");
+  expect(paintWindow.style.width).toBe("760px");
+  expect(paintWindow.style.height).toBe("560px");
   expect(paintWindow.style.left).toBe("0px");
   expect(paintWindow.style.top).toBe("0px");
+
+  [
+    ...paintWindow.querySelectorAll<HTMLButtonElement>(
+      ".paint-menu-group > button",
+    ),
+  ]
+    .find((button) => button.textContent === "Help")!
+    .click();
+  paintWindow
+    .querySelector<HTMLButtonElement>('[data-paint-command="about"]')!
+    .click();
+  const aboutPaint = shell.document.querySelector<HTMLElement>(
+    '.xp-about-dialog[aria-label="About Paint"]',
+  )!;
+  expect(aboutPaint).not.toBeNull();
+  expect(aboutPaint.querySelector(".xp-about-banner")).not.toBeNull();
+  aboutPaint.querySelector<HTMLButtonElement>(".dlg-buttons button")!.click();
+  expect(
+    shell.document.querySelector('.xp-about-dialog[aria-label="About Paint"]'),
+  ).toBeNull();
 
   Object.assign(paintWindow.style, {
     width: "700px",

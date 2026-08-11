@@ -900,6 +900,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
     return;
   }
   persistWindowPlacement(win);
+  win.mountedApplication?.unmount?.();
   win.el.remove();
   openWindows.delete(gameId);
 

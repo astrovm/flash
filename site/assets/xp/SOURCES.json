@@ -2359,6 +2359,19 @@
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
     }
   },
+  "assets/xp/paint/Tools.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSPAINT.EX_",
+    "sha256": "0e1ec9cfedf4fadc7f1c14c7eb634e06bd68e3230ed5bc14c7306e77059d2d63",
+    "resource": {
+      "parentSha256": "4a8b0fd56eef260471a1284161ecbba3bb0cdd8b240b932a94b85077ae8c2f43",
+      "type": 2,
+      "id": 859,
+      "language": 1033,
+      "frame": "448x16x32",
+      "pixelSha256": "0d264b859f70c6327b7dea4f3df3904f4605f1f0c92984ae2c7e80d2d755a0cb"
+    }
+  },
   "assets/xp/paint/SelectionOptions.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MSPAINT.EX_",

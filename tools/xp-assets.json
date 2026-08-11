@@ -1799,6 +1799,14 @@
       "member": "MSPAINT.EX_",
       "expandedName": "mspaint.exe",
       "resourceType": 2,
+      "resourceId": 859,
+      "transparentColor": [255, 0, 0],
+      "output": "site/assets/xp/paint/Tools.png"
+    },
+    {
+      "member": "MSPAINT.EX_",
+      "expandedName": "mspaint.exe",
+      "resourceType": 2,
       "resourceId": 863,
       "output": "site/assets/xp/paint/SelectionOptions.png"
     },

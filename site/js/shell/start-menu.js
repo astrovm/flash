@@ -924,7 +924,7 @@ const wireStartFlyoutKeyboard = (panel, parentButton) => {
 };
 
 const xpProgramMenuItem = (programId, id = programId.slice(2)) => {
-  const program = XPApplicationRegistry.get(programId);
+  const program = window.XPApplicationRegistry.get(programId);
   return {
     id,
     label: program.title,

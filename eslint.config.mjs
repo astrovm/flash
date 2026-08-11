@@ -80,6 +80,26 @@ export default defineConfig(
   },
   {
     files: [
+      "site/apps/index.js",
+      "site/apps/catalog/**/*.js",
+      "site/apps/core/**/*.js",
+      "site/apps/programs/**/*.js",
+      "site/apps/system/**/*.js",
+      "site/apps/notepad/**/*.js",
+      "site/apps/paint/index.js",
+    ],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: globals.browser,
+    },
+    rules: {
+      "no-unused-vars": ["error", { args: "none" }],
+    },
+  },
+  {
+    files: [
       "catalog/**/*.ts",
       "tests/**/*.ts",
       "tools/**/*.ts",

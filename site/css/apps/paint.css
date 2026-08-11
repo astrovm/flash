@@ -1,0 +1,477 @@
+.xp-native-paint-window .window-content {
+  overflow: hidden;
+}
+.xp-native-program.xp-native-paint {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #ece9d8;
+  font:
+    11px Tahoma,
+    sans-serif;
+  color: #000;
+}
+.paint-menu-bar {
+  display: flex;
+  flex: 0 0 20px;
+  padding: 1px 2px;
+  border-bottom: 1px solid #aca899;
+  background: #ece9d8;
+}
+.paint-menu-group {
+  position: relative;
+}
+.paint-menu-group > button {
+  min-width: 0;
+  height: 18px;
+  padding: 1px 6px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+.paint-menu-group > button:hover {
+  outline: 1px solid #316ac5;
+  background: #c1d2ee;
+}
+.paint-menu {
+  position: absolute;
+  z-index: 20;
+  top: 19px;
+  left: 0;
+  min-width: 190px;
+  padding: 2px;
+  border: 1px solid #666;
+  background: #fff;
+  box-shadow: 2px 2px 3px #777;
+}
+.paint-menu button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 18px 3px 22px;
+  border: 0;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+}
+.paint-menu button:hover {
+  background: #316ac5;
+  color: #fff;
+}
+.paint-menu hr {
+  margin: 2px 1px;
+  border: 0;
+  border-top: 1px solid #aca899;
+}
+.paint-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.paint-toolbox {
+  display: grid;
+  grid-template-columns: repeat(2, 25px);
+  grid-auto-rows: 25px;
+  align-content: start;
+  flex: 0 0 52px;
+  padding: 3px 2px;
+  border-right: 2px groove #fff;
+  background: #ece9d8;
+}
+.paint-tool-options {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 64px;
+  margin: 4px 3px 0;
+  border: 2px inset #fff;
+  background: #ece9d8;
+}
+.paint-tool-options:is([data-tool="select"], [data-tool="rect-select"])::before,
+.paint-tool-options:is([data-tool="select"], [data-tool="rect-select"])::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  width: 36px;
+  height: 23px;
+  background-image: url("/assets/xp/paint/SelectionOptions.png");
+  background-repeat: no-repeat;
+}
+.paint-tool-options:is(
+    [data-tool="select"],
+    [data-tool="rect-select"]
+  )::before {
+  top: 4px;
+  background-position: 0 0;
+}
+.paint-tool-options:is([data-tool="select"], [data-tool="rect-select"])::after {
+  top: 32px;
+  background-position: -36px 0;
+}
+.paint-tool {
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  border: 1px outset #fff;
+  background: #ece9d8;
+}
+.paint-tool::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background-image: url("/assets/xp/paint/Tools.png");
+  background-position: calc(-16px * var(--paint-tool-index)) 0;
+  background-repeat: no-repeat;
+}
+.paint-tool.selected {
+  border-style: inset;
+  background: #fff;
+}
+.paint-tool-select {
+  --tool-mask: linear-gradient(
+    135deg,
+    transparent 45%,
+    #000 46% 54%,
+    transparent 55%
+  );
+}
+.paint-tool-rect-select {
+  --tool-mask: linear-gradient(#000 0 0);
+}
+.paint-tool-eraser::after {
+  inset: 6px 4px;
+  transform: skew(-25deg);
+  background: #ff9;
+  border: 1px solid #111;
+  mask: none;
+}
+.paint-tool-fill {
+  --tool-mask: linear-gradient(
+    135deg,
+    transparent 30%,
+    #000 31% 70%,
+    transparent 71%
+  );
+}
+.paint-tool-picker {
+  --tool-mask: linear-gradient(
+    135deg,
+    transparent 42%,
+    #000 43% 57%,
+    transparent 58%
+  );
+}
+.paint-tool-magnifier::after {
+  inset: 4px 7px 8px 4px;
+  border: 2px solid #111;
+  border-radius: 50%;
+  background: transparent;
+  mask: none;
+  box-shadow: 6px 7px 0 -2px #111;
+}
+.paint-tool-pencil {
+  --tool-mask: linear-gradient(
+    135deg,
+    transparent 42%,
+    #000 43% 57%,
+    transparent 58%
+  );
+}
+.paint-tool-brush {
+  --tool-mask: linear-gradient(
+    120deg,
+    transparent 38%,
+    #000 39% 60%,
+    transparent 61%
+  );
+}
+.paint-tool-airbrush {
+  --tool-mask: radial-gradient(circle, #000 0 1px, transparent 1px);
+}
+.paint-tool-text::after {
+  content: "A";
+  inset: 1px;
+  background: none;
+  mask: none;
+  font: bold 17px serif;
+  text-align: center;
+}
+.paint-tool-line {
+  --tool-mask: linear-gradient(
+    135deg,
+    transparent 46%,
+    #000 47% 53%,
+    transparent 54%
+  );
+}
+.paint-tool-curve {
+  --tool-mask: radial-gradient(
+    ellipse at 40% 55%,
+    transparent 45%,
+    #000 46% 55%,
+    transparent 56%
+  );
+}
+.paint-tool-rectangle::after {
+  background: transparent;
+  border: 2px solid #111;
+  mask: none;
+}
+.paint-tool-polygon {
+  --tool-mask: conic-gradient(
+    from 20deg,
+    #000 0 20%,
+    transparent 20% 40%,
+    #000 40% 60%,
+    transparent 60% 80%,
+    #000 80%
+  );
+}
+.paint-tool-ellipse::after {
+  background: transparent;
+  border: 2px solid #111;
+  border-radius: 50%;
+  mask: none;
+}
+.paint-tool-rounded::after {
+  background: transparent;
+  border: 2px solid #111;
+  border-radius: 4px;
+  mask: none;
+}
+
+/* The ISO-matched Paint tool sprite wins over CSS fallbacks above. */
+.paint-tool::after {
+  inset: auto;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: url("/assets/xp/paint/Tools.png");
+  background-position: calc(-16px * var(--paint-tool-index)) 0;
+  background-repeat: no-repeat;
+  box-shadow: none;
+  color: transparent;
+  font-size: 0;
+  mask: none;
+  transform: none;
+}
+.paint-workspace-shell {
+  --paint-scrollbar-size: 17px;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.paint-workspace {
+  position: absolute;
+  inset: 0 var(--paint-scrollbar-size) var(--paint-scrollbar-size) 0;
+  overflow: auto;
+  padding: 3px 20px 20px 3px;
+  background: #808080;
+  scrollbar-width: none;
+}
+.paint-workspace::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.paint-canvas-frame {
+  display: inline-block;
+  padding: 0;
+  border-right: 3px solid #c0c0c0;
+  border-bottom: 3px solid #c0c0c0;
+  line-height: 0;
+}
+.paint-canvas {
+  background: #fff;
+  cursor: crosshair;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+.paint-color-box {
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 4px;
+  border-top: 2px groove #fff;
+  background: #ece9d8;
+}
+.paint-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 16px);
+  grid-template-rows: repeat(2, 16px);
+  gap: 1px;
+}
+.paint-current-colors {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  margin-right: 5px;
+  border: 1px inset #fff;
+  background: #fff;
+}
+.paint-current-colors::before,
+.paint-current-colors::after {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #888;
+}
+.paint-current-colors::before {
+  right: 3px;
+  bottom: 3px;
+  background: var(--paint-secondary);
+}
+.paint-current-colors::after {
+  left: 3px;
+  top: 3px;
+  background: var(--paint-primary);
+}
+.paint-swatch {
+  width: 16px;
+  height: 16px;
+  min-width: 0;
+  padding: 0;
+  border: 1px inset #fff;
+}
+.paint-status {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  flex: 0 0 20px;
+  gap: 2px;
+  padding: 2px;
+  border-top: 1px solid #aca899;
+  background: #ece9d8;
+}
+.paint-status span {
+  padding: 1px 4px;
+  border: 1px inset #fff;
+}
+
+.paint-scrollbar {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  background: #f7f7f5;
+}
+.paint-scrollbar.vertical {
+  top: 0;
+  right: 0;
+  bottom: var(--paint-scrollbar-size);
+  width: var(--paint-scrollbar-size);
+  flex-direction: column;
+}
+.paint-scrollbar.horizontal {
+  right: var(--paint-scrollbar-size);
+  bottom: 0;
+  left: 0;
+  height: var(--paint-scrollbar-size);
+}
+.paint-scroll-arrow {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image:
+    url("/assets/xp/paint/ScrollArrowGlyphs.png"),
+    url("/assets/xp/paint/ScrollArrows.png");
+  background-repeat: no-repeat;
+  background-size:
+    9px 144px,
+    17px 272px;
+  box-shadow: none;
+}
+.paint-scroll-up {
+  background-position:
+    center 0,
+    center 0;
+}
+.paint-scroll-down {
+  background-position:
+    center -36px,
+    center -68px;
+}
+.paint-scroll-left {
+  background-position:
+    center -72px,
+    center -136px;
+}
+.paint-scroll-right {
+  background-position:
+    center -108px,
+    center -204px;
+}
+.paint-scroll-up:disabled {
+  background-position:
+    center -27px,
+    center -51px;
+}
+.paint-scroll-down:disabled {
+  background-position:
+    center -63px,
+    center -119px;
+}
+.paint-scroll-left:disabled {
+  background-position:
+    center -99px,
+    center -187px;
+}
+.paint-scroll-right:disabled {
+  background-position:
+    center -135px,
+    center -255px;
+}
+.paint-scroll-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.paint-scrollbar.vertical .paint-scroll-track {
+  background: url("/assets/xp/paint/ScrollShaftVertical.png") 0 0 / 17px 68px
+    repeat-y;
+}
+.paint-scrollbar.horizontal .paint-scroll-track {
+  background: url("/assets/xp/paint/ScrollShaftHorizontal.png") 0 0 / 17px 68px
+    repeat-x;
+}
+.paint-scroll-thumb {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #8ba4c9;
+  border-radius: 2px;
+}
+.paint-scrollbar.vertical .paint-scroll-thumb {
+  left: 1px;
+  width: 15px;
+  min-height: 8px;
+  background: url("/assets/xp/paint/ScrollThumbVertical.png") center / 15px 88px;
+}
+.paint-scrollbar.horizontal .paint-scroll-thumb {
+  top: 1px;
+  height: 15px;
+  min-width: 8px;
+  background: url("/assets/xp/paint/ScrollThumbHorizontal.png") center / 22px
+    60px;
+}
+.paint-scroll-corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--paint-scrollbar-size);
+  height: var(--paint-scrollbar-size);
+  background: #ece9d8;
+}

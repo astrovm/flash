@@ -1463,4 +1463,19 @@ const resetAstroFlash = () => {
   syncGameFiles();
 };
 
-const NOTEPAD_ID = "__notepad";
+fs.registerFolderHandler((folder) => {
+  openSystemWindow("__my-documents");
+  const win = openWindows.get("__my-documents");
+  if (win) navigateExplorer(win, folder.id);
+});
+
+// Keep open explorer windows and desktop shortcuts in sync with filesystem changes.
+fs.subscribe(() => {
+  openWindows.forEach((win) => {
+    if (win.type !== "system" || !win.currentFolderId) return;
+    if (!fs.getNode(win.currentFolderId)) win.currentFolderId = fs.MY_COMPUTER;
+    renderExplorerItems(win);
+  });
+  if (iconsBuilt) buildDesktopIcons();
+  renderTaskButtons();
+});
