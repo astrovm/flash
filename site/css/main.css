@@ -176,7 +176,7 @@
     rgb(15, 97, 203) 88%
   );
   --chrome-font: "Tahoma", "Segoe UI", "Geneva", sans-serif;
-  --xp-cursor: url("../assets/xp/cursor.cur"), default;
+  --xp-cursor: url("/assets/xp/cursor.cur"), default;
 }
 
 * {
