@@ -8,12 +8,13 @@ const wireSystemWindowControls = (win) => {
   win.el
     .querySelector(".minimize-btn")
     .addEventListener("click", () => minimizeWindow(win.gameId));
-  win.el
-    .querySelector(".maximize-btn")
-    .addEventListener("click", () => toggleMaximize(win.gameId));
-  updateMaximizeButton(win);
+  const maximize = win.el.querySelector(".maximize-btn");
+  if (maximize) {
+    maximize.addEventListener("click", () => toggleMaximize(win.gameId));
+    updateMaximizeButton(win);
+  }
   wireDrag(win);
-  wireResize(win);
+  if (win.application?.window.resizable !== false) wireResize(win);
 };
 
 const applicationContext = (win) => ({
@@ -69,7 +70,7 @@ const openXPProgram = (programId, options = {}) => {
   );
   const preferredWidth = program.window.width;
   const preferredHeight = program.window.height;
-  if (programId === "__minesweeper") {
+  if (program.window.resizable === false) {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
@@ -110,6 +111,16 @@ const openXPProgram = (programId, options = {}) => {
   el.querySelector(".window-content").replaceWith(mounted.element);
   document.getElementById("desktop").appendChild(el);
   openWindows.set(programId, win);
+  if (program.window.maximizable === false) {
+    const maximize = el.querySelector(".maximize-btn");
+    if (maximize) {
+      maximize.disabled = true;
+      maximize.setAttribute("aria-disabled", "true");
+    }
+  }
+  if (program.window.resizable === false) {
+    el.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());
+  }
   if (program.window.customChrome) {
     win.el.addEventListener("pointerdown", () => focusWindow(win.gameId));
     wireDrag(win);

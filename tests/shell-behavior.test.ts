@@ -560,24 +560,30 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   const minesweeperWindow = shell.document.querySelector(
     '.xp-window[data-game="__minesweeper"]',
   )!;
+  expect(
+    minesweeperWindow.querySelector<HTMLButtonElement>(".maximize-btn")!
+      .disabled,
+  ).toBeTrue();
+  expect(minesweeperWindow.querySelector(".resize-handle")).toBeNull();
   const mineCells = minesweeperWindow.querySelectorAll<HTMLButtonElement>(
     ".xp-minesweeper-board [role='gridcell']",
   );
   expect(mineCells).toHaveLength(81);
   mineCells[40]!.click();
-  expect(mineCells[40]!.classList.contains("revealed")).toBeTrue();
-  const difficulty = minesweeperWindow.querySelector<HTMLSelectElement>(
-    '[aria-label="Difficulty"]',
-  )!;
-  difficulty.value = "intermediate";
-  difficulty.dispatchEvent(new shell.window.Event("change", { bubbles: true }));
+  expect(mineCells[40]!.dataset.open).toBe("true");
+  minesweeperWindow
+    .querySelector<HTMLButtonElement>(".minesweeper-menu-trigger")!
+    .click();
+  minesweeperWindow
+    .querySelector<HTMLButtonElement>('[data-command="intermediate"]')!
+    .click();
   const intermediateCells =
     minesweeperWindow.querySelectorAll<HTMLButtonElement>(
       ".xp-minesweeper-board [role='gridcell']",
     );
   expect(intermediateCells).toHaveLength(256);
   intermediateCells[128]!.click();
-  expect(intermediateCells[128]!.classList.contains("revealed")).toBeTrue();
+  expect(intermediateCells[128]!.dataset.open).toBe("true");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
