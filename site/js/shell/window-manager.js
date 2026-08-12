@@ -99,9 +99,8 @@ const fitNativeProgramToWorkArea = (win) => {
   const visibleHeight = viewport?.height
     ? Math.min(
         desktopHeight,
-        Math.max(0, Math.floor(viewport.height - (taskbarHeight || 0)),
-      ),
-    )
+        Math.max(0, Math.floor(viewport.height - (taskbarHeight || 0))),
+      )
     : desktopHeight;
   if (
     visibleWidth <= 0 ||
