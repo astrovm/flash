@@ -90,6 +90,9 @@ test("offline updates", async () => {
     async put(key, response) {
       this.values.set(String(key), response);
     }
+    async match(key) {
+      return this.values.get(String(key));
+    }
     async delete(key) {
       return this.values.delete(String(key));
     }
@@ -284,6 +287,11 @@ test("offline updates", async () => {
   ]);
   assert.strictEqual(manager.getSnapshot().downloadedGameBytes, 14);
   assert.strictEqual(initial.bundledCache.values.size, 2);
+
+  const bikeUrl = "https://flash.example/swf/bike-mania.bike-1/main.swf";
+  await initial.bundledCache.delete(bikeUrl);
+  await manager.downloadGame("bike-mania");
+  assert.strictEqual(initial.bundledCache.values.has(bikeUrl), true);
 
   await manager.downloadGame("doom");
   assert.strictEqual(manager.getSnapshot().downloadedGameIds.length, 2);

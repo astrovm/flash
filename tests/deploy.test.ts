@@ -108,6 +108,7 @@ async function makeSource(root: string): Promise<void> {
     "assets/icons/game.png": "icon",
     "assets/icons/SOURCES.json": "{}",
     "assets/xp/bliss.jpg": "wallpaper",
+    "assets/xp/Chess.bmp": "bitmap",
     "assets/xp/about.png": "about",
     "assets/xp/icons/paint.png": "paint",
     "assets/xp/sounds/startup.wav": "sound",
@@ -344,6 +345,7 @@ describe("build metadata", () => {
     expect(await Bun.file(join(root, "css", "main.css")).exists()).toBeFalse();
     expect(PRECACHE_FILE_SUFFIXES.has(".ttf")).toBeTrue();
     expect(PRECACHE_FILE_SUFFIXES.has(".bmp")).toBeTrue();
+    expect(PRECACHE_FILE_SUFFIXES.has(".data")).toBeTrue();
 
     const metadata = JSON.parse(await readFile(paths.versionJson, "utf8"));
     expect(metadata.offlineBytes).toBeGreaterThan(0);
@@ -421,6 +423,21 @@ describe("build metadata", () => {
 });
 
 describe("Workbox and artifact validation", () => {
+  test("precaches bitmap artwork and Pinball data", async () => {
+    const root = await makeTemporaryDirectory();
+    await writeFiles(root, {
+      "js/offline-worker.12345678.js": "offline worker",
+      "assets/xp/Chess.12345678.bmp": "bitmap",
+      "apps/pinball/runtime/SpaceCadetPinball.data": "pinball data",
+    });
+
+    await generateServiceWorker(root);
+
+    const worker = await readFile(join(root, "sw.js"), "utf8");
+    expect(worker).toContain("assets/xp/Chess.12345678.bmp");
+    expect(worker).toContain("apps/pinball/runtime/SpaceCadetPinball.data");
+  });
+
   test("accepts a generated worker with its runtime", async () => {
     const root = await makeTemporaryDirectory();
     await writeFiles(root, {
