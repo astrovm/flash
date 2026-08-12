@@ -115,6 +115,19 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     ).not.toBeNull();
   });
 
+  test("keeps the application URL at the origin root with a release base URL", async () => {
+    const shell = await login(await loadShell());
+    const base = shell.document.createElement("base");
+    base.href = "/releases/26.08.12-abcdef1/";
+    shell.document.head.prepend(base);
+    shell.window.history.replaceState(null, "", "/releases/26.08.12-abcdef1/");
+
+    launchSolitaire(shell);
+
+    expect(shell.window.location.pathname).toBe("/");
+    expect(shell.window.location.hash).toBe("#solitaire");
+  });
+
   test("stops the emulator when its window closes", async () => {
     const shell = await login(await loadShell());
     const solitaireWindow = launchSolitaire(shell);
