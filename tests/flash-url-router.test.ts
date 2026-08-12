@@ -80,10 +80,11 @@ test("Flash URL router maps archived assets into a versioned game package", () =
     },
     pageUrl,
     { example: "swf/example.0123456789abcdef/" },
+    "https://astro.example/releases/26.08.12-abcdef1/",
   );
 
   expect(router.resolve("https://media.example/main.swf")?.localUrl.href).toBe(
-    "https://astro.example/app/swf/example.0123456789abcdef/main.swf",
+    "https://astro.example/releases/26.08.12-abcdef1/swf/example.0123456789abcdef/main.swf",
   );
 });
 

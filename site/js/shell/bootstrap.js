@@ -7,6 +7,8 @@
 const flashUrlRouter = window.AstroFlashUrlRouter.create(
   window.FLASH_GAMES,
   window.location.href,
+  window.ASTRO_GAME_ROOTS,
+  document.baseURI,
 );
 
 const { fetch: originalFetch } = window;

@@ -173,6 +173,7 @@ test("offline updates", async () => {
   }
 
   const makeEnvironment = ({
+    assetBaseUrl = "https://flash.example/",
     registration = new Registration({
       active: new Worker("activated", manifest.version),
     }),
@@ -225,7 +226,10 @@ test("offline updates", async () => {
         timers.push({ callback, delay });
         return timers.length;
       },
-      document: Object.assign(new Events(), { visibilityState: "visible" }),
+      document: Object.assign(new Events(), {
+        baseURI: assetBaseUrl,
+        visibilityState: "visible",
+      }),
       caches: {
         keys: async () => ["astro-flash-precache", BUNDLED_GAME_CACHE],
         open: async (name) =>
@@ -311,6 +315,22 @@ test("offline updates", async () => {
   ]);
   assert.strictEqual(manager.getSnapshot().downloadedGameBytes, 14);
   assert.strictEqual(initial.bundledCache.values.size, 2);
+
+  const versioned = makeEnvironment({
+    assetBaseUrl: `https://flash.example/releases/${manifest.version}/`,
+  });
+  const versionedManager = createManager({
+    currentVersion: manifest.version,
+    environment: versioned.environment,
+  });
+  await versionedManager.initialize();
+  await versionedManager.downloadGame("bike-mania");
+  assert.strictEqual(
+    versioned.bundledCache.values.has(
+      `https://flash.example/releases/${manifest.version}/swf/bike-mania.bike-1/main.swf`,
+    ),
+    true,
+  );
 
   const bikeUrl = "https://flash.example/swf/bike-mania.bike-1/main.swf";
   await initial.bundledCache.delete(bikeUrl);

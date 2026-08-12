@@ -492,7 +492,8 @@
     const absoluteUrl = (url) =>
       new URL(
         url,
-        environment.location?.href ||
+        environment.document?.baseURI ||
+          environment.location?.href ||
           environment.location?.origin ||
           "https://astro.local/",
       ).href;
