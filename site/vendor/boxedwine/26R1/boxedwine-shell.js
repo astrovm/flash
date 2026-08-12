@@ -687,11 +687,8 @@
           // application robust, you may want to override this behavior before shipping!
           // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
           canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
-          const [width, height] = (Config.resolution || "800x600")
-            .split("x")
-            .map(Number);
-          canvas.width = width;
-          canvas.height = height;
+          canvas.width  = 800;
+          canvas.height = 600;
           return canvas;
         })(),
         setStatus: function(text) {

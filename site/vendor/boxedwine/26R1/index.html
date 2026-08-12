@@ -112,26 +112,11 @@
         delete window.BoxedWineRunnerConfig;
       })();
 
-      window.addEventListener("message", (event) => {
-        if (event.origin !== location.origin) return;
-        const { type, width, height } = event.data || {};
-        if (
-          type !== "boxedwine-framebuffer-resize" ||
-          !Number.isInteger(width) ||
-          !Number.isInteger(height) ||
-          width < 1 ||
-          height < 1
-        )
-          return;
+    </script>
+    <script type="module">
+      import { installBoxedWineResizeBridge } from "../../../apps/core/boxedwine-resize.js";
 
-        const canvas = document.getElementById("canvas");
-        if (!canvas) return;
-        canvas.width = width;
-        canvas.height = height;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        window.dispatchEvent(new Event("resize"));
-      });
+      installBoxedWineResizeBridge(window, Module);
     </script>
     <script async src="boxedwine.js"></script>
   </body>
