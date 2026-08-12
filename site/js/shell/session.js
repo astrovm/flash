@@ -214,7 +214,7 @@ const login = (playSound = true) => {
       // Deep link: #game-id opens that game's window
       const gameId = getHashGameId();
       if (gameId) {
-        openGameWindow(gameId);
+        openLinkedGame(gameId);
       }
     }
     maybePromptForUpdate(offlineManager.getSnapshot());

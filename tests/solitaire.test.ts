@@ -6,7 +6,12 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
+import {
+  cleanupShells,
+  flushShell,
+  loadShell,
+  login,
+} from "./helpers/shell-harness";
 import { installBoxedWineResizeBridge } from "../site/apps/core/boxedwine-resize.js";
 
 const require = createRequire(import.meta.url);
@@ -68,6 +73,19 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     maximize.click();
     expect(solitaireWindow.classList.contains("maximized")).toBeFalse();
     expect(maximize.title).toBe("Maximize");
+    expect(shell.window.location.hash).toBe("#solitaire");
+    await flushShell();
+    expect(shell.offlineDownloads).toEqual(["solitaire"]);
+  });
+
+  test("opens Solitaire from its deep link", async () => {
+    const shell = await loadShell();
+    shell.window.location.hash = "#solitaire";
+    await login(shell);
+
+    expect(
+      shell.document.querySelector('.xp-window[data-game="__solitaire"]'),
+    ).not.toBeNull();
   });
 
   test("stops the emulator when its window closes", async () => {

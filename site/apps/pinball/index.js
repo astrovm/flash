@@ -208,6 +208,7 @@ export const pinballApplication = defineApplication({
   title: "Pinball",
   icon: "Pinball.png",
   kind: "native-game",
+  deepLinkId: "pinball",
   window: {
     width: 606,
     height: 471,

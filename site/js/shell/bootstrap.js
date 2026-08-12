@@ -192,7 +192,7 @@ window.addEventListener("hashchange", () => {
 
   const gameId = getHashGameId();
   if (gameId) {
-    openGameWindow(gameId);
+    openLinkedGame(gameId);
   } else {
     // Empty hash means "back to desktop"
     minimizeAllWindows();

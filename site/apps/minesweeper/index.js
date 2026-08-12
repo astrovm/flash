@@ -452,6 +452,7 @@ export const minesweeperApplication = defineApplication({
   title: "Minesweeper",
   icon: "Minesweeper.png",
   kind: "native-game",
+  deepLinkId: "minesweeper",
   window: {
     width: 170,
     height: 259,

@@ -712,8 +712,11 @@ const focusWindow = (gameId) => {
   renderTaskButtons();
   updateDocumentTitle();
 
-  if (gamesList[gameId] && window.location.hash !== `#${gameId}`) {
-    history.replaceState(null, "", `#${gameId}`);
+  const deepLinkId = gamesList[gameId]
+    ? gameId
+    : window.XPApplicationRegistry?.get(gameId)?.deepLinkId;
+  if (deepLinkId && window.location.hash !== `#${deepLinkId}`) {
+    history.replaceState(null, "", `#${deepLinkId}`);
   }
 };
 

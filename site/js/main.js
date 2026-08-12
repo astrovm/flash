@@ -381,7 +381,21 @@ const createGameIconElement = (gameId, className) => {
 
 const getHashGameId = () => {
   const id = window.location.hash.slice(1);
-  return id && gamesList[id] ? id : null;
+  if (id && gamesList[id]) return id;
+  const application = window.XPApplicationRegistry?.values().find(
+    (candidate) =>
+      candidate.kind === "native-game" && candidate.deepLinkId === id,
+  );
+  return application?.id || null;
+};
+
+const openLinkedGame = (gameId) => {
+  const application = window.XPApplicationRegistry?.get(gameId);
+  if (application?.kind === "native-game") {
+    openXPProgram(gameId);
+  } else {
+    openGameWindow(gameId);
+  }
 };
 
 const readJsonStorage = (key, fallbackValue, validator) => {
