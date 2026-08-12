@@ -590,7 +590,7 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   )!;
   expect(solitaireFrame).not.toBeNull();
   expect(new URL(solitaireFrame.src).searchParams.get("executable")).toBe(
-    "sol.exe",
+    "resize-host.exe",
   );
 
   shell.document.getElementById("start-button")!.click();
