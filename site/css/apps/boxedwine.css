@@ -10,7 +10,4 @@
   left: 0;
   display: block;
   border: 0;
-  transform: translate(var(--boxedwine-left, 0), var(--boxedwine-top, 0))
-    scale(var(--boxedwine-scale, 1));
-  transform-origin: top left;
 }

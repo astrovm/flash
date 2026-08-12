@@ -111,6 +111,12 @@
         ].join("&");
         delete window.BoxedWineRunnerConfig;
       })();
+
+    </script>
+    <script type="module">
+      import { installBoxedWineResizeBridge } from "../../../apps/core/boxedwine-resize.js";
+
+      installBoxedWineResizeBridge(window, Module);
     </script>
     <script async src="boxedwine.js"></script>
   </body>

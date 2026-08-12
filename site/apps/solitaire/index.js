@@ -6,10 +6,9 @@ const mountSolitaire = () =>
     title: "Windows XP Solitaire",
     packageId: "solitaire",
     archive: "xp-solitaire",
-    executable: "sol.exe",
+    executable: "resize-host.exe",
     nativeWidth: 586,
     nativeHeight: 406,
-    resolution: "800x600",
     frameTop: 32,
     background: "#27811f",
   });

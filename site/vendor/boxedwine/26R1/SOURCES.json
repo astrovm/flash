@@ -8,8 +8,8 @@
   "runtimeUrl": "https://boxedwine.org/v/26R1/wine11/st/",
   "files": {
     "boxedwine-shell.js": "4eb37b1fe78c81451a22bc67485ac5e151b243912775596299b6736cd2c1678c",
-    "boxedwine.js": "5f4fd46d509d60a669961cfb405669c9aa001769ca551aada878c7c75eb62586",
-    "boxedwine.wasm": "d4148bda3955e0378de56719c716610f2e1daffd3581d0a2085970ba4df1decf",
+    "boxedwine.js": "4a5abecf3ab042dfbd62b4516edcb2a4a0ea660a0d8a6704545aca02e10379dd",
+    "boxedwine.wasm": "68e064fc1b71af0b9283725ec9fb38b8f461ee7b59e2082c2ea4883c96be7ade",
     "boxedwine.zip": "5d251b6d53cad1c31de254c5285603d193f91bc3129b9c9ba39c4cc65a24edb3"
   }
 }
