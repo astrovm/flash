@@ -31,7 +31,7 @@ test("optional runtime assets prefer the network and fall back offline", async (
   require(workerPath);
 
   const request = new Request(
-    "https://flash.example/vendor/boxedwine/26R1/boxedwine.12345678.wasm",
+    "https://flash.example/releases/26.07.28-abcdef1/vendor/boxedwine/26R1/boxedwine.12345678.wasm",
   );
   let responsePromise;
   listeners.get("fetch")({

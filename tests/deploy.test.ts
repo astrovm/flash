@@ -58,6 +58,7 @@ async function writeFiles(
 async function makeSource(root: string): Promise<void> {
   await writeFiles(root, {
     "index.html": [
+      "<head>",
       '<meta name="astro-version" content="development" />',
       '<script src="js/startup-recovery.js"></script>',
       '<script src="js/ruffle.js?v=old"></script>',
@@ -79,6 +80,7 @@ async function makeSource(root: string): Promise<void> {
       '<link rel="stylesheet" href="css/shell/desktop.css">',
       '<link rel="icon" href="favicon.ico">',
       '<img src="assets/xp/bliss.jpg">',
+      "</head>",
     ].join("\n"),
     "capture.html": [
       '<script src="js/ruffle.js?v=old"></script>',
@@ -260,8 +262,8 @@ describe("build metadata", () => {
 
     const hashedAssets = await updateHtml(paths, "26.07.28-abcdef1");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
-    const offlineManifestName = await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
+    const offlineManifestName = await versionOfflineGameManifest(paths);
 
     const main = await readFile(join(root, hashedAssets.mainJs), "utf8");
     const html = await readFile(paths.html, "utf8");
@@ -289,14 +291,13 @@ describe("build metadata", () => {
       `window.ASTRO_OFFLINE_MANIFEST_URL="${offlineManifestName}"`,
     );
     expect(offlineManifestName).toMatch(/^offline-games\.[a-f0-9]{8}\.json$/);
-    expect(await readFile(join(root, offlineManifestName), "utf8")).toBe(
-      await readFile(paths.offlineGamesJson, "utf8"),
-    );
     const capture = await readFile(paths.captureHtml, "utf8");
     expect(capture).toContain(`${hashedAssets.ruffle}"`);
     expect(capture).toContain(`${hashedAssets.gamesJs}"`);
     expect(capture).toContain(`${hashedAssets.flashUrlRouterJs}"`);
-    const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    const manifest = JSON.parse(
+      await readFile(join(root, offlineManifestName), "utf8"),
+    );
     expect(manifest.games["bike-mania"].files[0].integrity).toMatch(
       /^sha384-[A-Za-z0-9+/]+={0,2}$/,
     );
@@ -439,8 +440,8 @@ describe("build metadata", () => {
     const hashedAssets = await updateHtml(paths, "26.07.28-abcdef1");
     await writeFile(join(root, hashedAssets.mainJs), "tampered");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
-    await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
+    await versionOfflineGameManifest(paths);
     await expect(validateOutput(root)).rejects.toThrow(
       "invalid content hash for js/main.js",
     );
@@ -456,11 +457,18 @@ describe("Workbox and artifact validation", () => {
       "apps/pinball/runtime/SpaceCadetPinball.data": "pinball data",
     });
 
-    await generateServiceWorker(root);
+    await generateServiceWorker(root, undefined, "26.07.28-abcdef1");
 
     const worker = await readFile(join(root, "sw.js"), "utf8");
-    expect(worker).toContain("assets/xp/Chess.12345678.bmp");
-    expect(worker).toContain("apps/pinball/runtime/SpaceCadetPinball.data");
+    expect(worker).toContain(
+      "releases/26.07.28-abcdef1/assets/xp/Chess.12345678.bmp",
+    );
+    expect(worker).toContain(
+      "releases/26.07.28-abcdef1/apps/pinball/runtime/SpaceCadetPinball.data",
+    );
+    expect(worker).toContain(
+      'importScripts("releases/26.07.28-abcdef1/js/offline-worker.12345678.js")',
+    );
     expect(worker).toContain(
       `integrity:"sha384-${createHash("sha384")
         .update("bitmap")
@@ -468,25 +476,31 @@ describe("Workbox and artifact validation", () => {
     );
   });
 
-  test("accepts a generated worker with its runtime", async () => {
+  test("generates a self-contained worker for the release directory", async () => {
     const root = await makeTemporaryDirectory();
     await writeFiles(root, {
       "js/offline-worker.12345678.js": "offline worker",
     });
-    const generator = async () => {
+    let configuration: any;
+    const generator = async (options: any) => {
+      configuration = options;
       await addGeneratedRuntime(root);
       return { count: 1, size: 1, warnings: [], filePaths: [] };
     };
     await generateServiceWorker(root, generator as any, "26.07.28-abcdef1");
+    expect(configuration.inlineWorkboxRuntime).toBeTrue();
+    expect(configuration.importScripts).toEqual([
+      "releases/26.07.28-abcdef1/js/offline-worker.12345678.js",
+    ]);
     expect(
       await Bun.file(join(root, "workbox-f9030226.js")).exists(),
-    ).toBeTrue();
+    ).toBeFalse();
     expect(await readFile(join(root, "sw.js"), "utf8")).toContain(
       'self.__ASTRO_FLASH_VERSION__="26.07.28-abcdef1"',
     );
   });
 
-  test("rejects a generated worker with a missing runtime", async () => {
+  test("removes an unused external Workbox runtime", async () => {
     const root = await makeTemporaryDirectory();
     await writeFiles(root, {
       "js/offline-worker.12345678.js": "offline worker",
@@ -498,9 +512,10 @@ describe("Workbox and artifact validation", () => {
       );
       return { count: 1, size: 1, warnings: [], filePaths: [] };
     };
-    expect(generateServiceWorker(root, generator as any)).rejects.toThrow(
-      "missing Workbox runtime",
-    );
+    await generateServiceWorker(root, generator as any);
+    expect(
+      await Bun.file(join(root, "workbox-deadbeef.js")).exists(),
+    ).toBeFalse();
   });
 
   test("accepts a complete artifact and rejects a missing representative game", async () => {
@@ -510,11 +525,13 @@ describe("Workbox and artifact validation", () => {
     const paths = new BuildPaths(root);
     await updateHtml(paths, "26.07.28-abcdef1");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
-    await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
+    const offlineManifestName = await versionOfflineGameManifest(paths);
     await validateOutput(root);
 
-    const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    const manifest = JSON.parse(
+      await readFile(join(root, offlineManifestName), "utf8"),
+    );
     await unlink(join(root, manifest.games["bike-mania"].root, "main.swf"));
     expect(validateOutput(root)).rejects.toThrow("missing game file");
   });
@@ -559,6 +576,18 @@ describe("atomic build", () => {
     }
     expect(await Bun.file(join(output, "stale.txt")).exists()).toBeFalse();
     expect(await Bun.file(join(output, "sw.js")).exists()).toBeTrue();
+    const release = join(output, "releases", "26.07.28-abcdef1");
+    expect(
+      await Bun.file(join(output, "apps", "core", "boxedwine.js")).exists(),
+    ).toBeFalse();
+    expect(
+      await Bun.file(join(release, "apps", "core", "boxedwine.js")).exists(),
+    ).toBeTrue();
+    expect(
+      await Bun.file(join(release, "offline-games.json")).exists(),
+    ).toBeFalse();
+    const rootHtml = await readFile(join(output, "index.html"), "utf8");
+    expect(rootHtml).toContain('<base href="/releases/26.07.28-abcdef1/" />');
     const metadata = JSON.parse(
       await readFile(join(output, "version.json"), "utf8"),
     );

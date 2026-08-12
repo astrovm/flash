@@ -239,7 +239,7 @@ test("offline updates", async () => {
       fetch: async (url, options) => {
         fetches.push({ options, url });
         assert.strictEqual(options.cache, "no-store");
-        if (String(url).startsWith("version.json")) {
+        if (String(url).startsWith("/version.json")) {
           return new Response(
             JSON.stringify({
               version: remoteVersion,
@@ -293,8 +293,8 @@ test("offline updates", async () => {
   });
   await manager.initialize();
   assert.deepStrictEqual(initial.serviceWorker.registerCalls[0], [
-    `sw.js?v=${manifest.version}`,
-    { scope: "./", updateViaCache: "none" },
+    `/sw.js?v=${manifest.version}`,
+    { scope: "/", updateViaCache: "none" },
   ]);
   assert.strictEqual(manager.getSnapshot().phase, "ready");
   assert.strictEqual(manager.getSnapshot().bundledGames.length, 4);
@@ -540,7 +540,7 @@ test("offline updates", async () => {
   await new Promise((resolve) => setImmediate(resolve));
   assert.match(
     staleWaiting.serviceWorker.registerCalls.at(-1)[0],
-    /^sw\.js\?v=26\.07\.30-bbbbbbb&retry=1800000000000$/,
+    /^\/sw\.js\?v=26\.07\.30-bbbbbbb&retry=1800000000000$/,
   );
   assert.strictEqual(staleWaitingManager.getSnapshot().updateReady, true);
 
