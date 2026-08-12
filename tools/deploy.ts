@@ -212,7 +212,7 @@ export async function scopeReleaseReferences(
     /(["'`(=]\s*)\/(apps|assets|css|dos|iframe|js|swf|vendor)\//g;
   for (const path of await walkFiles(root)) {
     if (
-      ![".css", ".html", ".js", ".mjs"].includes(extname(path)) ||
+      ![".css", ".html", ".js", ".json", ".mjs"].includes(extname(path)) ||
       path.endsWith(`${sep}js${sep}offline-worker.js`)
     ) {
       continue;
@@ -1324,7 +1324,7 @@ export async function validateReleaseOutput(
   }
   for (const path of await walkFiles(releaseDir)) {
     if (
-      ![".css", ".html", ".js", ".mjs"].includes(extname(path)) ||
+      ![".css", ".html", ".js", ".json", ".mjs"].includes(extname(path)) ||
       /offline-worker\.[a-f0-9]{8}\.js$/.test(path)
     ) {
       continue;
