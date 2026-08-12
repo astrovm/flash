@@ -450,13 +450,18 @@
       ).href;
 
     const cacheEntry = async (id, entry, progress) => {
+      const cache = await environment.caches.open(bundledCacheName);
       if (
         records[id]?.revision === entry.revision &&
-        Array.isArray(records[id].files)
+        Array.isArray(records[id].files) &&
+        (
+          await Promise.all(
+            entry.files.map((file) => cache.match(absoluteUrl(file.url))),
+          )
+        ).every(Boolean)
       ) {
         return;
       }
-      const cache = await environment.caches.open(bundledCacheName);
       const previousFiles = records[id]?.files || [];
       const previousUrls = new Set(previousFiles.map(absoluteUrl));
       let loaded = 0;

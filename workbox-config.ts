@@ -2,11 +2,35 @@ import { join, resolve } from "node:path";
 
 const outputDirectory = resolve(process.env.SITE_OUTPUT_DIR || "dist");
 
+export const PRECACHE_EXTENSIONS = [
+  "ttf",
+  "woff",
+  "woff2",
+  "css",
+  "ico",
+  "svg",
+  "bmp",
+  "mp3",
+  "wav",
+  "png",
+  "jpg",
+  "jpeg",
+  "cur",
+  "json",
+  "html",
+  "js",
+  "mjs",
+  "wasm",
+  "data",
+  "swf",
+  "jsdos",
+  "xml",
+  "phtml",
+] as const;
+
 export default {
   globDirectory: `${outputDirectory}/`,
-  globPatterns: [
-    "**/*.{ttf,woff,woff2,css,ico,svg,mp3,wav,png,jpg,jpeg,cur,json,html,js,mjs,wasm,swf,jsdos,xml,phtml}",
-  ],
+  globPatterns: [`**/*.{${PRECACHE_EXTENSIONS.join(",")}}`],
   globIgnores: [
     "version.json",
     "swf/**",

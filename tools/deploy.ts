@@ -22,7 +22,7 @@ import {
 import { fileURLToPath } from "node:url";
 
 import { generateSW } from "workbox-build";
-import workboxConfig from "../workbox-config";
+import workboxConfig, { PRECACHE_EXTENSIONS } from "../workbox-config";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const SOURCE_DIR = join(PROJECT_DIR, "site");
@@ -47,30 +47,9 @@ const JS_DOS_RUNTIME_FILES = [
   "emulators/wlibzip.js",
   "emulators/wlibzip.wasm",
 ];
-export const PRECACHE_FILE_SUFFIXES = new Set([
-  ".ttf",
-  ".woff",
-  ".woff2",
-  ".css",
-  ".ico",
-  ".svg",
-  ".bmp",
-  ".mp3",
-  ".wav",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".cur",
-  ".json",
-  ".html",
-  ".js",
-  ".mjs",
-  ".wasm",
-  ".swf",
-  ".jsdos",
-  ".xml",
-  ".phtml",
-]);
+export const PRECACHE_FILE_SUFFIXES = new Set(
+  PRECACHE_EXTENSIONS.map((extension) => `.${extension}`),
+);
 const APP_VERSION_PATTERN = /const APP_VERSION = "[^"]+";/g;
 
 type WorkboxGenerator = typeof generateSW;
