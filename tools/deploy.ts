@@ -21,7 +21,7 @@ import {
 } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { generateSW } from "workbox-build";
+import { generateSW, type ManifestTransform } from "workbox-build";
 import workboxConfig, { PRECACHE_EXTENSIONS } from "../workbox-config";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -53,6 +53,33 @@ export const PRECACHE_FILE_SUFFIXES = new Set(
 const APP_VERSION_PATTERN = /const APP_VERSION = "[^"]+";/g;
 
 type WorkboxGenerator = typeof generateSW;
+
+export function createIntegrityManifestTransform(
+  outputDir: string,
+): ManifestTransform {
+  const root = resolve(outputDir);
+  return async (entries) => ({
+    manifest: await Promise.all(
+      entries.map(async (entry) => {
+        const relativeUrl = decodeURIComponent(entry.url.split(/[?#]/, 1)[0])
+          .replace(/^\/+/, "")
+          .split("/")
+          .join(sep);
+        const path = resolve(root, relativeUrl);
+        if (path !== root && !path.startsWith(`${root}${sep}`)) {
+          throw new Error(
+            `Precache entry escapes the build output: ${entry.url}`,
+          );
+        }
+        const integrity = `sha384-${createHash("sha384")
+          .update(await readFile(path))
+          .digest("base64")}`;
+        return { ...entry, integrity };
+      }),
+    ),
+    warnings: [],
+  });
+}
 
 interface OfflineFile {
   bytes: number;
@@ -316,6 +343,24 @@ export async function updateHtml(
     "Could not update APP_VERSION in output js/main.js",
   );
   await writeFile(paths.mainJs, mainJavaScript);
+
+  let html = await readFile(paths.html, "utf8");
+  html = await replaceExactlyOnce(
+    html,
+    /<meta name="astro-version" content="[^"]+" \/>/g,
+    `<meta name="astro-version" content="${version}" />`,
+    "Could not update the deployment version in output index.html",
+  );
+  const startupRecoveryPath = join(paths.js, "startup-recovery.js");
+  const startupRecovery = await readFile(startupRecoveryPath, "utf8");
+  html = await replaceExactlyOnce(
+    html,
+    /<script src="js\/startup-recovery\.js"><\/script>/g,
+    `<script>\n${startupRecovery}\n</script>`,
+    "Could not inline startup recovery in output index.html",
+  );
+  await writeFile(paths.html, html);
+  await rm(startupRecoveryPath);
 
   const staticPaths = [
     ...(await walkFiles(join(paths.root, "assets"))),
@@ -810,6 +855,7 @@ export async function generateServiceWorker(
     ...workboxConfig,
     globDirectory: `${resolve(outputDir)}/`,
     importScripts: [`js/${offlineWorkerNames[0]}`],
+    manifestTransforms: [createIntegrityManifestTransform(outputDir)],
     swDest: join(resolve(outputDir), "sw.js"),
   });
 

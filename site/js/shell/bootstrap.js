@@ -160,11 +160,14 @@ document.addEventListener(
   true,
 );
 
-gameLibraryInitialization = initializeGameLibrary();
+const gameLibraryStartup = initializeGameLibrary();
+gameLibraryInitialization = Promise.race([
+  gameLibraryStartup,
+  new Promise((resolve) => setTimeout(resolve, 5000)),
+]);
 
-window.addEventListener("load", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   initializeOfflineMode();
-  await gameLibraryInitialization;
   setupScreenFlow();
   setupDesktopContextMenu();
   setupWindowSystemMenu();
@@ -173,6 +176,7 @@ window.addEventListener("load", async () => {
   document
     .getElementById("start-button")
     .addEventListener("click", toggleStartMenu);
+  window.__ASTRO_STARTUP_READY__?.();
 });
 
 window.addEventListener("resize", () => {

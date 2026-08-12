@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
@@ -56,6 +57,8 @@ async function writeFiles(
 async function makeSource(root: string): Promise<void> {
   await writeFiles(root, {
     "index.html": [
+      '<meta name="astro-version" content="development" />',
+      '<script src="js/startup-recovery.js"></script>',
       '<script src="js/ruffle.js?v=old"></script>',
       '<script src="vendor/fflate/index.js?v=old"></script>',
       '<script src="js/games.js?v=old"></script>',
@@ -92,6 +95,7 @@ async function makeSource(root: string): Promise<void> {
     "js/dialogs.js": "dialogs",
     "js/offline.js": "offline",
     "js/offline-worker.js": "offline worker",
+    "js/startup-recovery.js": "startup recovery",
     "apps/index.js": "application registry",
     "apps/catalog.js": 'const icon = "assets/xp/icons/paint.png";',
     "js/shell/desktop.js": "desktop shell",
@@ -260,6 +264,14 @@ describe("build metadata", () => {
     const main = await readFile(join(root, hashedAssets.mainJs), "utf8");
     const html = await readFile(paths.html, "utf8");
     expect(main).toContain('const APP_VERSION = "26.07.28-abcdef1";');
+    expect(html).toContain(
+      '<meta name="astro-version" content="26.07.28-abcdef1" />',
+    );
+    expect(html).toContain("startup recovery");
+    expect(html).not.toContain('src="js/startup-recovery.js"');
+    expect(
+      await Bun.file(join(root, "js", "startup-recovery.js")).exists(),
+    ).toBeFalse();
     expect(html).toContain(`${hashedAssets.mainJs}"`);
     expect(html).toContain(`${hashedAssets.flashUrlRouterJs}"`);
     expect(html).toContain(`${hashedAssets.storagePolicyJs}"`);
@@ -436,6 +448,11 @@ describe("Workbox and artifact validation", () => {
     const worker = await readFile(join(root, "sw.js"), "utf8");
     expect(worker).toContain("assets/xp/Chess.12345678.bmp");
     expect(worker).toContain("apps/pinball/runtime/SpaceCadetPinball.data");
+    expect(worker).toContain(
+      `integrity:"sha384-${createHash("sha384")
+        .update("bitmap")
+        .digest("base64")}"`,
+    );
   });
 
   test("accepts a generated worker with its runtime", async () => {
