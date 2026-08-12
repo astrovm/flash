@@ -122,6 +122,7 @@ const openXPProgram = (programId, options = {}) => {
   el.querySelector(".window-content").replaceWith(mounted.element);
   document.getElementById("desktop").appendChild(el);
   openWindows.set(programId, win);
+  fitNativeProgramToWorkArea(win);
   if (program.window.maximizable === false) {
     const maximize = el.querySelector(".maximize-btn");
     if (maximize) {

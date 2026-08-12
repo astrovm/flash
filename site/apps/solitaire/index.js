@@ -24,6 +24,7 @@ export const solitaireApplication = defineApplication({
     width: 592,
     height: 438,
     className: "xp-native-solitaire-window",
+    fitToWorkArea: true,
     resizable: true,
     maximizable: true,
   },

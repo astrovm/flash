@@ -40,6 +40,33 @@ const launchSolitaire = (shell) => {
 };
 
 describe("Windows XP Solitaire through BoxedWine", () => {
+  test("uses the complete phone work area when its native bounds do not fit", async () => {
+    const shell = await login(await loadShell());
+    const desktop = shell.document.getElementById("desktop");
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 390 },
+      clientHeight: { configurable: true, value: 814 },
+    });
+
+    const solitaireWindow = launchSolitaire(shell);
+
+    expect(solitaireWindow.style.left).toBe("0px");
+    expect(solitaireWindow.style.top).toBe("0px");
+    expect(solitaireWindow.style.width).toBe("390px");
+    expect(solitaireWindow.style.height).toBe("814px");
+
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 844 },
+      clientHeight: { configurable: true, value: 360 },
+    });
+    shell.window.dispatchEvent(new shell.window.Event("resize"));
+
+    expect(solitaireWindow.style.left).toBe("0px");
+    expect(solitaireWindow.style.top).toBe("0px");
+    expect(solitaireWindow.style.width).toBe("844px");
+    expect(solitaireWindow.style.height).toBe("360px");
+  });
+
   test("launches the native executable in a resizable XP shell window", async () => {
     const shell = await login(await loadShell());
     shell.window.ASTRO_GAME_ROOTS = {
@@ -100,8 +127,12 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(frame.src).toBe("about:blank");
   });
 
-  test("resizes the emulator framebuffer to the real client area", async () => {
+  test("resizes the emulator framebuffer and pointer space in CSS pixels", async () => {
     const shell = await login(await loadShell());
+    Object.defineProperty(shell.window, "devicePixelRatio", {
+      configurable: true,
+      value: 3,
+    });
     let resize;
     let observed;
     let disconnected = false;
