@@ -534,7 +534,18 @@ export async function updateHtml(
       "Could not version the BoxedWine JavaScript reference",
     );
     await writeFile(indexPath, boxedWineIndex);
+    const indexName = `index.${await getShortHash(indexPath)}.html`;
+    const integrationPath = join(paths.root, "apps", "core", "boxedwine.js");
+    let integration = await readFile(integrationPath, "utf8");
+    integration = await replaceExactlyOnce(
+      integration,
+      /`\$\{RUNTIME_ROOT\}index\.html`/g,
+      `\`\${RUNTIME_ROOT}${indexName}\``,
+      "Could not version the BoxedWine runner reference",
+    );
+    await writeFile(integrationPath, integration);
     await Promise.all([
+      rename(indexPath, join(boxedWineRoot, indexName)),
       rename(wasmPath, join(boxedWineRoot, wasmName)),
       rename(javaScriptPath, join(boxedWineRoot, javaScriptName)),
       rename(shellPath, join(boxedWineRoot, shellName)),
