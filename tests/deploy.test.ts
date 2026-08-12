@@ -124,6 +124,8 @@ async function makeSource(root: string): Promise<void> {
       '<script src="boxedwine-shell.js"></script>',
       '<script async src="boxedwine.js"></script>',
     ].join("\n"),
+    "apps/core/boxedwine.js":
+      "new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);",
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
@@ -274,13 +276,21 @@ describe("build metadata", () => {
     expect(capture).toContain(`${hashedAssets.flashUrlRouterJs}"`);
     const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
     const boxedWineIndex = await readFile(
-      join(root, "vendor", "boxedwine", "26R1", "index.html"),
+      join(root, "apps", "core", "boxedwine.js"),
       "utf8",
     );
-    const boxedWineJavaScript = boxedWineIndex.match(
+    const boxedWineRunner = boxedWineIndex.match(
+      /index\.[a-f0-9]{8}\.html/,
+    )?.[0];
+    expect(boxedWineRunner).toBeDefined();
+    const boxedWineRunnerMarkup = await readFile(
+      join(root, "vendor", "boxedwine", "26R1", boxedWineRunner!),
+      "utf8",
+    );
+    const boxedWineJavaScript = boxedWineRunnerMarkup.match(
       /boxedwine\.[a-f0-9]{8}\.js/,
     )?.[0];
-    const boxedWineShell = boxedWineIndex.match(
+    const boxedWineShell = boxedWineRunnerMarkup.match(
       /boxedwine-shell\.[a-f0-9]{8}\.js/,
     )?.[0];
     expect(boxedWineJavaScript).toBeDefined();
