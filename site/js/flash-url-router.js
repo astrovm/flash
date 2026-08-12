@@ -27,6 +27,7 @@
     games,
     pageUrl = root.location?.href,
     gameRoots = root.ASTRO_GAME_ROOTS || {},
+    assetBaseUrl = root.document?.baseURI || pageUrl,
   ) => {
     if (!pageUrl) throw new Error("Flash URL routing requires a page URL.");
     const routes = new Map();
@@ -68,7 +69,7 @@
           : new URL(request.url);
       const route = routes.get(routeKey(originalUrl, pageUrl));
       if (!route) return null;
-      const localUrl = new URL(route.localPath, pageUrl);
+      const localUrl = new URL(route.localPath, assetBaseUrl);
       localUrl.search = originalUrl.search;
       return { ...route, localUrl, originalUrl };
     };

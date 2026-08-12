@@ -534,7 +534,10 @@ const updateMaximizeButton = (win) => {
 };
 
 const bundledGameRoot = (gameId, type) =>
-  window.ASTRO_GAME_ROOTS?.[gameId] || `${type}/${gameId}/`;
+  new URL(
+    window.ASTRO_GAME_ROOTS?.[gameId] || `${type}/${gameId}/`,
+    document.baseURI,
+  ).href;
 
 const loadRuffleSWF = (gameId, win) => {
   const ruffle = window.RufflePlayer.newest();

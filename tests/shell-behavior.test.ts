@@ -637,6 +637,26 @@ test("native games open from their public deep links", async () => {
   }
 });
 
+test("bundled iframe deep links use the production release base URL", async () => {
+  const shell = await loadShell();
+  const version = "26.08.12-abcdef1";
+  const gameRoot = "iframe/inside-the-firewall.0123456789abcdef/";
+  const base = shell.document.createElement("base");
+  base.href = `/releases/${version}/`;
+  shell.document.head.prepend(base);
+  shell.window.ASTRO_GAME_ROOTS = {
+    "inside-the-firewall": gameRoot,
+  };
+  shell.window.location.hash = "#inside-the-firewall";
+
+  await login(shell);
+
+  const frame = shell.document.querySelector<HTMLIFrameElement>(
+    '.xp-window[data-game="inside-the-firewall"] iframe',
+  );
+  expect(frame?.src).toBe(`http://127.0.0.1/releases/${version}/${gameRoot}`);
+});
+
 test("placeholder-only applications are not installed or exposed by the shell", async () => {
   const shell = await login(await loadShell());
   const removedApplicationIds = [
