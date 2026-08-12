@@ -244,7 +244,7 @@ export async function loadShell() {
 
   if (scriptErrors.length) throw scriptErrors[0];
 
-  window.dispatchEvent(new window.Event("load"));
+  document.dispatchEvent(new window.Event("DOMContentLoaded"));
   await flushShell();
   return { window, document, offlineDownloads };
 }
