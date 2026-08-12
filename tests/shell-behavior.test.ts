@@ -622,6 +622,21 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).not.toBeNull();
 });
 
+test("native games open from their public deep links", async () => {
+  for (const [deepLink, applicationId] of [
+    ["minesweeper", "__minesweeper"],
+    ["pinball", "__pinball"],
+    ["solitaire", "__solitaire"],
+  ]) {
+    const shell = await loadShell();
+    shell.window.location.hash = `#${deepLink}`;
+    await login(shell);
+    expect(
+      shell.document.querySelector(`.xp-window[data-game="${applicationId}"]`),
+    ).not.toBeNull();
+  }
+});
+
 test("placeholder-only applications are not installed or exposed by the shell", async () => {
   const shell = await login(await loadShell());
   const removedApplicationIds = [

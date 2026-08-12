@@ -18,6 +18,8 @@ export const solitaireApplication = defineApplication({
   title: "Solitaire",
   icon: "Solitaire.png",
   kind: "native-game",
+  deepLinkId: "solitaire",
+  offlineGameId: "solitaire",
   window: {
     width: 592,
     height: 438,

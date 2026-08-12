@@ -197,10 +197,12 @@ export async function loadShell() {
   window.AstroGameLibrary.createManager = () => emptyLibrary;
 
   const offlineSnapshot = {
+    bundledGames: [{ id: "solitaire" }],
     downloadedGameIds: [],
     phase: "idle",
     updateAvailable: false,
   };
+  const offlineDownloads: string[] = [];
   window.AstroOffline.createManager = () => ({
     subscribe() {
       return () => {};
@@ -209,7 +211,10 @@ export async function loadShell() {
     getSnapshot() {
       return offlineSnapshot;
     },
-    async downloadGame() {},
+    async downloadGame(gameId) {
+      offlineDownloads.push(gameId);
+      offlineSnapshot.downloadedGameIds.push(gameId);
+    },
   });
 
   // Happy DOM evaluates separately injected classic scripts in isolated lexical
@@ -241,7 +246,7 @@ export async function loadShell() {
 
   window.dispatchEvent(new window.Event("load"));
   await flushShell();
-  return { window, document };
+  return { window, document, offlineDownloads };
 }
 
 export async function login(shell: Awaited<ReturnType<typeof loadShell>>) {

@@ -208,11 +208,7 @@ const initializeOfflineMode = () => {
 };
 
 const saveBundledGameForOffline = (gameId) => {
-  if (
-    window.ASTRO_DEV ||
-    navigator.onLine === false ||
-    !Object.hasOwn(window.FLASH_GAMES, gameId)
-  ) {
+  if (window.ASTRO_DEV || navigator.onLine === false) {
     return;
   }
 
@@ -220,7 +216,11 @@ const saveBundledGameForOffline = (gameId) => {
     .catch(() => {})
     .then(async () => {
       await offlineManagerInitialization;
-      if (offlineManager.getSnapshot().downloadedGameIds.includes(gameId)) {
+      const snapshot = offlineManager.getSnapshot();
+      if (!snapshot.bundledGames.some((game) => game.id === gameId)) {
+        return;
+      }
+      if (snapshot.downloadedGameIds.includes(gameId)) {
         return;
       }
       await offlineManager.downloadGame(gameId);

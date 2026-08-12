@@ -56,15 +56,22 @@ const applicationContext = (win) => ({
 });
 
 const openXPProgram = (programId, options = {}) => {
+  const program = window.XPApplicationRegistry.get(programId);
+  const activateNativeGame = () => {
+    if (program.kind !== "native-game") return;
+    if (program.offlineGameId) {
+      saveBundledGameForOffline(program.offlineGameId);
+    }
+  };
   const existing = openWindows.get(programId);
   if (existing) {
     restoreWindow(programId);
     focusWindow(programId);
+    activateNativeGame();
     return options.file
       ? existing.mountedApplication?.openFile?.(options.file)
       : existing;
   }
-  const program = window.XPApplicationRegistry.get(programId);
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   const el = createWindowElement(programId);
   el.classList.add("xp-native-program-window");
@@ -132,6 +139,7 @@ const openXPProgram = (programId, options = {}) => {
     wireSystemWindowControls(win);
   }
   focusWindow(programId);
+  activateNativeGame();
   return win;
 };
 
