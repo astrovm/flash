@@ -899,7 +899,8 @@ export async function generateServiceWorker(
 ): Promise<void> {
   console.log("Generating service worker...");
   const releasePrefix = version ? `${releaseRelativePath(version)}/` : "";
-  const offlineWorkerNames = (await readdir(join(outputDir, "js"))).filter(
+  const contentDir = version ? join(outputDir, releasePrefix) : outputDir;
+  const offlineWorkerNames = (await readdir(join(contentDir, "js"))).filter(
     (name) => /^offline-worker\.[a-f0-9]{8}\.js$/.test(name),
   );
   if (offlineWorkerNames.length !== 1) {
@@ -909,12 +910,25 @@ export async function generateServiceWorker(
   }
   await generator({
     ...workboxConfig,
-    globDirectory: `${resolve(outputDir)}/`,
+    globDirectory: `${resolve(contentDir)}/`,
     importScripts: [`${releasePrefix}js/${offlineWorkerNames[0]}`],
     inlineWorkboxRuntime: true,
     manifestTransforms: [
-      createIntegrityManifestTransform(outputDir, releasePrefix),
+      createIntegrityManifestTransform(contentDir, releasePrefix),
     ],
+    ...(version
+      ? {
+          additionalManifestEntries: [
+            {
+              integrity: `sha384-${createHash("sha384")
+                .update(await readFile(join(outputDir, "index.html")))
+                .digest("base64")}`,
+              revision: await getShortHash(join(outputDir, "index.html")),
+              url: "index.html",
+            },
+          ],
+        }
+      : {}),
     swDest: join(resolve(outputDir), "sw.js"),
   });
 
@@ -941,7 +955,6 @@ export async function validateOutput(outputDir: string): Promise<void> {
   const required = [
     paths.html,
     paths.versionJson,
-    join(outputDir, "sw.js"),
     paths.fflateJs,
     join(paths.jsDosRoot, "js-dos.js"),
     join(paths.jsDosRoot, "emulators", "wdosbox.wasm"),
@@ -1282,6 +1295,7 @@ export async function validateReleaseOutput(
   if (!html.includes(`<base href="/${releasePath}/" />`)) {
     throw new Error("Build output has no matching immutable release base URL");
   }
+  await validatePrecacheIntegrity(outputDir);
   if (await isFile(join(releaseDir, "offline-games.json"))) {
     throw new Error("Build output contains an unversioned offline manifest");
   }
@@ -1323,6 +1337,49 @@ export async function validateReleaseOutput(
         `Build output has an unscoped release reference in ${relative(releaseDir, path)}: ${reference}`,
       );
     }
+  }
+}
+
+export async function validatePrecacheIntegrity(
+  outputDir: string,
+): Promise<void> {
+  const serviceWorker = join(outputDir, "sw.js");
+  if (!(await isFile(serviceWorker))) {
+    throw new Error("Build output is missing required file: sw.js");
+  }
+  const source = await readFile(serviceWorker, "utf8");
+  const entries = [
+    ...source.matchAll(
+      /\{(?=[^{}]*\bintegrity:"([^"]+)")(?=[^{}]*\burl:"([^"]+)")[^{}]*\}/g,
+    ),
+  ];
+  if (entries.length === 0) {
+    throw new Error("Build output has no integrity-protected precache entries");
+  }
+  let indexEntries = 0;
+  const root = resolve(outputDir);
+  for (const [, integrity, url] of entries) {
+    const relativeUrl = decodeURIComponent(url.split(/[?#]/, 1)[0])
+      .replace(/^\/+/, "")
+      .split("/")
+      .join(sep);
+    const path = resolve(root, relativeUrl);
+    if (path !== root && !path.startsWith(`${root}${sep}`)) {
+      throw new Error(`Precache entry escapes the build output: ${url}`);
+    }
+    if (!(await isFile(path))) {
+      throw new Error(`Precache entry references a missing file: ${url}`);
+    }
+    const actualIntegrity = `sha384-${createHash("sha384")
+      .update(await readFile(path))
+      .digest("base64")}`;
+    if (integrity !== actualIntegrity) {
+      throw new Error(`Precache entry has invalid integrity: ${url}`);
+    }
+    if (url === "index.html") indexEntries += 1;
+  }
+  if (indexEntries !== 1) {
+    throw new Error("Build output must precache index.html exactly once");
   }
 }
 
@@ -1377,9 +1434,9 @@ export async function build({
     await writeOfflineGameManifest(paths, deploymentVersion);
     await writeVersionMetadata(paths, deploymentVersion);
     await versionOfflineGameManifest(paths);
-    await generate(stagingDir, deploymentVersion);
     await validateOutput(stagingDir);
     await assembleReleaseOutput(stagingDir, deploymentVersion);
+    await generate(stagingDir, deploymentVersion);
     await validateReleaseOutput(stagingDir, deploymentVersion);
     await replaceOutput(stagingDir, resolvedOutput);
   } finally {

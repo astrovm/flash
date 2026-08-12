@@ -22,6 +22,7 @@ import {
   installRuffle,
   installWebtorrent,
   updateHtml,
+  validatePrecacheIntegrity,
   validateOutput,
   versionOfflineGameManifest,
   writeOfflineGameManifest,
@@ -452,9 +453,12 @@ describe("Workbox and artifact validation", () => {
   test("precaches bitmap artwork and Pinball data", async () => {
     const root = await makeTemporaryDirectory();
     await writeFiles(root, {
-      "js/offline-worker.12345678.js": "offline worker",
-      "assets/xp/Chess.12345678.bmp": "bitmap",
-      "apps/pinball/runtime/SpaceCadetPinball.data": "pinball data",
+      "index.html": "final index",
+      "releases/26.07.28-abcdef1/js/offline-worker.12345678.js":
+        "offline worker",
+      "releases/26.07.28-abcdef1/assets/xp/Chess.12345678.bmp": "bitmap",
+      "releases/26.07.28-abcdef1/apps/pinball/runtime/SpaceCadetPinball.data":
+        "pinball data",
     });
 
     await generateServiceWorker(root, undefined, "26.07.28-abcdef1");
@@ -474,21 +478,38 @@ describe("Workbox and artifact validation", () => {
         .update("bitmap")
         .digest("base64")}"`,
     );
+    expect(worker).toContain(
+      `integrity:"sha384-${createHash("sha384")
+        .update("final index")
+        .digest("base64")}"`,
+    );
+    await validatePrecacheIntegrity(root);
+    await writeFile(join(root, "index.html"), "changed after generation");
+    await expect(validatePrecacheIntegrity(root)).rejects.toThrow(
+      "invalid integrity: index.html",
+    );
   });
 
   test("generates a self-contained worker for the release directory", async () => {
     const root = await makeTemporaryDirectory();
+    const release = join(root, "releases", "26.07.28-abcdef1");
     await writeFiles(root, {
-      "js/offline-worker.12345678.js": "offline worker",
+      "index.html": "final index",
+      "releases/26.07.28-abcdef1/js/offline-worker.12345678.js":
+        "offline worker",
     });
     let configuration: any;
     const generator = async (options: any) => {
       configuration = options;
-      await addGeneratedRuntime(root);
+      await writeFiles(root, {
+        "sw.js": 's("workbox-f9030226", import.meta.url)',
+        "workbox-f9030226.js": "workbox",
+      });
       return { count: 1, size: 1, warnings: [], filePaths: [] };
     };
     await generateServiceWorker(root, generator as any, "26.07.28-abcdef1");
     expect(configuration.inlineWorkboxRuntime).toBeTrue();
+    expect(configuration.globDirectory).toBe(`${release}/`);
     expect(configuration.importScripts).toEqual([
       "releases/26.07.28-abcdef1/js/offline-worker.12345678.js",
     ]);
@@ -565,8 +586,12 @@ describe("atomic build", () => {
       sourceDir: source,
       outputDir: output,
       version: "26.07.28-abcdef1",
-      installRuffle: async (jsDir) => addGeneratedRuntime(join(jsDir, "..")),
-      generate: addGeneratedRuntime,
+      installRuffle: async (jsDir) =>
+        writeFiles(jsDir, {
+          "ruffle.js": "ruffle",
+          "core.ruffle.abc123.js": "core",
+          "abc123.wasm": "wasm",
+        }),
     });
 
     const currentFiles = await fileSnapshot(source);
