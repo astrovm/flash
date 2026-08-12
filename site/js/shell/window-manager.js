@@ -751,7 +751,10 @@ const focusWindow = (gameId) => {
     ? gameId
     : window.XPApplicationRegistry?.get(gameId)?.deepLinkId;
   if (deepLinkId && window.location.hash !== `#${deepLinkId}`) {
-    history.replaceState(null, "", `#${deepLinkId}`);
+    const deepLinkUrl = new URL("/", window.location.origin);
+    deepLinkUrl.search = window.location.search;
+    deepLinkUrl.hash = deepLinkId;
+    history.replaceState(null, "", deepLinkUrl);
   }
 };
 
