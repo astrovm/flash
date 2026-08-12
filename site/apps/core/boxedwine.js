@@ -27,7 +27,10 @@ const runnerUrl = ({
 
 const getFramebufferSize = (host, nativeWidth, nativeHeight, frameTop) => ({
   width: Math.max(1, Math.round(host.clientWidth || nativeWidth)),
-  height: Math.max(1, Math.round((host.clientHeight || nativeHeight) + frameTop)),
+  height: Math.max(
+    1,
+    Math.round((host.clientHeight || nativeHeight) + frameTop),
+  ),
 });
 
 export const mountBoxedWineApplication = ({
