@@ -7,7 +7,7 @@
   "sourceUrl": "https://github.com/danoon2/Boxedwine/tree/26R1.0",
   "runtimeUrl": "https://boxedwine.org/v/26R1/wine11/st/",
   "files": {
-    "boxedwine-shell.js": "4eb37b1fe78c81451a22bc67485ac5e151b243912775596299b6736cd2c1678c",
+    "boxedwine-shell.js": "2382d210c1f43afa04f3774356abf2ff8bafba05937a41ec4acb3bb11baf0c60",
     "boxedwine.js": "5f4fd46d509d60a669961cfb405669c9aa001769ca551aada878c7c75eb62586",
     "boxedwine.wasm": "d4148bda3955e0378de56719c716610f2e1daffd3581d0a2085970ba4df1decf",
     "boxedwine.zip": "5d251b6d53cad1c31de254c5285603d193f91bc3129b9c9ba39c4cc65a24edb3"

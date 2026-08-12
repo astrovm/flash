@@ -55,6 +55,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     );
     expect(url.searchParams.get("archive")).toBe("xp-solitaire");
     expect(url.searchParams.get("executable")).toBe("sol.exe");
+    expect(url.searchParams.get("resolution")).toBe("586x438");
     expect(url.searchParams.get("frameTop")).toBe("32");
     expect(url.searchParams.get("sound")).toBe("false");
     expect(solitaireWindow.querySelectorAll(".resize-handle")).toHaveLength(8);
@@ -80,7 +81,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(frame.src).toBe("about:blank");
   });
 
-  test("scales and centers the emulator viewport after a window resize", async () => {
+  test("resizes the emulator framebuffer to the real client area", async () => {
     const shell = await login(await loadShell());
     let resize;
     let observed;
@@ -100,6 +101,9 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     const solitaireWindow = launchSolitaire(shell);
     const host = solitaireWindow.querySelector(".boxedwine-app-host");
     const frame = host.querySelector(".boxedwine-app-frame");
+    const resizeMessages = [];
+    frame.contentWindow.postMessage = (message, origin) =>
+      resizeMessages.push({ message, origin });
     Object.defineProperties(host, {
       clientWidth: { configurable: true, value: 1372 },
       clientHeight: { configurable: true, value: 812 },
@@ -108,9 +112,31 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     resize();
 
     expect(observed).toBe(host);
-    expect(frame.style.getPropertyValue("--boxedwine-scale")).toBe("2");
-    expect(frame.style.getPropertyValue("--boxedwine-left")).toBe("100px");
-    expect(frame.style.getPropertyValue("--boxedwine-top")).toBe("0px");
+    expect(frame.style.width).toBe("100%");
+    expect(frame.style.height).toBe("100%");
+    expect(frame.style.transform).toBe("");
+    expect(resizeMessages.at(-1)).toEqual({
+      message: {
+        type: "boxedwine-framebuffer-resize",
+        width: 1372,
+        height: 844,
+      },
+      origin: new URL(frame.src).origin,
+    });
+
+    Object.defineProperties(host, {
+      clientWidth: { configurable: true, value: 586 },
+      clientHeight: { configurable: true, value: 406 },
+    });
+    resize();
+    expect(resizeMessages.at(-1)).toEqual({
+      message: {
+        type: "boxedwine-framebuffer-resize",
+        width: 586,
+        height: 438,
+      },
+      origin: new URL(frame.src).origin,
+    });
 
     solitaireWindow.querySelector(".close-btn").click();
     expect(disconnected).toBeTrue();

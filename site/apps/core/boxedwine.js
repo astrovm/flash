@@ -25,6 +25,11 @@ const runnerUrl = ({
   return url.href;
 };
 
+const getFramebufferSize = (host, nativeWidth, nativeHeight, frameTop) => ({
+  width: Math.max(1, Math.round(host.clientWidth || nativeWidth)),
+  height: Math.max(1, Math.round((host.clientHeight || nativeHeight) + frameTop)),
+});
+
 export const mountBoxedWineApplication = ({
   title,
   packageId,
@@ -32,7 +37,7 @@ export const mountBoxedWineApplication = ({
   executable,
   nativeWidth,
   nativeHeight,
-  resolution = "800x600",
+  resolution,
   frameTop = 0,
   background = "#000",
 }) => {
@@ -44,40 +49,48 @@ export const mountBoxedWineApplication = ({
   frame.className = "boxedwine-app-frame";
   frame.title = title;
   frame.allow = "fullscreen";
-  frame.style.width = `${nativeWidth}px`;
-  frame.style.height = `${nativeHeight}px`;
+  const initialFramebuffer = getFramebufferSize(
+    host,
+    nativeWidth,
+    nativeHeight,
+    frameTop,
+  );
+  frame.style.width = "100%";
+  frame.style.height = "100%";
   frame.src = runnerUrl({
     packageId,
     archive,
     executable,
-    resolution,
+    resolution:
+      resolution || `${initialFramebuffer.width}x${initialFramebuffer.height}`,
     frameTop,
   });
   host.appendChild(frame);
 
   const updateLayout = () => {
-    const availableWidth = host.clientWidth || nativeWidth;
-    const availableHeight = host.clientHeight || nativeHeight;
-    const scale = Math.min(
-      availableWidth / nativeWidth,
-      availableHeight / nativeHeight,
+    const framebuffer = getFramebufferSize(
+      host,
+      nativeWidth,
+      nativeHeight,
+      frameTop,
     );
-    const left = (availableWidth - nativeWidth * scale) / 2;
-    const top = (availableHeight - nativeHeight * scale) / 2;
-    frame.style.setProperty("--boxedwine-scale", String(scale));
-    frame.style.setProperty("--boxedwine-left", `${left}px`);
-    frame.style.setProperty("--boxedwine-top", `${top}px`);
+    frame.contentWindow?.postMessage(
+      { type: "boxedwine-framebuffer-resize", ...framebuffer },
+      new URL(frame.src).origin,
+    );
   };
   const resizeObserver = window.ResizeObserver
     ? new window.ResizeObserver(updateLayout)
     : null;
   resizeObserver?.observe(host);
+  frame.addEventListener("load", updateLayout);
   updateLayout();
 
   return {
     element: host,
     unmount() {
       resizeObserver?.disconnect();
+      frame.removeEventListener("load", updateLayout);
       frame.src = "about:blank";
       frame.remove();
     },
