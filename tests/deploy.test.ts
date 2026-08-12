@@ -23,6 +23,7 @@ import {
   installWebtorrent,
   updateHtml,
   validatePrecacheIntegrity,
+  validateReleaseOutput,
   validateOutput,
   versionOfflineGameManifest,
   writeOfflineGameManifest,
@@ -144,6 +145,15 @@ async function makeSource(root: string): Promise<void> {
       '<script src="../../js/storage-policy.js?v=old"></script>',
     "iframe/revcdos/index.html":
       '<script src="../../js/storage-policy.js?v=old"></script>',
+    "iframe/scummvm/launcher.js": [
+      'const route = "/iframe/scummvm/local-games/peril";',
+      'const dataPath = ["", "vendor", "scummvm", "2026.3.0", "data"].join("/");',
+    ].join("\n"),
+    "vendor/scummvm/2026.3.0/data/index.json": JSON.stringify({
+      peril: { baseUrl: "/iframe/scummvm/local-games/peril" },
+      pokus: { baseUrl: "/iframe/scummvm/local-games/pokus" },
+    }),
+    "vendor/scummvm/2026.3.0/scummvm.wasm": "scummvm",
     "dos/doom/doom.jsdos": "jsdos",
   });
 }
@@ -613,6 +623,18 @@ describe("atomic build", () => {
     ).toBeFalse();
     const rootHtml = await readFile(join(output, "index.html"), "utf8");
     expect(rootHtml).toContain('<base href="/releases/26.07.28-abcdef1/" />');
+    const scummvmIndexPath = join(
+      release,
+      "vendor",
+      "scummvm",
+      "2026.3.0",
+      "data",
+      "index.json",
+    );
+    const scummvmIndex = JSON.parse(await readFile(scummvmIndexPath, "utf8"));
+    expect(scummvmIndex.peril.baseUrl).toBe(
+      "/releases/26.07.28-abcdef1/iframe/scummvm/local-games/peril",
+    );
     const metadata = JSON.parse(
       await readFile(join(output, "version.json"), "utf8"),
     );
@@ -620,6 +642,14 @@ describe("atomic build", () => {
     expect(metadata.bundledGameBytes).toBeGreaterThan(0);
     expect(metadata.revision).toBe("abcdef1");
     expect(metadata.version).toBe("26.07.28-abcdef1");
+
+    await writeFile(
+      scummvmIndexPath,
+      '{"peril":{"baseUrl":"/iframe/scummvm/local-games/peril"}}',
+    );
+    await expect(
+      validateReleaseOutput(output, "26.07.28-abcdef1"),
+    ).rejects.toThrow("unscoped release reference");
   });
 
   test("preserves previous output after a failed build", async () => {

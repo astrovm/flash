@@ -145,6 +145,53 @@ test("Pink Panther wrappers execute their game configuration", async () => {
   expect(pokus.releases[508716126]).toBe("Spanish");
 });
 
+test("maps ScummVM's fixed data path to the active release", async () => {
+  const requests: string[] = [];
+  const window = new Window({
+    url: "http://127.0.0.1/releases/test/iframe/passport.hash/",
+    settings: {
+      disableCSSFileLoading: true,
+      disableJavaScriptFileLoading: true,
+      enableJavaScriptEvaluation: true,
+      handleDisabledFileLoadingAsSuccess: true,
+      suppressInsecureJavaScriptEnvironmentWarning: true,
+    },
+  });
+  Object.assign(window, {
+    Array,
+    Object,
+    PINK_GAME: {
+      id: "peril",
+      shellId: "pink-panther-passport-to-peril",
+      title: "The Pink Panther: Passport to Peril",
+    },
+    AstroStoragePolicy: {
+      errorMessage: (error: Error) => error.message,
+      requestPersistence: () => Promise.resolve(),
+    },
+    AstroIso9660: {},
+    fetch: (input: string | URL | Request) => {
+      requests.push(String(input));
+      return Promise.resolve(new Response("{}"));
+    },
+  });
+  const launcher = await Bun.file(
+    new URL("../site/iframe/scummvm/launcher.js", import.meta.url),
+  ).text();
+  const script = window.document.createElement("script");
+  script.textContent = launcher;
+  window.document.body.appendChild(script);
+
+  await window.fetch(
+    "/vendor/scummvm/2026.3.0/data/index.json?runtime=scummvm",
+  );
+
+  expect(requests).toEqual([
+    "http://127.0.0.1/releases/test/vendor/scummvm/2026.3.0/data/index.json?runtime=scummvm",
+  ]);
+  window.close();
+});
+
 test("mounts supported English and Spanish CD images", async () => {
   if (!authorizedCopiesAvailable) return;
   for (const game of games) {

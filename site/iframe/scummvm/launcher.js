@@ -8,6 +8,13 @@
 
   const SCUMMVM_ROOT = "../../vendor/scummvm/2026.3.0/";
   const SCUMMVM_GAME_ROUTE = `/iframe/scummvm/local-games/${game.id}/`;
+  // This is the virtual filesystem root compiled into the ScummVM runtime.
+  // Build it from segments so release URL scoping does not change it.
+  const SCUMMVM_DATA_PATH = ["", "vendor", "scummvm", "2026.3.0", "data"].join(
+    "/",
+  );
+  const SCUMMVM_DATA_ROUTE = `${SCUMMVM_DATA_PATH}/`;
+  const SCUMMVM_DATA_URL = new URL(`${SCUMMVM_ROOT}data/`, location.href);
   const STORAGE_DIRECTORY = "astro-flash-scummvm";
   const MAX_CD_IMAGE_SIZE = 800 * 1024 * 1024;
   const metadataKey = `astro-flash.scummvm.${game.id}.iso.v1`;
@@ -154,6 +161,17 @@
       typeof input === "string" || input instanceof URL ? input : input.url,
       location.href,
     );
+    if (
+      requestUrl.origin === location.origin &&
+      requestUrl.pathname.startsWith(SCUMMVM_DATA_ROUTE)
+    ) {
+      const releaseUrl = new URL(
+        requestUrl.pathname.slice(SCUMMVM_DATA_ROUTE.length),
+        SCUMMVM_DATA_URL,
+      );
+      releaseUrl.search = requestUrl.search;
+      return nativeFetch(releaseUrl, init);
+    }
     if (
       !temporaryIso ||
       !temporaryGameFiles ||
@@ -318,7 +336,7 @@
     setControlsDisabled(true);
     setMessage("Starting ScummVM…");
 
-    const gamePath = `/vendor/scummvm/2026.3.0/data/${game.id}`;
+    const gamePath = `${SCUMMVM_DATA_PATH}/${game.id}`;
     const argumentsHash = encodeURI(`--path=${gamePath} ${game.scummvmId}`);
     history.replaceState(null, "", `${location.pathname}#${argumentsHash}`);
     panel.hidden = true;
