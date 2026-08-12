@@ -187,6 +187,10 @@ window.addEventListener("resize", () => {
   }
 });
 
+window.visualViewport?.addEventListener("resize", () => {
+  window.dispatchEvent(new Event("resize"));
+});
+
 window.addEventListener("hashchange", () => {
   if (!loggedIn) return;
 

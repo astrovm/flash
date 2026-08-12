@@ -84,12 +84,47 @@ const clampWindowPosition = (win, left, top) => {
   };
 };
 
+const fitNativeProgramToWorkArea = (win) => {
+  const preferred = win.application?.window;
+  if (!preferred?.fitToWorkArea || win.maximized) return false;
+
+  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const viewport = window.visualViewport;
+  const taskbarHeight = document
+    .getElementById("taskbar")
+    ?.getBoundingClientRect().height;
+  const visibleWidth = viewport?.width
+    ? Math.min(desktopWidth, Math.floor(viewport.width))
+    : desktopWidth;
+  const visibleHeight = viewport?.height
+    ? Math.min(
+        desktopHeight,
+        Math.max(0, Math.floor(viewport.height - (taskbarHeight || 0))),
+      )
+    : desktopHeight;
+  if (
+    visibleWidth <= 0 ||
+    visibleHeight <= 0 ||
+    (visibleWidth >= preferred.width && visibleHeight >= preferred.height)
+  )
+    return false;
+
+  Object.assign(win.el.style, {
+    left: "0px",
+    top: "0px",
+    width: `${visibleWidth}px`,
+    height: `${visibleHeight}px`,
+  });
+  return true;
+};
+
 const keepWindowsInWorkArea = () => {
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   if (desktopWidth === 0 || desktopHeight === 0) return;
 
   openWindows.forEach((win) => {
     if (win.maximized) return;
+    if (fitNativeProgramToWorkArea(win)) return;
     const el = win.el;
     el.style.width = `${Math.min(el.offsetWidth, desktopWidth)}px`;
     el.style.height = `${Math.min(el.offsetHeight, desktopHeight)}px`;
@@ -864,6 +899,7 @@ const toggleMaximize = (gameId) => {
       win.el.style.top = `${position.top}px`;
     }
     win.maximized = false;
+    fitNativeProgramToWorkArea(win);
   }
   updateMaximizeButton(win);
   focusWindow(gameId);
