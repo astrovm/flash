@@ -42,7 +42,7 @@ const makeEnvironment = ({ htmlVersion = "26.08.12-abcdef1" } = {}) => {
     console: { error: (...values) => errors.push(values) },
     fetch: async (url, options) => {
       expect(options).toEqual({ cache: "no-store" });
-      if (String(url).startsWith("version.json?")) {
+      if (String(url).startsWith("/version.json?")) {
         return new Response(JSON.stringify({ version: "26.08.12-abcdef1" }));
       }
       return new Response(

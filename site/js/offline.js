@@ -118,8 +118,8 @@
   const createManager = ({
     currentVersion,
     environment = globalThis,
-    serviceWorkerUrl = "sw.js",
-    versionUrl = "version.json",
+    serviceWorkerUrl = "/sw.js",
+    versionUrl = "/version.json",
     gameManifestUrl = "offline-games.json",
     cachePrefix = "astro-flash",
     bundledCacheName = BUNDLED_GAME_CACHE,
@@ -396,7 +396,7 @@
       }
       const nextRegistration = await navigatorObject.serviceWorker.register(
         versionedServiceWorkerUrl(targetVersion),
-        { scope: "./", updateViaCache: "none" },
+        { scope: "/", updateViaCache: "none" },
       );
       trackRegistration(nextRegistration);
       if (nextRegistration.active) {
@@ -824,7 +824,7 @@
       setState({ phase: "repairing", error: null });
       const currentRegistration =
         registration ||
-        (await navigatorObject.serviceWorker?.getRegistration("./"));
+        (await navigatorObject.serviceWorker?.getRegistration("/"));
       if (currentRegistration) await currentRegistration.unregister();
       await deleteShellCaches();
       registration = null;
@@ -871,7 +871,7 @@
       await refreshStorageEstimate();
       try {
         const existingRegistration =
-          await navigatorObject.serviceWorker?.getRegistration?.("./");
+          await navigatorObject.serviceWorker?.getRegistration?.("/");
         if (existingRegistration) trackRegistration(existingRegistration);
         try {
           await checkForUpdates();

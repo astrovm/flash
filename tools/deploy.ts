@@ -32,6 +32,7 @@ export const RUFFLE_PACKAGE = "@ruffle-rs/ruffle";
 export const FFLATE_JS_PATH = "vendor/fflate/index.js";
 export const JS_DOS_ROOT_PATH = "vendor/js-dos";
 export const WEBTORRENT_JS_PATH = "vendor/webtorrent/webtorrent.min.js";
+export const RELEASES_PATH = "releases";
 const NODE_MODULES = join(PROJECT_DIR, "node_modules");
 const FFLATE_SOURCE = join(NODE_MODULES, "fflate");
 const JS_DOS_SOURCE = join(NODE_MODULES, "js-dos");
@@ -56,6 +57,7 @@ type WorkboxGenerator = typeof generateSW;
 
 export function createIntegrityManifestTransform(
   outputDir: string,
+  urlPrefix = "",
 ): ManifestTransform {
   const root = resolve(outputDir);
   return async (entries) => ({
@@ -74,7 +76,12 @@ export function createIntegrityManifestTransform(
         const integrity = `sha384-${createHash("sha384")
           .update(await readFile(path))
           .digest("base64")}`;
-        return { ...entry, integrity };
+        return {
+          ...entry,
+          integrity,
+          url:
+            entry.url === "index.html" ? entry.url : `${urlPrefix}${entry.url}`,
+        };
       }),
     ),
     warnings: [],
@@ -187,6 +194,33 @@ async function walkFiles(root: string): Promise<string[]> {
     }
   }
   return files;
+}
+
+function releaseRelativePath(version: string): string {
+  if (!/^[a-zA-Z0-9._-]+$/.test(version)) {
+    throw new Error(`Invalid release version: ${version}`);
+  }
+  return `${RELEASES_PATH}/${version}`;
+}
+
+export async function scopeReleaseReferences(
+  root: string,
+  version: string,
+): Promise<void> {
+  const releasePath = releaseRelativePath(version);
+  const referencePattern =
+    /(["'`(=]\s*)\/(apps|assets|css|dos|iframe|js|swf|vendor)\//g;
+  for (const path of await walkFiles(root)) {
+    if (
+      ![".css", ".html", ".js", ".mjs"].includes(extname(path)) ||
+      path.endsWith(`${sep}js${sep}offline-worker.js`)
+    ) {
+      continue;
+    }
+    const content = await readFile(path, "utf8");
+    const scoped = content.replace(referencePattern, `$1/${releasePath}/$2/`);
+    if (scoped !== content) await writeFile(path, scoped);
+  }
 }
 
 async function replaceExactlyOnce(
@@ -793,7 +827,7 @@ export async function versionOfflineGameManifest(
 ): Promise<string> {
   const hash = await getShortHash(paths.offlineGamesJson);
   const filename = `offline-games.${hash}.json`;
-  await cp(paths.offlineGamesJson, join(paths.root, filename));
+  await rename(paths.offlineGamesJson, join(paths.root, filename));
   const mapping = `<script>window.ASTRO_OFFLINE_MANIFEST_URL=${JSON.stringify(filename)};</script>`;
   const html = await replaceExactlyOnce(
     await readFile(paths.html, "utf8"),
@@ -864,6 +898,7 @@ export async function generateServiceWorker(
   version?: string,
 ): Promise<void> {
   console.log("Generating service worker...");
+  const releasePrefix = version ? `${releaseRelativePath(version)}/` : "";
   const offlineWorkerNames = (await readdir(join(outputDir, "js"))).filter(
     (name) => /^offline-worker\.[a-f0-9]{8}\.js$/.test(name),
   );
@@ -875,8 +910,11 @@ export async function generateServiceWorker(
   await generator({
     ...workboxConfig,
     globDirectory: `${resolve(outputDir)}/`,
-    importScripts: [`js/${offlineWorkerNames[0]}`],
-    manifestTransforms: [createIntegrityManifestTransform(outputDir)],
+    importScripts: [`${releasePrefix}js/${offlineWorkerNames[0]}`],
+    inlineWorkboxRuntime: true,
+    manifestTransforms: [
+      createIntegrityManifestTransform(outputDir, releasePrefix),
+    ],
     swDest: join(resolve(outputDir), "sw.js"),
   });
 
@@ -891,32 +929,9 @@ export async function generateServiceWorker(
     )};self.addEventListener("message",event=>{if(event.data?.type==="GET_VERSION")event.ports[0]?.postMessage({version:self.__ASTRO_FLASH_VERSION__})});\n`;
     await writeFile(serviceWorker, workerSource);
   }
-  const referencedRuntimeNames = new Set(
-    [...workerSource.matchAll(/workbox-[a-f0-9]+(?:\.js)?/g)].map((match) =>
-      match[0].endsWith(".js") ? match[0] : `${match[0]}.js`,
-    ),
-  );
-  if (referencedRuntimeNames.size === 0) {
-    throw new Error("Generated service worker references no Workbox runtime");
-  }
-  if (
-    !(
-      await Promise.all(
-        [...referencedRuntimeNames].map((name) =>
-          isFile(join(outputDir, name)),
-        ),
-      )
-    ).every(Boolean)
-  ) {
-    throw new Error(
-      "Generated service worker references a missing Workbox runtime",
-    );
-  }
   for (const path of await getWorkboxFiles(outputDir)) {
     const name = path.split(sep).at(-1) ?? "";
-    if (name.startsWith("workbox-") && !referencedRuntimeNames.has(name)) {
-      await rm(path);
-    }
+    if (name.startsWith("workbox-")) await rm(path);
   }
   console.log("  - Service worker generated successfully");
 }
@@ -925,7 +940,6 @@ export async function validateOutput(outputDir: string): Promise<void> {
   const paths = new BuildPaths(outputDir);
   const required = [
     paths.html,
-    paths.offlineGamesJson,
     paths.versionJson,
     join(outputDir, "sw.js"),
     paths.fflateJs,
@@ -1104,7 +1118,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
   let offlineManifest: OfflineManifest;
   try {
     offlineManifest = JSON.parse(
-      await readFile(paths.offlineGamesJson, "utf8"),
+      await readFile(versionedOfflineManifest, "utf8"),
     ) as OfflineManifest;
   } catch {
     throw new Error("Build output has invalid offline game manifest");
@@ -1115,12 +1129,6 @@ export async function validateOutput(outputDir: string): Promise<void> {
     !offlineManifest.runtime?.files?.length
   ) {
     throw new Error("Build output has invalid offline game manifest");
-  }
-  if (
-    (await readFile(versionedOfflineManifest, "utf8")) !==
-    (await readFile(paths.offlineGamesJson, "utf8"))
-  ) {
-    throw new Error("Build output has inconsistent offline game manifests");
   }
   const gameRoots = Object.fromEntries(
     Object.entries(offlineManifest.games).map(([id, game]) => [id, game.root]),
@@ -1210,6 +1218,114 @@ export async function replaceOutput(
   }
 }
 
+export async function assembleReleaseOutput(
+  stagingDir: string,
+  version: string,
+): Promise<void> {
+  const releasePath = releaseRelativePath(version);
+  const releaseDir = join(stagingDir, ...releasePath.split("/"));
+  const rootHtml = join(stagingDir, "index.html");
+  const html = await replaceExactlyOnce(
+    await readFile(rootHtml, "utf8"),
+    /<head>/g,
+    `<head>\n    <base href="/${releasePath}/" />`,
+    "Could not set the immutable release base URL",
+  ).then((content) =>
+    content.replaceAll(
+      "https://flash.4st.li/assets/",
+      `https://flash.4st.li/${releasePath}/assets/`,
+    ),
+  );
+
+  await mkdir(releaseDir, { recursive: true });
+  for (const entry of await readdir(stagingDir, { withFileTypes: true })) {
+    if (
+      entry.name === RELEASES_PATH ||
+      entry.name === "index.html" ||
+      entry.name === "sw.js" ||
+      entry.name === "version.json" ||
+      entry.name === "CNAME"
+    ) {
+      continue;
+    }
+    await rename(join(stagingDir, entry.name), join(releaseDir, entry.name));
+  }
+  await writeFile(rootHtml, html);
+}
+
+export async function validateReleaseOutput(
+  outputDir: string,
+  version: string,
+): Promise<void> {
+  const releasePath = releaseRelativePath(version);
+  const releaseDir = join(outputDir, ...releasePath.split("/"));
+  const allowedRootEntries = new Set([
+    "CNAME",
+    "index.html",
+    "releases",
+    "sw.js",
+    "version.json",
+  ]);
+  const unexpectedRootEntries = (await readdir(outputDir)).filter(
+    (name) => !allowedRootEntries.has(name),
+  );
+  if (unexpectedRootEntries.length > 0) {
+    throw new Error(
+      `Build output has files outside the release directory: ${unexpectedRootEntries.join(", ")}`,
+    );
+  }
+  const releases = await readdir(join(outputDir, RELEASES_PATH));
+  if (releases.length !== 1 || releases[0] !== version) {
+    throw new Error("Build output has an invalid release directory");
+  }
+  const html = await readFile(join(outputDir, "index.html"), "utf8");
+  if (!html.includes(`<base href="/${releasePath}/" />`)) {
+    throw new Error("Build output has no matching immutable release base URL");
+  }
+  if (await isFile(join(releaseDir, "offline-games.json"))) {
+    throw new Error("Build output contains an unversioned offline manifest");
+  }
+  const manifestReference = html.match(
+    /window\.ASTRO_OFFLINE_MANIFEST_URL="(offline-games\.[a-f0-9]{8}\.json)"/,
+  )?.[1];
+  if (
+    !manifestReference ||
+    !(await isFile(join(releaseDir, manifestReference)))
+  ) {
+    throw new Error("Build output has no release-scoped offline manifest");
+  }
+  for (const requiredPath of [
+    "apps",
+    "assets",
+    "capture.html",
+    "css",
+    "iframe",
+    "js",
+    "vendor",
+  ]) {
+    const path = join(releaseDir, requiredPath);
+    if (!(await isFile(path)) && !(await isDirectory(path))) {
+      throw new Error(`Build output is missing release path: ${requiredPath}`);
+    }
+  }
+  for (const path of await walkFiles(releaseDir)) {
+    if (
+      ![".css", ".html", ".js", ".mjs"].includes(extname(path)) ||
+      /offline-worker\.[a-f0-9]{8}\.js$/.test(path)
+    ) {
+      continue;
+    }
+    const reference = (await readFile(path, "utf8")).match(
+      /["'`(=]\s*\/(apps|assets|css|dos|iframe|js|swf|vendor)\//,
+    )?.[0];
+    if (reference) {
+      throw new Error(
+        `Build output has an unscoped release reference in ${relative(releaseDir, path)}: ${reference}`,
+      );
+    }
+  }
+}
+
 export interface BuildOptions {
   outputDir?: string;
   revision?: string;
@@ -1251,6 +1367,7 @@ export async function build({
       recursive: true,
       preserveTimestamps: true,
     });
+    await scopeReleaseReferences(stagingDir, deploymentVersion);
     const paths = new BuildPaths(stagingDir);
     await installFflate(stagingDir);
     await installJsDos(stagingDir);
@@ -1258,10 +1375,12 @@ export async function build({
     await installRuffleRuntime(paths.js);
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
-    await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, deploymentVersion);
+    await versionOfflineGameManifest(paths);
     await generate(stagingDir, deploymentVersion);
     await validateOutput(stagingDir);
+    await assembleReleaseOutput(stagingDir, deploymentVersion);
+    await validateReleaseOutput(stagingDir, deploymentVersion);
     await replaceOutput(stagingDir, resolvedOutput);
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });

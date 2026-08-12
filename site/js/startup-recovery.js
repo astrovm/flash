@@ -44,7 +44,7 @@
       try {
         const nonce = environment.Date.now();
         const versionResponse = await environment.fetch(
-          `version.json?t=${nonce}`,
+          `/version.json?t=${nonce}`,
           { cache: "no-store" },
         );
         if (!versionResponse.ok) throw new Error("Version check failed");

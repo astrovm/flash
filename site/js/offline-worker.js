@@ -19,6 +19,7 @@
   const SCUMMVM_DIRECTORY = "astro-flash-scummvm";
   let revcdosStorePromise;
   const scummvmStores = new Map();
+  const releasePath = (path) => path.replace(/^\/releases\/[^/]+(?=\/)/, "");
 
   const normalizeAssetPath = (path) =>
     decodeURIComponent(path)
@@ -209,21 +210,20 @@
     if (event.request.method !== "GET") return;
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
+    const path = releasePath(url.pathname);
+    if (path === url.pathname) return;
     if (REVCDOS_ROUTE.test(url.pathname)) {
       event.respondWith(serveRevcdosAsset(event.request, url));
       return;
     }
-    if (url.pathname.startsWith(SCUMMVM_ROUTE)) {
+    if (path.startsWith(SCUMMVM_ROUTE)) {
       event.respondWith(serveScummvmAsset(url));
       return;
     }
-    const isGameFile = OPTIONAL_PATHS.some((prefix) =>
-      url.pathname.startsWith(prefix),
-    );
+    const isGameFile = OPTIONAL_PATHS.some((prefix) => path.startsWith(prefix));
     const isRuffleRuntime =
-      url.pathname.startsWith("/js/") &&
-      (url.pathname.endsWith(".wasm") ||
-        /\/core\.ruffle\.[^/]+\.js$/.test(url.pathname));
+      path.startsWith("/js/") &&
+      (path.endsWith(".wasm") || /\/core\.ruffle\.[^/]+\.js$/.test(path));
     if (!isGameFile && !isRuffleRuntime) return;
 
     event.respondWith(
