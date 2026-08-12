@@ -229,7 +229,12 @@
     event.respondWith(
       caches.open(BUNDLED_GAME_CACHE).then(async (cache) => {
         const cached = await cache.match(event.request, { ignoreSearch: true });
-        return cached || fetch(event.request);
+        try {
+          return await fetch(event.request);
+        } catch (error) {
+          if (cached) return cached;
+          throw error;
+        }
       }),
     );
   });

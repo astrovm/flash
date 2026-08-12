@@ -116,6 +116,14 @@ async function makeSource(root: string): Promise<void> {
     "vendor/js-dos/js-dos.js": "js-dos",
     "vendor/js-dos/emulators/wdosbox.wasm": "wasm",
     "vendor/webtorrent/webtorrent.min.js": "webtorrent",
+    "vendor/boxedwine/26R1/boxedwine-shell.js": "boxedwine shell",
+    "vendor/boxedwine/26R1/boxedwine.js":
+      "return locateFile('boxedwine.wasm');",
+    "vendor/boxedwine/26R1/boxedwine.wasm": "boxedwine wasm",
+    "vendor/boxedwine/26R1/index.html": [
+      '<script src="boxedwine-shell.js"></script>',
+      '<script async src="boxedwine.js"></script>',
+    ].join("\n"),
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
@@ -265,6 +273,34 @@ describe("build metadata", () => {
     expect(capture).toContain(`${hashedAssets.gamesJs}"`);
     expect(capture).toContain(`${hashedAssets.flashUrlRouterJs}"`);
     const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    const boxedWineIndex = await readFile(
+      join(root, "vendor", "boxedwine", "26R1", "index.html"),
+      "utf8",
+    );
+    const boxedWineJavaScript = boxedWineIndex.match(
+      /boxedwine\.[a-f0-9]{8}\.js/,
+    )?.[0];
+    const boxedWineShell = boxedWineIndex.match(
+      /boxedwine-shell\.[a-f0-9]{8}\.js/,
+    )?.[0];
+    expect(boxedWineJavaScript).toBeDefined();
+    expect(boxedWineShell).toBeDefined();
+    expect(
+      await Bun.file(
+        join(root, "vendor", "boxedwine", "26R1", boxedWineJavaScript!),
+      ).exists(),
+    ).toBeTrue();
+    expect(
+      await Bun.file(
+        join(root, "vendor", "boxedwine", "26R1", boxedWineShell!),
+      ).exists(),
+    ).toBeTrue();
+    expect(
+      await readFile(
+        join(root, "vendor", "boxedwine", "26R1", boxedWineJavaScript!),
+        "utf8",
+      ),
+    ).toMatch(/locateFile\('boxedwine\.[a-f0-9]{8}\.wasm'\)/);
     for (const gameId of [
       "pink-panther-hokus-pokus",
       "pink-panther-passport-to-peril",
@@ -324,6 +360,10 @@ describe("build metadata", () => {
     expect(manifest.runtime.files.length).toBeGreaterThan(0);
     expect(metadata.bundledGameBytes).toBe(
       manifest.runtime.bytes +
+        Object.values(manifest.runtimes).reduce(
+          (total: number, runtime: any) => total + runtime.bytes,
+          0,
+        ) +
         Object.values(manifest.games).reduce(
           (total: number, game: any) => total + game.bytes,
           0,

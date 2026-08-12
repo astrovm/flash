@@ -502,6 +502,44 @@ export async function updateHtml(
     }
     await writeFile(paths.captureHtml, capture);
   }
+
+  const boxedWineRoot = join(paths.root, "vendor", "boxedwine", "26R1");
+  if (await isDirectory(boxedWineRoot)) {
+    const wasmPath = join(boxedWineRoot, "boxedwine.wasm");
+    const javaScriptPath = join(boxedWineRoot, "boxedwine.js");
+    const shellPath = join(boxedWineRoot, "boxedwine-shell.js");
+    const indexPath = join(boxedWineRoot, "index.html");
+    const wasmName = `boxedwine.${await getShortHash(wasmPath)}.wasm`;
+    let javaScript = await readFile(javaScriptPath, "utf8");
+    javaScript = await replaceExactlyOnce(
+      javaScript,
+      /locateFile\((['"])boxedwine\.wasm\1\)/g,
+      `locateFile('${wasmName}')`,
+      "Could not version the BoxedWine WebAssembly reference",
+    );
+    await writeFile(javaScriptPath, javaScript);
+    const javaScriptName = `boxedwine.${await getShortHash(javaScriptPath)}.js`;
+    const shellName = `boxedwine-shell.${await getShortHash(shellPath)}.js`;
+    let boxedWineIndex = await readFile(indexPath, "utf8");
+    boxedWineIndex = await replaceExactlyOnce(
+      boxedWineIndex,
+      /boxedwine-shell\.js"/g,
+      `${shellName}"`,
+      "Could not version the BoxedWine shell reference",
+    );
+    boxedWineIndex = await replaceExactlyOnce(
+      boxedWineIndex,
+      /boxedwine\.js"/g,
+      `${javaScriptName}"`,
+      "Could not version the BoxedWine JavaScript reference",
+    );
+    await writeFile(indexPath, boxedWineIndex);
+    await Promise.all([
+      rename(wasmPath, join(boxedWineRoot, wasmName)),
+      rename(javaScriptPath, join(boxedWineRoot, javaScriptName)),
+      rename(shellPath, join(boxedWineRoot, shellName)),
+    ]);
+  }
   console.log(`  - Set deployment version to ${version}`);
   return hashedAssets;
 }
