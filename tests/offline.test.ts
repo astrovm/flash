@@ -163,6 +163,14 @@ test("offline updates", async () => {
       },
     },
   };
+  const testIntegrity = `sha384-${"A".repeat(64)}`;
+  for (const entry of [
+    manifest.runtime,
+    ...Object.values(manifest.runtimes),
+    ...Object.values(manifest.games),
+  ]) {
+    for (const file of entry.files) file.integrity = testIntegrity;
+  }
 
   const makeEnvironment = ({
     registration = new Registration({
@@ -190,6 +198,8 @@ test("offline updates", async () => {
     });
     const sessionStorage = new MemoryStorage(sessionValues);
     let reloads = 0;
+    const timers = [];
+    const fetches = [];
     const environment = new Events();
     Object.assign(environment, {
       navigator: {
@@ -210,6 +220,11 @@ test("offline updates", async () => {
         },
       },
       Date: { now: () => 1_800_000_000_000 },
+      clearTimeout() {},
+      setTimeout: (callback, delay) => {
+        timers.push({ callback, delay });
+        return timers.length;
+      },
       document: Object.assign(new Events(), { visibilityState: "visible" }),
       caches: {
         keys: async () => ["astro-flash-precache", BUNDLED_GAME_CACHE],
@@ -222,6 +237,7 @@ test("offline updates", async () => {
         },
       },
       fetch: async (url, options) => {
+        fetches.push({ options, url });
         assert.strictEqual(options.cache, "no-store");
         if (String(url).startsWith("version.json")) {
           return new Response(
@@ -243,11 +259,13 @@ test("offline updates", async () => {
       bundledCache,
       deletedCaches,
       environment,
+      fetches,
       getReloads: () => reloads,
       registration,
       serviceWorker,
       storage,
       sessionStorage,
+      timers,
     };
   };
 
@@ -275,13 +293,19 @@ test("offline updates", async () => {
   });
   await manager.initialize();
   assert.deepStrictEqual(initial.serviceWorker.registerCalls[0], [
-    "sw.js",
-    { updateViaCache: "none" },
+    `sw.js?v=${manifest.version}`,
+    { scope: "./", updateViaCache: "none" },
   ]);
   assert.strictEqual(manager.getSnapshot().phase, "ready");
   assert.strictEqual(manager.getSnapshot().bundledGames.length, 4);
 
   await manager.downloadGame("bike-mania");
+  assert.strictEqual(
+    initial.fetches.find(({ url }) =>
+      String(url).includes("bike-mania.bike-1/main.swf"),
+    ).options.integrity,
+    testIntegrity,
+  );
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, [
     "bike-mania",
   ]);
@@ -478,7 +502,7 @@ test("offline updates", async () => {
     updateManager.getSnapshot().availableVersion,
     "26.07.30-bbbbbbb",
   );
-  const waitingWorker = new Worker("installed");
+  const waitingWorker = new Worker("installed", "26.07.30-bbbbbbb");
   updateRegistration.waiting = waitingWorker;
   updateRegistration.dispatch("updatefound");
   await new Promise((resolve) => setImmediate(resolve));
@@ -486,6 +510,39 @@ test("offline updates", async () => {
   assert.deepStrictEqual(waitingWorker.messages, [{ type: "SKIP_WAITING" }]);
   update.serviceWorker.dispatch("controllerchange");
   assert.strictEqual(update.getReloads(), 1);
+
+  const staleWaitingRegistration = new Registration({
+    active: new Worker("activated", manifest.version),
+    waiting: new Worker("installed", "26.07.30-intermediate"),
+  });
+  const staleWaiting = makeEnvironment({
+    registration: staleWaitingRegistration,
+    remoteVersion: "26.07.30-bbbbbbb",
+  });
+  const staleWaitingManager = createManager({
+    currentVersion: manifest.version,
+    environment: staleWaiting.environment,
+  });
+  await staleWaitingManager.initialize();
+  assert.strictEqual(staleWaitingManager.getSnapshot().updateReady, false);
+  await assert.rejects(
+    staleWaitingManager.applyUpdate(),
+    /not ready to install/,
+  );
+  assert.deepStrictEqual(staleWaitingRegistration.waiting.messages, []);
+  staleWaitingRegistration.waiting = new Worker(
+    "installed",
+    "26.07.30-bbbbbbb",
+  );
+  const retry = staleWaiting.timers.find(({ delay }) => delay === 30_000);
+  assert.ok(retry);
+  retry.callback();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.match(
+    staleWaiting.serviceWorker.registerCalls.at(-1)[0],
+    /^sw\.js\?v=26\.07\.30-bbbbbbb&retry=1800000000000$/,
+  );
+  assert.strictEqual(staleWaitingManager.getSnapshot().updateReady, true);
 
   const activatedUpdate = makeEnvironment({
     registration: new Registration({

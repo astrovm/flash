@@ -12,6 +12,7 @@ const WELCOME_DURATION_MS = 1200;
 const APP_VERSION = "26.07.28-2";
 const offlineManager = window.AstroOffline.createManager({
   currentVersion: APP_VERSION,
+  gameManifestUrl: window.ASTRO_OFFLINE_MANIFEST_URL || "offline-games.json",
 });
 const gameDataManager = window.AstroGameData.createManager();
 

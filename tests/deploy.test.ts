@@ -23,6 +23,7 @@ import {
   installWebtorrent,
   updateHtml,
   validateOutput,
+  versionOfflineGameManifest,
   writeOfflineGameManifest,
   writeVersionMetadata,
 } from "../tools/deploy";
@@ -259,6 +260,7 @@ describe("build metadata", () => {
 
     const hashedAssets = await updateHtml(paths, "26.07.28-abcdef1");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
+    const offlineManifestName = await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
 
     const main = await readFile(join(root, hashedAssets.mainJs), "utf8");
@@ -283,11 +285,21 @@ describe("build metadata", () => {
     expect(html).toContain(`${hashedAssets["entry:js/shell/desktop.js"]}"`);
     expect(html).toContain(`${hashedAssets["entry:apps/index.js"]}"`);
     expect(html).toContain(`${hashedAssets["entry:css/shell/desktop.css"]}"`);
+    expect(html).toContain(
+      `window.ASTRO_OFFLINE_MANIFEST_URL="${offlineManifestName}"`,
+    );
+    expect(offlineManifestName).toMatch(/^offline-games\.[a-f0-9]{8}\.json$/);
+    expect(await readFile(join(root, offlineManifestName), "utf8")).toBe(
+      await readFile(paths.offlineGamesJson, "utf8"),
+    );
     const capture = await readFile(paths.captureHtml, "utf8");
     expect(capture).toContain(`${hashedAssets.ruffle}"`);
     expect(capture).toContain(`${hashedAssets.gamesJs}"`);
     expect(capture).toContain(`${hashedAssets.flashUrlRouterJs}"`);
     const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    expect(manifest.games["bike-mania"].files[0].integrity).toMatch(
+      /^sha384-[A-Za-z0-9+/]+={0,2}$/,
+    );
     const boxedWineIndex = await readFile(
       join(root, "apps", "core", "boxedwine.js"),
       "utf8",
@@ -427,6 +439,7 @@ describe("build metadata", () => {
     const hashedAssets = await updateHtml(paths, "26.07.28-abcdef1");
     await writeFile(join(root, hashedAssets.mainJs), "tampered");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
+    await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
     await expect(validateOutput(root)).rejects.toThrow(
       "invalid content hash for js/main.js",
@@ -497,6 +510,7 @@ describe("Workbox and artifact validation", () => {
     const paths = new BuildPaths(root);
     await updateHtml(paths, "26.07.28-abcdef1");
     await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
+    await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, "26.07.28-abcdef1");
     await validateOutput(root);
 
