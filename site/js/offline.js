@@ -19,6 +19,7 @@
   const ACTIVE_VERSION_RELOAD_KEY = "astroFlashActiveVersionReload";
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
+  const UPDATE_RETRY_DELAY = 30 * 1000;
 
   const waitForWorker = (worker) =>
     new Promise((resolve, reject) => {
@@ -62,7 +63,9 @@
       .split("/")
       .some((part) => !part || part === "." || part === "..") &&
     Number.isInteger(file.bytes) &&
-    file.bytes >= 0;
+    file.bytes >= 0 &&
+    typeof file.integrity === "string" &&
+    /^sha384-[A-Za-z0-9+/]+={0,2}$/.test(file.integrity);
 
   const validateManifestEntry = (entry) =>
     entry &&
@@ -134,6 +137,24 @@
     let checkPromise = null;
     let reloadWhenControlled = false;
     let lifecycleListenersAttached = false;
+    let updateRetryTimer = null;
+    let bypassWorkerCdn = false;
+
+    const versionedServiceWorkerUrl = (version) => {
+      const separator = serviceWorkerUrl.includes("?") ? "&" : "?";
+      const versionedUrl = `${serviceWorkerUrl}${separator}v=${encodeURIComponent(version)}`;
+      return bypassWorkerCdn
+        ? `${versionedUrl}&retry=${environment.Date.now()}`
+        : versionedUrl;
+    };
+
+    const scheduleUpdateRetry = () => {
+      if (updateRetryTimer !== null) return;
+      updateRetryTimer = (environment.setTimeout || setTimeout)(() => {
+        updateRetryTimer = null;
+        void checkForUpdates().catch(() => {});
+      }, UPDATE_RETRY_DELAY);
+    };
 
     const requestWorkerVersion = (worker) =>
       new Promise((resolve) => {
@@ -245,15 +266,32 @@
       });
     };
 
-    const markWaitingUpdate = async (worker) => {
+    const markWaitingUpdate = async (worker, knownMetadata = null) => {
       if (!worker) return;
-      let metadata = null;
+      let metadata = knownMetadata;
       try {
-        metadata = await fetchVersion();
+        metadata ||= await fetchVersion();
         rememberVersionMetadata(metadata);
       } catch {
-        // A waiting worker is enough to prove that an update is ready.
+        scheduleUpdateRetry();
+        return false;
       }
+      const workerVersion = await requestWorkerVersion(worker);
+      if (workerVersion !== metadata.version) {
+        bypassWorkerCdn = true;
+        setState({
+          phase: "updating",
+          updateReady: false,
+          workerState: "waiting",
+          availableVersion: metadata.version,
+          availableRevision: metadata.revision,
+          downloadBytes: metadata.offlineBytes,
+          error: null,
+        });
+        scheduleUpdateRetry();
+        return false;
+      }
+      bypassWorkerCdn = false;
       setState({
         phase: "update-ready",
         updateReady: true,
@@ -263,6 +301,7 @@
         downloadBytes: metadata?.offlineBytes || state.downloadBytes,
         error: null,
       });
+      return true;
     };
 
     const reconcileActiveVersion = async (targetVersion) => {
@@ -349,22 +388,22 @@
       }
     };
 
-    const registerAndWait = async () => {
+    const registerAndWait = async (targetVersion) => {
       if (!navigatorObject.serviceWorker) {
         throw new Error(
           "Offline system files are not supported by this browser.",
         );
       }
       const nextRegistration = await navigatorObject.serviceWorker.register(
-        serviceWorkerUrl,
-        { updateViaCache: "none" },
+        versionedServiceWorkerUrl(targetVersion),
+        { scope: "./", updateViaCache: "none" },
       );
       trackRegistration(nextRegistration);
       if (nextRegistration.active) {
         setState({
-          phase: nextRegistration.waiting ? "update-ready" : "ready",
+          phase: nextRegistration.waiting ? "updating" : "ready",
           workerState: nextRegistration.waiting ? "waiting" : "active",
-          updateReady: Boolean(nextRegistration.waiting),
+          updateReady: false,
           error: null,
         });
         return nextRegistration;
@@ -379,6 +418,11 @@
         await waitForWorker(worker);
       } else {
         await navigatorObject.serviceWorker.ready;
+      }
+      const activeWorker = nextRegistration.active || worker;
+      if ((await requestWorkerVersion(activeWorker)) !== targetVersion) {
+        scheduleUpdateRetry();
+        throw new Error("The downloaded system version is inconsistent.");
       }
       setState({ phase: "ready", workerState: "active", error: null });
       await refreshStorageEstimate();
@@ -419,6 +463,10 @@
         throw new Error(`Offline game catalog failed (${response.status}).`);
       }
       manifest = validateGameManifest(await response.json());
+      if (manifest.version !== currentVersion) {
+        manifest = null;
+        throw new Error("The offline game catalog version is inconsistent.");
+      }
       setState({
         bundledGames: Object.entries(manifest.games).map(([id, entry]) => ({
           id,
@@ -470,6 +518,7 @@
         for (const file of entry.files) {
           const response = await environment.fetch(file.url, {
             cache: "no-store",
+            integrity: file.integrity,
           });
           if (!response.ok) {
             throw new Error(`Offline download failed (${response.status}).`);
@@ -668,16 +717,34 @@
         try {
           const metadata = await fetchVersion();
           rememberVersionMetadata(metadata);
-          if (!registration) await registerAndWait();
-          await registration.update();
+          await registerAndWait(metadata.version);
+          let waitingUpdateReady = false;
           if (registration.waiting) {
-            await markWaitingUpdate(registration.waiting);
+            waitingUpdateReady = await markWaitingUpdate(
+              registration.waiting,
+              metadata,
+            );
           } else if (registration.installing) {
             trackInstallingWorker(registration.installing, true);
           }
           const checkedAt = environment.Date.now();
           storage.setItem(LAST_CHECKED_KEY, String(checkedAt));
-          const updateAvailable = metadata.version !== currentVersion;
+          const activeWorkerVersion = await requestWorkerVersion(
+            registration?.active,
+          );
+          const updateAvailable =
+            metadata.version !== currentVersion ||
+            (activeWorkerVersion !== null &&
+              activeWorkerVersion !== metadata.version);
+          if (
+            activeWorkerVersion !== null &&
+            activeWorkerVersion !== metadata.version &&
+            !registration?.waiting &&
+            !registration?.installing
+          ) {
+            bypassWorkerCdn = true;
+            scheduleUpdateRetry();
+          }
           if (
             updateAvailable &&
             (await reconcileActiveVersion(metadata.version))
@@ -687,14 +754,14 @@
           }
           setState({
             phase: updateAvailable
-              ? registration?.waiting
+              ? waitingUpdateReady
                 ? "update-ready"
                 : "update-available"
               : "ready",
             availableVersion: updateAvailable ? metadata.version : null,
             availableRevision: updateAvailable ? metadata.revision : null,
             lastChecked: checkedAt,
-            updateReady: updateAvailable && Boolean(registration?.waiting),
+            updateReady: updateAvailable && waitingUpdateReady,
             workerState: registration?.waiting
               ? "waiting"
               : registration?.active
@@ -729,6 +796,14 @@
 
     const applyUpdate = async () => {
       if (registration?.waiting) {
+        const workerVersion = await requestWorkerVersion(registration.waiting);
+        if (
+          !state.availableVersion ||
+          workerVersion !== state.availableVersion
+        ) {
+          scheduleUpdateRetry();
+          throw new Error("The update is not ready to install.");
+        }
         reloadWhenControlled = true;
         setState({ phase: "applying", error: null });
         registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -754,7 +829,6 @@
       await deleteShellCaches();
       registration = null;
       setState({ phase: "starting", updateReady: false });
-      await registerAndWait();
       await checkForUpdates();
       return snapshot();
     };
@@ -796,7 +870,15 @@
       attachLifecycleListeners();
       await refreshStorageEstimate();
       try {
-        await registerAndWait();
+        const existingRegistration =
+          await navigatorObject.serviceWorker?.getRegistration?.("./");
+        if (existingRegistration) trackRegistration(existingRegistration);
+        try {
+          await checkForUpdates();
+        } catch (error) {
+          if (!existingRegistration) throw error;
+          setState({ phase: "ready", workerState: "active", error: null });
+        }
         await loadGameManifest();
         const knownVersion = storage.getItem(DOWNLOAD_VERSION_KEY);
         if (
@@ -806,7 +888,6 @@
         ) {
           return snapshot();
         }
-        automaticCheck();
         void syncDownloadedGames().catch((error) => {
           setState({ gamePhase: "error", gameError: error.message });
         });

@@ -83,6 +83,7 @@ export function createIntegrityManifestTransform(
 
 interface OfflineFile {
   bytes: number;
+  integrity: string;
   url: string;
 }
 
@@ -599,8 +600,10 @@ async function offlineFileEntry(
   revision?: string,
 ): Promise<OfflineFile> {
   const relativePath = relative(root, path).split(sep).join("/");
+  const content = await readFile(path);
   return {
-    bytes: (await stat(path)).size,
+    bytes: content.byteLength,
+    integrity: `sha384-${createHash("sha384").update(content).digest("base64")}`,
     url: revision ? `${relativePath}?rev=${revision}` : relativePath,
   };
 }
@@ -785,6 +788,23 @@ export async function writeOfflineGameManifest(
   await writeFile(paths.offlineGamesJson, `${JSON.stringify(manifest)}\n`);
 }
 
+export async function versionOfflineGameManifest(
+  paths: BuildPaths,
+): Promise<string> {
+  const hash = await getShortHash(paths.offlineGamesJson);
+  const filename = `offline-games.${hash}.json`;
+  await cp(paths.offlineGamesJson, join(paths.root, filename));
+  const mapping = `<script>window.ASTRO_OFFLINE_MANIFEST_URL=${JSON.stringify(filename)};</script>`;
+  const html = await replaceExactlyOnce(
+    await readFile(paths.html, "utf8"),
+    /<script src="js\/offline\.[a-f0-9]{8}\.js"><\/script>/g,
+    `${mapping}\n    $&`,
+    "Could not inject the versioned offline game manifest",
+  );
+  await writeFile(paths.html, html);
+  return filename;
+}
+
 export async function writeVersionMetadata(
   paths: BuildPaths,
   version: string,
@@ -795,6 +815,7 @@ export async function writeVersionMetadata(
     const relativePath = relative(paths.root, path);
     if (
       path !== paths.versionJson &&
+      path !== paths.offlineGamesJson &&
       PRECACHE_FILE_SUFFIXES.has(extname(path).toLowerCase()) &&
       !isOptionalOfflinePath(relativePath)
     ) {
@@ -926,6 +947,20 @@ export async function validateOutput(outputDir: string): Promise<void> {
   }
 
   const html = await readFile(paths.html, "utf8");
+  const offlineManifestReference = html.match(
+    /window\.ASTRO_OFFLINE_MANIFEST_URL="(offline-games\.([a-f0-9]{8})\.json)"/,
+  );
+  if (!offlineManifestReference) {
+    throw new Error("Build output has no versioned offline game manifest");
+  }
+  const versionedOfflineManifest = join(outputDir, offlineManifestReference[1]);
+  if (
+    !(await isFile(versionedOfflineManifest)) ||
+    (await getShortHash(versionedOfflineManifest)) !==
+      offlineManifestReference[2]
+  ) {
+    throw new Error("Build output has an invalid offline manifest hash");
+  }
   for (const asset of [
     "js/ruffle.js",
     "js/games.js",
@@ -1081,6 +1116,12 @@ export async function validateOutput(outputDir: string): Promise<void> {
   ) {
     throw new Error("Build output has invalid offline game manifest");
   }
+  if (
+    (await readFile(versionedOfflineManifest, "utf8")) !==
+    (await readFile(paths.offlineGamesJson, "utf8"))
+  ) {
+    throw new Error("Build output has inconsistent offline game manifests");
+  }
   const gameRoots = Object.fromEntries(
     Object.entries(offlineManifest.games).map(([id, game]) => [id, game.root]),
   );
@@ -1100,9 +1141,18 @@ export async function validateOutput(outputDir: string): Promise<void> {
       throw new Error(`Build output has an invalid game package for ${id}`);
     }
     for (const file of game.files) {
-      if (!(await isFile(join(outputDir, file.url)))) {
+      const path = join(outputDir, file.url);
+      if (!(await isFile(path))) {
         throw new Error(
           `Build output references a missing game file: ${file.url}`,
+        );
+      }
+      const integrity = `sha384-${createHash("sha384")
+        .update(await readFile(path))
+        .digest("base64")}`;
+      if (file.integrity !== integrity) {
+        throw new Error(
+          `Build output has invalid game file integrity: ${file.url}`,
         );
       }
     }
@@ -1112,12 +1162,21 @@ export async function validateOutput(outputDir: string): Promise<void> {
     ...Object.values(offlineManifest.runtimes ?? {}),
   ]) {
     for (const file of runtime.files) {
+      const path = join(outputDir, file.url.split("?")[0]);
       if (
         !file.url.endsWith(`?rev=${runtime.revision}`) ||
-        !(await isFile(join(outputDir, file.url.split("?")[0])))
+        !(await isFile(path))
       ) {
         throw new Error(
           `Build output has an invalid runtime file: ${file.url}`,
+        );
+      }
+      const integrity = `sha384-${createHash("sha384")
+        .update(await readFile(path))
+        .digest("base64")}`;
+      if (file.integrity !== integrity) {
+        throw new Error(
+          `Build output has invalid runtime file integrity: ${file.url}`,
         );
       }
     }
@@ -1199,6 +1258,7 @@ export async function build({
     await installRuffleRuntime(paths.js);
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
+    await versionOfflineGameManifest(paths);
     await writeVersionMetadata(paths, deploymentVersion);
     await generate(stagingDir, deploymentVersion);
     await validateOutput(stagingDir);
