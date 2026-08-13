@@ -192,6 +192,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: 1372,
         height: 844,
+        baseWidth: 586,
+        baseHeight: 438,
       },
       origin: new URL(frame.src).origin,
     });
@@ -206,6 +208,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: 586,
         height: 438,
+        baseWidth: 586,
+        baseHeight: 438,
       },
       origin: new URL(frame.src).origin,
     });
@@ -225,6 +229,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: 586,
         height: 438,
+        baseWidth: 586,
+        baseHeight: 438,
       },
       origin: new URL(frame.src).origin,
     });
@@ -256,6 +262,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: 1372,
         height: 844,
+        baseWidth: 586,
+        baseHeight: 438,
       },
     });
     module._boxedwine_resize_screen = (width, height) =>
@@ -274,7 +282,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     };
     module.onRuntimeInitialized();
     expect(resizeCalls).toEqual([{ width: 1372, height: 844 }]);
-    expect(files.get("/d_drive/solitaire-size.txt")).toBe("1372 844");
+    expect(files.get("/d_drive/boxedwine-size.txt")).toBe("1372 844 586 438");
 
     messageListener({
       origin: "https://flash.test",
@@ -282,10 +290,12 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: 586,
         height: 438,
+        baseWidth: 586,
+        baseHeight: 438,
       },
     });
     expect(resizeCalls.at(-1)).toEqual({ width: 586, height: 438 });
-    expect(files.get("/d_drive/solitaire-size.txt")).toBe("586 438");
+    expect(files.get("/d_drive/boxedwine-size.txt")).toBe("586 438 586 438");
 
     messageListener({
       origin: "https://other.test",

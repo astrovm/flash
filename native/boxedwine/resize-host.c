@@ -1,21 +1,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#define SIZE_FILE L"D:\\solitaire-size.txt"
+#define SIZE_FILE L"D:\\boxedwine-size.txt"
 
-#if defined(RESIZE_FREECELL)
-#define TARGET_EXECUTABLE L"freecell.exe"
-#define TARGET_TITLE L"FreeCell"
-#define NATIVE_SCREEN_WIDTH 640
-#define NATIVE_SCREEN_HEIGHT 480
-#elif defined(RESIZE_SPIDER_SOLITAIRE)
-#define TARGET_EXECUTABLE L"spider.exe"
-#define TARGET_TITLE L"Spider Solitaire"
-#define NATIVE_SCREEN_WIDTH 794
-#define NATIVE_SCREEN_HEIGHT 601
-#else
-#error A supported card game must be selected.
-#endif
+typedef struct {
+  DWORD process_id;
+  HWND window;
+  LONG area;
+} WindowSearch;
 
 static BOOL parse_dimension(char **cursor, char *end, unsigned int *value) {
   unsigned int result = 0;
@@ -31,7 +23,9 @@ static BOOL parse_dimension(char **cursor, char *end, unsigned int *value) {
   return TRUE;
 }
 
-static BOOL read_window_size(unsigned int *width, unsigned int *height) {
+static BOOL read_window_size(unsigned int *width, unsigned int *height,
+                             unsigned int *native_width,
+                             unsigned int *native_height) {
   char buffer[64];
   DWORD bytes_read = 0;
   HANDLE file = CreateFileW(SIZE_FILE, GENERIC_READ,
@@ -43,8 +37,37 @@ static BOOL read_window_size(unsigned int *width, unsigned int *height) {
   char *cursor = buffer;
   char *end = buffer + bytes_read;
   return read && parse_dimension(&cursor, end, width) &&
-         parse_dimension(&cursor, end, height) && *width >= 100 &&
-         *height >= 100;
+         parse_dimension(&cursor, end, height) &&
+         parse_dimension(&cursor, end, native_width) &&
+         parse_dimension(&cursor, end, native_height) && *width >= 100 &&
+         *height >= 100 && *native_width >= 100 && *native_height >= 100;
+}
+
+static BOOL CALLBACK find_process_window(HWND window, LPARAM parameter) {
+  WindowSearch *search = (WindowSearch *)parameter;
+  DWORD process_id = 0;
+  RECT bounds;
+  GetWindowThreadProcessId(window, &process_id);
+  if (process_id != search->process_id || !IsWindowVisible(window) ||
+      GetWindow(window, GW_OWNER) || !GetWindowRect(window, &bounds))
+    return TRUE;
+  LONG area = (bounds.right - bounds.left) * (bounds.bottom - bounds.top);
+  if (area > search->area) {
+    search->window = window;
+    search->area = area;
+  }
+  return TRUE;
+}
+
+static BOOL find_target(WCHAR *application_path, WCHAR *filename) {
+  static const WCHAR *targets[] = {L"sol.exe", L"freecell.exe", L"spider.exe"};
+  for (unsigned int index = 0; index < sizeof(targets) / sizeof(targets[0]);
+       ++index) {
+    lstrcpyW(filename, targets[index]);
+    if (GetFileAttributesW(application_path) != INVALID_FILE_ATTRIBUTES)
+      return TRUE;
+  }
+  return FALSE;
 }
 
 static DWORD run(void) {
@@ -62,8 +85,8 @@ static DWORD run(void) {
   if (!path_length || path_length == MAX_PATH) return 1;
   WCHAR *filename = application_path + path_length;
   while (filename > application_path && filename[-1] != L'\\') --filename;
-  if (filename == application_path) return 1;
-  lstrcpyW(filename, TARGET_EXECUTABLE);
+  if (filename == application_path || !find_target(application_path, filename))
+    return 1;
   if (!CreateProcessW(application_path, NULL, NULL, NULL, FALSE, 0, NULL, NULL,
                       &startup, &process))
     return 1;
@@ -72,17 +95,22 @@ static DWORD run(void) {
   while (WaitForSingleObject(process.hProcess, 50) == WAIT_TIMEOUT) {
     unsigned int width;
     unsigned int height;
-    HWND application = FindWindowW(NULL, TARGET_TITLE);
-    if (!application || !read_window_size(&width, &height)) continue;
+    unsigned int native_width;
+    unsigned int native_height;
+    WindowSearch search = {process.dwProcessId, NULL, 0};
+    EnumWindows(find_process_window, (LPARAM)&search);
+    if (!search.window ||
+        !read_window_size(&width, &height, &native_width, &native_height))
+      continue;
     if (width == applied_width && height == applied_height) continue;
     if (!calibrated) {
       RECT bounds;
-      if (!GetWindowRect(application, &bounds)) continue;
-      width_adjustment = bounds.right - bounds.left - NATIVE_SCREEN_WIDTH;
-      height_adjustment = bounds.bottom - bounds.top - NATIVE_SCREEN_HEIGHT;
+      if (!GetWindowRect(search.window, &bounds)) continue;
+      width_adjustment = bounds.right - bounds.left - (int)native_width;
+      height_adjustment = bounds.bottom - bounds.top - (int)native_height;
       calibrated = TRUE;
     }
-    if (SetWindowPos(application, NULL, 0, 0, (int)width + width_adjustment,
+    if (SetWindowPos(search.window, NULL, 0, 0, (int)width + width_adjustment,
                      (int)height + height_adjustment,
                      SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)) {
       applied_width = width;

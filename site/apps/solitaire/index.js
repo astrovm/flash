@@ -1,32 +1,12 @@
-import { mountBoxedWineApplication } from "../core/boxedwine.js";
-import { defineApplication } from "../core/application.js";
+import { defineBoxedWineCardGame } from "../core/boxedwine-card-game.js";
 
-const mountSolitaire = () =>
-  mountBoxedWineApplication({
-    title: "Windows XP Solitaire",
-    packageId: "solitaire",
-    archive: "xp-solitaire",
-    executable: "resize-host.exe",
-    nativeWidth: 586,
-    nativeHeight: 406,
-    frameTop: 32,
-    background: "#27811f",
-  });
-
-export const solitaireApplication = defineApplication({
-  id: "__solitaire",
+export const solitaireApplication = defineBoxedWineCardGame({
+  id: "solitaire",
   title: "Solitaire",
   icon: "Solitaire.png",
-  kind: "native-game",
-  deepLinkId: "solitaire",
-  offlineGameId: "solitaire",
-  window: {
-    width: 592,
-    height: 438,
-    className: "xp-native-solitaire-window",
-    fitToWorkArea: true,
-    resizable: true,
-    maximizable: true,
-  },
-  mount: mountSolitaire,
+  archive: "xp-solitaire",
+  width: 592,
+  height: 438,
+  nativeWidth: 586,
+  nativeHeight: 406,
 });
