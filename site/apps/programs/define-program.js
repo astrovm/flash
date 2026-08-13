@@ -2,7 +2,6 @@ import { defineApplication } from "../core/application.js";
 import * as renderers from "./renderers/index.js";
 
 const PROGRAM_RENDERERS = Object.freeze({
-  calculator: renderers.renderCalculator,
   terminal: renderers.renderTerminal,
   volume: renderers.renderVolume,
 });

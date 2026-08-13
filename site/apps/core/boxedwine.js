@@ -51,7 +51,12 @@ export const mountBoxedWineApplication = ({
   sound = true,
   background = "#000",
   scaleOnly = false,
+  onWindowSize,
+  nativeFrameWidth = 0,
+  nativeFrameHeight = 0,
 }) => {
+  let activeNativeWidth = nativeWidth;
+  let activeNativeHeight = nativeHeight;
   const host = document.createElement("div");
   host.className = "window-content boxedwine-app-host";
   host.style.background = background;
@@ -80,26 +85,29 @@ export const mountBoxedWineApplication = ({
   host.appendChild(frame);
 
   const updateLayout = () => {
-    const hostSize = getHostSize(host, nativeWidth, nativeHeight);
+    const hostSize = getHostSize(host, activeNativeWidth, activeNativeHeight);
     const shouldScale =
       scaleOnly ||
-      hostSize.width < nativeWidth ||
-      hostSize.height < nativeHeight;
+      hostSize.width < activeNativeWidth ||
+      hostSize.height < activeNativeHeight;
     const scale = shouldScale
       ? Math.min(
           1,
-          hostSize.width / nativeWidth,
-          hostSize.height / nativeHeight,
+          hostSize.width / activeNativeWidth,
+          hostSize.height / activeNativeHeight,
         )
       : 1;
     const framebuffer = shouldScale
-      ? { width: nativeWidth, height: nativeHeight + frameTop }
+      ? {
+          width: activeNativeWidth,
+          height: activeNativeHeight + frameTop,
+        }
       : { width: hostSize.width, height: hostSize.height + frameTop };
 
     if (shouldScale) {
-      frame.style.width = `${nativeWidth}px`;
-      frame.style.height = `${nativeHeight}px`;
-      frame.style.left = `${Math.max(0, (hostSize.width - nativeWidth * scale) / 2)}px`;
+      frame.style.width = `${activeNativeWidth}px`;
+      frame.style.height = `${activeNativeHeight}px`;
+      frame.style.left = `${Math.max(0, (hostSize.width - activeNativeWidth * scale) / 2)}px`;
       frame.style.transform = `scale(${scale})`;
       frame.style.transformOrigin = "top left";
     } else {
@@ -113,8 +121,8 @@ export const mountBoxedWineApplication = ({
       {
         type: "boxedwine-framebuffer-resize",
         ...framebuffer,
-        baseWidth: nativeWidth,
-        baseHeight: nativeHeight + frameTop,
+        baseWidth: activeNativeWidth,
+        baseHeight: activeNativeHeight + frameTop,
       },
       new URL(frame.src).origin,
     );
@@ -124,12 +132,33 @@ export const mountBoxedWineApplication = ({
     : null;
   resizeObserver?.observe(host);
   frame.addEventListener("load", updateLayout);
+  const handleWindowMessage = (event) => {
+    const { type, width, height } = event.data || {};
+    if (
+      event.source !== frame.contentWindow ||
+      event.origin !== new URL(frame.src).origin ||
+      type !== "boxedwine-window-size" ||
+      !Number.isInteger(width) ||
+      !Number.isInteger(height) ||
+      width < 100 ||
+      height < 100
+    )
+      return;
+    if (nativeFrameWidth || nativeFrameHeight) {
+      activeNativeWidth = Math.max(1, width - nativeFrameWidth);
+      activeNativeHeight = Math.max(1, height - nativeFrameHeight);
+    }
+    onWindowSize?.(width, height);
+    updateLayout();
+  };
+  window.addEventListener("message", handleWindowMessage);
   updateLayout();
 
   return {
     element: host,
     unmount() {
       resizeObserver?.disconnect();
+      window.removeEventListener("message", handleWindowMessage);
       frame.removeEventListener("load", updateLayout);
       frame.src = "about:blank";
       frame.remove();

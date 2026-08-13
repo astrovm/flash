@@ -17,6 +17,32 @@ const isResizeMessage = (event, origin) => {
 export const installBoxedWineResizeBridge = (hostWindow, module) => {
   let pendingResize = null;
   let runtimeInitialized = false;
+  let windowSizeTimer = null;
+  let previousWindowSize = "";
+
+  const reportWindowSize = () => {
+    if (!runtimeInitialized || typeof module.FS?.readFile !== "function")
+      return;
+    try {
+      const text = module.FS.readFile("/d_drive/boxedwine-window-size.txt", {
+        encoding: "utf8",
+      }).trim();
+      if (text === previousWindowSize) return;
+      const match = /^(\d+) (\d+)$/.exec(text);
+      if (!match) return;
+      previousWindowSize = text;
+      hostWindow.parent.postMessage(
+        {
+          type: "boxedwine-window-size",
+          width: Number(match[1]),
+          height: Number(match[2]),
+        },
+        hostWindow.location.origin,
+      );
+    } catch {
+      // Most applications do not publish their native window size.
+    }
+  };
 
   const applyResize = () => {
     if (
@@ -53,8 +79,17 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
     onRuntimeInitialized?.();
     runtimeInitialized = true;
     applyResize();
+    if (
+      typeof module.FS?.readFile === "function" &&
+      typeof hostWindow.setInterval === "function"
+    ) {
+      windowSizeTimer = hostWindow.setInterval(reportWindowSize, 100);
+    }
   };
   hostWindow.addEventListener("message", onMessage);
 
-  return () => hostWindow.removeEventListener("message", onMessage);
+  return () => {
+    hostWindow.removeEventListener("message", onMessage);
+    if (windowSizeTimer !== null) hostWindow.clearInterval(windowSizeTimer);
+  };
 };
