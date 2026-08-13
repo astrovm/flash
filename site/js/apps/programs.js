@@ -22,6 +22,13 @@ const applicationContext = (win) => ({
   dialogs: XPDialogs,
   fileOps,
   fs,
+  launchApplication(applicationId, options = {}) {
+    const application = window.XPApplicationRegistry.get(applicationId);
+    if (!application) return false;
+    if (application.kind === "system") openSystemWindow(applicationId);
+    else openXPProgram(applicationId, options);
+    return true;
+  },
   getDesktopSize,
   getMasterVolume,
   setMasterVolume,

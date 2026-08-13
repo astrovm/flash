@@ -622,6 +622,78 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).not.toBeNull();
 });
 
+test("Command Prompt uses the XP console layout and operates on the shared filesystem", async () => {
+  const shell = await login(await loadShell());
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
+    .click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="command-prompt"]')!
+    .click();
+
+  const commandWindow = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__command-prompt"]',
+  )!;
+  const input = commandWindow.querySelector<HTMLInputElement>(
+    ".xp-terminal-prompt input",
+  )!;
+  const output = commandWindow.querySelector<HTMLElement>(
+    ".xp-terminal-output",
+  )!;
+  const prompt = commandWindow.querySelector<HTMLElement>(
+    ".xp-terminal-prompt span",
+  )!;
+  const run = (command: string) => {
+    input.value = command;
+    input.dispatchEvent(
+      new shell.window.KeyboardEvent("keydown", {
+        bubbles: true,
+        key: "Enter",
+      }),
+    );
+  };
+
+  expect(commandWindow.style.width).toBe("668px");
+  expect(commandWindow.style.height).toBe("338px");
+  expect(commandWindow.style.left).toBe("24px");
+  expect(commandWindow.style.top).toBe("30px");
+  expect(
+    commandWindow.querySelector<HTMLButtonElement>(".maximize-btn")!.disabled,
+  ).toBeTrue();
+  expect(commandWindow.querySelector(".resize-handle")).toBeNull();
+  expect(commandWindow.querySelector(".title-text")!.textContent).toBe(
+    "C:\\WINDOWS\\system32\\cmd.exe",
+  );
+  expect(output.textContent).toStartWith(
+    "Microsoft Windows XP [Version 5.1.2600]",
+  );
+  expect(prompt.textContent).toBe("C:\\Documents and Settings\\Administrator>");
+
+  run('cd "My Documents"');
+  expect(prompt.textContent).toBe(
+    "C:\\Documents and Settings\\Administrator\\My Documents>",
+  );
+  run("echo Hello XP>note.txt");
+  const note = shell.window.VirtualFS.findChild(
+    shell.window.VirtualFS.MY_DOCUMENTS,
+    "note.txt",
+  );
+  expect(note).not.toBeNull();
+  expect(shell.window.VirtualFS.getContent(note.id)).toBe("Hello XP\n");
+
+  run("type note.txt");
+  expect(output.textContent).toContain("Hello XP");
+  run("notepad note.txt");
+  expect(
+    shell.document.querySelector('.xp-window[data-game="__notepad"]'),
+  ).not.toBeNull();
+  run("del note.txt");
+  expect(shell.window.VirtualFS.getNode(note.id)).toBeNull();
+});
+
 test("native games open from their public deep links", async () => {
   for (const [deepLink, applicationId] of [
     ["freecell", "__freecell"],

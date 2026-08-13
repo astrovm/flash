@@ -12,5 +12,16 @@ export const accessoryApplications = [
     "Command Prompt",
     "CommandPrompt.png",
     "terminal",
+    {
+      window: {
+        width: 668,
+        height: 338,
+        left: 24,
+        top: 30,
+        resizable: false,
+        maximizable: false,
+        className: "xp-command-prompt-window",
+      },
+    },
   ),
 ];
