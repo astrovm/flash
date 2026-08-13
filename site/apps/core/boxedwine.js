@@ -34,6 +34,11 @@ const getFramebufferSize = (host, nativeWidth, nativeHeight, frameTop) => ({
   ),
 });
 
+const getHostSize = (host, nativeWidth, nativeHeight) => ({
+  width: Math.max(1, Math.round(host.clientWidth || nativeWidth)),
+  height: Math.max(1, Math.round(host.clientHeight || nativeHeight)),
+});
+
 export const mountBoxedWineApplication = ({
   title,
   packageId,
@@ -45,6 +50,7 @@ export const mountBoxedWineApplication = ({
   frameTop = 0,
   sound = true,
   background = "#000",
+  scaleOnly = false,
 }) => {
   const host = document.createElement("div");
   host.className = "window-content boxedwine-app-host";
@@ -74,12 +80,35 @@ export const mountBoxedWineApplication = ({
   host.appendChild(frame);
 
   const updateLayout = () => {
-    const framebuffer = getFramebufferSize(
-      host,
-      nativeWidth,
-      nativeHeight,
-      frameTop,
-    );
+    const hostSize = getHostSize(host, nativeWidth, nativeHeight);
+    const shouldScale =
+      scaleOnly ||
+      hostSize.width < nativeWidth ||
+      hostSize.height < nativeHeight;
+    const scale = shouldScale
+      ? Math.min(
+          1,
+          hostSize.width / nativeWidth,
+          hostSize.height / nativeHeight,
+        )
+      : 1;
+    const framebuffer = shouldScale
+      ? { width: nativeWidth, height: nativeHeight + frameTop }
+      : { width: hostSize.width, height: hostSize.height + frameTop };
+
+    if (shouldScale) {
+      frame.style.width = `${nativeWidth}px`;
+      frame.style.height = `${nativeHeight}px`;
+      frame.style.left = `${Math.max(0, (hostSize.width - nativeWidth * scale) / 2)}px`;
+      frame.style.transform = `scale(${scale})`;
+      frame.style.transformOrigin = "top left";
+    } else {
+      frame.style.width = "100%";
+      frame.style.height = "100%";
+      frame.style.left = "0px";
+      frame.style.transform = "";
+      frame.style.transformOrigin = "";
+    }
     frame.contentWindow?.postMessage(
       { type: "boxedwine-framebuffer-resize", ...framebuffer },
       new URL(frame.src).origin,

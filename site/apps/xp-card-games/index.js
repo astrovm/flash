@@ -9,6 +9,8 @@ const defineXpCardGame = ({
   executable,
   width,
   height,
+  nativeWidth = width - 6,
+  nativeHeight = height - 31,
 }) =>
   defineApplication({
     id: `__${id}`,
@@ -30,10 +32,11 @@ const defineXpCardGame = ({
         packageId: id,
         archive,
         executable,
-        nativeWidth: width,
-        nativeHeight: height - 32,
+        nativeWidth,
+        nativeHeight,
         frameTop: 32,
         background: "#27811f",
+        scaleOnly: true,
       }),
   });
 
@@ -44,8 +47,10 @@ export const xpCardGameApplications = [
     icon: "FreeCell.png",
     archive: "xp-freecell",
     executable: "freecell.exe",
-    width: 700,
-    height: 520,
+    width: 646,
+    height: 479,
+    nativeWidth: 640,
+    nativeHeight: 448,
   }),
   defineXpCardGame({
     id: "spider-solitaire",

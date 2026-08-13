@@ -1,34 +1,54 @@
 import { createProgramRoot } from "../ui.js";
+import { CommandSession } from "../command-session.js";
 
 export const renderTerminal = (context, program, programId) => {
   const content = createProgramRoot(program);
-
-  content.innerHTML = `<div class="xp-terminal-output" aria-live="polite">Microsoft Windows XP [Version 5.1.2600]\n(C) Copyright 1985-2001 Microsoft Corp.\n\nC:\\Documents and Settings\\Administrator&gt;</div><label class="xp-terminal-prompt">C:\\Documents and Settings\\Administrator&gt;<input aria-label="Command"></label>`;
+  const session = new CommandSession(context);
+  context.setTitle("C:\\WINDOWS\\system32\\cmd.exe");
+  content.innerHTML = `<div class="xp-terminal-screen" role="application" aria-label="Command Prompt"><pre class="xp-terminal-output" aria-live="polite"></pre><label class="xp-terminal-prompt"><span></span><input aria-label="Command" autocomplete="off" autocapitalize="off" spellcheck="false"></label></div>`;
   const output = content.querySelector(".xp-terminal-output");
+  const screen = content.querySelector(".xp-terminal-screen");
+  const prompt = content.querySelector(".xp-terminal-prompt span");
   const input = content.querySelector("input");
+  const history = [];
+  let historyIndex = 0;
+
+  output.textContent = `${session.banner}\n`;
+  const updatePrompt = () => {
+    prompt.textContent = session.prompt;
+  };
+  updatePrompt();
+
   input.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    const command = input.value.trim();
-    const normalized = command.toLowerCase();
-    if (normalized === "cls") output.textContent = "";
-    else {
-      const response =
-        normalized === "help"
-          ? "Supported commands: CLS, DIR, ECHO, HELP, VER"
-          : normalized === "dir"
-            ? " Directory of C:\\Documents and Settings\\Administrator\n\nMy Documents    My Pictures    My Music"
-            : normalized === "ver"
-              ? "Microsoft Windows XP [Version 5.1.2600]"
-              : normalized.startsWith("echo ")
-                ? command.slice(5)
-                : command
-                  ? `'${command}' is not recognized as an internal or external command.`
-                  : "";
-      output.textContent += `\nC:\\Documents and Settings\\Administrator>${command}\n${response}`;
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!history.length) return;
+      historyIndex = Math.max(
+        0,
+        Math.min(
+          history.length,
+          historyIndex + (event.key === "ArrowUp" ? -1 : 1),
+        ),
+      );
+      input.value = history[historyIndex] || "";
+      input.setSelectionRange(input.value.length, input.value.length);
+      return;
     }
+    if (event.key !== "Enter") return;
+    const command = input.value;
+    if (command.trim()) history.push(command);
+    historyIndex = history.length;
+    const enteredPrompt = session.prompt;
+    const result = session.execute(command);
+    if (result.exit) return;
+    if (result.clear) output.textContent = "";
+    else
+      output.textContent += `${enteredPrompt}${command}\n${result.output}${result.output ? "\n" : ""}`;
     input.value = "";
-    output.scrollTop = output.scrollHeight;
+    updatePrompt();
+    screen.scrollTop = screen.scrollHeight;
   });
+  screen.addEventListener("pointerdown", () => input.focus());
   setTimeout(() => input.focus(), 0);
   return content;
 };
