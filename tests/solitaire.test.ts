@@ -65,6 +65,15 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.top).toBe("0px");
     expect(solitaireWindow.style.width).toBe("844px");
     expect(solitaireWindow.style.height).toBe("360px");
+
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 1024 },
+      clientHeight: { configurable: true, value: 738 },
+    });
+    shell.window.dispatchEvent(new shell.window.Event("resize"));
+
+    expect(solitaireWindow.style.width).toBe("592px");
+    expect(solitaireWindow.style.height).toBe("438px");
   });
 
   test("launches the native executable in a resizable XP shell window", async () => {
@@ -192,6 +201,25 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       clientHeight: { configurable: true, value: 406 },
     });
     resize();
+    expect(resizeMessages.at(-1)).toEqual({
+      message: {
+        type: "boxedwine-framebuffer-resize",
+        width: 586,
+        height: 438,
+      },
+      origin: new URL(frame.src).origin,
+    });
+
+    Object.defineProperties(host, {
+      clientWidth: { configurable: true, value: 390 },
+      clientHeight: { configurable: true, value: 780 },
+    });
+    resize();
+    expect(frame.style.width).toBe("586px");
+    expect(frame.style.height).toBe("406px");
+    expect(frame.style.left).toBe("0px");
+    expect(frame.style.transform).toBe(`scale(${390 / 586})`);
+    expect(frame.style.transformOrigin).toBe("top left");
     expect(resizeMessages.at(-1)).toEqual({
       message: {
         type: "boxedwine-framebuffer-resize",

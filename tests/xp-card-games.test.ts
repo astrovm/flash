@@ -80,6 +80,59 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(shell.offlineDownloads).toEqual([game.id]);
     });
 
+    test(`${game.title} scales its complete native surface into a phone window`, async () => {
+      const shell = await login(await loadShell());
+      const desktop = shell.document.getElementById("desktop");
+      Object.defineProperties(desktop, {
+        clientWidth: { configurable: true, value: 390 },
+        clientHeight: { configurable: true, value: 814 },
+      });
+      let resize;
+      shell.window.ResizeObserver = class ResizeObserver {
+        constructor(callback) {
+          resize = callback;
+        }
+        observe() {}
+        disconnect() {}
+      };
+
+      const gameWindow = launchGame(shell, game.id, game.applicationId);
+      const host = gameWindow.querySelector(".boxedwine-app-host");
+      const frame = host.querySelector(".boxedwine-app-frame");
+      const resizeMessages = [];
+      frame.contentWindow.postMessage = (message, origin) =>
+        resizeMessages.push({ message, origin });
+      Object.defineProperties(host, {
+        clientWidth: { configurable: true, value: 384 },
+        clientHeight: { configurable: true, value: 783 },
+      });
+
+      resize();
+
+      const nativeWidth = game.id === "freecell" ? 640 : 794;
+      const nativeHeight = game.id === "freecell" ? 448 : 569;
+      expect(gameWindow.style.width).toBe("390px");
+      expect(gameWindow.style.height).toBe("814px");
+      expect(gameWindow.style.minWidth).toBe("0px");
+      expect(gameWindow.style.minHeight).toBe("0px");
+      expect(frame.style.width).toBe(`${nativeWidth}px`);
+      expect(frame.style.height).toBe(`${nativeHeight}px`);
+      expect(frame.style.transform).toBe(`scale(${384 / nativeWidth})`);
+      expect(resizeMessages.at(-1).message).toEqual({
+        type: "boxedwine-framebuffer-resize",
+        width: nativeWidth,
+        height: nativeHeight + 32,
+      });
+
+      Object.defineProperties(desktop, {
+        clientWidth: { configurable: true, value: 1024 },
+        clientHeight: { configurable: true, value: 738 },
+      });
+      shell.window.dispatchEvent(new shell.window.Event("resize"));
+      expect(gameWindow.style.minWidth).not.toBe("0px");
+      expect(gameWindow.style.minHeight).not.toBe("0px");
+    });
+
     test(`${game.title} package matches its provenance manifest`, async () => {
       const directory = join(projectDirectory, "site", "iframe", game.id);
       const manifest = JSON.parse(

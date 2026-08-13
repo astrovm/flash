@@ -92,12 +92,14 @@ const openXPProgram = (programId, options = {}) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
-  const windowWidth =
-    desktopWidth > 16
+  const windowWidth = program.window.fitToWorkArea
+    ? preferredWidth
+    : desktopWidth > 16
       ? Math.min(preferredWidth, desktopWidth - 16)
       : preferredWidth;
-  const windowHeight =
-    desktopHeight > 16
+  const windowHeight = program.window.fitToWorkArea
+    ? preferredHeight
+    : desktopHeight > 16
       ? Math.min(preferredHeight, desktopHeight - 16)
       : preferredHeight;
   el.style.width = `${windowWidth}px`;
