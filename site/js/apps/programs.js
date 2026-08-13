@@ -18,6 +18,7 @@ const wireSystemWindowControls = (win) => {
 };
 
 const applicationContext = (win) => ({
+  windowElement: win.el,
   XP_ICON_PATHS,
   dialogs: XPDialogs,
   fileOps,

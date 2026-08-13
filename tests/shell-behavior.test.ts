@@ -662,8 +662,8 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   expect(commandWindow.style.top).toBe("30px");
   expect(
     commandWindow.querySelector<HTMLButtonElement>(".maximize-btn")!.disabled,
-  ).toBeTrue();
-  expect(commandWindow.querySelector(".resize-handle")).toBeNull();
+  ).toBeFalse();
+  expect(commandWindow.querySelector(".resize-handle")).not.toBeNull();
   expect(commandWindow.querySelector(".title-text")!.textContent).toBe(
     "C:\\WINDOWS\\system32\\cmd.exe",
   );
@@ -671,6 +671,18 @@ test("Command Prompt uses the XP console layout and operates on the shared files
     "Microsoft Windows XP [Version 5.1.2600]",
   );
   expect(prompt.textContent).toBe("C:\\Documents and Settings\\Administrator>");
+
+  commandWindow
+    .querySelector<HTMLElement>(".title-bar")!
+    .dispatchEvent(
+      new shell.window.PointerEvent("pointerdown", { bubbles: true }),
+    );
+  await flushShell();
+  expect(shell.document.activeElement).toBe(input);
+
+  commandWindow.querySelector<HTMLButtonElement>(".maximize-btn")!.click();
+  expect(commandWindow.classList.contains("maximized")).toBeTrue();
+  commandWindow.querySelector<HTMLButtonElement>(".maximize-btn")!.click();
 
   run('cd "My Documents"');
   expect(prompt.textContent).toBe(
