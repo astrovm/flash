@@ -1,0 +1,27 @@
+{
+  "runtime": "boxedwine",
+  "windowsXp": {
+    "source": "User-supplied Windows XP Professional SP3 source-media ISO",
+    "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "package": {
+      "file": "xp-calculator.zip",
+      "bytes": 69002,
+      "sha256": "8fb2df72143efdd104e1c2fe4508a5bf6e379d59f2c2648cd8753d85f21036d2"
+    },
+    "files": {
+      "calc.exe": {
+        "member": "I386/CALC.EX_",
+        "sha256": "37121ecb7c1e112b735bd21b0dfe3e526352ecb98c434c5f40e6a2a582380cdd"
+      },
+      "calc.chm": {
+        "member": "I386/CALC.CH_",
+        "sha256": "180e7b08e5a72ab907e4c5372530df107097de6b3cd6e6f4a63519fc171bd3bb"
+      },
+      "window-host.exe": {
+        "source": "native/calculator/window-host.c",
+        "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -mwindows -Wl,--no-insert-timestamp native/calculator/window-host.c -lkernel32 -luser32 -o window-host.exe",
+        "sha256": "3d1180fc264d7d026ea53f6b58542d61da6927216dc08a92850e29c50d07020e"
+      }
+    }
+  }
+}

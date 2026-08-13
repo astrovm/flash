@@ -506,18 +506,11 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   const calculatorWindow = shell.document.querySelector(
     '.xp-window[data-game="__calculator"]',
   )!;
-  const calculatorKeys = [
-    ...calculatorWindow.querySelectorAll<HTMLButtonElement>(
-      ".xp-calculator-keys button",
-    ),
-  ];
-  for (const key of ["2", "+", "3", "="]) {
-    calculatorKeys.find((button) => button.textContent === key)!.click();
-  }
-  expect(
-    calculatorWindow.querySelector<HTMLInputElement>(".xp-calculator-display")!
-      .value,
-  ).toBe("5.");
+  const calculatorUrl = new URL(
+    calculatorWindow.querySelector<HTMLIFrameElement>("iframe")!.src,
+  );
+  expect(calculatorUrl.searchParams.get("archive")).toBe("xp-calculator");
+  expect(calculatorUrl.searchParams.get("executable")).toBe("window-host.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
