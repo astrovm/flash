@@ -194,6 +194,7 @@ const login = (playSound = true) => {
     clearTimeout(bootTimeout);
     loggedIn = true;
     showDesktop();
+    window.XPBoxedWinePreload?.schedule();
     applyDisplaySettings(getDisplaySettings());
     applyStartMenuStyle(getStartMenuStyle(), false);
     applyFocusVolumes();
@@ -217,7 +218,6 @@ const login = (playSound = true) => {
         openLinkedGame(gameId);
       }
     }
-    maybePromptForUpdate(offlineManager.getSnapshot());
     scheduleScreenSaver();
   })().finally(() => {
     loginPromise = null;

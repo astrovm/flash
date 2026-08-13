@@ -139,6 +139,7 @@
     let lifecycleListenersAttached = false;
     let updateRetryTimer = null;
     let bypassWorkerCdn = false;
+    let automaticTargetVersion = null;
 
     const versionedServiceWorkerUrl = (version) => {
       const separator = serviceWorkerUrl.includes("?") ? "&" : "?";
@@ -194,6 +195,7 @@
       currentVersion,
       availableVersion: null,
       availableRevision: null,
+      updateEligibleAt: null,
       downloadBytes: cachedDownloadBytes,
       bundledGameBytes: null,
       downloadMetadataError: false,
@@ -266,6 +268,9 @@
       });
     };
 
+    const updateEligibleAt = (metadata) =>
+      Date.parse(metadata.releasedAt) + metadata.stabilityDelayMs;
+
     const markWaitingUpdate = async (worker, knownMetadata = null) => {
       if (!worker) return;
       let metadata = knownMetadata;
@@ -274,6 +279,23 @@
         rememberVersionMetadata(metadata);
       } catch {
         scheduleUpdateRetry();
+        return false;
+      }
+      const eligibleAt = updateEligibleAt(metadata);
+      if (environment.Date.now() < eligibleAt) {
+        if (automaticTargetVersion === metadata.version) {
+          automaticTargetVersion = null;
+        }
+        setState({
+          phase: "update-pending",
+          updateReady: false,
+          workerState: "waiting",
+          availableVersion: metadata.version,
+          availableRevision: metadata.revision,
+          updateEligibleAt: eligibleAt,
+          downloadBytes: metadata.offlineBytes,
+          error: null,
+        });
         return false;
       }
       const workerVersion = await requestWorkerVersion(worker);
@@ -285,6 +307,7 @@
           workerState: "waiting",
           availableVersion: metadata.version,
           availableRevision: metadata.revision,
+          updateEligibleAt: eligibleAt,
           downloadBytes: metadata.offlineBytes,
           error: null,
         });
@@ -298,9 +321,14 @@
         workerState: "waiting",
         availableVersion: metadata?.version || state.availableVersion,
         availableRevision: metadata?.revision || state.availableRevision,
+        updateEligibleAt: eligibleAt,
         downloadBytes: metadata?.offlineBytes || state.downloadBytes,
         error: null,
       });
+      if (automaticTargetVersion === metadata.version) {
+        automaticTargetVersion = null;
+        await applyUpdate();
+      }
       return true;
     };
 
@@ -445,6 +473,10 @@
       if (
         typeof metadata.version !== "string" ||
         typeof metadata.revision !== "string" ||
+        typeof metadata.releasedAt !== "string" ||
+        !Number.isFinite(Date.parse(metadata.releasedAt)) ||
+        !Number.isInteger(metadata.stabilityDelayMs) ||
+        metadata.stabilityDelayMs < 0 ||
         !Number.isFinite(metadata.offlineBytes) ||
         metadata.offlineBytes <= 0 ||
         !Number.isFinite(metadata.bundledGameBytes) ||
@@ -710,7 +742,7 @@
       }
     };
 
-    const checkForUpdates = async () => {
+    const checkForUpdates = async ({ applyAutomatically = false } = {}) => {
       if (checkPromise) return checkPromise;
       checkPromise = (async () => {
         const previousPhase = state.phase;
@@ -718,15 +750,11 @@
         try {
           const metadata = await fetchVersion();
           rememberVersionMetadata(metadata);
-          await registerAndWait(metadata.version);
-          let waitingUpdateReady = false;
-          if (registration.waiting) {
-            waitingUpdateReady = await markWaitingUpdate(
-              registration.waiting,
-              metadata,
-            );
-          } else if (registration.installing) {
-            trackInstallingWorker(registration.installing, true);
+          if (
+            automaticTargetVersion &&
+            automaticTargetVersion !== metadata.version
+          ) {
+            automaticTargetVersion = null;
           }
           const checkedAt = environment.Date.now();
           storage.setItem(LAST_CHECKED_KEY, String(checkedAt));
@@ -737,6 +765,37 @@
             metadata.version !== currentVersion ||
             (activeWorkerVersion !== null &&
               activeWorkerVersion !== metadata.version);
+          const eligibleAt = updateEligibleAt(metadata);
+          if (updateAvailable && checkedAt < eligibleAt) {
+            automaticTargetVersion = null;
+            setState({
+              phase: "update-pending",
+              availableVersion: metadata.version,
+              availableRevision: metadata.revision,
+              lastChecked: checkedAt,
+              updateEligibleAt: eligibleAt,
+              updateReady: false,
+              error: null,
+            });
+            return snapshot();
+          }
+          if (applyAutomatically && updateAvailable) {
+            automaticTargetVersion = metadata.version;
+          }
+          await registerAndWait(metadata.version);
+          let waitingUpdateReady = false;
+          if (registration.waiting) {
+            waitingUpdateReady = await markWaitingUpdate(
+              registration.waiting,
+              metadata,
+            );
+          } else if (registration.installing) {
+            trackInstallingWorker(registration.installing, true);
+          }
+          if (reloadWhenControlled) {
+            setState({ lastChecked: checkedAt });
+            return snapshot();
+          }
           if (
             activeWorkerVersion !== null &&
             activeWorkerVersion !== metadata.version &&
@@ -762,6 +821,7 @@
             availableVersion: updateAvailable ? metadata.version : null,
             availableRevision: updateAvailable ? metadata.revision : null,
             lastChecked: checkedAt,
+            updateEligibleAt: updateAvailable ? eligibleAt : null,
             updateReady: updateAvailable && waitingUpdateReady,
             workerState: registration?.waiting
               ? "waiting"
@@ -875,7 +935,7 @@
           await navigatorObject.serviceWorker?.getRegistration?.("/");
         if (existingRegistration) trackRegistration(existingRegistration);
         try {
-          await checkForUpdates();
+          await checkForUpdates({ applyAutomatically: true });
         } catch (error) {
           if (!existingRegistration) throw error;
           setState({ phase: "ready", workerState: "active", error: null });

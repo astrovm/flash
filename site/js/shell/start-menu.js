@@ -1058,6 +1058,9 @@ const createProgramMenuItem = (definition, depth) => {
     arrow.textContent = "▶";
     item.appendChild(arrow);
     const open = (focusFirst = false) => {
+      if (["accessories", "games"].includes(definition.id)) {
+        window.XPBoxedWinePreload?.preload().catch(() => {});
+      }
       openProgramSubmenu(definition.children, item, depth + 1);
       if (focusFirst)
         document

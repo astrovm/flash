@@ -57,9 +57,12 @@
             ? appRoot.href
             : `${appRoot.href}/`,
           archive: value("archive", /^[a-z0-9][a-z0-9-]*$/),
+          root: value("root", /^[a-z0-9][a-z0-9-]*$/),
           executable: value("executable", /^[a-z0-9_. -]+\.exe$/i),
           resolution: value("resolution", /^\d{3,4}x\d{3,4}$/),
           sound: value("sound", /^(?:true|false)$/),
+          cache: value("cache", /^(?:true|false)$/),
+          trace: value("trace", /^(?:true|false)$/),
         });
       })();
     </script>
@@ -97,17 +100,20 @@
         ></canvas>
       </div>
     </div>
+    <script src="boxedwine-startup.js"></script>
     <script src="boxedwine-shell.js"></script>
     <script>
       (() => {
         const runner = window.BoxedWineRunnerConfig;
         Config.locateAppBaseUrl = runner.appRoot;
         Config.urlParams = [
-          "root=boxedwine",
+          `root=${runner.root}`,
           `app=${runner.archive}`,
           `p=${runner.executable}`,
           `sound=${runner.sound}`,
           `resolution=${runner.resolution}`,
+          `cache=${runner.cache}`,
+          `trace=${runner.trace}`,
         ].join("&");
         delete window.BoxedWineRunnerConfig;
       })();

@@ -1,4 +1,5 @@
 const RUNTIME_ROOT = "vendor/boxedwine/26R1/";
+const ROOT_ARCHIVE = "xp-accessories";
 
 const packageRoot = (packageId) => {
   const configuredRoot = window.ASTRO_GAME_ROOTS?.[packageId];
@@ -17,11 +18,14 @@ const runnerUrl = ({
   const url = new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);
   url.search = new URLSearchParams({
     appRoot: new URL(packageRoot(packageId), document.baseURI).href,
+    root: ROOT_ARCHIVE,
     archive,
     executable,
     resolution,
     frameTop: String(frameTop),
     sound: String(sound),
+    cache: "false",
+    trace: "false",
   });
   return url.href;
 };
@@ -52,6 +56,7 @@ export const mountBoxedWineApplication = ({
   background = "#000",
   scaleOnly = false,
   onWindowSize,
+  onStartupMetric,
   nativeFrameWidth = 0,
   nativeFrameHeight = 0,
 }) => {
@@ -133,10 +138,29 @@ export const mountBoxedWineApplication = ({
   resizeObserver?.observe(host);
   frame.addEventListener("load", updateLayout);
   const handleWindowMessage = (event) => {
-    const { type, width, height } = event.data || {};
+    const { type, width, height, stage, elapsed } = event.data || {};
     if (
       event.source !== frame.contentWindow ||
-      event.origin !== new URL(frame.src).origin ||
+      event.origin !== new URL(frame.src).origin
+    )
+      return;
+    if (
+      type === "boxedwine-startup" &&
+      typeof stage === "string" &&
+      Number.isFinite(elapsed) &&
+      elapsed >= 0
+    ) {
+      const metric = { ...event.data };
+      delete metric.type;
+      host.dataset.boxedwineStartupStage = metric.stage;
+      host.dataset.boxedwineStartupElapsed = String(metric.elapsed);
+      onStartupMetric?.(metric);
+      host.dispatchEvent(
+        new window.CustomEvent("boxedwine-startup-metric", { detail: metric }),
+      );
+      return;
+    }
+    if (
       type !== "boxedwine-window-size" ||
       !Number.isInteger(width) ||
       !Number.isInteger(height) ||

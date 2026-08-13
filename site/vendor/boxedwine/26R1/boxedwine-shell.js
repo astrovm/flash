@@ -18,7 +18,7 @@
         Config.locateOverlayBaseUrl = "";
         Config.urlParams = "";
         Config.storageMode = STORAGE_INDEXED_DB;
-        Config.persist_d_drive = true;
+        Config.persist_d_drive = false;
         Config.showUploadDownload = false;
         Config.WorkingDir = "";
         Config.loadDesktop = false;
@@ -331,25 +331,16 @@
     		}
     		return contents;
         }
-        function loadFile(pathPrefix, filename, callback) {
-			fetch(pathPrefix + filename, { method: 'GET' }).then(function(response) {
-      			if (response.status === 200) {
-					response.arrayBuffer().then(function(buffer) {
-						let arr = new Uint8Array(buffer);
-						callback(arr);
-    				});
-      			} else {
-      				console.log('Unable to load:' + filename + ' error:' + response.status);
-      			}
-			});
-		}
-        function buildAppFileSystem(callback) {
+        function loadFile(pathPrefix, filename) {
+            return BoxedWineStartup.load(pathPrefix + filename, filename);
+        }
+        function buildAppFileSystem() {
             if(Config.appPayload.length > 0){
             	let uint8Array = getBase64Data(Config.appPayload);
             	createFile("/", Config.payloadZipFile, uint8Array);
-                callback();
+                return Promise.resolve();
             }else if(Config.appZipFile.length > 0){
-            	loadFile(Config.locateAppBaseUrl, Config.appZipFile, (uint8Array) => {
+				return loadFile(Config.locateAppBaseUrl, Config.appZipFile).then((uint8Array) => {
             		if (Config.Program.length > 0) {            	
             			let zipEntries = getZipEntries(uint8Array);
             		    let folder = Config.appZipFile.toLowerCase().endsWith('.zip') ?
@@ -361,50 +352,40 @@
             			}
             		}
             		createFile("/", Config.appZipFile, uint8Array);
-            		callback();
             	});
             }else{
-                callback();
+                return Promise.resolve();
             }
         }
-        function buildExtraFileSystems(callback) {
-	        let extraFSs = [];
+        function buildExtraFileSystems() {
             if(Config.extraPayload.length > 0){
             	let uint8Array = getBase64Data(Config.extraPayload);
             	createFile("/", "overlay.zip", uint8Array);
-            	callback();
+                return Promise.resolve();
             }else if(Config.extraZipFiles.length > 0){
-                for(let i = 0; i < Config.extraZipFiles.length; i++) {
-                    loadFile(Config.locateOverlayBaseUrl, Config.extraZipFiles[i], (uint8Array) => {
-                    	createFile("/", Config.extraZipFiles[i], uint8Array);
-                    	extraFSs.push(Config.extraZipFiles[i]);
-                    	if(extraFSs.length == Config.extraZipFiles.length) {
-            				callback();
-                        }
-            		});
-                }
+                return Promise.all(Config.extraZipFiles.map((filename) =>
+                    loadFile(Config.locateOverlayBaseUrl, filename).then((uint8Array) =>
+                        createFile("/", filename, uint8Array))));
             }else{
-                callback();
+                return Promise.resolve();
             }
         }
-        function initBrowserFilesystem(callback) {
+        function initBrowserFilesystem() {
     		console.log("Use Storage mode: "+Config.storageMode);
 			FS.mkdir(ROOT);
 			FS.mkdir(Config.d_drive);
 			if (Config.storageMode == STORAGE_INDEXED_DB) {
 	  			FS.mount(IDBFS, {autoPersist: true}, ROOT);
-	  			if (Config.persist_d_drive) {
-	  				FS.mount(IDBFS, {autoPersist: true}, Config.d_drive);
-	  			}
-  				FS.syncfs(true, function (err) {
+				return new Promise((resolve) => FS.syncfs(true, function (err) {
   					if (err) {
   						console.log('unable to sync folder: ' + ROOT);
-  					} else {
-  						callback();
   					}
-				});
+					BoxedWineStartup.report("storage-ready");
+					resolve();
+				}));
 			} else {
-				callback();
+				BoxedWineStartup.report("storage-ready");
+				return Promise.resolve();
 			}
 		}
         function buildBrowserFileSystem() {
@@ -437,6 +418,7 @@
         }
         function startEmulator() {
             isRunning = true;
+            BoxedWineStartup.report("emulator-start");
 
             document.getElementById('startbtn').style.display = 'none';
             document.getElementById('sound-checkbox').style.display = 'none';
@@ -458,19 +440,22 @@
             	});
             }
             Module["addRunDependency"]("setupBoxedWine");
-            initBrowserFilesystem(() => {
-            	spinnerElement.style.display = '';
-            	spinnerElement.hidden = false;
-            
-	        	buildExtraFileSystems(() => {
-    	        	buildAppFileSystem(() => {
-    	            	loadFile(Config.locateRootBaseUrl, Config.rootZipFile, (rootZipfileBytes) => {
-    	            	    createFile("/", Config.rootZipFile, rootZipfileBytes);
-                        	buildBrowserFileSystem();
-						});
-                	});
-	        	});
-	        });
+            spinnerElement.style.display = '';
+            spinnerElement.hidden = false;
+            const storageReady = initBrowserFilesystem();
+            const appReady = buildAppFileSystem();
+            const extrasReady = buildExtraFileSystems();
+            const rootReady = loadFile(Config.locateRootBaseUrl, Config.rootZipFile);
+            Promise.all([storageReady, appReady, extrasReady, rootReady])
+                .then(([, , , rootZipfileBytes]) => {
+                    createFile("/", Config.rootZipFile, rootZipfileBytes);
+                    BoxedWineStartup.report("filesystem-ready");
+                    buildBrowserFileSystem();
+                })
+                .catch((error) => {
+                    console.error(error);
+                    Module.setStatus(error.message);
+                });
         }
         function getEntriesAsPromise(item, exeFiles, allFiles, firstCall) {
             return new Promise((resolve, reject) => {
@@ -562,6 +547,12 @@
         }, false);
         function getEmulatorParams() {        
             let params = ["-root", ROOT];
+            if (getParameter("cache") == "true") {
+                params.push("-cacheReads");
+            }
+            if (getParameter("trace") == "true") {
+                params.push("-traceReads");
+            }
             params.push("-zip");
     		params.push(Config.rootZipFile);
     		

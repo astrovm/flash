@@ -1,0 +1,166 @@
+diff --git a/include/ksystem.h b/include/ksystem.h
+index 257f620..dd7e5ce 100644
+--- a/include/ksystem.h
++++ b/include/ksystem.h
+@@ -105,6 +105,7 @@ public:
+     static bool disableHideCursor;
+     static bool forceRelativeMouse;
+     static bool cacheReads;
++    static bool traceReads;
+     static bool useF64;
+     static U32 pageSize;
+     static bool canJitUse4KPage;
+diff --git a/project/emscripten/makefile b/project/emscripten/makefile
+index dd4c05f..0d07f8a 100644
+--- a/project/emscripten/makefile
++++ b/project/emscripten/makefile
+@@ -110,7 +110,7 @@ LDFLAGS = -s FORCE_FILESYSTEM -lidbfs.js -s USE_SDL=2 -s USE_ZLIB=1 -fwasm-ex
+ #	$(CC) $(TEST_OBJS) -o $@ $(LDFLAGS)
+
+ $(BUILD_DIR)/$(TARGET_EXEC): $(ALL)
+-	@$(CC) $(ALL) -o $@ $(LDFLAGS)
++	@$(CXX) $(ALL) -o $@ $(LDFLAGS)
+
+ # assembly
+ $(BUILD_DIR)/%.s.o: %.s
+diff --git a/source/io/fsfilenode.cpp b/source/io/fsfilenode.cpp
+index 2cf9d94..13fdc87 100644
+--- a/source/io/fsfilenode.cpp
++++ b/source/io/fsfilenode.cpp
+@@ -17,6 +17,9 @@
+  */
+
+ #include "boxedwine.h"
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#endif
+
+ #include <stdio.h>
+ #include <fcntl.h>
+@@ -217,6 +220,16 @@ FsOpenNode* FsFileNode::open(U32 flags) {
+         if (KSystem::cacheReads && this->zipNode) {
+             ensurePathIsLocal(false);
+         }
++#elif defined(BOXEDWINE_ZLIB) && defined(__EMSCRIPTEN__)
++        if (KSystem::traceReads && this->zipNode) {
++            EM_ASM({
++                console.log("BOXEDWINE_FILE:" + UTF8ToString($0));
++                window.parent.postMessage({
++                    type: "boxedwine-file-read",
++                    path: UTF8ToString($0)
++                }, window.location.origin);
++            }, this->path.c_str());
++        }
+ #endif
+     } else {
+         if ((flags & K_O_ACCMODE)==K_O_WRONLY) {
+diff --git a/source/io/fszipnode.h b/source/io/fszipnode.h
+index 7492198..b682b4f 100644
+--- a/source/io/fszipnode.h
++++ b/source/io/fszipnode.h
+@@ -35,6 +35,9 @@ public:
+     bool moveToFileSystem(std::shared_ptr<FsNode> node);
+
+     std::weak_ptr<FsZip> fsZip;
++#ifdef __EMSCRIPTEN__
++    std::shared_ptr<std::vector<U8>> cachedData;
++#endif
+ private:
+     fsZipInfo zipInfo;
+ };
+diff --git a/source/io/fszipopennode.cpp b/source/io/fszipopennode.cpp
+index f6f062f..ddae473 100644
+--- a/source/io/fszipopennode.cpp
++++ b/source/io/fszipopennode.cpp
+@@ -95,6 +95,36 @@ U32 FsZipOpenNode::readNative(U8* buffer, U32 len) {
+     BOXEDWINE_CRITICAL_SECTION_WITH_MUTEX(*getReadMutex());
+     std::shared_ptr<FsZip> fsZip = zipNode->fsZip.lock();
+     if (fsZip) {
++#ifdef __EMSCRIPTEN__
++        if (KSystem::cacheReads) {
++            if (!zipNode->cachedData) {
++                auto cachedData = std::make_shared<std::vector<U8>>();
++                cachedData->resize(this->node->length());
++                fsZip->setupZipRead(this->offset, 0);
++                U32 total = 0;
++                while (total < cachedData->size()) {
++                    int read = unzReadCurrentFile(
++                        fsZip->zipfile,
++                        cachedData->data() + total,
++                        cachedData->size() - total);
++                    if (read <= 0) {
++                        break;
++                    }
++                    total += read;
++                }
++                cachedData->resize(total);
++                zipNode->cachedData = cachedData;
++            }
++            if (this->pos < (S64)zipNode->cachedData->size()) {
++                result = (U32)std::min<U64>(
++                    len,
++                    zipNode->cachedData->size() - (U64)this->pos);
++                memcpy(buffer, zipNode->cachedData->data() + this->pos, result);
++                this->pos += result;
++            }
++            return result;
++        }
++#endif
+         fsZip->setupZipRead(this->offset, this->pos);
+         result = unzReadCurrentFile(fsZip->zipfile, buffer, len);
+         this->pos += result;
+diff --git a/source/kernel/ksystem.cpp b/source/kernel/ksystem.cpp
+index 57ba95e..4315347 100644
+--- a/source/kernel/ksystem.cpp
++++ b/source/kernel/ksystem.cpp
+@@ -63,6 +63,7 @@ U32 KSystem::wineMajorVersion;
+ bool KSystem::disableHideCursor = false;
+ bool KSystem::forceRelativeMouse = false;
+ bool KSystem::cacheReads = false;
++bool KSystem::traceReads = false;
+ BString KSystem::showWindowTimestamp;
+ U32 KSystem::pageSize = 4096;
+ bool KSystem::canJitUse4KPage = false;
+diff --git a/source/sdl/startupArgs.cpp b/source/sdl/startupArgs.cpp
+index e64e39a..ae720d1 100644
+--- a/source/sdl/startupArgs.cpp
++++ b/source/sdl/startupArgs.cpp
+@@ -269,6 +269,9 @@ std::vector<BString> StartUpArgs::buildArgs() {
+     if (this->cacheReads) {
+         args.push_back(B("-cacheReads"));
+     }
++    if (this->traceReads) {
++        args.push_back(B("-traceReads"));
++    }
+     for (auto& a : this->args) {
+         args.push_back(a);
+     }
+@@ -286,6 +289,7 @@ bool StartUpArgs::apply() {
+     KSystem::disableHideCursor = this->disableHideCursor;
+     KSystem::forceRelativeMouse = this->forceRelativeMouse;
+     KSystem::cacheReads = this->cacheReads;
++    KSystem::traceReads = this->traceReads;
+     KSystem::pentiumLevel = this->pentiumLevel;
+     KSystem::pollRate = this->pollRate;
+     if (KSystem::pollRate < 0) {
+@@ -827,6 +831,8 @@ bool StartUpArgs::parseStartupArgs(int argc, const char **argv) {
+             this->forceRelativeMouse = true;
+         }  else if (!strcmp(argv[i], "-cacheReads")) {
+             this->cacheReads = true;
++        }  else if (!strcmp(argv[i], "-traceReads")) {
++            this->traceReads = true;
+         }
+         else if (!strcmp(argv[i], "-dxvk")) {
+             BString dxvk;
+diff --git a/source/sdl/startupArgs.h b/source/sdl/startupArgs.h
+index 4740064..69296f0 100644
+--- a/source/sdl/startupArgs.h
++++ b/source/sdl/startupArgs.h
+@@ -115,6 +115,7 @@ public:
+     bool disableHideCursor = false;
+     bool forceRelativeMouse = false;
+     bool cacheReads = false;
++    bool traceReads = false;
+
+ private:
+     bool workingDirSet = false;

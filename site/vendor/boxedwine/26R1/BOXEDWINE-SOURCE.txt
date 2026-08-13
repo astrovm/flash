@@ -3,7 +3,21 @@ Commit: d7d5a1421bd781a81cbdf8f222cced11a7ebd76e
 License: GNU General Public License version 2
 Complete corresponding source: https://github.com/danoon2/Boxedwine/tree/26R1.0
 Local resize patch: BOXEDWINE-RESIZE.patch
+Local Web cache and file-read trace patch: BOXEDWINE-FILE-TRACE.patch
+Compiler: Emscripten 6.0.6
+Resource-safe build command:
+make -j1 BUILD_DIR=Build/Release SHELL_FILE=shell.html EXTRA_CPP_FLAGS=
+Normalize the generated JavaScript before verification:
+perl -pi -e 's/[ \t]+$//' Build/Release/boxedwine.js
+Before applying BOXEDWINE-FILE-TRACE.patch, normalize fsfilenode.cpp to LF:
+perl -pi -e 's/\r$//' source/io/fsfilenode.cpp
 Official release: https://github.com/danoon2/Boxedwine/releases/tag/26R1.0
 Official Web runtime: https://boxedwine.org/v/26R1/wine11/st/
+
+The full boxedwine.zip archive is the verified build input. The deployed
+xp-accessories.zip archive contains the shared Wine prefix and the runtime files
+observed while Calculator, FreeCell, Solitaire, and Spider Solitaire start and
+operate. Rebuild it with:
+bun tools/build-boxedwine-xp-filesystem.ts
 
 The adjacent LICENSE-BOXEDWINE.txt file contains the BoxedWine license.
