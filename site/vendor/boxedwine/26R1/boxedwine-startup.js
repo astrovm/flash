@@ -33,6 +33,11 @@
         return new Uint8Array(buffer);
       });
     requests.set(url, request);
+    void request
+      .finally(() => {
+        if (requests.get(url) === request) requests.delete(url);
+      })
+      .catch(() => {});
     return request;
   };
 

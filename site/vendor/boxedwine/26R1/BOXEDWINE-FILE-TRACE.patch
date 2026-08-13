@@ -16,11 +16,11 @@ index dd4c05f..0d07f8a 100644
 +++ b/project/emscripten/makefile
 @@ -110,7 +110,7 @@ LDFLAGS = -s FORCE_FILESYSTEM -lidbfs.js -s USE_SDL=2 -s USE_ZLIB=1 -fwasm-ex
  #	$(CC) $(TEST_OBJS) -o $@ $(LDFLAGS)
- 
+
  $(BUILD_DIR)/$(TARGET_EXEC): $(ALL)
 -	@$(CC) $(ALL) -o $@ $(LDFLAGS)
 +	@$(CXX) $(ALL) -o $@ $(LDFLAGS)
- 
+
  # assembly
  $(BUILD_DIR)/%.s.o: %.s
 diff --git a/source/io/fsfilenode.cpp b/source/io/fsfilenode.cpp
@@ -29,12 +29,12 @@ index 2cf9d94..13fdc87 100644
 +++ b/source/io/fsfilenode.cpp
 @@ -17,6 +17,9 @@
   */
- 
+
  #include "boxedwine.h"
 +#ifdef __EMSCRIPTEN__
 +#include <emscripten.h>
 +#endif
- 
+
  #include <stdio.h>
  #include <fcntl.h>
 @@ -217,6 +220,16 @@ FsOpenNode* FsFileNode::open(U32 flags) {
@@ -60,7 +60,7 @@ index 7492198..b682b4f 100644
 +++ b/source/io/fszipnode.h
 @@ -35,6 +35,9 @@ public:
      bool moveToFileSystem(std::shared_ptr<FsNode> node);
- 
+
      std::weak_ptr<FsZip> fsZip;
 +#ifdef __EMSCRIPTEN__
 +    std::shared_ptr<std::vector<U8>> cachedData;
@@ -161,6 +161,6 @@ index 4740064..69296f0 100644
      bool forceRelativeMouse = false;
      bool cacheReads = false;
 +    bool traceReads = false;
- 
+
  private:
      bool workingDirSet = false;

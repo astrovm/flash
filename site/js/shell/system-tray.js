@@ -134,7 +134,6 @@ const openNetworkStatus = () => {
 };
 
 let offlineManagerInitialized = false;
-let promptedUpdateVersion = null;
 
 const offlineStatusText = (state) => {
   const messages = {
@@ -146,8 +145,9 @@ const offlineStatusText = (state) => {
     "update-available": state.enabled
       ? "An update is downloading..."
       : "An update is available.",
+    "update-pending": "A newer update is waiting for its stability delay.",
     "update-ready":
-      "An update is ready. Restart Astro Flash Collection to apply it.",
+      "An update is ready and will install automatically on the next load.",
     "repair-required":
       "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
@@ -172,34 +172,11 @@ const projectStorageText = (state) => {
 const formatProjectState = (value) =>
   value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Unavailable";
 
-const maybePromptForUpdate = (state) => {
-  if (
-    !loggedIn ||
-    !state.updateReady ||
-    !state.availableVersion ||
-    promptedUpdateVersion === state.availableVersion
-  ) {
-    return;
-  }
-  promptedUpdateVersion = state.availableVersion;
-  XPDialogs.confirm(
-    `Astro Flash Collection ${state.availableVersion} is ready.\nRestart now to apply the update?`,
-    "Astro Flash Update",
-    "info",
-  ).then((accepted) => {
-    if (!accepted) return;
-    offlineManager.applyUpdate().catch((error) => {
-      XPDialogs.alert(error.message, "Astro Flash Update", "error");
-    });
-  });
-};
-
 const initializeOfflineMode = () => {
   if (offlineManagerInitialized || window.ASTRO_DEV) {
     return offlineManagerInitialization;
   }
   offlineManagerInitialized = true;
-  offlineManager.subscribe(maybePromptForUpdate);
   offlineManagerInitialization = offlineManager.initialize().catch((error) => {
     console.error("Offline mode initialization failed:", error);
     throw error;
@@ -317,7 +294,6 @@ const wireProjectSettings = (win) => {
         <p class="project-settings-status" data-project-status="updates" aria-live="polite"></p>
         <div class="project-settings-actions">
           <button type="button" class="xp-btn" data-project-action="check">Check for Updates</button>
-          <button type="button" class="xp-btn" data-project-action="apply">Restart to Update</button>
         </div>
       </fieldset>
     </section>
@@ -358,7 +334,6 @@ const wireProjectSettings = (win) => {
     "[data-project-game-progress]",
   );
   const checkButton = content.querySelector('[data-project-action="check"]');
-  const applyButton = content.querySelector('[data-project-action="apply"]');
   const repairButton = content.querySelector('[data-project-action="repair"]');
   const downloadAllGamesButton = content.querySelector(
     '[data-project-action="download-all-games"]',
@@ -601,13 +576,15 @@ const wireProjectSettings = (win) => {
     updateStatus.textContent =
       state.phase === "checking"
         ? "Checking for updates..."
-        : state.updateReady
-          ? `Astro Flash Collection ${state.availableVersion || "update"} is ready to install.`
-          : state.availableVersion
-            ? `Astro Flash Collection ${state.availableVersion} is available.`
-            : state.lastChecked
-              ? "Astro Flash Collection is up to date."
-              : "Updates have not been checked yet.";
+        : state.phase === "update-pending"
+          ? `Astro Flash Collection ${state.availableVersion} will become eligible after ${formatUpdateCheckTime(state.updateEligibleAt)} if no newer update is released.`
+          : state.updateReady
+            ? `Astro Flash Collection ${state.availableVersion || "update"} will install automatically the next time you load it.`
+            : state.availableVersion
+              ? `Astro Flash Collection ${state.availableVersion} is available.`
+              : state.lastChecked
+                ? "Astro Flash Collection is up to date."
+                : "Updates have not been checked yet.";
     if (state.error) {
       updateStatus.textContent = state.error;
     }
@@ -625,10 +602,6 @@ const wireProjectSettings = (win) => {
       gameDownloadProgress.removeAttribute("value");
     }
     checkButton.disabled = !state.online || transientPhases.has(state.phase);
-    applyButton.hidden = !state.availableVersion;
-    applyButton.disabled = state.enabled
-      ? !state.updateReady
-      : transientPhases.has(state.phase);
     repairButton.disabled = !state.online || transientPhases.has(state.phase);
     const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     downloadAllGamesButton.disabled =
@@ -667,11 +640,6 @@ const wireProjectSettings = (win) => {
 
   checkButton.addEventListener("click", () => {
     offlineManager.checkForUpdates().catch(() => {});
-  });
-  applyButton.addEventListener("click", () => {
-    offlineManager.applyUpdate().catch((error) => {
-      updateStatus.textContent = error.message;
-    });
   });
   repairButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(

@@ -164,6 +164,8 @@ test("offline updates", async () => {
     },
   };
   const testIntegrity = `sha384-${"A".repeat(64)}`;
+  const now = 1_800_000_000_000;
+  const sixHours = 6 * 60 * 60 * 1000;
   for (const entry of [
     manifest.runtime,
     ...Object.values(manifest.runtimes),
@@ -178,9 +180,17 @@ test("offline updates", async () => {
       active: new Worker("activated", manifest.version),
     }),
     remoteVersion = "26.07.29-aaaaaaa",
+    remoteReleasedAt = new Date(now - sixHours).toISOString(),
+    stabilityDelayMs = sixHours,
     storageValues = {},
     sessionValues = {},
   } = {}) => {
+    let remote = {
+      releasedAt: remoteReleasedAt,
+      stabilityDelayMs,
+      version: remoteVersion,
+    };
+    let currentTime = now;
     const serviceWorker = new Events();
     serviceWorker.controller = registration.active;
     serviceWorker.registerCalls = [];
@@ -220,7 +230,7 @@ test("offline updates", async () => {
           reloads += 1;
         },
       },
-      Date: { now: () => 1_800_000_000_000 },
+      Date: { now: () => currentTime },
       clearTimeout() {},
       setTimeout: (callback, delay) => {
         timers.push({ callback, delay });
@@ -246,8 +256,10 @@ test("offline updates", async () => {
         if (String(url).startsWith("/version.json")) {
           return new Response(
             JSON.stringify({
-              version: remoteVersion,
-              revision: remoteVersion.split("-").at(-1),
+              version: remote.version,
+              revision: remote.version.split("-").at(-1),
+              releasedAt: remote.releasedAt,
+              stabilityDelayMs: remote.stabilityDelayMs,
               offlineBytes: 8_000_000,
               bundledGameBytes: 10,
             }),
@@ -266,6 +278,12 @@ test("offline updates", async () => {
       fetches,
       getReloads: () => reloads,
       registration,
+      setNow: (value) => {
+        currentTime = value;
+      },
+      setRemote: (value) => {
+        remote = { ...remote, ...value };
+      },
       serviceWorker,
       storage,
       sessionStorage,
@@ -563,6 +581,45 @@ test("offline updates", async () => {
     /^\/sw\.js\?v=26\.07\.30-bbbbbbb&retry=1800000000000$/,
   );
   assert.strictEqual(staleWaitingManager.getSnapshot().updateReady, true);
+  assert.deepStrictEqual(staleWaitingRegistration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
+  const firstReleaseTime = now - 3 * 60 * 60 * 1000;
+  const delayedRegistration = new Registration({
+    active: new Worker("activated", manifest.version),
+    waiting: new Worker("installed", "26.07.30-first111"),
+  });
+  const delayed = makeEnvironment({
+    registration: delayedRegistration,
+    remoteVersion: "26.07.30-first111",
+    remoteReleasedAt: new Date(firstReleaseTime).toISOString(),
+  });
+  const delayedManager = createManager({
+    currentVersion: manifest.version,
+    environment: delayed.environment,
+  });
+  await delayedManager.initialize();
+  assert.strictEqual(delayedManager.getSnapshot().phase, "update-pending");
+  assert.deepStrictEqual(delayedRegistration.waiting.messages, []);
+
+  const secondReleaseTime = now;
+  delayed.setRemote({
+    version: "26.07.30-second22",
+    releasedAt: new Date(secondReleaseTime).toISOString(),
+  });
+  delayed.setNow(secondReleaseTime + sixHours);
+  delayedRegistration.waiting = new Worker("installed", "26.07.30-second22");
+  const nextLoadManager = createManager({
+    currentVersion: manifest.version,
+    environment: delayed.environment,
+  });
+  await nextLoadManager.initialize();
+  assert.deepStrictEqual(delayedRegistration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+  delayed.serviceWorker.dispatch("controllerchange");
+  assert.strictEqual(delayed.getReloads(), 1);
 
   const activatedUpdate = makeEnvironment({
     registration: new Registration({

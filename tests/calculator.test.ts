@@ -51,7 +51,7 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(url.searchParams.get("executable")).toBe("window-host.exe");
     expect(url.searchParams.get("resolution")).toBe("254x261");
     expect(url.searchParams.get("frameTop")).toBe("32");
-    expect(url.searchParams.get("cache")).toBe("true");
+    expect(url.searchParams.get("cache")).toBe("false");
     expect(url.searchParams.get("trace")).toBe("false");
   });
 

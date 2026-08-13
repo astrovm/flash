@@ -51,7 +51,7 @@ const installFetchStub = (shell) => {
 };
 
 describe("BoxedWine startup", () => {
-  test("deduplicates downloads and reports measured startup stages", async () => {
+  test("deduplicates active downloads and releases completed data", async () => {
     const window = new Window({
       url: "https://flash.example/runner.html",
     });
@@ -85,6 +85,11 @@ describe("BoxedWine startup", () => {
     ]);
     expect(messages.every(({ elapsed }) => elapsed >= 0)).toBeTrue();
     expect(window.BoxedWineStartup.metrics).toEqual(messages);
+
+    const third = window.BoxedWineStartup.load("root.zip", "root");
+    expect(third).not.toBe(first);
+    await third;
+    expect(downloads).toBe(2);
     await window.happyDOM.close();
   });
 

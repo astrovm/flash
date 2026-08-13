@@ -434,6 +434,8 @@ describe("build metadata", () => {
     const metadata = JSON.parse(await readFile(paths.versionJson, "utf8"));
     expect(metadata.offlineBytes).toBeGreaterThan(0);
     expect(metadata.bundledGameBytes).toBeGreaterThan(0);
+    expect(Number.isFinite(Date.parse(metadata.releasedAt))).toBeTrue();
+    expect(metadata.stabilityDelayMs).toBe(6 * 60 * 60 * 1000);
     expect(manifest.version).toBe("26.07.28-abcdef1");
     expect(manifest.games["bike-mania"].type).toBe("swf");
     expect(manifest.games.doom.type).toBe("iframe");
@@ -644,6 +646,8 @@ describe("atomic build", () => {
       sourceDir: source,
       outputDir: output,
       version: "26.07.28-abcdef1",
+      releasedAt: "2026-07-28T12:00:00.000Z",
+      stabilityDelayMs: 2 * 60 * 60 * 1000,
       installRuffle: async (jsDir) =>
         writeFiles(jsDir, {
           "ruffle.js": "ruffle",
@@ -690,6 +694,8 @@ describe("atomic build", () => {
     expect(metadata.bundledGameBytes).toBeGreaterThan(0);
     expect(metadata.revision).toBe("abcdef1");
     expect(metadata.version).toBe("26.07.28-abcdef1");
+    expect(metadata.releasedAt).toBe("2026-07-28T12:00:00.000Z");
+    expect(metadata.stabilityDelayMs).toBe(2 * 60 * 60 * 1000);
 
     await writeFile(
       scummvmIndexPath,

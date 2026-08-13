@@ -218,7 +218,6 @@ const login = (playSound = true) => {
         openLinkedGame(gameId);
       }
     }
-    maybePromptForUpdate(offlineManager.getSnapshot());
     scheduleScreenSaver();
   })().finally(() => {
     loginPromise = null;

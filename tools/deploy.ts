@@ -33,6 +33,7 @@ export const FFLATE_JS_PATH = "vendor/fflate/index.js";
 export const JS_DOS_ROOT_PATH = "vendor/js-dos";
 export const WEBTORRENT_JS_PATH = "vendor/webtorrent/webtorrent.min.js";
 export const RELEASES_PATH = "releases";
+export const DEFAULT_UPDATE_STABILITY_DELAY_MS = 6 * 60 * 60 * 1000;
 const NODE_MODULES = join(PROJECT_DIR, "node_modules");
 const FFLATE_SOURCE = join(NODE_MODULES, "fflate");
 const JS_DOS_SOURCE = join(NODE_MODULES, "js-dos");
@@ -874,7 +875,17 @@ export async function versionOfflineGameManifest(
 export async function writeVersionMetadata(
   paths: BuildPaths,
   version: string,
+  {
+    releasedAt = new Date().toISOString(),
+    stabilityDelayMs = DEFAULT_UPDATE_STABILITY_DELAY_MS,
+  }: { releasedAt?: string; stabilityDelayMs?: number } = {},
 ): Promise<void> {
+  if (!Number.isFinite(Date.parse(releasedAt))) {
+    throw new Error("Release time must be a valid date");
+  }
+  if (!Number.isInteger(stabilityDelayMs) || stabilityDelayMs < 0) {
+    throw new Error("Update stability delay must be a non-negative integer");
+  }
   const files = await walkFiles(paths.root);
   let offlineBytes = 0;
   for (const path of files) {
@@ -907,7 +918,9 @@ export async function writeVersionMetadata(
     `${JSON.stringify({
       bundledGameBytes,
       offlineBytes,
+      releasedAt,
       revision,
+      stabilityDelayMs,
       version,
     })}\n`,
   );
@@ -1147,7 +1160,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
   }
   if (
     Object.keys(versionMetadata).sort().join(",") !==
-    "bundledGameBytes,offlineBytes,revision,version"
+    "bundledGameBytes,offlineBytes,releasedAt,revision,stabilityDelayMs,version"
   ) {
     throw new Error("Build output has invalid version metadata");
   }
@@ -1155,7 +1168,11 @@ export async function validateOutput(outputDir: string): Promise<void> {
     !Number.isInteger(versionMetadata.offlineBytes) ||
     (versionMetadata.offlineBytes as number) <= 0 ||
     !Number.isInteger(versionMetadata.bundledGameBytes) ||
-    (versionMetadata.bundledGameBytes as number) <= 0
+    (versionMetadata.bundledGameBytes as number) <= 0 ||
+    typeof versionMetadata.releasedAt !== "string" ||
+    !Number.isFinite(Date.parse(versionMetadata.releasedAt)) ||
+    !Number.isInteger(versionMetadata.stabilityDelayMs) ||
+    (versionMetadata.stabilityDelayMs as number) < 0
   ) {
     throw new Error("Build output has invalid offline download size");
   }
@@ -1417,8 +1434,10 @@ export async function validatePrecacheIntegrity(
 
 export interface BuildOptions {
   outputDir?: string;
+  releasedAt?: string;
   revision?: string;
   sourceDir?: string;
+  stabilityDelayMs?: number;
   version?: string;
   installRuffle?: (jsDir: string) => Promise<void>;
   generate?: (outputDir: string, version?: string) => Promise<void>;
@@ -1426,8 +1445,10 @@ export interface BuildOptions {
 
 export async function build({
   outputDir = DEFAULT_OUTPUT_DIR,
+  releasedAt,
   revision = "HEAD",
   sourceDir = SOURCE_DIR,
+  stabilityDelayMs = DEFAULT_UPDATE_STABILITY_DELAY_MS,
   version,
   installRuffle: installRuffleRuntime = installRuffle,
   generate = (directory, buildVersion) =>
@@ -1464,7 +1485,10 @@ export async function build({
     await installRuffleRuntime(paths.js);
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
-    await writeVersionMetadata(paths, deploymentVersion);
+    await writeVersionMetadata(paths, deploymentVersion, {
+      releasedAt,
+      stabilityDelayMs,
+    });
     await versionOfflineGameManifest(paths);
     await validateOutput(stagingDir);
     await assembleReleaseOutput(stagingDir, deploymentVersion);
@@ -1480,23 +1504,36 @@ export async function build({
 function parseArguments(arguments_: string[]): {
   outputDir: string;
   revision: string;
+  stabilityDelayMs: number;
 } {
   let outputDir = DEFAULT_OUTPUT_DIR;
   let revision = "HEAD";
+  let stabilityDelayMs = DEFAULT_UPDATE_STABILITY_DELAY_MS;
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
-    if (argument === "--output" || argument === "--revision") {
+    if (
+      argument === "--output" ||
+      argument === "--revision" ||
+      argument === "--update-delay-hours"
+    ) {
       const value = arguments_[index + 1];
       if (!value) throw new Error(`${argument} requires a value`);
       if (argument === "--output")
         outputDir = isAbsolute(value) ? value : resolve(value);
-      else revision = value;
+      else if (argument === "--revision") revision = value;
+      else {
+        const hours = Number(value);
+        if (!Number.isFinite(hours) || hours < 0) {
+          throw new Error("--update-delay-hours must be zero or greater");
+        }
+        stabilityDelayMs = Math.round(hours * 60 * 60 * 1000);
+      }
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${argument}`);
     }
   }
-  return { outputDir, revision };
+  return { outputDir, revision, stabilityDelayMs };
 }
 
 if (import.meta.main) {
