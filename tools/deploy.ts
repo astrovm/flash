@@ -568,6 +568,8 @@ export async function updateHtml(
     const javaScriptPath = join(boxedWineRoot, "boxedwine.js");
     const shellPath = join(boxedWineRoot, "boxedwine-shell.js");
     const indexPath = join(boxedWineRoot, "index.html");
+    const rootZipPath = join(boxedWineRoot, "xp-accessories.zip");
+    const rootZipName = `xp-accessories-${await getShortHash(rootZipPath)}.zip`;
     const wasmName = `boxedwine.${await getShortHash(wasmPath)}.wasm`;
     let javaScript = await readFile(javaScriptPath, "utf8");
     javaScript = await replaceExactlyOnce(
@@ -594,8 +596,34 @@ export async function updateHtml(
     );
     await writeFile(indexPath, boxedWineIndex);
     const indexName = `index.${await getShortHash(indexPath)}.html`;
+    const preloadPath = join(boxedWineRoot, "preload.json");
+    if (await isFile(preloadPath)) {
+      await writeFile(
+        preloadPath,
+        `${JSON.stringify(
+          {
+            files: [
+              "boxedwine-startup.js",
+              shellName,
+              javaScriptName,
+              wasmName,
+              indexName,
+              rootZipName,
+            ],
+          },
+          null,
+          2,
+        )}\n`,
+      );
+    }
     const integrationPath = join(paths.root, "apps", "core", "boxedwine.js");
     let integration = await readFile(integrationPath, "utf8");
+    integration = await replaceExactlyOnce(
+      integration,
+      /const ROOT_ARCHIVE = "xp-accessories";/g,
+      `const ROOT_ARCHIVE = "${rootZipName.slice(0, -4)}";`,
+      "Could not version the BoxedWine root filesystem reference",
+    );
     integration = await replaceExactlyOnce(
       integration,
       /`\$\{RUNTIME_ROOT\}index\.html`/g,
@@ -608,6 +636,8 @@ export async function updateHtml(
       rename(wasmPath, join(boxedWineRoot, wasmName)),
       rename(javaScriptPath, join(boxedWineRoot, javaScriptName)),
       rename(shellPath, join(boxedWineRoot, shellName)),
+      rename(rootZipPath, join(boxedWineRoot, rootZipName)),
+      rm(join(boxedWineRoot, "boxedwine.zip")),
     ]);
   }
   console.log(`  - Set deployment version to ${version}`);

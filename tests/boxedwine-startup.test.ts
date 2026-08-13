@@ -1,0 +1,155 @@
+// @ts-nocheck -- Happy DOM's element types intentionally replace lib.dom here.
+import { afterEach, describe, expect, test } from "bun:test";
+import { readFile, stat } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Window } from "happy-dom";
+
+import {
+  cleanupShells,
+  flushShell,
+  loadShell,
+  login,
+} from "./helpers/shell-harness";
+
+const require = createRequire(import.meta.url);
+const { unzipSync } = require("fflate");
+const projectDirectory = join(dirname(fileURLToPath(import.meta.url)), "..");
+const runtimeDirectory = join(
+  projectDirectory,
+  "site",
+  "vendor",
+  "boxedwine",
+  "26R1",
+);
+
+afterEach(cleanupShells);
+
+const installFetchStub = (shell) => {
+  const requests = [];
+  shell.window.fetch = async (url, options) => {
+    requests.push({ url: String(url), options });
+    if (String(url).endsWith("/preload.json")) {
+      return {
+        ok: true,
+        async json() {
+          return { files: ["runtime.js", "root.zip"] };
+        },
+      };
+    }
+    return { ok: true };
+  };
+  return requests;
+};
+
+describe("BoxedWine startup", () => {
+  test("deduplicates downloads and reports measured startup stages", async () => {
+    const window = new Window({
+      url: "https://flash.example/runner.html",
+    });
+    const messages = [];
+    let downloads = 0;
+    window.postMessage = (message) => messages.push(message);
+    window.fetch = async () => {
+      downloads += 1;
+      return {
+        ok: true,
+        async arrayBuffer() {
+          return new Uint8Array([1, 2, 3]).buffer;
+        },
+      };
+    };
+    const startupSource = await readFile(
+      join(runtimeDirectory, "boxedwine-startup.js"),
+      "utf8",
+    );
+    new Function("window", startupSource)(window);
+
+    const first = window.BoxedWineStartup.load("root.zip", "root");
+    const second = window.BoxedWineStartup.load("root.zip", "root");
+    expect(first).toBe(second);
+    expect([...(await first)]).toEqual([1, 2, 3]);
+    expect(downloads).toBe(1);
+    expect(messages.map(({ stage }) => stage)).toEqual([
+      "runner-ready",
+      "download-start",
+      "download-ready",
+    ]);
+    expect(messages.every(({ elapsed }) => elapsed >= 0)).toBeTrue();
+    expect(window.BoxedWineStartup.metrics).toEqual(messages);
+    await window.happyDOM.close();
+  });
+
+  test("preloads the shared runtime after desktop login when idle", async () => {
+    const shell = await loadShell();
+    const requests = installFetchStub(shell);
+    let idleCallback;
+    shell.window.requestIdleCallback = (callback) => {
+      idleCallback = callback;
+      return 1;
+    };
+
+    await login(shell);
+    expect(requests).toHaveLength(0);
+    expect(idleCallback).toBeFunction();
+    idleCallback();
+    await flushShell();
+    await flushShell();
+
+    expect(requests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/vendor/boxedwine/26R1/preload.json",
+      "/vendor/boxedwine/26R1/runtime.js",
+      "/vendor/boxedwine/26R1/root.zip",
+    ]);
+    expect(
+      requests.every(({ options }) => options.cache === "force-cache"),
+    ).toBeTrue();
+  });
+
+  test("waits for menu demand on a constrained phone", async () => {
+    const shell = await loadShell();
+    const requests = installFetchStub(shell);
+    let idleRequests = 0;
+    shell.window.matchMedia = () => ({ matches: true });
+    shell.window.requestIdleCallback = () => {
+      idleRequests += 1;
+    };
+
+    await login(shell);
+    expect(idleRequests).toBe(0);
+    expect(requests).toHaveLength(0);
+
+    shell.document.getElementById("start-button").click();
+    shell.document.getElementById("all-programs-button").click();
+    shell.document.querySelector('[data-program-id="accessories"]').click();
+    await flushShell();
+    await flushShell();
+
+    expect(requests).toHaveLength(3);
+  });
+
+  test("packages only the traced shared XP files", async () => {
+    const trace = JSON.parse(
+      await readFile(
+        join(runtimeDirectory, "xp-accessories-files.json"),
+        "utf8",
+      ),
+    );
+    const archive = unzipSync(
+      new Uint8Array(
+        await readFile(join(runtimeDirectory, "xp-accessories.zip")),
+      ),
+    );
+
+    for (const absolutePath of trace) {
+      const path = absolutePath.replace(/^\/+/, "");
+      expect(
+        archive[path] || archive[`${path}/`] || archive[`${path}.link`],
+      ).toBeDefined();
+    }
+    expect(
+      (await stat(join(runtimeDirectory, "xp-accessories.zip"))).size,
+    ).toBeLessThan((await stat(join(runtimeDirectory, "boxedwine.zip"))).size);
+  });
+});

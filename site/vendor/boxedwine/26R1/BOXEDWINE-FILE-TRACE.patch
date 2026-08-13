@@ -1,0 +1,19 @@
+diff --git a/source/io/fsfilenode.cpp b/source/io/fsfilenode.cpp
+index 2cf9d94..a29d967 100644
+--- a/source/io/fsfilenode.cpp
++++ b/source/io/fsfilenode.cpp
+@@ -19,0 +20,3 @@
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#endif
+@@ -219,0 +223,10 @@ FsOpenNode* FsFileNode::open(U32 flags) {
++#elif defined(BOXEDWINE_ZLIB) && defined(__EMSCRIPTEN__)
++        if (KSystem::cacheReads && this->zipNode) {
++            EM_ASM({
++                console.log("BOXEDWINE_FILE:" + UTF8ToString($0));
++                window.parent.postMessage({
++                    type: "boxedwine-file-read",
++                    path: UTF8ToString($0)
++                }, window.location.origin);
++            }, this->path.c_str());
++        }

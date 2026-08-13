@@ -127,15 +127,31 @@ async function makeSource(root: string): Promise<void> {
     "vendor/js-dos/emulators/wdosbox.wasm": "wasm",
     "vendor/webtorrent/webtorrent.min.js": "webtorrent",
     "vendor/boxedwine/26R1/boxedwine-shell.js": "boxedwine shell",
+    "vendor/boxedwine/26R1/boxedwine-startup.js": "startup loader",
     "vendor/boxedwine/26R1/boxedwine.js":
       "return locateFile('boxedwine.wasm');",
     "vendor/boxedwine/26R1/boxedwine.wasm": "boxedwine wasm",
+    "vendor/boxedwine/26R1/boxedwine.zip": "full root filesystem",
+    "vendor/boxedwine/26R1/xp-accessories.zip": "minimal root filesystem",
+    "vendor/boxedwine/26R1/preload.json": JSON.stringify({
+      files: [
+        "boxedwine-startup.js",
+        "boxedwine-shell.js",
+        "boxedwine.js",
+        "boxedwine.wasm",
+        "index.html",
+        "xp-accessories.zip",
+      ],
+    }),
     "vendor/boxedwine/26R1/index.html": [
+      '<script src="boxedwine-startup.js"></script>',
       '<script src="boxedwine-shell.js"></script>',
       '<script async src="boxedwine.js"></script>',
     ].join("\n"),
-    "apps/core/boxedwine.js":
+    "apps/core/boxedwine.js": [
+      'const ROOT_ARCHIVE = "xp-accessories";',
       "new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);",
+    ].join("\n"),
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
@@ -330,8 +346,12 @@ describe("build metadata", () => {
     const boxedWineShell = boxedWineRunnerMarkup.match(
       /boxedwine-shell\.[a-f0-9]{8}\.js/,
     )?.[0];
+    const boxedWineRoot = boxedWineIndex.match(
+      /xp-accessories-[a-f0-9]{8}/,
+    )?.[0];
     expect(boxedWineJavaScript).toBeDefined();
     expect(boxedWineShell).toBeDefined();
+    expect(boxedWineRoot).toBeDefined();
     expect(
       await Bun.file(
         join(root, "vendor", "boxedwine", "26R1", boxedWineJavaScript!),
@@ -342,12 +362,40 @@ describe("build metadata", () => {
         join(root, "vendor", "boxedwine", "26R1", boxedWineShell!),
       ).exists(),
     ).toBeTrue();
+    const boxedWineJavaScriptSource = await readFile(
+      join(root, "vendor", "boxedwine", "26R1", boxedWineJavaScript!),
+      "utf8",
+    );
+    expect(boxedWineJavaScriptSource).toMatch(
+      /locateFile\('boxedwine\.[a-f0-9]{8}\.wasm'\)/,
+    );
+    const boxedWineWasm = boxedWineJavaScriptSource.match(
+      /boxedwine\.[a-f0-9]{8}\.wasm/,
+    )?.[0];
     expect(
+      await Bun.file(
+        join(root, "vendor", "boxedwine", "26R1", `${boxedWineRoot}.zip`),
+      ).exists(),
+    ).toBeTrue();
+    expect(
+      await Bun.file(
+        join(root, "vendor", "boxedwine", "26R1", "boxedwine.zip"),
+      ).exists(),
+    ).toBeFalse();
+    const boxedWinePreload = JSON.parse(
       await readFile(
-        join(root, "vendor", "boxedwine", "26R1", boxedWineJavaScript!),
+        join(root, "vendor", "boxedwine", "26R1", "preload.json"),
         "utf8",
       ),
-    ).toMatch(/locateFile\('boxedwine\.[a-f0-9]{8}\.wasm'\)/);
+    );
+    expect(boxedWinePreload.files).toEqual([
+      "boxedwine-startup.js",
+      boxedWineShell,
+      boxedWineJavaScript,
+      boxedWineWasm,
+      boxedWineRunner,
+      `${boxedWineRoot}.zip`,
+    ]);
     for (const gameId of [
       "pink-panther-hokus-pokus",
       "pink-panther-passport-to-peril",

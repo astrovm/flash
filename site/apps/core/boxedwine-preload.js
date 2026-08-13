@@ -1,0 +1,78 @@
+const RUNTIME_ROOT = "vendor/boxedwine/26R1/";
+let preloadPromise;
+
+export const isConstrainedBoxedWineDevice = (hostWindow = window) => {
+  const connection = hostWindow.navigator.connection;
+  return Boolean(
+    connection?.saveData ||
+    /(?:^|-)2g$/.test(connection?.effectiveType || "") ||
+    (Number.isFinite(hostWindow.navigator.deviceMemory) &&
+      hostWindow.navigator.deviceMemory < 4) ||
+    hostWindow.matchMedia?.("(max-width: 600px)").matches,
+  );
+};
+
+const runtimeUrl = (path, hostWindow) =>
+  new URL(`${RUNTIME_ROOT}${path}`, hostWindow.document.baseURI).href;
+
+export const preloadBoxedWineRuntime = async ({
+  automatic = false,
+  hostWindow = window,
+} = {}) => {
+  if (automatic && isConstrainedBoxedWineDevice(hostWindow)) return false;
+  if (preloadPromise) return preloadPromise;
+
+  preloadPromise = hostWindow
+    .fetch(runtimeUrl("preload.json", hostWindow), {
+      cache: "force-cache",
+      credentials: "same-origin",
+    })
+    .then(async (response) => {
+      if (!response.ok)
+        throw new Error("BoxedWine preload manifest unavailable");
+      const manifest = await response.json();
+      if (
+        !Array.isArray(manifest.files) ||
+        manifest.files.some(
+          (file) =>
+            typeof file !== "string" || !/^[a-z0-9][a-z0-9.-]*$/i.test(file),
+        )
+      ) {
+        throw new Error("Invalid BoxedWine preload manifest");
+      }
+      const responses = await Promise.all(
+        manifest.files.map((file) =>
+          hostWindow.fetch(runtimeUrl(file, hostWindow), {
+            cache: "force-cache",
+            credentials: "same-origin",
+          }),
+        ),
+      );
+      if (responses.some((assetResponse) => !assetResponse.ok)) {
+        throw new Error("BoxedWine preload asset unavailable");
+      }
+      return true;
+    })
+    .catch((error) => {
+      preloadPromise = undefined;
+      throw error;
+    });
+  return preloadPromise;
+};
+
+export const scheduleBoxedWinePreload = (hostWindow = window) => {
+  if (isConstrainedBoxedWineDevice(hostWindow)) return false;
+  const start = () =>
+    preloadBoxedWineRuntime({ automatic: true, hostWindow }).catch(() => {});
+  if (typeof hostWindow.requestIdleCallback === "function") {
+    hostWindow.requestIdleCallback(start, { timeout: 3000 });
+  } else {
+    hostWindow.setTimeout(start, 1500);
+  }
+  return true;
+};
+
+window.XPBoxedWinePreload = Object.freeze({
+  preload: () => preloadBoxedWineRuntime(),
+  schedule: () => scheduleBoxedWinePreload(),
+});

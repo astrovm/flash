@@ -47,9 +47,40 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(calculator.querySelector(".maximize-btn").disabled).toBeTrue();
     expect(calculator.querySelector(".resize-handle")).toBeNull();
     expect(url.searchParams.get("archive")).toBe("xp-calculator");
+    expect(url.searchParams.get("root")).toBe("xp-accessories");
     expect(url.searchParams.get("executable")).toBe("window-host.exe");
     expect(url.searchParams.get("resolution")).toBe("254x261");
     expect(url.searchParams.get("frameTop")).toBe("32");
+  });
+
+  test("exposes measured startup progress to the XP window", async () => {
+    const { shell, calculator } = await launchCalculator();
+    const host = calculator.querySelector(".boxedwine-app-host");
+    const frame = host.querySelector(".boxedwine-app-frame");
+    const metrics = [];
+    host.addEventListener("boxedwine-startup-metric", ({ detail }) =>
+      metrics.push(detail),
+    );
+
+    shell.window.dispatchEvent(
+      new shell.window.MessageEvent("message", {
+        data: {
+          type: "boxedwine-startup",
+          stage: "window-ready",
+          elapsed: 875,
+          width: 260,
+          height: 260,
+        },
+        origin: new URL(frame.src).origin,
+        source: frame.contentWindow,
+      }),
+    );
+
+    expect(metrics).toEqual([
+      { stage: "window-ready", elapsed: 875, width: 260, height: 260 },
+    ]);
+    expect(host.dataset.boxedwineStartupStage).toBe("window-ready");
+    expect(host.dataset.boxedwineStartupElapsed).toBe("875");
   });
 
   test("follows the real Calculator window when XP switches to Scientific mode", async () => {

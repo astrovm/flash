@@ -1,0 +1,10 @@
+{
+  "files": [
+    "boxedwine-startup.js",
+    "boxedwine-shell.js",
+    "boxedwine.js",
+    "boxedwine.wasm",
+    "index.html",
+    "xp-accessories.zip"
+  ]
+}
