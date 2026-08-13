@@ -3,12 +3,17 @@ let preloadPromise;
 
 export const isConstrainedBoxedWineDevice = (hostWindow = window) => {
   const connection = hostWindow.navigator.connection;
+  const mobileUserAgent =
+    hostWindow.navigator.userAgentData?.mobile === true ||
+    /Android|iPad|iPhone|iPod|Mobile/i.test(hostWindow.navigator.userAgent);
   return Boolean(
     connection?.saveData ||
     /(?:^|-)2g$/.test(connection?.effectiveType || "") ||
     (Number.isFinite(hostWindow.navigator.deviceMemory) &&
       hostWindow.navigator.deviceMemory < 4) ||
-    hostWindow.matchMedia?.("(max-width: 600px)").matches,
+    hostWindow.matchMedia?.("(max-width: 600px)").matches ||
+    hostWindow.matchMedia?.("(pointer: coarse)").matches ||
+    mobileUserAgent,
   );
 };
 
@@ -40,17 +45,21 @@ export const preloadBoxedWineRuntime = async ({
       ) {
         throw new Error("Invalid BoxedWine preload manifest");
       }
-      const responses = await Promise.all(
-        manifest.files.map((file) =>
-          hostWindow.fetch(runtimeUrl(file, hostWindow), {
-            cache: "force-cache",
-            credentials: "same-origin",
-          }),
-        ),
+      await Promise.all(
+        manifest.files.map(async (file) => {
+          const assetResponse = await hostWindow.fetch(
+            runtimeUrl(file, hostWindow),
+            {
+              cache: "force-cache",
+              credentials: "same-origin",
+            },
+          );
+          if (!assetResponse.ok) {
+            throw new Error("BoxedWine preload asset unavailable");
+          }
+          await assetResponse.arrayBuffer();
+        }),
       );
-      if (responses.some((assetResponse) => !assetResponse.ok)) {
-        throw new Error("BoxedWine preload asset unavailable");
-      }
       return true;
     })
     .catch((error) => {

@@ -51,6 +51,8 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(url.searchParams.get("executable")).toBe("window-host.exe");
     expect(url.searchParams.get("resolution")).toBe("254x261");
     expect(url.searchParams.get("frameTop")).toBe("32");
+    expect(url.searchParams.get("cache")).toBe("true");
+    expect(url.searchParams.get("trace")).toBe("false");
   });
 
   test("exposes measured startup progress to the XP window", async () => {
@@ -179,8 +181,14 @@ describe("original Windows XP Calculator through BoxedWine", () => {
   test("publishes native Standard and Scientific window sizes to the shell", () => {
     let pollWindowSize;
     const posted = [];
+    const startupReports = [];
     const runnerWindow = {
       location: { origin: "https://flash.test" },
+      BoxedWineStartup: {
+        report(stage, detail) {
+          startupReports.push({ stage, ...detail });
+        },
+      },
       parent: {
         postMessage(message, origin) {
           posted.push({ message, origin });
@@ -221,5 +229,8 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       message: { type: "boxedwine-window-size", width: 480, height: 260 },
       origin: "https://flash.test",
     });
+    expect(startupReports).toEqual([
+      { stage: "window-ready", width: 260, height: 260 },
+    ]);
   });
 });

@@ -547,8 +547,11 @@
         }, false);
         function getEmulatorParams() {        
             let params = ["-root", ROOT];
-            if (getParameter("trace") == "true") {
+            if (getParameter("cache") == "true") {
                 params.push("-cacheReads");
+            }
+            if (getParameter("trace") == "true") {
+                params.push("-traceReads");
             }
             params.push("-zip");
     		params.push(Config.rootZipFile);

@@ -8,7 +8,7 @@
   "runtimeUrl": "https://boxedwine.org/v/26R1/wine11/st/",
   "build": {
     "compiler": "Emscripten 6.0.6",
-    "command": "make release CC=em++",
+    "command": "make -j1 BUILD_DIR=Build/Release SHELL_FILE=shell.html EXTRA_CPP_FLAGS=",
     "patches": [
       "BOXEDWINE-RESIZE.patch",
       "BOXEDWINE-FILE-TRACE.patch"
@@ -16,10 +16,10 @@
     "filesystemCommand": "bun tools/build-boxedwine-xp-filesystem.ts"
   },
   "files": {
-    "boxedwine-shell.js": "7c68198b6bf71d530fbb0d4c814de466b93ad5afcbc9fcf12f6fc91c708157ca",
+    "boxedwine-shell.js": "ee18b4cf9812c5dd7d16b2708d9c33080cb1dc16dc757f79a2f11ac6b7802490",
     "boxedwine-startup.js": "cc74cdceb4602708442d86e1ca5d49f4403157b25205bd809333f21b5ab7f293",
-    "boxedwine.js": "811276d4b04fb5261933680a80f9b67526bedcb4f6aac5d218805dc552c37756",
-    "boxedwine.wasm": "27640b0aa1fd13a324c093739f8769afe8b57d798941047651d529bfb0f7ab2d",
+    "boxedwine.js": "fa83af03cc7abbee1e155068dfda2a3920e9a441d0039221cfb2c1bb2620b552",
+    "boxedwine.wasm": "1dc9aac81652bc2ee6da8fc358d77e57059a8149520e15724cd8589d5bfa49bc",
     "boxedwine.zip": "5d251b6d53cad1c31de254c5285603d193f91bc3129b9c9ba39c4cc65a24edb3",
     "xp-accessories-files.json": "a7ce518544382d5a44d20b9139c736152dfca9fadb54ccc6fb09c13a11664a5a",
     "xp-accessories.zip": "02f703da02afef88579c3b5fe376afa915443f6b8566aa7f69568eb5814c7ffa"

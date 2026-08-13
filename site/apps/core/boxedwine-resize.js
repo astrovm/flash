@@ -19,6 +19,7 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
   let runtimeInitialized = false;
   let windowSizeTimer = null;
   let previousWindowSize = "";
+  let startupWindowReported = false;
 
   const reportWindowSize = () => {
     if (!runtimeInitialized || typeof module.FS?.readFile !== "function")
@@ -31,10 +32,13 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
       const match = /^(\d+) (\d+)$/.exec(text);
       if (!match) return;
       previousWindowSize = text;
-      hostWindow.BoxedWineStartup?.report("window-ready", {
-        width: Number(match[1]),
-        height: Number(match[2]),
-      });
+      if (!startupWindowReported) {
+        startupWindowReported = true;
+        hostWindow.BoxedWineStartup?.report("window-ready", {
+          width: Number(match[1]),
+          height: Number(match[2]),
+        });
+      }
       hostWindow.parent.postMessage(
         {
           type: "boxedwine-window-size",

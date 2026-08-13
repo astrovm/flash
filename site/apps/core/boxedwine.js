@@ -24,6 +24,7 @@ const runnerUrl = ({
     resolution,
     frameTop: String(frameTop),
     sound: String(sound),
+    cache: "true",
     trace: "false",
   });
   return url.href;
