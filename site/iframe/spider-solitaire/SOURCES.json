@@ -1,0 +1,18 @@
+{
+  "runtime": "boxedwine",
+  "windowsXp": {
+    "source": "User-supplied Windows XP Professional SP3 source-media ISO",
+    "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "package": {
+      "file": "xp-spider-solitaire.zip",
+      "bytes": 270263,
+      "sha256": "ba3b5323193d91fcf5d32a2985e5e162881452228f9664b69f597b18de7dd70a"
+    },
+    "files": {
+      "spider.exe": {
+        "member": "I386/SPIDER.EX_",
+        "sha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288"
+      }
+    }
+  }
+}

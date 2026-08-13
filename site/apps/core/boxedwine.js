@@ -12,6 +12,7 @@ const runnerUrl = ({
   executable,
   resolution,
   frameTop,
+  sound,
 }) => {
   const url = new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);
   url.search = new URLSearchParams({
@@ -20,7 +21,7 @@ const runnerUrl = ({
     executable,
     resolution,
     frameTop: String(frameTop),
-    sound: "false",
+    sound: String(sound),
   });
   return url.href;
 };
@@ -42,6 +43,7 @@ export const mountBoxedWineApplication = ({
   nativeHeight,
   resolution,
   frameTop = 0,
+  sound = true,
   background = "#000",
 }) => {
   const host = document.createElement("div");
@@ -67,6 +69,7 @@ export const mountBoxedWineApplication = ({
     resolution:
       resolution || `${initialFramebuffer.width}x${initialFramebuffer.height}`,
     frameTop,
+    sound,
   });
   host.appendChild(frame);
 

@@ -90,7 +90,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(url.searchParams.get("executable")).toBe("resize-host.exe");
     expect(url.searchParams.get("resolution")).toBe("586x438");
     expect(url.searchParams.get("frameTop")).toBe("32");
-    expect(url.searchParams.get("sound")).toBe("false");
+    expect(url.searchParams.get("sound")).toBe("true");
     expect(solitaireWindow.querySelectorAll(".resize-handle")).toHaveLength(8);
     const maximize = solitaireWindow.querySelector(".maximize-btn");
     expect(maximize.disabled).toBeFalse();

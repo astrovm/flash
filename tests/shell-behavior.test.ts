@@ -624,9 +624,11 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
 
 test("native games open from their public deep links", async () => {
   for (const [deepLink, applicationId] of [
+    ["freecell", "__freecell"],
     ["minesweeper", "__minesweeper"],
     ["pinball", "__pinball"],
     ["solitaire", "__solitaire"],
+    ["spider-solitaire", "__spider-solitaire"],
   ]) {
     const shell = await loadShell();
     shell.window.location.hash = `#${deepLink}`;
@@ -678,7 +680,6 @@ test("placeholder-only applications are not installed or exposed by the shell", 
     "__internet-hearts",
     "__internet-reversi",
     "__internet-spades",
-    "__spider-solitaire",
     "__windows-catalog",
     "__windows-update",
     "__backup",
@@ -702,7 +703,6 @@ test("placeholder-only applications are not installed or exposed by the shell", 
     "__scheduled-tasks",
     "__system-information",
     "__address-book",
-    "__freecell",
   ];
 
   for (const applicationId of removedApplicationIds) {

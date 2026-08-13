@@ -686,7 +686,9 @@ export async function versionGamePackages(
   const gameRuntimes: Record<string, string> = {
     "pink-panther-hokus-pokus": "scummvm",
     "pink-panther-passport-to-peril": "scummvm",
+    freecell: "boxedwine",
     solitaire: "boxedwine",
+    "spider-solitaire": "boxedwine",
   };
   const packages: VersionedGamePackages = {};
   for (const gameId of [...gameIds].sort()) {
