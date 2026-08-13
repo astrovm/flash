@@ -2,6 +2,7 @@
 #include <windows.h>
 
 #define SIZE_FILE L"D:\\boxedwine-size.txt"
+#define WINDOW_SIZE_FILE L"D:\\boxedwine-window-size.txt"
 
 typedef struct {
   DWORD process_id;
@@ -21,6 +22,30 @@ static BOOL parse_dimension(char **cursor, char *end, unsigned int *value) {
   }
   *value = result;
   return TRUE;
+}
+
+static void append_number(char **cursor, unsigned int value) {
+  char digits[16];
+  unsigned int length = 0;
+  do {
+    digits[length++] = (char)('0' + value % 10);
+    value /= 10;
+  } while (value);
+  while (length) *(*cursor)++ = digits[--length];
+}
+
+static void write_window_size(unsigned int width, unsigned int height) {
+  char buffer[40];
+  char *cursor = buffer;
+  append_number(&cursor, width);
+  *cursor++ = ' ';
+  append_number(&cursor, height);
+  HANDLE file = CreateFileW(WINDOW_SIZE_FILE, GENERIC_WRITE, FILE_SHARE_READ,
+                            NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (file == INVALID_HANDLE_VALUE) return;
+  DWORD written;
+  WriteFile(file, buffer, (DWORD)(cursor - buffer), &written, NULL);
+  CloseHandle(file);
 }
 
 static BOOL read_window_size(unsigned int *width, unsigned int *height,
@@ -76,6 +101,8 @@ static DWORD run(void) {
   WCHAR application_path[MAX_PATH];
   unsigned int applied_width = 0;
   unsigned int applied_height = 0;
+  unsigned int reported_width = 0;
+  unsigned int reported_height = 0;
   int width_adjustment = 0;
   int height_adjustment = 0;
   BOOL calibrated = FALSE;
@@ -99,12 +126,22 @@ static DWORD run(void) {
     unsigned int native_height;
     WindowSearch search = {process.dwProcessId, NULL, 0};
     EnumWindows(find_process_window, (LPARAM)&search);
-    if (!search.window ||
-        !read_window_size(&width, &height, &native_width, &native_height))
+    if (!search.window) continue;
+    RECT bounds;
+    if (GetWindowRect(search.window, &bounds)) {
+      unsigned int current_width = (unsigned int)(bounds.right - bounds.left);
+      unsigned int current_height = (unsigned int)(bounds.bottom - bounds.top);
+      if (current_width != reported_width ||
+          current_height != reported_height) {
+        write_window_size(current_width, current_height);
+        reported_width = current_width;
+        reported_height = current_height;
+      }
+    }
+    if (!read_window_size(&width, &height, &native_width, &native_height))
       continue;
     if (width == applied_width && height == applied_height) continue;
     if (!calibrated) {
-      RECT bounds;
       if (!GetWindowRect(search.window, &bounds)) continue;
       width_adjustment = bounds.right - bounds.left - (int)native_width;
       height_adjustment = bounds.bottom - bounds.top - (int)native_height;
