@@ -517,7 +517,7 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   expect(
     calculatorWindow.querySelector<HTMLInputElement>(".xp-calculator-display")!
       .value,
-  ).toBe("5");
+  ).toBe("5.");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
