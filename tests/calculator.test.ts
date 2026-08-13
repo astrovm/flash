@@ -38,123 +38,44 @@ const launchCalculator = async () => {
 
 describe("original Windows XP Calculator through BoxedWine", () => {
   test("launches the authentic XP executable in its fixed Standard window", async () => {
-    const { calculator } = await launchCalculator();
-    const frame = calculator.querySelector(".boxedwine-app-frame");
+    const { shell, calculator } = await launchCalculator();
+    const frame = shell.document.querySelector(
+      ".boxedwine-shared-runtime-frame",
+    );
     const url = new URL(frame.src);
 
     expect(calculator.style.width).toBe("260px");
     expect(calculator.style.height).toBe("260px");
-    expect(calculator.querySelector(".maximize-btn").disabled).toBeTrue();
+    expect(
+      calculator.classList.contains("xp-boxedwine-shared-window"),
+    ).toBeTrue();
     expect(calculator.querySelector(".resize-handle")).toBeNull();
-    expect(url.searchParams.get("archive")).toBe("xp-calculator");
+    expect(
+      calculator.querySelector(".boxedwine-shared-app-host"),
+    ).not.toBeNull();
+    expect(url.searchParams.get("archive")).toBe("xp-runtime");
     expect(url.searchParams.get("root")).toBe("xp-accessories");
-    expect(url.searchParams.get("executable")).toBe("window-host.exe");
-    expect(url.searchParams.get("resolution")).toBe("254x261");
-    expect(url.searchParams.get("frameTop")).toBe("32");
+    expect(url.searchParams.get("executable")).toBe("runtime-host.exe");
+    expect(url.searchParams.get("resolution")).toBe("1024x768");
+    expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("cache")).toBe("false");
     expect(url.searchParams.get("trace")).toBe("false");
   });
 
-  test("exposes measured startup progress to the XP window", async () => {
-    const { shell, calculator } = await launchCalculator();
-    const host = calculator.querySelector(".boxedwine-app-host");
-    const frame = host.querySelector(".boxedwine-app-frame");
-    const metrics = [];
-    host.addEventListener("boxedwine-startup-metric", ({ detail }) =>
-      metrics.push(detail),
-    );
-
-    shell.window.dispatchEvent(
-      new shell.window.MessageEvent("message", {
-        data: {
-          type: "boxedwine-startup",
-          stage: "window-ready",
-          elapsed: 875,
-          width: 260,
-          height: 260,
-        },
-        origin: new URL(frame.src).origin,
-        source: frame.contentWindow,
-      }),
-    );
-
-    expect(metrics).toEqual([
-      { stage: "window-ready", elapsed: 875, width: 260, height: 260 },
-    ]);
-    expect(host.dataset.boxedwineStartupStage).toBe("window-ready");
-    expect(host.dataset.boxedwineStartupElapsed).toBe("875");
-  });
-
-  test("follows the real Calculator window when XP switches to Scientific mode", async () => {
-    const { shell, calculator } = await launchCalculator();
-    const frame = calculator.querySelector(".boxedwine-app-frame");
-
-    shell.window.dispatchEvent(
-      new shell.window.MessageEvent("message", {
-        data: { type: "boxedwine-window-size", width: 480, height: 260 },
-        origin: new URL(frame.src).origin,
-        source: frame.contentWindow,
-      }),
-    );
-
-    expect(calculator.style.width).toBe("480px");
-    expect(calculator.style.height).toBe("260px");
-
-    shell.window.dispatchEvent(
-      new shell.window.MessageEvent("message", {
-        data: { type: "boxedwine-window-size", width: 260, height: 260 },
-        origin: new URL(frame.src).origin,
-        source: frame.contentWindow,
-      }),
-    );
-    expect(calculator.style.width).toBe("260px");
-  });
-
-  test("scales the complete Scientific surface into a phone window", async () => {
-    const shell = await login(await loadShell());
-    const desktop = shell.document.getElementById("desktop");
-    Object.defineProperties(desktop, {
-      clientWidth: { configurable: true, value: 390 },
-      clientHeight: { configurable: true, value: 814 },
-    });
-    let resize;
-    shell.window.ResizeObserver = class ResizeObserver {
-      constructor(callback) {
-        resize = callback;
-      }
-      observe() {}
-      disconnect() {}
-    };
-
+  test("reuses one persistent runtime for repeated Calculator launches", async () => {
+    const { shell } = await launchCalculator();
     shell.document.getElementById("start-button").click();
     shell.document.getElementById("all-programs-button").click();
     const flyouts = shell.document.getElementById("start-menu-flyouts");
     flyouts.querySelector('[data-program-id="accessories"]').click();
     flyouts.querySelector('[data-program-id="calculator"]').click();
-    const calculator = shell.document.querySelector(
-      '.xp-window[data-game="__calculator"]',
-    );
-    const host = calculator.querySelector(".boxedwine-app-host");
-    const frame = host.querySelector(".boxedwine-app-frame");
 
-    shell.window.dispatchEvent(
-      new shell.window.MessageEvent("message", {
-        data: { type: "boxedwine-window-size", width: 480, height: 260 },
-        origin: new URL(frame.src).origin,
-        source: frame.contentWindow,
-      }),
-    );
-    Object.defineProperties(host, {
-      clientWidth: { configurable: true, value: 384 },
-      clientHeight: { configurable: true, value: 229 },
-    });
-    resize();
-
-    expect(calculator.style.width).toBe("390px");
-    expect(calculator.style.height).toBe("260px");
-    expect(frame.style.width).toBe("474px");
-    expect(frame.style.height).toBe("229px");
-    expect(frame.style.transform).toBe(`scale(${384 / 474})`);
+    expect(
+      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+    ).toHaveLength(1);
+    expect(
+      shell.document.querySelectorAll(".boxedwine-shared-app-host"),
+    ).toHaveLength(1);
   });
 
   test("packages the original executable, complete help, and window host", async () => {

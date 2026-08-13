@@ -117,6 +117,11 @@ describe("BoxedWine startup", () => {
     expect(
       requests.every(({ options }) => options.cache === "force-cache"),
     ).toBeTrue();
+    expect(
+      shell.window.document.querySelectorAll(
+        "iframe.boxedwine-shared-runtime-frame",
+      ),
+    ).toHaveLength(1);
   });
 
   test("waits for complete preload response bodies", async () => {

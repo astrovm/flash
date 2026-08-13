@@ -79,11 +79,13 @@ describe("Windows XP Solitaire through BoxedWine", () => {
   test("launches the native executable in a resizable XP shell window", async () => {
     const shell = await login(await loadShell());
     shell.window.ASTRO_GAME_ROOTS = {
-      solitaire: "iframe/solitaire-build-123/",
+      "boxedwine-runtime": "iframe/boxedwine-runtime-build-123/",
     };
 
     const solitaireWindow = launchSolitaire(shell);
-    const frame = solitaireWindow.querySelector(".boxedwine-app-frame");
+    const frame = shell.document.querySelector(
+      ".boxedwine-shared-runtime-frame",
+    );
     const url = new URL(frame.src);
 
     expect(solitaireWindow.style.width).toBe("592px");
@@ -93,22 +95,17 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     );
     expect(url.pathname).toBe("/vendor/boxedwine/26R1/index.html");
     expect(new URL(url.searchParams.get("appRoot")).pathname).toBe(
-      "/iframe/solitaire-build-123/",
+      "/iframe/boxedwine-runtime-build-123/",
     );
-    expect(url.searchParams.get("archive")).toBe("xp-solitaire");
-    expect(url.searchParams.get("executable")).toBe("resize-host.exe");
-    expect(url.searchParams.get("resolution")).toBe("586x438");
-    expect(url.searchParams.get("frameTop")).toBe("32");
+    expect(url.searchParams.get("archive")).toBe("xp-runtime");
+    expect(url.searchParams.get("executable")).toBe("runtime-host.exe");
+    expect(url.searchParams.get("resolution")).toBe("1024x768");
+    expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");
+    expect(
+      solitaireWindow.querySelector(".boxedwine-shared-app-host"),
+    ).not.toBeNull();
     expect(solitaireWindow.querySelectorAll(".resize-handle")).toHaveLength(8);
-    const maximize = solitaireWindow.querySelector(".maximize-btn");
-    expect(maximize.disabled).toBeFalse();
-    maximize.click();
-    expect(solitaireWindow.classList.contains("maximized")).toBeTrue();
-    expect(maximize.title).toBe("Restore");
-    maximize.click();
-    expect(solitaireWindow.classList.contains("maximized")).toBeFalse();
-    expect(maximize.title).toBe("Maximize");
     expect(shell.window.location.hash).toBe("#solitaire");
     await flushShell();
     expect(shell.offlineDownloads).toEqual(["solitaire"]);
@@ -137,106 +134,25 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(shell.window.location.hash).toBe("#solitaire");
   });
 
-  test("stops the emulator when its window closes", async () => {
+  test("shares one runtime with Calculator while keeping separate shell windows", async () => {
     const shell = await login(await loadShell());
     const solitaireWindow = launchSolitaire(shell);
-    const frame = solitaireWindow.querySelector(".boxedwine-app-frame");
+    shell.document.getElementById("start-button").click();
+    shell.document.getElementById("all-programs-button").click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts");
+    flyouts.querySelector('[data-program-id="accessories"]').click();
+    flyouts.querySelector('[data-program-id="calculator"]').click();
 
-    solitaireWindow.querySelector(".close-btn").click();
-
-    expect(solitaireWindow.isConnected).toBeFalse();
-    expect(frame.isConnected).toBeFalse();
-    expect(frame.src).toBe("about:blank");
-  });
-
-  test("resizes the emulator framebuffer and pointer space in CSS pixels", async () => {
-    const shell = await login(await loadShell());
-    Object.defineProperty(shell.window, "devicePixelRatio", {
-      configurable: true,
-      value: 3,
-    });
-    let resize;
-    let observed;
-    let disconnected = false;
-    shell.window.ResizeObserver = class ResizeObserver {
-      constructor(callback) {
-        resize = callback;
-      }
-      observe(target) {
-        observed = target;
-      }
-      disconnect() {
-        disconnected = true;
-      }
-    };
-
-    const solitaireWindow = launchSolitaire(shell);
-    const host = solitaireWindow.querySelector(".boxedwine-app-host");
-    const frame = host.querySelector(".boxedwine-app-frame");
-    const resizeMessages = [];
-    frame.contentWindow.postMessage = (message, origin) =>
-      resizeMessages.push({ message, origin });
-    Object.defineProperties(host, {
-      clientWidth: { configurable: true, value: 1372 },
-      clientHeight: { configurable: true, value: 812 },
-    });
-
-    resize();
-
-    expect(observed).toBe(host);
-    expect(frame.style.width).toBe("100%");
-    expect(frame.style.height).toBe("100%");
-    expect(frame.style.transform).toBe("");
-    expect(resizeMessages.at(-1)).toEqual({
-      message: {
-        type: "boxedwine-framebuffer-resize",
-        width: 1372,
-        height: 844,
-        baseWidth: 586,
-        baseHeight: 438,
-      },
-      origin: new URL(frame.src).origin,
-    });
-
-    Object.defineProperties(host, {
-      clientWidth: { configurable: true, value: 586 },
-      clientHeight: { configurable: true, value: 406 },
-    });
-    resize();
-    expect(resizeMessages.at(-1)).toEqual({
-      message: {
-        type: "boxedwine-framebuffer-resize",
-        width: 586,
-        height: 438,
-        baseWidth: 586,
-        baseHeight: 438,
-      },
-      origin: new URL(frame.src).origin,
-    });
-
-    Object.defineProperties(host, {
-      clientWidth: { configurable: true, value: 390 },
-      clientHeight: { configurable: true, value: 780 },
-    });
-    resize();
-    expect(frame.style.width).toBe("586px");
-    expect(frame.style.height).toBe("406px");
-    expect(frame.style.left).toBe("0px");
-    expect(frame.style.transform).toBe(`scale(${390 / 586})`);
-    expect(frame.style.transformOrigin).toBe("top left");
-    expect(resizeMessages.at(-1)).toEqual({
-      message: {
-        type: "boxedwine-framebuffer-resize",
-        width: 586,
-        height: 438,
-        baseWidth: 586,
-        baseHeight: 438,
-      },
-      origin: new URL(frame.src).origin,
-    });
-
-    solitaireWindow.querySelector(".close-btn").click();
-    expect(disconnected).toBeTrue();
+    expect(solitaireWindow.isConnected).toBeTrue();
+    expect(
+      shell.document.querySelector('.xp-window[data-game="__calculator"]'),
+    ).not.toBeNull();
+    expect(
+      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+    ).toHaveLength(1);
+    expect(
+      shell.document.querySelectorAll(".boxedwine-shared-app-host"),
+    ).toHaveLength(2);
   });
 
   test("forwards the latest client size into the BoxedWine display layer", () => {

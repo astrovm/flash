@@ -1,0 +1,25 @@
+--- a/source/sdl/emscripten/mainloop.cpp
++++ b/source/sdl/emscripten/mainloop.cpp
+@@ -30,6 +30,21 @@
+     pendingScreenHeight = height;
+ }
+ 
++extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_activate_window(U32 id) {
++    XServer* server = XServer::getServer(true);
++    if (!server) {
++        return;
++    }
++    XWindowPtr window = server->getWindow(id);
++    if (!window) {
++        return;
++    }
++    XWindowChanges changes = {};
++    changes.stack_mode = 0;
++    window->configure(CWStackMode, &changes);
++    server->setInputFocus(nullptr, id, 0, 0);
++    window->setDirty();
++}
++
+ static void applyPendingScreenResize() {
+     if (!pendingScreenWidth || !pendingScreenHeight) {
+         return;

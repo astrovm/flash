@@ -632,6 +632,50 @@ export async function updateHtml(
       "Could not version the BoxedWine runner reference",
     );
     await writeFile(integrationPath, integration);
+    const sharedRuntimePath = join(
+      paths.root,
+      "apps",
+      "core",
+      "boxedwine-runtime.js",
+    );
+    if (await isFile(sharedRuntimePath)) {
+      let sharedRuntime = await readFile(sharedRuntimePath, "utf8");
+      sharedRuntime = await replaceExactlyOnce(
+        sharedRuntime,
+        /const ROOT_ARCHIVE = "xp-accessories";/g,
+        `const ROOT_ARCHIVE = "${rootZipName.slice(0, -4)}";`,
+        "Could not version the shared BoxedWine root filesystem reference",
+      );
+      sharedRuntime = await replaceExactlyOnce(
+        sharedRuntime,
+        /`\$\{RUNTIME_ROOT\}index\.html`/g,
+        `\`\${RUNTIME_ROOT}${indexName}\``,
+        "Could not version the shared BoxedWine runner reference",
+      );
+      await writeFile(sharedRuntimePath, sharedRuntime);
+    }
+    const persistentProofPath = join(
+      paths.root,
+      "iframe",
+      "boxedwine-runtime",
+      "index.html",
+    );
+    if (await isFile(persistentProofPath)) {
+      let persistentProof = await readFile(persistentProofPath, "utf8");
+      persistentProof = await replaceExactlyOnce(
+        persistentProof,
+        /\.\.\/\.\.\/vendor\/boxedwine\/26R1\/index\.html/g,
+        `../../vendor/boxedwine/26R1/${indexName}`,
+        "Could not version the persistent BoxedWine runner reference",
+      );
+      persistentProof = await replaceExactlyOnce(
+        persistentProof,
+        /root: "xp-accessories"/g,
+        `root: "${rootZipName.slice(0, -4)}"`,
+        "Could not version the persistent BoxedWine root reference",
+      );
+      await writeFile(persistentProofPath, persistentProof);
+    }
     await Promise.all([
       rename(indexPath, join(boxedWineRoot, indexName)),
       rename(wasmPath, join(boxedWineRoot, wasmName)),
@@ -720,6 +764,7 @@ export async function versionGamePackages(
     freecell: "boxedwine",
     solitaire: "boxedwine",
     "spider-solitaire": "boxedwine",
+    "boxedwine-runtime": "boxedwine",
   };
   const packages: VersionedGamePackages = {};
   for (const gameId of [...gameIds].sort()) {

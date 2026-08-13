@@ -1,0 +1,260 @@
+diff --git a/include/knativewindowbridge.h b/include/knativewindowbridge.h
+new file mode 100644
+index 0000000..b95dd88
+--- /dev/null
++++ b/include/knativewindowbridge.h
+@@ -0,0 +1,14 @@
++#ifndef __KNATIVE_WINDOW_BRIDGE_H__
++#define __KNATIVE_WINDOW_BRIDGE_H__
++
++class XWindow;
++
++void boxedwineNativeWindowCreated(const std::shared_ptr<XWindow>& wnd);
++void boxedwineNativeWindowDestroyed(U32 id);
++void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped);
++void boxedwineNativeWindowBounds(const std::shared_ptr<XWindow>& wnd);
++void boxedwineNativeWindowTitle(U32 id, const U8* value, U32 length);
++void boxedwineNativeWindowOwner(U32 id, U32 ownerId);
++void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height);
++
++#endif
+diff --git a/platform/sdl/knativescreenSDL.cpp b/platform/sdl/knativescreenSDL.cpp
+index c4e0149..a1bc330 100644
+--- a/platform/sdl/knativescreenSDL.cpp
++++ b/platform/sdl/knativescreenSDL.cpp
+@@ -24,6 +24,7 @@
+ #include "sdlcallback.h"
+ #include "knativeinputSDL.h"
+ #include "knativescreenSDL.h"
++#include "knativewindowbridge.h"
+ #include "../../source/x11/x11.h"
+ 
+ KNativeScreenSDL::KNativeScreenSDL(U32 cx, U32 cy, U32 bpp, int scaleX, int scaleY, const BString& scaleQuality, U32 fullScreen, U32 vsync) {
+@@ -231,6 +232,7 @@ void KNativeScreenSDL::putBitsOnWnd(U32 id, U8* bits, U32 bitsPerPixel, U32 srcP
+             }
+         }
+         bits = wnd->bits;
++		srcPitch = dstPitch;
+     } else if (isDirty && bitsPerPixel == 16) {
+         wnd->ensureSize(dstPitch * height);
+         for (U32 y = 0; y < height; y++) {
+@@ -248,7 +250,11 @@ void KNativeScreenSDL::putBitsOnWnd(U32 id, U8* bits, U32 bitsPerPixel, U32 srcP
+             }
+         }
+         bits = wnd->bits;
++		srcPitch = dstPitch;
+     }
++	if (isDirty) {
++		boxedwineNativeWindowFrame(id, bits, srcPitch, width, height);
++	}
+ #ifdef BOXEDWINE_RECORDER
+     if ((Recorder::instance || Player::instance) && screenBpp() > 8) {
+         int wndWidth = width;
+diff --git a/platform/sdl/knativesystem.cpp b/platform/sdl/knativesystem.cpp
+index 48aa3af..400e032 100644
+--- a/platform/sdl/knativesystem.cpp
++++ b/platform/sdl/knativesystem.cpp
+@@ -20,6 +20,7 @@
+ #include "knativesystem.h"
+ #include <SDL.h>
+ #include "knativescreenSDL.h"
++#include "knativewindowbridge.h"
+ #include "kvulkanSDL.h"
+ #include "../../source/x11/x11.h"
+ #include "../../source/util/threadutils.h"
+@@ -125,12 +126,14 @@ void KNativeSystem::changeScreenSize(U32 cx, U32 cy) {
+ }
+ 
+ void KNativeSystem::moveWindow(const XWindowPtr& wnd) {
++	boxedwineNativeWindowBounds(wnd);
+     if (opengl && opengl->isActive()) {
+         opengl->glResizeWindow(wnd);
+     }
+ }
+ 
+ void KNativeSystem::showWindow(const XWindowPtr & wnd, bool bShow) {
++	boxedwineNativeWindowMapped(wnd, bShow);
+ }
+ 
+ void KNativeSystem::shutdown() {
+diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbridge.cpp
+new file mode 100644
+index 0000000..faadc6d
+--- /dev/null
++++ b/platform/sdl/knativewindowbridge.cpp
+@@ -0,0 +1,92 @@
++#include "boxedwine.h"
++#include "knativewindowbridge.h"
++#include "../../source/x11/x11.h"
++
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++
++EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, S32 x, S32 y, U32 width, U32 height), {
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: {
++            type: UTF8ToString(type),
++            id,
++            parentId,
++            x,
++            y,
++            width,
++            height,
++        },
++    }));
++});
++
++EM_JS(void, boxedwineWindowTitle, (U32 id, const U8* value, U32 length), {
++    const bytes = HEAPU8.slice(value, value + length);
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: {
++            type: "title",
++            id,
++            title: new TextDecoder("windows-1252").decode(bytes).split(String.fromCharCode(0), 1)[0],
++        },
++    }));
++});
++
++EM_JS(void, boxedwineWindowFrame, (U32 id, const U8* source, U32 pitch, U32 width, U32 height), {
++    const rgba = new Uint8ClampedArray(width * height * 4);
++    for (let y = 0; y < height; y++) {
++        let src = source + y * pitch;
++        let dst = y * width * 4;
++        for (let x = 0; x < width; x++, src += 4, dst += 4) {
++            rgba[dst] = HEAPU8[src + 2];
++            rgba[dst + 1] = HEAPU8[src + 1];
++            rgba[dst + 2] = HEAPU8[src];
++            rgba[dst + 3] = 255;
++        }
++    }
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: { type: "frame", id, width, height, rgba },
++    }));
++});
++#endif
++
++static void lifecycle(const char* type, const std::shared_ptr<XWindow>& wnd) {
++#ifdef __EMSCRIPTEN__
++    XWindowPtr parent = wnd->getParent();
++    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height());
++#endif
++}
++
++void boxedwineNativeWindowCreated(const std::shared_ptr<XWindow>& wnd) {
++    lifecycle("created", wnd);
++}
++
++void boxedwineNativeWindowDestroyed(U32 id) {
++#ifdef __EMSCRIPTEN__
++    boxedwineWindowLifecycle("destroyed", id, 0, 0, 0, 0, 0);
++#endif
++}
++
++void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped) {
++    lifecycle(mapped ? "mapped" : "unmapped", wnd);
++}
++
++void boxedwineNativeWindowBounds(const std::shared_ptr<XWindow>& wnd) {
++    lifecycle("bounds", wnd);
++}
++
++void boxedwineNativeWindowTitle(U32 id, const U8* value, U32 length) {
++#ifdef __EMSCRIPTEN__
++    boxedwineWindowTitle(id, value, length);
++#endif
++}
++
++void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
++#ifdef __EMSCRIPTEN__
++    boxedwineWindowLifecycle("owner", id, ownerId, 0, 0, 0, 0);
++#endif
++}
++
++void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height) {
++#ifdef __EMSCRIPTEN__
++    boxedwineWindowFrame(id, pixels, pitch, width, height);
++#endif
++}
+diff --git a/source/x11/xwindow.cpp b/source/x11/xwindow.cpp
+index 6bbaa90..ed787fb 100644
+--- a/source/x11/xwindow.cpp
++++ b/source/x11/xwindow.cpp
+@@ -17,6 +17,7 @@
+  */
+ 
+ #include "boxedwine.h"
++#include "knativewindowbridge.h"
+ #include "x11.h"
+ #include "knativesystem.h"
+ 
+@@ -167,6 +168,7 @@ void XWindow::addToParent() {
+ }
+ 
+ void XWindow::onDestroy() {
++	boxedwineNativeWindowDestroyed(id);
+ 	U32 transient = WM_TRANSIENT_FOR();
+ 	if (transient) {
+ 		XWindowPtr transientForWindow = XServer::getServer()->getWindow(transient);
+@@ -226,7 +228,8 @@ void XWindow::onDestroy() {
+ 	}
+ }
+ 
+-void XWindow::onCreate() {	
++void XWindow::onCreate() {
++	boxedwineNativeWindowCreated(shared_from_this());
+ 	if (parent) {
+ 		{
+ 			addToParent();
+@@ -277,6 +280,7 @@ void XWindow::setTransient(U32 w) {
+ 		}
+ 	}
+ 	setProperty( XA_WM_TRANSIENT_FOR, XA_WINDOW, 32, 4, (U8*)&w, true);
++	boxedwineNativeWindowOwner(id, w);
+ 	if (w) {
+ 		XWindowPtr transientForWindow = XServer::getServer()->getWindow(w);
+ 		if (transientForWindow) {
+@@ -391,7 +395,11 @@ void XWindow::screenToWindow(S32& x, S32& y) {
+ }
+ 
+ void XWindow::setTextProperty(KThread* thread, XTextProperty* name, Atom property, bool trace) {
+-	setProperty(property, name->encoding, name->format, name->byteLen(thread->memory), name->value);
++	U32 length = name->byteLen(thread->memory);
++	setProperty(property, name->encoding, name->format, length, name->value);
++	if ((property == XA_WM_NAME || property == _NET_WM_NAME) && name->format == 8) {
++		boxedwineNativeWindowTitle(id, thread->memory->getRamPtr(name->value, length, true), length);
++	}
+ }
+ 
+ XPropertyPtr XWindow::getProperty(U32 atom) {
+@@ -402,6 +410,9 @@ XPropertyPtr XWindow::getProperty(U32 atom) {
+ void XWindow::setProperty(U32 atom, U32 type, U32 format, U32 length, const U8* value, bool trace) {
+ 	BOXEDWINE_CRITICAL_SECTION_WITH_MUTEX(propertiesMutex);
+ 	properties.setProperty(atom, type, format, length, value);	
++	if ((atom == XA_WM_NAME || atom == _NET_WM_NAME) && format == 8) {
++		boxedwineNativeWindowTitle(id, value, length);
++	}
+ 
+ 	if (trace && XServer::getServer()->trace) {
+ 		XPropertyPtr prop = properties.getProperty(atom);
+diff --git a/source/x11/xwindow.h b/source/x11/xwindow.h
+index 097cad1..cbe4fd5 100644
+--- a/source/x11/xwindow.h
++++ b/source/x11/xwindow.h
+@@ -193,6 +193,9 @@ public:
+ 	void input2Notify(const DisplayDataPtr& data, S32 x, S32 y, U32 type);
+ 
+ 	XWindowPtr getParent() {return parent;}
++	S32 getLeft() const {return left;}
++	S32 getTop() const {return top;}
++	U32 getBorderWidth() const {return border_width;}
+ 	bool mapped() {return this->isMapped;}
+ 	bool isThisAndAncestorsMapped();
+ 	XWindowPtr getTopMappedChild();
+@@ -253,4 +256,4 @@ private:
+ 	U32 WM_TRANSIENT_FOR();
+ };
+ 
+-#endif
+\ No newline at end of file
++#endif
+

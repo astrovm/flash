@@ -194,7 +194,7 @@ const login = (playSound = true) => {
     clearTimeout(bootTimeout);
     loggedIn = true;
     showDesktop();
-    window.XPBoxedWinePreload?.schedule();
+    window.XPBoxedWineRuntime?.schedule();
     applyDisplaySettings(getDisplaySettings());
     applyStartMenuStyle(getStartMenuStyle(), false);
     applyFocusVolumes();

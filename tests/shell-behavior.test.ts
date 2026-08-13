@@ -507,10 +507,15 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     '.xp-window[data-game="__calculator"]',
   )!;
   const calculatorUrl = new URL(
-    calculatorWindow.querySelector<HTMLIFrameElement>("iframe")!.src,
+    shell.document.querySelector<HTMLIFrameElement>(
+      ".boxedwine-shared-runtime-frame",
+    )!.src,
   );
-  expect(calculatorUrl.searchParams.get("archive")).toBe("xp-calculator");
-  expect(calculatorUrl.searchParams.get("executable")).toBe("window-host.exe");
+  expect(
+    calculatorWindow.querySelector(".boxedwine-shared-app-host"),
+  ).not.toBeNull();
+  expect(calculatorUrl.searchParams.get("archive")).toBe("xp-runtime");
+  expect(calculatorUrl.searchParams.get("executable")).toBe("runtime-host.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
@@ -578,13 +583,19 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   const solitaireWindow = shell.document.querySelector(
     '.xp-window[data-game="__solitaire"]',
   )!;
-  const solitaireFrame = solitaireWindow.querySelector<HTMLIFrameElement>(
-    ".boxedwine-app-frame",
-  )!;
-  expect(solitaireFrame).not.toBeNull();
-  expect(new URL(solitaireFrame.src).searchParams.get("executable")).toBe(
-    "resize-host.exe",
-  );
+  expect(
+    solitaireWindow.querySelector(".boxedwine-shared-app-host"),
+  ).not.toBeNull();
+  expect(
+    shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+  ).toHaveLength(1);
+  expect(
+    new URL(
+      shell.document.querySelector<HTMLIFrameElement>(
+        ".boxedwine-shared-runtime-frame",
+      )!.src,
+    ).searchParams.get("executable"),
+  ).toBe("runtime-host.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();

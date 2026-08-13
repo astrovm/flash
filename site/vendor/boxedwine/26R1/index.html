@@ -63,6 +63,7 @@
           sound: value("sound", /^(?:true|false)$/),
           cache: value("cache", /^(?:true|false)$/),
           trace: value("trace", /^(?:true|false)$/),
+          persistent: params.get("persistent") === "true",
         });
       })();
     </script>
@@ -115,15 +116,24 @@
           `cache=${runner.cache}`,
           `trace=${runner.trace}`,
         ].join("&");
+        window.BoxedWinePersistentRuntime = runner.persistent;
         delete window.BoxedWineRunnerConfig;
       })();
 
     </script>
     <script type="module">
       import { installBoxedWineResizeBridge } from "../../../apps/core/boxedwine-resize.js";
+      import { installBoxedWineProcessHostBridge } from "../../../apps/core/boxedwine-process-host.js";
+      import { installBoxedWineWindowBridge } from "../../../apps/core/boxedwine-window-bridge.js";
 
       installBoxedWineResizeBridge(window, Module);
+      if (window.BoxedWinePersistentRuntime) {
+        installBoxedWineProcessHostBridge(window, Module);
+        installBoxedWineWindowBridge(window, Module);
+      }
+      const runtimeScript = document.createElement("script");
+      runtimeScript.src = "boxedwine.js";
+      document.body.appendChild(runtimeScript);
     </script>
-    <script async src="boxedwine.js"></script>
   </body>
 </html>

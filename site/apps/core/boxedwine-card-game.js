@@ -1,16 +1,7 @@
 import { defineApplication } from "./application.js";
-import { mountBoxedWineApplication } from "./boxedwine.js";
+import { mountSharedBoxedWineApplication } from "./boxedwine-runtime.js";
 
-export const defineBoxedWineCardGame = ({
-  id,
-  title,
-  icon,
-  archive,
-  width,
-  height,
-  nativeWidth = width - 6,
-  nativeHeight = height - 32,
-}) =>
+export const defineBoxedWineCardGame = ({ id, title, icon, width, height }) =>
   defineApplication({
     id: `__${id}`,
     title,
@@ -24,16 +15,8 @@ export const defineBoxedWineCardGame = ({
       fitToWorkArea: true,
       resizable: true,
       maximizable: true,
+      className: "xp-boxedwine-shared-window",
+      customChrome: true,
     },
-    mount: () =>
-      mountBoxedWineApplication({
-        title: `Windows XP ${title}`,
-        packageId: id,
-        archive,
-        executable: "resize-host.exe",
-        nativeWidth,
-        nativeHeight,
-        frameTop: 32,
-        background: "#27811f",
-      }),
+    mount: (context) => mountSharedBoxedWineApplication(id, context),
   });

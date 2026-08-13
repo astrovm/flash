@@ -4,13 +4,15 @@ License: GNU General Public License version 2
 Complete corresponding source: https://github.com/danoon2/Boxedwine/tree/26R1.0
 Local resize patch: BOXEDWINE-RESIZE.patch
 Local Web cache and file-read trace patch: BOXEDWINE-FILE-TRACE.patch
+Local per-window X11 bridge patch: BOXEDWINE-WINDOW-BRIDGE.patch
+Local X11 window activation patch: BOXEDWINE-WINDOW-ACTIVATION.patch
 Compiler: Emscripten 6.0.6
 Resource-safe build command:
 make -j1 BUILD_DIR=Build/Release SHELL_FILE=shell.html EXTRA_CPP_FLAGS=
 Normalize the generated JavaScript before verification:
 perl -pi -e 's/[ \t]+$//' Build/Release/boxedwine.js
-Before applying BOXEDWINE-FILE-TRACE.patch, normalize fsfilenode.cpp to LF:
-perl -pi -e 's/\r$//' source/io/fsfilenode.cpp
+Before applying BOXEDWINE-FILE-TRACE.patch, normalize its upstream files to LF:
+perl -pi -e 's/\r$//' include/ksystem.h source/io/fsfilenode.cpp source/io/fszipnode.h source/io/fszipopennode.cpp source/kernel/ksystem.cpp source/sdl/startupArgs.cpp source/sdl/startupArgs.h
 Official release: https://github.com/danoon2/Boxedwine/releases/tag/26R1.0
 Official Web runtime: https://boxedwine.org/v/26R1/wine11/st/
 

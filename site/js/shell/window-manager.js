@@ -754,6 +754,7 @@ const focusWindow = (gameId) => {
   win.lastUsed = Date.now();
   win.zIndex = ++zIndexCounter;
   win.el.style.zIndex = win.zIndex;
+  win.mountedApplication?.focus?.();
 
   openWindows.forEach((w, id) => {
     w.el.classList.toggle("active", id === gameId);
