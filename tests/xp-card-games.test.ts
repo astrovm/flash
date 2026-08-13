@@ -122,6 +122,8 @@ describe("Windows XP card games through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: nativeWidth,
         height: nativeHeight + 32,
+        baseWidth: nativeWidth,
+        baseHeight: nativeHeight + 32,
       });
 
       Object.defineProperties(desktop, {
@@ -146,6 +148,8 @@ describe("Windows XP card games through BoxedWine", () => {
         type: "boxedwine-framebuffer-resize",
         width: 1018,
         height: 739,
+        baseWidth: nativeWidth,
+        baseHeight: nativeHeight + 32,
       });
     });
 
@@ -165,6 +169,15 @@ describe("Windows XP card games through BoxedWine", () => {
       for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
         expect(sha256(files[name])).toBe(source.sha256);
       }
+      const solitaireManifest = JSON.parse(
+        await readFile(
+          join(projectDirectory, "site", "iframe", "solitaire", "SOURCES.json"),
+          "utf8",
+        ),
+      );
+      expect(manifest.windowsXp.files["resize-host.exe"].sha256).toBe(
+        solitaireManifest.windowsXp.files["resize-host.exe"].sha256,
+      );
     });
   }
 });

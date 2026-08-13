@@ -5,8 +5,8 @@
     "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "package": {
       "file": "xp-solitaire.zip",
-      "bytes": 177971,
-      "sha256": "074945b324b42c105146f309f2fe55744ea719acfdb42cdddc32b0857b28b802"
+      "bytes": 178239,
+      "sha256": "d4ba31c630b08b478a60bee49630e6b4fc449ed0a168ca3d4a2bda1c89c4216c"
     },
     "files": {
       "sol.exe": {
@@ -18,9 +18,9 @@
         "sha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506"
       },
       "resize-host.exe": {
-        "source": "native/solitaire/resize-host.c",
-        "build": "i686-w64-mingw32-gcc -Os -s -nostdlib -mwindows native/solitaire/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
-        "sha256": "1d2bee7b669f10d2af97e2670fcdabedb3c060f45a68e2eed4285adea23f3727"
+        "source": "native/boxedwine/resize-host.c",
+        "build": "i686-w64-mingw32-gcc -Os -s -nostdlib -mwindows native/boxedwine/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
+        "sha256": "adf6e0075ed512a40eaa06ec9f0389f1777e0b885153a4fc1b9eedf070426f5c"
       }
     }
   }

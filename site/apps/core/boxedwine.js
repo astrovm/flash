@@ -110,7 +110,12 @@ export const mountBoxedWineApplication = ({
       frame.style.transformOrigin = "";
     }
     frame.contentWindow?.postMessage(
-      { type: "boxedwine-framebuffer-resize", ...framebuffer },
+      {
+        type: "boxedwine-framebuffer-resize",
+        ...framebuffer,
+        baseWidth: nativeWidth,
+        baseHeight: nativeHeight + frameTop,
+      },
       new URL(frame.src).origin,
     );
   };

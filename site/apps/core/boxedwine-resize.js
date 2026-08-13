@@ -1,12 +1,16 @@
 const isResizeMessage = (event, origin) => {
-  const { type, width, height } = event.data || {};
+  const { type, width, height, baseWidth, baseHeight } = event.data || {};
   return (
     event.origin === origin &&
     type === "boxedwine-framebuffer-resize" &&
     Number.isInteger(width) &&
     Number.isInteger(height) &&
+    Number.isInteger(baseWidth) &&
+    Number.isInteger(baseHeight) &&
     width > 0 &&
-    height > 0
+    height > 0 &&
+    baseWidth > 0 &&
+    baseHeight > 0
   );
 };
 
@@ -22,12 +26,15 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
       typeof module.FS?.writeFile !== "function"
     )
       return;
-    const { width, height } = pendingResize;
-    const sizePath = "/d_drive/solitaire-size.txt";
+    const { width, height, baseWidth, baseHeight } = pendingResize;
+    const sizePath = "/d_drive/boxedwine-size.txt";
     const temporaryPath = `${sizePath}.tmp`;
 
     module._boxedwine_resize_screen(width, height);
-    module.FS.writeFile(temporaryPath, `${width} ${height}`);
+    module.FS.writeFile(
+      temporaryPath,
+      `${width} ${height} ${baseWidth} ${baseHeight}`,
+    );
     try {
       module.FS.unlink(sizePath);
     } catch {
