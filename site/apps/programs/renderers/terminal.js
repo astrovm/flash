@@ -49,6 +49,10 @@ export const renderTerminal = (context, program, programId) => {
     screen.scrollTop = screen.scrollHeight;
   });
   screen.addEventListener("pointerdown", () => input.focus());
+  context.windowElement.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".title-buttons, .resize-handle")) return;
+    setTimeout(() => input.focus(), 0);
+  });
   setTimeout(() => input.focus(), 0);
   return content;
 };

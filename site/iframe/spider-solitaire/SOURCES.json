@@ -5,13 +5,18 @@
     "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "package": {
       "file": "xp-spider-solitaire.zip",
-      "bytes": 270263,
-      "sha256": "ba3b5323193d91fcf5d32a2985e5e162881452228f9664b69f597b18de7dd70a"
+      "bytes": 271617,
+      "sha256": "950bc7a733a96cbc4cdc222e394f4aea8fe710c343a2857bf8b5460422ce5112"
     },
     "files": {
       "spider.exe": {
         "member": "I386/SPIDER.EX_",
         "sha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288"
+      },
+      "resize-host.exe": {
+        "source": "native/xp-card-games/resize-host.c",
+        "build": "i686-w64-mingw32-gcc -Os -s -nostdlib -mwindows -DRESIZE_SPIDER_SOLITAIRE native/xp-card-games/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
+        "sha256": "a54053947fc3cfda0ded2832b307d3ae075921b19efd4afefefd54006d84f3a5"
       }
     }
   }

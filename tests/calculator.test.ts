@@ -30,7 +30,7 @@ describe("Windows XP Calculator", () => {
     const { calculator, display } = await launchCalculator();
 
     expect(calculator.style.width).toBe("260px");
-    expect(calculator.style.height).toBe("259px");
+    expect(calculator.style.height).toBe("260px");
     expect(calculator.querySelector(".maximize-btn").disabled).toBeTrue();
     expect(display.value).toBe("0.");
     expect(

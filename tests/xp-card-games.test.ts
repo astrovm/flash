@@ -25,16 +25,16 @@ const games = [
     applicationId: "__freecell",
     title: "FreeCell",
     archive: "xp-freecell",
-    executable: "freecell.exe",
-    files: ["cards.dll", "freecell.exe"],
+    executable: "resize-host.exe",
+    files: ["cards.dll", "freecell.exe", "resize-host.exe"],
   },
   {
     id: "spider-solitaire",
     applicationId: "__spider-solitaire",
     title: "Spider Solitaire",
     archive: "xp-spider-solitaire",
-    executable: "spider.exe",
-    files: ["spider.exe"],
+    executable: "resize-host.exe",
+    files: ["resize-host.exe", "spider.exe"],
   },
 ];
 
@@ -73,8 +73,8 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(url.searchParams.get("executable")).toBe(game.executable);
       expect(url.searchParams.get("frameTop")).toBe("32");
       expect(url.searchParams.get("sound")).toBe("true");
-      expect(gameWindow.querySelector(".maximize-btn").disabled).toBeTrue();
-      expect(gameWindow.querySelector(".resize-handle")).toBeNull();
+      expect(gameWindow.querySelector(".maximize-btn").disabled).toBeFalse();
+      expect(gameWindow.querySelector(".resize-handle")).not.toBeNull();
       expect(shell.window.location.hash).toBe(`#${game.id}`);
       await flushShell();
       expect(shell.offlineDownloads).toEqual([game.id]);
@@ -131,6 +131,22 @@ describe("Windows XP card games through BoxedWine", () => {
       shell.window.dispatchEvent(new shell.window.Event("resize"));
       expect(gameWindow.style.minWidth).not.toBe("0px");
       expect(gameWindow.style.minHeight).not.toBe("0px");
+
+      gameWindow.querySelector(".maximize-btn").click();
+      expect(gameWindow.classList.contains("maximized")).toBeTrue();
+      Object.defineProperties(host, {
+        clientWidth: { configurable: true, value: 1018 },
+        clientHeight: { configurable: true, value: 707 },
+      });
+      resize();
+      expect(frame.style.width).toBe("100%");
+      expect(frame.style.height).toBe("100%");
+      expect(frame.style.transform).toBe("");
+      expect(resizeMessages.at(-1).message).toEqual({
+        type: "boxedwine-framebuffer-resize",
+        width: 1018,
+        height: 739,
+      });
     });
 
     test(`${game.title} package matches its provenance manifest`, async () => {

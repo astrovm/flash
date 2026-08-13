@@ -7,7 +7,7 @@ export const accessoryApplications = [
   program("__calculator", "Calculator", "Calculator.png", "calculator", {
     window: {
       width: 260,
-      height: 259,
+      height: 260,
       resizable: false,
       maximizable: false,
       className: "xp-calculator-window",
@@ -24,8 +24,8 @@ export const accessoryApplications = [
         height: 338,
         left: 24,
         top: 30,
-        resizable: false,
-        maximizable: false,
+        resizable: true,
+        maximizable: true,
         className: "xp-command-prompt-window",
       },
     },
