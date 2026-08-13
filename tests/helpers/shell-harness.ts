@@ -197,7 +197,11 @@ export async function loadShell() {
   window.AstroGameLibrary.createManager = () => emptyLibrary;
 
   const offlineSnapshot = {
-    bundledGames: [{ id: "solitaire" }],
+    bundledGames: [
+      { id: "freecell" },
+      { id: "solitaire" },
+      { id: "spider-solitaire" },
+    ],
     downloadedGameIds: [],
     phase: "idle",
     updateAvailable: false,

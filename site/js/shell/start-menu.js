@@ -987,9 +987,11 @@ const getAllProgramsTree = () => {
       label: "Games",
       icon: programFolder,
       children: [
+        xpProgramMenuItem("__freecell"),
         xpProgramMenuItem("__minesweeper"),
         xpProgramMenuItem("__pinball"),
         xpProgramMenuItem("__solitaire"),
+        xpProgramMenuItem("__spider-solitaire"),
         { separator: true },
         ...gameGroups,
       ],
