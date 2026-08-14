@@ -71,19 +71,12 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
       "spider-solitaire": "/d_drive/spidsize.txt",
     };
     const sizePath = appSizePaths[appId] || "/d_drive/boxedwine-size.txt";
-    const temporaryPath = `${sizePath}.tmp`;
 
     if (appId === undefined) module._boxedwine_resize_screen(width, height);
     module.FS.writeFile(
-      temporaryPath,
+      sizePath,
       `${width} ${height} ${baseWidth} ${baseHeight}`,
     );
-    try {
-      module.FS.unlink(sizePath);
-    } catch {
-      // The destination does not exist before the first resize.
-    }
-    module.FS.rename(temporaryPath, sizePath);
     pendingResize = null;
   };
   const onMessage = (event) => {
@@ -95,6 +88,19 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
   module.onRuntimeInitialized = () => {
     onRuntimeInitialized?.();
     runtimeInitialized = true;
+    if (typeof module.FS?.writeFile === "function") {
+      for (const path of [
+        "/d_drive/solsize.txt",
+        "/d_drive/freesize.txt",
+        "/d_drive/spidsize.txt",
+      ]) {
+        try {
+          module.FS.writeFile(path, "");
+        } catch {
+          // The mounted drive is unavailable only when startup has failed.
+        }
+      }
+    }
     applyResize();
     if (
       typeof module.FS?.readFile === "function" &&

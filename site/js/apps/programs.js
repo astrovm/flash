@@ -53,6 +53,16 @@ const applicationContext = (win) => ({
     win.el.style.height = `${height}px`;
     fitNativeProgramToWorkArea(win);
   },
+  applyNativeClientSize(width, height) {
+    if (win.maximized) return;
+    const host = win.el.querySelector(".boxedwine-shared-app-host");
+    if (!host) return;
+    const frameWidth = Math.max(0, win.el.offsetWidth - host.clientWidth);
+    const frameHeight = Math.max(0, win.el.offsetHeight - host.clientHeight);
+    win.el.style.width = `${width + frameWidth}px`;
+    win.el.style.height = `${height + frameHeight}px`;
+    fitNativeProgramToWorkArea(win);
+  },
   applyNativeClose: () =>
     closeGameWindow(win.gameId, {
       skipBeforeClose: true,

@@ -354,9 +354,9 @@ describe("BoxedWine window bridge", () => {
       expect(surface.attach(41, target)).toBeTrue();
       expect(surface.show(41)).toBeTrue();
       expect(canvas.style.left).toBe("0px");
-      expect(canvas.style.width).toBe("100%");
-      expect(canvas.style.height).toBe("100%");
-      expect(canvas.style.objectFit).toBe("contain");
+      expect(canvas.style.width).toBe("260px");
+      expect(canvas.style.height).toBe("232px");
+      expect(canvas.style.objectFit).toBe("none");
       expect(canvas.width).toBe(260);
       expect(canvas.height).toBe(232);
       expect(canvas.hidden).toBeFalse();

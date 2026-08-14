@@ -2,6 +2,7 @@ import { createBoxedWineWindowSurface } from "./boxedwine-window-bridge.js";
 
 const RUNTIME_ROOT = "vendor/boxedwine/26R1/";
 const ROOT_ARCHIVE = "xp-accessories";
+const NATIVE_TITLE_BAR_HEIGHT = 28;
 const APPLICATION_IDS = Object.freeze([
   "calculator",
   "solitaire",
@@ -115,6 +116,7 @@ const createRuntime = (initialApplicationId) => {
     mounted.element.dataset.boxedwineOpenElapsed = String(
       Math.round(performance.now() - mounted.startedAt),
     );
+    mounted.scheduleNativeWindow?.();
     return true;
   };
 
@@ -216,7 +218,10 @@ const createRuntime = (initialApplicationId) => {
       if (detail.type === "title" && detail.title) {
         mounted?.context.setTitle(detail.title);
       } else if (detail.type === "bounds" && detail.id === detail.topId) {
-        mounted?.context.applyNativeSize(detail.width, detail.height);
+        mounted?.context.applyNativeClientSize(
+          detail.width,
+          Math.max(1, detail.height - NATIVE_TITLE_BAR_HEIGHT),
+        );
       } else if (detail.type === "unmapped" && detail.id === detail.topId) {
         mounted?.context.applyNativeMinimize();
       } else if (detail.type === "mapped" && detail.id === detail.topId) {
@@ -392,6 +397,35 @@ const createRuntime = (initialApplicationId) => {
       status.textContent = "Starting Windows application…";
       element.appendChild(status);
       mounts.set(appId, { context, element, startedAt: performance.now() });
+      let resizeFrame = 0;
+      let pendingWindowAction = "bounds";
+      const syncNativeWindow = () => {
+        resizeFrame = 0;
+        const windowId = warmWindows.get(appId);
+        const width = element.clientWidth;
+        const height = element.clientHeight;
+        if (!windowId || width <= 0 || height <= 0) return false;
+        const action = pendingWindowAction;
+        pendingWindowAction = "bounds";
+        return surfaces.command(windowId, action, {
+          x: context.windowElement.offsetLeft,
+          y: context.windowElement.offsetTop,
+          appId,
+          width,
+          height: height + NATIVE_TITLE_BAR_HEIGHT,
+        });
+      };
+      const scheduleNativeWindow = (action = "bounds") => {
+        if (action !== "bounds") pendingWindowAction = action;
+        if (!resizeFrame)
+          resizeFrame = window.requestAnimationFrame(syncNativeWindow);
+        return Boolean(warmWindows.get(appId));
+      };
+      mounts.get(appId).scheduleNativeWindow = scheduleNativeWindow;
+      const resizeObserver = new window.ResizeObserver(() => {
+        scheduleNativeWindow();
+      });
+      resizeObserver.observe(element);
       this.start();
       attachMount(appId);
       if (!warmWindows.has(appId)) {
@@ -409,35 +443,17 @@ const createRuntime = (initialApplicationId) => {
           return windowId ? surfaces.command(windowId, "minimize") : false;
         },
         maximize() {
-          const windowId = warmWindows.get(appId);
-          const desktop = context.getDesktopSize();
-          return windowId
-            ? surfaces.command(windowId, "maximize", {
-                appId,
-                width: desktop.width,
-                height: desktop.height,
-              })
-            : false;
+          return scheduleNativeWindow("maximize");
         },
         restore() {
-          const windowId = warmWindows.get(appId);
-          return windowId
-            ? surfaces.command(windowId, "restore", { appId })
-            : false;
+          return scheduleNativeWindow("restore");
         },
-        bounds(left, top, width, height) {
-          const windowId = warmWindows.get(appId);
-          return windowId
-            ? surfaces.command(windowId, "bounds", {
-                x: left,
-                y: top,
-                appId,
-                width,
-                height,
-              })
-            : false;
+        bounds() {
+          return scheduleNativeWindow();
         },
         unmount() {
+          resizeObserver.disconnect();
+          if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
           const windowId = warmWindows.get(appId);
           const processId = processes.get(appId);
           if (windowId) {

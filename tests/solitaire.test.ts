@@ -182,7 +182,9 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       resizeCalls.push({ width, height });
     module.FS = {
       writeFile(path, content) {
-        files.set(path, content);
+        const file = files.get(path);
+        if (file) file.content = content;
+        else files.set(path, { content });
       },
       unlink(path) {
         if (!files.delete(path)) throw new Error("ENOENT");
@@ -193,8 +195,12 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       },
     };
     module.onRuntimeInitialized();
+    const solitaireSizeFile = files.get("/d_drive/solsize.txt");
+    expect(solitaireSizeFile.content).toBe("");
     expect(resizeCalls).toEqual([{ width: 1372, height: 844 }]);
-    expect(files.get("/d_drive/boxedwine-size.txt")).toBe("1372 844 586 438");
+    expect(files.get("/d_drive/boxedwine-size.txt").content).toBe(
+      "1372 844 586 438",
+    );
 
     messageListener({
       origin: "https://flash.test",
@@ -207,7 +213,9 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       },
     });
     expect(resizeCalls.at(-1)).toEqual({ width: 586, height: 438 });
-    expect(files.get("/d_drive/boxedwine-size.txt")).toBe("586 438 586 438");
+    expect(files.get("/d_drive/boxedwine-size.txt").content).toBe(
+      "586 438 586 438",
+    );
 
     messageListener({
       origin: "https://flash.test",
@@ -221,7 +229,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       },
     });
     expect(resizeCalls.at(-1)).toEqual({ width: 586, height: 438 });
-    expect(files.get("/d_drive/solsize.txt")).toBe("900 600 586 438");
+    expect(files.get("/d_drive/solsize.txt")).toBe(solitaireSizeFile);
+    expect(solitaireSizeFile.content).toBe("900 600 586 438");
 
     messageListener({
       origin: "https://other.test",

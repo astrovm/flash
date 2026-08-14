@@ -310,7 +310,6 @@ export const createBoxedWineWindowSurface = ({
   const windows = new Map();
   const surfaces = new Map();
   const canvases = new Map();
-  const restoreSizes = new Map();
   const anchoredWindows = new Set();
   const visibleWindows = new Set();
   let nextZIndex = 1;
@@ -483,11 +482,9 @@ export const createBoxedWineWindowSurface = ({
       canvas.height = Math.max(1, top.height - titleBarHeight);
     canvas.style.left = anchoredWindows.has(topId) ? "0px" : `${top.x}px`;
     canvas.style.top = anchoredWindows.has(topId) ? "0px" : `${top.y}px`;
-    canvas.style.width = anchoredWindows.has(topId) ? "100%" : `${top.width}px`;
-    canvas.style.height = anchoredWindows.has(topId)
-      ? "100%"
-      : `${top.height}px`;
-    canvas.style.objectFit = anchoredWindows.has(topId) ? "contain" : "fill";
+    canvas.style.width = `${top.width}px`;
+    canvas.style.height = `${Math.max(1, top.height - titleBarHeight)}px`;
+    canvas.style.objectFit = "none";
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -636,12 +633,6 @@ export const createBoxedWineWindowSurface = ({
     command(id, action, detail = {}) {
       const top = windows.get(id);
       if (!top) return false;
-      if (action === "maximize") {
-        restoreSizes.set(id, { width: top.width, height: top.height });
-      } else if (action === "restore") {
-        Object.assign(detail, restoreSizes.get(id));
-        restoreSizes.delete(id);
-      }
       runtimeWindow.postMessage(
         {
           type: "boxedwine-native-command",
