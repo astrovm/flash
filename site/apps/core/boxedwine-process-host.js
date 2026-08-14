@@ -81,15 +81,29 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
     if (
       event.source !== hostWindow.parent ||
       event.origin !== hostWindow.location.origin ||
-      !["boxedwine-launch-process", "boxedwine-terminate-process"].includes(
-        type,
-      ) ||
+      ![
+        "boxedwine-launch-process",
+        "boxedwine-observe-process",
+        "boxedwine-terminate-process",
+      ].includes(type) ||
       typeof requestId !== "string" ||
       !Object.hasOwn(APPLICATIONS, appId) ||
-      (type === "boxedwine-terminate-process" &&
+      (["boxedwine-observe-process", "boxedwine-terminate-process"].includes(
+        type,
+      ) &&
         (!Number.isInteger(processId) || processId <= 0))
     )
       return;
+    if (type === "boxedwine-observe-process") {
+      processes.set(processId, appId);
+      post({
+        type: "boxedwine-process-observed",
+        appId,
+        requestId,
+        processId,
+      });
+      return;
+    }
     queuedRequests.push({
       appId,
       requestId,

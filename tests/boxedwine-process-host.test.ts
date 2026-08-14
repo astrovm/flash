@@ -148,6 +148,35 @@ describe("persistent BoxedWine process host", () => {
     });
   });
 
+  test("observes the initial process and reports when it exits", () => {
+    const host = createHost();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
+    processHost.running.add(101);
+
+    host.send({
+      type: "boxedwine-observe-process",
+      appId: "calculator",
+      processId: 101,
+      requestId: "observe",
+    });
+    expect(host.messages.at(-1).message).toEqual({
+      type: "boxedwine-process-observed",
+      appId: "calculator",
+      requestId: "observe",
+      processId: 101,
+    });
+
+    processHost.running.delete(101);
+    host.tick();
+    expect(host.messages.at(-1).message).toEqual({
+      type: "boxedwine-process-exited",
+      appId: "calculator",
+      processId: 101,
+    });
+  });
+
   test("rejects unknown applications", () => {
     const host = createHost();
     const processHost = createModule();
