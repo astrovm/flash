@@ -6,7 +6,12 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
+import {
+  cleanupShells,
+  flushShell,
+  loadShell,
+  login,
+} from "./helpers/shell-harness";
 import { installBoxedWineResizeBridge } from "../site/apps/core/boxedwine-resize.js";
 
 const require = createRequire(import.meta.url);
@@ -34,6 +39,60 @@ const launchCalculator = async () => {
     '.xp-window[data-game="__calculator"]',
   );
   return { shell, calculator };
+};
+
+const sendNativeWindow = (shell, detail, runtimeWindow) => {
+  const frame = shell.document.querySelector(".boxedwine-shared-runtime-frame");
+  const event = new shell.window.Event("message");
+  Object.defineProperties(event, {
+    data: {
+      value: { type: "boxedwine-native-window", window: detail },
+    },
+    origin: { value: shell.window.location.origin },
+    source: { value: runtimeWindow || frame.contentWindow },
+  });
+  shell.window.dispatchEvent(event);
+};
+
+const showNativeCalculator = (
+  shell,
+  id = 41,
+  runtimeWindow = shell.document.querySelector(
+    ".boxedwine-shared-runtime-frame",
+  ).contentWindow,
+) => {
+  sendNativeWindow(
+    shell,
+    {
+      type: "created",
+      id,
+      parentId: 1,
+      processId: 10,
+      x: 0,
+      y: 0,
+      width: 260,
+      height: 260,
+    },
+    runtimeWindow,
+  );
+  sendNativeWindow(
+    shell,
+    { type: "title", id, title: "Calculator" },
+    runtimeWindow,
+  );
+  sendNativeWindow(shell, { type: "mapped", id }, runtimeWindow);
+  sendNativeWindow(
+    shell,
+    {
+      type: "frame",
+      id,
+      width: 260,
+      height: 260,
+      rgba: new Uint8ClampedArray(260 * 260 * 4),
+    },
+    runtimeWindow,
+  );
+  return runtimeWindow;
 };
 
 describe("original Windows XP Calculator through BoxedWine", () => {
@@ -76,6 +135,46 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-app-host"),
     ).toHaveLength(1);
+  });
+
+  test("distinguishes native minimize from a replacement Calculator window", async () => {
+    const { shell, calculator } = await launchCalculator();
+    const nativeSetTimeout = shell.window.setTimeout.bind(shell.window);
+    shell.window.setTimeout = (callback, delay, ...arguments_) =>
+      nativeSetTimeout(callback, delay === 100 ? 0 : delay, ...arguments_);
+    shell.window.ImageData = class ImageData {
+      constructor(data, width, height) {
+        Object.assign(this, { data, width, height });
+      }
+    };
+    const getCanvasContext =
+      shell.window.HTMLCanvasElement.prototype.getContext;
+    shell.window.HTMLCanvasElement.prototype.getContext = function (...args) {
+      const context = getCanvasContext.apply(this, args);
+      context.clearRect ||= () => {};
+      return context;
+    };
+    const runtimeWindow = showNativeCalculator(shell);
+    sendNativeWindow(shell, { type: "unmapped", id: 41 }, runtimeWindow);
+    await flushShell();
+    await flushShell();
+    expect(calculator.style.display).toBe("none");
+
+    sendNativeWindow(shell, { type: "mapped", id: 41 }, runtimeWindow);
+    expect(calculator.style.display).toBe("flex");
+
+    sendNativeWindow(shell, { type: "unmapped", id: 41 }, runtimeWindow);
+    sendNativeWindow(shell, { type: "destroyed", id: 41 }, runtimeWindow);
+    await flushShell();
+    await flushShell();
+    expect(calculator.style.display).toBe("flex");
+    expect(calculator.textContent).toContain("Updating Windows application");
+
+    showNativeCalculator(shell, 42, runtimeWindow);
+    expect(calculator.style.display).toBe("flex");
+    expect(
+      calculator.querySelector('[data-boxedwine-window="42"]'),
+    ).not.toBeNull();
   });
 
   test("packages the original executable, complete help, and window host", async () => {

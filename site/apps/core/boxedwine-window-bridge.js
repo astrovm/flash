@@ -309,6 +309,8 @@ export const createBoxedWineWindowSurface = ({
   onOwnedWindow,
   initiallyVisible = true,
 }) => {
+  const getRuntimeWindow =
+    typeof runtimeWindow === "function" ? runtimeWindow : () => runtimeWindow;
   const windows = new Map();
   const surfaces = new Map();
   const canvases = new Map();
@@ -439,7 +441,7 @@ export const createBoxedWineWindowSurface = ({
       };
     };
     const forwardPointer = (eventType, event) => {
-      runtimeWindow.postMessage(
+      getRuntimeWindow().postMessage(
         {
           type: "boxedwine-native-pointer",
           windowId: entry.id,
@@ -480,7 +482,7 @@ export const createBoxedWineWindowSurface = ({
       forwardPointer("dblclick", event),
     );
     canvas.addEventListener("wheel", (event) => {
-      runtimeWindow.postMessage(
+      getRuntimeWindow().postMessage(
         {
           type: "boxedwine-native-wheel",
           windowId: entry.id,
@@ -496,7 +498,7 @@ export const createBoxedWineWindowSurface = ({
     });
     for (const eventType of ["keydown", "keyup"]) {
       canvas.addEventListener(eventType, (event) => {
-        runtimeWindow.postMessage(
+        getRuntimeWindow().postMessage(
           {
             type: "boxedwine-native-key",
             windowId: entry.id,
@@ -575,7 +577,7 @@ export const createBoxedWineWindowSurface = ({
       if (initiallyVisible) visibleWindows.add(topId);
       const forwardPointer = (eventType, event) => {
         const coordinates = inputCoordinates(canvas, top, event);
-        runtimeWindow.postMessage(
+        getRuntimeWindow().postMessage(
           {
             type: "boxedwine-native-pointer",
             windowId: topId,
@@ -617,7 +619,7 @@ export const createBoxedWineWindowSurface = ({
       );
       canvas.addEventListener("wheel", (event) => {
         const coordinates = inputCoordinates(canvas, top, event);
-        runtimeWindow.postMessage(
+        getRuntimeWindow().postMessage(
           {
             type: "boxedwine-native-wheel",
             windowId: topId,
@@ -633,7 +635,7 @@ export const createBoxedWineWindowSurface = ({
       });
       for (const eventType of ["keydown", "keyup"]) {
         canvas.addEventListener(eventType, (event) => {
-          runtimeWindow.postMessage(
+          getRuntimeWindow().postMessage(
             {
               type: "boxedwine-native-key",
               windowId: topId,
@@ -737,7 +739,7 @@ export const createBoxedWineWindowSurface = ({
 
   const handleMessage = (event) => {
     if (
-      event.source !== runtimeWindow ||
+      event.source !== getRuntimeWindow() ||
       event.origin !== origin ||
       event.data?.type !== MESSAGE_TYPE
     )
@@ -840,7 +842,7 @@ export const createBoxedWineWindowSurface = ({
       (canvases.get(id) || ownedCanvases.get(id))?.focus({
         preventScroll: true,
       });
-      runtimeWindow.postMessage(
+      getRuntimeWindow().postMessage(
         { type: "boxedwine-native-command", action: "activate", windowId: id },
         origin,
       );
@@ -849,7 +851,7 @@ export const createBoxedWineWindowSurface = ({
     command(id, action, detail = {}) {
       const top = windows.get(id);
       if (!top) return false;
-      runtimeWindow.postMessage(
+      getRuntimeWindow().postMessage(
         {
           type: "boxedwine-native-command",
           windowId: id,

@@ -73,6 +73,7 @@ const createRuntime = (initialApplicationId) => {
   const launchingApplications = new Set([initialApplicationId]);
   const pendingFirstFrames = new Map();
   const pendingWindowDestructions = new Set();
+  const pendingNativeMinimizes = new Map();
   const launchFailures = new Map();
   const mounts = new Map();
   let request = 0;
@@ -123,6 +124,24 @@ const createRuntime = (initialApplicationId) => {
 
   const cancelWindowDestruction = (appId) => {
     pendingWindowDestructions.delete(appId);
+  };
+
+  const cancelNativeMinimize = (appId) => {
+    const timer = pendingNativeMinimizes.get(appId);
+    if (timer) window.clearTimeout(timer);
+    pendingNativeMinimizes.delete(appId);
+  };
+
+  const scheduleNativeMinimize = (appId, windowId) => {
+    cancelNativeMinimize(appId);
+    pendingNativeMinimizes.set(
+      appId,
+      window.setTimeout(() => {
+        pendingNativeMinimizes.delete(appId);
+        if (warmWindows.get(appId) === windowId)
+          mounts.get(appId)?.context.applyNativeMinimize();
+      }, 100),
+    );
   };
 
   const postProcessRequest = (type, appId, processId = 0) => {
@@ -184,6 +203,7 @@ const createRuntime = (initialApplicationId) => {
   const bindFirstFrame = (appId, windowId, processId = 0) => {
     if (!appId || warmWindows.get(appId) === windowId) return;
     const replacesDestroyedWindow = pendingWindowDestructions.has(appId);
+    cancelNativeMinimize(appId);
     const currentWindowId = warmWindows.get(appId);
     if (currentWindowId) {
       const currentProcessId = Number(
@@ -214,7 +234,7 @@ const createRuntime = (initialApplicationId) => {
 
   const surfaces = createBoxedWineWindowSurface({
     host: staging,
-    runtimeWindow: frame.contentWindow,
+    runtimeWindow: () => frame.contentWindow,
     origin: location.origin,
     initiallyVisible: false,
     onFirstFrame({ id, appId: nativeAppId, processId, title }) {
@@ -260,12 +280,18 @@ const createRuntime = (initialApplicationId) => {
           detail.width,
           Math.max(1, detail.height - NATIVE_TITLE_BAR_HEIGHT),
         );
+      } else if (detail.type === "unmapped" && detail.id === detail.topId) {
+        scheduleNativeMinimize(appId, detail.id);
+      } else if (detail.type === "mapped" && detail.id === detail.topId) {
+        cancelNativeMinimize(appId);
+        mounted?.context.applyNativeRestore();
       } else if (
         detail.id === detail.topId &&
         (detail.type === "focused" || detail.type === "raised")
       ) {
         mounted?.context.applyNativeFocus();
       } else if (detail.type === "destroyed" && detail.id === detail.topId) {
+        cancelNativeMinimize(appId);
         if (mounted) {
           const status = document.createElement("span");
           status.className = "boxedwine-shared-loading";
@@ -341,6 +367,8 @@ const createRuntime = (initialApplicationId) => {
     processApplications.clear();
     pendingFirstFrames.clear();
     pendingWindowDestructions.clear();
+    for (const appId of pendingNativeMinimizes.keys())
+      cancelNativeMinimize(appId);
     launchFailures.clear();
     launchingApplications.clear();
     launchingApplications.add(initialApplicationId);
@@ -397,6 +425,7 @@ const createRuntime = (initialApplicationId) => {
     ) {
       const appId = event.data.appId;
       cancelWindowDestruction(appId);
+      cancelNativeMinimize(appId);
       const launchFailed = launchingApplications.delete(appId);
       const windowId = warmWindows.get(appId);
       const mounted = mounts.get(appId);
@@ -497,6 +526,7 @@ const createRuntime = (initialApplicationId) => {
           return scheduleNativeWindow();
         },
         unmount() {
+          cancelNativeMinimize(appId);
           resizeObserver.disconnect();
           if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
           context.clearNativeOwnedWindows();

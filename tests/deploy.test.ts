@@ -284,6 +284,18 @@ describe("build metadata", () => {
   test("versions main before hashing and writes matching manifests", async () => {
     const root = await makeTemporaryDirectory();
     await makeSource(root);
+    await writeFiles(root, {
+      "apps/core/boxedwine-runtime.js": [
+        'const ROOT_ARCHIVE = "xp-accessories";',
+        "new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);",
+      ].join("\n"),
+      "iframe/boxedwine-runtime/index.html": [
+        'const runner = "../../vendor/boxedwine/26R1/index.html";',
+        'const options = { root: "xp-accessories" };',
+      ].join("\n"),
+      "iframe/boxedwine-runtime/xp-runtime.zip": "shared XP applications",
+      "iframe/solitaire/xp-solitaire.zip": "legacy Solitaire package",
+    });
     await addGeneratedRuntime(root);
     const paths = new BuildPaths(root);
 
@@ -327,6 +339,18 @@ describe("build metadata", () => {
     );
     expect(manifest.games["bike-mania"].files[0].integrity).toMatch(
       /^sha384-[A-Za-z0-9+/]+={0,2}$/,
+    );
+    expect(manifest.games["boxedwine-runtime"]).toBeUndefined();
+    expect(manifest.games.solitaire.runtime).toBe("boxedwine");
+    expect(
+      manifest.runtimes.boxedwine.files.some(
+        (file: { url: string }) =>
+          file.url.includes("/boxedwine-runtime.") &&
+          file.url.includes("/xp-runtime.zip?rev="),
+      ),
+    ).toBeTrue();
+    expect(html).toMatch(
+      /"boxedwine-runtime":"iframe\/boxedwine-runtime\.[a-f0-9]{16}\//,
     );
     const boxedWineIndex = await readFile(
       join(root, "apps", "core", "boxedwine.js"),
@@ -445,15 +469,19 @@ describe("build metadata", () => {
       `${manifest.games.doom.root}dos/doom/doom.jsdos`,
       `${manifest.games.doom.root}index.html`,
     ]);
-    expect(html).toContain(
-      `window.ASTRO_GAME_ROOTS=Object.freeze(${JSON.stringify(
-        Object.fromEntries(
-          Object.entries(manifest.games).map(([id, game]: [string, any]) => [
-            id,
-            game.root,
-          ]),
-        ),
-      )})`,
+    const configuredRoots = JSON.parse(
+      html.match(/window\.ASTRO_GAME_ROOTS=Object\.freeze\((\{[^<]+\})\)/)![1],
+    );
+    expect(configuredRoots).toMatchObject(
+      Object.fromEntries(
+        Object.entries(manifest.games).map(([id, game]: [string, any]) => [
+          id,
+          game.root,
+        ]),
+      ),
+    );
+    expect(configuredRoots["boxedwine-runtime"]).toMatch(
+      /^iframe\/boxedwine-runtime\.[a-f0-9]{16}\/$/,
     );
     expect(manifest.runtime.files.length).toBeGreaterThan(0);
     expect(metadata.bundledGameBytes).toBe(
