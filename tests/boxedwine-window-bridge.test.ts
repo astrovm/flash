@@ -384,8 +384,8 @@ describe("BoxedWine window bridge", () => {
         id: 43,
         parentId: 1,
         processId: 9,
-        x: 130,
-        y: 90,
+        x: 4,
+        y: 49,
         width: 100,
         height: 60,
       });
@@ -399,6 +399,9 @@ describe("BoxedWine window bridge", () => {
         rgba: new Uint8ClampedArray(100 * 60 * 4),
       });
       expect(canvas.draws.length).toBeGreaterThanOrEqual(3);
+      expect(
+        canvas.draws.findLast(([drawn]) => drawn.width === 100)?.slice(1),
+      ).toEqual([4, 49]);
       expect(
         lifecycle.find((event) => event.id === 43 && event.type === "owner"),
       ).toMatchObject({ topId: 41 });

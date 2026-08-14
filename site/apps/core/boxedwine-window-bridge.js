@@ -503,8 +503,13 @@ export const createBoxedWineWindowSurface = ({
         .filter((child) => child.parentId === id || child.ownerId === id)
         .sort((left, right) => left.stack - right.stack);
       for (const child of children) {
-        const childX = child.ownerId ? child.x - top.x : offsetX + child.x;
-        const childY = child.ownerId ? child.y - top.y : offsetY + child.y;
+        const anchoredOwner = child.ownerId && anchoredWindows.has(topId);
+        const childX = child.ownerId
+          ? child.x - (anchoredOwner ? 0 : top.x)
+          : offsetX + child.x;
+        const childY = child.ownerId
+          ? child.y - (anchoredOwner ? 0 : top.y)
+          : offsetY + child.y;
         drawTree(child.id, childX, childY);
       }
     };
