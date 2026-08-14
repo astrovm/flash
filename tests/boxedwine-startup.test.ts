@@ -92,6 +92,61 @@ describe("BoxedWine startup", () => {
     expect(shell.document.getElementById("desktop").hidden).toBeFalse();
   });
 
+  test("retries an application that exits before its first frame", async () => {
+    const shell = await loadShell();
+    const frame = shell.document.querySelector(
+      "iframe.boxedwine-shared-runtime-frame",
+    );
+    const runtimeWindow = frame.contentWindow;
+    const requests = [];
+    Object.defineProperty(runtimeWindow, "postMessage", {
+      configurable: true,
+      value: (message) => requests.push(message),
+    });
+    const setRuntimeTimeout = shell.window.setTimeout.bind(shell.window);
+    shell.window.setTimeout = (callback, delay, ...arguments_) => {
+      if (delay === 250) {
+        queueMicrotask(() => callback(...arguments_));
+        return -1;
+      }
+      return setRuntimeTimeout(callback, delay, ...arguments_);
+    };
+    const sendRuntimeMessage = (data) => {
+      const event = new shell.window.Event("message");
+      Object.defineProperties(event, {
+        data: { value: data },
+        origin: { value: shell.window.location.origin },
+        source: { value: runtimeWindow },
+      });
+      shell.window.dispatchEvent(event);
+    };
+
+    sendRuntimeMessage({ type: "boxedwine-runtime-ready" });
+    expect(shell.document.documentElement.dataset.boxedwineRuntimeState).toBe(
+      "ready",
+    );
+    sendRuntimeMessage({
+      type: "boxedwine-process-launched",
+      appId: "calculator",
+      processId: 101,
+      error: 0,
+    });
+    sendRuntimeMessage({
+      type: "boxedwine-process-exited",
+      appId: "calculator",
+      processId: 101,
+    });
+    expect(shell.document.documentElement.dataset.boxedwineLastExit).toBe(
+      "calculator:101",
+    );
+    await flushShell();
+
+    expect(requests.at(-1)).toMatchObject({
+      type: "boxedwine-launch-process",
+      appId: "calculator",
+    });
+  });
+
   test("opens an installed-game deep link after the library becomes ready", async () => {
     let releaseLibrary;
     const gameLibraryManager = {

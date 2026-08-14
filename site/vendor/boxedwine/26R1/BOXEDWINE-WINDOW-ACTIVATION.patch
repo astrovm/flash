@@ -1,6 +1,6 @@
 --- a/source/sdl/emscripten/mainloop.cpp
 +++ b/source/sdl/emscripten/mainloop.cpp
-@@ -20,6 +20,185 @@
+@@ -20,6 +20,198 @@
  #include <emscripten/emscripten.h>
  #include "boxedwine.h"
  #include "knativesystem.h"
@@ -15,9 +15,9 @@
 +static const char* boxedwineApplicationPath(U32 application) {
 +    switch (application) {
 +    case 1: return "C:\\files\\calculator\\calc.exe";
-+    case 2: return "C:\\files\\solitaire\\resize-host.exe";
-+    case 3: return "C:\\files\\freecell\\resize-host.exe";
-+    case 4: return "C:\\files\\spider-solitaire\\resize-host.exe";
++    case 2: return "C:\\files\\solitaire\\sol.exe";
++    case 3: return "C:\\files\\freecell\\freecell.exe";
++    case 4: return "C:\\files\\spider-solitaire\\spider.exe";
 +    default: return nullptr;
 +    }
 +}
@@ -101,19 +101,34 @@
 +    U32 height;
 +};
 +
-+static BoxedwineWindowRestore windowRestores[32] = {};
++static std::vector<BoxedwineWindowRestore> windowRestores;
 +
-+static BoxedwineWindowRestore* getWindowRestore(U32 id) {
-+    BoxedwineWindowRestore* empty = nullptr;
++static void discardClosedWindowRestores(XServer* server) {
++    windowRestores.erase(
++        std::remove_if(windowRestores.begin(), windowRestores.end(),
++            [server](const BoxedwineWindowRestore& restore) {
++                return !server->getWindow(restore.id);
++            }),
++        windowRestores.end());
++}
++
++static BoxedwineWindowRestore* getWindowRestore(XServer* server, U32 id) {
++    discardClosedWindowRestores(server);
 +    for (auto& restore : windowRestores) {
 +        if (restore.id == id) {
 +            return &restore;
 +        }
-+        if (!restore.id && !empty) {
-+            empty = &restore;
-+        }
 +    }
-+    return empty;
++    return nullptr;
++}
++
++static void removeWindowRestore(U32 id) {
++    windowRestores.erase(
++        std::remove_if(windowRestores.begin(), windowRestores.end(),
++            [id](const BoxedwineWindowRestore& restore) {
++                return restore.id == id;
++            }),
++        windowRestores.end());
 +}
 +
 +static void closeWindow(XServer* server, const XWindowPtr& window) {
@@ -144,25 +159,23 @@
 +        return;
 +    }
 +    if (command == 1) {
++        removeWindowRestore(id);
 +        closeWindow(server, window);
 +    } else if (command == 2) {
 +        window->unmapWindow();
 +    } else if (command == 3) {
-+        BoxedwineWindowRestore* restore = getWindowRestore(id);
-+        if (restore && !restore->id) {
-+            restore->id = id;
-+            restore->x = window->getLeft();
-+            restore->y = window->getTop();
-+            restore->width = window->width();
-+            restore->height = window->height();
++        if (!getWindowRestore(server, id)) {
++            windowRestores.push_back({
++                id, window->getLeft(), window->getTop(),
++                window->width(), window->height()});
 +        }
 +        KNativeScreenPtr screen = KNativeSystem::getScreen();
 +        window->moveResize(0, 0, width ? width : screen->screenWidth(), height ? height : screen->screenHeight());
 +    } else if (command == 4) {
-+        BoxedwineWindowRestore* restore = getWindowRestore(id);
-+        if (restore && restore->id) {
++        BoxedwineWindowRestore* restore = getWindowRestore(server, id);
++        if (restore) {
 +            window->moveResize(restore->x, restore->y, restore->width, restore->height);
-+            *restore = {};
++            removeWindowRestore(id);
 +        }
 +        window->mapWindow();
 +    } else if (command == 5 && width && height) {
@@ -186,7 +199,7 @@
 
  #ifdef BOXEDWINE_MULTI_THREADED
  #include "knativethread.h"
-@@ -52,6 +231,8 @@
+@@ -52,6 +244,8 @@
  extern int allocatedRamPages;
  void mainloop() {
      isMainThread = true;
@@ -195,7 +208,8 @@
          U32 t = KSystem::getMilliesSinceStart();
          U32 nextTimer = getNextTimer();
          if (nextTimer == 0) {
-@@ -94,5 +275,7 @@
+@@ -93,6 +287,8 @@ bool isMainthread() {
+ 
  void mainloop() {
      U64 startTime = KSystem::getMicroCounter();
 +    applyPendingScreenResize();

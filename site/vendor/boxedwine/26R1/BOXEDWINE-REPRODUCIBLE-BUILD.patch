@@ -1,6 +1,6 @@
 --- a/project/emscripten/makefile
 +++ b/project/emscripten/makefile
-@@ -102,7 +102,7 @@
+@@ -102,5 +102,5 @@
  $(SOFT_OBJS): INCLUDES := -I../../lib/softfloat/source/include -I../../lib/softfloat/source -I../../lib/softfloat/source/8086-SSE
 
  CXXFLAGS ?= -std=c++20

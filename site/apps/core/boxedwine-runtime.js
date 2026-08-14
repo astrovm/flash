@@ -385,6 +385,7 @@ const createRuntime = (initialApplicationId) => {
       processes.get(event.data.appId) === event.data.processId
     ) {
       const appId = event.data.appId;
+      const launchFailed = launchingApplications.delete(appId);
       const windowId = warmWindows.get(appId);
       const mounted = mounts.get(appId);
       warmWindows.delete(appId);
@@ -397,7 +398,15 @@ const createRuntime = (initialApplicationId) => {
         mounted.context.applyNativeClose();
       }
       delete document.documentElement.dataset.boxedwineApplicationsReady;
-      ensureWarmApplications();
+      if (launchFailed) {
+        const failures = (launchFailures.get(appId) || 0) + 1;
+        launchFailures.set(appId, failures);
+        document.documentElement.dataset.boxedwineRuntimeError = `launch:${appId}:process-exited`;
+        if (failures < 3) window.setTimeout(ensureWarmApplications, 250);
+        else recoverRuntime(`launch:${appId}:process-exited`);
+      } else {
+        ensureWarmApplications();
+      }
     } else if (
       event.data?.type === "boxedwine-process-terminated" &&
       APPLICATION_IDS.includes(event.data.appId) &&
