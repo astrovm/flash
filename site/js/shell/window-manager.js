@@ -103,8 +103,31 @@ const fitNativeProgramToWorkArea = (win) => {
       )
     : desktopHeight;
   if (visibleWidth <= 0 || visibleHeight <= 0) return false;
-  if (visibleWidth >= preferred.width && visibleHeight >= preferred.height) {
+  const actualWidth = parseWindowLength(
+    win.el.style.width,
+    win.el.offsetWidth || preferred.width,
+  );
+  const actualHeight = parseWindowLength(
+    win.el.style.height,
+    win.el.offsetHeight || preferred.height,
+  );
+  if (
+    actualWidth <= visibleWidth &&
+    actualHeight <= visibleHeight &&
+    preferred.width <= visibleWidth &&
+    preferred.height <= visibleHeight
+  ) {
     if (!win.workAreaFitRect) return false;
+    const originalWidth = parseWindowLength(
+      win.workAreaFitRect.width,
+      preferred.width,
+    );
+    const originalHeight = parseWindowLength(
+      win.workAreaFitRect.height,
+      preferred.height,
+    );
+    if (visibleWidth < originalWidth || visibleHeight < originalHeight)
+      return false;
     Object.assign(win.el.style, win.workAreaFitRect);
     win.workAreaFitRect = null;
     return true;
@@ -113,8 +136,8 @@ const fitNativeProgramToWorkArea = (win) => {
   win.workAreaFitRect ||= {
     left: win.el.style.left,
     top: win.el.style.top,
-    width: `${preferred.width}px`,
-    height: `${preferred.height}px`,
+    width: `${actualWidth}px`,
+    height: `${actualHeight}px`,
     minWidth: win.el.style.minWidth,
     minHeight: win.el.style.minHeight,
   };
@@ -745,7 +768,7 @@ const loadIframe = (gameId, win) => {
   );
 };
 
-const focusWindow = (gameId) => {
+const focusWindow = (gameId, { notifyApplication = true } = {}) => {
   const win = openWindows.get(gameId);
   if (!win) return;
 
@@ -754,6 +777,7 @@ const focusWindow = (gameId) => {
   win.lastUsed = Date.now();
   win.zIndex = ++zIndexCounter;
   win.el.style.zIndex = win.zIndex;
+  if (notifyApplication) win.mountedApplication?.focus?.();
 
   openWindows.forEach((w, id) => {
     w.el.classList.toggle("active", id === gameId);
@@ -798,10 +822,12 @@ const focusTopWindow = () => {
   }
 };
 
-const minimizeWindow = (gameId) => {
+const minimizeWindow = (gameId, { notifyApplication = true } = {}) => {
   const win = openWindows.get(gameId);
   if (!win || win.minimized) return;
 
+  if (notifyApplication && win.mountedApplication?.minimize?.() === false)
+    return;
   win.minimized = true;
   const taskButton = document.querySelector(
     `.task-button[data-game="${gameId}"]`,
@@ -841,10 +867,12 @@ const minimizeWindow = (gameId) => {
   }
 };
 
-const restoreWindow = (gameId) => {
+const restoreWindow = (gameId, { notifyApplication = true } = {}) => {
   const win = openWindows.get(gameId);
   if (!win || !win.minimized) return;
 
+  if (notifyApplication && win.mountedApplication?.restore?.() === false)
+    return;
   win.minimized = false;
   win.el.style.display = "flex";
   win.el.animate(
@@ -892,10 +920,16 @@ const toggleShowDesktop = () => {
   minimizeAllWindows();
 };
 
-const toggleMaximize = (gameId) => {
+const toggleMaximize = (gameId, { notifyApplication = true } = {}) => {
   const win = openWindows.get(gameId);
   if (!win) return;
 
+  if (notifyApplication) {
+    const handled = win.maximized
+      ? win.mountedApplication?.restore?.()
+      : win.mountedApplication?.maximize?.();
+    if (handled === false) return;
+  }
   if (!win.maximized) {
     win.prevRect = {
       left: win.el.style.left,
@@ -922,10 +956,13 @@ const toggleMaximize = (gameId) => {
     fitNativeProgramToWorkArea(win);
   }
   updateMaximizeButton(win);
-  focusWindow(gameId);
+  focusWindow(gameId, { notifyApplication });
 };
 
-const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
+const closeGameWindow = (
+  gameId,
+  { skipBeforeClose = false, skipUnmount = false } = {},
+) => {
   const win = openWindows.get(gameId);
   if (!win) return;
 
@@ -959,7 +996,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
     return;
   }
   persistWindowPlacement(win);
-  win.mountedApplication?.unmount?.();
+  if (!skipUnmount) win.mountedApplication?.unmount?.();
   win.el.remove();
   openWindows.delete(gameId);
 
@@ -1180,6 +1217,12 @@ const wireResize = (win) => {
         }
         updateSize();
         persistWindowPlacement(win);
+        win.mountedApplication?.bounds?.(
+          win.el.offsetLeft,
+          win.el.offsetTop,
+          win.el.offsetWidth,
+          win.el.offsetHeight,
+        );
       };
 
       try {

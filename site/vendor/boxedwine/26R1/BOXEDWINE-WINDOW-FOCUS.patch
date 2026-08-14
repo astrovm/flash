@@ -1,0 +1,59 @@
+diff --git a/include/knativewindowbridge.h b/include/knativewindowbridge.h
+--- a/include/knativewindowbridge.h
++++ b/include/knativewindowbridge.h
+@@ -9,6 +9,8 @@ void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped);
+ void boxedwineNativeWindowBounds(const std::shared_ptr<XWindow>& wnd);
+ void boxedwineNativeWindowTitle(U32 id, const U8* value, U32 length);
+ void boxedwineNativeWindowOwner(U32 id, U32 ownerId);
++void boxedwineNativeWindowFocused(const std::shared_ptr<XWindow>& wnd);
++void boxedwineNativeWindowRaised(const std::shared_ptr<XWindow>& wnd);
+ void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height);
+
+ #endif
+diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbridge.cpp
+--- a/platform/sdl/knativewindowbridge.cpp
++++ b/platform/sdl/knativewindowbridge.cpp
+@@ -88,6 +88,14 @@ void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
+ #endif
+ }
+
++void boxedwineNativeWindowFocused(const std::shared_ptr<XWindow>& wnd) {
++    lifecycle("focused", wnd);
++}
++
++void boxedwineNativeWindowRaised(const std::shared_ptr<XWindow>& wnd) {
++    lifecycle("raised", wnd);
++}
++
+ void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height) {
+ #ifdef __EMSCRIPTEN__
+     boxedwineWindowFrame(id, pixels, pitch, width, height);
+diff --git a/source/x11/xserver.cpp b/source/x11/xserver.cpp
+--- a/source/x11/xserver.cpp
++++ b/source/x11/xserver.cpp
+@@ -17,5 +17,6 @@
+
+ #include "boxedwine.h"
++#include "knativewindowbridge.h"
+ #include "x11.h"
+ #include "knativesystem.h"
+ #include "ksocket.h"
+@@ -264,6 +265,7 @@ U32 XServer::setInputFocus(const DisplayDataPtr& data, U32 window, U32 revertTo,
+ 		this->inputFocus = w;
+ 		if (w) {
+ 			w->focusIn();
++			boxedwineNativeWindowFocused(w);
+ 		}
+ 	}
+ 	return Success;
+diff --git a/source/x11/xwindow.cpp b/source/x11/xwindow.cpp
+--- a/source/x11/xwindow.cpp
++++ b/source/x11/xwindow.cpp
+@@ -1051,6 +1051,7 @@ int XWindow::configure(U32 mask, XWindowChanges* changes) {
+ 				parent->zchildren.push_back(shared_from_this());
+ 			}
+ 		}
++		boxedwineNativeWindowRaised(shared_from_this());
+ 	}
+ 	if (sizeChanged) {
+ 		if (width != this->width() || height != this->height()) {

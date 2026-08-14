@@ -1,5 +1,6 @@
 const isResizeMessage = (event, origin) => {
-  const { type, width, height, baseWidth, baseHeight } = event.data || {};
+  const { type, appId, width, height, baseWidth, baseHeight } =
+    event.data || {};
   return (
     event.origin === origin &&
     type === "boxedwine-framebuffer-resize" &&
@@ -10,7 +11,9 @@ const isResizeMessage = (event, origin) => {
     width > 0 &&
     height > 0 &&
     baseWidth > 0 &&
-    baseHeight > 0
+    baseHeight > 0 &&
+    (appId === undefined ||
+      ["solitaire", "freecell", "spider-solitaire"].includes(appId))
   );
 };
 
@@ -56,25 +59,24 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
     if (
       !runtimeInitialized ||
       !pendingResize ||
-      typeof module._boxedwine_resize_screen !== "function" ||
+      (pendingResize.appId === undefined &&
+        typeof module._boxedwine_resize_screen !== "function") ||
       typeof module.FS?.writeFile !== "function"
     )
       return;
-    const { width, height, baseWidth, baseHeight } = pendingResize;
-    const sizePath = "/d_drive/boxedwine-size.txt";
-    const temporaryPath = `${sizePath}.tmp`;
+    const { appId, width, height, baseWidth, baseHeight } = pendingResize;
+    const appSizePaths = {
+      solitaire: "/d_drive/solsize.txt",
+      freecell: "/d_drive/freesize.txt",
+      "spider-solitaire": "/d_drive/spidsize.txt",
+    };
+    const sizePath = appSizePaths[appId] || "/d_drive/boxedwine-size.txt";
 
-    module._boxedwine_resize_screen(width, height);
+    if (appId === undefined) module._boxedwine_resize_screen(width, height);
     module.FS.writeFile(
-      temporaryPath,
+      sizePath,
       `${width} ${height} ${baseWidth} ${baseHeight}`,
     );
-    try {
-      module.FS.unlink(sizePath);
-    } catch {
-      // The destination does not exist before the first resize.
-    }
-    module.FS.rename(temporaryPath, sizePath);
     pendingResize = null;
   };
   const onMessage = (event) => {
@@ -86,6 +88,19 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
   module.onRuntimeInitialized = () => {
     onRuntimeInitialized?.();
     runtimeInitialized = true;
+    if (typeof module.FS?.writeFile === "function") {
+      for (const path of [
+        "/d_drive/solsize.txt",
+        "/d_drive/freesize.txt",
+        "/d_drive/spidsize.txt",
+      ]) {
+        try {
+          module.FS.writeFile(path, "");
+        } catch {
+          // The mounted drive is unavailable only when startup has failed.
+        }
+      }
+    }
     applyResize();
     if (
       typeof module.FS?.readFile === "function" &&

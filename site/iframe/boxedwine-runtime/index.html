@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Persistent BoxedWine runtime proof</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font:
+          13px Tahoma,
+          sans-serif;
+        background: #245edb;
+      }
+      body {
+        overflow: hidden;
+      }
+      nav {
+        display: flex;
+        gap: 6px;
+        padding: 8px;
+        background: #ece9d8;
+      }
+      iframe {
+        position: absolute;
+        width: 1024px;
+        height: 768px;
+        border: 0;
+        opacity: 0;
+        z-index: -1;
+        pointer-events: none;
+      }
+      #windows {
+        position: absolute;
+        inset: 44px 0 0;
+        overflow: hidden;
+      }
+      .boxedwine-native-window {
+        position: absolute;
+        image-rendering: auto;
+        filter: drop-shadow(2px 3px 3px #0008);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <button data-app="calculator" disabled>Calculator</button>
+      <button data-app="solitaire" disabled>Solitaire</button>
+      <button data-app="freecell" disabled>FreeCell</button>
+      <button data-app="spider-solitaire" disabled>Spider Solitaire</button>
+      <output>Starting one BoxedWine runtime…</output>
+    </nav>
+    <iframe title="Persistent BoxedWine runtime"></iframe>
+    <main id="windows" aria-label="Separate Wine windows"></main>
+    <script type="module">
+      import { createBoxedWineWindowSurface } from "../../apps/core/boxedwine-window-bridge.js";
+
+      const frame = document.querySelector("iframe");
+      const buttons = [...document.querySelectorAll("button")];
+      const appIds = buttons.map((button) => button.dataset.app);
+      const output = document.querySelector("output");
+      const runner = new URL(
+        "../../vendor/boxedwine/26R1/index.html",
+        location.href,
+      );
+      runner.search = new URLSearchParams({
+        appRoot: new URL("./", location.href).href,
+        root: "xp-accessories",
+        archive: "xp-runtime",
+        executable: "calculator/calc.exe",
+        resolution: "1024x768",
+        frameTop: "0",
+        sound: "true",
+        cache: "false",
+        trace: "false",
+        persistent: "true",
+      });
+      frame.src = runner.href;
+      const warmWindows = new Map();
+      const processApplications = new Map();
+      let warmingAppId = "calculator";
+      let warmStartedAt = 0;
+      let request = 0;
+      const launch = (appId, requestId) =>
+        frame.contentWindow.postMessage(
+          { type: "boxedwine-launch-process", appId, requestId },
+          location.origin,
+        );
+      const warmNext = () => {
+        warmingAppId = appIds.find((appId) => !warmWindows.has(appId)) || null;
+        if (!warmingAppId) {
+          const elapsed = Math.round(performance.now() - warmStartedAt);
+          document.body.dataset.boxedwineWarmupElapsed = String(elapsed);
+          for (const button of buttons) button.disabled = false;
+          output.value = `Four original XP applications warmed in ${elapsed} ms.`;
+          return;
+        }
+        output.value = `Warming ${warmingAppId} in the background…`;
+        if (warmingAppId !== "calculator")
+          launch(warmingAppId, `prewarm:${warmingAppId}:${++request}`);
+      };
+      const surfaces = createBoxedWineWindowSurface({
+        host: document.querySelector("#windows"),
+        runtimeWindow: frame.contentWindow,
+        origin: location.origin,
+        initiallyVisible: false,
+        onFirstFrame({ id, processId }) {
+          const appId = processApplications.get(processId) || warmingAppId;
+          if (!appId) return;
+          warmWindows.set(appId, id);
+          surfaces.hide(id);
+          warmingAppId = null;
+          setTimeout(warmNext, 50);
+        },
+      });
+      for (const button of buttons) {
+        button.addEventListener("click", () => {
+          const appId = button.dataset.app;
+          const startedAt = performance.now();
+          const shown = surfaces.show(warmWindows.get(appId));
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              const elapsed = Math.round(performance.now() - startedAt);
+              output.value = shown
+                ? `${button.textContent} visible in ${elapsed} ms`
+                : `${button.textContent} is not warm`;
+            }),
+          );
+        });
+      }
+      addEventListener("message", (event) => {
+        if (
+          event.source !== frame.contentWindow ||
+          event.origin !== location.origin
+        )
+          return;
+        if (event.data?.type === "boxedwine-runtime-ready") {
+          warmStartedAt = performance.now();
+          warmNext();
+        }
+        if (event.data?.type === "boxedwine-process-dispatched") {
+          if (!event.data.requestId.startsWith("prewarm:"))
+            output.value = `${event.data.appId} command delivered to the resident host…`;
+        }
+        if (event.data?.type === "boxedwine-process-accepted") {
+          if (!event.data.requestId.startsWith("prewarm:"))
+            output.value = `${event.data.appId} command accepted; creating the Wine process…`;
+        }
+        if (event.data?.type === "boxedwine-process-launched") {
+          if (!event.data.error)
+            processApplications.set(event.data.processId, event.data.appId);
+          if (event.data.error)
+            output.value = `Warm-up failed with Windows error ${event.data.error}`;
+        }
+      });
+    </script>
+  </body>
+</html>

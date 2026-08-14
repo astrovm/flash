@@ -19,11 +19,22 @@ const sharedTrees = [
   "usr/",
   "var/",
 ];
+const wineThemePath =
+  "home/username/.wine/drive_c/windows/resources/themes/light/light.msstyles";
+const wineUserRegistryPath = "home/username/.wine/user.reg";
 
 export const buildBoxedWineXpFilesystem = async ({
   sourcePath = join(runtimeRoot, "boxedwine.zip"),
   tracePath = join(runtimeRoot, "xp-accessories-files.json"),
   outputPath = join(runtimeRoot, "xp-accessories.zip"),
+  themePath = join(
+    projectRoot,
+    "source-media",
+    "xp-sp3",
+    "extracted",
+    "themes",
+    "Luna.msstyles",
+  ),
 } = {}) => {
   const source = new Uint8Array(await readFile(sourcePath));
   const sourceFiles = unzipSync(source);
@@ -75,8 +86,20 @@ export const buildBoxedWineXpFilesystem = async ({
   }
 
   const outputFiles: Zippable = {};
+  const lunaTheme = new Uint8Array(await readFile(themePath));
   for (const name of [...selected].sort()) {
-    const content = sourceFiles[name];
+    let content = name === wineThemePath ? lunaTheme : sourceFiles[name];
+    if (name === wineUserRegistryPath) {
+      const registry = new TextDecoder().decode(content);
+      const themedRegistry = registry.replace(
+        '"ColorName"="Blue"',
+        '"ColorName"="NormalColor"',
+      );
+      if (themedRegistry === registry) {
+        throw new Error("Wine ThemeManager Blue color scheme was not found");
+      }
+      content = new TextEncoder().encode(themedRegistry);
+    }
     const isDirectory = name.endsWith("/");
     const isExecutable =
       isDirectory ||
@@ -109,6 +132,7 @@ export const buildBoxedWineXpFilesystem = async ({
     missing,
     outputBytes: output.byteLength,
     outputSha256: sha256(output),
+    themeSha256: sha256(lunaTheme),
   };
 };
 

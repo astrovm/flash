@@ -1,0 +1,226 @@
+--- a/source/sdl/emscripten/mainloop.cpp
++++ b/source/sdl/emscripten/mainloop.cpp
+@@ -20,6 +20,198 @@
+ #include <emscripten/emscripten.h>
+ #include "boxedwine.h"
+ #include "knativesystem.h"
++#include "../../x11/x11.h"
++
++static U32 pendingScreenWidth;
++static U32 pendingScreenHeight;
++static U32 pendingApplication;
++static U32 pendingTermination;
++static U32 launchResult;
++
++static const char* boxedwineApplicationPath(U32 application) {
++    switch (application) {
++    case 1: return "C:\\files\\calculator\\calc.exe";
++    case 2: return "C:\\files\\solitaire\\resize-host.exe";
++    case 3: return "C:\\files\\freecell\\resize-host.exe";
++    case 4: return "C:\\files\\spider-solitaire\\resize-host.exe";
++    default: return nullptr;
++    }
++}
++
++EM_JS(void, boxedwineProcessEvent, (const char* type, U32 processId, const char* executable), {
++    window.dispatchEvent(new CustomEvent("boxedwine-native-process", {
++        detail: { type: UTF8ToString(type), processId, executable: UTF8ToString(executable) },
++    }));
++});
++
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_process(U32 application) {
++    if (!boxedwineApplicationPath(application) || pendingApplication) return 0;
++    launchResult = 0;
++    pendingApplication = application;
++    return 1;
++}
++
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_result() {
++    return launchResult;
++}
++
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_terminate_process(U32 processId) {
++    if (!processId || pendingTermination) return 0;
++    pendingTermination = processId;
++    return 1;
++}
++
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_process_running(U32 processId) {
++    KProcessPtr process = KSystem::getProcess(processId);
++    return process && !process->isTerminated();
++}
++
++static void applyPendingProcessChanges() {
++    if (pendingTermination) {
++        KProcessPtr process = KSystem::getProcess(pendingTermination);
++        if (process && !process->isTerminated()) process->signalProcess(9);
++        pendingTermination = 0;
++    }
++    if (!pendingApplication) return;
++    const char* executable = boxedwineApplicationPath(pendingApplication);
++    pendingApplication = 0;
++    std::vector<BString> args = {B("/bin/wine"), BString::copy(executable)};
++    std::vector<BString> environment = {
++        B("HOME=/home/username"), B("LOGNAME=username"), B("USERNAME=username"),
++        B("USER=username"), B("PWD=/home/username/.wine/dosdevices/c:/files"),
++        B("DISPLAY=:0"), B("WINE_FAKE_WAIT_VBLANK=60"),
++        B("PATH=/bin:/usr/bin:/usr/local/bin")};
++    KProcessPtr process = KProcess::create();
++    KThread* thread = process->startProcess(
++        B("/home/username/.wine/dosdevices/c:/files"), args, environment,
++        UID, GID, UID, GID);
++    launchResult = thread ? process->id : 0xffffffff;
++    if (thread) boxedwineProcessEvent("started", process->id, executable);
++}
++extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_resize_screen(U32 width, U32 height) {
++    pendingScreenWidth = width;
++    pendingScreenHeight = height;
++}
++
++extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_activate_window(U32 id) {
++    XServer* server = XServer::getServer(true);
++    if (!server) {
++        return;
++    }
++    XWindowPtr window = server->getWindow(id);
++    if (!window) {
++        return;
++    }
++    XWindowChanges changes = {};
++    changes.stack_mode = 0;
++    window->configure(CWStackMode, &changes);
++    server->setInputFocus(nullptr, id, 0, 0);
++    window->setDirty();
++}
++
++struct BoxedwineWindowRestore {
++    U32 id;
++    S32 x;
++    S32 y;
++    U32 width;
++    U32 height;
++};
++
++static std::vector<BoxedwineWindowRestore> windowRestores;
++
++static void discardClosedWindowRestores(XServer* server) {
++    windowRestores.erase(
++        std::remove_if(windowRestores.begin(), windowRestores.end(),
++            [server](const BoxedwineWindowRestore& restore) {
++                return !server->getWindow(restore.id);
++            }),
++        windowRestores.end());
++}
++
++static BoxedwineWindowRestore* getWindowRestore(XServer* server, U32 id) {
++    discardClosedWindowRestores(server);
++    for (auto& restore : windowRestores) {
++        if (restore.id == id) {
++            return &restore;
++        }
++    }
++    return nullptr;
++}
++
++static void removeWindowRestore(U32 id) {
++    windowRestores.erase(
++        std::remove_if(windowRestores.begin(), windowRestores.end(),
++            [id](const BoxedwineWindowRestore& restore) {
++                return restore.id == id;
++            }),
++        windowRestores.end());
++}
++
++static void closeWindow(XServer* server, const XWindowPtr& window) {
++    DisplayDataPtr data = server->getDisplayDataById(window->displayId);
++    if (!data) {
++        return;
++    }
++    XEvent event = {};
++    event.type = ClientMessage;
++    event.xclient.serial = data->getNextEventSerial();
++    event.xclient.send_event = True;
++    event.xclient.display = data->displayAddress;
++    event.xclient.window = window->id;
++    event.xclient.message_type = server->internAtom(B("WM_PROTOCOLS"), false);
++    event.xclient.format = 32;
++    event.xclient.data.l[0] = server->internAtom(B("WM_DELETE_WINDOW"), false);
++    event.xclient.data.l[1] = server->getEventTime();
++    data->putEvent(event);
++}
++
++static void resizeWindow(const XWindowPtr& window, U32 width, U32 height) {
++    XWindowChanges changes = {};
++    changes.width = width;
++    changes.height = height;
++    window->configure(CWWidth | CWHeight, &changes);
++}
++
++extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_window_command(U32 id, U32 command, S32 x, S32 y, U32 width, U32 height) {
++    XServer* server = XServer::getServer(true);
++    if (!server) {
++        return;
++    }
++    XWindowPtr window = server->getWindow(id);
++    if (!window) {
++        return;
++    }
++    if (command == 1) {
++        removeWindowRestore(id);
++        closeWindow(server, window);
++    } else if (command == 2) {
++        window->unmapWindow();
++    } else if (command == 3) {
++        if (!getWindowRestore(server, id)) {
++            windowRestores.push_back({
++                id, window->getLeft(), window->getTop(),
++                window->width(), window->height()});
++        }
++        KNativeScreenPtr screen = KNativeSystem::getScreen();
++        resizeWindow(window, width ? width : screen->screenWidth(), height ? height : screen->screenHeight());
++    } else if (command == 4) {
++        BoxedwineWindowRestore* restore = getWindowRestore(server, id);
++        if (restore) {
++            resizeWindow(window, restore->width, restore->height);
++            removeWindowRestore(id);
++        }
++        window->mapWindow();
++    } else if (command == 5 && width && height) {
++        resizeWindow(window, width, height);
++    }
++    window->setDirty();
++}
++
++static void applyPendingScreenResize() {
++    if (!pendingScreenWidth || !pendingScreenHeight) {
++        return;
++    }
++    XServer* server = XServer::getServer(true);
++    if (!server) {
++        return;
++    }
++    server->changeScreen(pendingScreenWidth, pendingScreenHeight);
++    pendingScreenWidth = 0;
++    pendingScreenHeight = 0;
++}
+
+ #ifdef BOXEDWINE_MULTI_THREADED
+ #include "knativethread.h"
+@@ -52,6 +244,8 @@
+ extern int allocatedRamPages;
+ void mainloop() {
+     isMainThread = true;
++        applyPendingScreenResize();
++        applyPendingProcessChanges();
+         U32 t = KSystem::getMilliesSinceStart();
+         U32 nextTimer = getNextTimer();
+         if (nextTimer == 0) {
+@@ -93,6 +287,8 @@ bool isMainthread() {
+ 
+ void mainloop() {
+     U64 startTime = KSystem::getMicroCounter();
++    applyPendingScreenResize();
++    applyPendingProcessChanges();
+     U32 t;
+     U32 count=0;
+     BString mipsTitle;

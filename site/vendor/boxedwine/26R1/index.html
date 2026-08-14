@@ -58,11 +58,15 @@
             : `${appRoot.href}/`,
           archive: value("archive", /^[a-z0-9][a-z0-9-]*$/),
           root: value("root", /^[a-z0-9][a-z0-9-]*$/),
-          executable: value("executable", /^[a-z0-9_. -]+\.exe$/i),
+          executable: value(
+            "executable",
+            /^(?:[a-z0-9_. -]+\/)*[a-z0-9_. -]+\.exe$/i,
+          ),
           resolution: value("resolution", /^\d{3,4}x\d{3,4}$/),
           sound: value("sound", /^(?:true|false)$/),
           cache: value("cache", /^(?:true|false)$/),
           trace: value("trace", /^(?:true|false)$/),
+          persistent: params.get("persistent") === "true",
         });
       })();
     </script>
@@ -115,15 +119,47 @@
           `cache=${runner.cache}`,
           `trace=${runner.trace}`,
         ].join("&");
+        window.BoxedWinePersistentRuntime = runner.persistent;
+        if (runner.persistent) Config.storageMode = "MEMORY";
         delete window.BoxedWineRunnerConfig;
       })();
 
     </script>
     <script type="module">
       import { installBoxedWineResizeBridge } from "../../../apps/core/boxedwine-resize.js";
+      import { installBoxedWineProcessHostBridge } from "../../../apps/core/boxedwine-process-host.js";
+      import { installBoxedWineWindowBridge } from "../../../apps/core/boxedwine-window-bridge.js";
 
       installBoxedWineResizeBridge(window, Module);
+      if (window.BoxedWinePersistentRuntime) {
+        installBoxedWineProcessHostBridge(window, Module);
+        installBoxedWineWindowBridge(window, Module);
+      }
+      const reportRuntimeFailure = (reason) =>
+        window.parent.postMessage(
+          {
+            type: "boxedwine-runtime-failed",
+            reason: String(reason || "runtime-error").slice(0, 160),
+          },
+          window.location.origin,
+        );
+      window.addEventListener("error", (event) =>
+        reportRuntimeFailure(event.error?.message || event.message),
+      );
+      window.addEventListener("unhandledrejection", (event) =>
+        reportRuntimeFailure(event.reason?.message || event.reason),
+      );
+      const onAbort = Module.onAbort;
+      Module.onAbort = (reason) => {
+        onAbort?.(reason);
+        reportRuntimeFailure(reason || "abort");
+      };
+      const runtimeScript = document.createElement("script");
+      runtimeScript.src = "boxedwine.js";
+      runtimeScript.addEventListener("error", () =>
+        reportRuntimeFailure("script-load"),
+      );
+      document.body.appendChild(runtimeScript);
     </script>
-    <script async src="boxedwine.js"></script>
   </body>
 </html>

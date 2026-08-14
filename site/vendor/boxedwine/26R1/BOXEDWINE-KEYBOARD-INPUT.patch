@@ -1,0 +1,24 @@
+--- a/platform/sdl/knativewindowbridge.cpp
++++ b/platform/sdl/knativewindowbridge.cpp
+@@ -4,6 +4,21 @@
+
+ #ifdef __EMSCRIPTEN__
+ #include <emscripten.h>
++#include <SDL.h>
++
++extern "C" {
++EMSCRIPTEN_KEEPALIVE int boxedwine_key_event(U32 windowId, U32 scanCode, U32 down) {
++    (void)windowId;
++    SDL_Event event = {};
++    event.type = down ? SDL_KEYDOWN : SDL_KEYUP;
++    event.key.type = event.type;
++    event.key.state = down ? SDL_PRESSED : SDL_RELEASED;
++    event.key.repeat = 0;
++    event.key.keysym.scancode = static_cast<SDL_Scancode>(scanCode);
++    event.key.keysym.sym = SDL_GetKeyFromScancode(event.key.keysym.scancode);
++    return SDL_PushEvent(&event);
++}
++}
+
+ EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height, U32 dialog), {
+     window.dispatchEvent(new CustomEvent("boxedwine-native-window", {

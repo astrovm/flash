@@ -7,12 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Window } from "happy-dom";
 
-import {
-  cleanupShells,
-  flushShell,
-  loadShell,
-  login,
-} from "./helpers/shell-harness";
+import { cleanupShells, flushShell, loadShell } from "./helpers/shell-harness";
 import { buildBoxedWineXpFilesystem } from "../tools/build-boxedwine-xp-filesystem";
 
 const require = createRequire(import.meta.url);
@@ -27,28 +22,6 @@ const runtimeDirectory = join(
 );
 
 afterEach(cleanupShells);
-
-const installFetchStub = (shell) => {
-  const requests = [];
-  shell.window.fetch = async (url, options) => {
-    requests.push({ url: String(url), options });
-    if (String(url).endsWith("/preload.json")) {
-      return {
-        ok: true,
-        async json() {
-          return { files: ["runtime.js", "root.zip"] };
-        },
-      };
-    }
-    return {
-      ok: true,
-      async arrayBuffer() {
-        return new ArrayBuffer(0);
-      },
-    };
-  };
-  return requests;
-};
 
 describe("BoxedWine startup", () => {
   test("deduplicates active downloads and releases completed data", async () => {
@@ -93,30 +66,135 @@ describe("BoxedWine startup", () => {
     await window.happyDOM.close();
   });
 
-  test("preloads the shared runtime after desktop login when idle", async () => {
+  test("starts shared runtime preparation during the XP boot sequence", async () => {
     const shell = await loadShell();
-    const requests = installFetchStub(shell);
-    let idleCallback;
-    shell.window.requestIdleCallback = (callback) => {
-      idleCallback = callback;
-      return 1;
+    expect(
+      shell.window.document.querySelectorAll(
+        "iframe.boxedwine-shared-runtime-frame",
+      ),
+    ).toHaveLength(1);
+    expect(shell.document.getElementById("boot-screen").hidden).toBeFalse();
+  });
+
+  test("does not block Welcome on application preparation", async () => {
+    const shell = await loadShell();
+    shell.window.XPBoxedWineRuntime = {
+      ...shell.window.XPBoxedWineRuntime,
+      applicationsReady: () => new Promise(() => {}),
     };
 
-    await login(shell);
-    expect(requests).toHaveLength(0);
-    expect(idleCallback).toBeFunction();
-    idleCallback();
+    shell.document.getElementById("boot-screen").click();
+    await flushShell();
+    expect(shell.document.getElementById("boot-screen").hidden).toBeTrue();
+    expect(shell.document.getElementById("welcome-screen").hidden).toBeFalse();
+    shell.document.getElementById("welcome-screen").click();
+    await flushShell();
+    expect(shell.document.getElementById("desktop").hidden).toBeFalse();
+  });
+
+  test("retries an application that exits before its first frame", async () => {
+    const shell = await loadShell();
+    const frame = shell.document.querySelector(
+      "iframe.boxedwine-shared-runtime-frame",
+    );
+    const runtimeWindow = frame.contentWindow;
+    const requests = [];
+    Object.defineProperty(runtimeWindow, "postMessage", {
+      configurable: true,
+      value: (message) => requests.push(message),
+    });
+    const setRuntimeTimeout = shell.window.setTimeout.bind(shell.window);
+    shell.window.setTimeout = (callback, delay, ...arguments_) => {
+      if (delay === 250) {
+        queueMicrotask(() => callback(...arguments_));
+        return -1;
+      }
+      return setRuntimeTimeout(callback, delay, ...arguments_);
+    };
+    const sendRuntimeMessage = (data) => {
+      const event = new shell.window.Event("message");
+      Object.defineProperties(event, {
+        data: { value: data },
+        origin: { value: shell.window.location.origin },
+        source: { value: runtimeWindow },
+      });
+      shell.window.dispatchEvent(event);
+    };
+
+    sendRuntimeMessage({ type: "boxedwine-runtime-ready" });
+    expect(shell.document.documentElement.dataset.boxedwineRuntimeState).toBe(
+      "ready",
+    );
+    sendRuntimeMessage({
+      type: "boxedwine-process-launched",
+      appId: "calculator",
+      processId: 101,
+      error: 0,
+    });
+    sendRuntimeMessage({
+      type: "boxedwine-process-exited",
+      appId: "calculator",
+      processId: 101,
+    });
+    expect(shell.document.documentElement.dataset.boxedwineLastExit).toBe(
+      "calculator:101",
+    );
+    await flushShell();
+
+    expect(requests.at(-1)).toMatchObject({
+      type: "boxedwine-launch-process",
+      appId: "calculator",
+    });
+  });
+
+  test("opens an installed-game deep link after the library becomes ready", async () => {
+    let releaseLibrary;
+    const gameLibraryManager = {
+      subscribe() {
+        return () => {};
+      },
+      initialize() {
+        return new Promise((resolve) => {
+          releaseLibrary = resolve;
+        });
+      },
+      async search() {
+        return [];
+      },
+      async details() {
+        return null;
+      },
+      async install() {},
+      async uninstall() {},
+      getRecord() {
+        return null;
+      },
+      async match() {
+        return null;
+      },
+    };
+    const shell = await loadShell({ gameLibraryManager });
+    shell.window.location.hash = "#delayed-installed-game";
+    shell.document.getElementById("boot-screen").click();
+    shell.document.getElementById("welcome-screen").click();
+    await flushShell();
+    expect(
+      shell.document.querySelector('[data-game="delayed-installed-game"]'),
+    ).toBeNull();
+
+    releaseLibrary({
+      "delayed-installed-game": {
+        ...shell.window.FLASH_GAMES["bike-mania"],
+        id: "delayed-installed-game",
+        title: "Delayed Installed Game",
+      },
+    });
     await flushShell();
     await flushShell();
 
-    expect(requests.map(({ url }) => new URL(url).pathname)).toEqual([
-      "/vendor/boxedwine/26R1/preload.json",
-      "/vendor/boxedwine/26R1/runtime.js",
-      "/vendor/boxedwine/26R1/root.zip",
-    ]);
     expect(
-      requests.every(({ options }) => options.cache === "force-cache"),
-    ).toBeTrue();
+      shell.document.querySelector('[data-game="delayed-installed-game"]'),
+    ).not.toBeNull();
   });
 
   test("waits for complete preload response bodies", async () => {
@@ -177,45 +255,6 @@ describe("BoxedWine startup", () => {
     );
   });
 
-  test("waits for menu demand on a constrained phone", async () => {
-    const shell = await loadShell();
-    const requests = installFetchStub(shell);
-    let idleRequests = 0;
-    shell.window.matchMedia = () => ({ matches: true });
-    shell.window.requestIdleCallback = () => {
-      idleRequests += 1;
-    };
-
-    await login(shell);
-    expect(idleRequests).toBe(0);
-    expect(requests).toHaveLength(0);
-
-    shell.document.getElementById("start-button").click();
-    shell.document.getElementById("all-programs-button").click();
-    shell.document.querySelector('[data-program-id="accessories"]').click();
-    await flushShell();
-    await flushShell();
-
-    expect(requests).toHaveLength(3);
-  });
-
-  test("does not preload automatically on a landscape touch device", async () => {
-    const shell = await loadShell();
-    const requests = installFetchStub(shell);
-    let idleRequests = 0;
-    shell.window.matchMedia = (query) => ({
-      matches: query === "(pointer: coarse)",
-    });
-    shell.window.requestIdleCallback = () => {
-      idleRequests += 1;
-    };
-
-    await login(shell);
-
-    expect(idleRequests).toBe(0);
-    expect(requests).toHaveLength(0);
-  });
-
   test("packages only the traced shared XP files", async () => {
     const trace = JSON.parse(
       await readFile(
@@ -235,6 +274,14 @@ describe("BoxedWine startup", () => {
         archive[path] || archive[`${path}/`] || archive[`${path}.link`],
       ).toBeDefined();
     }
+    const wineRegistry = new TextDecoder().decode(
+      archive["home/username/.wine/user.reg"],
+    );
+    expect(wineRegistry).toContain('"ThemeActive"="1"');
+    expect(wineRegistry).toContain('"ColorName"="NormalColor"');
+    expect(wineRegistry).toContain(
+      '"DllName"="C:\\\\windows\\\\resources\\\\themes\\\\light\\\\light.msstyles"',
+    );
     expect(
       (await stat(join(runtimeDirectory, "xp-accessories.zip"))).size,
     ).toBeLessThan((await stat(join(runtimeDirectory, "boxedwine.zip"))).size);

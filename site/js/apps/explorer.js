@@ -29,6 +29,9 @@ const refreshInstalledGames = (installedGames) => {
   if (!document.getElementById("start-menu").hidden) buildPinnedPrograms();
   const internetWindow = openWindows.get("__internet-games");
   if (internetWindow) renderInstalledInternetGames(internetWindow);
+  const linkedGameId = getHashGameId();
+  if (linkedGameId && !openWindows.has(linkedGameId))
+    openLinkedGame(linkedGameId);
 };
 
 const initializeGameLibrary = async () => {

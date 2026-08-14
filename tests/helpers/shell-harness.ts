@@ -34,7 +34,7 @@ const activeWindows = new Set<Window>();
 export const flushShell = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
-export async function loadShell() {
+export async function loadShell({ gameLibraryManager } = {}) {
   const window = new Window({
     url: "http://127.0.0.1/",
     width: 1024,
@@ -194,7 +194,8 @@ export async function loadShell() {
       return null;
     },
   };
-  window.AstroGameLibrary.createManager = () => emptyLibrary;
+  window.AstroGameLibrary.createManager = () =>
+    gameLibraryManager || emptyLibrary;
 
   const offlineSnapshot = {
     bundledGames: [
@@ -245,6 +246,18 @@ export async function loadShell() {
   const applicationScript = document.createElement("script");
   applicationScript.textContent = await applicationBundle.outputs[0].text();
   document.body.appendChild(applicationScript);
+
+  // The real browser runs the WebAssembly guest while the XP welcome screen
+  // is visible. Happy DOM cannot execute an iframe guest, so resolve only the
+  // boot readiness boundaries and keep the real runtime DOM for shell tests.
+  const boxedWineRuntime = window.XPBoxedWineRuntime;
+  if (boxedWineRuntime) {
+    window.XPBoxedWineRuntime = Object.freeze({
+      ...boxedWineRuntime,
+      ready: async () => {},
+      applicationsReady: async () => {},
+    });
+  }
 
   if (scriptErrors.length) throw scriptErrors[0];
 

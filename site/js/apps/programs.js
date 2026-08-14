@@ -17,6 +17,150 @@ const wireSystemWindowControls = (win) => {
   if (win.application?.window.resizable !== false) wireResize(win);
 };
 
+const focusNativeOwnedWindow = (owner, dialog) => {
+  focusWindow(owner.gameId, { notifyApplication: false });
+  owner.el.classList.remove("active");
+  dialog.el.classList.add("active");
+  dialog.el.style.zIndex = String(++zIndexCounter);
+  dialog.canvas.focus({ preventScroll: true });
+  dialog.focus?.();
+};
+
+const wireNativeOwnedWindowDrag = (owner, dialog) => {
+  const bar = dialog.el.querySelector(".title-bar");
+  bar.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || event.target.closest(".title-buttons")) return;
+    focusNativeOwnedWindow(owner, dialog);
+    const start = {
+      x: event.clientX,
+      y: event.clientY,
+      left: dialog.el.offsetLeft,
+      top: dialog.el.offsetTop,
+    };
+    const move = (moveEvent) => {
+      const position = clampWindowPosition(
+        { el: dialog.el },
+        start.left + moveEvent.clientX - start.x,
+        start.top + moveEvent.clientY - start.y,
+      );
+      dialog.el.style.left = `${position.left}px`;
+      dialog.el.style.top = `${position.top}px`;
+      dialog.moved = true;
+    };
+    const stop = () => {
+      bar.removeEventListener("pointermove", move);
+      bar.removeEventListener("pointerup", stop);
+      bar.removeEventListener("pointercancel", stop);
+    };
+    try {
+      bar.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is not available in older browsers.
+    }
+    bar.addEventListener("pointermove", move);
+    bar.addEventListener("pointerup", stop);
+    bar.addEventListener("pointercancel", stop);
+    event.preventDefault();
+  });
+};
+
+const removeNativeOwnedWindow = (owner, id) => {
+  const dialog = owner.nativeOwnedWindows?.get(id);
+  if (!dialog) return false;
+  dialog.el.remove();
+  owner.nativeOwnedWindows.delete(id);
+  if (owner.nativeOwnedWindows.size === 0) {
+    owner.el.removeAttribute("aria-disabled");
+    owner.el.classList.remove("native-owned-window-blocked");
+    owner.el.removeEventListener(
+      "pointerdown",
+      owner.nativeDialogBlocker,
+      true,
+    );
+    owner.el.removeEventListener("click", owner.nativeDialogBlocker, true);
+    owner.nativeDialogBlocker = null;
+    focusWindow(owner.gameId, { notifyApplication: false });
+  }
+  return true;
+};
+
+const clearNativeOwnedWindows = (owner) => {
+  for (const id of [...(owner.nativeOwnedWindows?.keys() || [])])
+    removeNativeOwnedWindow(owner, id);
+};
+
+const upsertNativeOwnedWindow = (owner, detail) => {
+  owner.nativeOwnedWindows ||= new Map();
+  let dialog = owner.nativeOwnedWindows.get(detail.id);
+  const created = !dialog;
+  if (!dialog) {
+    const el = createWindowElement(owner.gameId);
+    el.dataset.game = `${owner.gameId}:native:${detail.id}`;
+    el.dataset.nativeWindowId = String(detail.id);
+    el.classList.add(
+      "xp-native-program-window",
+      "xp-boxedwine-shared-window",
+      "xp-boxedwine-owned-window",
+    );
+    el.querySelectorAll(".game-menu-bar, .game-menu, .resize-handle").forEach(
+      (node) => node.remove(),
+    );
+    el.querySelector(".minimize-btn")?.remove();
+    el.querySelector(".maximize-btn")?.remove();
+    const content = el.querySelector(".window-content");
+    content.className = "window-content boxedwine-shared-app-host";
+    content.replaceChildren(detail.canvas);
+    dialog = {
+      canvas: detail.canvas,
+      close: detail.close,
+      el,
+      focus: detail.focus,
+      moved: false,
+    };
+    owner.nativeOwnedWindows.set(detail.id, dialog);
+    el.querySelector(".close-btn").addEventListener("click", () =>
+      dialog.close?.(),
+    );
+    el.addEventListener("pointerdown", () =>
+      focusNativeOwnedWindow(owner, dialog),
+    );
+    wireNativeOwnedWindowDrag(owner, dialog);
+    document.getElementById("desktop").appendChild(el);
+    if (!owner.nativeDialogBlocker) {
+      owner.nativeDialogBlocker = (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const topDialog = [...owner.nativeOwnedWindows.values()].at(-1);
+        if (topDialog) focusNativeOwnedWindow(owner, topDialog);
+      };
+      owner.el.addEventListener("pointerdown", owner.nativeDialogBlocker, true);
+      owner.el.addEventListener("click", owner.nativeDialogBlocker, true);
+    }
+    owner.el.classList.add("native-owned-window-blocked");
+    owner.el.setAttribute("aria-disabled", "true");
+  } else if (dialog.canvas !== detail.canvas) {
+    dialog.canvas = detail.canvas;
+    dialog.el
+      .querySelector(".boxedwine-shared-app-host")
+      .replaceChildren(detail.canvas);
+  }
+  dialog.close = detail.close;
+  dialog.focus = detail.focus;
+  dialog.el.querySelector(".title-text").textContent = detail.title;
+  dialog.el.style.width = `${detail.width}px`;
+  dialog.el.style.height = `${detail.height}px`;
+  if (!dialog.moved) {
+    const position = clampWindowPosition(
+      { el: dialog.el },
+      owner.el.offsetLeft + detail.x,
+      owner.el.offsetTop + detail.y,
+    );
+    dialog.el.style.left = `${position.left}px`;
+    dialog.el.style.top = `${position.top}px`;
+  }
+  if (created) focusNativeOwnedWindow(owner, dialog);
+};
+
 const applicationContext = (win) => ({
   windowElement: win.el,
   XP_ICON_PATHS,
@@ -48,6 +192,37 @@ const applicationContext = (win) => ({
   setAccessKeyText,
   close: () => closeGameWindow(win.gameId),
   minimize: () => minimizeWindow(win.gameId),
+  applyNativeSize(width, height) {
+    win.el.style.width = `${width}px`;
+    win.el.style.height = `${height}px`;
+    fitNativeProgramToWorkArea(win);
+  },
+  applyNativeClientSize(width, height) {
+    if (win.maximized) return;
+    const host = win.el.querySelector(".boxedwine-shared-app-host");
+    if (!host) return;
+    const frameWidth = Math.max(0, win.el.offsetWidth - host.clientWidth);
+    const frameHeight = Math.max(0, win.el.offsetHeight - host.clientHeight);
+    win.el.style.width = `${width + frameWidth}px`;
+    win.el.style.height = `${height + frameHeight}px`;
+    fitNativeProgramToWorkArea(win);
+  },
+  applyNativeClose: () => {
+    clearNativeOwnedWindows(win);
+    closeGameWindow(win.gameId, {
+      skipBeforeClose: true,
+      skipUnmount: true,
+    });
+  },
+  applyNativeFocus: () => focusWindow(win.gameId, { notifyApplication: false }),
+  applyNativeMinimize: () =>
+    minimizeWindow(win.gameId, { notifyApplication: false }),
+  applyNativeRestore: () => {
+    if (win.minimized) restoreWindow(win.gameId, { notifyApplication: false });
+  },
+  upsertNativeOwnedWindow: (detail) => upsertNativeOwnedWindow(win, detail),
+  removeNativeOwnedWindow: (id) => removeNativeOwnedWindow(win, id),
+  clearNativeOwnedWindows: () => clearNativeOwnedWindows(win),
   openFile: (options) => XPDialogs.openFile(options),
   saveFile: (options) => XPDialogs.saveFile(options),
   myPictures: fs.MY_PICTURES,

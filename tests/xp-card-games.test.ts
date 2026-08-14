@@ -53,26 +53,27 @@ const launchGame = (shell, id, applicationId) => {
 
 describe("Windows XP card games through BoxedWine", () => {
   for (const game of games) {
-    test(`launches ${game.title} with sound and offline support`, async () => {
+    test(`mounts ${game.title} in the boot-prepared runtime with sound and offline support`, async () => {
       const shell = await login(await loadShell());
-      shell.window.ASTRO_GAME_ROOTS = {
-        [game.id]: `iframe/${game.id}-build-123/`,
-      };
-
       const gameWindow = launchGame(shell, game.id, game.applicationId);
-      const frame = gameWindow.querySelector(".boxedwine-app-frame");
+      const frame = shell.document.querySelector(
+        ".boxedwine-shared-runtime-frame",
+      );
       const url = new URL(frame.src);
 
       expect(gameWindow.querySelector(".title-text").textContent).toBe(
         game.title,
       );
       expect(new URL(url.searchParams.get("appRoot")).pathname).toBe(
-        `/iframe/${game.id}-build-123/`,
+        "/iframe/boxedwine-runtime/",
       );
-      expect(url.searchParams.get("archive")).toBe(game.archive);
-      expect(url.searchParams.get("executable")).toBe(game.executable);
-      expect(url.searchParams.get("frameTop")).toBe("32");
+      expect(url.searchParams.get("archive")).toBe("xp-runtime");
+      expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
+      expect(url.searchParams.get("persistent")).toBe("true");
       expect(url.searchParams.get("sound")).toBe("true");
+      expect(
+        gameWindow.querySelector(".boxedwine-shared-app-host"),
+      ).not.toBeNull();
       expect(gameWindow.querySelector(".maximize-btn").disabled).toBeFalse();
       expect(gameWindow.querySelector(".resize-handle")).not.toBeNull();
       expect(shell.window.location.hash).toBe(`#${game.id}`);
@@ -80,51 +81,18 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(shell.offlineDownloads).toEqual([game.id]);
     });
 
-    test(`${game.title} scales its complete native surface into a phone window`, async () => {
+    test(`${game.title} uses the complete phone work area`, async () => {
       const shell = await login(await loadShell());
       const desktop = shell.document.getElementById("desktop");
       Object.defineProperties(desktop, {
         clientWidth: { configurable: true, value: 390 },
         clientHeight: { configurable: true, value: 814 },
       });
-      let resize;
-      shell.window.ResizeObserver = class ResizeObserver {
-        constructor(callback) {
-          resize = callback;
-        }
-        observe() {}
-        disconnect() {}
-      };
-
       const gameWindow = launchGame(shell, game.id, game.applicationId);
-      const host = gameWindow.querySelector(".boxedwine-app-host");
-      const frame = host.querySelector(".boxedwine-app-frame");
-      const resizeMessages = [];
-      frame.contentWindow.postMessage = (message, origin) =>
-        resizeMessages.push({ message, origin });
-      Object.defineProperties(host, {
-        clientWidth: { configurable: true, value: 384 },
-        clientHeight: { configurable: true, value: 783 },
-      });
-
-      resize();
-
-      const nativeWidth = game.id === "freecell" ? 640 : 794;
-      const nativeHeight = game.id === "freecell" ? 448 : 569;
       expect(gameWindow.style.width).toBe("390px");
       expect(gameWindow.style.height).toBe("814px");
       expect(gameWindow.style.minWidth).toBe("0px");
       expect(gameWindow.style.minHeight).toBe("0px");
-      expect(frame.style.width).toBe(`${nativeWidth}px`);
-      expect(frame.style.height).toBe(`${nativeHeight}px`);
-      expect(frame.style.transform).toBe(`scale(${384 / nativeWidth})`);
-      expect(resizeMessages.at(-1).message).toEqual({
-        type: "boxedwine-framebuffer-resize",
-        width: nativeWidth,
-        height: nativeHeight + 32,
-        baseWidth: nativeWidth,
-        baseHeight: nativeHeight + 32,
-      });
 
       Object.defineProperties(desktop, {
         clientWidth: { configurable: true, value: 1024 },
@@ -133,24 +101,6 @@ describe("Windows XP card games through BoxedWine", () => {
       shell.window.dispatchEvent(new shell.window.Event("resize"));
       expect(gameWindow.style.minWidth).not.toBe("0px");
       expect(gameWindow.style.minHeight).not.toBe("0px");
-
-      gameWindow.querySelector(".maximize-btn").click();
-      expect(gameWindow.classList.contains("maximized")).toBeTrue();
-      Object.defineProperties(host, {
-        clientWidth: { configurable: true, value: 1018 },
-        clientHeight: { configurable: true, value: 707 },
-      });
-      resize();
-      expect(frame.style.width).toBe("100%");
-      expect(frame.style.height).toBe("100%");
-      expect(frame.style.transform).toBe("");
-      expect(resizeMessages.at(-1).message).toEqual({
-        type: "boxedwine-framebuffer-resize",
-        width: 1018,
-        height: 739,
-        baseWidth: nativeWidth,
-        baseHeight: nativeHeight + 32,
-      });
     });
 
     test(`${game.title} package matches its provenance manifest`, async () => {

@@ -632,6 +632,50 @@ export async function updateHtml(
       "Could not version the BoxedWine runner reference",
     );
     await writeFile(integrationPath, integration);
+    const sharedRuntimePath = join(
+      paths.root,
+      "apps",
+      "core",
+      "boxedwine-runtime.js",
+    );
+    if (await isFile(sharedRuntimePath)) {
+      let sharedRuntime = await readFile(sharedRuntimePath, "utf8");
+      sharedRuntime = await replaceExactlyOnce(
+        sharedRuntime,
+        /const ROOT_ARCHIVE = "xp-accessories";/g,
+        `const ROOT_ARCHIVE = "${rootZipName.slice(0, -4)}";`,
+        "Could not version the shared BoxedWine root filesystem reference",
+      );
+      sharedRuntime = await replaceExactlyOnce(
+        sharedRuntime,
+        /`\$\{RUNTIME_ROOT\}index\.html`/g,
+        `\`\${RUNTIME_ROOT}${indexName}\``,
+        "Could not version the shared BoxedWine runner reference",
+      );
+      await writeFile(sharedRuntimePath, sharedRuntime);
+    }
+    const persistentProofPath = join(
+      paths.root,
+      "iframe",
+      "boxedwine-runtime",
+      "index.html",
+    );
+    if (await isFile(persistentProofPath)) {
+      let persistentProof = await readFile(persistentProofPath, "utf8");
+      persistentProof = await replaceExactlyOnce(
+        persistentProof,
+        /\.\.\/\.\.\/vendor\/boxedwine\/26R1\/index\.html/g,
+        `../../vendor/boxedwine/26R1/${indexName}`,
+        "Could not version the persistent BoxedWine runner reference",
+      );
+      persistentProof = await replaceExactlyOnce(
+        persistentProof,
+        /root: "xp-accessories"/g,
+        `root: "${rootZipName.slice(0, -4)}"`,
+        "Could not version the persistent BoxedWine root reference",
+      );
+      await writeFile(persistentProofPath, persistentProof);
+    }
     await Promise.all([
       rename(indexPath, join(boxedWineRoot, indexName)),
       rename(wasmPath, join(boxedWineRoot, wasmName)),
@@ -787,7 +831,7 @@ export async function writeOfflineGameManifest(
     .map((entry) => join(paths.js, entry.name))
     .toSorted();
 
-  const sharedRuntimes = {
+  const sharedRuntimes: Record<string, string[]> = {
     boxedwine: [join(paths.root, "vendor", "boxedwine", "26R1")],
     scummvm: [
       join(paths.root, "iframe", "scummvm"),
@@ -796,6 +840,14 @@ export async function writeOfflineGameManifest(
   };
   const games = await versionGamePackages(paths);
   await injectGameRoots(paths, games);
+  const boxedWineApplicationPackage = games["boxedwine-runtime"];
+  if (boxedWineApplicationPackage) {
+    sharedRuntimes.boxedwine.push(
+      join(paths.root, boxedWineApplicationPackage.root),
+    );
+  }
+  const publicGames = { ...games };
+  delete publicGames["boxedwine-runtime"];
 
   const runtimes = Object.fromEntries(
     await Promise.all(
@@ -835,7 +887,7 @@ export async function writeOfflineGameManifest(
   );
   const runtimeRevision = await offlineRevision(paths.root, runtimeFiles);
   const manifest: OfflineManifest = {
-    games,
+    games: publicGames,
     runtime: {
       bytes: (
         await Promise.all(
@@ -1195,10 +1247,17 @@ export async function validateOutput(outputDir: string): Promise<void> {
   const gameRoots = Object.fromEntries(
     Object.entries(offlineManifest.games).map(([id, game]) => [id, game.root]),
   );
+  const rootsMatch = html.match(
+    /window\.ASTRO_GAME_ROOTS=Object\.freeze\((\{[^<]+\})\)/,
+  );
+  let configuredRoots: Record<string, string> = {};
+  try {
+    configuredRoots = rootsMatch ? JSON.parse(rootsMatch[1]) : {};
+  } catch {
+    configuredRoots = {};
+  }
   if (
-    !html.includes(
-      `window.ASTRO_GAME_ROOTS=Object.freeze(${JSON.stringify(gameRoots)})`,
-    )
+    Object.entries(gameRoots).some(([id, root]) => configuredRoots[id] !== root)
   ) {
     throw new Error("Build output has no matching versioned game roots");
   }

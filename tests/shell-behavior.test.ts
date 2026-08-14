@@ -15,6 +15,7 @@ test("startup accepts pointer and keyboard input before showing the desktop", as
   const pointerDocument = pointerShell.document;
   expect(pointerDocument.getElementById("boot-screen")!.hidden).toBeFalse();
   pointerDocument.getElementById("boot-screen")!.click();
+  await flushShell();
   expect(pointerDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
   pointerDocument.getElementById("welcome-screen")!.click();
   await flushShell();
@@ -28,6 +29,7 @@ test("startup accepts pointer and keyboard input before showing the desktop", as
     .dispatchEvent(
       new keyboardShell.window.KeyboardEvent("keydown", { key: "Enter" }),
     );
+  await flushShell();
   expect(keyboardDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
   keyboardDocument
     .getElementById("welcome-screen")!
@@ -507,10 +509,17 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     '.xp-window[data-game="__calculator"]',
   )!;
   const calculatorUrl = new URL(
-    calculatorWindow.querySelector<HTMLIFrameElement>("iframe")!.src,
+    shell.document.querySelector<HTMLIFrameElement>(
+      ".boxedwine-shared-runtime-frame",
+    )!.src,
   );
-  expect(calculatorUrl.searchParams.get("archive")).toBe("xp-calculator");
-  expect(calculatorUrl.searchParams.get("executable")).toBe("window-host.exe");
+  expect(
+    calculatorWindow.querySelector(".boxedwine-shared-app-host"),
+  ).not.toBeNull();
+  expect(calculatorUrl.searchParams.get("archive")).toBe("xp-runtime");
+  expect(calculatorUrl.searchParams.get("executable")).toBe(
+    "calculator/calc.exe",
+  );
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
@@ -578,13 +587,19 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   const solitaireWindow = shell.document.querySelector(
     '.xp-window[data-game="__solitaire"]',
   )!;
-  const solitaireFrame = solitaireWindow.querySelector<HTMLIFrameElement>(
-    ".boxedwine-app-frame",
-  )!;
-  expect(solitaireFrame).not.toBeNull();
-  expect(new URL(solitaireFrame.src).searchParams.get("executable")).toBe(
-    "resize-host.exe",
-  );
+  expect(
+    solitaireWindow.querySelector(".boxedwine-shared-app-host"),
+  ).not.toBeNull();
+  expect(
+    shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+  ).toHaveLength(1);
+  expect(
+    new URL(
+      shell.document.querySelector<HTMLIFrameElement>(
+        ".boxedwine-shared-runtime-frame",
+      )!.src,
+    ).searchParams.get("executable"),
+  ).toBe("calculator/calc.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();

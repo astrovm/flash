@@ -1,1 +1,2 @@
 * text=auto eol=lf
+site/vendor/boxedwine/26R1/*.patch -whitespace
