@@ -46,7 +46,7 @@ const runnerUrl = (initialApplicationId) => {
     root: ROOT_ARCHIVE,
     archive: "xp-runtime",
     executable: APPLICATION_EXECUTABLES[initialApplicationId],
-    resolution: `${Math.max(320, screenWidth - 8)}x${Math.max(240, screenHeight - 8)}`,
+    resolution: `${Math.max(320, screenWidth)}x${Math.max(240, screenHeight)}`,
     frameTop: "0",
     sound: "true",
     cache: "false",

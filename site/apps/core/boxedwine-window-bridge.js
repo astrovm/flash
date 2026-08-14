@@ -317,15 +317,35 @@ export const createBoxedWineWindowSurface = ({
   let nativeStack = 1;
   const inputCoordinates = (canvas, top, event) => {
     const rect = canvas.getBoundingClientRect();
+    const scale = Math.min(
+      rect.width / canvas.width,
+      rect.height / canvas.height,
+    );
+    const renderedWidth = canvas.width * scale;
+    const renderedHeight = canvas.height * scale;
+    const renderedLeft = rect.left + (rect.width - renderedWidth) / 2;
+    const renderedTop = rect.top + (rect.height - renderedHeight) / 2;
     const titleBarHeight = anchoredWindows.has(top.id)
       ? NATIVE_TITLE_BAR_HEIGHT
       : 0;
     return {
-      x: top.x + ((event.clientX - rect.left) * canvas.width) / rect.width,
+      x:
+        top.x +
+        (Math.min(
+          Math.max(event.clientX, renderedLeft),
+          renderedLeft + renderedWidth,
+        ) -
+          renderedLeft) /
+          scale,
       y:
         top.y +
         titleBarHeight +
-        ((event.clientY - rect.top) * canvas.height) / rect.height,
+        (Math.min(
+          Math.max(event.clientY, renderedTop),
+          renderedTop + renderedHeight,
+        ) -
+          renderedTop) /
+          scale,
     };
   };
   const modifiers = (event) => ({
@@ -467,6 +487,7 @@ export const createBoxedWineWindowSurface = ({
     canvas.style.height = anchoredWindows.has(topId)
       ? "100%"
       : `${top.height}px`;
+    canvas.style.objectFit = anchoredWindows.has(topId) ? "contain" : "fill";
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 

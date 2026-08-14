@@ -34,7 +34,7 @@ const activeWindows = new Set<Window>();
 export const flushShell = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
-export async function loadShell() {
+export async function loadShell({ gameLibraryManager } = {}) {
   const window = new Window({
     url: "http://127.0.0.1/",
     width: 1024,
@@ -194,7 +194,8 @@ export async function loadShell() {
       return null;
     },
   };
-  window.AstroGameLibrary.createManager = () => emptyLibrary;
+  window.AstroGameLibrary.createManager = () =>
+    gameLibraryManager || emptyLibrary;
 
   const offlineSnapshot = {
     bundledGames: [

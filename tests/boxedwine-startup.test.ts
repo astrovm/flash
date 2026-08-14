@@ -76,29 +76,70 @@ describe("BoxedWine startup", () => {
     expect(shell.document.getElementById("boot-screen").hidden).toBeFalse();
   });
 
-  test("keeps application preparation behind boot instead of Welcome", async () => {
+  test("does not block Welcome on application preparation", async () => {
     const shell = await loadShell();
-    let releasePreparation;
     shell.window.XPBoxedWineRuntime = {
       ...shell.window.XPBoxedWineRuntime,
-      applicationsReady: () =>
-        new Promise((resolve) => {
-          releasePreparation = resolve;
-        }),
+      applicationsReady: () => new Promise(() => {}),
     };
 
     shell.document.getElementById("boot-screen").click();
     await flushShell();
-    expect(shell.document.getElementById("boot-screen").hidden).toBeFalse();
-    expect(shell.document.getElementById("welcome-screen").hidden).toBeTrue();
-
-    releasePreparation();
-    await flushShell();
-    await flushShell();
+    expect(shell.document.getElementById("boot-screen").hidden).toBeTrue();
     expect(shell.document.getElementById("welcome-screen").hidden).toBeFalse();
     shell.document.getElementById("welcome-screen").click();
     await flushShell();
     expect(shell.document.getElementById("desktop").hidden).toBeFalse();
+  });
+
+  test("opens an installed-game deep link after the library becomes ready", async () => {
+    let releaseLibrary;
+    const gameLibraryManager = {
+      subscribe() {
+        return () => {};
+      },
+      initialize() {
+        return new Promise((resolve) => {
+          releaseLibrary = resolve;
+        });
+      },
+      async search() {
+        return [];
+      },
+      async details() {
+        return null;
+      },
+      async install() {},
+      async uninstall() {},
+      getRecord() {
+        return null;
+      },
+      async match() {
+        return null;
+      },
+    };
+    const shell = await loadShell({ gameLibraryManager });
+    shell.window.location.hash = "#delayed-installed-game";
+    shell.document.getElementById("boot-screen").click();
+    shell.document.getElementById("welcome-screen").click();
+    await flushShell();
+    expect(
+      shell.document.querySelector('[data-game="delayed-installed-game"]'),
+    ).toBeNull();
+
+    releaseLibrary({
+      "delayed-installed-game": {
+        ...shell.window.FLASH_GAMES["bike-mania"],
+        id: "delayed-installed-game",
+        title: "Delayed Installed Game",
+      },
+    });
+    await flushShell();
+    await flushShell();
+
+    expect(
+      shell.document.querySelector('[data-game="delayed-installed-game"]'),
+    ).not.toBeNull();
   });
 
   test("waits for complete preload response bodies", async () => {

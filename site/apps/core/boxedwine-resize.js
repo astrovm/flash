@@ -59,7 +59,8 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
     if (
       !runtimeInitialized ||
       !pendingResize ||
-      typeof module._boxedwine_resize_screen !== "function" ||
+      (pendingResize.appId === undefined &&
+        typeof module._boxedwine_resize_screen !== "function") ||
       typeof module.FS?.writeFile !== "function"
     )
       return;
@@ -72,7 +73,7 @@ export const installBoxedWineResizeBridge = (hostWindow, module) => {
     const sizePath = appSizePaths[appId] || "/d_drive/boxedwine-size.txt";
     const temporaryPath = `${sizePath}.tmp`;
 
-    module._boxedwine_resize_screen(width, height);
+    if (appId === undefined) module._boxedwine_resize_screen(width, height);
     module.FS.writeFile(
       temporaryPath,
       `${width} ${height} ${baseWidth} ${baseHeight}`,

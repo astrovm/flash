@@ -22,8 +22,6 @@ const playXPSound = (name) => {
 };
 
 let startupSoundPending = true;
-const WINDOWS_RUNTIME_BOOT_TIMEOUT_MS = 60000;
-let runtimeBootWait = null;
 
 const setScreen = (...visibleIds) => {
   [
@@ -76,22 +74,8 @@ const muteAllWindows = () => {
 };
 
 const finishBootSequence = () => {
-  if (runtimeBootWait) return runtimeBootWait;
   clearTimeout(bootTimeout);
-  let timeout = 0;
-  const prepared = Promise.resolve(
-    window.XPBoxedWineRuntime?.applicationsReady?.(),
-  ).catch(() => {});
-  const fallback = new Promise((resolve) => {
-    timeout = setTimeout(resolve, WINDOWS_RUNTIME_BOOT_TIMEOUT_MS);
-  });
-  runtimeBootWait = Promise.race([prepared, fallback]).finally(() => {
-    clearTimeout(timeout);
-    if (!document.getElementById("boot-screen").hidden) {
-      showWelcomeScreen(true);
-    }
-  });
-  return runtimeBootWait;
+  if (!document.getElementById("boot-screen").hidden) showWelcomeScreen(true);
 };
 
 const showBootScreen = () => {
@@ -102,7 +86,6 @@ const showBootScreen = () => {
   setScreen("boot-screen");
   document.getElementById("boot-screen").focus({ preventScroll: true });
   startupSoundPending = true;
-  runtimeBootWait = null;
   clearTimeout(bootTimeout);
   bootTimeout = setTimeout(finishBootSequence, BOOT_DURATION_MS);
 };

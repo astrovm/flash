@@ -95,7 +95,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     );
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
     expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
-    expect(url.searchParams.get("resolution")).toBe("1016x730");
+    expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");
     expect(
@@ -220,7 +220,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         baseHeight: 438,
       },
     });
-    expect(resizeCalls.at(-1)).toEqual({ width: 900, height: 600 });
+    expect(resizeCalls.at(-1)).toEqual({ width: 586, height: 438 });
     expect(files.get("/d_drive/solsize.txt")).toBe("900 600 586 438");
 
     messageListener({
@@ -231,7 +231,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
         height: 1,
       },
     });
-    expect(resizeCalls).toHaveLength(3);
+    expect(resizeCalls).toHaveLength(2);
 
     dispose();
     expect(messageListener).toBeNull();
