@@ -401,7 +401,7 @@ describe("BoxedWine window bridge", () => {
       expect(canvas.draws.length).toBeGreaterThanOrEqual(3);
       expect(
         canvas.draws.findLast(([drawn]) => drawn.width === 100)?.slice(1),
-      ).toEqual([4, 49]);
+      ).toEqual([4, 21]);
       expect(
         lifecycle.find((event) => event.id === 43 && event.type === "owner"),
       ).toMatchObject({ topId: 41 });

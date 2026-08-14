@@ -508,7 +508,7 @@ export const createBoxedWineWindowSurface = ({
           ? child.x - (anchoredOwner ? 0 : top.x)
           : offsetX + child.x;
         const childY = child.ownerId
-          ? child.y - (anchoredOwner ? 0 : top.y)
+          ? child.y - (anchoredOwner ? titleBarHeight : top.y)
           : offsetY + child.y;
         drawTree(child.id, childX, childY);
       }
