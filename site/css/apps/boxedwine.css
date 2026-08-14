@@ -70,6 +70,11 @@
   background: #000;
 }
 
+.xp-boxedwine-owned-window {
+  min-width: 0;
+  min-height: 0;
+}
+
 html[data-xp-appearance="classic"] .xp-boxedwine-shared-window {
   --boxedwine-shell-caption-height: 18px;
 }
