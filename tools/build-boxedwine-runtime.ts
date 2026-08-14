@@ -11,7 +11,7 @@ const outputDirectory = join(
   "iframe",
   "boxedwine-runtime",
 );
-const fixedTime = new Date("2000-01-01T00:00:00Z");
+const fixedTime = new Date(2000, 0, 1);
 
 const archiveFiles = async (path: string) =>
   unzipSync(new Uint8Array(await readFile(path)));

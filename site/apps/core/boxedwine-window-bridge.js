@@ -162,11 +162,12 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
       module._boxedwine_activate_window(windowId);
     if (type === "boxedwine-native-command") {
       const { action, x = 0, y = 0, width = 0, height = 0 } = event.data;
-      if (
-        ["bounds", "maximize", "restore"].includes(action) &&
+      const changesSize =
         width > 0 &&
-        height > 0
-      ) {
+        height > 0 &&
+        (width !== event.data.sourceWidth ||
+          height !== event.data.sourceHeight);
+      if (["bounds", "maximize", "restore"].includes(action) && changesSize) {
         hostWindow.postMessage(
           {
             type: "boxedwine-framebuffer-resize",
@@ -178,8 +179,8 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
           },
           hostWindow.location.origin,
         );
-        return;
       }
+      if (action === "bounds" && !changesSize) return;
       if (typeof module?._boxedwine_window_command === "function") {
         module._boxedwine_window_command(
           windowId,

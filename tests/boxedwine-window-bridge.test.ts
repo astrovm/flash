@@ -121,6 +121,26 @@ describe("BoxedWine window bridge", () => {
     expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
     expect(dispatched).toHaveLength(2);
 
+    const messagesBeforeMove = messages.length;
+    listeners.get("message")({
+      source: parent,
+      origin: hostWindow.location.origin,
+      data: {
+        type: "boxedwine-native-command",
+        action: "bounds",
+        appId: "solitaire",
+        windowId: 41,
+        x: 300,
+        y: 200,
+        width: 593,
+        height: 437,
+        sourceWidth: 593,
+        sourceHeight: 437,
+      },
+    });
+    expect(messages).toHaveLength(messagesBeforeMove);
+    expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
+
     listeners.get("message")({
       source: parent,
       origin: hostWindow.location.origin,
@@ -143,7 +163,10 @@ describe("BoxedWine window bridge", () => {
       baseWidth: 593,
       baseHeight: 437,
     });
-    expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
+    expect(commands).toEqual([
+      [41, 0, 0, 0, 0, 0],
+      [41, 3, 0, 0, 1280, 690],
+    ]);
 
     listeners.get("message")({
       source: parent,

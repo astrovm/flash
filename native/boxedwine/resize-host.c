@@ -157,6 +157,17 @@ static DWORD run(void) {
     if (SetWindowPos(search.window, NULL, 0, 0, (int)width + width_adjustment,
                      (int)height + height_adjustment,
                      SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)) {
+      RECT client;
+      if (GetClientRect(search.window, &client)) {
+        DWORD_PTR ignored;
+        SendMessageTimeoutW(
+            search.window, WM_SIZE, SIZE_RESTORED,
+            MAKELPARAM(client.right - client.left, client.bottom - client.top),
+            SMTO_ABORTIFHUNG, 250, &ignored);
+        RedrawWindow(search.window, NULL, NULL,
+                     RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN |
+                         RDW_UPDATENOW);
+      }
       applied_width = width;
       applied_height = height;
     }

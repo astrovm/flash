@@ -15,9 +15,9 @@
 +static const char* boxedwineApplicationPath(U32 application) {
 +    switch (application) {
 +    case 1: return "C:\\files\\calculator\\calc.exe";
-+    case 2: return "C:\\files\\solitaire\\sol.exe";
-+    case 3: return "C:\\files\\freecell\\freecell.exe";
-+    case 4: return "C:\\files\\spider-solitaire\\spider.exe";
++    case 2: return "C:\\files\\solitaire\\resize-host.exe";
++    case 3: return "C:\\files\\freecell\\resize-host.exe";
++    case 4: return "C:\\files\\spider-solitaire\\resize-host.exe";
 +    default: return nullptr;
 +    }
 +}
@@ -149,6 +149,13 @@
 +    data->putEvent(event);
 +}
 +
++static void resizeWindow(const XWindowPtr& window, U32 width, U32 height) {
++    XWindowChanges changes = {};
++    changes.width = width;
++    changes.height = height;
++    window->configure(CWWidth | CWHeight, &changes);
++}
++
 +extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_window_command(U32 id, U32 command, S32 x, S32 y, U32 width, U32 height) {
 +    XServer* server = XServer::getServer(true);
 +    if (!server) {
@@ -170,16 +177,16 @@
 +                window->width(), window->height()});
 +        }
 +        KNativeScreenPtr screen = KNativeSystem::getScreen();
-+        window->moveResize(0, 0, width ? width : screen->screenWidth(), height ? height : screen->screenHeight());
++        resizeWindow(window, width ? width : screen->screenWidth(), height ? height : screen->screenHeight());
 +    } else if (command == 4) {
 +        BoxedwineWindowRestore* restore = getWindowRestore(server, id);
 +        if (restore) {
-+            window->moveResize(restore->x, restore->y, restore->width, restore->height);
++            resizeWindow(window, restore->width, restore->height);
 +            removeWindowRestore(id);
 +        }
 +        window->mapWindow();
 +    } else if (command == 5 && width && height) {
-+        window->moveResize(x, y, width, height);
++        resizeWindow(window, width, height);
 +    }
 +    window->setDirty();
 +}

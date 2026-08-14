@@ -103,8 +103,31 @@ const fitNativeProgramToWorkArea = (win) => {
       )
     : desktopHeight;
   if (visibleWidth <= 0 || visibleHeight <= 0) return false;
-  if (visibleWidth >= preferred.width && visibleHeight >= preferred.height) {
+  const actualWidth = parseWindowLength(
+    win.el.style.width,
+    win.el.offsetWidth || preferred.width,
+  );
+  const actualHeight = parseWindowLength(
+    win.el.style.height,
+    win.el.offsetHeight || preferred.height,
+  );
+  if (
+    actualWidth <= visibleWidth &&
+    actualHeight <= visibleHeight &&
+    preferred.width <= visibleWidth &&
+    preferred.height <= visibleHeight
+  ) {
     if (!win.workAreaFitRect) return false;
+    const originalWidth = parseWindowLength(
+      win.workAreaFitRect.width,
+      preferred.width,
+    );
+    const originalHeight = parseWindowLength(
+      win.workAreaFitRect.height,
+      preferred.height,
+    );
+    if (visibleWidth < originalWidth || visibleHeight < originalHeight)
+      return false;
     Object.assign(win.el.style, win.workAreaFitRect);
     win.workAreaFitRect = null;
     return true;
@@ -113,8 +136,8 @@ const fitNativeProgramToWorkArea = (win) => {
   win.workAreaFitRect ||= {
     left: win.el.style.left,
     top: win.el.style.top,
-    width: `${preferred.width}px`,
-    height: `${preferred.height}px`,
+    width: `${actualWidth}px`,
+    height: `${actualHeight}px`,
     minWidth: win.el.style.minWidth,
     minHeight: win.el.style.minHeight,
   };

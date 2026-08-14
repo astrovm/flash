@@ -5,8 +5,8 @@
     "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "package": {
       "file": "xp-spider-solitaire.zip",
-      "bytes": 273240,
-      "sha256": "904427998d8a007c14a72f0b433f9f7581dc2885216b0ed716214d969d8581f0"
+      "bytes": 273366,
+      "sha256": "dba4f8b2dec9122c3857ad23d5e1ee4393dea574a79c3c91bf50cbdca5bc1a6b"
     },
     "files": {
       "spider.exe": {
@@ -16,7 +16,7 @@
       "resize-host.exe": {
         "source": "native/boxedwine/resize-host.c",
         "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -mwindows -Wl,--no-insert-timestamp native/boxedwine/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
-        "sha256": "caacb579952ce95081abe3779816152d5f0eb69967a3a15a9e69692e9392eba6"
+        "sha256": "61a6d47daa25db06debbdc2021923687930c270b48a4f87aa98beb3b6f81f3d1"
       }
     }
   }
