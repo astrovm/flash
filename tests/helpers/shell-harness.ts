@@ -246,6 +246,18 @@ export async function loadShell() {
   applicationScript.textContent = await applicationBundle.outputs[0].text();
   document.body.appendChild(applicationScript);
 
+  // The real browser runs the WebAssembly guest while the XP welcome screen
+  // is visible. Happy DOM cannot execute an iframe guest, so resolve only the
+  // boot readiness boundaries and keep the real runtime DOM for shell tests.
+  const boxedWineRuntime = window.XPBoxedWineRuntime;
+  if (boxedWineRuntime) {
+    window.XPBoxedWineRuntime = Object.freeze({
+      ...boxedWineRuntime,
+      ready: async () => {},
+      applicationsReady: async () => {},
+    });
+  }
+
   if (scriptErrors.length) throw scriptErrors[0];
 
   document.dispatchEvent(new window.Event("DOMContentLoaded"));

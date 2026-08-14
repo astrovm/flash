@@ -76,12 +76,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.height).toBe("438px");
   });
 
-  test("launches the native executable in a resizable XP shell window", async () => {
+  test("mounts in the boot-prepared shared runtime as a resizable XP window", async () => {
     const shell = await login(await loadShell());
-    shell.window.ASTRO_GAME_ROOTS = {
-      "boxedwine-runtime": "iframe/boxedwine-runtime-build-123/",
-    };
-
     const solitaireWindow = launchSolitaire(shell);
     const frame = shell.document.querySelector(
       ".boxedwine-shared-runtime-frame",
@@ -95,10 +91,10 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     );
     expect(url.pathname).toBe("/vendor/boxedwine/26R1/index.html");
     expect(new URL(url.searchParams.get("appRoot")).pathname).toBe(
-      "/iframe/boxedwine-runtime-build-123/",
+      "/iframe/boxedwine-runtime/",
     );
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
-    expect(url.searchParams.get("executable")).toBe("runtime-host.exe");
+    expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
     expect(url.searchParams.get("resolution")).toBe("1024x768");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");

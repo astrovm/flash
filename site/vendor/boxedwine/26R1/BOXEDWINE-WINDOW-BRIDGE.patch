@@ -82,7 +82,7 @@ new file mode 100644
 index 0000000..faadc6d
 --- /dev/null
 +++ b/platform/sdl/knativewindowbridge.cpp
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,95 @@
 +#include "boxedwine.h"
 +#include "knativewindowbridge.h"
 +#include "../../source/x11/x11.h"
@@ -90,12 +90,13 @@ index 0000000..faadc6d
 +#ifdef __EMSCRIPTEN__
 +#include <emscripten.h>
 +
-+EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, S32 x, S32 y, U32 width, U32 height), {
++EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height), {
 +    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
 +        detail: {
 +            type: UTF8ToString(type),
 +            id,
 +            parentId,
++            processId,
 +            x,
 +            y,
 +            width,
@@ -136,7 +137,9 @@ index 0000000..faadc6d
 +static void lifecycle(const char* type, const std::shared_ptr<XWindow>& wnd) {
 +#ifdef __EMSCRIPTEN__
 +    XWindowPtr parent = wnd->getParent();
-+    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height());
++    XServer* server = XServer::getServer(true);
++    DisplayDataPtr data = server ? server->getDisplayDataById(wnd->displayId) : nullptr;
++    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, data ? data->processId : 0, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height());
 +#endif
 +}
 +
@@ -146,7 +149,7 @@ index 0000000..faadc6d
 +
 +void boxedwineNativeWindowDestroyed(U32 id) {
 +#ifdef __EMSCRIPTEN__
-+    boxedwineWindowLifecycle("destroyed", id, 0, 0, 0, 0, 0);
++    boxedwineWindowLifecycle("destroyed", id, 0, 0, 0, 0, 0, 0);
 +#endif
 +}
 +
@@ -166,7 +169,7 @@ index 0000000..faadc6d
 +
 +void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
 +#ifdef __EMSCRIPTEN__
-+    boxedwineWindowLifecycle("owner", id, ownerId, 0, 0, 0, 0);
++    boxedwineWindowLifecycle("owner", id, ownerId, 0, 0, 0, 0, 0);
 +#endif
 +}
 +
@@ -257,4 +260,3 @@ index 097cad1..cbe4fd5 100644
 -#endif
 \ No newline at end of file
 +#endif
-

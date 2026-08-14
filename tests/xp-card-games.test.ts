@@ -53,12 +53,8 @@ const launchGame = (shell, id, applicationId) => {
 
 describe("Windows XP card games through BoxedWine", () => {
   for (const game of games) {
-    test(`launches ${game.title} with sound and offline support`, async () => {
+    test(`mounts ${game.title} in the boot-prepared runtime with sound and offline support`, async () => {
       const shell = await login(await loadShell());
-      shell.window.ASTRO_GAME_ROOTS = {
-        "boxedwine-runtime": "iframe/boxedwine-runtime-build-123/",
-      };
-
       const gameWindow = launchGame(shell, game.id, game.applicationId);
       const frame = shell.document.querySelector(
         ".boxedwine-shared-runtime-frame",
@@ -69,10 +65,10 @@ describe("Windows XP card games through BoxedWine", () => {
         game.title,
       );
       expect(new URL(url.searchParams.get("appRoot")).pathname).toBe(
-        "/iframe/boxedwine-runtime-build-123/",
+        "/iframe/boxedwine-runtime/",
       );
       expect(url.searchParams.get("archive")).toBe("xp-runtime");
-      expect(url.searchParams.get("executable")).toBe("runtime-host.exe");
+      expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
       expect(url.searchParams.get("persistent")).toBe("true");
       expect(url.searchParams.get("sound")).toBe("true");
       expect(

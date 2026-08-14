@@ -55,7 +55,7 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     ).not.toBeNull();
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
     expect(url.searchParams.get("root")).toBe("xp-accessories");
-    expect(url.searchParams.get("executable")).toBe("runtime-host.exe");
+    expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
     expect(url.searchParams.get("resolution")).toBe("1024x768");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("cache")).toBe("false");

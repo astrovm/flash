@@ -1,6 +1,4 @@
-import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,22 +13,10 @@ const outputDirectory = join(
 );
 const fixedTime = new Date("2000-01-01T00:00:00Z");
 
-const run = (command: string, args: string[]) =>
-  new Promise<void>((resolvePromise, reject) => {
-    const child = spawn(command, args, { stdio: "inherit" });
-    child.on("error", reject);
-    child.on("exit", (code) =>
-      code === 0
-        ? resolvePromise()
-        : reject(new Error(`${command} exited with status ${code}`)),
-    );
-  });
-
 const archiveFiles = async (path: string) =>
   unzipSync(new Uint8Array(await readFile(path)));
 
 export const buildBoxedWineRuntimeArchive = async ({
-  runtimeHostPath = join(outputDirectory, "runtime-host.exe"),
   outputPath = join(outputDirectory, "xp-runtime.zip"),
 } = {}) => {
   const packages = {
@@ -53,12 +39,7 @@ export const buildBoxedWineRuntimeArchive = async ({
       ),
     ),
   };
-  const files: Zippable = {
-    "runtime-host.exe": [
-      new Uint8Array(await readFile(runtimeHostPath)),
-      { mtime: fixedTime },
-    ],
-  };
+  const files: Zippable = {};
   for (const [application, entries] of Object.entries(packages)) {
     for (const [name, bytes] of Object.entries(entries)) {
       if (name.endsWith("/") || name.endsWith("host.exe")) continue;
@@ -71,49 +52,7 @@ export const buildBoxedWineRuntimeArchive = async ({
 };
 
 export const buildBoxedWineRuntime = async () => {
-  const temporaryDirectory = await mkdtemp(join(tmpdir(), "boxedwine-host-"));
-  try {
-    const definitionPath = join(temporaryDirectory, "kernel32.def");
-    const libraryPath = join(temporaryDirectory, "kernel32.lib");
-    const objectPath = join(temporaryDirectory, "runtime-host.obj");
-    const executablePath = join(outputDirectory, "runtime-host.exe");
-    await writeFile(
-      definitionPath,
-      "LIBRARY kernel32.dll\nEXPORTS\nCreateFileA@28\nReadFile@20\nWriteFile@20\nCloseHandle@4\nCreateProcessA@40\nGetLastError@0\nSleep@4\nExitProcess@4\n",
-    );
-    await run("llvm-dlltool-21", [
-      "-m",
-      "i386",
-      "--kill-at",
-      "--input-def",
-      definitionPath,
-      "--output-lib",
-      libraryPath,
-    ]);
-    await run("clang", [
-      "--target=i686-pc-windows-msvc",
-      "-Oz",
-      "-c",
-      join(projectRoot, "native", "boxedwine", "runtime-host.c"),
-      "-o",
-      objectPath,
-    ]);
-    await run("lld-link-21", [
-      "/entry:WinMainCRTStartup",
-      "/subsystem:windows,5.01",
-      "/nodefaultlib",
-      "/machine:x86",
-      "/timestamp:0",
-      `/out:${executablePath}`,
-      objectPath,
-      libraryPath,
-    ]);
-    return await buildBoxedWineRuntimeArchive({
-      runtimeHostPath: executablePath,
-    });
-  } finally {
-    await rm(temporaryDirectory, { recursive: true, force: true });
-  }
+  return await buildBoxedWineRuntimeArchive();
 };
 
 if (import.meta.main) console.log(await buildBoxedWineRuntime());

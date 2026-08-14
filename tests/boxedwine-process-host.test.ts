@@ -1,4 +1,4 @@
-// @ts-nocheck -- This test uses a minimal browser and Emscripten FS contract.
+// @ts-nocheck -- This test uses a minimal browser and Emscripten contract.
 import { describe, expect, test } from "bun:test";
 
 import { installBoxedWineProcessHostBridge } from "../site/apps/core/boxedwine-process-host.js";
@@ -15,6 +15,7 @@ const createHost = () => {
   const hostWindow = {
     parent,
     location: { origin: "https://flash.example" },
+    document: { documentElement: { dataset: {} } },
     addEventListener(type, listener) {
       listeners.set(type, listener);
     },
@@ -46,26 +47,28 @@ const createHost = () => {
 };
 
 const createModule = () => {
-  const files = new Map();
+  let launchResult = 0;
+  const running = new Set();
   return {
-    files,
+    running,
+    setLaunchResult(processId) {
+      launchResult = processId;
+      if (processId) running.add(processId);
+    },
     module: {
-      preRun: [],
-      FS: {
-        readFile(path) {
-          if (!files.has(path)) throw new Error("ENOENT");
-          return files.get(path);
-        },
-        writeFile(path, content) {
-          files.set(path, content);
-        },
-        rename(from, to) {
-          files.set(to, files.get(from));
-          files.delete(from);
-        },
-        unlink(path) {
-          if (!files.delete(path)) throw new Error("ENOENT");
-        },
+      _boxedwine_launch_process(application) {
+        return application > 0;
+      },
+      _boxedwine_launch_result() {
+        const result = launchResult;
+        launchResult = 0;
+        return result;
+      },
+      _boxedwine_process_running(processId) {
+        return running.has(processId);
+      },
+      _boxedwine_terminate_process(processId) {
+        return running.delete(processId);
       },
     },
   };
@@ -74,14 +77,9 @@ const createModule = () => {
 describe("persistent BoxedWine process host", () => {
   test("launches two original applications through one initialized runtime", () => {
     const host = createHost();
-    const { files, module } = createModule();
-    const dispose = installBoxedWineProcessHostBridge(host.hostWindow, module);
-
-    for (const preRun of module.preRun) preRun();
-    expect(files.get("/d_drive/boxedwine-launch.txt")).toBe("");
-    module.onRuntimeInitialized();
-    files.set("/d_drive/boxedwine-runtime-ready.txt", "ready");
-    host.tick();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
     expect(host.messages.at(-1).message).toEqual({
       type: "boxedwine-runtime-ready",
     });
@@ -91,21 +89,14 @@ describe("persistent BoxedWine process host", () => {
       appId: "calculator",
       requestId: "first",
     });
-    expect(files.get("/d_drive/boxedwine-launch.txt")).toBe(
-      "1\nC:\\files\\calculator\\calc.exe\n",
-    );
-    files.set("/d_drive/boxedwine-launch-result.txt", "1 101 0");
+    processHost.setLaunchResult(101);
     host.tick();
-
     host.send({
       type: "boxedwine-launch-process",
       appId: "solitaire",
       requestId: "second",
     });
-    expect(files.get("/d_drive/boxedwine-launch.txt")).toBe(
-      "2\nC:\\files\\solitaire\\sol.exe\n",
-    );
-    files.set("/d_drive/boxedwine-launch-result.txt", "2 102 0");
+    processHost.setLaunchResult(102);
     host.tick();
 
     expect(
@@ -128,23 +119,46 @@ describe("persistent BoxedWine process host", () => {
         error: 0,
       },
     ]);
-    dispose();
+  });
+
+  test("terminates a launched process through BoxedWine", () => {
+    const host = createHost();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
+    processHost.setLaunchResult(101);
+    host.send({
+      type: "boxedwine-launch-process",
+      appId: "calculator",
+      requestId: "launch",
+    });
+    host.tick();
+    host.send({
+      type: "boxedwine-terminate-process",
+      appId: "calculator",
+      processId: 101,
+      requestId: "close",
+    });
+    expect(host.messages.at(-1).message).toEqual({
+      type: "boxedwine-process-terminated",
+      appId: "calculator",
+      requestId: "close",
+      processId: 101,
+      error: 0,
+    });
   });
 
   test("rejects unknown applications", () => {
     const host = createHost();
-    const { files, module } = createModule();
-    installBoxedWineProcessHostBridge(host.hostWindow, module);
-    for (const preRun of module.preRun) preRun();
-    module.onRuntimeInitialized();
-    files.set("/d_drive/boxedwine-runtime-ready.txt", "ready");
-    host.tick();
-
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
+    const count = host.messages.length;
     host.send({
       type: "boxedwine-launch-process",
       appId: "unknown.exe",
       requestId: "bad",
     });
-    expect(files.get("/d_drive/boxedwine-launch.txt")).toBe("");
+    expect(host.messages).toHaveLength(count);
   });
 });

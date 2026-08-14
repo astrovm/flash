@@ -1,6 +1,117 @@
 const MESSAGE_TYPE = "boxedwine-native-window";
 
+const applicationFromExecutable = (executable = "") => {
+  const name = executable.toLowerCase().replaceAll("\\", "/");
+  if (name.endsWith("/calc.exe")) return "calculator";
+  if (name.endsWith("/sol.exe")) return "solitaire";
+  if (name.endsWith("/freecell.exe")) return "freecell";
+  if (name.endsWith("/spider.exe")) return "spider-solitaire";
+  return "";
+};
+
+const legacyKeyCode = (code, key) => {
+  if (/^Key[A-Z]$/.test(code)) return code.charCodeAt(3);
+  if (/^Digit[0-9]$/.test(code)) return code.charCodeAt(5);
+  if (/^Numpad[0-9]$/.test(code)) return 96 + Number(code.at(-1));
+  if (/^F(?:[1-9]|1[0-2])$/.test(code)) return 111 + Number(code.slice(1));
+  return (
+    {
+      Backspace: 8,
+      Tab: 9,
+      Enter: 13,
+      ShiftLeft: 16,
+      ShiftRight: 16,
+      ControlLeft: 17,
+      ControlRight: 17,
+      AltLeft: 18,
+      AltRight: 18,
+      Escape: 27,
+      Space: 32,
+      PageUp: 33,
+      PageDown: 34,
+      End: 35,
+      Home: 36,
+      ArrowLeft: 37,
+      ArrowUp: 38,
+      ArrowRight: 39,
+      ArrowDown: 40,
+      Insert: 45,
+      Delete: 46,
+      Semicolon: 186,
+      Equal: 187,
+      Comma: 188,
+      Minus: 189,
+      Period: 190,
+      Slash: 191,
+      Backquote: 192,
+      BracketLeft: 219,
+      Backslash: 220,
+      BracketRight: 221,
+      Quote: 222,
+    }[code] || (key?.length === 1 ? key.toUpperCase().charCodeAt(0) : 0)
+  );
+};
+
+const sdlScanCode = (code) => {
+  if (/^Key[A-Z]$/.test(code)) return 4 + code.charCodeAt(3) - 65;
+  if (/^Digit[1-9]$/.test(code)) return 30 + Number(code.at(-1)) - 1;
+  if (code === "Digit0") return 39;
+  if (/^F(?:[1-9]|1[0-2])$/.test(code)) return 57 + Number(code.slice(1));
+  if (/^Numpad[1-9]$/.test(code)) return 88 + Number(code.at(-1));
+  if (code === "Numpad0") return 98;
+  return (
+    {
+      Enter: 40,
+      Escape: 41,
+      Backspace: 42,
+      Tab: 43,
+      Space: 44,
+      Minus: 45,
+      Equal: 46,
+      BracketLeft: 47,
+      BracketRight: 48,
+      Backslash: 49,
+      Semicolon: 51,
+      Quote: 52,
+      Backquote: 53,
+      Comma: 54,
+      Period: 55,
+      Slash: 56,
+      CapsLock: 57,
+      PrintScreen: 70,
+      ScrollLock: 71,
+      Pause: 72,
+      Insert: 73,
+      Home: 74,
+      PageUp: 75,
+      Delete: 76,
+      End: 77,
+      PageDown: 78,
+      ArrowRight: 79,
+      ArrowLeft: 80,
+      ArrowDown: 81,
+      ArrowUp: 82,
+      NumLock: 83,
+      NumpadDivide: 84,
+      NumpadMultiply: 85,
+      NumpadSubtract: 86,
+      NumpadAdd: 87,
+      NumpadEnter: 88,
+      NumpadDecimal: 99,
+      ControlLeft: 224,
+      ShiftLeft: 225,
+      AltLeft: 226,
+      MetaLeft: 227,
+      ControlRight: 228,
+      ShiftRight: 229,
+      AltRight: 230,
+      MetaRight: 231,
+    }[code] || 0
+  );
+};
+
 export const installBoxedWineWindowBridge = (hostWindow, module) => {
+  const processApplications = new Map();
   const forwardWindowEvent = (event) => {
     const detail = event.detail;
     if (!detail || typeof detail.type !== "string") return;
@@ -11,48 +122,157 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
     root.dataset.boxedwineLastWindowEvent = `${detail.type}:${detail.id}`;
     const transfer =
       detail.rgba instanceof Uint8ClampedArray ? [detail.rgba.buffer] : [];
+    const appId = processApplications.get(detail.processId) || "";
     hostWindow.parent.postMessage(
-      { type: MESSAGE_TYPE, window: detail },
+      { type: MESSAGE_TYPE, window: { ...detail, appId } },
       hostWindow.location.origin,
       transfer,
     );
   };
 
-  const forwardPointerEvent = (event) => {
-    const { type, windowId, x, y, button = 0 } = event.data || {};
+  const forwardInputEvent = (event) => {
+    const { type, windowId, x, y } = event.data || {};
     if (
       event.source !== hostWindow.parent ||
       event.origin !== hostWindow.location.origin ||
-      (type !== "boxedwine-native-pointer" &&
-        type !== "boxedwine-native-activate")
+      ![
+        "boxedwine-native-pointer",
+        "boxedwine-native-wheel",
+        "boxedwine-native-key",
+        "boxedwine-native-command",
+      ].includes(type)
     )
       return;
+    const activatesWindow =
+      (type === "boxedwine-native-command" &&
+        event.data.action === "activate") ||
+      (type === "boxedwine-native-pointer" &&
+        event.data.eventType === "mousedown") ||
+      type === "boxedwine-native-key";
     if (
+      activatesWindow &&
       Number.isInteger(windowId) &&
       typeof module?._boxedwine_activate_window === "function"
     )
       module._boxedwine_activate_window(windowId);
-    if (type === "boxedwine-native-activate") return;
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (type === "boxedwine-native-command") {
+      const { action, x = 0, y = 0, width = 0, height = 0 } = event.data;
+      if (typeof module?._boxedwine_window_command === "function") {
+        module._boxedwine_window_command(
+          windowId,
+          {
+            close: 1,
+            minimize: 2,
+            maximize: 3,
+            restore: 4,
+            bounds: 5,
+          }[action] || 0,
+          x,
+          y,
+          width,
+          height,
+        );
+      }
+      return;
+    }
     const canvas = hostWindow.document.getElementById("canvas");
     if (!canvas) return;
+    const modifiers = {
+      altKey: Boolean(event.data.altKey),
+      ctrlKey: Boolean(event.data.ctrlKey),
+      metaKey: Boolean(event.data.metaKey),
+      shiftKey: Boolean(event.data.shiftKey),
+    };
+    if (type === "boxedwine-native-key") {
+      const scanCode = sdlScanCode(event.data.code || "");
+      if (scanCode && typeof module?._boxedwine_key_event === "function") {
+        module._boxedwine_key_event(
+          windowId,
+          scanCode,
+          event.data.eventType === "keydown" ? 1 : 0,
+        );
+        return;
+      }
+      const keyboardEvent = new hostWindow.KeyboardEvent(event.data.eventType, {
+        ...modifiers,
+        bubbles: true,
+        cancelable: true,
+        code: event.data.code,
+        key: event.data.key,
+        location: event.data.location || 0,
+        repeat: Boolean(event.data.repeat),
+      });
+      const keyCode =
+        event.data.keyCode ||
+        legacyKeyCode(event.data.code || "", event.data.key || "");
+      for (const property of ["keyCode", "which"])
+        Object.defineProperty(keyboardEvent, property, { value: keyCode });
+      hostWindow.dispatchEvent(keyboardEvent);
+      return;
+    }
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (type === "boxedwine-native-wheel") {
+      canvas.dispatchEvent(
+        new hostWindow.WheelEvent("wheel", {
+          ...modifiers,
+          bubbles: true,
+          cancelable: true,
+          clientX: x,
+          clientY: y,
+          deltaMode: event.data.deltaMode || 0,
+          deltaX: event.data.deltaX || 0,
+          deltaY: event.data.deltaY || 0,
+        }),
+      );
+      return;
+    }
     canvas.dispatchEvent(
       new hostWindow.MouseEvent(event.data.eventType, {
+        ...modifiers,
         bubbles: true,
         cancelable: true,
         clientX: x,
         clientY: y,
-        button,
+        button: event.data.button || 0,
         buttons: event.data.buttons || 0,
+        detail: event.data.detail || 0,
       }),
     );
   };
 
+  const forwardProcessEvent = (event) => {
+    const detail = event.detail;
+    if (!detail || !Number.isInteger(detail.processId)) return;
+    if (detail.type === "started") {
+      const appId = applicationFromExecutable(detail.executable);
+      if (appId) processApplications.set(detail.processId, appId);
+    } else if (detail.type === "exited") {
+      processApplications.delete(detail.processId);
+    }
+    hostWindow.parent.postMessage(
+      {
+        type: "boxedwine-native-process",
+        process: {
+          ...detail,
+          appId:
+            processApplications.get(detail.processId) ||
+            applicationFromExecutable(detail.executable),
+        },
+      },
+      hostWindow.location.origin,
+    );
+  };
+
   hostWindow.addEventListener(MESSAGE_TYPE, forwardWindowEvent);
-  hostWindow.addEventListener("message", forwardPointerEvent);
+  hostWindow.addEventListener("boxedwine-native-process", forwardProcessEvent);
+  hostWindow.addEventListener("message", forwardInputEvent);
   return () => {
     hostWindow.removeEventListener(MESSAGE_TYPE, forwardWindowEvent);
-    hostWindow.removeEventListener("message", forwardPointerEvent);
+    hostWindow.removeEventListener(
+      "boxedwine-native-process",
+      forwardProcessEvent,
+    );
+    hostWindow.removeEventListener("message", forwardInputEvent);
   };
 };
 
@@ -61,6 +281,7 @@ export const createBoxedWineWindowSurface = ({
   runtimeWindow,
   origin,
   onFirstFrame,
+  onLifecycle,
   initiallyVisible = true,
 }) => {
   const windows = new Map();
@@ -69,12 +290,37 @@ export const createBoxedWineWindowSurface = ({
   const anchoredWindows = new Set();
   const visibleWindows = new Set();
   let nextZIndex = 1;
+  let nativeStack = 1;
+  const inputCoordinates = (canvas, top, event) => {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: top.x + ((event.clientX - rect.left) * canvas.width) / rect.width,
+      y: top.y + ((event.clientY - rect.top) * canvas.height) / rect.height,
+    };
+  };
+  const modifiers = (event) => ({
+    altKey: event.altKey,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey,
+    shiftKey: event.shiftKey,
+  });
   const topLevelId = (id) => {
     let current = windows.get(id);
     if (!current) return 0;
-    while (current.parentId) {
-      const parent = windows.get(current.parentId);
-      if (!parent || !parent.parentId) return current.id;
+    while (current.parentId || current.ownerId) {
+      const parent = windows.get(current.ownerId || current.parentId);
+      if (!parent || (!parent.parentId && !parent.ownerId)) {
+        if (current.processId) {
+          const primary = [...windows.values()].find(
+            (candidate) =>
+              candidate.id !== current.id &&
+              candidate.processId === current.processId &&
+              canvases.has(candidate.id),
+          );
+          if (primary) return primary.id;
+        }
+        return current.id;
+      }
       current = parent;
     }
     return 0;
@@ -88,45 +334,95 @@ export const createBoxedWineWindowSurface = ({
       canvas = document.createElement("canvas");
       canvas.dataset.boxedwineWindow = String(topId);
       canvas.className = "boxedwine-native-window";
+      canvas.tabIndex = 0;
       canvases.set(topId, canvas);
       if (initiallyVisible) visibleWindows.add(topId);
-      canvas.addEventListener("mousedown", (event) => {
-        const rect = canvas.getBoundingClientRect();
+      const forwardPointer = (eventType, event) => {
+        const coordinates = inputCoordinates(canvas, top, event);
         runtimeWindow.postMessage(
           {
             type: "boxedwine-native-pointer",
             windowId: topId,
-            eventType: "mousedown",
-            x: top.x + (event.clientX - rect.left),
-            y: top.y + (event.clientY - rect.top),
+            eventType,
+            ...coordinates,
+            ...modifiers(event),
             button: event.button,
             buttons: event.buttons,
+            detail: event.detail,
           },
           origin,
         );
+      };
+      canvas.addEventListener("pointerdown", (event) => {
+        canvas.focus({ preventScroll: true });
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch {
+          // Mouse events and older browsers do not expose pointer capture.
+        }
+        forwardPointer("mousedown", event);
       });
-      for (const eventType of ["mousemove", "mouseup"]) {
+      for (const [pointerType, mouseType] of [
+        ["pointermove", "mousemove"],
+        ["pointerup", "mouseup"],
+        ["pointercancel", "mouseup"],
+      ]) {
+        canvas.addEventListener(pointerType, (event) => {
+          forwardPointer(mouseType, event);
+          if (
+            pointerType !== "pointermove" &&
+            canvas.hasPointerCapture?.(event.pointerId)
+          )
+            canvas.releasePointerCapture(event.pointerId);
+        });
+      }
+      canvas.addEventListener("dblclick", (event) =>
+        forwardPointer("dblclick", event),
+      );
+      canvas.addEventListener("wheel", (event) => {
+        const coordinates = inputCoordinates(canvas, top, event);
+        runtimeWindow.postMessage(
+          {
+            type: "boxedwine-native-wheel",
+            windowId: topId,
+            ...coordinates,
+            ...modifiers(event),
+            deltaMode: event.deltaMode,
+            deltaX: event.deltaX,
+            deltaY: event.deltaY,
+          },
+          origin,
+        );
+        event.preventDefault();
+      });
+      for (const eventType of ["keydown", "keyup"]) {
         canvas.addEventListener(eventType, (event) => {
-          const rect = canvas.getBoundingClientRect();
           runtimeWindow.postMessage(
             {
-              type: "boxedwine-native-pointer",
+              type: "boxedwine-native-key",
               windowId: topId,
               eventType,
-              x: top.x + (event.clientX - rect.left),
-              y: top.y + (event.clientY - rect.top),
-              button: event.button,
-              buttons: event.buttons,
+              ...modifiers(event),
+              code: event.code,
+              key: event.key,
+              keyCode: event.keyCode,
+              location: event.location,
+              repeat: event.repeat,
             },
             origin,
           );
+          event.preventDefault();
         });
       }
+      canvas.addEventListener("contextmenu", (event) => event.preventDefault());
       host.appendChild(canvas);
     }
     canvas.hidden = !visibleWindows.has(topId);
     canvas.dataset.boxedwineX = String(top.x);
     canvas.dataset.boxedwineY = String(top.y);
+    canvas.dataset.boxedwineParent = String(top.parentId || 0);
+    canvas.dataset.boxedwineProcess = String(top.processId || 0);
+    canvas.dataset.boxedwineTitle = top.title || "";
     canvas.width = top.width;
     canvas.height = top.height;
     canvas.style.left = anchoredWindows.has(topId) ? "0px" : `${top.x}px`;
@@ -134,20 +430,48 @@ export const createBoxedWineWindowSurface = ({
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    const drawnWindows = new Set();
+    let drewNativePixels = false;
     const drawTree = (id, offsetX, offsetY) => {
       const entry = windows.get(id);
-      if (!entry?.mapped) return;
+      if (!entry?.mapped || drawnWindows.has(id)) return;
+      drawnWindows.add(id);
       const surface = surfaces.get(id);
-      if (surface) context.drawImage(surface, offsetX, offsetY);
-      for (const child of windows.values()) {
-        if (child.parentId === id)
-          drawTree(child.id, offsetX + child.x, offsetY + child.y);
+      if (surface) {
+        context.drawImage(surface, offsetX, offsetY);
+        drewNativePixels = true;
+      }
+      const children = [...windows.values()]
+        .filter((child) => child.parentId === id || child.ownerId === id)
+        .sort((left, right) => left.stack - right.stack);
+      for (const child of children) {
+        const childX = child.ownerId ? child.x - top.x : offsetX + child.x;
+        const childY = child.ownerId ? child.y - top.y : offsetY + child.y;
+        drawTree(child.id, childX, childY);
       }
     };
     drawTree(topId, 0, 0);
-    if (!canvas.dataset.firstFrame) {
+    const processWindows = [...windows.values()].sort(
+      (left, right) => left.stack - right.stack,
+    );
+    for (const entry of processWindows) {
+      if (
+        entry.id !== topId &&
+        entry.processId &&
+        entry.processId === top.processId &&
+        !drawnWindows.has(entry.id)
+      )
+        drawTree(entry.id, entry.x - top.x, entry.y - top.y);
+    }
+    if (drewNativePixels && !canvas.dataset.firstFrame) {
       canvas.dataset.firstFrame = "true";
-      onFirstFrame?.({ id: topId, title: top.title || "", canvas });
+      onFirstFrame?.({
+        id: topId,
+        appId: top.appId || "",
+        processId: top.processId || 0,
+        title: top.title || "",
+        canvas,
+      });
     }
   };
 
@@ -160,12 +484,28 @@ export const createBoxedWineWindowSurface = ({
       return;
     const detail = event.data.window;
     if (!detail || !Number.isInteger(detail.id)) return;
+    document.documentElement.dataset.boxedwineLastLifecycle = [
+      detail.type,
+      detail.id,
+      detail.parentId || 0,
+      detail.processId || 0,
+      detail.width || 0,
+      detail.height || 0,
+    ].join(":");
     if (detail.type === "created") {
-      windows.set(detail.id, { ...detail, mapped: false, title: "" });
+      windows.set(detail.id, {
+        ...detail,
+        mapped: false,
+        title: "",
+        stack: nativeStack++,
+      });
+      onLifecycle?.({ ...detail, topId: topLevelId(detail.id) });
       return;
     }
     const entry = windows.get(detail.id);
     if (detail.type === "destroyed") {
+      const topId = topLevelId(detail.id) || detail.id;
+      onLifecycle?.({ ...detail, topId });
       windows.delete(detail.id);
       surfaces.delete(detail.id);
       visibleWindows.delete(detail.id);
@@ -177,6 +517,7 @@ export const createBoxedWineWindowSurface = ({
     if (!entry) return;
     if (detail.type === "title") entry.title = detail.title;
     if (detail.type === "owner") entry.ownerId = detail.parentId;
+    if (detail.type === "raised") entry.stack = nativeStack++;
     if (detail.type === "mapped" || detail.type === "unmapped")
       entry.mapped = detail.type === "mapped";
     if (detail.type === "bounds") Object.assign(entry, detail);
@@ -195,6 +536,7 @@ export const createBoxedWineWindowSurface = ({
       surfaces.set(detail.id, surface);
     }
     const topId = topLevelId(detail.id);
+    onLifecycle?.({ ...detail, topId });
     if (topId) {
       const canvas = canvases.get(topId);
       if (detail.type === "unmapped" && detail.id === topId && canvas)
@@ -223,8 +565,17 @@ export const createBoxedWineWindowSurface = ({
     activate(id) {
       const top = windows.get(id);
       if (!top?.mapped) return false;
+      canvases.get(id)?.focus({ preventScroll: true });
       runtimeWindow.postMessage(
-        { type: "boxedwine-native-activate", windowId: id },
+        { type: "boxedwine-native-command", action: "activate", windowId: id },
+        origin,
+      );
+      return true;
+    },
+    command(id, action, detail = {}) {
+      if (!windows.has(id)) return false;
+      runtimeWindow.postMessage(
+        { type: "boxedwine-native-command", windowId: id, action, ...detail },
         origin,
       );
       return true;
@@ -247,12 +598,36 @@ export const createBoxedWineWindowSurface = ({
       canvas.hidden = true;
       return true;
     },
+    remove(id) {
+      const ids = [...windows.keys()].filter(
+        (windowId) => windowId === id || topLevelId(windowId) === id,
+      );
+      if (ids.length === 0) return false;
+      for (const windowId of ids) {
+        windows.delete(windowId);
+        surfaces.delete(windowId);
+        visibleWindows.delete(windowId);
+        anchoredWindows.delete(windowId);
+        canvases.get(windowId)?.remove();
+        canvases.delete(windowId);
+      }
+      return true;
+    },
     getCanvas(id) {
       return canvases.get(id) || null;
     },
+    reset() {
+      for (const canvas of canvases.values()) canvas.remove();
+      windows.clear();
+      surfaces.clear();
+      canvases.clear();
+      anchoredWindows.clear();
+      visibleWindows.clear();
+      host.replaceChildren();
+    },
     dispose() {
       window.removeEventListener("message", handleMessage);
-      host.replaceChildren();
+      this.reset();
     },
   };
 };

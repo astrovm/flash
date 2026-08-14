@@ -15,6 +15,7 @@ test("startup accepts pointer and keyboard input before showing the desktop", as
   const pointerDocument = pointerShell.document;
   expect(pointerDocument.getElementById("boot-screen")!.hidden).toBeFalse();
   pointerDocument.getElementById("boot-screen")!.click();
+  await flushShell();
   expect(pointerDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
   pointerDocument.getElementById("welcome-screen")!.click();
   await flushShell();
@@ -28,6 +29,7 @@ test("startup accepts pointer and keyboard input before showing the desktop", as
     .dispatchEvent(
       new keyboardShell.window.KeyboardEvent("keydown", { key: "Enter" }),
     );
+  await flushShell();
   expect(keyboardDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
   keyboardDocument
     .getElementById("welcome-screen")!
@@ -515,7 +517,9 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     calculatorWindow.querySelector(".boxedwine-shared-app-host"),
   ).not.toBeNull();
   expect(calculatorUrl.searchParams.get("archive")).toBe("xp-runtime");
-  expect(calculatorUrl.searchParams.get("executable")).toBe("runtime-host.exe");
+  expect(calculatorUrl.searchParams.get("executable")).toBe(
+    "calculator/calc.exe",
+  );
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
@@ -595,7 +599,7 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
         ".boxedwine-shared-runtime-frame",
       )!.src,
     ).searchParams.get("executable"),
-  ).toBe("runtime-host.exe");
+  ).toBe("calculator/calc.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();

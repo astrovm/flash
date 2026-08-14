@@ -22,6 +22,8 @@ const playXPSound = (name) => {
 };
 
 let startupSoundPending = true;
+const WINDOWS_RUNTIME_BOOT_TIMEOUT_MS = 60000;
+let runtimeBootWait = null;
 
 const setScreen = (...visibleIds) => {
   [
@@ -73,6 +75,25 @@ const muteAllWindows = () => {
   openWindows.forEach((win) => setPlayerVolume(win.player, win.type, 0));
 };
 
+const finishBootSequence = () => {
+  if (runtimeBootWait) return runtimeBootWait;
+  clearTimeout(bootTimeout);
+  let timeout = 0;
+  const prepared = Promise.resolve(
+    window.XPBoxedWineRuntime?.applicationsReady?.(),
+  ).catch(() => {});
+  const fallback = new Promise((resolve) => {
+    timeout = setTimeout(resolve, WINDOWS_RUNTIME_BOOT_TIMEOUT_MS);
+  });
+  runtimeBootWait = Promise.race([prepared, fallback]).finally(() => {
+    clearTimeout(timeout);
+    if (!document.getElementById("boot-screen").hidden) {
+      showWelcomeScreen(true);
+    }
+  });
+  return runtimeBootWait;
+};
+
 const showBootScreen = () => {
   setSuspended(false);
   hideSystemDialogs();
@@ -81,8 +102,9 @@ const showBootScreen = () => {
   setScreen("boot-screen");
   document.getElementById("boot-screen").focus({ preventScroll: true });
   startupSoundPending = true;
+  runtimeBootWait = null;
   clearTimeout(bootTimeout);
-  bootTimeout = setTimeout(() => showWelcomeScreen(true), BOOT_DURATION_MS);
+  bootTimeout = setTimeout(finishBootSequence, BOOT_DURATION_MS);
 };
 
 const showWelcomeScreen = (autoLogin = false) => {
@@ -121,6 +143,11 @@ const showWelcomeScreen = (autoLogin = false) => {
 const showDesktop = () => {
   setScreen("desktop", "taskbar");
   closeStartMenu();
+};
+
+const startWindowsApplicationRuntime = () => {
+  const start = () => window.XPBoxedWineRuntime?.start?.().catch(() => {});
+  start();
 };
 
 const showTurnOffScreen = () => {
@@ -190,11 +217,9 @@ let loginPromise = null;
 const login = (playSound = true) => {
   if (loginPromise) return loginPromise;
   loginPromise = (async () => {
-    await gameLibraryInitialization;
     clearTimeout(bootTimeout);
     loggedIn = true;
     showDesktop();
-    window.XPBoxedWineRuntime?.schedule();
     applyDisplaySettings(getDisplaySettings());
     applyStartMenuStyle(getStartMenuStyle(), false);
     applyFocusVolumes();
@@ -226,8 +251,11 @@ const login = (playSound = true) => {
 };
 
 const setupScreenFlow = () => {
+  // Hide BoxedWine preparation behind the normal boot and Welcome screens.
+  // Do not make either screen wait when the browser needs more time.
+  startWindowsApplicationRuntime();
   const bootScreen = document.getElementById("boot-screen");
-  const skipBootScreen = () => showWelcomeScreen(true);
+  const skipBootScreen = () => finishBootSequence();
   bootScreen.addEventListener("click", skipBootScreen);
   bootScreen.addEventListener("keydown", (event) => {
     if (!["Enter", " "].includes(event.key)) return;

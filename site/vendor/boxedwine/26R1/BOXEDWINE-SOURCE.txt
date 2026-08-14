@@ -6,6 +6,14 @@ Local resize patch: BOXEDWINE-RESIZE.patch
 Local Web cache and file-read trace patch: BOXEDWINE-FILE-TRACE.patch
 Local per-window X11 bridge patch: BOXEDWINE-WINDOW-BRIDGE.patch
 Local X11 window activation patch: BOXEDWINE-WINDOW-ACTIVATION.patch
+Local X11 focus and z-order patch: BOXEDWINE-WINDOW-FOCUS.patch
+Local direct keyboard input patch: BOXEDWINE-KEYBOARD-INPUT.patch
+Local reproducible build-path patch: BOXEDWINE-REPRODUCIBLE-BUILD.patch
+
+The local patches add the persistent-process API, process termination,
+per-window pixel bridge, input activation, window commands, focus, z-order
+events, and direct SDL keyboard input used by the Windows XP shell. Apply the
+patches in the order listed in SOURCES.json before building.
 Compiler: Emscripten 6.0.6
 Resource-safe build command:
 make -j1 BUILD_DIR=Build/Release SHELL_FILE=shell.html EXTRA_CPP_FLAGS=
@@ -19,7 +27,12 @@ Official Web runtime: https://boxedwine.org/v/26R1/wine11/st/
 The full boxedwine.zip archive is the verified build input. The deployed
 xp-accessories.zip archive contains the shared Wine prefix and the runtime files
 observed while Calculator, FreeCell, Solitaire, and Spider Solitaire start and
-operate. Rebuild it with:
+operate. The build replaces Wine's Light visual style at its registered path
+with the user-supplied Windows XP SP3 Luna.msstyles file (SHA-256
+dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4),
+and selects Luna's NormalColor scheme in the Wine user registry, so original
+applications use the same Luna theme as the simulated shell.
+Rebuild it with:
 bun tools/build-boxedwine-xp-filesystem.ts
 
 The adjacent LICENSE-BOXEDWINE.txt file contains the BoxedWine license.

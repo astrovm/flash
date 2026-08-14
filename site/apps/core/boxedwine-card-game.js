@@ -16,7 +16,6 @@ export const defineBoxedWineCardGame = ({ id, title, icon, width, height }) =>
       resizable: true,
       maximizable: true,
       className: "xp-boxedwine-shared-window",
-      customChrome: true,
     },
     mount: (context) => mountSharedBoxedWineApplication(id, context),
   });

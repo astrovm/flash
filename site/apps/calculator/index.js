@@ -12,7 +12,6 @@ export const calculatorApplication = defineApplication({
     resizable: false,
     maximizable: false,
     className: "xp-boxedwine-shared-window",
-    customChrome: true,
   },
   mount: (context) => mountSharedBoxedWineApplication("calculator", context),
 });

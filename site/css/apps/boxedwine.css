@@ -1,5 +1,5 @@
 .xp-native-program-window .boxedwine-app-host {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .boxedwine-app-host > .boxedwine-app-frame {
@@ -17,17 +17,18 @@
   position: fixed;
   width: 1024px;
   height: 768px;
-  left: -2048px;
   top: 0;
   border: 0;
   pointer-events: none;
 }
 
 .boxedwine-shared-runtime-frame {
-  opacity: 0;
+  left: 0;
+  opacity: 0.001;
 }
 
 .boxedwine-shared-runtime-staging {
+  left: -2048px;
   overflow: hidden;
 }
 
@@ -44,23 +45,21 @@
   z-index: 3;
   top: 0;
   left: 0;
-  width: calc(100% - 76px);
-  height: 30px;
-  padding: 0;
-  opacity: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 28px;
+  margin: 0;
 }
 
-.xp-boxedwine-shared-window > .title-bar .title-buttons,
-.xp-boxedwine-shared-window > .title-bar .title-icon,
-.xp-boxedwine-shared-window > .title-bar .title-text {
-  display: none;
+.xp-boxedwine-shared-window.maximized > .title-bar {
+  width: 100%;
 }
 
 .xp-boxedwine-shared-window > .window-content,
 .boxedwine-shared-app-host {
   position: absolute;
   inset: 0;
-  overflow: visible;
+  overflow: hidden;
   background: transparent;
 }
 

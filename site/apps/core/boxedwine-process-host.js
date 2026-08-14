@@ -1,133 +1,113 @@
 const APPLICATIONS = Object.freeze({
-  calculator: "C:\\files\\calculator\\calc.exe",
-  solitaire: "C:\\files\\solitaire\\sol.exe",
-  freecell: "C:\\files\\freecell\\freecell.exe",
-  "spider-solitaire": "C:\\files\\spider-solitaire\\spider.exe",
+  calculator: 1,
+  solitaire: 2,
+  freecell: 3,
+  "spider-solitaire": 4,
 });
 
-const READY_PATH = "/d_drive/boxedwine-runtime-ready.txt";
-const COMMAND_PATH = "/d_drive/boxedwine-launch.txt";
-const ACCEPTED_PATH = "/d_drive/boxedwine-launch-accepted.txt";
-const RESULT_PATH = "/d_drive/boxedwine-launch-result.txt";
-
 export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
-  let runtimeInitialized = false;
   let ready = false;
   let timer = null;
-  let nextSequence = 1;
   let activeRequest = null;
   const queuedRequests = [];
+  const processes = new Map();
 
   const post = (message) =>
     hostWindow.parent.postMessage(message, hostWindow.location.origin);
 
-  const removeFile = (path) => {
-    try {
-      module.FS.unlink(path);
-    } catch {
-      // The file does not exist before the first command.
-    }
+  const completeRequest = (processId, error = 0) => {
+    const request = activeRequest;
+    activeRequest = null;
+    post({
+      type:
+        request.operation === "terminate"
+          ? "boxedwine-process-terminated"
+          : "boxedwine-process-launched",
+      appId: request.appId,
+      requestId: request.requestId,
+      processId,
+      error,
+    });
+    dispatchNext();
   };
 
   const dispatchNext = () => {
     if (!ready || activeRequest || queuedRequests.length === 0) return;
     activeRequest = queuedRequests.shift();
-    const command = `${activeRequest.sequence}\n${activeRequest.path}\n`;
-    module.FS.writeFile(COMMAND_PATH, command);
+    const request = activeRequest;
     post({
       type: "boxedwine-process-dispatched",
-      appId: activeRequest.appId,
-      requestId: activeRequest.requestId,
+      appId: request.appId,
+      requestId: request.requestId,
     });
+    if (request.operation === "launch") {
+      if (!module._boxedwine_launch_process(APPLICATIONS[request.appId])) {
+        completeRequest(0, 87);
+        return;
+      }
+      post({
+        type: "boxedwine-process-accepted",
+        appId: request.appId,
+        requestId: request.requestId,
+      });
+      return;
+    }
+    if (!module._boxedwine_terminate_process(request.processId))
+      completeRequest(request.processId, 87);
+    else {
+      processes.delete(request.processId);
+      completeRequest(request.processId);
+    }
   };
 
   const poll = () => {
-    if (!runtimeInitialized || typeof module.FS?.readFile !== "function")
-      return;
-    if (!ready) {
-      try {
-        if (
-          module.FS.readFile(READY_PATH, { encoding: "utf8" }).trim() ===
-          "ready"
-        ) {
-          ready = true;
-          post({ type: "boxedwine-runtime-ready" });
-          dispatchNext();
-        }
-      } catch {
-        return;
+    if (activeRequest?.operation === "launch") {
+      const result = module._boxedwine_launch_result();
+      if (result) {
+        const processId = result === -1 || result === 0xffffffff ? 0 : result;
+        if (processId) processes.set(processId, activeRequest.appId);
+        completeRequest(processId, processId ? 0 : 87);
       }
     }
-    if (!activeRequest) return;
-    try {
-      const accepted = module.FS.readFile(ACCEPTED_PATH, {
-        encoding: "utf8",
-      }).trim();
-      if (Number(accepted) === activeRequest.sequence) {
-        removeFile(ACCEPTED_PATH);
-        post({
-          type: "boxedwine-process-accepted",
-          appId: activeRequest.appId,
-          requestId: activeRequest.requestId,
-        });
-      }
-    } catch {
-      // The resident host has not consumed the command yet.
-    }
-    try {
-      const result = module.FS.readFile(RESULT_PATH, {
-        encoding: "utf8",
-      }).trim();
-      const match = /^(\d+) (\d+) (\d+)$/.exec(result);
-      if (!match || Number(match[1]) !== activeRequest.sequence) return;
-      removeFile(RESULT_PATH);
-      const request = activeRequest;
-      activeRequest = null;
-      post({
-        type: "boxedwine-process-launched",
-        appId: request.appId,
-        requestId: request.requestId,
-        processId: Number(match[2]),
-        error: Number(match[3]),
-      });
-      dispatchNext();
-    } catch {
-      // The resident host has not written a result yet.
+    for (const [processId, appId] of processes) {
+      if (module._boxedwine_process_running(processId)) continue;
+      processes.delete(processId);
+      post({ type: "boxedwine-process-exited", appId, processId });
     }
   };
 
   const onMessage = (event) => {
-    const { type, appId, requestId } = event.data || {};
+    const { type, appId, processId, requestId } = event.data || {};
     if (
       event.source !== hostWindow.parent ||
       event.origin !== hostWindow.location.origin ||
-      type !== "boxedwine-launch-process" ||
+      !["boxedwine-launch-process", "boxedwine-terminate-process"].includes(
+        type,
+      ) ||
       typeof requestId !== "string" ||
-      !Object.hasOwn(APPLICATIONS, appId)
+      !Object.hasOwn(APPLICATIONS, appId) ||
+      (type === "boxedwine-terminate-process" &&
+        (!Number.isInteger(processId) || processId <= 0))
     )
       return;
     queuedRequests.push({
       appId,
       requestId,
-      path: APPLICATIONS[appId],
-      sequence: nextSequence++,
+      operation:
+        type === "boxedwine-terminate-process" ? "terminate" : "launch",
+      processId,
     });
     dispatchNext();
   };
 
   const onRuntimeInitialized = module.onRuntimeInitialized;
-  module.preRun?.push(() => {
-    try {
-      module.FS.readFile(COMMAND_PATH);
-    } catch {
-      module.FS.writeFile(COMMAND_PATH, "");
-    }
-  });
   module.onRuntimeInitialized = () => {
     onRuntimeInitialized?.();
-    runtimeInitialized = true;
-    poll();
-    timer = hostWindow.setInterval(poll, 20);
+    ready = true;
+    hostWindow.document.documentElement.dataset.boxedwineProcessHost = "ready";
+    post({ type: "boxedwine-runtime-ready" });
+    dispatchNext();
+    timer = hostWindow.setInterval(poll, 50);
   };
   hostWindow.addEventListener("message", onMessage);
 

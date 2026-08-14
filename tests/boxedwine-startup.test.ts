@@ -7,12 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Window } from "happy-dom";
 
-import {
-  cleanupShells,
-  flushShell,
-  loadShell,
-  login,
-} from "./helpers/shell-harness";
+import { cleanupShells, flushShell, loadShell } from "./helpers/shell-harness";
 import { buildBoxedWineXpFilesystem } from "../tools/build-boxedwine-xp-filesystem";
 
 const require = createRequire(import.meta.url);
@@ -27,28 +22,6 @@ const runtimeDirectory = join(
 );
 
 afterEach(cleanupShells);
-
-const installFetchStub = (shell) => {
-  const requests = [];
-  shell.window.fetch = async (url, options) => {
-    requests.push({ url: String(url), options });
-    if (String(url).endsWith("/preload.json")) {
-      return {
-        ok: true,
-        async json() {
-          return { files: ["runtime.js", "root.zip"] };
-        },
-      };
-    }
-    return {
-      ok: true,
-      async arrayBuffer() {
-        return new ArrayBuffer(0);
-      },
-    };
-  };
-  return requests;
-};
 
 describe("BoxedWine startup", () => {
   test("deduplicates active downloads and releases completed data", async () => {
@@ -93,35 +66,39 @@ describe("BoxedWine startup", () => {
     await window.happyDOM.close();
   });
 
-  test("preloads the shared runtime after desktop login when idle", async () => {
+  test("starts shared runtime preparation during the XP boot sequence", async () => {
     const shell = await loadShell();
-    const requests = installFetchStub(shell);
-    let idleCallback;
-    shell.window.requestIdleCallback = (callback) => {
-      idleCallback = callback;
-      return 1;
-    };
-
-    await login(shell);
-    expect(requests).toHaveLength(0);
-    expect(idleCallback).toBeFunction();
-    idleCallback();
-    await flushShell();
-    await flushShell();
-
-    expect(requests.map(({ url }) => new URL(url).pathname)).toEqual([
-      "/vendor/boxedwine/26R1/preload.json",
-      "/vendor/boxedwine/26R1/runtime.js",
-      "/vendor/boxedwine/26R1/root.zip",
-    ]);
-    expect(
-      requests.every(({ options }) => options.cache === "force-cache"),
-    ).toBeTrue();
     expect(
       shell.window.document.querySelectorAll(
         "iframe.boxedwine-shared-runtime-frame",
       ),
     ).toHaveLength(1);
+    expect(shell.document.getElementById("boot-screen").hidden).toBeFalse();
+  });
+
+  test("keeps application preparation behind boot instead of Welcome", async () => {
+    const shell = await loadShell();
+    let releasePreparation;
+    shell.window.XPBoxedWineRuntime = {
+      ...shell.window.XPBoxedWineRuntime,
+      applicationsReady: () =>
+        new Promise((resolve) => {
+          releasePreparation = resolve;
+        }),
+    };
+
+    shell.document.getElementById("boot-screen").click();
+    await flushShell();
+    expect(shell.document.getElementById("boot-screen").hidden).toBeFalse();
+    expect(shell.document.getElementById("welcome-screen").hidden).toBeTrue();
+
+    releasePreparation();
+    await flushShell();
+    await flushShell();
+    expect(shell.document.getElementById("welcome-screen").hidden).toBeFalse();
+    shell.document.getElementById("welcome-screen").click();
+    await flushShell();
+    expect(shell.document.getElementById("desktop").hidden).toBeFalse();
   });
 
   test("waits for complete preload response bodies", async () => {
@@ -182,45 +159,6 @@ describe("BoxedWine startup", () => {
     );
   });
 
-  test("waits for menu demand on a constrained phone", async () => {
-    const shell = await loadShell();
-    const requests = installFetchStub(shell);
-    let idleRequests = 0;
-    shell.window.matchMedia = () => ({ matches: true });
-    shell.window.requestIdleCallback = () => {
-      idleRequests += 1;
-    };
-
-    await login(shell);
-    expect(idleRequests).toBe(0);
-    expect(requests).toHaveLength(0);
-
-    shell.document.getElementById("start-button").click();
-    shell.document.getElementById("all-programs-button").click();
-    shell.document.querySelector('[data-program-id="accessories"]').click();
-    await flushShell();
-    await flushShell();
-
-    expect(requests).toHaveLength(3);
-  });
-
-  test("does not preload automatically on a landscape touch device", async () => {
-    const shell = await loadShell();
-    const requests = installFetchStub(shell);
-    let idleRequests = 0;
-    shell.window.matchMedia = (query) => ({
-      matches: query === "(pointer: coarse)",
-    });
-    shell.window.requestIdleCallback = () => {
-      idleRequests += 1;
-    };
-
-    await login(shell);
-
-    expect(idleRequests).toBe(0);
-    expect(requests).toHaveLength(0);
-  });
-
   test("packages only the traced shared XP files", async () => {
     const trace = JSON.parse(
       await readFile(
@@ -240,6 +178,14 @@ describe("BoxedWine startup", () => {
         archive[path] || archive[`${path}/`] || archive[`${path}.link`],
       ).toBeDefined();
     }
+    const wineRegistry = new TextDecoder().decode(
+      archive["home/username/.wine/user.reg"],
+    );
+    expect(wineRegistry).toContain('"ThemeActive"="1"');
+    expect(wineRegistry).toContain('"ColorName"="NormalColor"');
+    expect(wineRegistry).toContain(
+      '"DllName"="C:\\\\windows\\\\resources\\\\themes\\\\light\\\\light.msstyles"',
+    );
     expect(
       (await stat(join(runtimeDirectory, "xp-accessories.zip"))).size,
     ).toBeLessThan((await stat(join(runtimeDirectory, "boxedwine.zip"))).size);

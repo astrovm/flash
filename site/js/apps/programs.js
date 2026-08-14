@@ -48,6 +48,22 @@ const applicationContext = (win) => ({
   setAccessKeyText,
   close: () => closeGameWindow(win.gameId),
   minimize: () => minimizeWindow(win.gameId),
+  applyNativeSize(width, height) {
+    win.el.style.width = `${width}px`;
+    win.el.style.height = `${height}px`;
+    fitNativeProgramToWorkArea(win);
+  },
+  applyNativeClose: () =>
+    closeGameWindow(win.gameId, {
+      skipBeforeClose: true,
+      skipUnmount: true,
+    }),
+  applyNativeFocus: () => focusWindow(win.gameId, { notifyApplication: false }),
+  applyNativeMinimize: () =>
+    minimizeWindow(win.gameId, { notifyApplication: false }),
+  applyNativeRestore: () => {
+    if (win.minimized) restoreWindow(win.gameId, { notifyApplication: false });
+  },
   openFile: (options) => XPDialogs.openFile(options),
   saveFile: (options) => XPDialogs.saveFile(options),
   myPictures: fs.MY_PICTURES,

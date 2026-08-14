@@ -69,7 +69,7 @@
         appRoot: new URL("./", location.href).href,
         root: "xp-accessories",
         archive: "xp-runtime",
-        executable: "runtime-host.exe",
+        executable: "calculator/calc.exe",
         resolution: "1024x768",
         frameTop: "0",
         sound: "true",
@@ -79,7 +79,8 @@
       });
       frame.src = runner.href;
       const warmWindows = new Map();
-      let warmingAppId = null;
+      const processApplications = new Map();
+      let warmingAppId = "calculator";
       let warmStartedAt = 0;
       let request = 0;
       const launch = (appId, requestId) =>
@@ -97,16 +98,18 @@
           return;
         }
         output.value = `Warming ${warmingAppId} in the background…`;
-        launch(warmingAppId, `prewarm:${warmingAppId}:${++request}`);
+        if (warmingAppId !== "calculator")
+          launch(warmingAppId, `prewarm:${warmingAppId}:${++request}`);
       };
       const surfaces = createBoxedWineWindowSurface({
         host: document.querySelector("#windows"),
         runtimeWindow: frame.contentWindow,
         origin: location.origin,
         initiallyVisible: false,
-        onFirstFrame({ id }) {
-          if (!warmingAppId) return;
-          warmWindows.set(warmingAppId, id);
+        onFirstFrame({ id, processId }) {
+          const appId = processApplications.get(processId) || warmingAppId;
+          if (!appId) return;
+          warmWindows.set(appId, id);
           surfaces.hide(id);
           warmingAppId = null;
           setTimeout(warmNext, 50);
@@ -146,6 +149,8 @@
             output.value = `${event.data.appId} command accepted; creating the Wine process…`;
         }
         if (event.data?.type === "boxedwine-process-launched") {
+          if (!event.data.error)
+            processApplications.set(event.data.processId, event.data.appId);
           if (event.data.error)
             output.value = `Warm-up failed with Windows error ${event.data.error}`;
         }
