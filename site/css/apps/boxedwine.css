@@ -74,7 +74,8 @@ html[data-xp-appearance="classic"] .xp-boxedwine-shared-window {
   --boxedwine-shell-caption-height: 18px;
 }
 
-.boxedwine-shared-app-host > .boxedwine-native-window {
+.boxedwine-shared-app-host > .boxedwine-native-window,
+.boxedwine-shared-app-host > .boxedwine-native-owned-window {
   position: absolute;
   display: block;
 }

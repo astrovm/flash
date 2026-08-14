@@ -209,6 +209,22 @@ const createRuntime = (initialApplicationId) => {
       if (appId) bindFirstFrame(appId, id, processId);
       else if (processId) pendingFirstFrames.set(processId, id);
     },
+    onOwnedWindow(detail) {
+      const appId = APPLICATION_IDS.find(
+        (candidate) => warmWindows.get(candidate) === detail.topId,
+      );
+      const mounted = appId ? mounts.get(appId) : null;
+      if (!mounted) return;
+      if (detail.type === "hidden") {
+        mounted.context.removeNativeOwnedWindow(detail.id);
+        return;
+      }
+      mounted.context.upsertNativeOwnedWindow({
+        ...detail,
+        close: () => surfaces.command(detail.id, "close"),
+        focus: () => surfaces.activate(detail.id),
+      });
+    },
     onLifecycle(detail) {
       const appId = APPLICATION_IDS.find(
         (candidate) => warmWindows.get(candidate) === detail.topId,
@@ -248,6 +264,7 @@ const createRuntime = (initialApplicationId) => {
 
   const showLoadingState = () => {
     for (const mounted of mounts.values()) {
+      mounted.context.clearNativeOwnedWindows();
       const status = document.createElement("span");
       status.className = "boxedwine-shared-loading";
       status.textContent = "Restarting Windows application…";
@@ -454,6 +471,7 @@ const createRuntime = (initialApplicationId) => {
         unmount() {
           resizeObserver.disconnect();
           if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+          context.clearNativeOwnedWindows();
           const windowId = warmWindows.get(appId);
           const processId = processes.get(appId);
           if (windowId) {

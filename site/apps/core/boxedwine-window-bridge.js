@@ -305,11 +305,13 @@ export const createBoxedWineWindowSurface = ({
   origin,
   onFirstFrame,
   onLifecycle,
+  onOwnedWindow,
   initiallyVisible = true,
 }) => {
   const windows = new Map();
   const surfaces = new Map();
   const canvases = new Map();
+  const ownedCanvases = new Map();
   const anchoredWindows = new Set();
   const visibleWindows = new Set();
   let nextZIndex = 1;
@@ -353,6 +355,41 @@ export const createBoxedWineWindowSurface = ({
     metaKey: event.metaKey,
     shiftKey: event.shiftKey,
   });
+  const scaledCanvasCoordinates = (canvas, event) => {
+    const rect = canvas.getBoundingClientRect();
+    const scale = Math.min(
+      rect.width / canvas.width,
+      rect.height / canvas.height,
+    );
+    const renderedWidth = canvas.width * scale;
+    const renderedHeight = canvas.height * scale;
+    const renderedLeft = rect.left + (rect.width - renderedWidth) / 2;
+    const renderedTop = rect.top + (rect.height - renderedHeight) / 2;
+    return {
+      x:
+        (Math.min(
+          Math.max(event.clientX, renderedLeft),
+          renderedLeft + renderedWidth,
+        ) -
+          renderedLeft) /
+        scale,
+      y:
+        (Math.min(
+          Math.max(event.clientY, renderedTop),
+          renderedTop + renderedHeight,
+        ) -
+          renderedTop) /
+        scale,
+    };
+  };
+  const isOwnedDialog = (entry) =>
+    Boolean(
+      entry?.ownerId &&
+      entry.mapped &&
+      entry.title?.trim() &&
+      entry.width > 1 &&
+      entry.height > NATIVE_TITLE_BAR_HEIGHT,
+    );
   const topLevelId = (id) => {
     let current = windows.get(id);
     if (!current) return 0;
@@ -373,6 +410,154 @@ export const createBoxedWineWindowSurface = ({
       current = parent;
     }
     return 0;
+  };
+
+  const ownedDialogAncestor = (id, topId) => {
+    let current = windows.get(id);
+    const visited = new Set();
+    while (current && current.id !== topId && !visited.has(current.id)) {
+      visited.add(current.id);
+      if (isOwnedDialog(current)) return current;
+      current = windows.get(current.ownerId || current.parentId);
+    }
+    return null;
+  };
+
+  const createOwnedCanvas = (entry) => {
+    const canvas = document.createElement("canvas");
+    canvas.dataset.boxedwineOwnedWindow = String(entry.id);
+    canvas.className = "boxedwine-native-owned-window";
+    canvas.tabIndex = 0;
+    ownedCanvases.set(entry.id, canvas);
+    const coordinates = (event) => {
+      const local = scaledCanvasCoordinates(canvas, event);
+      return {
+        x: entry.x + local.x,
+        y: entry.y + NATIVE_TITLE_BAR_HEIGHT + local.y,
+      };
+    };
+    const forwardPointer = (eventType, event) => {
+      runtimeWindow.postMessage(
+        {
+          type: "boxedwine-native-pointer",
+          windowId: entry.id,
+          eventType,
+          ...coordinates(event),
+          ...modifiers(event),
+          button: event.button,
+          buttons: event.buttons,
+          detail: event.detail,
+        },
+        origin,
+      );
+    };
+    canvas.addEventListener("pointerdown", (event) => {
+      canvas.focus({ preventScroll: true });
+      try {
+        canvas.setPointerCapture(event.pointerId);
+      } catch {
+        // Mouse events and older browsers do not expose pointer capture.
+      }
+      forwardPointer("mousedown", event);
+    });
+    for (const [pointerType, mouseType] of [
+      ["pointermove", "mousemove"],
+      ["pointerup", "mouseup"],
+      ["pointercancel", "mouseup"],
+    ]) {
+      canvas.addEventListener(pointerType, (event) => {
+        forwardPointer(mouseType, event);
+        if (
+          pointerType !== "pointermove" &&
+          canvas.hasPointerCapture?.(event.pointerId)
+        )
+          canvas.releasePointerCapture(event.pointerId);
+      });
+    }
+    canvas.addEventListener("dblclick", (event) =>
+      forwardPointer("dblclick", event),
+    );
+    canvas.addEventListener("wheel", (event) => {
+      runtimeWindow.postMessage(
+        {
+          type: "boxedwine-native-wheel",
+          windowId: entry.id,
+          ...coordinates(event),
+          ...modifiers(event),
+          deltaMode: event.deltaMode,
+          deltaX: event.deltaX,
+          deltaY: event.deltaY,
+        },
+        origin,
+      );
+      event.preventDefault();
+    });
+    for (const eventType of ["keydown", "keyup"]) {
+      canvas.addEventListener(eventType, (event) => {
+        runtimeWindow.postMessage(
+          {
+            type: "boxedwine-native-key",
+            windowId: entry.id,
+            eventType,
+            ...modifiers(event),
+            code: event.code,
+            key: event.key,
+            keyCode: event.keyCode,
+            location: event.location,
+            repeat: event.repeat,
+          },
+          origin,
+        );
+        event.preventDefault();
+      });
+    }
+    canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+    return canvas;
+  };
+
+  const renderOwnedDialog = (entry, top) => {
+    let canvas = ownedCanvases.get(entry.id);
+    if (!canvas) canvas = createOwnedCanvas(entry);
+    canvas.dataset.boxedwineTitle = entry.title;
+    canvas.dataset.boxedwineNativeWidth = String(entry.width);
+    canvas.dataset.boxedwineNativeHeight = String(entry.height);
+    canvas.width = entry.width;
+    canvas.height = Math.max(1, entry.height - NATIVE_TITLE_BAR_HEIGHT);
+    canvas.style.width = `${entry.width}px`;
+    canvas.style.height = `${canvas.height}px`;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    const surface = surfaces.get(entry.id);
+    if (surface) context.drawImage(surface, 0, -NATIVE_TITLE_BAR_HEIGHT);
+    const children = [...windows.values()]
+      .filter(
+        (child) =>
+          child.mapped &&
+          !isOwnedDialog(child) &&
+          (child.parentId === entry.id || child.ownerId === entry.id),
+      )
+      .sort((left, right) => left.stack - right.stack);
+    for (const child of children) {
+      const childSurface = surfaces.get(child.id);
+      if (!childSurface) continue;
+      const childX = child.ownerId ? child.x - entry.x : child.x;
+      const childY = child.ownerId
+        ? child.y - entry.y - NATIVE_TITLE_BAR_HEIGHT
+        : child.y - NATIVE_TITLE_BAR_HEIGHT;
+      context.drawImage(childSurface, childX, childY);
+    }
+    onOwnedWindow?.({
+      type: "shown",
+      id: entry.id,
+      ownerId: entry.ownerId,
+      topId: top.id,
+      title: entry.title,
+      x: entry.x - (anchoredWindows.has(top.id) ? 0 : top.x),
+      y: entry.y - (anchoredWindows.has(top.id) ? 0 : top.y),
+      width: entry.width,
+      height: entry.height,
+      canvas,
+    });
   };
 
   const render = (topId) => {
@@ -488,6 +673,13 @@ export const createBoxedWineWindowSurface = ({
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (anchoredWindows.has(topId)) {
+      for (const entry of windows.values()) {
+        if (isOwnedDialog(entry) && topLevelId(entry.id) === topId)
+          renderOwnedDialog(entry, top);
+      }
+    }
+
     const drawnWindows = new Set();
     let drewNativePixels = false;
     const drawTree = (id, offsetX, offsetY) => {
@@ -503,6 +695,8 @@ export const createBoxedWineWindowSurface = ({
         .filter((child) => child.parentId === id || child.ownerId === id)
         .sort((left, right) => left.stack - right.stack);
       for (const child of children) {
+        if (anchoredWindows.has(topId) && ownedDialogAncestor(child.id, topId))
+          continue;
         const anchoredOwner = child.ownerId && anchoredWindows.has(topId);
         const childX = child.ownerId
           ? child.x - (anchoredOwner ? 0 : top.x)
@@ -522,7 +716,8 @@ export const createBoxedWineWindowSurface = ({
         entry.id !== topId &&
         entry.processId &&
         entry.processId === top.processId &&
-        !drawnWindows.has(entry.id)
+        !drawnWindows.has(entry.id) &&
+        !(anchoredWindows.has(topId) && ownedDialogAncestor(entry.id, topId))
       )
         drawTree(entry.id, entry.x - top.x, entry.y - top.y - titleBarHeight);
     }
@@ -568,6 +763,11 @@ export const createBoxedWineWindowSurface = ({
     const entry = windows.get(detail.id);
     if (detail.type === "destroyed") {
       const topId = topLevelId(detail.id) || detail.id;
+      if (ownedCanvases.has(detail.id)) {
+        onOwnedWindow?.({ type: "hidden", id: detail.id, topId });
+        ownedCanvases.get(detail.id)?.remove();
+        ownedCanvases.delete(detail.id);
+      }
       onLifecycle?.({ ...detail, topId });
       windows.delete(detail.id);
       surfaces.delete(detail.id);
@@ -583,6 +783,12 @@ export const createBoxedWineWindowSurface = ({
     if (detail.type === "raised") entry.stack = nativeStack++;
     if (detail.type === "mapped" || detail.type === "unmapped")
       entry.mapped = detail.type === "mapped";
+    if (detail.type === "unmapped" && ownedCanvases.has(detail.id)) {
+      const topId = topLevelId(detail.id);
+      onOwnedWindow?.({ type: "hidden", id: detail.id, topId });
+      ownedCanvases.get(detail.id)?.remove();
+      ownedCanvases.delete(detail.id);
+    }
     if (detail.type === "bounds") Object.assign(entry, detail);
     if (detail.type === "frame") {
       const surface =
@@ -628,7 +834,9 @@ export const createBoxedWineWindowSurface = ({
     activate(id) {
       const top = windows.get(id);
       if (!top?.mapped) return false;
-      canvases.get(id)?.focus({ preventScroll: true });
+      (canvases.get(id) || ownedCanvases.get(id))?.focus({
+        preventScroll: true,
+      });
       runtimeWindow.postMessage(
         { type: "boxedwine-native-command", action: "activate", windowId: id },
         origin,
@@ -675,23 +883,32 @@ export const createBoxedWineWindowSurface = ({
       );
       if (ids.length === 0) return false;
       for (const windowId of ids) {
+        if (ownedCanvases.has(windowId))
+          onOwnedWindow?.({ type: "hidden", id: windowId, topId: id });
         windows.delete(windowId);
         surfaces.delete(windowId);
         visibleWindows.delete(windowId);
         anchoredWindows.delete(windowId);
         canvases.get(windowId)?.remove();
         canvases.delete(windowId);
+        ownedCanvases.get(windowId)?.remove();
+        ownedCanvases.delete(windowId);
       }
       return true;
     },
     getCanvas(id) {
-      return canvases.get(id) || null;
+      return canvases.get(id) || ownedCanvases.get(id) || null;
     },
     reset() {
       for (const canvas of canvases.values()) canvas.remove();
+      for (const [id, canvas] of ownedCanvases) {
+        onOwnedWindow?.({ type: "hidden", id, topId: topLevelId(id) });
+        canvas.remove();
+      }
       windows.clear();
       surfaces.clear();
       canvases.clear();
+      ownedCanvases.clear();
       anchoredWindows.clear();
       visibleWindows.clear();
       host.replaceChildren();

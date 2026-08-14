@@ -189,6 +189,7 @@ describe("BoxedWine window bridge", () => {
     const windowListeners = new Map();
     const runtimeMessages = [];
     const lifecycle = [];
+    const ownedWindows = [];
     const firstFrames = [];
     const canvases = [];
 
@@ -312,6 +313,7 @@ describe("BoxedWine window bridge", () => {
         initiallyVisible: false,
         onFirstFrame: (detail) => firstFrames.push(detail),
         onLifecycle: (detail) => lifecycle.push(detail),
+        onOwnedWindow: (detail) => ownedWindows.push(detail),
       });
       const send = (window) =>
         windowListeners.get("message")({
@@ -406,6 +408,55 @@ describe("BoxedWine window bridge", () => {
         lifecycle.find((event) => event.id === 43 && event.type === "owner"),
       ).toMatchObject({ topId: 41 });
 
+      send({
+        type: "created",
+        id: 44,
+        parentId: 1,
+        processId: 9,
+        x: 27,
+        y: 101,
+        width: 400,
+        height: 336,
+      });
+      send({ type: "owner", id: 44, parentId: 41 });
+      send({ type: "title", id: 44, title: "About Calculator" });
+      send({ type: "mapped", id: 44 });
+      send({
+        type: "frame",
+        id: 44,
+        width: 400,
+        height: 336,
+        rgba: new Uint8ClampedArray(400 * 336 * 4),
+      });
+      const ownedWindow = ownedWindows.findLast(
+        (event) => event.type === "shown" && event.id === 44,
+      );
+      expect(ownedWindow).toMatchObject({
+        ownerId: 41,
+        topId: 41,
+        title: "About Calculator",
+        x: 27,
+        y: 101,
+        width: 400,
+        height: 336,
+      });
+      expect(ownedWindow.canvas).not.toBe(canvas);
+      expect(ownedWindow.canvas.width).toBe(400);
+      expect(ownedWindow.canvas.height).toBe(308);
+      expect(canvas.draws.some(([drawn]) => drawn.width === 400)).toBeFalse();
+
+      ownedWindow.canvas.dispatch("pointerdown", {
+        pointerId: 8,
+        buttons: 1,
+        clientX: 85,
+        clientY: 95,
+      });
+      expect(runtimeMessages.at(-1).message).toMatchObject({
+        type: "boxedwine-native-pointer",
+        windowId: 44,
+        eventType: "mousedown",
+      });
+
       canvas.dispatch("pointerdown", {
         pointerId: 7,
         buttons: 1,
@@ -437,6 +488,14 @@ describe("BoxedWine window bridge", () => {
         eventType: "keydown",
         code: "KeyA",
       });
+
+      send({ type: "unmapped", id: 44 });
+      expect(ownedWindows.at(-1)).toMatchObject({
+        type: "hidden",
+        id: 44,
+        topId: 41,
+      });
+      expect(ownedWindow.canvas.removed).toBeTrue();
 
       for (const action of [
         "activate",
