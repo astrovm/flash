@@ -231,7 +231,11 @@ const createRuntime = (initialApplicationId) => {
       );
       if (!appId) return;
       const mounted = mounts.get(appId);
-      if (detail.type === "title" && detail.title) {
+      if (
+        detail.type === "title" &&
+        detail.id === detail.topId &&
+        detail.title
+      ) {
         mounted?.context.setTitle(detail.title);
       } else if (detail.type === "bounds" && detail.id === detail.topId) {
         mounted?.context.applyNativeClientSize(
@@ -242,7 +246,10 @@ const createRuntime = (initialApplicationId) => {
         mounted?.context.applyNativeMinimize();
       } else if (detail.type === "mapped" && detail.id === detail.topId) {
         mounted?.context.applyNativeRestore();
-      } else if (detail.type === "focused" || detail.type === "raised") {
+      } else if (
+        detail.id === detail.topId &&
+        (detail.type === "focused" || detail.type === "raised")
+      ) {
         mounted?.context.applyNativeFocus();
       } else if (detail.type === "destroyed" && detail.id === detail.topId) {
         const processId = processes.get(appId);

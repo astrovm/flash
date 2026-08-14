@@ -392,7 +392,7 @@ describe("BoxedWine window bridge", () => {
         height: 60,
       });
       send({ type: "owner", id: 43, parentId: 41 });
-      send({ type: "mapped", id: 43 });
+      send({ type: "mapped", id: 43, dialog: true });
       send({
         type: "frame",
         id: 43,
@@ -407,6 +407,7 @@ describe("BoxedWine window bridge", () => {
       expect(
         lifecycle.find((event) => event.id === 43 && event.type === "owner"),
       ).toMatchObject({ topId: 41 });
+      expect(ownedWindows.some((event) => event.id === 43)).toBeFalse();
 
       send({
         type: "created",
@@ -420,7 +421,7 @@ describe("BoxedWine window bridge", () => {
       });
       send({ type: "owner", id: 44, parentId: 41 });
       send({ type: "title", id: 44, title: "About Calculator" });
-      send({ type: "mapped", id: 44 });
+      send({ type: "mapped", id: 44, dialog: true });
       send({
         type: "frame",
         id: 44,

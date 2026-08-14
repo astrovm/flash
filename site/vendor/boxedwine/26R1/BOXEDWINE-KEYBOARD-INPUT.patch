@@ -20,5 +20,5 @@
 +}
 +}
 
- EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height), {
+ EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height, U32 dialog), {
      window.dispatchEvent(new CustomEvent("boxedwine-native-window", {

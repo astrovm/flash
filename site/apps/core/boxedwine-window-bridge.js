@@ -385,6 +385,7 @@ export const createBoxedWineWindowSurface = ({
   const isOwnedDialog = (entry) =>
     Boolean(
       entry?.ownerId &&
+      entry.dialog &&
       entry.mapped &&
       entry.title?.trim() &&
       entry.width > 1 &&
@@ -780,6 +781,7 @@ export const createBoxedWineWindowSurface = ({
     if (!entry) return;
     if (detail.type === "title") entry.title = detail.title;
     if (detail.type === "owner") entry.ownerId = detail.parentId;
+    if (typeof detail.dialog === "boolean") entry.dialog = detail.dialog;
     if (detail.type === "raised") entry.stack = nativeStack++;
     if (detail.type === "mapped" || detail.type === "unmapped")
       entry.mapped = detail.type === "mapped";

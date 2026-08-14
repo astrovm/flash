@@ -82,7 +82,7 @@ new file mode 100644
 index 0000000..faadc6d
 --- /dev/null
 +++ b/platform/sdl/knativewindowbridge.cpp
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,105 @@
 +#include "boxedwine.h"
 +#include "knativewindowbridge.h"
 +#include "../../source/x11/x11.h"
@@ -90,7 +90,7 @@ index 0000000..faadc6d
 +#ifdef __EMSCRIPTEN__
 +#include <emscripten.h>
 +
-+EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height), {
++EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height, U32 dialog), {
 +    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
 +        detail: {
 +            type: UTF8ToString(type),
@@ -101,6 +101,7 @@ index 0000000..faadc6d
 +            y,
 +            width,
 +            height,
++            dialog: Boolean(dialog),
 +        },
 +    }));
 +});
@@ -139,7 +140,7 @@ index 0000000..faadc6d
 +    XWindowPtr parent = wnd->getParent();
 +    XServer* server = XServer::getServer(true);
 +    DisplayDataPtr data = server ? server->getDisplayDataById(wnd->displayId) : nullptr;
-+    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, data ? data->processId : 0, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height());
++    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, data ? data->processId : 0, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height(), wnd->shouldUseNativeDialogShell());
 +#endif
 +}
 +
@@ -149,11 +150,20 @@ index 0000000..faadc6d
 +
 +void boxedwineNativeWindowDestroyed(U32 id) {
 +#ifdef __EMSCRIPTEN__
-+    boxedwineWindowLifecycle("destroyed", id, 0, 0, 0, 0, 0, 0);
++    boxedwineWindowLifecycle("destroyed", id, 0, 0, 0, 0, 0, 0, 0);
 +#endif
 +}
 +
 +void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped) {
++    if (mapped) {
++        XPropertyPtr name = wnd->getProperty(_NET_WM_NAME);
++        if (!name || !name->length) {
++            name = wnd->getProperty(XA_WM_NAME);
++        }
++        if (name && name->format == 8 && name->length) {
++            boxedwineNativeWindowTitle(wnd->id, name->value, name->length);
++        }
++    }
 +    lifecycle(mapped ? "mapped" : "unmapped", wnd);
 +}
 +
@@ -169,7 +179,7 @@ index 0000000..faadc6d
 +
 +void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
 +#ifdef __EMSCRIPTEN__
-+    boxedwineWindowLifecycle("owner", id, ownerId, 0, 0, 0, 0, 0);
++    boxedwineWindowLifecycle("owner", id, ownerId, 0, 0, 0, 0, 0, 0);
 +#endif
 +}
 +
@@ -243,17 +253,18 @@ diff --git a/source/x11/xwindow.h b/source/x11/xwindow.h
 index 097cad1..cbe4fd5 100644
 --- a/source/x11/xwindow.h
 +++ b/source/x11/xwindow.h
-@@ -193,6 +193,9 @@ public:
+@@ -193,6 +193,10 @@ public:
  	void input2Notify(const DisplayDataPtr& data, S32 x, S32 y, U32 type);
  
  	XWindowPtr getParent() {return parent;}
 +	S32 getLeft() const {return left;}
 +	S32 getTop() const {return top;}
 +	U32 getBorderWidth() const {return border_width;}
++	bool shouldUseNativeDialogShell() {return isDialog();}
  	bool mapped() {return this->isMapped;}
  	bool isThisAndAncestorsMapped();
  	XWindowPtr getTopMappedChild();
-@@ -253,4 +256,4 @@ private:
+@@ -253,4 +257,4 @@ private:
  	U32 WM_TRANSIENT_FOR();
  };
  

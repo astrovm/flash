@@ -18,7 +18,7 @@ const wireSystemWindowControls = (win) => {
 };
 
 const focusNativeOwnedWindow = (owner, dialog) => {
-  focusWindow(owner.gameId);
+  focusWindow(owner.gameId, { notifyApplication: false });
   owner.el.classList.remove("active");
   dialog.el.classList.add("active");
   dialog.el.style.zIndex = String(++zIndexCounter);
