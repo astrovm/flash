@@ -1,8 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#define SIZE_FILE L"D:\\boxedwine-size.txt"
-#define WINDOW_SIZE_FILE L"D:\\boxedwine-window-size.txt"
+static const WCHAR *size_file = L"D:\\boxedwine-size.txt";
+static const WCHAR *window_size_file = L"D:\\boxedwine-window-size.txt";
 
 typedef struct {
   DWORD process_id;
@@ -40,7 +40,7 @@ static void write_window_size(unsigned int width, unsigned int height) {
   append_number(&cursor, width);
   *cursor++ = ' ';
   append_number(&cursor, height);
-  HANDLE file = CreateFileW(WINDOW_SIZE_FILE, GENERIC_WRITE, FILE_SHARE_READ,
+  HANDLE file = CreateFileW(window_size_file, GENERIC_WRITE, FILE_SHARE_READ,
                             NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
   if (file == INVALID_HANDLE_VALUE) return;
   DWORD written;
@@ -53,7 +53,7 @@ static BOOL read_window_size(unsigned int *width, unsigned int *height,
                              unsigned int *native_height) {
   char buffer[64];
   DWORD bytes_read = 0;
-  HANDLE file = CreateFileW(SIZE_FILE, GENERIC_READ,
+  HANDLE file = CreateFileW(size_file, GENERIC_READ,
                             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (file == INVALID_HANDLE_VALUE) return FALSE;
@@ -86,11 +86,18 @@ static BOOL CALLBACK find_process_window(HWND window, LPARAM parameter) {
 
 static BOOL find_target(WCHAR *application_path, WCHAR *filename) {
   static const WCHAR *targets[] = {L"sol.exe", L"freecell.exe", L"spider.exe"};
+  static const WCHAR *size_files[] = {
+      L"D:\\solsize.txt", L"D:\\freesize.txt", L"D:\\spidsize.txt"};
+  static const WCHAR *window_size_files[] = {
+      L"D:\\solwindow.txt", L"D:\\freewindow.txt", L"D:\\spidwindow.txt"};
   for (unsigned int index = 0; index < sizeof(targets) / sizeof(targets[0]);
        ++index) {
     lstrcpyW(filename, targets[index]);
-    if (GetFileAttributesW(application_path) != INVALID_FILE_ATTRIBUTES)
+    if (GetFileAttributesW(application_path) != INVALID_FILE_ATTRIBUTES) {
+      size_file = size_files[index];
+      window_size_file = window_size_files[index];
       return TRUE;
+    }
   }
   return FALSE;
 }

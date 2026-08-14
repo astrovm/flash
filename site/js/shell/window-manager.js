@@ -1070,12 +1070,6 @@ const wireDrag = (win) => {
         };
       }
       persistWindowPlacement(win);
-      win.mountedApplication?.bounds?.(
-        win.el.offsetLeft,
-        win.el.offsetTop,
-        win.el.offsetWidth,
-        win.el.offsetHeight,
-      );
     };
 
     try {

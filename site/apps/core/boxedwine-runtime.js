@@ -10,9 +10,9 @@ const APPLICATION_IDS = Object.freeze([
 ]);
 const APPLICATION_EXECUTABLES = Object.freeze({
   calculator: "calculator/calc.exe",
-  solitaire: "solitaire/sol.exe",
-  freecell: "freecell/freecell.exe",
-  "spider-solitaire": "spider-solitaire/spider.exe",
+  solitaire: "solitaire/resize-host.exe",
+  freecell: "freecell/resize-host.exe",
+  "spider-solitaire": "spider-solitaire/resize-host.exe",
 });
 const applicationFromTitle = (title = "") => {
   const normalized = title.trim().toLowerCase();
@@ -35,12 +35,18 @@ const packageRoot = () => {
 
 const runnerUrl = (initialApplicationId) => {
   const url = new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);
+  const desktop = document.getElementById("desktop");
+  const screenWidth = desktop?.clientWidth || window.innerWidth;
+  const screenHeight = Math.min(
+    desktop?.clientHeight || window.innerHeight,
+    window.innerHeight - 30,
+  );
   url.search = new URLSearchParams({
     appRoot: packageRoot(),
     root: ROOT_ARCHIVE,
     archive: "xp-runtime",
     executable: APPLICATION_EXECUTABLES[initialApplicationId],
-    resolution: "1024x768",
+    resolution: `${Math.max(320, screenWidth - 8)}x${Math.max(240, screenHeight - 8)}`,
     frameTop: "0",
     sound: "true",
     cache: "false",
@@ -101,7 +107,10 @@ const createRuntime = (initialApplicationId) => {
     surfaces.attach(windowId, mounted.element);
     surfaces.show(windowId);
     surfaces.activate(windowId);
-    mounted.context.setSize(canvas.width, canvas.height);
+    mounted.context.setSize(
+      Number(canvas.dataset.boxedwineNativeWidth) || canvas.width,
+      Number(canvas.dataset.boxedwineNativeHeight) || canvas.height,
+    );
     mounted.element.dataset.boxedwineReady = "true";
     mounted.element.dataset.boxedwineOpenElapsed = String(
       Math.round(performance.now() - mounted.startedAt),
@@ -322,7 +331,6 @@ const createRuntime = (initialApplicationId) => {
       APPLICATION_IDS.includes(event.data.appId) &&
       !event.data.error
     ) {
-      launchingApplications.delete(event.data.appId);
       processes.set(event.data.appId, event.data.processId);
       processApplications.set(event.data.processId, event.data.appId);
       document.documentElement.dataset.boxedwineLastProcess = `${event.data.appId}:${event.data.processId}`;
@@ -405,6 +413,7 @@ const createRuntime = (initialApplicationId) => {
           const desktop = context.getDesktopSize();
           return windowId
             ? surfaces.command(windowId, "maximize", {
+                appId,
                 width: desktop.width,
                 height: desktop.height,
               })
@@ -412,7 +421,9 @@ const createRuntime = (initialApplicationId) => {
         },
         restore() {
           const windowId = warmWindows.get(appId);
-          return windowId ? surfaces.command(windowId, "restore") : false;
+          return windowId
+            ? surfaces.command(windowId, "restore", { appId })
+            : false;
         },
         bounds(left, top, width, height) {
           const windowId = warmWindows.get(appId);
@@ -420,6 +431,7 @@ const createRuntime = (initialApplicationId) => {
             ? surfaces.command(windowId, "bounds", {
                 x: left,
                 y: top,
+                appId,
                 width,
                 height,
               })

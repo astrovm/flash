@@ -42,7 +42,7 @@ export const buildBoxedWineRuntimeArchive = async ({
   const files: Zippable = {};
   for (const [application, entries] of Object.entries(packages)) {
     for (const [name, bytes] of Object.entries(entries)) {
-      if (name.endsWith("/") || name.endsWith("host.exe")) continue;
+      if (name.endsWith("/") || name === "window-host.exe") continue;
       files[`${application}/${name}`] = [bytes, { mtime: fixedTime }];
     }
   }

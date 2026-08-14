@@ -63,6 +63,10 @@
   background: transparent;
 }
 
+.xp-boxedwine-shared-window > .window-content.boxedwine-shared-app-host {
+  inset: 28px 0 0;
+}
+
 .boxedwine-shared-app-host > .boxedwine-native-window {
   position: absolute;
   display: block;

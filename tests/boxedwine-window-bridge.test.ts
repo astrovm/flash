@@ -40,6 +40,9 @@ describe("BoxedWine window bridge", () => {
       dispatchEvent(event) {
         dispatched.push(event);
       },
+      postMessage(message, origin) {
+        messages.push({ message, origin });
+      },
       addEventListener(type, listener) {
         listeners.set(type, listener);
       },
@@ -117,6 +120,30 @@ describe("BoxedWine window bridge", () => {
     expect(activated).toEqual([41, 41]);
     expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
     expect(dispatched).toHaveLength(2);
+
+    listeners.get("message")({
+      source: parent,
+      origin: hostWindow.location.origin,
+      data: {
+        type: "boxedwine-native-command",
+        action: "maximize",
+        appId: "solitaire",
+        windowId: 41,
+        width: 1280,
+        height: 690,
+        sourceWidth: 593,
+        sourceHeight: 437,
+      },
+    });
+    expect(messages.at(-1).message).toEqual({
+      type: "boxedwine-framebuffer-resize",
+      appId: "solitaire",
+      width: 1280,
+      height: 690,
+      baseWidth: 593,
+      baseHeight: 437,
+    });
+    expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
 
     listeners.get("message")({
       source: parent,
@@ -327,6 +354,10 @@ describe("BoxedWine window bridge", () => {
       expect(surface.attach(41, target)).toBeTrue();
       expect(surface.show(41)).toBeTrue();
       expect(canvas.style.left).toBe("0px");
+      expect(canvas.style.width).toBe("100%");
+      expect(canvas.style.height).toBe("100%");
+      expect(canvas.width).toBe(260);
+      expect(canvas.height).toBe(232);
       expect(canvas.hidden).toBeFalse();
 
       send({
@@ -383,7 +414,7 @@ describe("BoxedWine window bridge", () => {
         windowId: 41,
         eventType: "mousedown",
         x: 230,
-        y: 180,
+        y: 194,
       });
       canvas.dispatch("pointerup", {
         pointerId: 7,

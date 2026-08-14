@@ -15,9 +15,9 @@
 +static const char* boxedwineApplicationPath(U32 application) {
 +    switch (application) {
 +    case 1: return "C:\\files\\calculator\\calc.exe";
-+    case 2: return "C:\\files\\solitaire\\sol.exe";
-+    case 3: return "C:\\files\\freecell\\freecell.exe";
-+    case 4: return "C:\\files\\spider-solitaire\\spider.exe";
++    case 2: return "C:\\files\\solitaire\\resize-host.exe";
++    case 3: return "C:\\files\\freecell\\resize-host.exe";
++    case 4: return "C:\\files\\spider-solitaire\\resize-host.exe";
 +    default: return nullptr;
 +    }
 +}

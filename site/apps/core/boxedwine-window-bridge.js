@@ -1,4 +1,5 @@
 const MESSAGE_TYPE = "boxedwine-native-window";
+const NATIVE_TITLE_BAR_HEIGHT = 28;
 
 const applicationFromExecutable = (executable = "") => {
   const name = executable.toLowerCase().replaceAll("\\", "/");
@@ -6,6 +7,10 @@ const applicationFromExecutable = (executable = "") => {
   if (name.endsWith("/sol.exe")) return "solitaire";
   if (name.endsWith("/freecell.exe")) return "freecell";
   if (name.endsWith("/spider.exe")) return "spider-solitaire";
+  if (name.endsWith("/solitaire/resize-host.exe")) return "solitaire";
+  if (name.endsWith("/freecell/resize-host.exe")) return "freecell";
+  if (name.endsWith("/spider-solitaire/resize-host.exe"))
+    return "spider-solitaire";
   return "";
 };
 
@@ -157,6 +162,24 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
       module._boxedwine_activate_window(windowId);
     if (type === "boxedwine-native-command") {
       const { action, x = 0, y = 0, width = 0, height = 0 } = event.data;
+      if (
+        ["bounds", "maximize", "restore"].includes(action) &&
+        width > 0 &&
+        height > 0
+      ) {
+        hostWindow.postMessage(
+          {
+            type: "boxedwine-framebuffer-resize",
+            appId: event.data.appId,
+            width,
+            height,
+            baseWidth: event.data.sourceWidth || width,
+            baseHeight: event.data.sourceHeight || height,
+          },
+          hostWindow.location.origin,
+        );
+        return;
+      }
       if (typeof module?._boxedwine_window_command === "function") {
         module._boxedwine_window_command(
           windowId,
@@ -287,15 +310,22 @@ export const createBoxedWineWindowSurface = ({
   const windows = new Map();
   const surfaces = new Map();
   const canvases = new Map();
+  const restoreSizes = new Map();
   const anchoredWindows = new Set();
   const visibleWindows = new Set();
   let nextZIndex = 1;
   let nativeStack = 1;
   const inputCoordinates = (canvas, top, event) => {
     const rect = canvas.getBoundingClientRect();
+    const titleBarHeight = anchoredWindows.has(top.id)
+      ? NATIVE_TITLE_BAR_HEIGHT
+      : 0;
     return {
       x: top.x + ((event.clientX - rect.left) * canvas.width) / rect.width,
-      y: top.y + ((event.clientY - rect.top) * canvas.height) / rect.height,
+      y:
+        top.y +
+        titleBarHeight +
+        ((event.clientY - rect.top) * canvas.height) / rect.height,
     };
   };
   const modifiers = (event) => ({
@@ -423,10 +453,20 @@ export const createBoxedWineWindowSurface = ({
     canvas.dataset.boxedwineParent = String(top.parentId || 0);
     canvas.dataset.boxedwineProcess = String(top.processId || 0);
     canvas.dataset.boxedwineTitle = top.title || "";
-    canvas.width = top.width;
-    canvas.height = top.height;
+    canvas.dataset.boxedwineNativeWidth = String(top.width);
+    canvas.dataset.boxedwineNativeHeight = String(top.height);
+    const titleBarHeight = anchoredWindows.has(topId)
+      ? NATIVE_TITLE_BAR_HEIGHT
+      : 0;
+    if (canvas.width !== top.width) canvas.width = top.width;
+    if (canvas.height !== Math.max(1, top.height - titleBarHeight))
+      canvas.height = Math.max(1, top.height - titleBarHeight);
     canvas.style.left = anchoredWindows.has(topId) ? "0px" : `${top.x}px`;
     canvas.style.top = anchoredWindows.has(topId) ? "0px" : `${top.y}px`;
+    canvas.style.width = anchoredWindows.has(topId) ? "100%" : `${top.width}px`;
+    canvas.style.height = anchoredWindows.has(topId)
+      ? "100%"
+      : `${top.height}px`;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -450,7 +490,7 @@ export const createBoxedWineWindowSurface = ({
         drawTree(child.id, childX, childY);
       }
     };
-    drawTree(topId, 0, 0);
+    drawTree(topId, 0, -titleBarHeight);
     const processWindows = [...windows.values()].sort(
       (left, right) => left.stack - right.stack,
     );
@@ -461,7 +501,7 @@ export const createBoxedWineWindowSurface = ({
         entry.processId === top.processId &&
         !drawnWindows.has(entry.id)
       )
-        drawTree(entry.id, entry.x - top.x, entry.y - top.y);
+        drawTree(entry.id, entry.x - top.x, entry.y - top.y - titleBarHeight);
     }
     if (drewNativePixels && !canvas.dataset.firstFrame) {
       canvas.dataset.firstFrame = "true";
@@ -573,9 +613,23 @@ export const createBoxedWineWindowSurface = ({
       return true;
     },
     command(id, action, detail = {}) {
-      if (!windows.has(id)) return false;
+      const top = windows.get(id);
+      if (!top) return false;
+      if (action === "maximize") {
+        restoreSizes.set(id, { width: top.width, height: top.height });
+      } else if (action === "restore") {
+        Object.assign(detail, restoreSizes.get(id));
+        restoreSizes.delete(id);
+      }
       runtimeWindow.postMessage(
-        { type: "boxedwine-native-command", windowId: id, action, ...detail },
+        {
+          type: "boxedwine-native-command",
+          windowId: id,
+          action,
+          sourceWidth: top.width,
+          sourceHeight: top.height,
+          ...detail,
+        },
         origin,
       );
       return true;
