@@ -158,6 +158,22 @@ const offlineStatusText = (state) => {
 const formatUpdateCheckTime = (timestamp) =>
   timestamp ? new Date(timestamp).toLocaleString() : "Never";
 
+const UPDATE_DELAY_HOUR = 60 * 60 * 1000;
+const formatAutomaticUpdateDelay = (delayMs) => {
+  const hours = Math.round(delayMs / UPDATE_DELAY_HOUR);
+  if (hours === 0) return "No delay";
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return [
+    days ? `${days} ${days === 1 ? "day" : "days"}` : "",
+    remainingHours
+      ? `${remainingHours} ${remainingHours === 1 ? "hour" : "hours"}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
 const formatProjectBytes = (bytes) =>
   XPDialogs.formatBytes(bytes).replace(/\s+\([^)]*\)$/, "");
 
@@ -264,16 +280,9 @@ const wireProjectSettings = (win) => {
       <fieldset>
         <legend>Automatic updates</legend>
         <p class="project-settings-description">Astro Flash checks for updates automatically. It waits for the selected time before it downloads and applies a new release.</p>
-        <label class="project-update-delay">Wait before automatic update:
-          <select data-project-setting="update-delay">
-            <option value="">Use release default</option>
-            <option value="0">Do not wait</option>
-            <option value="3600000">1 hour</option>
-            <option value="21600000">6 hours</option>
-            <option value="43200000">12 hours</option>
-            <option value="86400000">1 day</option>
-            <option value="259200000">3 days</option>
-          </select>
+        <label class="project-update-delay">Wait before automatic update: <output data-project-value="update-delay">6 hours</output>
+          <input type="range" min="0" max="72" step="1" value="6" data-project-setting="update-delay">
+          <span><span>No delay</span><span>3 days</span></span>
         </label>
       </fieldset>
       <fieldset>
@@ -339,9 +348,10 @@ const wireProjectSettings = (win) => {
   const updateNowButton = content.querySelector(
     '[data-project-action="update-now"]',
   );
-  const updateDelaySelect = content.querySelector(
+  const updateDelayInput = content.querySelector(
     '[data-project-setting="update-delay"]',
   );
+  const updateDelayOutput = value("update-delay");
   const repairButton = content.querySelector('[data-project-action="repair"]');
   const downloadAllGamesButton = content.querySelector(
     '[data-project-action="download-all-games"]',
@@ -610,11 +620,18 @@ const wireProjectSettings = (win) => {
     checkButton.disabled = !state.online || transientPhases.has(state.phase);
     updateNowButton.disabled =
       !state.online || transientPhases.has(state.phase);
-    updateDelaySelect.disabled = transientPhases.has(state.phase);
-    updateDelaySelect.value =
-      state.automaticUpdateDelayMs === null
-        ? ""
-        : String(state.automaticUpdateDelayMs);
+    updateDelayInput.disabled = transientPhases.has(state.phase);
+    const automaticUpdateDelay =
+      state.automaticUpdateDelayMs ??
+      state.releaseUpdateDelayMs ??
+      6 * UPDATE_DELAY_HOUR;
+    updateDelayInput.value = String(
+      Math.min(
+        72,
+        Math.max(0, Math.round(automaticUpdateDelay / UPDATE_DELAY_HOUR)),
+      ),
+    );
+    updateDelayOutput.value = formatAutomaticUpdateDelay(automaticUpdateDelay);
     repairButton.disabled = !state.online || transientPhases.has(state.phase);
     const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     downloadAllGamesButton.disabled =
@@ -657,10 +674,13 @@ const wireProjectSettings = (win) => {
   updateNowButton.addEventListener("click", () => {
     offlineManager.updateNow().catch(() => {});
   });
-  updateDelaySelect.addEventListener("change", () => {
-    const delay = updateDelaySelect.value
-      ? Number(updateDelaySelect.value)
-      : null;
+  updateDelayInput.addEventListener("input", () => {
+    updateDelayOutput.value = formatAutomaticUpdateDelay(
+      Number(updateDelayInput.value) * UPDATE_DELAY_HOUR,
+    );
+  });
+  updateDelayInput.addEventListener("change", () => {
+    const delay = Number(updateDelayInput.value) * UPDATE_DELAY_HOUR;
     offlineManager.setAutomaticUpdateDelay(delay);
     offlineManager
       .checkForUpdates({ applyAutomatically: true })

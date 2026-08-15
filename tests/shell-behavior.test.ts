@@ -133,9 +133,13 @@ test("desktop icons select and launch their actual destinations", async () => {
   ).toEqual(["General", "Games", "Updates", "Recovery"]);
   expect(settings.textContent).toContain("Built-in games for offline play");
   expect(settings.textContent).toContain("Installed games and game files");
-  expect(
-    settings.querySelector('[data-project-setting="update-delay"]'),
-  ).not.toBeNull();
+  const updateDelay = settings.querySelector<HTMLInputElement>(
+    '[data-project-setting="update-delay"]',
+  )!;
+  expect(updateDelay.type).toBe("range");
+  expect(updateDelay.min).toBe("0");
+  expect(updateDelay.max).toBe("72");
+  expect(settings.textContent).not.toContain("Use release default");
   expect(
     settings.querySelector('[data-project-action="update-now"]')?.textContent,
   ).toBe("Update Now");

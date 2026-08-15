@@ -4440,14 +4440,25 @@
 }
 
 .project-update-delay {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   margin: 0 0 8px 20px;
 }
 
-.project-update-delay select {
-  min-width: 150px;
+.project-update-delay output {
+  font-weight: 700;
+}
+
+.project-update-delay input[type="range"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 8px 0 2px;
+}
+
+.project-update-delay > span {
+  display: flex;
+  justify-content: space-between;
+  color: #555;
 }
 
 .project-offline-game-list {

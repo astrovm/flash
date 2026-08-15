@@ -265,6 +265,7 @@
         savedAutomaticUpdateDelay >= 0
           ? savedAutomaticUpdateDelay
           : null,
+      releaseUpdateDelayMs: null,
       downloadBytes: cachedDownloadBytes,
       bundledGameBytes: null,
       downloadMetadataError: false,
@@ -333,6 +334,7 @@
       setState({
         downloadBytes: metadata.offlineBytes,
         bundledGameBytes: metadata.bundledGameBytes,
+        releaseUpdateDelayMs: metadata.stabilityDelayMs,
         downloadMetadataError: false,
       });
     };
