@@ -642,10 +642,12 @@ const wireProjectSettings = (win) => {
     } else {
       gameDownloadProgress.removeAttribute("value");
     }
+    const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     offlineEnabledCheckbox.checked = state.enabled;
     savePlayedGamesCheckbox.checked = state.savePlayedGamesOffline;
     automaticUpdatesCheckbox.checked = state.automaticUpdatesEnabled;
-    offlineEnabledCheckbox.disabled = transientPhases.has(state.phase);
+    offlineEnabledCheckbox.disabled =
+      gameBusy || transientPhases.has(state.phase);
     savePlayedGamesCheckbox.disabled =
       !state.enabled || transientPhases.has(state.phase);
     automaticUpdatesCheckbox.disabled =
@@ -671,7 +673,6 @@ const wireProjectSettings = (win) => {
     updateDelayOutput.value = formatAutomaticUpdateDelay(automaticUpdateDelay);
     repairButton.disabled =
       !state.enabled || !state.online || transientPhases.has(state.phase);
-    const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     downloadAllGamesButton.disabled =
       !state.online ||
       !state.enabled ||

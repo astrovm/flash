@@ -53,6 +53,8 @@ export const PRECACHE_FILE_SUFFIXES = new Set(
   PRECACHE_EXTENSIONS.map((extension) => `.${extension}`),
 );
 const APP_VERSION_PATTERN = /const APP_VERSION = "[^"]+";/g;
+const VERSIONED_SERVICE_WORKER_MARKER =
+  "\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n";
 
 type WorkboxGenerator = typeof generateSW;
 
@@ -1052,9 +1054,9 @@ export async function generateServiceWorker(
     if (name.startsWith("workbox-")) await rm(path);
   }
   if (version) {
-    await cp(
-      serviceWorker,
+    await writeFile(
       join(outputDir, versionedServiceWorkerName(version)),
+      workerSource + VERSIONED_SERVICE_WORKER_MARKER,
     );
   }
   console.log("  - Service worker generated successfully");
@@ -1418,11 +1420,12 @@ export async function validateReleaseOutput(
     throw new Error("Build output has no matching immutable release base URL");
   }
   await validatePrecacheIntegrity(outputDir);
-  if (
-    (
-      await readFile(join(outputDir, versionedServiceWorkerName(version)))
-    ).toString() !== (await readFile(join(outputDir, "sw.js"))).toString()
-  ) {
+  const rootWorker = await readFile(join(outputDir, "sw.js"), "utf8");
+  const versionedWorker = await readFile(
+    join(outputDir, versionedServiceWorkerName(version)),
+    "utf8",
+  );
+  if (versionedWorker !== rootWorker + VERSIONED_SERVICE_WORKER_MARKER) {
     throw new Error(
       "Build output has an inconsistent versioned service worker",
     );

@@ -243,6 +243,23 @@ test("offline-dependent settings are disabled when offline access is off", async
   }
 });
 
+test("offline access cannot be disabled during a game download", async () => {
+  const shell = await login(
+    await loadShell({
+      offlineSettings: { gamePhase: "downloading", activeGameId: "freecell" },
+    }),
+  );
+  const settingsIcon = shell.document.querySelector<HTMLButtonElement>(
+    '[data-desktop-id="__astro-settings"]',
+  )!;
+  settingsIcon.dispatchEvent(new shell.window.MouseEvent("dblclick"));
+  expect(
+    shell.document.querySelector<HTMLInputElement>(
+      '.xp-window[data-game="__astro-settings"] [data-project-setting="offline-enabled"]',
+    )?.disabled,
+  ).toBeTrue();
+});
+
 test("My Computer exposes the native desktop shell menu and opens Properties", async () => {
   const shell = await login(await loadShell());
   const icon = shell.document.querySelector<HTMLButtonElement>(

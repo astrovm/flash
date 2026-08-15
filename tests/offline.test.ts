@@ -452,6 +452,42 @@ test("offline updates", async () => {
     { type: "SKIP_WAITING" },
   ]);
 
+  const manualMigrationRegistration = new Registration({
+    active: new Worker(
+      "activated",
+      manifest.version,
+      `/sw.js?v=${manifest.version}`,
+    ),
+  });
+  const manualMigration = makeEnvironment({
+    registration: manualMigrationRegistration,
+    storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+  });
+  const manualMigrationWorker = new Worker("installed", manifest.version);
+  manualMigration.serviceWorker.register = async (...args) => {
+    manualMigration.serviceWorker.registerCalls.push(args);
+    manualMigrationRegistration.waiting = manualMigrationWorker;
+    return manualMigrationRegistration;
+  };
+  const manualMigrationManager = createManager({
+    currentVersion: manifest.version,
+    environment: manualMigration.environment,
+  });
+  await manualMigrationManager.initialize();
+  assert.strictEqual(
+    manualMigration.serviceWorker.registerCalls[0][0],
+    `/sw.${manifest.version}.js`,
+  );
+  assert.deepStrictEqual(manualMigrationWorker.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+  assert.strictEqual(
+    manualMigration.fetches.some(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ),
+    false,
+  );
+
   await manager.downloadGame("bike-mania");
   assert.strictEqual(
     initial.fetches.find(({ url }) =>
@@ -504,6 +540,60 @@ test("offline updates", async () => {
   await manager.removeAllGames();
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, []);
   assert(initial.deletedCaches.includes(BUNDLED_GAME_CACHE));
+
+  const interrupted = makeEnvironment();
+  const interruptedManager = createManager({
+    currentVersion: manifest.version,
+    environment: interrupted.environment,
+  });
+  await interruptedManager.initialize();
+  const originalInterruptedPut = interrupted.bundledCache.put.bind(
+    interrupted.bundledCache,
+  );
+  let releaseInterruptedPut;
+  let markInterruptedPutStarted;
+  const interruptedPutStarted = new Promise((resolve) => {
+    markInterruptedPutStarted = resolve;
+  });
+  const interruptedPutRelease = new Promise((resolve) => {
+    releaseInterruptedPut = resolve;
+  });
+  interrupted.bundledCache.put = async (...arguments_) => {
+    markInterruptedPutStarted();
+    await interruptedPutRelease;
+    return originalInterruptedPut(...arguments_);
+  };
+  const interruptedDownload = interruptedManager.downloadGame("doom");
+  await interruptedPutStarted;
+  await interruptedManager.setOfflineEnabled(false);
+  releaseInterruptedPut();
+  await assert.rejects(interruptedDownload, /Offline access was disabled/);
+  assert.strictEqual(interruptedManager.getSnapshot().phase, "disabled");
+  assert.strictEqual(interruptedManager.getSnapshot().gamePhase, "idle");
+  assert.strictEqual(interrupted.bundledCache.values.size, 0);
+  assert.deepStrictEqual(
+    JSON.parse(
+      interrupted.storage.getItem("astroFlashOfflineGameRecords") || "{}",
+    ),
+    {},
+  );
+
+  const repaired = makeEnvironment({
+    storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+  });
+  const repairedManager = createManager({
+    currentVersion: manifest.version,
+    environment: repaired.environment,
+  });
+  await repairedManager.initialize();
+  repaired.setRemote({ version: "26.07.30-repair111" });
+  repaired.registration.waiting = new Worker("installed", "26.07.30-repair111");
+  await repairedManager.repair();
+  assert.strictEqual(repaired.registration.unregisterCalls, 1);
+  assert(repaired.deletedCaches.includes("astro-flash-precache"));
+  assert.deepStrictEqual(repaired.registration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
 
   const lowEstimate = makeEnvironment();
   lowEstimate.environment.navigator.storage = {

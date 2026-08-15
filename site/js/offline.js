@@ -369,6 +369,23 @@
 
     const markWaitingUpdate = async (worker, knownMetadata = null) => {
       if (!worker) return;
+      if (
+        applyTargetVersion === currentVersion &&
+        !state.automaticUpdatesEnabled
+      ) {
+        if ((await requestWorkerVersion(worker)) !== currentVersion) {
+          throw new Error("The downloaded system version is inconsistent.");
+        }
+        applyTargetVersion = null;
+        setState({
+          phase: "ready",
+          workerState: "waiting",
+          updateReady: false,
+          error: null,
+        });
+        worker.postMessage({ type: "SKIP_WAITING" });
+        return true;
+      }
       let metadata = knownMetadata;
       try {
         metadata ||= await fetchVersion();
@@ -489,7 +506,7 @@
       });
     };
 
-    const trackRegistration = (nextRegistration) => {
+    const trackRegistration = (nextRegistration, inspectWaiting = true) => {
       registration = nextRegistration;
       if (trackedRegistrations.has(nextRegistration)) return;
       trackedRegistrations.add(nextRegistration);
@@ -503,6 +520,7 @@
         );
       });
       if (
+        inspectWaiting &&
         nextRegistration.waiting &&
         nextRegistration.active &&
         (state.automaticUpdatesEnabled || applyTargetVersion !== null)
@@ -518,7 +536,7 @@
       }
     };
 
-    const registerAndWait = async (targetVersion) => {
+    const registerAndWait = async (targetVersion, inspectWaiting = true) => {
       if (!navigatorObject.serviceWorker) {
         throw new Error(
           "Offline system files are not supported by this browser.",
@@ -528,7 +546,7 @@
         versionedServiceWorkerUrl(targetVersion),
         { scope: "/", updateViaCache: "none" },
       );
-      trackRegistration(nextRegistration);
+      trackRegistration(nextRegistration, inspectWaiting);
       if (nextRegistration.active) {
         setState({
           phase: nextRegistration.waiting ? "updating" : "ready",
@@ -634,6 +652,9 @@
 
     const cacheEntry = async (id, entry, progress) => {
       const cache = await environment.caches.open(bundledCacheName);
+      if (!state.enabled) {
+        throw new Error("Offline access was disabled.");
+      }
       if (
         records[id]?.revision === entry.revision &&
         Array.isArray(records[id].files) &&
@@ -658,16 +679,22 @@
           if (!response.ok) {
             throw new Error(`Offline download failed (${response.status}).`);
           }
+          if (!state.enabled) {
+            throw new Error("Offline access was disabled.");
+          }
           const url = absoluteUrl(file.url);
           await cache.put(url, response);
           written.push(url);
           loaded += file.bytes;
           progress(file.bytes);
         }
+        if (!state.enabled) {
+          throw new Error("Offline access was disabled.");
+        }
       } catch (error) {
         await Promise.all(
           written
-            .filter((url) => !previousUrls.has(url))
+            .filter((url) => !state.enabled || !previousUrls.has(url))
             .map((url) => cache.delete(url).catch(() => {})),
         );
         throw error;
@@ -680,6 +707,12 @@
           .filter((url) => !nextUrls.has(url))
           .map((url) => cache.delete(url).catch(() => {})),
       );
+      if (!state.enabled) {
+        await Promise.all(
+          written.map((url) => cache.delete(url).catch(() => {})),
+        );
+        throw new Error("Offline access was disabled.");
+      }
       records[id] = {
         bytes: entry.bytes,
         files: entry.files.map((file) => file.url),
@@ -738,11 +771,21 @@
         return snapshot();
       } catch (error) {
         const normalized = storagePolicy.normalizeError(error);
-        setState({
-          gamePhase: "error",
-          activeGameId: null,
-          gameError: normalized.message,
-        });
+        setState(
+          state.enabled
+            ? {
+                gamePhase: "error",
+                activeGameId: null,
+                gameError: normalized.message,
+              }
+            : {
+                gamePhase: "idle",
+                activeGameId: null,
+                gameError: null,
+                gameProgressLoaded: 0,
+                gameProgressTotal: 0,
+              },
+        );
         throw normalized;
       }
     };
@@ -1052,7 +1095,7 @@
       await deleteShellCaches();
       registration = null;
       setState({ phase: "starting", updateReady: false });
-      await checkForUpdates();
+      await checkForUpdates({ applyAutomatically: true, bypassDelay: true });
       return snapshot();
     };
 
@@ -1208,17 +1251,31 @@
       try {
         const existingRegistration =
           await navigatorObject.serviceWorker?.getRegistration?.("/");
-        if (existingRegistration) trackRegistration(existingRegistration);
         if (state.automaticUpdatesEnabled) {
+          if (existingRegistration) trackRegistration(existingRegistration);
           try {
             await checkForUpdates({ applyAutomatically: true });
           } catch (error) {
             if (!existingRegistration) throw error;
             setState({ phase: "ready", workerState: "active", error: null });
           }
+        } else if (
+          existingRegistration?.active &&
+          (await requestWorkerVersion(existingRegistration.active)) ===
+            currentVersion &&
+          workerNeedsVersionedUrl(existingRegistration.active, currentVersion)
+        ) {
+          applyTargetVersion = currentVersion;
+          await registerAndWait(currentVersion, false);
+          if (registration.waiting) {
+            await markWaitingUpdate(registration.waiting);
+          } else if (registration.installing) {
+            trackInstallingWorker(registration.installing, true);
+          }
         } else if (!existingRegistration) {
           await registerAndWait(currentVersion);
         } else {
+          trackRegistration(existingRegistration, false);
           setState({ phase: "ready", workerState: "active", error: null });
         }
         await loadGameManifest();

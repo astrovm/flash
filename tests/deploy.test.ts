@@ -608,7 +608,7 @@ describe("Workbox and artifact validation", () => {
       'self.__ASTRO_FLASH_VERSION__="26.07.28-abcdef1"',
     );
     expect(await readFile(join(root, "sw.26.07.28-abcdef1.js"), "utf8")).toBe(
-      await readFile(join(root, "sw.js"), "utf8"),
+      `${await readFile(join(root, "sw.js"), "utf8")}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
     );
   });
 
