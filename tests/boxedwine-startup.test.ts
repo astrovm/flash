@@ -7,7 +7,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Window } from "happy-dom";
 
-import { cleanupShells, flushShell, loadShell } from "./helpers/shell-harness";
+import {
+  cleanupShells,
+  flushShell,
+  loadShell,
+  login,
+} from "./helpers/shell-harness";
 import { buildBoxedWineXpFilesystem } from "../tools/build-boxedwine-xp-filesystem";
 
 const require = createRequire(import.meta.url);
@@ -66,13 +71,13 @@ describe("BoxedWine startup", () => {
     await window.happyDOM.close();
   });
 
-  test("starts shared runtime preparation during the XP boot sequence", async () => {
+  test("does not launch a Windows application during the XP boot sequence", async () => {
     const shell = await loadShell();
     expect(
       shell.window.document.querySelectorAll(
         "iframe.boxedwine-shared-runtime-frame",
       ),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
     expect(shell.document.getElementById("boot-screen").hidden).toBeFalse();
   });
 
@@ -93,7 +98,12 @@ describe("BoxedWine startup", () => {
   });
 
   test("retries an application that exits before its first frame", async () => {
-    const shell = await loadShell();
+    const shell = await login(await loadShell());
+    shell.document.getElementById("start-button").click();
+    shell.document.getElementById("all-programs-button").click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts");
+    flyouts.querySelector('[data-program-id="accessories"]').click();
+    flyouts.querySelector('[data-program-id="calculator"]').click();
     const frame = shell.document.querySelector(
       "iframe.boxedwine-shared-runtime-frame",
     );

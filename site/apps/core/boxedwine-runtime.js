@@ -1,28 +1,9 @@
-import { createBoxedWineWindowSurface } from "./boxedwine-window-bridge.js";
+import { createBoxedWineWindowSurface } from "./boxedwine-window-surface.js";
+import { getBoxedWineApplication } from "./boxedwine-applications.js";
 
 const RUNTIME_ROOT = "vendor/boxedwine/26R1/";
 const ROOT_ARCHIVE = "xp-accessories";
 const NATIVE_TITLE_BAR_HEIGHT = 28;
-const APPLICATION_IDS = Object.freeze([
-  "calculator",
-  "solitaire",
-  "freecell",
-  "spider-solitaire",
-]);
-const APPLICATION_EXECUTABLES = Object.freeze({
-  calculator: "calculator/calc.exe",
-  solitaire: "solitaire/resize-host.exe",
-  freecell: "freecell/resize-host.exe",
-  "spider-solitaire": "spider-solitaire/resize-host.exe",
-});
-const applicationFromTitle = (title = "") => {
-  const normalized = title.trim().toLowerCase();
-  if (normalized.includes("spider")) return "spider-solitaire";
-  if (normalized === "freecell") return "freecell";
-  if (normalized === "solitaire") return "solitaire";
-  if (normalized === "calculator" || normalized === "calc") return "calculator";
-  return "";
-};
 
 let runtime;
 
@@ -35,6 +16,11 @@ const packageRoot = () => {
 };
 
 const runnerUrl = (initialApplicationId) => {
+  const application = getBoxedWineApplication(initialApplicationId);
+  if (!application)
+    throw new TypeError(
+      `Unknown BoxedWine application: ${initialApplicationId}`,
+    );
   const url = new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);
   const desktop = document.getElementById("desktop");
   const screenWidth = desktop?.clientWidth || window.innerWidth;
@@ -46,7 +32,7 @@ const runnerUrl = (initialApplicationId) => {
     appRoot: packageRoot(),
     root: ROOT_ARCHIVE,
     archive: "xp-runtime",
-    executable: APPLICATION_EXECUTABLES[initialApplicationId],
+    executable: application.executable,
     resolution: `${Math.max(320, screenWidth)}x${Math.max(240, screenHeight)}`,
     frameTop: "0",
     sound: "true",
@@ -67,9 +53,10 @@ const createRuntime = (initialApplicationId) => {
   staging.className = "boxedwine-shared-runtime-staging";
   document.body.append(frame, staging);
 
-  const warmWindows = new Map();
+  const runningWindows = new Map();
   const processes = new Map();
   const processApplications = new Map();
+  const windowApplications = new Map();
   const launchingApplications = new Set([initialApplicationId]);
   const pendingFirstFrames = new Map();
   const pendingWindowDestructions = new Set();
@@ -80,12 +67,12 @@ const createRuntime = (initialApplicationId) => {
   let recoveryAttempt = 0;
   let recoveryScheduled = false;
   let runtimeTimer = 0;
-  let warmTimer = 0;
+  let launchTimer = 0;
   let runtimeReady = false;
-  let preparationComplete = false;
+  let mountedReadinessComplete = false;
   let started = false;
-  let resolvePrepared;
-  let rejectPrepared;
+  let resolveMountedReady;
+  let rejectMountedReady;
   let resolveInitialized;
   let rejectInitialized;
   let initializationComplete = false;
@@ -94,15 +81,15 @@ const createRuntime = (initialApplicationId) => {
     rejectInitialized = reject;
   });
   initialized.catch(() => {});
-  const prepared = new Promise((resolve, reject) => {
-    resolvePrepared = resolve;
-    rejectPrepared = reject;
+  const mountedReady = new Promise((resolve, reject) => {
+    resolveMountedReady = resolve;
+    rejectMountedReady = reject;
   });
-  prepared.catch(() => {});
+  mountedReady.catch(() => {});
 
   const attachMount = (appId) => {
     const mounted = mounts.get(appId);
-    const windowId = warmWindows.get(appId);
+    const windowId = runningWindows.get(appId);
     if (!mounted || !windowId) return false;
     const canvas = surfaces.getCanvas(windowId);
     if (!canvas) return false;
@@ -138,7 +125,7 @@ const createRuntime = (initialApplicationId) => {
       appId,
       window.setTimeout(() => {
         pendingNativeMinimizes.delete(appId);
-        if (warmWindows.get(appId) === windowId)
+        if (runningWindows.get(appId) === windowId)
           mounts.get(appId)?.context.applyNativeMinimize();
       }, 100),
     );
@@ -156,39 +143,43 @@ const createRuntime = (initialApplicationId) => {
     );
   };
 
-  const updatePreparation = () => {
-    document.documentElement.dataset.boxedwineWarmApplications =
-      APPLICATION_IDS.filter((appId) => warmWindows.has(appId)).join(",");
-    if (APPLICATION_IDS.every((appId) => warmWindows.has(appId))) {
-      window.clearTimeout(warmTimer);
+  const updateMountedReadiness = () => {
+    document.documentElement.dataset.boxedwineRunningApplications = [
+      ...runningWindows.keys(),
+    ].join(",");
+    if (
+      mounts.size > 0 &&
+      [...mounts.keys()].every((appId) => runningWindows.has(appId))
+    ) {
+      window.clearTimeout(launchTimer);
       recoveryAttempt = 0;
-      document.documentElement.dataset.boxedwineApplicationsReady = "true";
+      document.documentElement.dataset.boxedwineMountedApplicationsReady =
+        "true";
       delete document.documentElement.dataset.boxedwineRuntimeError;
       delete document.documentElement.dataset.boxedwineRuntimeRecovery;
-      if (!preparationComplete) {
-        preparationComplete = true;
-        resolvePrepared();
+      if (!mountedReadinessComplete) {
+        mountedReadinessComplete = true;
+        resolveMountedReady();
       }
     }
   };
 
-  const ensureWarmApplications = () => {
+  const ensureMountedApplications = () => {
     if (!runtimeReady) return;
-    if (!APPLICATION_IDS.every((appId) => warmWindows.has(appId))) {
-      window.clearTimeout(warmTimer);
-      warmTimer = window.setTimeout(
+    const missingApplications = [...mounts.keys()].filter(
+      (appId) => !runningWindows.has(appId) && !processes.has(appId),
+    );
+    if (missingApplications.length > 0) {
+      window.clearTimeout(launchTimer);
+      launchTimer = window.setTimeout(
         () => recoverRuntime("application-warmup-timeout"),
         120000,
       );
     }
-    const launchOrder = [
-      ...APPLICATION_IDS.filter((appId) => mounts.has(appId)),
-      ...APPLICATION_IDS,
-    ];
     if (launchingApplications.size > 0) return;
-    for (const appId of launchOrder) {
+    for (const appId of missingApplications) {
       if (
-        warmWindows.has(appId) ||
+        runningWindows.has(appId) ||
         launchingApplications.has(appId) ||
         processes.has(appId)
       )
@@ -197,14 +188,22 @@ const createRuntime = (initialApplicationId) => {
       postProcessRequest("boxedwine-launch-process", appId);
       break;
     }
-    updatePreparation();
+    updateMountedReadiness();
   };
 
   const bindFirstFrame = (appId, windowId, processId = 0) => {
-    if (!appId || warmWindows.get(appId) === windowId) return;
+    if (!appId || runningWindows.get(appId) === windowId) return;
+    if (!mounts.has(appId)) {
+      launchingApplications.delete(appId);
+      surfaces.remove(windowId);
+      if (processId)
+        postProcessRequest("boxedwine-terminate-process", appId, processId);
+      ensureMountedApplications();
+      return;
+    }
     const replacesDestroyedWindow = pendingWindowDestructions.has(appId);
     cancelNativeMinimize(appId);
-    const currentWindowId = warmWindows.get(appId);
+    const currentWindowId = runningWindows.get(appId);
     if (currentWindowId) {
       const currentProcessId = Number(
         surfaces.getCanvas(currentWindowId)?.dataset.boxedwineProcess || 0,
@@ -213,7 +212,8 @@ const createRuntime = (initialApplicationId) => {
       surfaces.hide(currentWindowId);
     }
     cancelWindowDestruction(appId);
-    warmWindows.set(appId, windowId);
+    runningWindows.set(appId, windowId);
+    windowApplications.set(windowId, appId);
     if (processId) {
       const launchProcessId = processes.get(appId);
       if (launchProcessId && launchProcessId !== processId)
@@ -228,8 +228,8 @@ const createRuntime = (initialApplicationId) => {
     attachMount(appId);
     if (replacesDestroyedWindow)
       mounts.get(appId)?.context.applyNativeRestore();
-    updatePreparation();
-    ensureWarmApplications();
+    updateMountedReadiness();
+    ensureMountedApplications();
   };
 
   const surfaces = createBoxedWineWindowSurface({
@@ -237,20 +237,17 @@ const createRuntime = (initialApplicationId) => {
     runtimeWindow: () => frame.contentWindow,
     origin: location.origin,
     initiallyVisible: false,
-    onFirstFrame({ id, appId: nativeAppId, processId, title }) {
+    onFirstFrame({ id, appId: nativeAppId, processId }) {
       const appId =
         nativeAppId ||
         processApplications.get(processId) ||
-        applicationFromTitle(title) ||
         launchingApplications.values().next().value ||
         "";
       if (appId) bindFirstFrame(appId, id, processId);
       else if (processId) pendingFirstFrames.set(processId, id);
     },
     onOwnedWindow(detail) {
-      const appId = APPLICATION_IDS.find(
-        (candidate) => warmWindows.get(candidate) === detail.topId,
-      );
+      const appId = windowApplications.get(detail.topId);
       const mounted = appId ? mounts.get(appId) : null;
       if (!mounted) return;
       if (detail.type === "hidden") {
@@ -264,9 +261,7 @@ const createRuntime = (initialApplicationId) => {
       });
     },
     onLifecycle(detail) {
-      const appId = APPLICATION_IDS.find(
-        (candidate) => warmWindows.get(candidate) === detail.topId,
-      );
+      const appId = windowApplications.get(detail.topId);
       if (!appId) return;
       const mounted = mounts.get(appId);
       if (
@@ -291,6 +286,7 @@ const createRuntime = (initialApplicationId) => {
       ) {
         mounted?.context.applyNativeFocus();
       } else if (detail.type === "destroyed" && detail.id === detail.topId) {
+        windowApplications.delete(detail.topId);
         cancelNativeMinimize(appId);
         if (mounted) {
           const status = document.createElement("span");
@@ -298,8 +294,9 @@ const createRuntime = (initialApplicationId) => {
           status.textContent = "Updating Windows application…";
           mounted.element.replaceChildren(status);
         }
-        warmWindows.delete(appId);
-        delete document.documentElement.dataset.boxedwineApplicationsReady;
+        runningWindows.delete(appId);
+        delete document.documentElement.dataset
+          .boxedwineMountedApplicationsReady;
         pendingWindowDestructions.add(appId);
       }
     },
@@ -319,15 +316,15 @@ const createRuntime = (initialApplicationId) => {
 
   const failRuntime = (reason) => {
     window.clearTimeout(runtimeTimer);
-    window.clearTimeout(warmTimer);
+    window.clearTimeout(launchTimer);
     document.documentElement.dataset.boxedwineRuntimeState = "failed";
     document.documentElement.dataset.boxedwineRuntimeError = reason;
     const instruction = document.querySelector(".welcome-instruction");
     if (instruction)
       instruction.textContent =
         "Windows applications could not start. Reload this page to try again.";
-    if (!preparationComplete)
-      rejectPrepared(
+    if (!mountedReadinessComplete)
+      rejectMountedReady(
         new Error("The Windows application runtime did not start"),
       );
     if (!initializationComplete)
@@ -338,7 +335,11 @@ const createRuntime = (initialApplicationId) => {
 
   const startRuntimeAttempt = () => {
     recoveryScheduled = false;
-    const url = new URL(runnerUrl(initialApplicationId));
+    const startupApplicationId =
+      mounts.keys().next().value || initialApplicationId;
+    launchingApplications.clear();
+    launchingApplications.add(startupApplicationId);
+    const url = new URL(runnerUrl(startupApplicationId));
     if (recoveryAttempt) url.searchParams.set("recovery", recoveryAttempt);
     frame.src = url.href;
     window.clearTimeout(runtimeTimer);
@@ -350,6 +351,15 @@ const createRuntime = (initialApplicationId) => {
 
   const recoverRuntime = (reason) => {
     if (recoveryScheduled) return;
+    if (mounts.size === 0) {
+      runtimeReady = false;
+      started = false;
+      frame.src = "about:blank";
+      surfaces.reset();
+      document.documentElement.dataset.boxedwineRuntimeState = "idle";
+      document.documentElement.dataset.boxedwineRuntimeError = reason;
+      return;
+    }
     if (recoveryAttempt >= 2) {
       failRuntime(reason);
       return;
@@ -357,21 +367,21 @@ const createRuntime = (initialApplicationId) => {
     recoveryAttempt += 1;
     recoveryScheduled = true;
     window.clearTimeout(runtimeTimer);
-    window.clearTimeout(warmTimer);
+    window.clearTimeout(launchTimer);
     runtimeReady = false;
     document.documentElement.dataset.boxedwineRuntimeState = "recovering";
     document.documentElement.dataset.boxedwineRuntimeRecovery = `${recoveryAttempt}:${reason}`;
-    delete document.documentElement.dataset.boxedwineApplicationsReady;
-    warmWindows.clear();
+    delete document.documentElement.dataset.boxedwineMountedApplicationsReady;
+    runningWindows.clear();
     processes.clear();
     processApplications.clear();
+    windowApplications.clear();
     pendingFirstFrames.clear();
     pendingWindowDestructions.clear();
     for (const appId of pendingNativeMinimizes.keys())
       cancelNativeMinimize(appId);
     launchFailures.clear();
     launchingApplications.clear();
-    launchingApplications.add(initialApplicationId);
     surfaces.reset();
     showLoadingState();
     window.setTimeout(startRuntimeAttempt, 250);
@@ -391,16 +401,28 @@ const createRuntime = (initialApplicationId) => {
         initializationComplete = true;
         resolveInitialized();
       }
-      ensureWarmApplications();
+      ensureMountedApplications();
     } else if (event.data?.type === "boxedwine-runtime-failed") {
       recoverRuntime(event.data.reason || "runtime-failed");
     } else if (
       event.data?.type === "boxedwine-process-launched" &&
-      APPLICATION_IDS.includes(event.data.appId) &&
+      getBoxedWineApplication(event.data.appId) &&
       !event.data.error
     ) {
       processes.set(event.data.appId, event.data.processId);
       processApplications.set(event.data.processId, event.data.appId);
+      if (!mounts.has(event.data.appId)) {
+        launchingApplications.delete(event.data.appId);
+        processes.delete(event.data.appId);
+        processApplications.delete(event.data.processId);
+        postProcessRequest(
+          "boxedwine-terminate-process",
+          event.data.appId,
+          event.data.processId,
+        );
+        ensureMountedApplications();
+        return;
+      }
       document.documentElement.dataset.boxedwineLastProcess = `${event.data.appId}:${event.data.processId}`;
       const pendingWindowId = pendingFirstFrames.get(event.data.processId);
       if (pendingWindowId) {
@@ -409,52 +431,54 @@ const createRuntime = (initialApplicationId) => {
       }
     } else if (
       event.data?.type === "boxedwine-process-launched" &&
-      APPLICATION_IDS.includes(event.data.appId) &&
+      getBoxedWineApplication(event.data.appId) &&
       event.data.error
     ) {
       launchingApplications.delete(event.data.appId);
       const failures = (launchFailures.get(event.data.appId) || 0) + 1;
       launchFailures.set(event.data.appId, failures);
       document.documentElement.dataset.boxedwineRuntimeError = `launch:${event.data.appId}:${event.data.error}`;
-      if (failures < 3) window.setTimeout(ensureWarmApplications, 250);
+      if (!mounts.has(event.data.appId)) ensureMountedApplications();
+      else if (failures < 3) window.setTimeout(ensureMountedApplications, 250);
       else recoverRuntime(`launch:${event.data.appId}:${event.data.error}`);
     } else if (
       event.data?.type === "boxedwine-process-exited" &&
-      APPLICATION_IDS.includes(event.data.appId) &&
+      getBoxedWineApplication(event.data.appId) &&
       processes.get(event.data.appId) === event.data.processId
     ) {
       const appId = event.data.appId;
       cancelWindowDestruction(appId);
       cancelNativeMinimize(appId);
       const launchFailed = launchingApplications.delete(appId);
-      const windowId = warmWindows.get(appId);
+      const windowId = runningWindows.get(appId);
       const mounted = mounts.get(appId);
-      warmWindows.delete(appId);
+      runningWindows.delete(appId);
+      if (windowId) windowApplications.delete(windowId);
       processes.delete(appId);
       processApplications.delete(event.data.processId);
       document.documentElement.dataset.boxedwineLastExit = `${appId}:${event.data.processId}`;
       if (windowId) surfaces.remove(windowId);
-      if (mounted) {
-        mounts.delete(appId);
-        mounted.context.applyNativeClose();
-      }
-      delete document.documentElement.dataset.boxedwineApplicationsReady;
-      if (launchFailed) {
+      delete document.documentElement.dataset.boxedwineMountedApplicationsReady;
+      if (launchFailed && mounted) {
         const failures = (launchFailures.get(appId) || 0) + 1;
         launchFailures.set(appId, failures);
         document.documentElement.dataset.boxedwineRuntimeError = `launch:${appId}:process-exited`;
-        if (failures < 3) window.setTimeout(ensureWarmApplications, 250);
+        if (failures < 3) window.setTimeout(ensureMountedApplications, 250);
         else recoverRuntime(`launch:${appId}:process-exited`);
       } else {
-        ensureWarmApplications();
+        if (mounted) {
+          mounts.delete(appId);
+          mounted.context.applyNativeClose();
+        }
+        ensureMountedApplications();
       }
     } else if (
       event.data?.type === "boxedwine-process-terminated" &&
-      APPLICATION_IDS.includes(event.data.appId) &&
+      getBoxedWineApplication(event.data.appId) &&
       !event.data.error
     ) {
       document.documentElement.dataset.boxedwineLastTermination = `${event.data.appId}:${event.data.processId}`;
-      ensureWarmApplications();
+      ensureMountedApplications();
     }
   };
   window.addEventListener("message", onMessage);
@@ -464,6 +488,8 @@ const createRuntime = (initialApplicationId) => {
 
   return {
     mount(appId, context) {
+      if (!getBoxedWineApplication(appId))
+        throw new TypeError(`Unknown BoxedWine application: ${appId}`);
       const element = document.createElement("div");
       element.className = "window-content boxedwine-shared-app-host";
       const status = document.createElement("span");
@@ -475,7 +501,7 @@ const createRuntime = (initialApplicationId) => {
       let pendingWindowAction = "bounds";
       const syncNativeWindow = () => {
         resizeFrame = 0;
-        const windowId = warmWindows.get(appId);
+        const windowId = runningWindows.get(appId);
         const width = element.clientWidth;
         const height = element.clientHeight;
         if (!windowId || width <= 0 || height <= 0) return false;
@@ -493,7 +519,7 @@ const createRuntime = (initialApplicationId) => {
         if (action !== "bounds") pendingWindowAction = action;
         if (!resizeFrame)
           resizeFrame = window.requestAnimationFrame(syncNativeWindow);
-        return Boolean(warmWindows.get(appId));
+        return Boolean(runningWindows.get(appId));
       };
       mounts.get(appId).scheduleNativeWindow = scheduleNativeWindow;
       const resizeObserver = new window.ResizeObserver(() => {
@@ -502,18 +528,19 @@ const createRuntime = (initialApplicationId) => {
       resizeObserver.observe(element);
       this.start();
       attachMount(appId);
-      if (!warmWindows.has(appId)) {
-        delete document.documentElement.dataset.boxedwineApplicationsReady;
-        ensureWarmApplications();
+      if (!runningWindows.has(appId)) {
+        delete document.documentElement.dataset
+          .boxedwineMountedApplicationsReady;
+        ensureMountedApplications();
       }
       return {
         element,
         focus() {
-          const windowId = warmWindows.get(appId);
+          const windowId = runningWindows.get(appId);
           if (windowId) surfaces.activate(windowId);
         },
         minimize() {
-          const windowId = warmWindows.get(appId);
+          const windowId = runningWindows.get(appId);
           return windowId ? surfaces.command(windowId, "minimize") : false;
         },
         maximize() {
@@ -530,15 +557,17 @@ const createRuntime = (initialApplicationId) => {
           resizeObserver.disconnect();
           if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
           context.clearNativeOwnedWindows();
-          const windowId = warmWindows.get(appId);
+          const windowId = runningWindows.get(appId);
           const processId = processes.get(appId);
           if (windowId) {
             surfaces.detach(windowId);
             surfaces.command(windowId, "close");
           }
-          warmWindows.delete(appId);
+          runningWindows.delete(appId);
+          if (windowId) windowApplications.delete(windowId);
           processes.delete(appId);
-          delete document.documentElement.dataset.boxedwineApplicationsReady;
+          delete document.documentElement.dataset
+            .boxedwineMountedApplicationsReady;
           if (processId) {
             processApplications.delete(processId);
             window.setTimeout(
@@ -561,7 +590,7 @@ const createRuntime = (initialApplicationId) => {
     },
     applicationsReady() {
       this.start();
-      return prepared;
+      return mountedReady;
     },
     start() {
       if (started) return initialized;

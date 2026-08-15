@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 import { unzipSync, zipSync, type Zippable } from "fflate";
 
+import { boxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
+
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = join(
   projectRoot,
@@ -19,31 +21,12 @@ const archiveFiles = async (path: string) =>
 export const buildBoxedWineRuntimeArchive = async ({
   outputPath = join(outputDirectory, "xp-runtime.zip"),
 } = {}) => {
-  const packages = {
-    calculator: await archiveFiles(
-      join(projectRoot, "site", "iframe", "calculator", "xp-calculator.zip"),
-    ),
-    solitaire: await archiveFiles(
-      join(projectRoot, "site", "iframe", "solitaire", "xp-solitaire.zip"),
-    ),
-    freecell: await archiveFiles(
-      join(projectRoot, "site", "iframe", "freecell", "xp-freecell.zip"),
-    ),
-    "spider-solitaire": await archiveFiles(
-      join(
-        projectRoot,
-        "site",
-        "iframe",
-        "spider-solitaire",
-        "xp-spider-solitaire.zip",
-      ),
-    ),
-  };
   const files: Zippable = {};
-  for (const [application, entries] of Object.entries(packages)) {
+  for (const { id, packagePath } of boxedWineApplications) {
+    const entries = await archiveFiles(join(projectRoot, packagePath));
     for (const [name, bytes] of Object.entries(entries)) {
       if (name.endsWith("/") || name === "window-host.exe") continue;
-      files[`${application}/${name}`] = [bytes, { mtime: fixedTime }];
+      files[`${id}/${name}`] = [bytes, { mtime: fixedTime }];
     }
   }
   const output = zipSync(files, { level: 9, mtime: fixedTime });

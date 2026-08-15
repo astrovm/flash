@@ -1,10 +1,8 @@
 // @ts-nocheck -- This test uses a minimal browser event contract.
 import { describe, expect, test } from "bun:test";
 
-import {
-  createBoxedWineWindowSurface,
-  installBoxedWineWindowBridge,
-} from "../site/apps/core/boxedwine-window-bridge.js";
+import { installBoxedWineWindowBridge } from "../site/apps/core/boxedwine-window-bridge.js";
+import { createBoxedWineWindowSurface } from "../site/apps/core/boxedwine-window-surface.js";
 
 describe("BoxedWine window bridge", () => {
   test("forwards separate window frames and routes pointer input", () => {
@@ -65,13 +63,20 @@ describe("BoxedWine window bridge", () => {
       },
     };
     const dispose = installBoxedWineWindowBridge(hostWindow, module);
-    const rgba = new Uint8ClampedArray([1, 2, 3, 255]);
-
+    const legacyPixels = new Uint8ClampedArray([1, 2, 3, 4]);
     listeners.get("boxedwine-native-window")({
-      detail: { type: "frame", id: 41, width: 1, height: 1, rgba },
+      detail: {
+        type: "frame",
+        id: 41,
+        width: 1,
+        height: 1,
+        generation: 1,
+        rgba: legacyPixels,
+      },
     });
     expect(messages[0].message.window.id).toBe(41);
-    expect(messages[0].transfer).toEqual([rgba.buffer]);
+    expect(messages[0].message.window).not.toHaveProperty("rgba");
+    expect(messages[0].transfer).toEqual([]);
 
     listeners.get("message")({
       source: parent,
@@ -215,6 +220,10 @@ describe("BoxedWine window bridge", () => {
     const ownedWindows = [];
     const firstFrames = [];
     const canvases = [];
+    const nativeFrames = new Map();
+    const frameSubscriptions = [];
+    const animationFrames = [];
+    let frameReads = 0;
 
     const makeCanvas = () => {
       const listeners = new Map();
@@ -223,6 +232,7 @@ describe("BoxedWine window bridge", () => {
         dataset: {},
         style: {},
         hidden: false,
+        clears: 0,
         width: 0,
         height: 0,
         parentElement: null,
@@ -256,7 +266,9 @@ describe("BoxedWine window bridge", () => {
         },
         getContext() {
           return {
-            clearRect() {},
+            clearRect() {
+              canvas.clears += 1;
+            },
             drawImage(...args) {
               draws.push(args);
             },
@@ -298,6 +310,16 @@ describe("BoxedWine window bridge", () => {
       },
     };
     const runtimeWindow = {
+      BoxedWineFrames: {
+        read(id, previousGeneration) {
+          frameReads += 1;
+          const frame = nativeFrames.get(id);
+          return frame?.generation === previousGeneration ? null : frame;
+        },
+        setProcessVisible(processId, visible) {
+          frameSubscriptions.push({ processId, visible });
+        },
+      },
       postMessage(message, origin) {
         runtimeMessages.push({ message, origin });
       },
@@ -309,6 +331,11 @@ describe("BoxedWine window bridge", () => {
       removeEventListener(type) {
         windowListeners.delete(type);
       },
+      requestAnimationFrame(callback) {
+        animationFrames.push(callback);
+        return animationFrames.length;
+      },
+      cancelAnimationFrame() {},
     };
     const fakeDocument = {
       documentElement: { dataset: {} },
@@ -338,12 +365,27 @@ describe("BoxedWine window bridge", () => {
         onLifecycle: (detail) => lifecycle.push(detail),
         onOwnedWindow: (detail) => ownedWindows.push(detail),
       });
-      const send = (window) =>
+      const send = (window) => {
+        if (window.type === "frame") {
+          const generation = (nativeFrames.get(window.id)?.generation || 0) + 1;
+          nativeFrames.set(window.id, {
+            generation,
+            width: window.width,
+            height: window.height,
+            rgba: window.rgba,
+          });
+          window = { ...window, generation };
+          delete window.rgba;
+        }
         windowListeners.get("message")({
           source: runtimeWindow,
           origin: "https://flash.example",
           data: { type: "boxedwine-native-window", window },
         });
+      };
+      const flushRenders = () => {
+        while (animationFrames.length) animationFrames.shift()();
+      };
 
       send({ type: "created", id: 1, parentId: 0, processId: 0 });
       send({
@@ -366,6 +408,7 @@ describe("BoxedWine window bridge", () => {
         height: 260,
         rgba: new Uint8ClampedArray(260 * 260 * 4),
       });
+      flushRenders();
       expect(firstFrames).toHaveLength(1);
       expect(firstFrames[0]).toMatchObject({
         id: 41,
@@ -385,6 +428,46 @@ describe("BoxedWine window bridge", () => {
       expect(canvas.width).toBe(260);
       expect(canvas.height).toBe(232);
       expect(canvas.hidden).toBeFalse();
+      flushRenders();
+
+      const readsBeforeCoalescing = frameReads;
+      const clearsBeforeCoalescing = canvas.clears;
+      send({
+        type: "frame",
+        id: 41,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      send({
+        type: "frame",
+        id: 41,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      expect(animationFrames).toHaveLength(1);
+      flushRenders();
+      expect(frameReads - readsBeforeCoalescing).toBe(1);
+      expect(canvas.clears - clearsBeforeCoalescing).toBe(1);
+
+      surface.hide(41);
+      const readsBeforeHiddenFrame = frameReads;
+      send({
+        type: "frame",
+        id: 41,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      flushRenders();
+      expect(frameReads).toBe(readsBeforeHiddenFrame);
+      expect(frameSubscriptions.at(-1)).toEqual({
+        processId: 9,
+        visible: false,
+      });
+      expect(surface.show(41)).toBeTrue();
+      flushRenders();
 
       send({
         type: "created",
@@ -404,6 +487,7 @@ describe("BoxedWine window bridge", () => {
         height: 40,
         rgba: new Uint8ClampedArray(80 * 40 * 4),
       });
+      flushRenders();
       send({
         type: "created",
         id: 43,
@@ -423,6 +507,7 @@ describe("BoxedWine window bridge", () => {
         height: 60,
         rgba: new Uint8ClampedArray(100 * 60 * 4),
       });
+      flushRenders();
       expect(canvas.draws.length).toBeGreaterThanOrEqual(3);
       expect(
         canvas.draws.findLast(([drawn]) => drawn.width === 100)?.slice(1),
@@ -452,6 +537,7 @@ describe("BoxedWine window bridge", () => {
         height: 336,
         rgba: new Uint8ClampedArray(400 * 336 * 4),
       });
+      flushRenders();
       const ownedWindow = ownedWindows.findLast(
         (event) => event.type === "shown" && event.id === 44,
       );
