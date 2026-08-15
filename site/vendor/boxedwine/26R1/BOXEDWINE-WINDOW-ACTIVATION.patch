@@ -1,6 +1,8 @@
+diff --git a/source/sdl/emscripten/mainloop.cpp b/source/sdl/emscripten/mainloop.cpp
+index daf345d..131075c 100644
 --- a/source/sdl/emscripten/mainloop.cpp
 +++ b/source/sdl/emscripten/mainloop.cpp
-@@ -20,6 +20,198 @@
+@@ -20,6 +20,216 @@
  #include <emscripten/emscripten.h>
  #include "boxedwine.h"
  #include "knativesystem.h"
@@ -8,18 +10,26 @@
 +
 +static U32 pendingScreenWidth;
 +static U32 pendingScreenHeight;
-+static U32 pendingApplication;
++static BString pendingApplication;
 +static U32 pendingTermination;
 +static U32 launchResult;
 +
-+static const char* boxedwineApplicationPath(U32 application) {
-+    switch (application) {
-+    case 1: return "C:\\files\\calculator\\calc.exe";
-+    case 2: return "C:\\files\\solitaire\\resize-host.exe";
-+    case 3: return "C:\\files\\freecell\\resize-host.exe";
-+    case 4: return "C:\\files\\spider-solitaire\\resize-host.exe";
-+    default: return nullptr;
++static bool isValidApplicationPath(const char* path, U32 length) {
++    if (!path || !length || length > 240) return false;
++    if (path[0] == '/' || path[0] == '\\') return false;
++    bool previousDot = false;
++    for (U32 i = 0; i < length; ++i) {
++        const char value = path[i];
++        const bool valid = (value >= 'a' && value <= 'z') ||
++            (value >= 'A' && value <= 'Z') || (value >= '0' && value <= '9') ||
++            value == '/' || value == '-' || value == '_' || value == ' ' || value == '.';
++        if (!valid || (value == '.' && previousDot)) return false;
++        previousDot = value == '.';
 +    }
++    return length > 4 && path[length - 4] == '.' &&
++        (path[length - 3] == 'e' || path[length - 3] == 'E') &&
++        (path[length - 2] == 'x' || path[length - 2] == 'X') &&
++        (path[length - 1] == 'e' || path[length - 1] == 'E');
 +}
 +
 +EM_JS(void, boxedwineProcessEvent, (const char* type, U32 processId, const char* executable), {
@@ -28,10 +38,13 @@
 +    }));
 +});
 +
-+extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_process(U32 application) {
-+    if (!boxedwineApplicationPath(application) || pendingApplication) return 0;
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_process(const char* path, U32 length) {
++    if (!isValidApplicationPath(path, length) || pendingApplication.length()) return 0;
 +    launchResult = 0;
-+    pendingApplication = application;
++    pendingApplication = B("C:\\files\\");
++    for (U32 i = 0; i < length; ++i) {
++        pendingApplication.append(path[i] == '/' ? '\\' : path[i]);
++    }
 +    return 1;
 +}
 +
@@ -56,10 +69,10 @@
 +        if (process && !process->isTerminated()) process->signalProcess(9);
 +        pendingTermination = 0;
 +    }
-+    if (!pendingApplication) return;
-+    const char* executable = boxedwineApplicationPath(pendingApplication);
-+    pendingApplication = 0;
-+    std::vector<BString> args = {B("/bin/wine"), BString::copy(executable)};
++    if (!pendingApplication.length()) return;
++    BString executable = pendingApplication;
++    pendingApplication = BString::empty;
++    std::vector<BString> args = {B("/bin/wine"), executable};
 +    std::vector<BString> environment = {
 +        B("HOME=/home/username"), B("LOGNAME=username"), B("USERNAME=username"),
 +        B("USER=username"), B("PWD=/home/username/.wine/dosdevices/c:/files"),
@@ -70,7 +83,7 @@
 +        B("/home/username/.wine/dosdevices/c:/files"), args, environment,
 +        UID, GID, UID, GID);
 +    launchResult = thread ? process->id : 0xffffffff;
-+    if (thread) boxedwineProcessEvent("started", process->id, executable);
++    if (thread) boxedwineProcessEvent("started", process->id, executable.c_str());
 +}
 +extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_resize_screen(U32 width, U32 height) {
 +    pendingScreenWidth = width;
@@ -203,10 +216,10 @@
 +    pendingScreenWidth = 0;
 +    pendingScreenHeight = 0;
 +}
-
+ 
  #ifdef BOXEDWINE_MULTI_THREADED
  #include "knativethread.h"
-@@ -52,6 +244,8 @@
+@@ -52,6 +262,8 @@ static BString getSize(int pages)
  extern int allocatedRamPages;
  void mainloop() {
      isMainThread = true;
@@ -215,7 +228,7 @@
          U32 t = KSystem::getMilliesSinceStart();
          U32 nextTimer = getNextTimer();
          if (nextTimer == 0) {
-@@ -93,6 +287,8 @@ bool isMainthread() {
+@@ -93,6 +305,8 @@ bool isMainthread() {
  
  void mainloop() {
      U64 startTime = KSystem::getMicroCounter();

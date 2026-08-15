@@ -28,8 +28,7 @@ const sha256 = (content: Uint8Array) =>
 
 afterEach(cleanupShells);
 
-const launchCalculator = async () => {
-  const shell = await login(await loadShell());
+const openCalculator = (shell) => {
   shell.document.getElementById("start-button").click();
   shell.document.getElementById("all-programs-button").click();
   const flyouts = shell.document.getElementById("start-menu-flyouts");
@@ -38,6 +37,12 @@ const launchCalculator = async () => {
   const calculator = shell.document.querySelector(
     '.xp-window[data-game="__calculator"]',
   );
+  return calculator;
+};
+
+const launchCalculator = async () => {
+  const shell = await login(await loadShell());
+  const calculator = openCalculator(shell);
   return { shell, calculator };
 };
 
@@ -61,6 +66,14 @@ const showNativeCalculator = (
     ".boxedwine-shared-runtime-frame",
   ).contentWindow,
 ) => {
+  runtimeWindow.__boxedwineTestFrames ||= new Map();
+  runtimeWindow.BoxedWineFrames ||= {
+    read(windowId, previousGeneration) {
+      const frame = runtimeWindow.__boxedwineTestFrames.get(windowId);
+      return frame?.generation === previousGeneration ? null : frame;
+    },
+    setProcessVisible() {},
+  };
   sendNativeWindow(
     shell,
     {
@@ -81,15 +94,17 @@ const showNativeCalculator = (
     runtimeWindow,
   );
   sendNativeWindow(shell, { type: "mapped", id }, runtimeWindow);
+  const generation =
+    (runtimeWindow.__boxedwineTestFrames.get(id)?.generation || 0) + 1;
+  runtimeWindow.__boxedwineTestFrames.set(id, {
+    generation,
+    width: 260,
+    height: 260,
+    rgba: new Uint8ClampedArray(260 * 260 * 4),
+  });
   sendNativeWindow(
     shell,
-    {
-      type: "frame",
-      id,
-      width: 260,
-      height: 260,
-      rgba: new Uint8ClampedArray(260 * 260 * 4),
-    },
+    { type: "frame", id, width: 260, height: 260, generation },
     runtimeWindow,
   );
   return runtimeWindow;
@@ -137,11 +152,85 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     ).toHaveLength(1);
   });
 
-  test("distinguishes native minimize from a replacement Calculator window", async () => {
-    const { shell, calculator } = await launchCalculator();
+  test("keeps the runtime alive without relaunching a closed application", async () => {
+    const shell = await login(await loadShell());
+    const addFrameListener =
+      shell.window.HTMLIFrameElement.prototype.addEventListener;
+    shell.window.HTMLIFrameElement.prototype.addEventListener = function (
+      type,
+      ...arguments_
+    ) {
+      if (type === "error") return;
+      return addFrameListener.call(this, type, ...arguments_);
+    };
+    const calculator = openCalculator(shell);
+    const runtimeWindow = shell.document.querySelector(
+      ".boxedwine-shared-runtime-frame",
+    ).contentWindow;
+    const requests = [];
+    runtimeWindow.postMessage = (message) => requests.push(message);
     const nativeSetTimeout = shell.window.setTimeout.bind(shell.window);
-    shell.window.setTimeout = (callback, delay, ...arguments_) =>
-      nativeSetTimeout(callback, delay === 100 ? 0 : delay, ...arguments_);
+    shell.window.setTimeout = (callback, delay, ...arguments_) => {
+      if (delay === 500) {
+        callback(...arguments_);
+        return -1;
+      }
+      return nativeSetTimeout(callback, delay, ...arguments_);
+    };
+    showNativeCalculator(shell, 41, runtimeWindow);
+
+    calculator.querySelector(".close-btn").click();
+    expect(requests).toContainEqual(
+      expect.objectContaining({
+        type: "boxedwine-terminate-process",
+        appId: "calculator",
+        processId: 10,
+      }),
+    );
+
+    const event = new shell.window.Event("message");
+    Object.defineProperties(event, {
+      data: {
+        value: {
+          type: "boxedwine-process-terminated",
+          appId: "calculator",
+          processId: 10,
+          error: 0,
+        },
+      },
+      origin: { value: shell.window.location.origin },
+      source: { value: runtimeWindow },
+    });
+    shell.window.dispatchEvent(event);
+
+    expect(
+      requests.filter(({ type }) => type === "boxedwine-launch-process"),
+    ).toEqual([]);
+    expect(
+      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+    ).toHaveLength(1);
+  });
+
+  test("distinguishes native minimize from a replacement Calculator window", async () => {
+    const shell = await login(await loadShell());
+    const addFrameListener =
+      shell.window.HTMLIFrameElement.prototype.addEventListener;
+    shell.window.HTMLIFrameElement.prototype.addEventListener = function (
+      type,
+      ...arguments_
+    ) {
+      if (type === "error") return;
+      return addFrameListener.call(this, type, ...arguments_);
+    };
+    const calculator = openCalculator(shell);
+    const nativeSetTimeout = shell.window.setTimeout.bind(shell.window);
+    shell.window.setTimeout = (callback, delay, ...arguments_) => {
+      if (delay === 100) {
+        callback(...arguments_);
+        return -1;
+      }
+      return nativeSetTimeout(callback, delay, ...arguments_);
+    };
     shell.window.ImageData = class ImageData {
       constructor(data, width, height) {
         Object.assign(this, { data, width, height });
@@ -165,8 +254,6 @@ describe("original Windows XP Calculator through BoxedWine", () => {
 
     sendNativeWindow(shell, { type: "unmapped", id: 41 }, runtimeWindow);
     sendNativeWindow(shell, { type: "destroyed", id: 41 }, runtimeWindow);
-    await flushShell();
-    await flushShell();
     expect(calculator.style.display).toBe("flex");
     expect(calculator.textContent).toContain("Updating Windows application");
 

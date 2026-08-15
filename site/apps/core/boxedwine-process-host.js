@@ -1,9 +1,4 @@
-const APPLICATIONS = Object.freeze({
-  calculator: 1,
-  solitaire: 2,
-  freecell: 3,
-  "spider-solitaire": 4,
-});
+import { getBoxedWineApplication } from "./boxedwine-applications.js";
 
 export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
   let ready = false;
@@ -41,7 +36,11 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
       requestId: request.requestId,
     });
     if (request.operation === "launch") {
-      if (!module._boxedwine_launch_process(APPLICATIONS[request.appId])) {
+      const application = getBoxedWineApplication(request.appId);
+      if (
+        !application ||
+        !module.boxedwineLaunchProcess(application.executable)
+      ) {
         completeRequest(0, 87);
         return;
       }
@@ -87,7 +86,7 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
         "boxedwine-terminate-process",
       ].includes(type) ||
       typeof requestId !== "string" ||
-      !Object.hasOwn(APPLICATIONS, appId) ||
+      !getBoxedWineApplication(appId) ||
       (["boxedwine-observe-process", "boxedwine-terminate-process"].includes(
         type,
       ) &&
@@ -117,6 +116,9 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
   const onRuntimeInitialized = module.onRuntimeInitialized;
   module.onRuntimeInitialized = () => {
     onRuntimeInitialized?.();
+    module._boxedwine_install_bridge_api();
+    if (typeof module.boxedwineLaunchProcess !== "function")
+      throw new Error("BoxedWine process launcher is unavailable");
     ready = true;
     hostWindow.document.documentElement.dataset.boxedwineProcessHost = "ready";
     post({ type: "boxedwine-runtime-ready" });

@@ -24,8 +24,8 @@
   "files": {
     "boxedwine-shell.js": "ee18b4cf9812c5dd7d16b2708d9c33080cb1dc16dc757f79a2f11ac6b7802490",
     "boxedwine-startup.js": "276ca5a89cfc69b46b34051207bbe7590b7812fe30fd53cf01b9e2b3a1057aa0",
-    "boxedwine.js": "60bfd34ed82a1a6be3e5b875efb760c0904fc2840e28e3d8705efe1e01e0d88f",
-    "boxedwine.wasm": "8e5f701d994a7a4d3a83a6b62af4f83bd1fdfbc9398b19a1a08aa4ccab488f50",
+    "boxedwine.js": "1c736afad0191519b45f556055e482778cfa3c39efab1868c3c7b17e4a35bce3",
+    "boxedwine.wasm": "3d1b13227e89418dcf9cbe8cf5920430543e3a0cb94ae20d8d44b1b2467c1c98",
     "boxedwine.zip": "5d251b6d53cad1c31de254c5285603d193f91bc3129b9c9ba39c4cc65a24edb3",
     "xp-accessories-files.json": "a7ce518544382d5a44d20b9139c736152dfca9fadb54ccc6fb09c13a11664a5a",
     "xp-accessories.zip": "e00ef715adf08ea064e95127f947104fded64b71ef8b138613afab3126c35413"

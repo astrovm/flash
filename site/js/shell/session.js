@@ -129,8 +129,7 @@ const showDesktop = () => {
 };
 
 const startWindowsApplicationRuntime = () => {
-  const start = () => window.XPBoxedWineRuntime?.start?.().catch(() => {});
-  start();
+  window.XPBoxedWinePreload?.schedule?.();
 };
 
 const showTurnOffScreen = () => {

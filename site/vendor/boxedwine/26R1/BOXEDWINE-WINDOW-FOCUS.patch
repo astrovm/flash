@@ -13,7 +13,7 @@ diff --git a/include/knativewindowbridge.h b/include/knativewindowbridge.h
 diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbridge.cpp
 --- a/platform/sdl/knativewindowbridge.cpp
 +++ b/platform/sdl/knativewindowbridge.cpp
-@@ -88,6 +88,14 @@ void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
+@@ -174,4 +174,12 @@ void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
  #endif
  }
 
@@ -26,8 +26,6 @@ diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbr
 +}
 +
  void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height) {
- #ifdef __EMSCRIPTEN__
-     boxedwineWindowFrame(id, pixels, pitch, width, height);
 diff --git a/source/x11/xserver.cpp b/source/x11/xserver.cpp
 --- a/source/x11/xserver.cpp
 +++ b/source/x11/xserver.cpp

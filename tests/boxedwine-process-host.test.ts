@@ -49,28 +49,34 @@ const createHost = () => {
 const createModule = () => {
   let launchResult = 0;
   const running = new Set();
+  const launchedExecutables = [];
+  const module = {
+    _boxedwine_install_bridge_api() {
+      module.boxedwineLaunchProcess = (executable) => {
+        launchedExecutables.push(executable);
+        return executable.endsWith(".exe");
+      };
+    },
+    _boxedwine_launch_result() {
+      const result = launchResult;
+      launchResult = 0;
+      return result;
+    },
+    _boxedwine_process_running(processId) {
+      return running.has(processId);
+    },
+    _boxedwine_terminate_process(processId) {
+      return running.delete(processId);
+    },
+  };
   return {
     running,
+    launchedExecutables,
     setLaunchResult(processId) {
       launchResult = processId;
       if (processId) running.add(processId);
     },
-    module: {
-      _boxedwine_launch_process(application) {
-        return application > 0;
-      },
-      _boxedwine_launch_result() {
-        const result = launchResult;
-        launchResult = 0;
-        return result;
-      },
-      _boxedwine_process_running(processId) {
-        return running.has(processId);
-      },
-      _boxedwine_terminate_process(processId) {
-        return running.delete(processId);
-      },
-    },
+    module,
   };
 };
 
@@ -98,6 +104,11 @@ describe("persistent BoxedWine process host", () => {
     });
     processHost.setLaunchResult(102);
     host.tick();
+
+    expect(processHost.launchedExecutables).toEqual([
+      "calculator/calc.exe",
+      "solitaire/resize-host.exe",
+    ]);
 
     expect(
       host.messages
