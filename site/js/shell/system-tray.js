@@ -207,6 +207,7 @@ const saveBundledGameForOffline = (gameId) => {
     .then(async () => {
       await offlineManagerInitialization;
       const snapshot = offlineManager.getSnapshot();
+      if (!snapshot.enabled || !snapshot.savePlayedGamesOffline) return;
       if (!snapshot.bundledGames.some((game) => game.id === gameId)) {
         return;
       }
@@ -244,6 +245,7 @@ const wireProjectSettings = (win) => {
       </div>
       <fieldset>
         <legend>Offline access</legend>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="offline-enabled" checked> Keep Astro Flash available offline</label>
         <p class="project-settings-description">Astro Flash saves its system files automatically so the desktop can start without an internet connection.</p>
         <dl class="dlg-props-table project-settings-details">
           <dt>Status:</dt><dd data-project-value="offlineFiles"></dd>
@@ -259,6 +261,7 @@ const wireProjectSettings = (win) => {
     <section class="project-settings-panel" id="project-panel-games" role="tabpanel" aria-labelledby="project-tab-games" hidden>
       <fieldset>
         <legend>Built-in games for offline play</legend>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="save-played-games" checked> Automatically save built-in games after I play them</label>
         <p class="project-settings-description">Built-in games come with Astro Flash. Select the games that you want to use without an internet connection.</p>
         <p><strong data-project-value="offlineGames"></strong> built-in games are available offline and use <strong data-project-value="offlineGameStorage"></strong>.</p>
         <div class="project-offline-game-list" data-project-offline-games role="group" aria-label="Built-in games available offline"></div>
@@ -279,6 +282,7 @@ const wireProjectSettings = (win) => {
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
         <legend>Automatic updates</legend>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Download and apply updates automatically</label>
         <p class="project-settings-description">Astro Flash checks for updates automatically. It waits for the selected time before it downloads and applies a new release.</p>
         <label class="project-update-delay">Wait before automatic update: <output data-project-value="update-delay">6 hours</output>
           <input type="range" min="0" max="72" step="1" value="6" data-project-setting="update-delay">
@@ -352,6 +356,15 @@ const wireProjectSettings = (win) => {
     '[data-project-setting="update-delay"]',
   );
   const updateDelayOutput = value("update-delay");
+  const offlineEnabledCheckbox = content.querySelector(
+    '[data-project-setting="offline-enabled"]',
+  );
+  const savePlayedGamesCheckbox = content.querySelector(
+    '[data-project-setting="save-played-games"]',
+  );
+  const automaticUpdatesCheckbox = content.querySelector(
+    '[data-project-setting="automatic-updates"]',
+  );
   const repairButton = content.querySelector('[data-project-action="repair"]');
   const downloadAllGamesButton = content.querySelector(
     '[data-project-action="download-all-games"]',
@@ -406,6 +419,7 @@ const wireProjectSettings = (win) => {
     "updating",
     "applying",
     "repairing",
+    "disabling",
   ]);
   let offlineListSignature = "";
   let gameDataRefresh = 0;
@@ -501,6 +515,7 @@ const wireProjectSettings = (win) => {
         downloaded.has(game.id),
       ]),
       busy,
+      state.enabled,
       state.activeGameId,
     ]);
     if (signature === offlineListSignature) return;
@@ -509,7 +524,9 @@ const wireProjectSettings = (win) => {
     if (!state.bundledGames.length) {
       const empty = document.createElement("p");
       empty.className = "project-settings-description";
-      empty.textContent = "Loading the built-in game list...";
+      empty.textContent = state.enabled
+        ? "Loading the built-in game list..."
+        : "Enable offline access to select built-in games.";
       offlineGamesList.appendChild(empty);
       return;
     }
@@ -525,7 +542,7 @@ const wireProjectSettings = (win) => {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = downloaded.has(game.id);
-      checkbox.disabled = busy;
+      checkbox.disabled = busy || !state.enabled;
       checkbox.dataset.offlineGame = game.id;
       const title = document.createElement("span");
       title.textContent = gamesList[game.id]?.title || formatGameTitle(game.id);
@@ -564,8 +581,9 @@ const wireProjectSettings = (win) => {
     value("connection").textContent = state.online
       ? "Connected to the internet"
       : "Working offline";
-    value("offlineFiles").textContent =
-      state.workerState === "active"
+    value("offlineFiles").textContent = !state.enabled
+      ? "Disabled"
+      : state.workerState === "active"
         ? "Ready for offline use"
         : formatProjectState(state.workerState);
     value("offlineGames").textContent =
@@ -575,7 +593,9 @@ const wireProjectSettings = (win) => {
     );
     value("storage").textContent = projectStorageText(state);
     value("lastChecked").textContent = formatUpdateCheckTime(state.lastChecked);
-    offlineStatus.textContent = offlineStatusText(state);
+    offlineStatus.textContent = state.enabled
+      ? offlineStatusText(state)
+      : "Offline access is disabled.";
     const activeGameTitle = state.activeGameId
       ? gamesList[state.activeGameId]?.title ||
         formatGameTitle(state.activeGameId)
@@ -589,18 +609,23 @@ const wireProjectSettings = (win) => {
           : state.downloadedGameIds.length
             ? "Selected built-in games are available offline."
             : "No built-in games are available offline.";
-    updateStatus.textContent =
-      state.phase === "checking"
-        ? "Checking for updates..."
-        : state.phase === "update-pending"
-          ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to install it immediately.`
-          : state.updateReady
-            ? `Astro Flash ${state.availableVersion || "update"} is ready to apply.`
-            : state.availableVersion
-              ? `Astro Flash ${state.availableVersion} is available.`
-              : state.lastChecked
-                ? "Astro Flash is up to date."
-                : "Updates have not been checked yet.";
+    updateStatus.textContent = !state.enabled
+      ? "Enable offline access to use offline updates."
+      : !state.automaticUpdatesEnabled
+        ? state.availableVersion
+          ? `Astro Flash ${state.availableVersion} is available.`
+          : "Automatic updates are disabled. Use Check for Updates or Update Now when you want to update the offline copy."
+        : state.phase === "checking"
+          ? "Checking for updates..."
+          : state.phase === "update-pending"
+            ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to install it immediately.`
+            : state.updateReady
+              ? `Astro Flash ${state.availableVersion || "update"} is ready to apply.`
+              : state.availableVersion
+                ? `Astro Flash ${state.availableVersion} is available.`
+                : state.lastChecked
+                  ? "Astro Flash is up to date."
+                  : "Updates have not been checked yet.";
     if (state.error) {
       updateStatus.textContent = state.error;
     }
@@ -617,10 +642,22 @@ const wireProjectSettings = (win) => {
     } else {
       gameDownloadProgress.removeAttribute("value");
     }
-    checkButton.disabled = !state.online || transientPhases.has(state.phase);
+    offlineEnabledCheckbox.checked = state.enabled;
+    savePlayedGamesCheckbox.checked = state.savePlayedGamesOffline;
+    automaticUpdatesCheckbox.checked = state.automaticUpdatesEnabled;
+    offlineEnabledCheckbox.disabled = transientPhases.has(state.phase);
+    savePlayedGamesCheckbox.disabled =
+      !state.enabled || transientPhases.has(state.phase);
+    automaticUpdatesCheckbox.disabled =
+      !state.enabled || transientPhases.has(state.phase);
+    checkButton.disabled =
+      !state.enabled || !state.online || transientPhases.has(state.phase);
     updateNowButton.disabled =
-      !state.online || transientPhases.has(state.phase);
-    updateDelayInput.disabled = transientPhases.has(state.phase);
+      !state.enabled || !state.online || transientPhases.has(state.phase);
+    updateDelayInput.disabled =
+      !state.enabled ||
+      !state.automaticUpdatesEnabled ||
+      transientPhases.has(state.phase);
     const automaticUpdateDelay =
       state.automaticUpdateDelayMs ??
       state.releaseUpdateDelayMs ??
@@ -632,15 +669,17 @@ const wireProjectSettings = (win) => {
       ),
     );
     updateDelayOutput.value = formatAutomaticUpdateDelay(automaticUpdateDelay);
-    repairButton.disabled = !state.online || transientPhases.has(state.phase);
+    repairButton.disabled =
+      !state.enabled || !state.online || transientPhases.has(state.phase);
     const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     downloadAllGamesButton.disabled =
       !state.online ||
+      !state.enabled ||
       gameBusy ||
       !state.bundledGames.length ||
       state.downloadedGameIds.length === state.bundledGames.length;
     removeAllGamesButton.disabled =
-      gameBusy || state.downloadedGameIds.length === 0;
+      !state.enabled || gameBusy || state.downloadedGameIds.length === 0;
     renderOfflineGameList(state);
   };
   const unsubscribe = offlineManager.subscribe(render);
@@ -674,6 +713,30 @@ const wireProjectSettings = (win) => {
   updateNowButton.addEventListener("click", () => {
     offlineManager.updateNow().catch(() => {});
   });
+  offlineEnabledCheckbox.addEventListener("change", async () => {
+    if (!offlineEnabledCheckbox.checked) {
+      const accepted = await XPDialogs.confirm(
+        "Turn off offline access and remove downloaded system files and built-in game copies?\n\nPersonal files, saved games, preferences, and installed games will be preserved.",
+        "Turn Off Offline Access",
+        "question",
+      );
+      if (!accepted) {
+        offlineEnabledCheckbox.checked = true;
+        return;
+      }
+    }
+    offlineManager
+      .setOfflineEnabled(offlineEnabledCheckbox.checked)
+      .catch((error) => {
+        offlineStatus.textContent = error.message;
+      });
+  });
+  savePlayedGamesCheckbox.addEventListener("change", () => {
+    offlineManager.setSavePlayedGamesOffline(savePlayedGamesCheckbox.checked);
+  });
+  automaticUpdatesCheckbox.addEventListener("change", () => {
+    offlineManager.setAutomaticUpdatesEnabled(automaticUpdatesCheckbox.checked);
+  });
   updateDelayInput.addEventListener("input", () => {
     updateDelayOutput.value = formatAutomaticUpdateDelay(
       Number(updateDelayInput.value) * UPDATE_DELAY_HOUR,
@@ -682,9 +745,11 @@ const wireProjectSettings = (win) => {
   updateDelayInput.addEventListener("change", () => {
     const delay = Number(updateDelayInput.value) * UPDATE_DELAY_HOUR;
     offlineManager.setAutomaticUpdateDelay(delay);
-    offlineManager
-      .checkForUpdates({ applyAutomatically: true })
-      .catch(() => {});
+    if (offlineManager.getSnapshot().automaticUpdatesEnabled) {
+      offlineManager
+        .checkForUpdates({ applyAutomatically: true })
+        .catch(() => {});
+    }
   });
   repairButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(

@@ -34,7 +34,10 @@ const activeWindows = new Set<Window>();
 export const flushShell = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
-export async function loadShell({ gameLibraryManager } = {}) {
+export async function loadShell({
+  gameLibraryManager,
+  offlineSettings = {},
+} = {}) {
   const window = new Window({
     url: "http://127.0.0.1/",
     width: 1024,
@@ -198,19 +201,45 @@ export async function loadShell({ gameLibraryManager } = {}) {
     gameLibraryManager || emptyLibrary;
 
   const offlineSnapshot = {
+    activeGameId: null,
+    automaticUpdateDelayMs: null,
+    availableVersion: null,
     bundledGames: [
       { id: "freecell" },
       { id: "solitaire" },
       { id: "spider-solitaire" },
     ],
     downloadedGameIds: [],
-    phase: "idle",
+    downloadedGameBytes: 0,
+    downloadBytes: 8_000_000,
+    downloadMetadataError: false,
+    enabled: true,
+    gameError: null,
+    gamePhase: "idle",
+    gameProgressLoaded: 0,
+    gameProgressTotal: 0,
+    lastChecked: null,
+    online: true,
+    releaseUpdateDelayMs: 6 * 60 * 60 * 1000,
+    savePlayedGamesOffline: true,
+    automaticUpdatesEnabled: true,
+    phase: "ready",
+    updateEligibleAt: null,
     updateAvailable: false,
+    updateReady: false,
+    usage: 0,
+    workerState: "active",
+    ...offlineSettings,
   };
   const offlineDownloads: string[] = [];
+  const offlineListeners = new Set();
+  const notifyOfflineListeners = () =>
+    offlineListeners.forEach((listener) => listener({ ...offlineSnapshot }));
   window.AstroOffline.createManager = () => ({
-    subscribe() {
-      return () => {};
+    subscribe(listener) {
+      offlineListeners.add(listener);
+      listener({ ...offlineSnapshot });
+      return () => offlineListeners.delete(listener);
     },
     async initialize() {},
     getSnapshot() {
@@ -219,7 +248,23 @@ export async function loadShell({ gameLibraryManager } = {}) {
     async downloadGame(gameId) {
       offlineDownloads.push(gameId);
       offlineSnapshot.downloadedGameIds.push(gameId);
+      notifyOfflineListeners();
     },
+    async setOfflineEnabled(enabled) {
+      offlineSnapshot.enabled = enabled;
+      notifyOfflineListeners();
+    },
+    setSavePlayedGamesOffline(enabled) {
+      offlineSnapshot.savePlayedGamesOffline = enabled;
+      notifyOfflineListeners();
+    },
+    setAutomaticUpdatesEnabled(enabled) {
+      offlineSnapshot.automaticUpdatesEnabled = enabled;
+      notifyOfflineListeners();
+    },
+    setAutomaticUpdateDelay() {},
+    async checkForUpdates() {},
+    async updateNow() {},
   });
 
   // Happy DOM evaluates separately injected classic scripts in isolated lexical

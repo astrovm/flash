@@ -18,6 +18,9 @@
   const GAME_RECORDS_KEY = "astroFlashOfflineGameRecords";
   const ACTIVE_VERSION_RELOAD_KEY = "astroFlashActiveVersionReload";
   const AUTOMATIC_UPDATE_DELAY_KEY = "astroFlashAutomaticUpdateDelay";
+  const OFFLINE_ENABLED_KEY = "astroFlashOfflineEnabled";
+  const SAVE_PLAYED_GAMES_KEY = "astroFlashSavePlayedGamesOffline";
+  const AUTOMATIC_UPDATES_KEY = "astroFlashAutomaticUpdatesEnabled";
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
   const UPDATE_RETRY_DELAY = 30 * 1000;
@@ -175,6 +178,12 @@
     };
 
     const scheduleUpdateRetry = () => {
+      if (
+        !state.enabled ||
+        (!state.automaticUpdatesEnabled && applyTargetVersion === null)
+      ) {
+        return;
+      }
       if (updateRetryTimer !== null) return;
       updateRetryTimer = (environment.setTimeout || setTimeout)(() => {
         updateRetryTimer = null;
@@ -187,6 +196,10 @@
     };
 
     const scheduleAutomaticUpdate = (eligibleAt) => {
+      if (!state.enabled || !state.automaticUpdatesEnabled) {
+        cancelAutomaticUpdate();
+        return;
+      }
       if (automaticUpdateTimer !== null) {
         (environment.clearTimeout || clearTimeout)(automaticUpdateTimer);
       }
@@ -214,6 +227,12 @@
       if (automaticUpdateTimer === null) return;
       (environment.clearTimeout || clearTimeout)(automaticUpdateTimer);
       automaticUpdateTimer = null;
+    };
+
+    const cancelUpdateRetry = () => {
+      if (updateRetryTimer === null) return;
+      (environment.clearTimeout || clearTimeout)(updateRetryTimer);
+      updateRetryTimer = null;
     };
 
     const requestWorkerVersion = (worker) =>
@@ -251,10 +270,13 @@
       AUTOMATIC_UPDATE_DELAY_KEY,
     );
     const savedAutomaticUpdateDelay = Number(savedAutomaticUpdateDelayValue);
+    const settingEnabled = (key) => storage.getItem(key) !== "false";
     let state = {
-      enabled: true,
+      enabled: settingEnabled(OFFLINE_ENABLED_KEY),
+      savePlayedGamesOffline: settingEnabled(SAVE_PLAYED_GAMES_KEY),
+      automaticUpdatesEnabled: settingEnabled(AUTOMATIC_UPDATES_KEY),
       online: navigatorObject.onLine !== false,
-      phase: "starting",
+      phase: settingEnabled(OFFLINE_ENABLED_KEY) ? "starting" : "disabled",
       currentVersion,
       availableVersion: null,
       availableRevision: null,
@@ -444,6 +466,7 @@
         error: null,
       });
       worker.addEventListener("statechange", () => {
+        if (!state.enabled) return;
         setState({ workerState: worker.state });
         if (worker.state === "installed" && isUpdate) {
           (environment.setTimeout || setTimeout)(() => {
@@ -471,6 +494,7 @@
       if (trackedRegistrations.has(nextRegistration)) return;
       trackedRegistrations.add(nextRegistration);
       nextRegistration.addEventListener("updatefound", () => {
+        if (!state.enabled) return;
         trackInstallingWorker(
           nextRegistration.installing,
           Boolean(
@@ -478,7 +502,11 @@
           ),
         );
       });
-      if (nextRegistration.waiting && nextRegistration.active) {
+      if (
+        nextRegistration.waiting &&
+        nextRegistration.active &&
+        (state.automaticUpdatesEnabled || applyTargetVersion !== null)
+      ) {
         void markWaitingUpdate(nextRegistration.waiting);
       } else if (nextRegistration.installing) {
         trackInstallingWorker(
@@ -664,6 +692,9 @@
     };
 
     const downloadGame = async (id) => {
+      if (!state.enabled) {
+        throw new Error("Enable offline access to download built-in games.");
+      }
       const currentManifest = await ensureManifest();
       const entry = currentManifest.games[id];
       if (!entry) throw new Error("This bundled game is unavailable.");
@@ -764,6 +795,9 @@
     };
 
     const downloadAllGames = async () => {
+      if (!state.enabled) {
+        throw new Error("Enable offline access to download built-in games.");
+      }
       const currentManifest = await ensureManifest();
       for (const id of Object.keys(currentManifest.games)) {
         if (records[id]?.revision !== currentManifest.games[id].revision) {
@@ -820,12 +854,21 @@
       applyAutomatically = false,
       bypassDelay = false,
     } = {}) => {
+      if (!state.enabled) {
+        throw new Error("Enable offline access to use offline updates.");
+      }
       if (checkPromise) return checkPromise;
       checkPromise = (async () => {
         const previousPhase = state.phase;
         setState({ phase: "checking", error: null });
         try {
           const metadata = await fetchVersion();
+          if (!state.enabled) {
+            throw new Error("Offline access was disabled.");
+          }
+          const automaticApplicationAllowed =
+            applyAutomatically &&
+            (state.automaticUpdatesEnabled || bypassDelay);
           rememberVersionMetadata(metadata);
           if (applyTargetVersion && applyTargetVersion !== metadata.version) {
             applyTargetVersion = null;
@@ -846,9 +889,13 @@
             workerNeedsVersionedUrl(registration?.active, metadata.version);
           if (updateAvailable && !bypassDelay && checkedAt < eligibleAt) {
             applyTargetVersion = null;
-            scheduleAutomaticUpdate(eligibleAt);
+            if (state.automaticUpdatesEnabled) {
+              scheduleAutomaticUpdate(eligibleAt);
+            }
             setState({
-              phase: "update-pending",
+              phase: state.automaticUpdatesEnabled
+                ? "update-pending"
+                : "update-available",
               availableVersion: metadata.version,
               availableRevision: metadata.revision,
               lastChecked: checkedAt,
@@ -858,7 +905,11 @@
             });
             return snapshot();
           }
-          if (!updateAvailable || applyAutomatically || migrateActiveWorker) {
+          if (
+            !updateAvailable ||
+            automaticApplicationAllowed ||
+            migrateActiveWorker
+          ) {
             cancelAutomaticUpdate();
           }
           if (
@@ -869,7 +920,7 @@
             setState({ lastChecked: checkedAt });
             return snapshot();
           }
-          if (updateAvailable && !applyAutomatically) {
+          if (updateAvailable && !automaticApplicationAllowed) {
             setState({
               phase: "update-available",
               availableVersion: metadata.version,
@@ -881,7 +932,10 @@
             });
             return snapshot();
           }
-          if ((applyAutomatically && updateAvailable) || migrateActiveWorker) {
+          if (
+            (automaticApplicationAllowed && updateAvailable) ||
+            migrateActiveWorker
+          ) {
             applyTargetVersion = metadata.version;
           }
           await registerAndWait(metadata.version);
@@ -983,6 +1037,9 @@
     };
 
     const repair = async () => {
+      if (!state.enabled) {
+        throw new Error("Enable offline access before repairing system files.");
+      }
       if (navigatorObject.onLine === false) {
         throw new Error("Connect to the internet to repair system files.");
       }
@@ -996,6 +1053,78 @@
       registration = null;
       setState({ phase: "starting", updateReady: false });
       await checkForUpdates();
+      return snapshot();
+    };
+
+    const setOfflineEnabled = async (enabled) => {
+      if (typeof enabled !== "boolean") {
+        throw new Error("The offline access setting is invalid.");
+      }
+      storage.setItem(OFFLINE_ENABLED_KEY, String(enabled));
+      if (enabled === state.enabled) return snapshot();
+      if (enabled) {
+        setState({ enabled: true, phase: "starting", error: null });
+        return initialize();
+      }
+
+      setState({ enabled: false, phase: "disabling", error: null });
+      applyTargetVersion = null;
+      reloadWhenControlled = false;
+      cancelAutomaticUpdate();
+      cancelUpdateRetry();
+      try {
+        if (checkPromise) await checkPromise.catch(() => {});
+        const currentRegistration =
+          registration ||
+          (await navigatorObject.serviceWorker?.getRegistration?.("/"));
+        if (currentRegistration) await currentRegistration.unregister();
+        await deleteShellCaches();
+        await environment.caches?.delete(bundledCacheName);
+        for (const id of Object.keys(records)) delete records[id];
+        persistRecords();
+        registration = null;
+        manifest = null;
+        setState({
+          phase: "disabled",
+          workerState: "unregistered",
+          bundledGames: [],
+          updateReady: false,
+          availableVersion: null,
+          availableRevision: null,
+          updateEligibleAt: null,
+          gamePhase: "idle",
+          error: null,
+        });
+        await refreshStorageEstimate();
+        return snapshot();
+      } catch (error) {
+        setState({ phase: "disabled", error: error.message });
+        throw error;
+      }
+    };
+
+    const setSavePlayedGamesOffline = (enabled) => {
+      if (typeof enabled !== "boolean") {
+        throw new Error("The automatic game download setting is invalid.");
+      }
+      storage.setItem(SAVE_PLAYED_GAMES_KEY, String(enabled));
+      setState({ savePlayedGamesOffline: enabled });
+      return snapshot();
+    };
+
+    const setAutomaticUpdatesEnabled = (enabled) => {
+      if (typeof enabled !== "boolean") {
+        throw new Error("The automatic update setting is invalid.");
+      }
+      storage.setItem(AUTOMATIC_UPDATES_KEY, String(enabled));
+      setState({ automaticUpdatesEnabled: enabled });
+      if (!enabled) {
+        applyTargetVersion = null;
+        cancelAutomaticUpdate();
+        cancelUpdateRetry();
+      } else if (state.enabled) {
+        void checkForUpdates({ applyAutomatically: true }).catch(() => {});
+      }
       return snapshot();
     };
 
@@ -1021,6 +1150,8 @@
         state.updateEligibleAt !== null &&
         environment.Date.now() >= state.updateEligibleAt;
       if (
+        !state.enabled ||
+        !state.automaticUpdatesEnabled ||
         navigatorObject.onLine === false ||
         (!automaticUpdateIsDue &&
           state.lastChecked &&
@@ -1056,14 +1187,38 @@
     const initialize = async () => {
       attachLifecycleListeners();
       await refreshStorageEstimate();
+      if (!state.enabled) {
+        const existingRegistration =
+          await navigatorObject.serviceWorker?.getRegistration?.("/");
+        if (existingRegistration) await existingRegistration.unregister();
+        await deleteShellCaches();
+        await environment.caches?.delete(bundledCacheName);
+        for (const id of Object.keys(records)) delete records[id];
+        persistRecords();
+        registration = null;
+        manifest = null;
+        setState({
+          phase: "disabled",
+          workerState: "unregistered",
+          bundledGames: [],
+          error: null,
+        });
+        return snapshot();
+      }
       try {
         const existingRegistration =
           await navigatorObject.serviceWorker?.getRegistration?.("/");
         if (existingRegistration) trackRegistration(existingRegistration);
-        try {
-          await checkForUpdates({ applyAutomatically: true });
-        } catch (error) {
-          if (!existingRegistration) throw error;
+        if (state.automaticUpdatesEnabled) {
+          try {
+            await checkForUpdates({ applyAutomatically: true });
+          } catch (error) {
+            if (!existingRegistration) throw error;
+            setState({ phase: "ready", workerState: "active", error: null });
+          }
+        } else if (!existingRegistration) {
+          await registerAndWait(currentVersion);
+        } else {
           setState({ phase: "ready", workerState: "active", error: null });
         }
         await loadGameManifest();
@@ -1095,7 +1250,10 @@
       removeAllGames,
       removeGame,
       repair,
+      setAutomaticUpdatesEnabled,
       setAutomaticUpdateDelay,
+      setOfflineEnabled,
+      setSavePlayedGamesOffline,
       subscribe,
       updateNow,
     };

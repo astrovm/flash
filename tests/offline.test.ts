@@ -315,12 +315,111 @@ test("offline updates", async () => {
     environment: initial.environment,
   });
   await manager.initialize();
+  assert.strictEqual(manager.getSnapshot().enabled, true);
+  assert.strictEqual(manager.getSnapshot().savePlayedGamesOffline, true);
+  assert.strictEqual(manager.getSnapshot().automaticUpdatesEnabled, true);
   assert.deepStrictEqual(initial.serviceWorker.registerCalls[0], [
     `/sw.${manifest.version}.js`,
     { scope: "/", updateViaCache: "none" },
   ]);
   assert.strictEqual(manager.getSnapshot().phase, "ready");
   assert.strictEqual(manager.getSnapshot().bundledGames.length, 4);
+
+  const disabled = makeEnvironment({
+    storageValues: {
+      astroFlashOfflineEnabled: "false",
+      astroFlashOfflineGameRecords: JSON.stringify({
+        "synthetic-game": {
+          bytes: 4,
+          files: ["swf/synthetic-game/main.swf"],
+          revision: "synthetic-1",
+          type: "swf",
+        },
+      }),
+      syntheticPersonalPreference: "preserve-me",
+    },
+  });
+  const disabledManager = createManager({
+    currentVersion: manifest.version,
+    environment: disabled.environment,
+  });
+  await disabledManager.initialize();
+  assert.strictEqual(disabledManager.getSnapshot().enabled, false);
+  assert.strictEqual(disabledManager.getSnapshot().phase, "disabled");
+  assert.strictEqual(disabled.registration.unregisterCalls, 1);
+  assert.strictEqual(disabled.serviceWorker.registerCalls.length, 0);
+  await assert.rejects(
+    disabledManager.downloadGame("bike-mania"),
+    /Enable offline access/,
+  );
+  assert.strictEqual(
+    disabled.fetches.some(({ url }) => String(url).startsWith("/version.json")),
+    false,
+  );
+  assert(disabled.deletedCaches.includes("astro-flash-precache"));
+  assert(disabled.deletedCaches.includes(BUNDLED_GAME_CACHE));
+  assert.deepStrictEqual(
+    JSON.parse(disabled.storage.getItem("astroFlashOfflineGameRecords")),
+    {},
+  );
+  assert.strictEqual(
+    disabled.storage.getItem("syntheticPersonalPreference"),
+    "preserve-me",
+  );
+
+  await disabledManager.setOfflineEnabled(true);
+  assert.strictEqual(disabledManager.getSnapshot().enabled, true);
+  assert.strictEqual(disabledManager.getSnapshot().phase, "ready");
+  assert.strictEqual(disabled.serviceWorker.registerCalls.length, 1);
+  disabledManager.setSavePlayedGamesOffline(false);
+  assert.strictEqual(
+    disabled.storage.getItem("astroFlashSavePlayedGamesOffline"),
+    "false",
+  );
+  disabledManager.setAutomaticUpdatesEnabled(false);
+  const versionFetchesBeforeVisibility = disabled.fetches.filter(({ url }) =>
+    String(url).startsWith("/version.json"),
+  ).length;
+  disabled.setNow(now + 2 * 60 * 60 * 1000);
+  disabled.environment.document.dispatch("visibilitychange");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.strictEqual(
+    disabled.fetches.filter(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ).length,
+    versionFetchesBeforeVisibility,
+  );
+  await disabledManager.checkForUpdates();
+  assert.strictEqual(
+    disabled.fetches.filter(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ).length,
+    versionFetchesBeforeVisibility + 1,
+  );
+
+  const manualUpdates = makeEnvironment({
+    storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+  });
+  const manualUpdatesManager = createManager({
+    currentVersion: manifest.version,
+    environment: manualUpdates.environment,
+  });
+  await manualUpdatesManager.initialize();
+  assert.strictEqual(
+    manualUpdates.fetches.some(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ),
+    false,
+  );
+  manualUpdates.setRemote({ version: "26.07.30-manual11" });
+  manualUpdates.registration.waiting = new Worker(
+    "installed",
+    "26.07.30-manual11",
+  );
+  await manualUpdatesManager.updateNow();
+  assert.deepStrictEqual(manualUpdates.registration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
 
   const legacyActiveWorker = new Worker(
     "activated",
