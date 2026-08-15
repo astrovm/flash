@@ -215,6 +215,7 @@ describe("BoxedWine window bridge", () => {
     const originalDocument = globalThis.document;
     const originalImageData = globalThis.ImageData;
     const windowListeners = new Map();
+    const documentListeners = new Map();
     const runtimeMessages = [];
     const lifecycle = [];
     const ownedWindows = [];
@@ -338,7 +339,14 @@ describe("BoxedWine window bridge", () => {
       cancelAnimationFrame() {},
     };
     const fakeDocument = {
+      hidden: false,
       documentElement: { dataset: {} },
+      addEventListener(type, listener) {
+        documentListeners.set(type, listener);
+      },
+      removeEventListener(type) {
+        documentListeners.delete(type);
+      },
       createElement(type) {
         if (type !== "canvas") throw new Error(`Unexpected element: ${type}`);
         return makeCanvas();
@@ -451,6 +459,27 @@ describe("BoxedWine window bridge", () => {
       expect(frameReads - readsBeforeCoalescing).toBe(1);
       expect(canvas.clears - clearsBeforeCoalescing).toBe(1);
 
+      fakeDocument.hidden = true;
+      documentListeners.get("visibilitychange")();
+      const readsBeforeDocumentHiddenFrame = frameReads;
+      send({
+        type: "frame",
+        id: 41,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      flushRenders();
+      expect(frameReads).toBe(readsBeforeDocumentHiddenFrame);
+      fakeDocument.hidden = false;
+      documentListeners.get("visibilitychange")();
+      flushRenders();
+      expect(frameReads).toBe(readsBeforeDocumentHiddenFrame + 1);
+      expect(frameSubscriptions.at(-1)).toEqual({
+        processId: 9,
+        visible: true,
+      });
+
       surface.hide(41);
       const readsBeforeHiddenFrame = frameReads;
       send({
@@ -468,6 +497,7 @@ describe("BoxedWine window bridge", () => {
       });
       expect(surface.show(41)).toBeTrue();
       flushRenders();
+      expect(frameReads).toBe(readsBeforeHiddenFrame + 1);
 
       send({
         type: "created",

@@ -486,7 +486,6 @@ export const createBoxedWineWindowSurface = ({
   function flushRenders() {
     animationFrame = 0;
     for (const id of pendingFrameIds) {
-      pendingFrameIds.delete(id);
       const topId = topLevelId(id);
       const canvas = topId ? canvases.get(topId) : null;
       if (
@@ -496,6 +495,7 @@ export const createBoxedWineWindowSurface = ({
           document.hidden)
       )
         continue;
+      pendingFrameIds.delete(id);
       if (!uploadFrame(id)) continue;
       if (topId) pendingRenderIds.add(topId);
     }
@@ -513,7 +513,10 @@ export const createBoxedWineWindowSurface = ({
 
   const onDocumentVisibility = () => {
     const visible = !document.hidden;
-    for (const id of visibleWindows) setProcessVisible(id, visible);
+    for (const id of visibleWindows) {
+      setProcessVisible(id, visible);
+      if (visible) requestRender(id);
+    }
   };
 
   const handleMessage = (event) => {

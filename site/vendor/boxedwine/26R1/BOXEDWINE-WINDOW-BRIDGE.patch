@@ -1,3 +1,23 @@
+diff --git a/include/knativewindowbridge.h b/include/knativewindowbridge.h
+new file mode 100644
+index 0000000..b95dd88
+--- /dev/null
++++ b/include/knativewindowbridge.h
+@@ -0,0 +1,14 @@
++#ifndef __KNATIVE_WINDOW_BRIDGE_H__
++#define __KNATIVE_WINDOW_BRIDGE_H__
++
++class XWindow;
++
++void boxedwineNativeWindowCreated(const std::shared_ptr<XWindow>& wnd);
++void boxedwineNativeWindowDestroyed(U32 id);
++void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped);
++void boxedwineNativeWindowBounds(const std::shared_ptr<XWindow>& wnd);
++void boxedwineNativeWindowTitle(U32 id, const U8* value, U32 length);
++void boxedwineNativeWindowOwner(U32 id, U32 ownerId);
++void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height);
++
++#endif
 diff --git a/platform/sdl/knativescreenSDL.cpp b/platform/sdl/knativescreenSDL.cpp
 index c4e0149..a1bc330 100644
 --- a/platform/sdl/knativescreenSDL.cpp
@@ -57,6 +77,219 @@ index 48aa3af..400e032 100644
  }
  
  void KNativeSystem::shutdown() {
+diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbridge.cpp
+new file mode 100644
+index 0000000..effccbf
+--- /dev/null
++++ b/platform/sdl/knativewindowbridge.cpp
+@@ -0,0 +1,207 @@
++#include "boxedwine.h"
++#include "knativewindowbridge.h"
++#include "../../source/x11/x11.h"
++#include <cstdint>
++#include <map>
++#include <set>
++#include <vector>
++
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++
++EM_JS(void, boxedwineWindowLifecycle, (const char* type, U32 id, U32 parentId, U32 processId, S32 x, S32 y, U32 width, U32 height, U32 dialog), {
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: {
++            type: UTF8ToString(type),
++            id,
++            parentId,
++            processId,
++            x,
++            y,
++            width,
++            height,
++            dialog: Boolean(dialog),
++        },
++    }));
++});
++
++EM_JS(void, boxedwineWindowTitle, (U32 id, const U8* value, U32 length), {
++    const bytes = HEAPU8.slice(value, value + length);
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: {
++            type: "title",
++            id,
++            title: new TextDecoder("windows-1252").decode(bytes).split(String.fromCharCode(0), 1)[0],
++        },
++    }));
++});
++
++EM_JS(void, boxedwineWindowFrameReady, (U32 id, U32 width, U32 height, U32 generation), {
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: { type: "frame", id, width, height, generation },
++    }));
++});
++
++EM_JS(void, boxedwineInstallBridgeApi, (), {
++    Module.boxedwineLaunchProcess = (executable) => {
++        const length = lengthBytesUTF8(executable);
++        const pointer = _malloc(length + 1);
++        stringToUTF8(executable, pointer, length + 1);
++        const result = _boxedwine_launch_process(pointer, length);
++        _free(pointer);
++        return result;
++    };
++    Module.boxedwineFrames = Object.freeze({
++        setProcessVisible: (processId, visible) =>
++            _boxedwine_set_process_visible(processId, visible ? 1 : 0),
++        read: (id, previousGeneration = 0) => {
++            const generation = _boxedwine_frame_generation(id);
++            if (!generation || generation === previousGeneration) return null;
++            const pointer = _boxedwine_frame_pointer(id);
++            const width = _boxedwine_frame_width(id);
++            const height = _boxedwine_frame_height(id);
++            if (!pointer || !width || !height) return null;
++            return {
++                generation,
++                width,
++                height,
++                rgba: new Uint8ClampedArray(
++                    HEAPU8.buffer,
++                    pointer,
++                    width * height * 4,
++                ),
++            };
++        },
++    });
++});
++
++struct BoxedwineNativeFrame {
++    U32 width = 0;
++    U32 height = 0;
++    U32 generation = 0;
++    std::vector<U8> rgba;
++};
++
++static std::map<U32, BoxedwineNativeFrame> boxedwineNativeFrames;
++static std::map<U32, U32> boxedwineWindowProcesses;
++static std::set<U32> boxedwineVisibleProcesses;
++
++extern "C" {
++EMSCRIPTEN_KEEPALIVE void boxedwine_install_bridge_api() {
++    boxedwineInstallBridgeApi();
++}
++
++EMSCRIPTEN_KEEPALIVE void boxedwine_set_process_visible(U32 processId, U32 visible) {
++    if (!processId) return;
++    if (visible) boxedwineVisibleProcesses.insert(processId);
++    else boxedwineVisibleProcesses.erase(processId);
++}
++
++EMSCRIPTEN_KEEPALIVE U32 boxedwine_frame_generation(U32 id) {
++    auto frame = boxedwineNativeFrames.find(id);
++    return frame == boxedwineNativeFrames.end() ? 0 : frame->second.generation;
++}
++
++EMSCRIPTEN_KEEPALIVE U32 boxedwine_frame_pointer(U32 id) {
++    auto frame = boxedwineNativeFrames.find(id);
++    if (frame == boxedwineNativeFrames.end() || frame->second.rgba.empty()) return 0;
++    return static_cast<U32>(reinterpret_cast<uintptr_t>(frame->second.rgba.data()));
++}
++
++EMSCRIPTEN_KEEPALIVE U32 boxedwine_frame_width(U32 id) {
++    auto frame = boxedwineNativeFrames.find(id);
++    return frame == boxedwineNativeFrames.end() ? 0 : frame->second.width;
++}
++
++EMSCRIPTEN_KEEPALIVE U32 boxedwine_frame_height(U32 id) {
++    auto frame = boxedwineNativeFrames.find(id);
++    return frame == boxedwineNativeFrames.end() ? 0 : frame->second.height;
++}
++}
++#endif
++
++static void lifecycle(const char* type, const std::shared_ptr<XWindow>& wnd) {
++#ifdef __EMSCRIPTEN__
++    XWindowPtr parent = wnd->getParent();
++    XServer* server = XServer::getServer(true);
++    DisplayDataPtr data = server ? server->getDisplayDataById(wnd->displayId) : nullptr;
++    U32 processId = data ? data->processId : 0;
++    boxedwineWindowProcesses[wnd->id] = processId;
++    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, processId, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height(), wnd->shouldUseNativeDialogShell());
++#endif
++}
++
++void boxedwineNativeWindowCreated(const std::shared_ptr<XWindow>& wnd) {
++    lifecycle("created", wnd);
++}
++
++void boxedwineNativeWindowDestroyed(U32 id) {
++#ifdef __EMSCRIPTEN__
++    U32 processId = boxedwineWindowProcesses[id];
++    boxedwineNativeFrames.erase(id);
++    boxedwineWindowProcesses.erase(id);
++    bool processHasWindows = false;
++    for (const auto& entry : boxedwineWindowProcesses) {
++        if (entry.second == processId) {
++            processHasWindows = true;
++            break;
++        }
++    }
++    if (!processHasWindows) boxedwineVisibleProcesses.erase(processId);
++    boxedwineWindowLifecycle("destroyed", id, 0, processId, 0, 0, 0, 0, 0);
++#endif
++}
++
++void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped) {
++    if (mapped) {
++        XPropertyPtr name = wnd->getProperty(_NET_WM_NAME);
++        if (!name || !name->length) {
++            name = wnd->getProperty(XA_WM_NAME);
++        }
++        if (name && name->format == 8 && name->length) {
++            boxedwineNativeWindowTitle(wnd->id, name->value, name->length);
++        }
++    }
++    lifecycle(mapped ? "mapped" : "unmapped", wnd);
++}
++
++void boxedwineNativeWindowBounds(const std::shared_ptr<XWindow>& wnd) {
++    lifecycle("bounds", wnd);
++}
++
++void boxedwineNativeWindowTitle(U32 id, const U8* value, U32 length) {
++#ifdef __EMSCRIPTEN__
++    boxedwineWindowTitle(id, value, length);
++#endif
++}
++
++void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
++#ifdef __EMSCRIPTEN__
++    U32 processId = boxedwineWindowProcesses[id];
++    boxedwineWindowLifecycle("owner", id, ownerId, processId, 0, 0, 0, 0, 0);
++#endif
++}
++
++void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height) {
++#ifdef __EMSCRIPTEN__
++    if (!pixels || !width || !height || width > 16384 || height > 16384 || pitch < width * 4) return;
++    auto& frame = boxedwineNativeFrames[id];
++    U32 processId = boxedwineWindowProcesses[id];
++    if (frame.generation && boxedwineVisibleProcesses.find(processId) == boxedwineVisibleProcesses.end()) return;
++    frame.width = width;
++    frame.height = height;
++    frame.rgba.resize(static_cast<size_t>(width) * height * 4);
++    for (U32 y = 0; y < height; ++y) {
++        const U8* source = pixels + y * pitch;
++        U8* destination = frame.rgba.data() + static_cast<size_t>(y) * width * 4;
++        for (U32 x = 0; x < width; ++x) {
++            destination[x * 4] = source[x * 4 + 2];
++            destination[x * 4 + 1] = source[x * 4 + 1];
++            destination[x * 4 + 2] = source[x * 4];
++            destination[x * 4 + 3] = 255;
++        }
++    }
++    if (++frame.generation == 0) frame.generation = 1;
++    boxedwineWindowFrameReady(id, width, height, frame.generation);
++#endif
++}
 diff --git a/source/x11/xwindow.cpp b/source/x11/xwindow.cpp
 index 6bbaa90..ed787fb 100644
 --- a/source/x11/xwindow.cpp
