@@ -122,11 +122,42 @@ test("desktop icons select and launch their actual destinations", async () => {
   settingsIcon.click();
   expect(settingsIcon.classList.contains("selected")).toBeTrue();
   settingsIcon.dispatchEvent(new shell.window.MouseEvent("dblclick"));
+  const settings = shell.document.querySelector(
+    '.xp-window[data-game="__astro-settings"] .project-settings-content',
+  )!;
+  expect(settings).not.toBeNull();
   expect(
-    shell.document.querySelector(
-      '.xp-window[data-game="__astro-settings"] .project-settings-content',
+    [...settings.querySelectorAll<HTMLButtonElement>('[role="tab"]')].map(
+      (tab) => tab.textContent,
     ),
-  ).not.toBeNull();
+  ).toEqual(["General", "Games", "Updates", "Recovery"]);
+  expect(settings.textContent).toContain("Built-in games for offline play");
+  expect(settings.textContent).toContain("Installed games and game files");
+  const updateDelay = settings.querySelector<HTMLInputElement>(
+    '[data-project-setting="update-delay"]',
+  )!;
+  expect(updateDelay.type).toBe("range");
+  expect(updateDelay.min).toBe("0");
+  expect(updateDelay.max).toBe("72");
+  expect(settings.textContent).not.toContain("Use release default");
+  expect(
+    settings.querySelector<HTMLInputElement>(
+      '[data-project-setting="offline-enabled"]',
+    )?.checked,
+  ).toBeTrue();
+  expect(
+    settings.querySelector<HTMLInputElement>(
+      '[data-project-setting="save-played-games"]',
+    )?.checked,
+  ).toBeTrue();
+  expect(
+    settings.querySelector<HTMLInputElement>(
+      '[data-project-setting="automatic-updates"]',
+    )?.checked,
+  ).toBeTrue();
+  expect(
+    settings.querySelector('[data-project-action="update-now"]')?.textContent,
+  ).toBe("Update Now");
 });
 
 test("desktop arrow keys move between icons by screen direction", async () => {
@@ -180,6 +211,53 @@ test("desktop arrow keys move between icons by screen direction", async () => {
   press("ArrowUp");
   expect(shell.document.activeElement).toBe(icons[0]);
   expect(icons[0]!.classList.contains("selected")).toBeTrue();
+});
+
+test("offline-dependent settings are disabled when offline access is off", async () => {
+  const shell = await login(
+    await loadShell({ offlineSettings: { enabled: false, phase: "disabled" } }),
+  );
+  const settingsIcon = shell.document.querySelector<HTMLButtonElement>(
+    '[data-desktop-id="__astro-settings"]',
+  )!;
+  settingsIcon.dispatchEvent(new shell.window.MouseEvent("dblclick"));
+  const settings = shell.document.querySelector(
+    '.xp-window[data-game="__astro-settings"] .project-settings-content',
+  )!;
+  expect(
+    settings.querySelector<HTMLInputElement>(
+      '[data-project-setting="offline-enabled"]',
+    )?.checked,
+  ).toBeFalse();
+  for (const selector of [
+    '[data-project-setting="save-played-games"]',
+    '[data-project-setting="automatic-updates"]',
+    '[data-project-setting="update-delay"]',
+    '[data-project-action="check"]',
+    '[data-project-action="update-now"]',
+  ]) {
+    expect(
+      settings.querySelector<HTMLInputElement | HTMLButtonElement>(selector)
+        ?.disabled,
+    ).toBeTrue();
+  }
+});
+
+test("offline access cannot be disabled during a game download", async () => {
+  const shell = await login(
+    await loadShell({
+      offlineSettings: { gamePhase: "downloading", activeGameId: "freecell" },
+    }),
+  );
+  const settingsIcon = shell.document.querySelector<HTMLButtonElement>(
+    '[data-desktop-id="__astro-settings"]',
+  )!;
+  settingsIcon.dispatchEvent(new shell.window.MouseEvent("dblclick"));
+  expect(
+    shell.document.querySelector<HTMLInputElement>(
+      '.xp-window[data-game="__astro-settings"] [data-project-setting="offline-enabled"]',
+    )?.disabled,
+  ).toBeTrue();
 });
 
 test("My Computer exposes the native desktop shell menu and opens Properties", async () => {
@@ -729,6 +807,16 @@ test("native games open from their public deep links", async () => {
       shell.document.querySelector(`.xp-window[data-game="${applicationId}"]`),
     ).not.toBeNull();
   }
+});
+
+test("played built-in games are not saved when automatic offline copies are disabled", async () => {
+  const shell = await loadShell({
+    offlineSettings: { savePlayedGamesOffline: false },
+  });
+  shell.window.location.hash = "#freecell";
+  await login(shell);
+  await flushShell();
+  expect(shell.offlineDownloads).toEqual([]);
 });
 
 test("bundled iframe deep links use the production release base URL", async () => {

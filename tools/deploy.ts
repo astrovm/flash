@@ -53,6 +53,8 @@ export const PRECACHE_FILE_SUFFIXES = new Set(
   PRECACHE_EXTENSIONS.map((extension) => `.${extension}`),
 );
 const APP_VERSION_PATTERN = /const APP_VERSION = "[^"]+";/g;
+const VERSIONED_SERVICE_WORKER_MARKER =
+  "\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n";
 
 type WorkboxGenerator = typeof generateSW;
 
@@ -202,6 +204,13 @@ function releaseRelativePath(version: string): string {
     throw new Error(`Invalid release version: ${version}`);
   }
   return `${RELEASES_PATH}/${version}`;
+}
+
+function versionedServiceWorkerName(version: string): string {
+  if (!/^[a-zA-Z0-9._-]+$/.test(version)) {
+    throw new Error(`Invalid service worker version: ${version}`);
+  }
+  return `sw.${version}.js`;
 }
 
 export async function scopeReleaseReferences(
@@ -1044,6 +1053,12 @@ export async function generateServiceWorker(
     const name = path.split(sep).at(-1) ?? "";
     if (name.startsWith("workbox-")) await rm(path);
   }
+  if (version) {
+    await writeFile(
+      join(outputDir, versionedServiceWorkerName(version)),
+      workerSource + VERSIONED_SERVICE_WORKER_MARKER,
+    );
+  }
   console.log("  - Service worker generated successfully");
 }
 
@@ -1385,6 +1400,7 @@ export async function validateReleaseOutput(
     "index.html",
     "releases",
     "sw.js",
+    versionedServiceWorkerName(version),
     "version.json",
   ]);
   const unexpectedRootEntries = (await readdir(outputDir)).filter(
@@ -1404,6 +1420,16 @@ export async function validateReleaseOutput(
     throw new Error("Build output has no matching immutable release base URL");
   }
   await validatePrecacheIntegrity(outputDir);
+  const rootWorker = await readFile(join(outputDir, "sw.js"), "utf8");
+  const versionedWorker = await readFile(
+    join(outputDir, versionedServiceWorkerName(version)),
+    "utf8",
+  );
+  if (versionedWorker !== rootWorker + VERSIONED_SERVICE_WORKER_MARKER) {
+    throw new Error(
+      "Build output has an inconsistent versioned service worker",
+    );
+  }
   if (await isFile(join(releaseDir, "offline-games.json"))) {
     throw new Error("Build output contains an unversioned offline manifest");
   }

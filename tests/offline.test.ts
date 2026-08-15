@@ -32,10 +32,11 @@ test("offline updates", async () => {
   }
 
   class Worker extends Events {
-    constructor(state = "activated", version = null) {
+    constructor(state = "activated", version = null, scriptURL = null) {
       super();
       this.state = state;
       this.version = version;
+      this.scriptURL = scriptURL;
       this.messages = [];
     }
     transition(state) {
@@ -314,12 +315,178 @@ test("offline updates", async () => {
     environment: initial.environment,
   });
   await manager.initialize();
+  assert.strictEqual(manager.getSnapshot().enabled, true);
+  assert.strictEqual(manager.getSnapshot().savePlayedGamesOffline, true);
+  assert.strictEqual(manager.getSnapshot().automaticUpdatesEnabled, true);
   assert.deepStrictEqual(initial.serviceWorker.registerCalls[0], [
-    `/sw.js?v=${manifest.version}`,
+    `/sw.${manifest.version}.js`,
     { scope: "/", updateViaCache: "none" },
   ]);
   assert.strictEqual(manager.getSnapshot().phase, "ready");
   assert.strictEqual(manager.getSnapshot().bundledGames.length, 4);
+
+  const disabled = makeEnvironment({
+    storageValues: {
+      astroFlashOfflineEnabled: "false",
+      astroFlashOfflineGameRecords: JSON.stringify({
+        "synthetic-game": {
+          bytes: 4,
+          files: ["swf/synthetic-game/main.swf"],
+          revision: "synthetic-1",
+          type: "swf",
+        },
+      }),
+      syntheticPersonalPreference: "preserve-me",
+    },
+  });
+  const disabledManager = createManager({
+    currentVersion: manifest.version,
+    environment: disabled.environment,
+  });
+  await disabledManager.initialize();
+  assert.strictEqual(disabledManager.getSnapshot().enabled, false);
+  assert.strictEqual(disabledManager.getSnapshot().phase, "disabled");
+  assert.strictEqual(disabled.registration.unregisterCalls, 1);
+  assert.strictEqual(disabled.serviceWorker.registerCalls.length, 0);
+  await assert.rejects(
+    disabledManager.downloadGame("bike-mania"),
+    /Enable offline access/,
+  );
+  assert.strictEqual(
+    disabled.fetches.some(({ url }) => String(url).startsWith("/version.json")),
+    false,
+  );
+  assert(disabled.deletedCaches.includes("astro-flash-precache"));
+  assert(disabled.deletedCaches.includes(BUNDLED_GAME_CACHE));
+  assert.deepStrictEqual(
+    JSON.parse(disabled.storage.getItem("astroFlashOfflineGameRecords")),
+    {},
+  );
+  assert.strictEqual(
+    disabled.storage.getItem("syntheticPersonalPreference"),
+    "preserve-me",
+  );
+
+  await disabledManager.setOfflineEnabled(true);
+  assert.strictEqual(disabledManager.getSnapshot().enabled, true);
+  assert.strictEqual(disabledManager.getSnapshot().phase, "ready");
+  assert.strictEqual(disabled.serviceWorker.registerCalls.length, 1);
+  disabledManager.setSavePlayedGamesOffline(false);
+  assert.strictEqual(
+    disabled.storage.getItem("astroFlashSavePlayedGamesOffline"),
+    "false",
+  );
+  disabledManager.setAutomaticUpdatesEnabled(false);
+  const versionFetchesBeforeVisibility = disabled.fetches.filter(({ url }) =>
+    String(url).startsWith("/version.json"),
+  ).length;
+  disabled.setNow(now + 2 * 60 * 60 * 1000);
+  disabled.environment.document.dispatch("visibilitychange");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.strictEqual(
+    disabled.fetches.filter(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ).length,
+    versionFetchesBeforeVisibility,
+  );
+  await disabledManager.checkForUpdates();
+  assert.strictEqual(
+    disabled.fetches.filter(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ).length,
+    versionFetchesBeforeVisibility + 1,
+  );
+
+  const manualUpdates = makeEnvironment({
+    storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+  });
+  const manualUpdatesManager = createManager({
+    currentVersion: manifest.version,
+    environment: manualUpdates.environment,
+  });
+  await manualUpdatesManager.initialize();
+  assert.strictEqual(
+    manualUpdates.fetches.some(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ),
+    false,
+  );
+  manualUpdates.setRemote({ version: "26.07.30-manual11" });
+  manualUpdates.registration.waiting = new Worker(
+    "installed",
+    "26.07.30-manual11",
+  );
+  await manualUpdatesManager.updateNow();
+  assert.deepStrictEqual(manualUpdates.registration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
+  const legacyActiveWorker = new Worker(
+    "activated",
+    manifest.version,
+    `/sw.js?v=${manifest.version}`,
+  );
+  const migrationRegistration = new Registration({
+    active: legacyActiveWorker,
+  });
+  const migration = makeEnvironment({
+    registration: migrationRegistration,
+    remoteVersion: manifest.version,
+  });
+  const migrationWaitingWorker = new Worker("installed", manifest.version);
+  migration.serviceWorker.register = async (...args) => {
+    migration.serviceWorker.registerCalls.push(args);
+    migrationRegistration.waiting = migrationWaitingWorker;
+    return migrationRegistration;
+  };
+  const migrationManager = createManager({
+    currentVersion: manifest.version,
+    environment: migration.environment,
+  });
+  await migrationManager.initialize();
+  assert.strictEqual(
+    migration.serviceWorker.registerCalls[0][0],
+    `/sw.${manifest.version}.js`,
+  );
+  assert.deepStrictEqual(migrationWaitingWorker.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
+  const manualMigrationRegistration = new Registration({
+    active: new Worker(
+      "activated",
+      manifest.version,
+      `/sw.js?v=${manifest.version}`,
+    ),
+  });
+  const manualMigration = makeEnvironment({
+    registration: manualMigrationRegistration,
+    storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+  });
+  const manualMigrationWorker = new Worker("installed", manifest.version);
+  manualMigration.serviceWorker.register = async (...args) => {
+    manualMigration.serviceWorker.registerCalls.push(args);
+    manualMigrationRegistration.waiting = manualMigrationWorker;
+    return manualMigrationRegistration;
+  };
+  const manualMigrationManager = createManager({
+    currentVersion: manifest.version,
+    environment: manualMigration.environment,
+  });
+  await manualMigrationManager.initialize();
+  assert.strictEqual(
+    manualMigration.serviceWorker.registerCalls[0][0],
+    `/sw.${manifest.version}.js`,
+  );
+  assert.deepStrictEqual(manualMigrationWorker.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+  assert.strictEqual(
+    manualMigration.fetches.some(({ url }) =>
+      String(url).startsWith("/version.json"),
+    ),
+    false,
+  );
 
   await manager.downloadGame("bike-mania");
   assert.strictEqual(
@@ -373,6 +540,60 @@ test("offline updates", async () => {
   await manager.removeAllGames();
   assert.deepStrictEqual(manager.getSnapshot().downloadedGameIds, []);
   assert(initial.deletedCaches.includes(BUNDLED_GAME_CACHE));
+
+  const interrupted = makeEnvironment();
+  const interruptedManager = createManager({
+    currentVersion: manifest.version,
+    environment: interrupted.environment,
+  });
+  await interruptedManager.initialize();
+  const originalInterruptedPut = interrupted.bundledCache.put.bind(
+    interrupted.bundledCache,
+  );
+  let releaseInterruptedPut;
+  let markInterruptedPutStarted;
+  const interruptedPutStarted = new Promise((resolve) => {
+    markInterruptedPutStarted = resolve;
+  });
+  const interruptedPutRelease = new Promise((resolve) => {
+    releaseInterruptedPut = resolve;
+  });
+  interrupted.bundledCache.put = async (...arguments_) => {
+    markInterruptedPutStarted();
+    await interruptedPutRelease;
+    return originalInterruptedPut(...arguments_);
+  };
+  const interruptedDownload = interruptedManager.downloadGame("doom");
+  await interruptedPutStarted;
+  await interruptedManager.setOfflineEnabled(false);
+  releaseInterruptedPut();
+  await assert.rejects(interruptedDownload, /Offline access was disabled/);
+  assert.strictEqual(interruptedManager.getSnapshot().phase, "disabled");
+  assert.strictEqual(interruptedManager.getSnapshot().gamePhase, "idle");
+  assert.strictEqual(interrupted.bundledCache.values.size, 0);
+  assert.deepStrictEqual(
+    JSON.parse(
+      interrupted.storage.getItem("astroFlashOfflineGameRecords") || "{}",
+    ),
+    {},
+  );
+
+  const repaired = makeEnvironment({
+    storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+  });
+  const repairedManager = createManager({
+    currentVersion: manifest.version,
+    environment: repaired.environment,
+  });
+  await repairedManager.initialize();
+  repaired.setRemote({ version: "26.07.30-repair111" });
+  repaired.registration.waiting = new Worker("installed", "26.07.30-repair111");
+  await repairedManager.repair();
+  assert.strictEqual(repaired.registration.unregisterCalls, 1);
+  assert(repaired.deletedCaches.includes("astro-flash-precache"));
+  assert.deepStrictEqual(repaired.registration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
 
   const lowEstimate = makeEnvironment();
   lowEstimate.environment.navigator.storage = {
@@ -578,7 +799,7 @@ test("offline updates", async () => {
   await new Promise((resolve) => setImmediate(resolve));
   assert.match(
     staleWaiting.serviceWorker.registerCalls.at(-1)[0],
-    /^\/sw\.js\?v=26\.07\.30-bbbbbbb&retry=1800000000000$/,
+    /^\/sw\.26\.07\.30-bbbbbbb\.js\?retry=1800000000000$/,
   );
   assert.strictEqual(staleWaitingManager.getSnapshot().updateReady, true);
   assert.deepStrictEqual(staleWaitingRegistration.waiting.messages, [
@@ -620,6 +841,76 @@ test("offline updates", async () => {
   ]);
   delayed.serviceWorker.dispatch("controllerchange");
   assert.strictEqual(delayed.getReloads(), 1);
+
+  const configurableReleaseTime = now - 7 * 60 * 60 * 1000;
+  const configurableRegistration = new Registration({
+    active: new Worker("activated", manifest.version),
+  });
+  const configurable = makeEnvironment({
+    registration: configurableRegistration,
+    remoteVersion: "26.07.30-config123",
+    remoteReleasedAt: new Date(configurableReleaseTime).toISOString(),
+    storageValues: {
+      astroFlashAutomaticUpdateDelay: String(12 * 60 * 60 * 1000),
+    },
+  });
+  const configurableManager = createManager({
+    currentVersion: manifest.version,
+    environment: configurable.environment,
+  });
+  await configurableManager.initialize();
+  assert.strictEqual(
+    configurableManager.getSnapshot().automaticUpdateDelayMs,
+    12 * 60 * 60 * 1000,
+  );
+  assert.strictEqual(configurableManager.getSnapshot().phase, "update-pending");
+  assert.strictEqual(configurable.serviceWorker.registerCalls.length, 0);
+  await configurableManager.checkForUpdates();
+  assert.strictEqual(configurable.serviceWorker.registerCalls.length, 0);
+
+  const scheduledUpdate = configurable.timers.find(
+    ({ delay }) => delay === 5 * 60 * 60 * 1000,
+  );
+  assert.ok(scheduledUpdate);
+  configurable.setNow(now + 5 * 60 * 60 * 1000);
+  configurableRegistration.waiting = new Worker(
+    "installed",
+    "26.07.30-config123",
+  );
+  scheduledUpdate.callback();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.strictEqual(
+    configurable.serviceWorker.registerCalls.at(-1)[0],
+    "/sw.26.07.30-config123.js",
+  );
+  assert.deepStrictEqual(configurableRegistration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
+  const configurableWaitingWorker = new Worker(
+    "installed",
+    "26.07.30-config123",
+  );
+  configurableRegistration.waiting = configurableWaitingWorker;
+  await configurableManager.updateNow();
+  assert.strictEqual(
+    configurable.serviceWorker.registerCalls.at(-1)[0],
+    "/sw.26.07.30-config123.js",
+  );
+  assert.deepStrictEqual(configurableWaitingWorker.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
+  configurableManager.setAutomaticUpdateDelay(0);
+  assert.strictEqual(
+    configurable.storage.getItem("astroFlashAutomaticUpdateDelay"),
+    "0",
+  );
+  configurableManager.setAutomaticUpdateDelay(null);
+  assert.strictEqual(
+    configurable.storage.getItem("astroFlashAutomaticUpdateDelay"),
+    null,
+  );
 
   const activatedUpdate = makeEnvironment({
     registration: new Registration({

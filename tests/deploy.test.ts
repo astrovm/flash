@@ -607,6 +607,9 @@ describe("Workbox and artifact validation", () => {
     expect(await readFile(join(root, "sw.js"), "utf8")).toContain(
       'self.__ASTRO_FLASH_VERSION__="26.07.28-abcdef1"',
     );
+    expect(await readFile(join(root, "sw.26.07.28-abcdef1.js"), "utf8")).toBe(
+      `${await readFile(join(root, "sw.js"), "utf8")}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
+    );
   });
 
   test("removes an unused external Workbox runtime", async () => {
@@ -691,6 +694,9 @@ describe("atomic build", () => {
     }
     expect(await Bun.file(join(output, "stale.txt")).exists()).toBeFalse();
     expect(await Bun.file(join(output, "sw.js")).exists()).toBeTrue();
+    expect(
+      await Bun.file(join(output, "sw.26.07.28-abcdef1.js")).exists(),
+    ).toBeTrue();
     const release = join(output, "releases", "26.07.28-abcdef1");
     expect(
       await Bun.file(join(output, "apps", "core", "boxedwine.js")).exists(),
