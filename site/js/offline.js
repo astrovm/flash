@@ -139,6 +139,7 @@
     let reloadWhenControlled = false;
     let lifecycleListenersAttached = false;
     let updateRetryTimer = null;
+    let automaticUpdateTimer = null;
     let bypassWorkerCdn = false;
     let applyTargetVersion = null;
 
@@ -183,6 +184,36 @@
           bypassDelay: shouldApply,
         }).catch(() => {});
       }, UPDATE_RETRY_DELAY);
+    };
+
+    const scheduleAutomaticUpdate = (eligibleAt) => {
+      if (automaticUpdateTimer !== null) {
+        (environment.clearTimeout || clearTimeout)(automaticUpdateTimer);
+      }
+      const delay = Math.max(0, eligibleAt - environment.Date.now());
+      automaticUpdateTimer = (environment.setTimeout || setTimeout)(
+        () => {
+          automaticUpdateTimer = null;
+          if (environment.Date.now() < eligibleAt) {
+            scheduleAutomaticUpdate(eligibleAt);
+            return;
+          }
+          void checkForUpdates({ applyAutomatically: true }).catch(() => {
+            if (navigatorObject.onLine !== false) {
+              scheduleAutomaticUpdate(
+                environment.Date.now() + UPDATE_RETRY_DELAY,
+              );
+            }
+          });
+        },
+        Math.min(delay, 2_147_483_647),
+      );
+    };
+
+    const cancelAutomaticUpdate = () => {
+      if (automaticUpdateTimer === null) return;
+      (environment.clearTimeout || clearTimeout)(automaticUpdateTimer);
+      automaticUpdateTimer = null;
     };
 
     const requestWorkerVersion = (worker) =>
@@ -813,6 +844,7 @@
             workerNeedsVersionedUrl(registration?.active, metadata.version);
           if (updateAvailable && !bypassDelay && checkedAt < eligibleAt) {
             applyTargetVersion = null;
+            scheduleAutomaticUpdate(eligibleAt);
             setState({
               phase: "update-pending",
               availableVersion: metadata.version,
@@ -823,6 +855,9 @@
               error: null,
             });
             return snapshot();
+          }
+          if (!updateAvailable || applyAutomatically || migrateActiveWorker) {
+            cancelAutomaticUpdate();
           }
           if (
             updateAvailable &&
@@ -980,9 +1015,13 @@
       checkForUpdates({ applyAutomatically: true, bypassDelay: true });
 
     const automaticCheck = () => {
+      const automaticUpdateIsDue =
+        state.updateEligibleAt !== null &&
+        environment.Date.now() >= state.updateEligibleAt;
       if (
         navigatorObject.onLine === false ||
-        (state.lastChecked &&
+        (!automaticUpdateIsDue &&
+          state.lastChecked &&
           environment.Date.now() - state.lastChecked < checkInterval)
       ) {
         return;

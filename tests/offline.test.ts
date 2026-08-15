@@ -679,6 +679,25 @@ test("offline updates", async () => {
   await configurableManager.checkForUpdates();
   assert.strictEqual(configurable.serviceWorker.registerCalls.length, 0);
 
+  const scheduledUpdate = configurable.timers.find(
+    ({ delay }) => delay === 5 * 60 * 60 * 1000,
+  );
+  assert.ok(scheduledUpdate);
+  configurable.setNow(now + 5 * 60 * 60 * 1000);
+  configurableRegistration.waiting = new Worker(
+    "installed",
+    "26.07.30-config123",
+  );
+  scheduledUpdate.callback();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.strictEqual(
+    configurable.serviceWorker.registerCalls.at(-1)[0],
+    "/sw.26.07.30-config123.js",
+  );
+  assert.deepStrictEqual(configurableRegistration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
   const configurableWaitingWorker = new Worker(
     "installed",
     "26.07.30-config123",
