@@ -122,11 +122,23 @@ test("desktop icons select and launch their actual destinations", async () => {
   settingsIcon.click();
   expect(settingsIcon.classList.contains("selected")).toBeTrue();
   settingsIcon.dispatchEvent(new shell.window.MouseEvent("dblclick"));
+  const settings = shell.document.querySelector(
+    '.xp-window[data-game="__astro-settings"] .project-settings-content',
+  )!;
+  expect(settings).not.toBeNull();
   expect(
-    shell.document.querySelector(
-      '.xp-window[data-game="__astro-settings"] .project-settings-content',
+    [...settings.querySelectorAll<HTMLButtonElement>('[role="tab"]')].map(
+      (tab) => tab.textContent,
     ),
+  ).toEqual(["General", "Games", "Updates", "Recovery"]);
+  expect(settings.textContent).toContain("Built-in games for offline play");
+  expect(settings.textContent).toContain("Installed games and game files");
+  expect(
+    settings.querySelector('[data-project-setting="update-delay"]'),
   ).not.toBeNull();
+  expect(
+    settings.querySelector('[data-project-action="update-now"]')?.textContent,
+  ).toBe("Update Now");
 });
 
 test("desktop arrow keys move between icons by screen direction", async () => {

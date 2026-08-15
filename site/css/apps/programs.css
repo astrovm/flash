@@ -4439,6 +4439,17 @@
   font-weight: 700;
 }
 
+.project-update-delay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 20px;
+}
+
+.project-update-delay select {
+  min-width: 150px;
+}
+
 .project-offline-game-list {
   max-height: 156px;
   margin: 0 0 10px;

@@ -32,10 +32,11 @@ test("offline updates", async () => {
   }
 
   class Worker extends Events {
-    constructor(state = "activated", version = null) {
+    constructor(state = "activated", version = null, scriptURL = null) {
       super();
       this.state = state;
       this.version = version;
+      this.scriptURL = scriptURL;
       this.messages = [];
     }
     transition(state) {
@@ -315,11 +316,42 @@ test("offline updates", async () => {
   });
   await manager.initialize();
   assert.deepStrictEqual(initial.serviceWorker.registerCalls[0], [
-    `/sw.js?v=${manifest.version}`,
+    `/sw.${manifest.version}.js`,
     { scope: "/", updateViaCache: "none" },
   ]);
   assert.strictEqual(manager.getSnapshot().phase, "ready");
   assert.strictEqual(manager.getSnapshot().bundledGames.length, 4);
+
+  const legacyActiveWorker = new Worker(
+    "activated",
+    manifest.version,
+    `/sw.js?v=${manifest.version}`,
+  );
+  const migrationRegistration = new Registration({
+    active: legacyActiveWorker,
+  });
+  const migration = makeEnvironment({
+    registration: migrationRegistration,
+    remoteVersion: manifest.version,
+  });
+  const migrationWaitingWorker = new Worker("installed", manifest.version);
+  migration.serviceWorker.register = async (...args) => {
+    migration.serviceWorker.registerCalls.push(args);
+    migrationRegistration.waiting = migrationWaitingWorker;
+    return migrationRegistration;
+  };
+  const migrationManager = createManager({
+    currentVersion: manifest.version,
+    environment: migration.environment,
+  });
+  await migrationManager.initialize();
+  assert.strictEqual(
+    migration.serviceWorker.registerCalls[0][0],
+    `/sw.${manifest.version}.js`,
+  );
+  assert.deepStrictEqual(migrationWaitingWorker.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
 
   await manager.downloadGame("bike-mania");
   assert.strictEqual(
@@ -578,7 +610,7 @@ test("offline updates", async () => {
   await new Promise((resolve) => setImmediate(resolve));
   assert.match(
     staleWaiting.serviceWorker.registerCalls.at(-1)[0],
-    /^\/sw\.js\?v=26\.07\.30-bbbbbbb&retry=1800000000000$/,
+    /^\/sw\.26\.07\.30-bbbbbbb\.js\?retry=1800000000000$/,
   );
   assert.strictEqual(staleWaitingManager.getSnapshot().updateReady, true);
   assert.deepStrictEqual(staleWaitingRegistration.waiting.messages, [
@@ -620,6 +652,57 @@ test("offline updates", async () => {
   ]);
   delayed.serviceWorker.dispatch("controllerchange");
   assert.strictEqual(delayed.getReloads(), 1);
+
+  const configurableReleaseTime = now - 7 * 60 * 60 * 1000;
+  const configurableRegistration = new Registration({
+    active: new Worker("activated", manifest.version),
+  });
+  const configurable = makeEnvironment({
+    registration: configurableRegistration,
+    remoteVersion: "26.07.30-config123",
+    remoteReleasedAt: new Date(configurableReleaseTime).toISOString(),
+    storageValues: {
+      astroFlashAutomaticUpdateDelay: String(12 * 60 * 60 * 1000),
+    },
+  });
+  const configurableManager = createManager({
+    currentVersion: manifest.version,
+    environment: configurable.environment,
+  });
+  await configurableManager.initialize();
+  assert.strictEqual(
+    configurableManager.getSnapshot().automaticUpdateDelayMs,
+    12 * 60 * 60 * 1000,
+  );
+  assert.strictEqual(configurableManager.getSnapshot().phase, "update-pending");
+  assert.strictEqual(configurable.serviceWorker.registerCalls.length, 0);
+  await configurableManager.checkForUpdates();
+  assert.strictEqual(configurable.serviceWorker.registerCalls.length, 0);
+
+  const configurableWaitingWorker = new Worker(
+    "installed",
+    "26.07.30-config123",
+  );
+  configurableRegistration.waiting = configurableWaitingWorker;
+  await configurableManager.updateNow();
+  assert.strictEqual(
+    configurable.serviceWorker.registerCalls.at(-1)[0],
+    "/sw.26.07.30-config123.js",
+  );
+  assert.deepStrictEqual(configurableWaitingWorker.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+
+  configurableManager.setAutomaticUpdateDelay(0);
+  assert.strictEqual(
+    configurable.storage.getItem("astroFlashAutomaticUpdateDelay"),
+    "0",
+  );
+  configurableManager.setAutomaticUpdateDelay(null);
+  assert.strictEqual(
+    configurable.storage.getItem("astroFlashAutomaticUpdateDelay"),
+    null,
+  );
 
   const activatedUpdate = makeEnvironment({
     registration: new Registration({

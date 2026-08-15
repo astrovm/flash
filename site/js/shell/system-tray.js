@@ -137,17 +137,14 @@ let offlineManagerInitialized = false;
 
 const offlineStatusText = (state) => {
   const messages = {
-    starting: "Preparing Windows XP system files...",
-    downloading: "Downloading Windows XP system files...",
-    ready: "Windows XP system files are available offline.",
+    starting: "Preparing Astro Flash system files...",
+    downloading: "Downloading Astro Flash system files...",
+    ready: "Astro Flash system files are available offline.",
     checking: "Checking for updates...",
     updating: "Downloading the latest update...",
-    "update-available": state.enabled
-      ? "An update is downloading..."
-      : "An update is available.",
-    "update-pending": "A newer update is waiting for its stability delay.",
-    "update-ready":
-      "An update is ready and will install automatically on the next load.",
+    "update-available": "An update is available.",
+    "update-pending": "An automatic update is scheduled.",
+    "update-ready": "An update is ready to apply.",
     "repair-required":
       "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
@@ -217,8 +214,7 @@ const wireProjectSettings = (win) => {
   content.innerHTML = `
     <div class="project-settings-tabs" role="tablist" aria-label="Astro Flash Settings">
       <button type="button" role="tab" class="active" id="project-tab-general" aria-controls="project-panel-general" aria-selected="true">General</button>
-      <button type="button" role="tab" id="project-tab-offline" aria-controls="project-panel-offline" aria-selected="false" tabindex="-1">Offline</button>
-      <button type="button" role="tab" id="project-tab-game-data" aria-controls="project-panel-game-data" aria-selected="false" tabindex="-1">Game Data</button>
+      <button type="button" role="tab" id="project-tab-games" aria-controls="project-panel-games" aria-selected="false" tabindex="-1">Games</button>
       <button type="button" role="tab" id="project-tab-updates" aria-controls="project-panel-updates" aria-selected="false" tabindex="-1">Updates</button>
       <button type="button" role="tab" id="project-tab-recovery" aria-controls="project-panel-recovery" aria-selected="false" tabindex="-1">Recovery</button>
     </div>
@@ -231,81 +227,85 @@ const wireProjectSettings = (win) => {
         </div>
       </div>
       <fieldset>
-        <legend>Game library</legend>
+        <legend>Offline access</legend>
+        <p class="project-settings-description">Astro Flash saves its system files automatically so the desktop can start without an internet connection.</p>
         <dl class="dlg-props-table project-settings-details">
-          <dt>Included games:</dt><dd data-project-value="includedGames"></dd>
-          <dt>Downloaded games:</dt><dd data-project-value="downloadedGames"></dd>
+          <dt>Status:</dt><dd data-project-value="offlineFiles"></dd>
+          <dt>System files:</dt><dd data-project-value="downloadSize"></dd>
         </dl>
-        <button type="button" class="xp-btn" data-project-action="manage-games">Manage Games...</button>
       </fieldset>
       <fieldset>
         <legend>Storage</legend>
-        <p>Astro Flash Collection is using <strong data-project-value="storage"></strong> of browser storage.</p>
+        <p>Astro Flash uses <strong data-project-value="storage"></strong> of browser storage. This includes system files, games, and personal data.</p>
       </fieldset>
       <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send suggestions or report a problem</a>
     </section>
-    <section class="project-settings-panel" id="project-panel-offline" role="tabpanel" aria-labelledby="project-tab-offline" hidden>
+    <section class="project-settings-panel" id="project-panel-games" role="tabpanel" aria-labelledby="project-tab-games" hidden>
       <fieldset>
-        <legend>Windows XP system files</legend>
-        <p class="project-settings-description">The desktop, settings, artwork, fonts, and sounds are saved automatically for offline use.</p>
-        <dl class="dlg-props-table project-settings-details">
-          <dt>System download:</dt><dd data-project-value="downloadSize"></dd>
-          <dt>Offline status:</dt><dd data-project-value="offlineFiles"></dd>
-        </dl>
-        <p class="project-settings-status" data-project-status="offline" aria-live="polite"></p>
-        <progress class="project-settings-progress" aria-label="Offline download progress" hidden></progress>
-        <div class="project-settings-actions">
-          <button type="button" class="xp-btn" data-project-action="repair">Repair System Files</button>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>Included games</legend>
-        <p class="project-settings-description">Choose which of the ${bundledGameCount} included games should work offline. The shared Flash runtime is downloaded once when needed.</p>
-        <dl class="dlg-props-table project-settings-details">
-          <dt>Downloaded:</dt><dd data-project-value="offlineGames"></dd>
-          <dt>Game storage:</dt><dd data-project-value="offlineGameStorage"></dd>
-        </dl>
-        <div class="project-offline-game-list" data-project-offline-games role="group" aria-label="Included games available offline"></div>
-        <progress class="project-settings-progress" data-project-game-progress aria-label="Included game download progress" hidden></progress>
+        <legend>Built-in games for offline play</legend>
+        <p class="project-settings-description">Built-in games come with Astro Flash. Select the games that you want to use without an internet connection.</p>
+        <p><strong data-project-value="offlineGames"></strong> built-in games are available offline and use <strong data-project-value="offlineGameStorage"></strong>.</p>
+        <div class="project-offline-game-list" data-project-offline-games role="group" aria-label="Built-in games available offline"></div>
+        <progress class="project-settings-progress" data-project-game-progress aria-label="Built-in game download progress" hidden></progress>
         <p class="project-settings-status" data-project-status="offline-games" aria-live="polite"></p>
         <div class="project-settings-actions">
-          <button type="button" class="xp-btn" data-project-action="download-all-games">Download All Games</button>
-          <button type="button" class="xp-btn" data-project-action="remove-all-games">Remove Offline Games</button>
+          <button type="button" class="xp-btn" data-project-action="download-all-games">Make All Available Offline</button>
+          <button type="button" class="xp-btn" data-project-action="remove-all-games">Remove Offline Copies</button>
         </div>
       </fieldset>
-      <p class="project-settings-description">Games installed from Internet Games use separate storage and remain available after installation. Legacy games may fetch additional files the first time they are used.</p>
-    </section>
-    <section class="project-settings-panel" id="project-panel-game-data" role="tabpanel" aria-labelledby="project-tab-game-data" hidden>
       <fieldset>
-        <legend>Installed game data</legend>
-        <p class="project-settings-description">Remove games installed from Internet Games, reVCDOS game data, or saved Pink Panther CD images. Saved games are preserved.</p>
+        <legend>Installed games and game files</legend>
+        <p class="project-settings-description">These games and files were downloaded separately. Removing an item preserves its saved games.</p>
         <div class="project-game-data-list" data-project-game-data aria-live="polite"></div>
         <p class="project-settings-status" data-project-status="game-data" aria-live="polite"></p>
       </fieldset>
     </section>
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
-        <legend>Astro Flash updates</legend>
+        <legend>Automatic updates</legend>
+        <p class="project-settings-description">Astro Flash checks for updates automatically. It waits for the selected time before it downloads and applies a new release.</p>
+        <label class="project-update-delay">Wait before automatic update:
+          <select data-project-setting="update-delay">
+            <option value="">Use release default</option>
+            <option value="0">Do not wait</option>
+            <option value="3600000">1 hour</option>
+            <option value="21600000">6 hours</option>
+            <option value="43200000">12 hours</option>
+            <option value="86400000">1 day</option>
+            <option value="259200000">3 days</option>
+          </select>
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Update status</legend>
         <dl class="dlg-props-table project-settings-details">
-          <dt>Installed version:</dt><dd data-project-value="version"></dd>
-          <dt>Available version:</dt><dd data-project-value="availableVersion"></dd>
+          <dt>Installed:</dt><dd data-project-value="version"></dd>
+          <dt>Available:</dt><dd data-project-value="availableVersion"></dd>
           <dt>Last checked:</dt><dd data-project-value="lastChecked"></dd>
         </dl>
         <p class="project-settings-status" data-project-status="updates" aria-live="polite"></p>
+        <progress class="project-settings-progress" data-project-update-progress aria-label="System file download progress" hidden></progress>
         <div class="project-settings-actions">
+          <button type="button" class="xp-btn" data-project-action="update-now">Update Now</button>
           <button type="button" class="xp-btn" data-project-action="check">Check for Updates</button>
         </div>
       </fieldset>
     </section>
     <section class="project-settings-panel" id="project-panel-recovery" role="tabpanel" aria-labelledby="project-tab-recovery" hidden>
       <fieldset class="project-recovery-group">
+        <legend>Repair system files</legend>
+        <p>Download a clean copy of the Astro Flash system files. Built-in games and personal data are preserved.</p>
+        <p class="project-settings-status" data-project-status="offline" aria-live="polite"></p>
+        <button type="button" class="xp-btn" data-project-action="repair">Repair System Files</button>
+      </fieldset>
+      <fieldset class="project-recovery-group">
         <legend>Restore the desktop</legend>
-        <p>Restore all game shortcuts and their default positions. Personal files, downloaded games, and preferences are preserved.</p>
+        <p>Restore all game shortcuts and their default positions. Personal files, installed games, offline copies, and preferences are preserved.</p>
         <button type="button" class="xp-btn" data-project-action="restore-desktop">Restore Default Desktop</button>
       </fieldset>
       <fieldset class="project-recovery-group project-recovery-danger">
         <legend>Reset Astro Flash</legend>
-        <p>Permanently delete personal files and reset all preferences. Downloaded games and offline files are preserved.</p>
+        <p>Permanently delete personal files and reset all preferences. Installed games and offline copies are preserved.</p>
         <button type="button" class="xp-btn" data-project-action="reset">Reset Astro Flash</button>
       </fieldset>
     </section>
@@ -329,11 +329,19 @@ const wireProjectSettings = (win) => {
   const gameDataStatus = content.querySelector(
     '[data-project-status="game-data"]',
   );
-  const downloadProgress = content.querySelector(".project-settings-progress");
+  const downloadProgress = content.querySelector(
+    "[data-project-update-progress]",
+  );
   const gameDownloadProgress = content.querySelector(
     "[data-project-game-progress]",
   );
   const checkButton = content.querySelector('[data-project-action="check"]');
+  const updateNowButton = content.querySelector(
+    '[data-project-action="update-now"]',
+  );
+  const updateDelaySelect = content.querySelector(
+    '[data-project-setting="update-delay"]',
+  );
   const repairButton = content.querySelector('[data-project-action="repair"]');
   const downloadAllGamesButton = content.querySelector(
     '[data-project-action="download-all-games"]',
@@ -359,7 +367,7 @@ const wireProjectSettings = (win) => {
       panel.hidden = !active;
       panel.classList.toggle("active", active);
     });
-    if (panelId === "project-panel-game-data") void renderGameData();
+    if (panelId === "project-panel-games") void renderGameData();
   };
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showTab(tab));
@@ -403,7 +411,7 @@ const wireProjectSettings = (win) => {
       const items = [
         ...internetGames.map((item) => ({
           ...item,
-          detail: "Internet Game",
+          detail: "Installed game",
           removeId: item.id,
           owner: "internet",
         })),
@@ -417,7 +425,7 @@ const wireProjectSettings = (win) => {
       if (!items.length) {
         const empty = document.createElement("p");
         empty.className = "project-settings-description";
-        empty.textContent = "No downloaded or stored game data was found.";
+        empty.textContent = "No installed games or separate game files found.";
         gameDataList.appendChild(empty);
       }
       items.forEach((item) => {
@@ -491,7 +499,7 @@ const wireProjectSettings = (win) => {
     if (!state.bundledGames.length) {
       const empty = document.createElement("p");
       empty.className = "project-settings-description";
-      empty.textContent = "Loading the included-game catalog...";
+      empty.textContent = "Loading the built-in game list...";
       offlineGamesList.appendChild(empty);
       return;
     }
@@ -537,8 +545,6 @@ const wireProjectSettings = (win) => {
       : state.lastChecked
         ? "Up to date"
         : "Not checked";
-    value("includedGames").textContent = String(bundledGameCount);
-    value("downloadedGames").textContent = String(installedGameIds.size);
     value("downloadSize").textContent =
       state.downloadBytes === null
         ? state.downloadMetadataError
@@ -563,7 +569,7 @@ const wireProjectSettings = (win) => {
     const activeGameTitle = state.activeGameId
       ? gamesList[state.activeGameId]?.title ||
         formatGameTitle(state.activeGameId)
-      : "included games";
+      : "built-in games";
     offlineGamesStatus.textContent = state.gameError
       ? state.gameError
       : state.gamePhase === "downloading"
@@ -571,19 +577,19 @@ const wireProjectSettings = (win) => {
         : state.gamePhase === "removing"
           ? "Removing offline game files..."
           : state.downloadedGameIds.length
-            ? "Selected games are ready for offline use."
-            : "No included games are downloaded for offline use.";
+            ? "Selected built-in games are available offline."
+            : "No built-in games are available offline.";
     updateStatus.textContent =
       state.phase === "checking"
         ? "Checking for updates..."
         : state.phase === "update-pending"
-          ? `Astro Flash Collection ${state.availableVersion} will become eligible after ${formatUpdateCheckTime(state.updateEligibleAt)} if no newer update is released.`
+          ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to install it immediately.`
           : state.updateReady
-            ? `Astro Flash Collection ${state.availableVersion || "update"} will install automatically the next time you load it.`
+            ? `Astro Flash ${state.availableVersion || "update"} is ready to apply.`
             : state.availableVersion
-              ? `Astro Flash Collection ${state.availableVersion} is available.`
+              ? `Astro Flash ${state.availableVersion} is available.`
               : state.lastChecked
-                ? "Astro Flash Collection is up to date."
+                ? "Astro Flash is up to date."
                 : "Updates have not been checked yet.";
     if (state.error) {
       updateStatus.textContent = state.error;
@@ -602,6 +608,13 @@ const wireProjectSettings = (win) => {
       gameDownloadProgress.removeAttribute("value");
     }
     checkButton.disabled = !state.online || transientPhases.has(state.phase);
+    updateNowButton.disabled =
+      !state.online || transientPhases.has(state.phase);
+    updateDelaySelect.disabled = transientPhases.has(state.phase);
+    updateDelaySelect.value =
+      state.automaticUpdateDelayMs === null
+        ? ""
+        : String(state.automaticUpdateDelayMs);
     repairButton.disabled = !state.online || transientPhases.has(state.phase);
     const gameBusy = ["downloading", "removing"].includes(state.gamePhase);
     downloadAllGamesButton.disabled =
@@ -641,6 +654,18 @@ const wireProjectSettings = (win) => {
   checkButton.addEventListener("click", () => {
     offlineManager.checkForUpdates().catch(() => {});
   });
+  updateNowButton.addEventListener("click", () => {
+    offlineManager.updateNow().catch(() => {});
+  });
+  updateDelaySelect.addEventListener("change", () => {
+    const delay = updateDelaySelect.value
+      ? Number(updateDelaySelect.value)
+      : null;
+    offlineManager.setAutomaticUpdateDelay(delay);
+    offlineManager
+      .checkForUpdates({ applyAutomatically: true })
+      .catch(() => {});
+  });
   repairButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
       "Clear and download the Windows XP system files again?",
@@ -659,7 +684,7 @@ const wireProjectSettings = (win) => {
   });
   removeAllGamesButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
-      "Remove the offline copies of all included games? Internet Games installations will be preserved.",
+      "Remove the offline copies of all built-in games? Installed games will be preserved.",
       "Remove Offline Games",
       "question",
     );
@@ -668,15 +693,6 @@ const wireProjectSettings = (win) => {
       offlineGamesStatus.textContent = error.message;
     });
   });
-  content
-    .querySelector('[data-project-action="manage-games"]')
-    .addEventListener("click", () => {
-      openSystemWindow("__internet-games");
-      openWindows
-        .get("__internet-games")
-        ?.el.querySelector('[data-internet-tab="installed"]')
-        ?.click();
-    });
   restoreDesktopButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
       "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",

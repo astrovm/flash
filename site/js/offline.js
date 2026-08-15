@@ -17,6 +17,7 @@
   const DOWNLOAD_BYTES_KEY = "astroFlashDownloadBytes";
   const GAME_RECORDS_KEY = "astroFlashOfflineGameRecords";
   const ACTIVE_VERSION_RELOAD_KEY = "astroFlashActiveVersionReload";
+  const AUTOMATIC_UPDATE_DELAY_KEY = "astroFlashAutomaticUpdateDelay";
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
   const UPDATE_RETRY_DELAY = 30 * 1000;
@@ -118,7 +119,7 @@
   const createManager = ({
     currentVersion,
     environment = globalThis,
-    serviceWorkerUrl = "/sw.js",
+    serviceWorkerUrl = "/sw.{version}.js",
     versionUrl = "/version.json",
     gameManifestUrl = "offline-games.json",
     cachePrefix = "astro-flash",
@@ -139,9 +140,18 @@
     let lifecycleListenersAttached = false;
     let updateRetryTimer = null;
     let bypassWorkerCdn = false;
-    let automaticTargetVersion = null;
+    let applyTargetVersion = null;
 
     const versionedServiceWorkerUrl = (version) => {
+      if (serviceWorkerUrl.includes("{version}")) {
+        const versionedUrl = serviceWorkerUrl.replace(
+          "{version}",
+          encodeURIComponent(version),
+        );
+        return bypassWorkerCdn
+          ? `${versionedUrl}?retry=${environment.Date.now()}`
+          : versionedUrl;
+      }
       const separator = serviceWorkerUrl.includes("?") ? "&" : "?";
       const versionedUrl = `${serviceWorkerUrl}${separator}v=${encodeURIComponent(version)}`;
       return bypassWorkerCdn
@@ -149,11 +159,29 @@
         : versionedUrl;
     };
 
+    const workerNeedsVersionedUrl = (worker, version) => {
+      if (!worker?.scriptURL || !serviceWorkerUrl.includes("{version}")) {
+        return false;
+      }
+      const expected = new URL(
+        serviceWorkerUrl.replace("{version}", encodeURIComponent(version)),
+        environment.location.href,
+      );
+      return (
+        new URL(worker.scriptURL, environment.location.href).pathname !==
+        expected.pathname
+      );
+    };
+
     const scheduleUpdateRetry = () => {
       if (updateRetryTimer !== null) return;
       updateRetryTimer = (environment.setTimeout || setTimeout)(() => {
         updateRetryTimer = null;
-        void checkForUpdates().catch(() => {});
+        const shouldApply = applyTargetVersion !== null;
+        void checkForUpdates({
+          applyAutomatically: shouldApply,
+          bypassDelay: shouldApply,
+        }).catch(() => {});
       }, UPDATE_RETRY_DELAY);
     };
 
@@ -188,6 +216,10 @@
       storage.getItem(DOWNLOAD_VERSION_KEY) === currentVersion
         ? Number(storage.getItem(DOWNLOAD_BYTES_KEY)) || null
         : null;
+    const savedAutomaticUpdateDelayValue = storage.getItem(
+      AUTOMATIC_UPDATE_DELAY_KEY,
+    );
+    const savedAutomaticUpdateDelay = Number(savedAutomaticUpdateDelayValue);
     let state = {
       enabled: true,
       online: navigatorObject.onLine !== false,
@@ -196,6 +228,12 @@
       availableVersion: null,
       availableRevision: null,
       updateEligibleAt: null,
+      automaticUpdateDelayMs:
+        savedAutomaticUpdateDelayValue !== null &&
+        Number.isInteger(savedAutomaticUpdateDelay) &&
+        savedAutomaticUpdateDelay >= 0
+          ? savedAutomaticUpdateDelay
+          : null,
       downloadBytes: cachedDownloadBytes,
       bundledGameBytes: null,
       downloadMetadataError: false,
@@ -268,8 +306,11 @@
       });
     };
 
+    const automaticUpdateDelay = (metadata) =>
+      state.automaticUpdateDelayMs ?? metadata.stabilityDelayMs;
+
     const updateEligibleAt = (metadata) =>
-      Date.parse(metadata.releasedAt) + metadata.stabilityDelayMs;
+      Date.parse(metadata.releasedAt) + automaticUpdateDelay(metadata);
 
     const markWaitingUpdate = async (worker, knownMetadata = null) => {
       if (!worker) return;
@@ -282,10 +323,10 @@
         return false;
       }
       const eligibleAt = updateEligibleAt(metadata);
-      if (environment.Date.now() < eligibleAt) {
-        if (automaticTargetVersion === metadata.version) {
-          automaticTargetVersion = null;
-        }
+      if (
+        environment.Date.now() < eligibleAt &&
+        applyTargetVersion !== metadata.version
+      ) {
         setState({
           phase: "update-pending",
           updateReady: false,
@@ -325,8 +366,8 @@
         downloadBytes: metadata?.offlineBytes || state.downloadBytes,
         error: null,
       });
-      if (automaticTargetVersion === metadata.version) {
-        automaticTargetVersion = null;
+      if (applyTargetVersion === metadata.version) {
+        applyTargetVersion = null;
         await applyUpdate();
       }
       return true;
@@ -742,7 +783,10 @@
       }
     };
 
-    const checkForUpdates = async ({ applyAutomatically = false } = {}) => {
+    const checkForUpdates = async ({
+      applyAutomatically = false,
+      bypassDelay = false,
+    } = {}) => {
       if (checkPromise) return checkPromise;
       checkPromise = (async () => {
         const previousPhase = state.phase;
@@ -750,11 +794,8 @@
         try {
           const metadata = await fetchVersion();
           rememberVersionMetadata(metadata);
-          if (
-            automaticTargetVersion &&
-            automaticTargetVersion !== metadata.version
-          ) {
-            automaticTargetVersion = null;
+          if (applyTargetVersion && applyTargetVersion !== metadata.version) {
+            applyTargetVersion = null;
           }
           const checkedAt = environment.Date.now();
           storage.setItem(LAST_CHECKED_KEY, String(checkedAt));
@@ -766,8 +807,12 @@
             (activeWorkerVersion !== null &&
               activeWorkerVersion !== metadata.version);
           const eligibleAt = updateEligibleAt(metadata);
-          if (updateAvailable && checkedAt < eligibleAt) {
-            automaticTargetVersion = null;
+          const migrateActiveWorker =
+            !updateAvailable &&
+            activeWorkerVersion === metadata.version &&
+            workerNeedsVersionedUrl(registration?.active, metadata.version);
+          if (updateAvailable && !bypassDelay && checkedAt < eligibleAt) {
+            applyTargetVersion = null;
             setState({
               phase: "update-pending",
               availableVersion: metadata.version,
@@ -779,8 +824,28 @@
             });
             return snapshot();
           }
-          if (applyAutomatically && updateAvailable) {
-            automaticTargetVersion = metadata.version;
+          if (
+            updateAvailable &&
+            activeWorkerVersion === metadata.version &&
+            (await reconcileActiveVersion(metadata.version))
+          ) {
+            setState({ lastChecked: checkedAt });
+            return snapshot();
+          }
+          if (updateAvailable && !applyAutomatically) {
+            setState({
+              phase: "update-available",
+              availableVersion: metadata.version,
+              availableRevision: metadata.revision,
+              lastChecked: checkedAt,
+              updateEligibleAt: eligibleAt,
+              updateReady: false,
+              error: null,
+            });
+            return snapshot();
+          }
+          if ((applyAutomatically && updateAvailable) || migrateActiveWorker) {
+            applyTargetVersion = metadata.version;
           }
           await registerAndWait(metadata.version);
           let waitingUpdateReady = false;
@@ -830,6 +895,9 @@
                 : "unregistered",
             error: null,
           });
+          if (!registration?.waiting && !registration?.installing) {
+            applyTargetVersion = null;
+          }
         } catch (error) {
           setState({
             phase: previousPhase === "ready" ? "ready" : "error",
@@ -894,6 +962,23 @@
       return snapshot();
     };
 
+    const setAutomaticUpdateDelay = (delay) => {
+      if (delay === null) {
+        storage.removeItem(AUTOMATIC_UPDATE_DELAY_KEY);
+        setState({ automaticUpdateDelayMs: null });
+        return snapshot();
+      }
+      if (!Number.isInteger(delay) || delay < 0) {
+        throw new Error("The automatic update delay is invalid.");
+      }
+      storage.setItem(AUTOMATIC_UPDATE_DELAY_KEY, String(delay));
+      setState({ automaticUpdateDelayMs: delay });
+      return snapshot();
+    };
+
+    const updateNow = () =>
+      checkForUpdates({ applyAutomatically: true, bypassDelay: true });
+
     const automaticCheck = () => {
       if (
         navigatorObject.onLine === false ||
@@ -902,7 +987,7 @@
       ) {
         return;
       }
-      void checkForUpdates().catch(() => {});
+      void checkForUpdates({ applyAutomatically: true }).catch(() => {});
     };
 
     const attachLifecycleListeners = () => {
@@ -969,7 +1054,9 @@
       removeAllGames,
       removeGame,
       repair,
+      setAutomaticUpdateDelay,
       subscribe,
+      updateNow,
     };
   };
 
