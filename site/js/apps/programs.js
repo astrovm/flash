@@ -147,8 +147,16 @@ const upsertNativeOwnedWindow = (owner, detail) => {
   dialog.close = detail.close;
   dialog.focus = detail.focus;
   dialog.el.querySelector(".title-text").textContent = detail.title;
-  dialog.el.style.width = `${detail.width}px`;
-  dialog.el.style.height = `${detail.height}px`;
+  const dialogWidth = Number(detail.clientWidth) || Number(detail.width);
+  const dialogHeight = Number(detail.clientHeight) || Number(detail.height);
+  const dialogCaption = parseWindowLength(
+    dialog.el.ownerDocument.defaultView
+      ?.getComputedStyle?.(dialog.el)
+      ?.getPropertyValue("--boxedwine-shell-caption-height"),
+    28,
+  );
+  dialog.el.style.width = `${dialogWidth}px`;
+  dialog.el.style.height = `${dialogHeight + dialogCaption}px`;
   if (!dialog.moved) {
     const position = clampWindowPosition(
       { el: dialog.el },
@@ -163,6 +171,7 @@ const upsertNativeOwnedWindow = (owner, detail) => {
 
 const applicationContext = (win) => ({
   windowElement: win.el,
+  nativeWindowReady: false,
   XP_ICON_PATHS,
   dialogs: XPDialogs,
   fileOps,
@@ -202,9 +211,18 @@ const applicationContext = (win) => ({
     const host = win.el.querySelector(".boxedwine-shared-app-host");
     if (!host) return;
     const frameWidth = Math.max(0, win.el.offsetWidth - host.clientWidth);
-    const frameHeight = Math.max(0, win.el.offsetHeight - host.clientHeight);
+    const measuredFrameHeight = Math.max(
+      0,
+      win.el.offsetHeight - host.clientHeight,
+    );
+    const caption = parseWindowLength(
+      win.el.ownerDocument.defaultView
+        ?.getComputedStyle?.(win.el)
+        ?.getPropertyValue("--boxedwine-shell-caption-height"),
+      28,
+    );
     win.el.style.width = `${width + frameWidth}px`;
-    win.el.style.height = `${height + frameHeight}px`;
+    win.el.style.height = `${height + (measuredFrameHeight || caption)}px`;
     fitNativeProgramToWorkArea(win);
   },
   applyNativeWindowMetadata(metadata) {
@@ -226,25 +244,31 @@ const applicationContext = (win) => ({
       minimize.setAttribute("aria-disabled", String(!canMinimize));
     }
 
-    const width = Number(metadata.width);
-    const height = Number(metadata.height);
+    const frameLeft = Math.max(0, Number(metadata.frameLeft) || 0);
+    const frameTop = Math.max(0, Number(metadata.frameTop) || 0);
+    const frameRight = Math.max(0, Number(metadata.frameRight) || 0);
+    const frameBottom = Math.max(0, Number(metadata.frameBottom) || 0);
+    const outerWidth = Number(metadata.outerWidth) || Number(metadata.width);
+    const outerHeight = Number(metadata.outerHeight) || Number(metadata.height);
+    const width =
+      Number(metadata.clientWidth) ||
+      (outerWidth > 0 ? outerWidth - frameLeft - frameRight : 0);
+    const height =
+      Number(metadata.clientHeight) ||
+      (outerHeight > 0 ? outerHeight - frameTop - frameBottom : 0);
     if (width <= 0 || height <= 0) return;
     const saved = getWindowPlacements()[win.gameId];
     if (saved && !win.nativeMetadataApplied) {
       restoreWindowPlacement(win);
     } else if (!saved) {
       if (!win.nativeMetadataApplied) win.workAreaFitRect = null;
-      const workArea = getVisibleWorkArea();
-      const visibleWidth = workArea.width > 0 ? workArea.width : width;
-      const visibleHeight = workArea.height > 0 ? workArea.height : height;
-      win.el.style.width = `${Math.min(width, visibleWidth)}px`;
-      win.el.style.height = `${Math.min(height, visibleHeight)}px`;
+      this.applyNativeClientSize(width, height);
       if (!win.nativeMetadataApplied) {
+        const workArea = getVisibleWorkArea();
         const offset = (cascadeCount++ % 6) * 28;
         win.el.style.left = `${Math.max(0, (workArea.width - win.el.offsetWidth) / 2 + offset - 56)}px`;
         win.el.style.top = `${Math.max(0, (workArea.height - win.el.offsetHeight) / 2 + offset - 40)}px`;
       }
-      fitNativeProgramToWorkArea(win);
       const position = clampWindowPosition(
         win,
         win.el.offsetLeft,
@@ -254,6 +278,7 @@ const applicationContext = (win) => ({
       win.el.style.top = `${position.top}px`;
     }
     win.nativeMetadataApplied = true;
+    this.nativeWindowReady = true;
   },
   applyNativeClose: () => {
     clearNativeOwnedWindows(win);

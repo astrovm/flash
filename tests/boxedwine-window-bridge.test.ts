@@ -470,6 +470,62 @@ describe("BoxedWine window bridge", () => {
       expect(canvas.style.width).toBe("260px");
       expect(canvas.style.height).toBe("232px");
       expect(canvas.style.objectFit).toBe("none");
+
+      send({
+        type: "created",
+        id: 51,
+        parentId: 1,
+        processId: 11,
+        launchToken: 99,
+        x: 0,
+        y: 0,
+        width: 260,
+        height: 260,
+        canMinimize: true,
+        canMaximize: false,
+        canResize: false,
+      });
+      send({ type: "title", id: 51, title: "Calculator" });
+      send({ type: "mapped", id: 51 });
+      send({
+        type: "frame",
+        id: 51,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      flushRenders();
+      expect(surface.attach(51, target)).toBeTrue();
+      const cropped = surface.getCanvas(51);
+      expect(cropped.width).toBe(260);
+      expect(cropped.height).toBe(232);
+      expect(cropped.dataset.boxedwineLaunchToken).toBe("99");
+
+      send({
+        type: "created",
+        id: 52,
+        parentId: 1,
+        processId: 12,
+        launchToken: -2020735226,
+        x: 0,
+        y: 0,
+        width: 260,
+        height: 260,
+        canMinimize: true,
+      });
+      send({ type: "title", id: 52, title: "Solitaire" });
+      send({ type: "mapped", id: 52 });
+      send({
+        type: "frame",
+        id: 52,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      flushRenders();
+      expect(surface.getCanvas(52).dataset.boxedwineLaunchToken).toBe(
+        "2274232070",
+      );
       expect(canvas.width).toBe(260);
       expect(canvas.height).toBe(232);
       expect(canvas.hidden).toBeFalse();

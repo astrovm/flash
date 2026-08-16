@@ -1,4 +1,5 @@
 const MESSAGE_TYPE = "boxedwine-native-window";
+const WINE_LUNA_CAPTION_HEIGHT = 28;
 
 const frameMetrics = (entry) => {
   const left = Math.max(0, entry.frameLeft || 0);
@@ -13,6 +14,29 @@ const frameMetrics = (entry) => {
     width: Math.max(1, entry.clientWidth || entry.width - left - right),
     height: Math.max(1, entry.clientHeight || entry.height - top - bottom),
   };
+};
+
+const hasReportedFrame = (entry) =>
+  entry.frameLeft > 0 ||
+  entry.frameTop > 0 ||
+  entry.frameRight > 0 ||
+  entry.frameBottom > 0;
+
+const looksDecorated = (entry) =>
+  Boolean(entry.title?.trim()) ||
+  entry.canMinimize === true ||
+  entry.canMaximize === true ||
+  entry.dialog === true;
+
+const applyDecoratedFrameFallback = (entry) => {
+  if (hasReportedFrame(entry) || !looksDecorated(entry)) return;
+  entry.frameTop = WINE_LUNA_CAPTION_HEIGHT;
+  const fullHeight = Number(entry.outerHeight) || Number(entry.height) || 0;
+  const clientHeight = Number(entry.clientHeight);
+  if (clientHeight > WINE_LUNA_CAPTION_HEIGHT && clientHeight >= fullHeight)
+    entry.clientHeight = clientHeight - WINE_LUNA_CAPTION_HEIGHT;
+  else if (!clientHeight && fullHeight > WINE_LUNA_CAPTION_HEIGHT)
+    entry.clientHeight = fullHeight - WINE_LUNA_CAPTION_HEIGHT;
 };
 
 export const createBoxedWineWindowSurface = ({
@@ -561,13 +585,16 @@ export const createBoxedWineWindowSurface = ({
       detail.height || 0,
     ].join(":");
     if (detail.type === "created") {
-      windows.set(detail.id, {
+      const created = {
         ...detail,
         mapped: false,
-        title: "",
+        title: detail.title || "",
+        launchToken: Number(detail.launchToken) >>> 0,
         stack: nativeStack++,
-      });
-      onLifecycle?.({ ...detail, topId: topLevelId(detail.id) });
+      };
+      applyDecoratedFrameFallback(created);
+      windows.set(detail.id, created);
+      onLifecycle?.({ ...created, topId: topLevelId(detail.id) });
       return;
     }
     const entry = windows.get(detail.id);
@@ -596,8 +623,11 @@ export const createBoxedWineWindowSurface = ({
       if (Number.isFinite(detail.outerY)) entry.y = detail.outerY;
       if (detail.outerWidth > 0) entry.width = detail.outerWidth;
       if (detail.outerHeight > 0) entry.height = detail.outerHeight;
+      if (detail.launchToken != null)
+        entry.launchToken = Number(detail.launchToken) >>> 0;
     }
     if (detail.type === "title") entry.title = detail.title;
+    applyDecoratedFrameFallback(entry);
     if (detail.type === "owner") entry.ownerId = detail.parentId;
     if (typeof detail.dialog === "boolean") entry.dialog = detail.dialog;
     if (detail.type === "raised") entry.stack = nativeStack++;
@@ -614,7 +644,7 @@ export const createBoxedWineWindowSurface = ({
     const topId = topLevelId(detail.id);
     if (detail.type === "frame" && topId)
       reportFirstFrame(topId, canvases.get(topId));
-    onLifecycle?.({ ...entry, ...detail, topId });
+    onLifecycle?.({ ...detail, ...entry, topId });
     if (topId) {
       if (detail.type === "mapped" && !canvases.has(topId)) render(topId);
       const canvas = canvases.get(topId);

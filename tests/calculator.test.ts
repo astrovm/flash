@@ -64,6 +64,7 @@ const showNativeCalculator = (
   runtimeWindow = shell.document.querySelector(
     ".boxedwine-shared-runtime-frame",
   ).contentWindow,
+  { includeFrame = true } = {},
 ) => {
   runtimeWindow.__boxedwineTestFrames ||= new Map();
   runtimeWindow.BoxedWineFrames ||= {
@@ -88,9 +89,16 @@ const showNativeCalculator = (
       y: 0,
       width: 260,
       height: 260,
-      frameTop: 28,
-      clientWidth: 260,
-      clientHeight: 232,
+      ...(includeFrame
+        ? {
+            frameTop: 28,
+            clientWidth: 260,
+            clientHeight: 232,
+          }
+        : {
+            clientWidth: 260,
+            clientHeight: 260,
+          }),
       canResize: false,
       canMaximize: false,
       canMinimize: true,
@@ -145,6 +153,15 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("cache")).toBe("false");
     expect(url.searchParams.get("trace")).toBe("false");
+  });
+
+  test("sizes the XP window from the client when native frame extents are missing", async () => {
+    const { shell, calculator } = await launchCalculator();
+    showNativeCalculator(shell, 41, undefined, { includeFrame: false });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("260px");
+    expect(calculator.style.height).toBe("260px");
   });
 
   test("reuses one persistent runtime for repeated Calculator launches", async () => {

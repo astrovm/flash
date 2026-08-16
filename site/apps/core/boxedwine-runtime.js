@@ -64,10 +64,15 @@ const createRuntime = (initialApplicationId) => {
   const launchFailures = new Map();
   const mounts = new Map();
   let request = 0;
+  const normalizeLaunchToken = (value) => {
+    const token = Number(value) >>> 0;
+    return token ? String(token) : "";
+  };
   const createLaunchToken = () => {
     const values = new Uint32Array(1);
     globalThis.crypto?.getRandomValues?.(values);
-    const random = values[0] || (Date.now() + ++request) >>> 0 || 1;
+    const random =
+      values[0] & 0x7fffffff || (Date.now() + ++request) & 0x7fffffff || 1;
     return String(random);
   };
   const launchTokenFor = (appId, renew = false) => {
@@ -249,7 +254,8 @@ const createRuntime = (initialApplicationId) => {
     origin: location.origin,
     initiallyVisible: false,
     onFirstFrame({ id, launchToken, processId }) {
-      const appId = launchApplications.get(String(launchToken)) || "";
+      const appId =
+        launchApplications.get(normalizeLaunchToken(launchToken)) || "";
       if (appId) bindFirstFrame(appId, id, processId);
     },
     onOwnedWindow(detail) {
@@ -267,7 +273,9 @@ const createRuntime = (initialApplicationId) => {
       });
     },
     onLifecycle(detail) {
-      const tokenAppId = launchApplications.get(String(detail.launchToken));
+      const tokenAppId = launchApplications.get(
+        normalizeLaunchToken(detail.launchToken),
+      );
       if (tokenAppId && detail.id === detail.topId)
         windowApplications.set(detail.topId, tokenAppId);
       const appId = tokenAppId || windowApplications.get(detail.topId);
@@ -281,7 +289,7 @@ const createRuntime = (initialApplicationId) => {
         mounted?.context.setTitle(detail.title);
       }
       if (
-        ["created", "mapped", "bounds", "capabilities", "metadata"].includes(
+        ["mapped", "bounds", "capabilities", "metadata"].includes(
           detail.type,
         ) &&
         detail.id === detail.topId
@@ -522,6 +530,7 @@ const createRuntime = (initialApplicationId) => {
         const width = element.clientWidth;
         const height = element.clientHeight;
         if (!windowId || width <= 0 || height <= 0) return false;
+        if (!mounts.get(appId)?.context.nativeWindowReady) return false;
         const action = pendingWindowAction;
         pendingWindowAction = "bounds";
         return surfaces.command(windowId, action, {
