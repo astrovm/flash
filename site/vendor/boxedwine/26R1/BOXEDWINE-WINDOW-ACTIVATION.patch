@@ -1,11 +1,12 @@
 diff --git a/source/sdl/emscripten/mainloop.cpp b/source/sdl/emscripten/mainloop.cpp
-index daf345d..131075c 100644
+index daf345dd..fa97b322 100644
 --- a/source/sdl/emscripten/mainloop.cpp
 +++ b/source/sdl/emscripten/mainloop.cpp
-@@ -20,6 +20,216 @@
+@@ -20,6 +20,235 @@
  #include <emscripten/emscripten.h>
  #include "boxedwine.h"
  #include "knativesystem.h"
++#include "knativewindowbridge.h"
 +#include "../../x11/x11.h"
 +
 +static U32 pendingScreenWidth;
@@ -13,6 +14,7 @@ index daf345d..131075c 100644
 +static BString pendingApplication;
 +static U32 pendingTermination;
 +static U32 launchResult;
++static U32 pendingLaunchToken;
 +
 +static bool isValidApplicationPath(const char* path, U32 length) {
 +    if (!path || !length || length > 240) return false;
@@ -32,15 +34,16 @@ index daf345d..131075c 100644
 +        (path[length - 1] == 'e' || path[length - 1] == 'E');
 +}
 +
-+EM_JS(void, boxedwineProcessEvent, (const char* type, U32 processId, const char* executable), {
++EM_JS(void, boxedwineProcessEvent, (const char* type, U32 processId, U32 parentProcessId, U32 launchToken, const char* executable), {
 +    window.dispatchEvent(new CustomEvent("boxedwine-native-process", {
-+        detail: { type: UTF8ToString(type), processId, executable: UTF8ToString(executable) },
++        detail: { type: UTF8ToString(type), processId, parentProcessId, launchToken, executable: UTF8ToString(executable) },
 +    }));
 +});
 +
-+extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_process(const char* path, U32 length) {
-+    if (!isValidApplicationPath(path, length) || pendingApplication.length()) return 0;
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_process(const char* path, U32 length, U32 launchToken) {
++    if (!isValidApplicationPath(path, length) || !launchToken || pendingApplication.length()) return 0;
 +    launchResult = 0;
++    pendingLaunchToken = launchToken;
 +    pendingApplication = B("C:\\files\\");
 +    for (U32 i = 0; i < length; ++i) {
 +        pendingApplication.append(path[i] == '/' ? '\\' : path[i]);
@@ -72,6 +75,8 @@ index daf345d..131075c 100644
 +    if (!pendingApplication.length()) return;
 +    BString executable = pendingApplication;
 +    pendingApplication = BString::empty;
++    U32 launchToken = pendingLaunchToken;
++    pendingLaunchToken = 0;
 +    std::vector<BString> args = {B("/bin/wine"), executable};
 +    std::vector<BString> environment = {
 +        B("HOME=/home/username"), B("LOGNAME=username"), B("USERNAME=username"),
@@ -83,7 +88,11 @@ index daf345d..131075c 100644
 +        B("/home/username/.wine/dosdevices/c:/files"), args, environment,
 +        UID, GID, UID, GID);
 +    launchResult = thread ? process->id : 0xffffffff;
-+    if (thread) boxedwineProcessEvent("started", process->id, executable.c_str());
++    if (thread) {
++        boxedwineNativeRegisterLaunch(process->id, launchToken);
++        boxedwineProcessEvent("started", process->id, process->parentId,
++            launchToken, executable.c_str());
++    }
 +}
 +extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_resize_screen(U32 width, U32 height) {
 +    pendingScreenWidth = width;
@@ -162,11 +171,18 @@ index daf345d..131075c 100644
 +    data->putEvent(event);
 +}
 +
-+static void resizeWindow(const XWindowPtr& window, U32 width, U32 height) {
++static void configureWindow(const XWindowPtr& window, S32 x, S32 y,
++        U32 width, U32 height, bool position) {
 +    XWindowChanges changes = {};
++    U32 mask = CWWidth | CWHeight;
++    if (position) {
++        changes.x = x;
++        changes.y = y;
++        mask |= CWX | CWY;
++    }
 +    changes.width = width;
 +    changes.height = height;
-+    window->configure(CWWidth | CWHeight, &changes);
++    window->configure(mask, &changes);
 +}
 +
 +extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_window_command(U32 id, U32 command, S32 x, S32 y, U32 width, U32 height) {
@@ -190,16 +206,19 @@ index daf345d..131075c 100644
 +                window->width(), window->height()});
 +        }
 +        KNativeScreenPtr screen = KNativeSystem::getScreen();
-+        resizeWindow(window, width ? width : screen->screenWidth(), height ? height : screen->screenHeight());
++        configureWindow(window, x, y,
++            width ? width : screen->screenWidth(),
++            height ? height : screen->screenHeight(), true);
 +    } else if (command == 4) {
 +        BoxedwineWindowRestore* restore = getWindowRestore(server, id);
 +        if (restore) {
-+            resizeWindow(window, restore->width, restore->height);
++            configureWindow(window, restore->x, restore->y,
++                restore->width, restore->height, true);
 +            removeWindowRestore(id);
 +        }
 +        window->mapWindow();
 +    } else if (command == 5 && width && height) {
-+        resizeWindow(window, width, height);
++        configureWindow(window, x, y, width, height, true);
 +    }
 +    window->setDirty();
 +}
@@ -219,7 +238,7 @@ index daf345d..131075c 100644
  
  #ifdef BOXEDWINE_MULTI_THREADED
  #include "knativethread.h"
-@@ -52,6 +262,8 @@ static BString getSize(int pages)
+@@ -52,6 +281,8 @@ static BString getSize(int pages)
  extern int allocatedRamPages;
  void mainloop() {
      isMainThread = true;
@@ -228,7 +247,7 @@ index daf345d..131075c 100644
          U32 t = KSystem::getMilliesSinceStart();
          U32 nextTimer = getNextTimer();
          if (nextTimer == 0) {
-@@ -93,6 +305,8 @@ bool isMainthread() {
+@@ -93,6 +324,8 @@ bool isMainthread() {
  
  void mainloop() {
      U64 startTime = KSystem::getMicroCounter();

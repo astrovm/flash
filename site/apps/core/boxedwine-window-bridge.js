@@ -1,17 +1,4 @@
-import { boxedWineApplications } from "./boxedwine-applications.js";
-
 const MESSAGE_TYPE = "boxedwine-native-window";
-
-const applicationFromExecutable = (executable = "") => {
-  const name = executable.toLowerCase().replaceAll("\\", "/");
-  return (
-    boxedWineApplications.find((application) =>
-      application.processExecutables.some((executable) =>
-        name.endsWith(`/${executable.toLowerCase()}`),
-      ),
-    )?.id || ""
-  );
-};
 
 const legacyKeyCode = (code, key) => {
   if (/^Key[A-Z]$/.test(code)) return code.charCodeAt(3);
@@ -115,7 +102,6 @@ const sdlScanCode = (code) => {
 };
 
 export const installBoxedWineWindowBridge = (hostWindow, module) => {
-  const processApplications = new Map();
   const forwardWindowEvent = (event) => {
     const detail = event.detail;
     if (!detail || typeof detail.type !== "string") return;
@@ -126,9 +112,8 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
       Number(root.dataset.boxedwineWindowEvents || 0) + 1,
     );
     root.dataset.boxedwineLastWindowEvent = `${detail.type}:${detail.id}`;
-    const appId = processApplications.get(detail.processId) || "";
     hostWindow.parent.postMessage(
-      { type: MESSAGE_TYPE, window: { ...metadata, appId } },
+      { type: MESSAGE_TYPE, window: metadata },
       hostWindow.location.origin,
       [],
     );
@@ -266,21 +251,10 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
   const forwardProcessEvent = (event) => {
     const detail = event.detail;
     if (!detail || !Number.isInteger(detail.processId)) return;
-    if (detail.type === "started") {
-      const appId = applicationFromExecutable(detail.executable);
-      if (appId) processApplications.set(detail.processId, appId);
-    } else if (detail.type === "exited") {
-      processApplications.delete(detail.processId);
-    }
     hostWindow.parent.postMessage(
       {
         type: "boxedwine-native-process",
-        process: {
-          ...detail,
-          appId:
-            processApplications.get(detail.processId) ||
-            applicationFromExecutable(detail.executable),
-        },
+        process: { ...detail },
       },
       hostWindow.location.origin,
     );
@@ -292,6 +266,9 @@ export const installBoxedWineWindowBridge = (hostWindow, module) => {
   const onRuntimeInitialized = module.onRuntimeInitialized;
   module.onRuntimeInitialized = () => {
     onRuntimeInitialized?.();
+    const initialLaunchToken = hostWindow.BoxedWineInitialLaunchToken;
+    if (initialLaunchToken)
+      module.boxedwineSetInitialLaunchToken?.(initialLaunchToken);
     if (!module.boxedwineFrames)
       throw new Error("BoxedWine frame registry is unavailable");
     hostWindow.BoxedWineFrames = module.boxedwineFrames;

@@ -207,6 +207,54 @@ const applicationContext = (win) => ({
     win.el.style.height = `${height + frameHeight}px`;
     fitNativeProgramToWorkArea(win);
   },
+  applyNativeWindowMetadata(metadata) {
+    if (win.maximized) return;
+    const canResize = metadata.canResize !== false;
+    const canMaximize = metadata.canMaximize !== false;
+    const canMinimize = metadata.canMinimize !== false;
+    win.el.querySelectorAll(".resize-handle").forEach((handle) => {
+      handle.hidden = !canResize;
+    });
+    const maximize = win.el.querySelector(".maximize-btn");
+    if (maximize) {
+      maximize.disabled = !canMaximize;
+      maximize.setAttribute("aria-disabled", String(!canMaximize));
+    }
+    const minimize = win.el.querySelector(".minimize-btn");
+    if (minimize) {
+      minimize.disabled = !canMinimize;
+      minimize.setAttribute("aria-disabled", String(!canMinimize));
+    }
+
+    const width = Number(metadata.width);
+    const height = Number(metadata.height);
+    if (width <= 0 || height <= 0) return;
+    const saved = getWindowPlacements()[win.gameId];
+    if (saved && !win.nativeMetadataApplied) {
+      restoreWindowPlacement(win);
+    } else if (!saved) {
+      if (!win.nativeMetadataApplied) win.workAreaFitRect = null;
+      const workArea = getVisibleWorkArea();
+      const visibleWidth = workArea.width > 0 ? workArea.width : width;
+      const visibleHeight = workArea.height > 0 ? workArea.height : height;
+      win.el.style.width = `${Math.min(width, visibleWidth)}px`;
+      win.el.style.height = `${Math.min(height, visibleHeight)}px`;
+      if (!win.nativeMetadataApplied) {
+        const offset = (cascadeCount++ % 6) * 28;
+        win.el.style.left = `${Math.max(0, (workArea.width - win.el.offsetWidth) / 2 + offset - 56)}px`;
+        win.el.style.top = `${Math.max(0, (workArea.height - win.el.offsetHeight) / 2 + offset - 40)}px`;
+      }
+      fitNativeProgramToWorkArea(win);
+      const position = clampWindowPosition(
+        win,
+        win.el.offsetLeft,
+        win.el.offsetTop,
+      );
+      win.el.style.left = `${position.left}px`;
+      win.el.style.top = `${position.top}px`;
+    }
+    win.nativeMetadataApplied = true;
+  },
   applyNativeClose: () => {
     clearNativeOwnedWindows(win);
     closeGameWindow(win.gameId, {
@@ -268,12 +316,14 @@ const openXPProgram = (programId, options = {}) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
-  const windowWidth = program.window.fitToWorkArea
+  const usesNativeDefaults =
+    program.window.fitToWorkArea || program.window.nativeMetadata;
+  const windowWidth = usesNativeDefaults
     ? preferredWidth
     : desktopWidth > 16
       ? Math.min(preferredWidth, desktopWidth - 16)
       : preferredWidth;
-  const windowHeight = program.window.fitToWorkArea
+  const windowHeight = usesNativeDefaults
     ? preferredHeight
     : desktopHeight > 16
       ? Math.min(preferredHeight, desktopHeight - 16)

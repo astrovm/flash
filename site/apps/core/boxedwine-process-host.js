@@ -19,6 +19,7 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
           ? "boxedwine-process-terminated"
           : "boxedwine-process-launched",
       appId: request.appId,
+      launchToken: request.launchToken,
       requestId: request.requestId,
       processId,
       error,
@@ -33,13 +34,17 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
     post({
       type: "boxedwine-process-dispatched",
       appId: request.appId,
+      launchToken: request.launchToken,
       requestId: request.requestId,
     });
     if (request.operation === "launch") {
       const application = getBoxedWineApplication(request.appId);
       if (
         !application ||
-        !module.boxedwineLaunchProcess(application.executable)
+        !module.boxedwineLaunchProcess(
+          application.executable,
+          request.launchToken,
+        )
       ) {
         completeRequest(0, 87);
         return;
@@ -47,6 +52,7 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
       post({
         type: "boxedwine-process-accepted",
         appId: request.appId,
+        launchToken: request.launchToken,
         requestId: request.requestId,
       });
       return;
@@ -64,19 +70,23 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
       const result = module._boxedwine_launch_result();
       if (result) {
         const processId = result === -1 || result === 0xffffffff ? 0 : result;
-        if (processId) processes.set(processId, activeRequest.appId);
+        if (processId)
+          processes.set(processId, {
+            appId: activeRequest.appId,
+            launchToken: activeRequest.launchToken,
+          });
         completeRequest(processId, processId ? 0 : 87);
       }
     }
-    for (const [processId, appId] of processes) {
+    for (const [processId, process] of processes) {
       if (module._boxedwine_process_running(processId)) continue;
       processes.delete(processId);
-      post({ type: "boxedwine-process-exited", appId, processId });
+      post({ type: "boxedwine-process-exited", ...process, processId });
     }
   };
 
   const onMessage = (event) => {
-    const { type, appId, processId, requestId } = event.data || {};
+    const { type, appId, launchToken, processId, requestId } = event.data || {};
     if (
       event.source !== hostWindow.parent ||
       event.origin !== hostWindow.location.origin ||
@@ -86,6 +96,8 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
         "boxedwine-terminate-process",
       ].includes(type) ||
       typeof requestId !== "string" ||
+      typeof launchToken !== "string" ||
+      !/^\d{1,10}$/.test(launchToken) ||
       !getBoxedWineApplication(appId) ||
       (["boxedwine-observe-process", "boxedwine-terminate-process"].includes(
         type,
@@ -94,10 +106,11 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
     )
       return;
     if (type === "boxedwine-observe-process") {
-      processes.set(processId, appId);
+      processes.set(processId, { appId, launchToken });
       post({
         type: "boxedwine-process-observed",
         appId,
+        launchToken,
         requestId,
         processId,
       });
@@ -105,6 +118,7 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
     }
     queuedRequests.push({
       appId,
+      launchToken,
       requestId,
       operation:
         type === "boxedwine-terminate-process" ? "terminate" : "launch",

@@ -108,6 +108,7 @@ describe("BoxedWine startup", () => {
       "iframe.boxedwine-shared-runtime-frame",
     );
     const runtimeWindow = frame.contentWindow;
+    const launchToken = new URL(frame.src).searchParams.get("launchToken");
     const requests = [];
     Object.defineProperty(runtimeWindow, "postMessage", {
       configurable: true,
@@ -138,12 +139,14 @@ describe("BoxedWine startup", () => {
     sendRuntimeMessage({
       type: "boxedwine-process-launched",
       appId: "calculator",
+      launchToken,
       processId: 101,
       error: 0,
     });
     sendRuntimeMessage({
       type: "boxedwine-process-exited",
       appId: "calculator",
+      launchToken,
       processId: 101,
     });
     expect(shell.document.documentElement.dataset.boxedwineLastExit).toBe(

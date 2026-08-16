@@ -626,21 +626,6 @@ export async function updateHtml(
         )}\n`,
       );
     }
-    const integrationPath = join(paths.root, "apps", "core", "boxedwine.js");
-    let integration = await readFile(integrationPath, "utf8");
-    integration = await replaceExactlyOnce(
-      integration,
-      /const ROOT_ARCHIVE = "xp-accessories";/g,
-      `const ROOT_ARCHIVE = "${rootZipName.slice(0, -4)}";`,
-      "Could not version the BoxedWine root filesystem reference",
-    );
-    integration = await replaceExactlyOnce(
-      integration,
-      /`\$\{RUNTIME_ROOT\}index\.html`/g,
-      `\`\${RUNTIME_ROOT}${indexName}\``,
-      "Could not version the BoxedWine runner reference",
-    );
-    await writeFile(integrationPath, integration);
     const sharedRuntimePath = join(
       paths.root,
       "apps",

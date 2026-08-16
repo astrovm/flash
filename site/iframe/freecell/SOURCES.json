@@ -5,8 +5,8 @@
     "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "package": {
       "file": "xp-freecell.zip",
-      "bytes": 182056,
-      "sha256": "d4b2b79170be2a5c5f547bc06c7c24a7a80901877a2cbdfa0fc89e57591d7190"
+      "bytes": 179770,
+      "sha256": "7188e7f4434948b4dd5303c58d9489ec6022fc61caed1c69dee7e47a4342b6cd"
     },
     "files": {
       "freecell.exe": {
@@ -16,11 +16,6 @@
       "cards.dll": {
         "member": "I386/CARDS.DL_",
         "sha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506"
-      },
-      "resize-host.exe": {
-        "source": "native/boxedwine/resize-host.c",
-        "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -mwindows -Wl,--no-insert-timestamp native/boxedwine/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
-        "sha256": "61a6d47daa25db06debbdc2021923687930c270b48a4f87aa98beb3b6f81f3d1"
       }
     }
   }

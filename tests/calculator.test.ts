@@ -12,7 +12,6 @@ import {
   loadShell,
   login,
 } from "./helpers/shell-harness";
-import { installBoxedWineResizeBridge } from "../site/apps/core/boxedwine-resize.js";
 
 const require = createRequire(import.meta.url);
 const { unzipSync } = require("fflate");
@@ -74,6 +73,9 @@ const showNativeCalculator = (
     },
     setProcessVisible() {},
   };
+  const launchToken = new URL(
+    shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+  ).searchParams.get("launchToken");
   sendNativeWindow(
     shell,
     {
@@ -81,10 +83,17 @@ const showNativeCalculator = (
       id,
       parentId: 1,
       processId: 10,
+      launchToken,
       x: 0,
       y: 0,
       width: 260,
       height: 260,
+      frameTop: 28,
+      clientWidth: 260,
+      clientHeight: 232,
+      canResize: false,
+      canMaximize: false,
+      canMinimize: true,
     },
     runtimeWindow,
   );
@@ -117,13 +126,15 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       ".boxedwine-shared-runtime-frame",
     );
     const url = new URL(frame.src);
+    showNativeCalculator(shell);
+    await flushShell();
 
     expect(calculator.style.width).toBe("260px");
     expect(calculator.style.height).toBe("260px");
     expect(
       calculator.classList.contains("xp-boxedwine-shared-window"),
     ).toBeTrue();
-    expect(calculator.querySelector(".resize-handle")).toBeNull();
+    expect(calculator.querySelector(".resize-handle").hidden).toBeTrue();
     expect(
       calculator.querySelector(".boxedwine-shared-app-host"),
     ).not.toBeNull();
@@ -150,6 +161,29 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-app-host"),
     ).toHaveLength(1);
+  });
+
+  test("restores and clamps saved native placement before applying defaults", async () => {
+    const shell = await login(await loadShell());
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: {
+          left: 4000,
+          top: 3000,
+          width: 260,
+          height: 260,
+        },
+      }),
+    );
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+
+    expect(calculator.style.width).toBe("260px");
+    expect(calculator.style.height).toBe("260px");
+    expect(Number.parseFloat(calculator.style.left)).toBeLessThanOrEqual(764);
+    expect(Number.parseFloat(calculator.style.top)).toBeLessThanOrEqual(478);
   });
 
   test("keeps the runtime alive without relaunching a closed application", async () => {
@@ -194,6 +228,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
         value: {
           type: "boxedwine-process-terminated",
           appId: "calculator",
+          launchToken: new URL(
+            shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+          ).searchParams.get("launchToken"),
           processId: 10,
           error: 0,
         },
@@ -264,7 +301,7 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     ).not.toBeNull();
   });
 
-  test("packages the original executable, complete help, and window host", async () => {
+  test("packages the original executable and complete help", async () => {
     const manifest = JSON.parse(
       await readFile(join(calculatorDirectory, "SOURCES.json"), "utf8"),
     );
@@ -275,69 +312,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
 
     expect(packageContent.byteLength).toBe(manifest.windowsXp.package.bytes);
     expect(sha256(packageContent)).toBe(manifest.windowsXp.package.sha256);
-    expect(Object.keys(files).sort()).toEqual([
-      "calc.chm",
-      "calc.exe",
-      "window-host.exe",
-    ]);
+    expect(Object.keys(files).sort()).toEqual(["calc.chm", "calc.exe"]);
     for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
       expect(sha256(files[name])).toBe(source.sha256);
     }
-  });
-
-  test("publishes native Standard and Scientific window sizes to the shell", () => {
-    let pollWindowSize;
-    const posted = [];
-    const startupReports = [];
-    const runnerWindow = {
-      location: { origin: "https://flash.test" },
-      BoxedWineStartup: {
-        report(stage, detail) {
-          startupReports.push({ stage, ...detail });
-        },
-      },
-      parent: {
-        postMessage(message, origin) {
-          posted.push({ message, origin });
-        },
-      },
-      addEventListener() {},
-      removeEventListener() {},
-      setInterval(callback) {
-        pollWindowSize = callback;
-        return 1;
-      },
-      clearInterval() {},
-    };
-    let nativeSize = "260 260";
-    const module = {
-      _boxedwine_resize_screen() {},
-      FS: {
-        readFile() {
-          return nativeSize;
-        },
-        writeFile() {},
-        unlink() {},
-        rename() {},
-      },
-    };
-    installBoxedWineResizeBridge(runnerWindow, module);
-    module.onRuntimeInitialized();
-
-    pollWindowSize();
-    expect(posted.at(-1)).toEqual({
-      message: { type: "boxedwine-window-size", width: 260, height: 260 },
-      origin: "https://flash.test",
-    });
-
-    nativeSize = "480 260";
-    pollWindowSize();
-    expect(posted.at(-1)).toEqual({
-      message: { type: "boxedwine-window-size", width: 480, height: 260 },
-      origin: "https://flash.test",
-    });
-    expect(startupReports).toEqual([
-      { stage: "window-ready", width: 260, height: 260 },
-    ]);
   });
 });

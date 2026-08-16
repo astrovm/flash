@@ -3,12 +3,14 @@ new file mode 100644
 index 0000000..b95dd88
 --- /dev/null
 +++ b/include/knativewindowbridge.h
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,16 @@
 +#ifndef __KNATIVE_WINDOW_BRIDGE_H__
 +#define __KNATIVE_WINDOW_BRIDGE_H__
 +
 +class XWindow;
 +
++void boxedwineNativeRegisterLaunch(U32 processId, U32 launchToken);
++U32 boxedwineNativeLaunchToken(U32 processId);
 +void boxedwineNativeWindowCreated(const std::shared_ptr<XWindow>& wnd);
 +void boxedwineNativeWindowDestroyed(U32 id);
 +void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped);
@@ -82,7 +84,7 @@ new file mode 100644
 index 0000000..effccbf
 --- /dev/null
 +++ b/platform/sdl/knativewindowbridge.cpp
-@@ -0,0 +1,207 @@
+@@ -0,0 +1,372 @@
 +#include "boxedwine.h"
 +#include "knativewindowbridge.h"
 +#include "../../source/x11/x11.h"
@@ -110,6 +112,41 @@ index 0000000..effccbf
 +    }));
 +});
 +
++EM_JS(void, boxedwineWindowMetadata, (const char* lifecycleType, U32 id, U32 parentId, U32 ownerId, U32 processId, U32 parentProcessId, U32 launchToken, S32 x, S32 y, U32 width, U32 height, U32 frameLeft, U32 frameTop, U32 frameRight, U32 frameBottom, U32 dialog, U32 canResize, U32 canMaximize, U32 canMinimize), {
++    if (!launchToken) {
++        launchToken = Module.boxedwineInitialLaunchToken ||
++            Number(new URLSearchParams(window.location.search).get("launchToken")) || 0;
++    }
++    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
++        detail: {
++            type: "metadata",
++            lifecycleType: UTF8ToString(lifecycleType),
++            id,
++            parentId,
++            ownerId,
++            processId,
++            parentProcessId,
++            launchToken,
++            outerX: x,
++            outerY: y,
++            outerWidth: width + frameLeft + frameRight,
++            outerHeight: height + frameTop + frameBottom,
++            clientX: x + frameLeft,
++            clientY: y + frameTop,
++            clientWidth: width,
++            clientHeight: height,
++            frameLeft,
++            frameTop,
++            frameRight,
++            frameBottom,
++            dialog: Boolean(dialog),
++            canResize: Boolean(canResize),
++            canMaximize: Boolean(canMaximize),
++            canMinimize: Boolean(canMinimize),
++        },
++    }));
++});
++
 +EM_JS(void, boxedwineWindowTitle, (U32 id, const U8* value, U32 length), {
 +    const bytes = HEAPU8.slice(value, value + length);
 +    window.dispatchEvent(new CustomEvent("boxedwine-native-window", {
@@ -128,11 +165,21 @@ index 0000000..effccbf
 +});
 +
 +EM_JS(void, boxedwineInstallBridgeApi, (), {
-+    Module.boxedwineLaunchProcess = (executable) => {
++    Module.boxedwineInitialLaunchToken =
++        Number(new URLSearchParams(window.location.search).get("launchToken")) || 0;
++    Module.boxedwineSetInitialLaunchToken = (launchToken) => {
++        launchToken = Number(launchToken);
++        if (!Number.isInteger(launchToken) || launchToken <= 0) return 0;
++        Module.boxedwineInitialLaunchToken = launchToken;
++        return 1;
++    };
++    Module.boxedwineLaunchProcess = (executable, launchToken) => {
++        launchToken = Number(launchToken);
++        if (!Number.isInteger(launchToken) || launchToken <= 0) return 0;
 +        const length = lengthBytesUTF8(executable);
 +        const pointer = _malloc(length + 1);
 +        stringToUTF8(executable, pointer, length + 1);
-+        const result = _boxedwine_launch_process(pointer, length);
++        const result = _boxedwine_launch_process(pointer, length, launchToken);
 +        _free(pointer);
 +        return result;
 +    };
@@ -169,6 +216,7 @@ index 0000000..effccbf
 +
 +static std::map<U32, BoxedwineNativeFrame> boxedwineNativeFrames;
 +static std::map<U32, U32> boxedwineWindowProcesses;
++static std::map<U32, U32> boxedwineLaunchProcesses;
 +static std::set<U32> boxedwineVisibleProcesses;
 +
 +extern "C" {
@@ -205,14 +253,123 @@ index 0000000..effccbf
 +}
 +#endif
 +
-+static void lifecycle(const char* type, const std::shared_ptr<XWindow>& wnd) {
++void boxedwineNativeRegisterLaunch(U32 processId, U32 launchToken) {
 +#ifdef __EMSCRIPTEN__
++    if (processId && launchToken) boxedwineLaunchProcesses[processId] = launchToken;
++#endif
++}
++
++U32 boxedwineNativeLaunchToken(U32 processId) {
++#ifdef __EMSCRIPTEN__
++    U32 originalProcessId = processId;
++    std::set<U32> visited;
++    while (processId && visited.insert(processId).second) {
++        auto launch = boxedwineLaunchProcesses.find(processId);
++        if (launch != boxedwineLaunchProcesses.end()) {
++            boxedwineLaunchProcesses[originalProcessId] = launch->second;
++            return launch->second;
++        }
++        KProcessPtr process = KSystem::getProcess(processId);
++        if (!process || process->parentId == processId) break;
++        processId = process->parentId;
++    }
++#endif
++    return 0;
++}
++
++struct BoxedwineWindowMetadata {
++    U32 parentId = 0;
++    U32 ownerId = 0;
++    U32 processId = 0;
++    U32 parentProcessId = 0;
++    U32 launchToken = 0;
++    U32 frameLeft = 0;
++    U32 frameTop = 0;
++    U32 frameRight = 0;
++    U32 frameBottom = 0;
++    bool canResize = true;
++    bool canMaximize = true;
++    bool canMinimize = true;
++};
++
++static BoxedwineWindowMetadata metadata(const std::shared_ptr<XWindow>& wnd) {
++    BoxedwineWindowMetadata result;
 +    XWindowPtr parent = wnd->getParent();
++    result.parentId = parent ? parent->id : 0;
++    result.ownerId = wnd->getTransientFor();
 +    XServer* server = XServer::getServer(true);
 +    DisplayDataPtr data = server ? server->getDisplayDataById(wnd->displayId) : nullptr;
-+    U32 processId = data ? data->processId : 0;
-+    boxedwineWindowProcesses[wnd->id] = processId;
-+    boxedwineWindowLifecycle(type, wnd->id, parent ? parent->id : 0, processId, wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height(), wnd->shouldUseNativeDialogShell());
++    result.processId = data ? data->processId : 0;
++    KProcessPtr process = KSystem::getProcess(result.processId);
++    result.parentProcessId = process ? process->parentId : 0;
++    result.launchToken = boxedwineNativeLaunchToken(result.processId);
++    result.frameLeft = wnd->getBorderWidth();
++    result.frameTop = wnd->getBorderWidth();
++    result.frameRight = wnd->getBorderWidth();
++    result.frameBottom = wnd->getBorderWidth();
++    U32 frameExtentsAtom = server ? server->internAtom(B("_NET_FRAME_EXTENTS"), true) : 0;
++    XPropertyPtr frameExtents = frameExtentsAtom ? wnd->getProperty(frameExtentsAtom) : nullptr;
++    if (frameExtents && frameExtents->format == 32 && frameExtents->length >= 4 * sizeof(U32)) {
++        const U32* extents = reinterpret_cast<const U32*>(frameExtents->value);
++        result.frameLeft = extents[0];
++        result.frameRight = extents[1];
++        result.frameTop = extents[2];
++        result.frameBottom = extents[3];
++    }
++
++    XPropertyPtr normalHints = wnd->getProperty(XA_WM_NORMAL_HINTS);
++    if (normalHints && normalHints->format == 32 && normalHints->length >= sizeof(XSizeHints)) {
++        const XSizeHints* hints = reinterpret_cast<const XSizeHints*>(normalHints->value);
++        const U32 PMinSize = 1 << 4;
++        const U32 PMaxSize = 1 << 5;
++        if ((hints->flags & PMinSize) && (hints->flags & PMaxSize) &&
++            hints->min_width == hints->max_width &&
++            hints->min_height == hints->max_height) {
++            result.canResize = false;
++            result.canMaximize = false;
++        }
++    }
++    XPropertyPtr motifHints = wnd->getProperty(_MOTIF_WM_HINTS);
++    if (motifHints && motifHints->format == 32 && motifHints->length >= 2 * sizeof(U32)) {
++        const U32* hints = reinterpret_cast<const U32*>(motifHints->value);
++        const U32 MWM_HINTS_FUNCTIONS = 1 << 0;
++        const U32 MWM_FUNC_ALL = 1 << 0;
++        const U32 MWM_FUNC_RESIZE = 1 << 1;
++        const U32 MWM_FUNC_MINIMIZE = 1 << 3;
++        const U32 MWM_FUNC_MAXIMIZE = 1 << 4;
++        if (hints[0] & MWM_HINTS_FUNCTIONS) {
++            const bool inverted = (hints[1] & MWM_FUNC_ALL) != 0;
++            const auto allows = [hints, inverted](U32 function) {
++                return inverted ? (hints[1] & function) == 0 : (hints[1] & function) != 0;
++            };
++            result.canResize = allows(MWM_FUNC_RESIZE);
++            result.canMinimize = allows(MWM_FUNC_MINIMIZE);
++            result.canMaximize = result.canResize && allows(MWM_FUNC_MAXIMIZE);
++        }
++    }
++    return result;
++}
++
++static void reportMetadata(const char* type, const std::shared_ptr<XWindow>& wnd) {
++#ifdef __EMSCRIPTEN__
++    BoxedwineWindowMetadata value = metadata(wnd);
++    boxedwineWindowMetadata(type, wnd->id, value.parentId, value.ownerId,
++        value.processId, value.parentProcessId, value.launchToken,
++        wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height(),
++        value.frameLeft, value.frameTop, value.frameRight, value.frameBottom,
++        wnd->shouldUseNativeDialogShell(), value.canResize,
++        value.canMaximize, value.canMinimize);
++#endif
++}
++
++static void lifecycle(const char* type, const std::shared_ptr<XWindow>& wnd) {
++#ifdef __EMSCRIPTEN__
++    BoxedwineWindowMetadata value = metadata(wnd);
++    boxedwineWindowProcesses[wnd->id] = value.processId;
++    boxedwineWindowLifecycle(type, wnd->id, value.parentId, value.processId,
++        wnd->getLeft(), wnd->getTop(), wnd->width(), wnd->height(),
++        wnd->shouldUseNativeDialogShell());
++    reportMetadata(type, wnd);
 +#endif
 +}
 +
@@ -233,7 +390,11 @@ index 0000000..effccbf
 +        }
 +    }
 +    if (!processHasWindows) boxedwineVisibleProcesses.erase(processId);
++    KProcessPtr process = KSystem::getProcess(processId);
 +    boxedwineWindowLifecycle("destroyed", id, 0, processId, 0, 0, 0, 0, 0);
++    boxedwineWindowMetadata("destroyed", id, 0, 0, processId,
++        process ? process->parentId : 0, boxedwineNativeLaunchToken(processId),
++        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1);
 +#endif
 +}
 +
@@ -262,8 +423,14 @@ index 0000000..effccbf
 +
 +void boxedwineNativeWindowOwner(U32 id, U32 ownerId) {
 +#ifdef __EMSCRIPTEN__
-+    U32 processId = boxedwineWindowProcesses[id];
-+    boxedwineWindowLifecycle("owner", id, ownerId, processId, 0, 0, 0, 0, 0);
++    XServer* server = XServer::getServer(true);
++    XWindowPtr wnd = server ? server->getWindow(id) : nullptr;
++    if (wnd) {
++        BoxedwineWindowMetadata value = metadata(wnd);
++        boxedwineWindowLifecycle("owner", id, ownerId, value.processId,
++            0, 0, 0, 0, 0);
++        reportMetadata("owner", wnd);
++    }
 +#endif
 +}
 +
@@ -355,7 +522,7 @@ diff --git a/source/x11/xwindow.h b/source/x11/xwindow.h
 index 097cad1..2960514 100644
 --- a/source/x11/xwindow.h
 +++ b/source/x11/xwindow.h
-@@ -193,6 +193,10 @@ public:
+@@ -193,6 +193,11 @@ public:
  	void input2Notify(const DisplayDataPtr& data, S32 x, S32 y, U32 type);
  
  	XWindowPtr getParent() {return parent;}
@@ -363,10 +530,11 @@ index 097cad1..2960514 100644
 +	S32 getTop() const {return top;}
 +	U32 getBorderWidth() const {return border_width;}
 +	bool shouldUseNativeDialogShell() {return isDialog();}
++	U32 getTransientFor() {return WM_TRANSIENT_FOR();}
  	bool mapped() {return this->isMapped;}
  	bool isThisAndAncestorsMapped();
  	XWindowPtr getTopMappedChild();
-@@ -253,4 +257,4 @@ private:
+@@ -253,4 +258,4 @@ private:
  	U32 WM_TRANSIENT_FOR();
  };
  

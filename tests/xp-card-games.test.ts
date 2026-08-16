@@ -25,16 +25,16 @@ const games = [
     applicationId: "__freecell",
     title: "FreeCell",
     archive: "xp-freecell",
-    executable: "resize-host.exe",
-    files: ["cards.dll", "freecell.exe", "resize-host.exe"],
+    executable: "freecell.exe",
+    files: ["cards.dll", "freecell.exe"],
   },
   {
     id: "spider-solitaire",
     applicationId: "__spider-solitaire",
     title: "Spider Solitaire",
     archive: "xp-spider-solitaire",
-    executable: "resize-host.exe",
-    files: ["resize-host.exe", "spider.exe"],
+    executable: "spider.exe",
+    files: ["spider.exe"],
   },
 ];
 
@@ -69,7 +69,7 @@ describe("Windows XP card games through BoxedWine", () => {
       );
       expect(url.searchParams.get("archive")).toBe("xp-runtime");
       expect(url.searchParams.get("executable")).toBe(
-        `${game.id}/resize-host.exe`,
+        `${game.id}/${game.executable}`,
       );
       expect(url.searchParams.get("persistent")).toBe("true");
       expect(url.searchParams.get("sound")).toBe("true");
@@ -121,15 +121,6 @@ describe("Windows XP card games through BoxedWine", () => {
       for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
         expect(sha256(files[name])).toBe(source.sha256);
       }
-      const solitaireManifest = JSON.parse(
-        await readFile(
-          join(projectDirectory, "site", "iframe", "solitaire", "SOURCES.json"),
-          "utf8",
-        ),
-      );
-      expect(manifest.windowsXp.files["resize-host.exe"].sha256).toBe(
-        solitaireManifest.windowsXp.files["resize-host.exe"].sha256,
-      );
     });
   }
 });

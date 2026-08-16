@@ -14,6 +14,51 @@ const getDesktopSize = () => {
   return { width: desktop.clientWidth, height: desktop.clientHeight };
 };
 
+const XP_TASKBAR_HEIGHT = 30;
+const sameWorkAreaBand = (left, right) => Math.abs(left - right) <= 1;
+
+const getVisibleWorkArea = () => {
+  let { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const viewportWidth =
+    Number(window.visualViewport?.width) || Number(window.innerWidth) || 0;
+  const viewportHeight =
+    Number(window.visualViewport?.height) || Number(window.innerHeight) || 0;
+  if (desktopWidth <= 0) desktopWidth = viewportWidth;
+  if (desktopHeight <= 0) desktopHeight = viewportHeight;
+  const measuredTaskbar = Number(
+    document.getElementById("taskbar")?.getBoundingClientRect().height,
+  );
+  const taskbarHeight =
+    measuredTaskbar > 0 && measuredTaskbar <= XP_TASKBAR_HEIGHT + 8
+      ? measuredTaskbar
+      : 0;
+  let width = desktopWidth;
+  let height = desktopHeight;
+  const alignedWidth =
+    viewportWidth > 0 && sameWorkAreaBand(desktopWidth, viewportWidth);
+  const alignedHeight =
+    viewportHeight > 0 && sameWorkAreaBand(desktopHeight, viewportHeight);
+  if (alignedWidth && alignedHeight) {
+    height = Math.max(0, height - (taskbarHeight || XP_TASKBAR_HEIGHT));
+  } else if (
+    alignedWidth &&
+    viewportHeight > 0 &&
+    viewportHeight < desktopHeight
+  ) {
+    height = Math.max(0, Math.floor(viewportHeight - taskbarHeight));
+  } else if (
+    alignedHeight &&
+    viewportWidth > 0 &&
+    viewportWidth < desktopWidth
+  ) {
+    width = Math.floor(viewportWidth);
+  }
+  return {
+    width: width > 0 ? width : desktopWidth,
+    height: height > 0 ? height : desktopHeight,
+  };
+};
+
 const isWindowPlacement = (value) =>
   value &&
   typeof value === "object" &&
@@ -56,7 +101,7 @@ const persistWindowPlacement = (win) => {
 const restoreWindowPlacement = (win) => {
   const saved = getWindowPlacements()[win.gameId];
   if (!saved) return;
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
   const width =
     desktopWidth > 0 ? Math.min(saved.width, desktopWidth) : saved.width;
   const height =
@@ -77,31 +122,27 @@ const restoreWindowPlacement = (win) => {
 // Keep at least part of the title bar reachable inside the work area,
 // matching how Windows XP constrains window positions.
 const clampWindowPosition = (win, left, top) => {
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
+  const width = parseWindowLength(win.el.style.width, win.el.offsetWidth);
+  const height = parseWindowLength(win.el.style.height, win.el.offsetHeight);
+  if (win.application?.window.nativeMetadata) {
+    return {
+      left: Math.min(Math.max(left, 0), Math.max(0, desktopWidth - width)),
+      top: Math.min(Math.max(top, 0), Math.max(0, desktopHeight - height)),
+    };
+  }
   return {
-    left: Math.min(Math.max(left, 60 - win.el.offsetWidth), desktopWidth - 60),
+    left: Math.min(Math.max(left, 60 - width), desktopWidth - 60),
     top: Math.min(Math.max(top, 0), desktopHeight - 28),
   };
 };
 
 const fitNativeProgramToWorkArea = (win) => {
   const preferred = win.application?.window;
-  if (!preferred?.fitToWorkArea || win.maximized) return false;
+  if (!(preferred?.fitToWorkArea || preferred?.nativeMetadata) || win.maximized)
+    return false;
 
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
-  const viewport = window.visualViewport;
-  const taskbarHeight = document
-    .getElementById("taskbar")
-    ?.getBoundingClientRect().height;
-  const visibleWidth = viewport?.width
-    ? Math.min(desktopWidth, Math.floor(viewport.width))
-    : desktopWidth;
-  const visibleHeight = viewport?.height
-    ? Math.min(
-        desktopHeight,
-        Math.max(0, Math.floor(viewport.height - (taskbarHeight || 0))),
-      )
-    : desktopHeight;
+  const { width: visibleWidth, height: visibleHeight } = getVisibleWorkArea();
   if (visibleWidth <= 0 || visibleHeight <= 0) return false;
   const actualWidth = parseWindowLength(
     win.el.style.width,
@@ -111,13 +152,7 @@ const fitNativeProgramToWorkArea = (win) => {
     win.el.style.height,
     win.el.offsetHeight || preferred.height,
   );
-  if (
-    actualWidth <= visibleWidth &&
-    actualHeight <= visibleHeight &&
-    preferred.width <= visibleWidth &&
-    preferred.height <= visibleHeight
-  ) {
-    if (!win.workAreaFitRect) return false;
+  if (win.workAreaFitRect) {
     const originalWidth = parseWindowLength(
       win.workAreaFitRect.width,
       preferred.width,
@@ -126,11 +161,14 @@ const fitNativeProgramToWorkArea = (win) => {
       win.workAreaFitRect.height,
       preferred.height,
     );
-    if (visibleWidth < originalWidth || visibleHeight < originalHeight)
-      return false;
-    Object.assign(win.el.style, win.workAreaFitRect);
-    win.workAreaFitRect = null;
-    return true;
+    if (originalWidth <= visibleWidth && originalHeight <= visibleHeight) {
+      Object.assign(win.el.style, win.workAreaFitRect);
+      win.workAreaFitRect = null;
+      return true;
+    }
+  }
+  if (actualWidth <= visibleWidth && actualHeight <= visibleHeight) {
+    return false;
   }
 
   win.workAreaFitRect ||= {

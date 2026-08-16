@@ -148,10 +148,6 @@ async function makeSource(root: string): Promise<void> {
       '<script src="boxedwine-shell.js"></script>',
       '<script async src="boxedwine.js"></script>',
     ].join("\n"),
-    "apps/core/boxedwine.js": [
-      'const ROOT_ARCHIVE = "xp-accessories";',
-      "new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);",
-    ].join("\n"),
     "swf/bike-mania/main.swf": "swf",
     "iframe/doom/index.html": "doom ../../dos/doom/doom.jsdos",
     "iframe/inside-the-firewall/index.html": "firewall",
@@ -353,7 +349,7 @@ describe("build metadata", () => {
       /"boxedwine-runtime":"iframe\/boxedwine-runtime\.[a-f0-9]{16}\//,
     );
     const boxedWineIndex = await readFile(
-      join(root, "apps", "core", "boxedwine.js"),
+      join(root, "apps", "core", "boxedwine-runtime.js"),
       "utf8",
     );
     const boxedWineRunner = boxedWineIndex.match(
@@ -703,7 +699,7 @@ describe("atomic build", () => {
     ).toBeFalse();
     expect(
       await Bun.file(join(release, "apps", "core", "boxedwine.js")).exists(),
-    ).toBeTrue();
+    ).toBeFalse();
     expect(
       await Bun.file(join(release, "offline-games.json")).exists(),
     ).toBeFalse();

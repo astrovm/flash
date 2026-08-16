@@ -1,22 +1,6 @@
-.xp-native-program-window .boxedwine-app-host {
-  overflow: visible;
-}
-
-.boxedwine-app-host > .boxedwine-app-frame {
-  position: absolute;
-  top: 0;
-  right: auto;
-  bottom: auto;
-  left: 0;
-  display: block;
-  border: 0;
-}
-
 .boxedwine-shared-runtime-frame,
 .boxedwine-shared-runtime-staging {
   position: fixed;
-  width: 1024px;
-  height: 768px;
   top: 0;
   border: 0;
   pointer-events: none;
@@ -28,7 +12,8 @@
 }
 
 .boxedwine-shared-runtime-staging {
-  left: -2048px;
+  left: 0;
+  transform: translateX(-100%);
   overflow: hidden;
 }
 
