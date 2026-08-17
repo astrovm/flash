@@ -60,7 +60,10 @@ const getVisibleWorkArea = () => {
     // Pinch zoom shrinks both axes at once, so neither aligns with the
     // desktop; clamp to what the reader can actually reach.
     width = Math.min(width, Math.floor(viewportWidth));
-    height = Math.min(height, Math.max(0, Math.floor(viewportHeight - taskbarHeight)));
+    height = Math.min(
+      height,
+      Math.max(0, Math.floor(viewportHeight - taskbarHeight)),
+    );
   }
   return {
     width: width > 0 ? width : desktopWidth,
