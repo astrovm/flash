@@ -172,6 +172,7 @@ const upsertNativeOwnedWindow = (owner, detail) => {
 const applicationContext = (win) => ({
   windowElement: win.el,
   nativeWindowReady: false,
+  nativeCanMaximize: true,
   XP_ICON_PATHS,
   dialogs: XPDialogs,
   fileOps,
@@ -226,7 +227,6 @@ const applicationContext = (win) => ({
     fitNativeProgramToWorkArea(win);
   },
   applyNativeWindowMetadata(metadata) {
-    if (win.maximized) return;
     const canResize = metadata.canResize !== false;
     const canMaximize = metadata.canMaximize !== false;
     const canMinimize = metadata.canMinimize !== false;
@@ -242,6 +242,15 @@ const applicationContext = (win) => ({
     if (minimize) {
       minimize.disabled = !canMinimize;
       minimize.setAttribute("aria-disabled", String(!canMinimize));
+    }
+    this.nativeCanMaximize = canMaximize;
+
+    // Geometry is owned by the shell while maximized, and unmeasurable while
+    // minimized (the frame is display:none), so only the capability flags
+    // above apply in those states.
+    if (win.maximized || win.minimized) {
+      this.nativeWindowReady = true;
+      return;
     }
 
     const frameLeft = Math.max(0, Number(metadata.frameLeft) || 0);

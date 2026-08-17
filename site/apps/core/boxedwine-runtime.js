@@ -530,7 +530,13 @@ const createRuntime = (initialApplicationId) => {
         const width = element.clientWidth;
         const height = element.clientHeight;
         if (!windowId || width <= 0 || height <= 0) return false;
-        if (!mounts.get(appId)?.context.nativeWindowReady) return false;
+        if (!mounts.get(appId)?.context.nativeWindowReady) {
+          // Retry explicit state changes until the native window reports its
+          // metadata; plain bounds updates are re-sent by the resize observer.
+          if (pendingWindowAction !== "bounds")
+            resizeFrame = window.requestAnimationFrame(syncNativeWindow);
+          return false;
+        }
         const action = pendingWindowAction;
         pendingWindowAction = "bounds";
         return surfaces.command(windowId, action, {
@@ -570,6 +576,8 @@ const createRuntime = (initialApplicationId) => {
           return windowId ? surfaces.command(windowId, "minimize") : false;
         },
         maximize() {
+          if (mounts.get(appId)?.context.nativeCanMaximize === false)
+            return false;
           return scheduleNativeWindow("maximize");
         },
         restore() {

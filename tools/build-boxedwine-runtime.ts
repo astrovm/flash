@@ -25,7 +25,7 @@ export const buildBoxedWineRuntimeArchive = async ({
   for (const { id, packagePath } of boxedWineApplications) {
     const entries = await archiveFiles(join(projectRoot, packagePath));
     for (const [name, bytes] of Object.entries(entries)) {
-      if (name.endsWith("/") || name === "window-host.exe") continue;
+      if (name.endsWith("/")) continue;
       files[`${id}/${name}`] = [bytes, { mtime: fixedTime }];
     }
   }
