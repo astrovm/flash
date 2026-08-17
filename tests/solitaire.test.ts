@@ -75,6 +75,33 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.height).toBe("470px");
   });
 
+  test("regrows with the work area while its native bounds still do not fit", async () => {
+    const shell = await login(await loadShell());
+    const desktop = shell.document.getElementById("desktop");
+    const resizeDesktop = (clientWidth, clientHeight) => {
+      Object.defineProperties(desktop, {
+        clientWidth: { configurable: true, value: clientWidth },
+        clientHeight: { configurable: true, value: clientHeight },
+      });
+      shell.window.dispatchEvent(new shell.window.Event("resize"));
+    };
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 844 },
+      clientHeight: { configurable: true, value: 360 },
+    });
+
+    const solitaireWindow = launchSolitaire(shell);
+    expect(solitaireWindow.style.width).toBe("844px");
+    expect(solitaireWindow.style.height).toBe("360px");
+
+    // 640x470 still does not fit, so the window keeps filling the work area
+    // instead of staying at the size measured for the smaller one.
+    resizeDesktop(900, 400);
+
+    expect(solitaireWindow.style.width).toBe("900px");
+    expect(solitaireWindow.style.height).toBe("400px");
+  });
+
   test("mounts in the boot-prepared shared runtime as a resizable XP window", async () => {
     const shell = await login(await loadShell());
     const solitaireWindow = launchSolitaire(shell);

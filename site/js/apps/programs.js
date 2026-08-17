@@ -266,13 +266,16 @@ const applicationContext = (win) => ({
       Number(metadata.clientHeight) ||
       (outerHeight > 0 ? outerHeight - frameTop - frameBottom : 0);
     if (width <= 0 || height <= 0) return;
-    const saved = getWindowPlacements()[win.gameId];
-    if (saved && !win.nativeMetadataApplied) {
+    const first = !win.nativeMetadataApplied;
+    // A stored placement only decides where the window opens. Later metadata
+    // reports the size the application chose for itself (Calculator switching
+    // to scientific mode, for example), so the frame has to keep following it.
+    if (first && getWindowPlacements()[win.gameId]) {
       restoreWindowPlacement(win);
-    } else if (!saved) {
-      if (!win.nativeMetadataApplied) win.workAreaFitRect = null;
-      this.applyNativeClientSize(width, height);
-      if (!win.nativeMetadataApplied) {
+    } else {
+      if (first) win.workAreaFitRect = null;
+      if (!win.resizing) this.applyNativeClientSize(width, height);
+      if (first) {
         const workArea = getVisibleWorkArea();
         const offset = (cascadeCount++ % 6) * 28;
         win.el.style.left = `${Math.max(0, (workArea.width - win.el.offsetWidth) / 2 + offset - 56)}px`;

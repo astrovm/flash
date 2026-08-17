@@ -24,7 +24,10 @@
   min-height: 0;
   padding: 0;
   border: 0;
-  border-radius: 0;
+
+  /* Match the caption's rounding so the inherited inset frame shadow follows
+     the same curve instead of squaring off the title bar's corners. */
+  border-radius: 8px 8px 0 0;
   background: transparent;
   box-shadow: none;
   overflow: visible;

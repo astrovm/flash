@@ -58,6 +58,26 @@ const sendNativeWindow = (shell, detail, runtimeWindow) => {
   shell.window.dispatchEvent(event);
 };
 
+// Happy DOM fires an error on the runtime iframe, which would restart the
+// runtime and drop its native windows; suppress it so lifecycle messages that
+// arrive after the first frame still reach the shell.
+const silenceRuntimeFrameErrors = (shell) => {
+  const addFrameListener =
+    shell.window.HTMLIFrameElement.prototype.addEventListener;
+  shell.window.HTMLIFrameElement.prototype.addEventListener = function (
+    type,
+    ...arguments_
+  ) {
+    if (type === "error") return;
+    return addFrameListener.call(this, type, ...arguments_);
+  };
+};
+
+const nativeLaunchToken = (shell) =>
+  new URL(
+    shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+  ).searchParams.get("launchToken");
+
 const showNativeCalculator = (
   shell,
   id = 41,
@@ -201,6 +221,100 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(calculator.style.height).toBe("260px");
     expect(Number.parseFloat(calculator.style.left)).toBeLessThanOrEqual(764);
     expect(Number.parseFloat(calculator.style.top)).toBeLessThanOrEqual(478);
+  });
+
+  test("follows the native window when Scientific mode resizes it", async () => {
+    const shell = await login(await loadShell());
+    silenceRuntimeFrameErrors(shell);
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+    expect(calculator.style.width).toBe("260px");
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken: nativeLaunchToken(shell),
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 544,
+      outerHeight: 348,
+      clientWidth: 544,
+      clientHeight: 320,
+      frameTop: 28,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("544px");
+    expect(calculator.style.height).toBe("348px");
+  });
+
+  test("keeps following native sizes after restoring a saved placement", async () => {
+    const shell = await login(await loadShell());
+    silenceRuntimeFrameErrors(shell);
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: { left: 20, top: 20, width: 260, height: 260 },
+      }),
+    );
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken: nativeLaunchToken(shell),
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 544,
+      outerHeight: 348,
+      clientWidth: 544,
+      clientHeight: 320,
+      frameTop: 28,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("544px");
+    expect(calculator.style.height).toBe("348px");
+  });
+
+  test("ignores metadata from a second top-level window of the same launch", async () => {
+    const shell = await login(await loadShell());
+    silenceRuntimeFrameErrors(shell);
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+    const launchToken = nativeLaunchToken(shell);
+
+    sendNativeWindow(shell, {
+      type: "created",
+      id: 42,
+      parentId: 1,
+      processId: 11,
+      launchToken,
+      x: 0,
+      y: 0,
+      width: 900,
+      height: 700,
+      clientWidth: 900,
+      clientHeight: 672,
+      frameTop: 28,
+    });
+    sendNativeWindow(shell, { type: "title", id: 42, title: "Helper" });
+    sendNativeWindow(shell, { type: "mapped", id: 42 });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("260px");
+    expect(calculator.style.height).toBe("260px");
+    expect(calculator.querySelector(".title-text").textContent).toBe(
+      "Calculator",
+    );
   });
 
   test("keeps the runtime alive without relaunching a closed application", async () => {

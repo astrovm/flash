@@ -305,7 +305,6 @@ export const createBoxedWineWindowSurface = ({
       height: entry.height,
       clientWidth: frame.width,
       clientHeight: frame.height,
-      capabilities: entry.capabilities,
       canvas,
     });
   };
@@ -617,7 +616,12 @@ export const createBoxedWineWindowSurface = ({
       return;
     }
     if (!entry) return;
-    Object.assign(entry, detail);
+    if (detail.type === "frame") {
+      // Frame events carry the framebuffer size, not the window geometry.
+      entry.generation = detail.generation;
+    } else {
+      Object.assign(entry, detail);
+    }
     if (detail.type === "metadata") {
       if (Number.isFinite(detail.outerX)) entry.x = detail.outerX;
       if (Number.isFinite(detail.outerY)) entry.y = detail.outerY;
@@ -625,6 +629,13 @@ export const createBoxedWineWindowSurface = ({
       if (detail.outerHeight > 0) entry.height = detail.outerHeight;
       if (detail.launchToken != null)
         entry.launchToken = Number(detail.launchToken) >>> 0;
+    }
+    // Lifecycle bounds report the client size; the matching metadata message
+    // that follows restores the outer size. Refreshing the client size here
+    // keeps frameMetrics from measuring against the previous geometry.
+    if (detail.type === "bounds" && detail.width > 0 && detail.height > 0) {
+      entry.clientWidth = detail.width;
+      entry.clientHeight = detail.height;
     }
     if (detail.type === "title") entry.title = detail.title;
     applyDecoratedFrameFallback(entry);
@@ -639,7 +650,6 @@ export const createBoxedWineWindowSurface = ({
       ownedCanvases.get(detail.id)?.remove();
       ownedCanvases.delete(detail.id);
     }
-    if (detail.type === "bounds") Object.assign(entry, detail);
     if (detail.type === "frame") pendingFrameIds.add(detail.id);
     const topId = topLevelId(detail.id);
     if (detail.type === "frame" && topId)

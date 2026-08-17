@@ -52,6 +52,15 @@ const getVisibleWorkArea = () => {
     viewportWidth < desktopWidth
   ) {
     width = Math.floor(viewportWidth);
+  } else if (
+    Number(window.visualViewport?.scale) > 1 &&
+    viewportWidth > 0 &&
+    viewportHeight > 0
+  ) {
+    // Pinch zoom shrinks both axes at once, so neither aligns with the
+    // desktop; clamp to what the reader can actually reach.
+    width = Math.min(width, Math.floor(viewportWidth));
+    height = Math.min(height, Math.max(0, Math.floor(viewportHeight - taskbarHeight)));
   }
   return {
     width: width > 0 ? width : desktopWidth,
@@ -166,8 +175,9 @@ const fitNativeProgramToWorkArea = (win) => {
       win.workAreaFitRect = null;
       return true;
     }
-  }
-  if (actualWidth <= visibleWidth && actualHeight <= visibleHeight) {
+    // The original size still does not fit, so keep filling the work area
+    // instead of leaving the window at the size measured for the old one.
+  } else if (actualWidth <= visibleWidth && actualHeight <= visibleHeight) {
     return false;
   }
 
@@ -1217,6 +1227,9 @@ const wireResize = (win) => {
       e.preventDefault();
 
       const direction = handle.dataset.dir;
+      // Native windows echo their new client size back as metadata; ignore it
+      // while dragging so the frame does not fight the pointer.
+      win.resizing = true;
       const start = {
         x: e.clientX,
         y: e.clientY,
@@ -1254,6 +1267,7 @@ const wireResize = (win) => {
           nextPointer = { x: ev.clientX, y: ev.clientY };
         }
         updateSize();
+        win.resizing = false;
         persistWindowPlacement(win);
         win.mountedApplication?.bounds?.(
           win.el.offsetLeft,

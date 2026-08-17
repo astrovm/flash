@@ -276,37 +276,37 @@ const createRuntime = (initialApplicationId) => {
       const tokenAppId = launchApplications.get(
         normalizeLaunchToken(detail.launchToken),
       );
-      if (tokenAppId && detail.id === detail.topId)
-        windowApplications.set(detail.topId, tokenAppId);
       const appId = tokenAppId || windowApplications.get(detail.topId);
       if (!appId) return;
-      const mounted = mounts.get(appId);
-      if (
-        detail.type === "title" &&
+      // A launch can open several top-level windows. Only the one bound to the
+      // shell frame drives it; the rest must not retitle, move or resize it.
+      const boundWindowId = runningWindows.get(appId);
+      const drivesShell =
         detail.id === detail.topId &&
-        detail.title
-      ) {
+        (boundWindowId ? boundWindowId === detail.topId : true);
+      if (tokenAppId && drivesShell)
+        windowApplications.set(detail.topId, tokenAppId);
+      const mounted = mounts.get(appId);
+      if (detail.type === "title" && drivesShell && detail.title) {
         mounted?.context.setTitle(detail.title);
       }
       if (
-        ["mapped", "bounds", "capabilities", "metadata"].includes(
-          detail.type,
-        ) &&
-        detail.id === detail.topId
+        ["mapped", "bounds", "metadata"].includes(detail.type) &&
+        drivesShell
       ) {
         mounted?.context.applyNativeWindowMetadata(detail);
       }
-      if (detail.type === "unmapped" && detail.id === detail.topId) {
+      if (detail.type === "unmapped" && drivesShell) {
         scheduleNativeMinimize(appId, detail.id);
-      } else if (detail.type === "mapped" && detail.id === detail.topId) {
+      } else if (detail.type === "mapped" && drivesShell) {
         cancelNativeMinimize(appId);
         mounted?.context.applyNativeRestore();
       } else if (
-        detail.id === detail.topId &&
+        drivesShell &&
         (detail.type === "focused" || detail.type === "raised")
       ) {
         mounted?.context.applyNativeFocus();
-      } else if (detail.type === "destroyed" && detail.id === detail.topId) {
+      } else if (detail.type === "destroyed" && drivesShell) {
         windowApplications.delete(detail.topId);
         cancelNativeMinimize(appId);
         if (mounted) {

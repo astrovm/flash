@@ -190,14 +190,11 @@ describe("BoxedWine window bridge", () => {
         sourceHeight: 437,
       },
     });
-    expect(messages.at(-1).message).toEqual({
-      type: "boxedwine-framebuffer-resize",
-      appId: "solitaire",
-      width: 1280,
-      height: 690,
-      baseWidth: 593,
-      baseHeight: 437,
-    });
+    expect(
+      messages.some(
+        (entry) => entry.message?.type === "boxedwine-framebuffer-resize",
+      ),
+    ).toBe(false);
     expect(commands).toEqual([
       [41, 0, 0, 0, 0, 0],
       [41, 3, 0, 0, 1280, 690],
