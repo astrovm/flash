@@ -664,11 +664,10 @@ const getGameVolume = (gameId) => {
       isMuted: gameVolumes[gameId].isMuted,
     };
   }
-  // Fall back to global settings if no game-specific settings exist
-  return {
-    volume: parseInt(localStorage.getItem("volume") || "100", 10),
-    isMuted: localStorage.getItem("isMuted") === "true",
-  };
+  // Game volume is independent of the system tray volume, so an
+  // unconfigured game defaults to full volume rather than inheriting
+  // whatever the system sound level happens to be set to.
+  return { volume: 100, isMuted: false };
 };
 
 const setGameVolume = (gameId, volume, isMuted) => {

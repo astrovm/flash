@@ -185,8 +185,8 @@ const applicationContext = (win) => ({
     return true;
   },
   getDesktopSize,
-  getMasterVolume,
-  setMasterVolume,
+  getSystemVolume,
+  setSystemVolume,
   setSize(width, height) {
     win.el.style.width = `${width}px`;
     win.el.style.height = `${height}px`;
