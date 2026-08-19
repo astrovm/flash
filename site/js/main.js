@@ -624,7 +624,13 @@ const setupScreenSaver = () => {
   overlay.id = "screen-saver-overlay";
   overlay.hidden = true;
   overlay.setAttribute("aria-label", "Screen saver");
-  document.getElementById("desktop")?.appendChild(overlay);
+  // Appended to <body>, not #desktop: #desktop has overflow:hidden (it
+  // clips desktop icons/windows to its own bounds, which stop 30px short of
+  // the bottom for the taskbar), and that clip applies to this overlay too
+  // if it's a descendant - fixed positioning and z-index only control where
+  // an element is placed and stacked, not whether an ancestor's overflow
+  // clips it out of view.
+  document.body.appendChild(overlay);
   const wake = () => scheduleScreenSaver();
   ["pointerdown", "keydown", "mousemove", "touchstart"].forEach((eventName) => {
     document.addEventListener(eventName, wake, { passive: true });
