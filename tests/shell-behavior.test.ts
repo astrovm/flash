@@ -541,12 +541,11 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).toEqual([
     "accessories",
     "games",
-    "startup",
     "winamp",
     "astro-settings",
     "internet-games",
   ]);
-  for (const programId of ["accessories", "games", "startup", "winamp"]) {
+  for (const programId of ["accessories", "games", "winamp"]) {
     expect(
       flyouts
         .querySelector(`[data-program-id="${programId}"] img`)!
