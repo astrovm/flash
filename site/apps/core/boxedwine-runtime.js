@@ -309,6 +309,14 @@ const createRuntime = (initialApplicationId) => {
         ["mapped", "bounds", "metadata"].includes(detail.type) &&
         drivesShell
       ) {
+        // Record what the guest itself just reported before reflecting it
+        // into the frame below, so the resize observer that reflection
+        // triggers can tell "the guest is just confirming a size" apart from
+        // "something wants a genuinely new size" (see syncNativeWindow).
+        if (mounted) {
+          mounted.lastGuestWidth = Number(detail.clientWidth) || 0;
+          mounted.lastGuestHeight = Number(detail.clientHeight) || 0;
+        }
         mounted?.context.applyNativeWindowMetadata(detail);
       }
       if (detail.type === "unmapped" && drivesShell) {
@@ -566,8 +574,23 @@ const createRuntime = (initialApplicationId) => {
         // what actually resizes the application; the X command still moves it.
         // A fixed-size window (e.g. Calculator in Standard mode) must not be
         // force-resized by the wrapper, matching the X path's own gating.
+        //
+        // Reflecting the guest's own metadata into this frame (so the shell
+        // visually matches whatever size the guest actually settled on)
+        // resizes this host element too, which fires this same observer
+        // again. Skipping when the container already matches what the guest
+        // itself just reported (not just what we last asked for) stops that
+        // echo from being mistaken for a fresh request: confirming the guest
+        // already reports this exact size can never converge on its own,
+        // since the guest's own reply is what triggered the check.
+        const mountedState = mounts.get(appId);
+        const isGuestEcho =
+          mountedState &&
+          width === mountedState.lastGuestWidth &&
+          height === mountedState.lastGuestHeight;
         if (
           surfaces.canResize(windowId) &&
+          !isGuestEcho &&
           (width !== lastRequestedWidth || height !== lastRequestedHeight)
         ) {
           lastRequestedWidth = width;
