@@ -37,8 +37,12 @@
 }
 
 #screen-saver-overlay {
-  position: absolute;
-  z-index: 20;
+  /* Fixed (not absolute) so it covers the full viewport regardless of
+     #desktop's own bounds, and z-indexed above the taskbar (8200) and start
+     menu (7100) so it's actually the topmost thing on screen, matching how
+     a real screen saver blanks the whole display. */
+  position: fixed;
+  z-index: 9000;
   inset: 0;
   background: #000;
 }
@@ -68,8 +72,11 @@
 }
 
 #screen-saver-overlay[data-saver="windows-xp"] {
-  background: #000 url("../../assets/xp/BootLogo.png") center / min(34%, 320px)
-    auto no-repeat;
+  background-color: #000;
+  background-image: url("../../assets/xp/BootLogo.png");
+  background-size: min(34%, 320px) auto;
+  background-repeat: no-repeat;
+  animation: saver-windows-xp 20s linear infinite;
 }
 
 @keyframes saver-marquee {
@@ -92,6 +99,31 @@
       130px 100px,
       -170px 140px,
       210px -180px;
+  }
+}
+/* A DVD-logo-style bounce around the screen, matching the real "Windows XP"
+   screen saver's flying logo rather than a static centered image. */
+@keyframes saver-windows-xp {
+  0% {
+    background-position: 12% 18%;
+  }
+  18% {
+    background-position: 85% 8%;
+  }
+  36% {
+    background-position: 92% 78%;
+  }
+  52% {
+    background-position: 15% 88%;
+  }
+  70% {
+    background-position: 8% 32%;
+  }
+  85% {
+    background-position: 70% 55%;
+  }
+  100% {
+    background-position: 12% 18%;
   }
 }
 
