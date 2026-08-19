@@ -539,6 +539,14 @@ const createRuntime = (initialApplicationId) => {
       mounts.set(appId, { context, element, startedAt: performance.now() });
       let resizeFrame = 0;
       let pendingWindowAction = "bounds";
+      // The native window's own metadata echo back after a resize resizes
+      // this host element too (CSS ties it to the shell frame it's driving),
+      // which retriggers the resize observer below. Without this guard, that
+      // echo gets reinterpreted as a fresh resize request and reconfirmed
+      // forever - re-requesting a size the guest already reports having
+      // never lets the loop settle.
+      let lastRequestedWidth = 0;
+      let lastRequestedHeight = 0;
       const syncNativeWindow = () => {
         resizeFrame = 0;
         const windowId = runningWindows.get(appId);
@@ -558,7 +566,14 @@ const createRuntime = (initialApplicationId) => {
         // what actually resizes the application; the X command still moves it.
         // A fixed-size window (e.g. Calculator in Standard mode) must not be
         // force-resized by the wrapper, matching the X path's own gating.
-        if (surfaces.canResize(windowId)) postResizeRequest(appId, width, height);
+        if (
+          surfaces.canResize(windowId) &&
+          (width !== lastRequestedWidth || height !== lastRequestedHeight)
+        ) {
+          lastRequestedWidth = width;
+          lastRequestedHeight = height;
+          postResizeRequest(appId, width, height);
+        }
         return surfaces.command(windowId, action, {
           x: context.windowElement.offsetLeft,
           y: context.windowElement.offsetTop,

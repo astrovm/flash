@@ -211,19 +211,23 @@ const applicationContext = (win) => ({
     if (win.maximized) return;
     const host = win.el.querySelector(".boxedwine-shared-app-host");
     if (!host) return;
-    const frameWidth = Math.max(0, win.el.offsetWidth - host.clientWidth);
-    const measuredFrameHeight = Math.max(
-      0,
-      win.el.offsetHeight - host.clientHeight,
-    );
+    // .boxedwine-shared-app-host is always positioned at
+    // `inset: var(--boxedwine-shell-caption-height) 0 0` with no borders on
+    // .xp-boxedwine-shared-window (see boxedwine.css), so the chrome overhead
+    // is a fixed constant, not something to remeasure live. Measuring it from
+    // the current win.el/host layout instead let a stale mid-update read feed
+    // back into itself: applyNativeClientSize sets win.el's size from this
+    // measurement, which changes host's size via that same CSS relationship,
+    // which re-triggers this method through the resize observer, compounding
+    // any measurement error into unbounded growth on every metadata echo.
     const caption = parseWindowLength(
       win.el.ownerDocument.defaultView
         ?.getComputedStyle?.(win.el)
         ?.getPropertyValue("--boxedwine-shell-caption-height"),
       28,
     );
-    win.el.style.width = `${width + frameWidth}px`;
-    win.el.style.height = `${height + (measuredFrameHeight || caption)}px`;
+    win.el.style.width = `${width}px`;
+    win.el.style.height = `${height + caption}px`;
     fitNativeProgramToWorkArea(win);
   },
   applyNativeWindowMetadata(metadata) {

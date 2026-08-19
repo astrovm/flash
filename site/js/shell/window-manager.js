@@ -184,11 +184,17 @@ const fitNativeProgramToWorkArea = (win) => {
     return false;
   }
 
+  // Remembering the size measured at this exact moment (rather than the
+  // application's own stable declared size) let it capture a value already
+  // corrupted by a mid-update read. Since a metadata echo can retrigger this
+  // same capture-then-restore path on every resize confirmation, a corrupted
+  // capture becomes a new, larger "original" each cycle instead of ever
+  // converging back to the true size - unbounded growth on every echo.
   win.workAreaFitRect ||= {
     left: win.el.style.left,
     top: win.el.style.top,
-    width: `${actualWidth}px`,
-    height: `${actualHeight}px`,
+    width: `${preferred.width || actualWidth}px`,
+    height: `${preferred.height || actualHeight}px`,
     minWidth: win.el.style.minWidth,
     minHeight: win.el.style.minHeight,
   };
