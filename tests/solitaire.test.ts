@@ -71,8 +71,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     });
     shell.window.dispatchEvent(new shell.window.Event("resize"));
 
-    expect(solitaireWindow.style.width).toBe("640px");
-    expect(solitaireWindow.style.height).toBe("470px");
+    expect(solitaireWindow.style.width).toBe("592px");
+    expect(solitaireWindow.style.height).toBe("438px");
   });
 
   test("regrows with the work area while its native bounds still do not fit", async () => {
@@ -94,7 +94,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.width).toBe("844px");
     expect(solitaireWindow.style.height).toBe("360px");
 
-    // 640x470 still does not fit, so the window keeps filling the work area
+    // 592x438 still does not fit, so the window keeps filling the work area
     // instead of staying at the size measured for the smaller one.
     resizeDesktop(900, 400);
 
@@ -118,7 +118,9 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       "/iframe/boxedwine-runtime/",
     );
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
-    expect(url.searchParams.get("executable")).toBe("solitaire/sol.exe");
+    expect(url.searchParams.get("executable")).toBe(
+      "solitaire/resize-host.exe",
+    );
     expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");

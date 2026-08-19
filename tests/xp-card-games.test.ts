@@ -69,7 +69,7 @@ describe("Windows XP card games through BoxedWine", () => {
       );
       expect(url.searchParams.get("archive")).toBe("xp-runtime");
       expect(url.searchParams.get("executable")).toBe(
-        `${game.id}/${game.executable}`,
+        `${game.id}/resize-host.exe`,
       );
       expect(url.searchParams.get("persistent")).toBe("true");
       expect(url.searchParams.get("sound")).toBe("true");

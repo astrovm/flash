@@ -776,6 +776,9 @@ export const createBoxedWineWindowSurface = ({
     getCanvas(id) {
       return canvases.get(id) || ownedCanvases.get(id) || null;
     },
+    canResize(id) {
+      return windows.get(id)?.canResize !== false;
+    },
     reset() {
       for (const canvas of canvases.values()) canvas.remove();
       for (const [id, canvas] of ownedCanvases) {

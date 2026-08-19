@@ -162,13 +162,15 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(
       calculator.classList.contains("xp-boxedwine-shared-window"),
     ).toBeTrue();
-    expect(calculator.querySelector(".resize-handle").hidden).toBeTrue();
+    expect(calculator.querySelector(".resize-handle")).toBeNull();
     expect(
       calculator.querySelector(".boxedwine-shared-app-host"),
     ).not.toBeNull();
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
     expect(url.searchParams.get("root")).toBe("xp-accessories");
-    expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
+    expect(url.searchParams.get("executable")).toBe(
+      "calculator/resize-host.exe",
+    );
     expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("cache")).toBe("false");

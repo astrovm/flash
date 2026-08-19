@@ -134,7 +134,22 @@ static DWORD run(void) {
     if (!search.window) continue;
     if (!read_requested_size(request_path, &width, &height)) continue;
     if (width == applied_width && height == applied_height) continue;
-    if (SetWindowPos(search.window, NULL, 0, 0, (int)width, (int)height,
+    // The shell requests the target CLIENT area, but SetWindowPos's cx/cy set
+    // the OUTER window rectangle. The window's own caption/border overhead is
+    // measured fresh on every resize (rather than once) so it stays correct
+    // even if the window's frame style changes at runtime (e.g. a menu bar
+    // toggling).
+    RECT outer_before;
+    RECT client_before;
+    if (!GetWindowRect(search.window, &outer_before) ||
+        !GetClientRect(search.window, &client_before))
+      continue;
+    int overhead_width =
+        (outer_before.right - outer_before.left) - client_before.right;
+    int overhead_height =
+        (outer_before.bottom - outer_before.top) - client_before.bottom;
+    if (SetWindowPos(search.window, NULL, 0, 0, (int)width + overhead_width,
+                     (int)height + overhead_height,
                      SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE)) {
       RECT client;
       if (GetClientRect(search.window, &client)) {

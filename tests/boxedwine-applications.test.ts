@@ -2,11 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import { validateBoxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
 
+// Each id's first six characters, and each executable's basename, must stay
+// unique across the whole catalog (see boxedwine-applications.js), so this
+// fixture cannot reuse a shared "application-" prefix or "program.exe" name.
 const application = (index: number) => ({
-  id: `application-${index}`,
+  id: `game${String(index).padStart(2, "0")}`,
   title: `Application ${index}`,
   icon: `Application-${index}.png`,
-  executable: `application-${index}/program.exe`,
+  executable: `application-${index}/program${index}.exe`,
   packagePath: `site/iframe/application-${index}/application-${index}.zip`,
 });
 
@@ -18,8 +21,8 @@ describe("BoxedWine application catalog", () => {
 
     expect(applications).toHaveLength(20);
     expect(applications.at(-1)).toMatchObject({
-      id: "application-20",
-      executable: "application-20/program.exe",
+      id: "game20",
+      executable: "application-20/program20.exe",
     });
   });
 

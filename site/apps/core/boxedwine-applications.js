@@ -7,6 +7,12 @@ export const validateBoxedWineApplications = (definitions) => {
   if (!Array.isArray(definitions))
     throw new TypeError("BoxedWine applications must be an array");
   const ids = new Set();
+  // The native launch-token fix matches a launched executable by basename
+  // alone (see BOXEDWINE-LAUNCH-TOKEN.patch), and the D: drive's legacy 8.3
+  // short names collide when two ids share their first six characters (see
+  // boxedwine-resize.js) - both must stay unique across every application.
+  const executableBasenames = new Set();
+  const idPrefixes = new Set();
   return Object.freeze(
     definitions.map((definition) => {
       const { id, title, icon, executable, packagePath } = definition || {};
@@ -14,6 +20,11 @@ export const validateBoxedWineApplications = (definitions) => {
         throw new TypeError("Invalid BoxedWine application ID");
       if (ids.has(id))
         throw new TypeError(`Duplicate BoxedWine application ID: ${id}`);
+      const idPrefix = id.slice(0, 6);
+      if (idPrefixes.has(idPrefix))
+        throw new TypeError(
+          `BoxedWine application ID ${id} collides with another ID's first six characters`,
+        );
       if (typeof title !== "string" || !title.trim())
         throw new TypeError(`Invalid BoxedWine application title for ${id}`);
       if (typeof icon !== "string" || !/^[a-z0-9_. -]+\.png$/i.test(icon))
@@ -24,9 +35,18 @@ export const validateBoxedWineApplications = (definitions) => {
         executable.includes("..")
       )
         throw new TypeError(`Invalid BoxedWine executable for ${id}`);
+      const executableBasename = executable
+        .slice(executable.lastIndexOf("/") + 1)
+        .toLowerCase();
+      if (executableBasenames.has(executableBasename))
+        throw new TypeError(
+          `BoxedWine executable for ${id} collides with another application's executable name`,
+        );
       if (typeof packagePath !== "string" || !PACKAGE_PATTERN.test(packagePath))
         throw new TypeError(`Invalid BoxedWine package path for ${id}`);
       ids.add(id);
+      idPrefixes.add(idPrefix);
+      executableBasenames.add(executableBasename);
       return Object.freeze({
         id,
         title,

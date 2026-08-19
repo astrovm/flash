@@ -31,7 +31,10 @@ const runnerUrl = (initialApplicationId, launchToken) => {
     appRoot: packageRoot(),
     root: ROOT_ARCHIVE,
     archive: "xp-runtime",
-    executable: application.executable,
+    // Wine ignores externally-initiated resizes, so every application -
+    // including the one that boots the shared runtime - launches through the
+    // resize-host.exe wrapper, which resizes its child's window directly.
+    executable: application.launchExecutable,
     launchToken,
     resolution: `${Math.max(320, screenWidth)}x${Math.max(240, screenHeight)}`,
     frameTop: "0",
@@ -160,8 +163,8 @@ const createRuntime = (initialApplicationId) => {
     );
   };
 
-  const postProcessRequest = (type, appId, processId = 0) => {
-    const launchToken = launchTokenFor(appId);
+  const postProcessRequest = (type, appId, processId = 0, launchToken) => {
+    launchToken ??= launchTokenFor(appId);
     frame.contentWindow.postMessage(
       {
         type,
@@ -553,7 +556,9 @@ const createRuntime = (initialApplicationId) => {
         pendingWindowAction = "bounds";
         // Wine ignores the X resize below, so the in-guest resize helper is
         // what actually resizes the application; the X command still moves it.
-        postResizeRequest(appId, width, height);
+        // A fixed-size window (e.g. Calculator in Standard mode) must not be
+        // force-resized by the wrapper, matching the X path's own gating.
+        if (surfaces.canResize(windowId)) postResizeRequest(appId, width, height);
         return surfaces.command(windowId, action, {
           x: context.windowElement.offsetLeft,
           y: context.windowElement.offsetTop,
@@ -618,12 +623,18 @@ const createRuntime = (initialApplicationId) => {
           delete document.documentElement.dataset
             .boxedwineMountedApplicationsReady;
           if (processId) {
+            // Capture the token that launched this process now: if the app is
+            // reopened before this timer fires, launchTokenFor(appId) would
+            // otherwise re-resolve to the new launch's token by the time this
+            // runs, misattributing the terminate request.
+            const launchToken = launchTokenFor(appId);
             window.setTimeout(
               () =>
                 postProcessRequest(
                   "boxedwine-terminate-process",
                   appId,
                   processId,
+                  launchToken,
                 ),
               500,
             );

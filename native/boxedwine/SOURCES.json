@@ -3,6 +3,6 @@
     "source": "native/boxedwine/resize-host.c",
     "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -fno-builtin -mwindows -Wl,--no-insert-timestamp native/boxedwine/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
     "compiler": "i686-w64-mingw32-gcc (GCC) 12-win32 (debian:bookworm-slim)",
-    "sha256": "2bd844b28871b5735edaecc97e21da679c6174e03bdb87c67b16b7db34a8d893"
+    "sha256": "8961157158c592da9c0a6c3294a9c4d9937f25c2cd02f2907a6be992f114534d"
   }
 }

@@ -39,16 +39,20 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
     });
     if (request.operation === "launch") {
       const application = getBoxedWineApplication(request.appId);
+      // Launch the wrapper first: if it fails (e.g. a launch is already
+      // pending), boxedwineExpectExec is never called, so a rejected launch
+      // never leaves a stale filename->token mapping for a later, unrelated
+      // launch of the same target to accidentally match.
       if (
         !application ||
+        !module.boxedwineLaunchProcess(
+          application.launchExecutable,
+          request.launchToken,
+        ) ||
         !module.boxedwineExpectExec(
           application.executable.slice(
             application.executable.lastIndexOf("/") + 1,
           ),
-          request.launchToken,
-        ) ||
-        !module.boxedwineLaunchProcess(
-          application.launchExecutable,
           request.launchToken,
         )
       ) {

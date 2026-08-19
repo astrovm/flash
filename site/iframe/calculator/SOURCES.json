@@ -5,8 +5,8 @@
     "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "package": {
       "file": "xp-calculator.zip",
-      "bytes": 71363,
-      "sha256": "7edc2cd75c5f770dc96cbde12b21e5ca93e87a32ad23135deb1509136d6593a7"
+      "bytes": 71428,
+      "sha256": "8834c1d15334e25d6ac7081cf89e14c5f81b395d100d15ace3bcd3db5d1ecd89"
     },
     "files": {
       "calc.exe": {
@@ -20,7 +20,7 @@
       "resize-host.exe": {
         "source": "native/boxedwine/resize-host.c",
         "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -fno-builtin -mwindows -Wl,--no-insert-timestamp native/boxedwine/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
-        "sha256": "2bd844b28871b5735edaecc97e21da679c6174e03bdb87c67b16b7db34a8d893"
+        "sha256": "8961157158c592da9c0a6c3294a9c4d9937f25c2cd02f2907a6be992f114534d"
       },
       "resize-host.txt": {
         "generated": "calc.exe\\nD:\\\\calculator.bws\\n",
