@@ -21,11 +21,13 @@ const syncTrayVolumeUI = () => {
 };
 
 const setSystemVolume = (volume, isMuted) => {
-  // This is the system sound volume (login/logoff/startup/shutdown
-  // chimes) only; games keep their own independent per-game volume
-  // (see getGameVolume/setGameVolume) and are not touched here.
+  // Like the real XP Volume Control's Master fader, this scales every
+  // audio source - games included - on top of each game's own volume
+  // (see getGameVolume/setGameVolume, normalizeGameVolume), rather than
+  // being a separate, unrelated channel.
   localStorage.setItem("volume", String(volume));
   localStorage.setItem("isMuted", String(isMuted));
+  applyFocusVolumes();
   syncTrayVolumeUI();
 };
 
