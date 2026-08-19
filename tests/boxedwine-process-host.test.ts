@@ -52,6 +52,7 @@ const createModule = () => {
   const launchedExecutables = [];
   const module = {
     _boxedwine_install_bridge_api() {
+      module.boxedwineExpectExec = () => 1;
       module.boxedwineLaunchProcess = (executable, launchToken) => {
         launchedExecutables.push({ executable, launchToken });
         return executable.endsWith(".exe");
@@ -109,11 +110,11 @@ describe("persistent BoxedWine process host", () => {
 
     expect(processHost.launchedExecutables).toEqual([
       {
-        executable: "calculator/calc.exe",
+        executable: "calculator/resize-host.exe",
         launchToken: "1011",
       },
       {
-        executable: "solitaire/sol.exe",
+        executable: "solitaire/resize-host.exe",
         launchToken: "2022",
       },
     ]);

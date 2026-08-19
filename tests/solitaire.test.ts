@@ -197,7 +197,12 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(sha256(packageBytes)).toBe(appSources.windowsXp.package.sha256);
 
     const files = unzipSync(packageBytes);
-    expect(Object.keys(files).sort()).toEqual(["cards.dll", "sol.exe"]);
+    expect(Object.keys(files).sort()).toEqual([
+      "cards.dll",
+      "resize-host.exe",
+      "resize-host.txt",
+      "sol.exe",
+    ]);
     for (const [filename, source] of Object.entries(
       appSources.windowsXp.files,
     )) {

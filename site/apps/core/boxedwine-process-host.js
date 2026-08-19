@@ -41,8 +41,14 @@ export const installBoxedWineProcessHostBridge = (hostWindow, module) => {
       const application = getBoxedWineApplication(request.appId);
       if (
         !application ||
+        !module.boxedwineExpectExec(
+          application.executable.slice(
+            application.executable.lastIndexOf("/") + 1,
+          ),
+          request.launchToken,
+        ) ||
         !module.boxedwineLaunchProcess(
-          application.executable,
+          application.launchExecutable,
           request.launchToken,
         )
       ) {

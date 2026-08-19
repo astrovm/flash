@@ -1,0 +1,126 @@
+diff --git a/include/knativewindowbridge.h b/include/knativewindowbridge.h
+index e17831e..7d93285 100644
+--- a/include/knativewindowbridge.h
++++ b/include/knativewindowbridge.h
+@@ -14,5 +14,6 @@ void boxedwineNativeWindowOwner(U32 id, U32 ownerId);
+ void boxedwineNativeWindowFocused(const std::shared_ptr<XWindow>& wnd);
+ void boxedwineNativeWindowRaised(const std::shared_ptr<XWindow>& wnd);
+ void boxedwineNativeWindowFrame(U32 id, const U8* pixels, U32 pitch, U32 width, U32 height);
++U32 boxedwineConsumeExpectedExecToken(const BString& arg);
+ 
+ #endif
+diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbridge.cpp
+index 38ffe8f..c33e272 100644
+--- a/platform/sdl/knativewindowbridge.cpp
++++ b/platform/sdl/knativewindowbridge.cpp
+@@ -111,6 +111,16 @@ EM_JS(void, boxedwineInstallBridgeApi, (), {
+         _free(pointer);
+         return result;
+     };
++    Module.boxedwineExpectExec = (filename, launchToken) => {
++        launchToken = Number(launchToken);
++        if (!Number.isInteger(launchToken) || launchToken <= 0) return 0;
++        const length = lengthBytesUTF8(filename);
++        const pointer = _malloc(length + 1);
++        stringToUTF8(filename, pointer, length + 1);
++        const result = _boxedwine_expect_exec(pointer, length, launchToken);
++        _free(pointer);
++        return result;
++    };
+     Module.boxedwineFrames = Object.freeze({
+         setProcessVisible: (processId, visible) =>
+             _boxedwine_set_process_visible(processId, visible ? 1 : 0),
+diff --git a/source/kernel/kprocess.cpp b/source/kernel/kprocess.cpp
+index f405dde..461bc38 100644
+--- a/source/kernel/kprocess.cpp
++++ b/source/kernel/kprocess.cpp
+@@ -28,6 +28,7 @@
+ #include "../io/fsmemopennode.h"
+ #include "../io/fsfilenode.h"
+ #include "../x11/x11.h"
++#include "knativewindowbridge.h"
+ #include "kunixsocket.h"
+ 
+ #include <stdlib.h>
+@@ -733,6 +734,19 @@ U32 KProcess::execve(KThread* thread, BString path, std::vector<BString>& args,
+             Platform::setCurrentThreadPriorityHigh();
+             this->systemProcess = true;
+         }
++#ifdef __EMSCRIPTEN__
++        // Wine execve()s "/bin/wine <target.exe>" for every process it starts,
++        // itself included, passing the target Windows executable as one of
++        // these argv entries (matched the same way the checks above match
++        // known Wine daemons). A guest CreateProcessW-spawned child's OS-level
++        // parent is the shared wineserver, not the application that requested
++        // it, so this is the only reliable signal available for attributing
++        // the resulting window back to the launch that asked for it.
++        U32 expectedLaunchToken = boxedwineConsumeExpectedExecToken(s);
++        if (expectedLaunchToken) {
++            boxedwineNativeRegisterLaunch(this->id, expectedLaunchToken);
++        }
++#endif
+     }
+     node = this->findInPath(path);
+     if (!node) {
+diff --git a/source/sdl/emscripten/mainloop.cpp b/source/sdl/emscripten/mainloop.cpp
+index fa97b32..0bc4eb5 100644
+--- a/source/sdl/emscripten/mainloop.cpp
++++ b/source/sdl/emscripten/mainloop.cpp
+@@ -18,6 +18,7 @@
+ 
+ #ifdef __EMSCRIPTEN__
+ #include <emscripten/emscripten.h>
++#include <map>
+ #include "boxedwine.h"
+ #include "knativesystem.h"
+ #include "knativewindowbridge.h"
+@@ -30,6 +31,17 @@ static U32 pendingTermination;
+ static U32 launchResult;
+ static U32 pendingLaunchToken;
+ 
++// Wine routes a guest CreateProcessW call for a new top-level process
++// through the single shared wineserver, so the resulting process's OS-level
++// parent is wineserver, not the application that asked for it: walking
++// parentId (see boxedwineNativeLaunchToken) cannot recover which launch a
++// child belongs to. Wine always execve()s "/bin/wine <target.exe>", passing
++// the target Windows executable as one of the new argv entries (the same
++// signal this file already keys system-process detection off of below), so
++// a shell that knows which target it is waiting for can register a token
++// here instead, matched by that argv entry rather than by process ancestry.
++static std::map<BString, U32> boxedwinePendingExecTokens;
++
+ static bool isValidApplicationPath(const char* path, U32 length) {
+     if (!path || !length || length > 240) return false;
+     if (path[0] == '/' || path[0] == '\\') return false;
+@@ -65,6 +77,31 @@ extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_process(const char* path, U
+     return 1;
+ }
+ 
++// A wrapper the shell already knows how to launch (see boxedwine_launch_process)
++// may itself CreateProcessW a further target that never appears in the process
++// tree; call this once per launch with just that target's filename (e.g.
++// "sol.exe") to have it registered under the same token when Wine execve()s it.
++extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_expect_exec(const char* filename, U32 length, U32 launchToken) {
++    if (!isValidApplicationPath(filename, length) || !launchToken) return 0;
++    BString key;
++    for (U32 i = 0; i < length; ++i) {
++        key.append(filename[i]);
++    }
++    boxedwinePendingExecTokens[key] = launchToken;
++    return 1;
++}
++
++U32 boxedwineConsumeExpectedExecToken(const BString& arg) {
++    for (auto it = boxedwinePendingExecTokens.begin(); it != boxedwinePendingExecTokens.end(); ++it) {
++        if (arg.endsWith(it->first, true)) {
++            U32 token = it->second;
++            boxedwinePendingExecTokens.erase(it);
++            return token;
++        }
++    }
++    return 0;
++}
++
+ extern "C" EMSCRIPTEN_KEEPALIVE U32 boxedwine_launch_result() {
+     return launchResult;
+ }

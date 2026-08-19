@@ -32,6 +32,7 @@ export const validateBoxedWineApplications = (definitions) => {
         title,
         icon,
         executable,
+        launchExecutable: `${id}/resize-host.exe`,
         packagePath,
       });
     }),

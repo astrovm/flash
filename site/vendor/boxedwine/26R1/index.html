@@ -129,10 +129,12 @@
     </script>
     <script type="module">
       import { installBoxedWineProcessHostBridge } from "../../../apps/core/boxedwine-process-host.js";
+      import { installBoxedWineResizeBridge } from "../../../apps/core/boxedwine-resize.js";
       import { installBoxedWineWindowBridge } from "../../../apps/core/boxedwine-window-bridge.js";
 
       if (window.BoxedWinePersistentRuntime) {
         installBoxedWineProcessHostBridge(window, Module);
+        installBoxedWineResizeBridge(window, Module);
         installBoxedWineWindowBridge(window, Module);
       }
       const reportRuntimeFailure = (reason) =>

@@ -26,7 +26,7 @@ const games = [
     title: "FreeCell",
     archive: "xp-freecell",
     executable: "freecell.exe",
-    files: ["cards.dll", "freecell.exe"],
+    files: ["cards.dll", "freecell.exe", "resize-host.exe", "resize-host.txt"],
   },
   {
     id: "spider-solitaire",
@@ -34,7 +34,7 @@ const games = [
     title: "Spider Solitaire",
     archive: "xp-spider-solitaire",
     executable: "spider.exe",
-    files: ["spider.exe"],
+    files: ["resize-host.exe", "resize-host.txt", "spider.exe"],
   },
 ];
 

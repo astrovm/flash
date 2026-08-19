@@ -443,7 +443,12 @@ describe("original Windows XP Calculator through BoxedWine", () => {
 
     expect(packageContent.byteLength).toBe(manifest.windowsXp.package.bytes);
     expect(sha256(packageContent)).toBe(manifest.windowsXp.package.sha256);
-    expect(Object.keys(files).sort()).toEqual(["calc.chm", "calc.exe"]);
+    expect(Object.keys(files).sort()).toEqual([
+      "calc.chm",
+      "calc.exe",
+      "resize-host.exe",
+      "resize-host.txt",
+    ]);
     for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
       expect(sha256(files[name])).toBe(source.sha256);
     }

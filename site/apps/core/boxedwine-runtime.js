@@ -148,6 +148,18 @@ const createRuntime = (initialApplicationId) => {
     );
   };
 
+  const postResizeRequest = (appId, width, height) => {
+    frame.contentWindow?.postMessage(
+      {
+        type: "boxedwine-resize-window",
+        appId,
+        width: Math.round(width),
+        height: Math.round(height),
+      },
+      location.origin,
+    );
+  };
+
   const postProcessRequest = (type, appId, processId = 0) => {
     const launchToken = launchTokenFor(appId);
     frame.contentWindow.postMessage(
@@ -539,6 +551,9 @@ const createRuntime = (initialApplicationId) => {
         }
         const action = pendingWindowAction;
         pendingWindowAction = "bounds";
+        // Wine ignores the X resize below, so the in-guest resize helper is
+        // what actually resizes the application; the X command still moves it.
+        postResizeRequest(appId, width, height);
         return surfaces.command(windowId, action, {
           x: context.windowElement.offsetLeft,
           y: context.windowElement.offsetTop,
