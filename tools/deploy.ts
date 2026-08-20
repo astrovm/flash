@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 
 import { generateSW, type ManifestTransform } from "workbox-build";
 import workboxConfig, { PRECACHE_EXTENSIONS } from "../workbox-config";
+import { boxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const SOURCE_DIR = join(PROJECT_DIR, "site");
@@ -755,9 +756,9 @@ export async function versionGamePackages(
   const gameRuntimes: Record<string, string> = {
     "pink-panther-hokus-pokus": "scummvm",
     "pink-panther-passport-to-peril": "scummvm",
-    freecell: "boxedwine",
-    solitaire: "boxedwine",
-    "spider-solitaire": "boxedwine",
+    ...Object.fromEntries(
+      boxedWineApplications.map(({ id }) => [id, "boxedwine"]),
+    ),
   };
   const packages: VersionedGamePackages = {};
   for (const gameId of [...gameIds].sort()) {

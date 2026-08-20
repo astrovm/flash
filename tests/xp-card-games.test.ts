@@ -21,6 +21,14 @@ const sha256 = (content: Uint8Array) =>
 
 const games = [
   {
+    id: "hearts",
+    applicationId: "__hearts",
+    title: "Hearts",
+    archive: "xp-hearts",
+    executable: "mshearts.exe",
+    files: ["cards.dll", "mfc42u.dll", "mshearts.chm", "mshearts.exe"],
+  },
+  {
     id: "freecell",
     applicationId: "__freecell",
     title: "FreeCell",

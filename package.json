@@ -4,6 +4,7 @@
     "test": "bun run typecheck && bun test && bun run validate:javascript && bun run validate:icons",
     "build": "bun tools/deploy.ts",
     "build:pinball-runtime": "bun tools/build-pinball-runtime.ts",
+    "build:boxedwine-apps": "bun tools/build-boxedwine-app-packages.ts",
     "build:boxedwine-runtime": "bun tools/build-boxedwine-runtime.ts",
     "dev": "bun tools/dev-server.ts",
     "preview": "bun tools/dev-server.ts --production",
@@ -24,6 +25,7 @@
     "validate:javascript": "bun tools/validate-javascript.ts",
     "verify:xp-assets": "bun tools/extract-xp-assets.ts --check",
     "verify:pinball-assets": "bun tools/extract-pinball-assets.ts --check",
+    "verify:boxedwine-apps": "bun tools/build-boxedwine-app-packages.ts --check",
     "xp:vm": "bun tools/xp-vm.ts"
   },
   "devDependencies": {

@@ -25,6 +25,10 @@ let iconsBuilt = false;
 let renderedPlacesStyle = null;
 let screenSaverTimeout = null;
 let screenSaverWired = false;
+let screenSaverPreviewCleanup = null;
+
+const PIPES_SCREEN_SAVER_URL =
+  "vendor/pipes/86e8eb1418f937ef43f9acbd871085c5160714fc/index.html";
 
 const gamesList = { ...window.FLASH_GAMES };
 const installedGameIds = new Set();
@@ -55,6 +59,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   WINDOW_PLACEMENTS_KEY,
   "gameVolumes",
   "isMuted",
+  "minesweeperSettings",
   "runHistory",
   "volume",
 ]);
@@ -601,17 +606,47 @@ const applyDisplaySettings = (settings) => {
   scheduleScreenSaver(settings);
 };
 
+const renderScreenSaver = (container, saver, active) => {
+  container.dataset.saver = saver;
+  const current = container.querySelector(".pipes-screen-saver");
+  if (saver !== "pipes" || !active) {
+    current?.remove();
+    return;
+  }
+  if (current) return;
+  const frame = document.createElement("iframe");
+  frame.className = "pipes-screen-saver";
+  frame.src = PIPES_SCREEN_SAVER_URL;
+  frame.title = "3D Pipes";
+  frame.tabIndex = -1;
+  frame.setAttribute("aria-hidden", "true");
+  container.appendChild(frame);
+};
+
+const hideScreenSaver = (saver) => {
+  screenSaverPreviewCleanup?.();
+  screenSaverPreviewCleanup = null;
+  saver.hidden = true;
+  renderScreenSaver(saver, saver.dataset.saver || "none", false);
+};
+
+const showScreenSaver = (saver, type) => {
+  saver.dataset.saver = type;
+  saver.hidden = false;
+  renderScreenSaver(saver, type, true);
+};
+
 const scheduleScreenSaver = (settings = getDisplaySettings()) => {
   clearTimeout(screenSaverTimeout);
   const desktop = document.getElementById("desktop");
   const saver = document.getElementById("screen-saver-overlay");
   if (!desktop || !saver) return;
-  saver.hidden = true;
+  hideScreenSaver(saver);
   saver.dataset.saver = settings.screenSaver;
   if (settings.screenSaver === "none" || !loggedIn) return;
   screenSaverTimeout = setTimeout(
     () => {
-      saver.hidden = false;
+      showScreenSaver(saver, settings.screenSaver);
     },
     settings.screenSaverWait * 60 * 1000,
   );

@@ -385,6 +385,62 @@ test("Display Properties applies and persists a selected wallpaper", async () =>
   expect(apply.disabled).toBeTrue();
 });
 
+test("3D Pipes renders in the monitor and full-screen previews and cleans up", async () => {
+  const shell = await login(await loadShell());
+  clickStartAction(shell, "controlPanel");
+  const controlPanel = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__control-panel"]',
+  )!;
+  controlPanel
+    .querySelector<HTMLButtonElement>(
+      '[data-control-panel-category="appearance"]',
+    )!
+    .click();
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="display"]')!
+    .click();
+
+  const display = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__display-properties"]',
+  )!;
+  display.querySelector<HTMLButtonElement>("#display-tab-saver")!.click();
+  const select = display.querySelector<HTMLSelectElement>("#display-saver")!;
+  select.value = "pipes";
+  select.dispatchEvent(new shell.window.Event("change"));
+
+  const monitor = display.querySelector<HTMLElement>(".screen-saver-preview")!;
+  const monitorFrame = monitor.querySelector<HTMLIFrameElement>(
+    ".pipes-screen-saver",
+  )!;
+  expect(monitorFrame).not.toBeNull();
+  expect(monitorFrame.src).toEndWith(
+    "/vendor/pipes/86e8eb1418f937ef43f9acbd871085c5160714fc/index.html",
+  );
+
+  display.querySelector<HTMLButtonElement>("#display-tab-desktop")!.click();
+  expect(monitor.querySelector(".pipes-screen-saver")).toBeNull();
+  display.querySelector<HTMLButtonElement>("#display-tab-saver")!.click();
+  expect(monitor.querySelector(".pipes-screen-saver")).not.toBeNull();
+
+  display
+    .querySelector<HTMLButtonElement>(".display-saver-preview-button")!
+    .click();
+  const overlay = shell.document.getElementById("screen-saver-overlay")!;
+  expect(overlay.hidden).toBeFalse();
+  expect(overlay.querySelector(".pipes-screen-saver")).not.toBeNull();
+  shell.document.dispatchEvent(
+    new shell.window.KeyboardEvent("keydown", { key: "Escape" }),
+  );
+  expect(overlay.hidden).toBeTrue();
+  expect(overlay.querySelector(".pipes-screen-saver")).toBeNull();
+
+  select.value = "stars";
+  select.dispatchEvent(new shell.window.Event("change"));
+  expect(monitor.querySelector(".pipes-screen-saver")).toBeNull();
+  display.querySelector<HTMLButtonElement>(".close-btn")!.click();
+  expect(shell.document.querySelector(".pipes-screen-saver")).toBeNull();
+});
+
 test("Windows Classic applies the native Classic appearance and solid desktop", async () => {
   const shell = await login(await loadShell());
   clickStartAction(shell, "controlPanel");
@@ -665,6 +721,53 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).toHaveLength(480);
   expect((minesweeperWindow as HTMLElement).style.width).toBe("506px");
   expect((minesweeperWindow as HTMLElement).style.height).toBe("377px");
+  minesweeperWindow
+    .querySelector<HTMLButtonElement>(".minesweeper-menu-trigger")!
+    .click();
+  minesweeperWindow
+    .querySelector<HTMLButtonElement>('[data-command="sound"]')!
+    .click();
+  expect(
+    JSON.parse(shell.window.localStorage.getItem("minesweeperSettings")!),
+  ).toEqual({
+    difficulty: "expert",
+    customLevel: { rows: 20, columns: 20, mines: 80 },
+    marks: true,
+    color: true,
+    sound: false,
+  });
+  minesweeperWindow.querySelector<HTMLButtonElement>(".close-btn")!.click();
+
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="minesweeper"]')!
+    .click();
+  const restoredMinesweeper = shell.document.querySelector(
+    '.xp-window[data-game="__minesweeper"]',
+  )!;
+  expect(
+    restoredMinesweeper.querySelectorAll(
+      ".xp-minesweeper-board [role='gridcell']",
+    ),
+  ).toHaveLength(480);
+  restoredMinesweeper
+    .querySelector<HTMLButtonElement>(".minesweeper-menu-trigger")!
+    .click();
+  expect(
+    restoredMinesweeper.querySelector<HTMLElement>(
+      '[data-command="expert"] [data-check]',
+    )!.textContent,
+  ).toBe("✓");
+  expect(
+    restoredMinesweeper.querySelector<HTMLElement>(
+      '[data-command="sound"] [data-check]',
+    )!.textContent,
+  ).toBe("");
+  restoredMinesweeper.querySelector<HTMLButtonElement>(".close-btn")!.click();
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
@@ -866,7 +969,6 @@ test("placeholder-only applications are not installed or exposed by the shell", 
     "__new-connection-wizard",
     "__wireless-network-setup-wizard",
     "__remote-assistance",
-    "__hearts",
     "__internet-backgammon",
     "__internet-checkers",
     "__internet-hearts",
@@ -881,7 +983,6 @@ test("placeholder-only applications are not installed or exposed by the shell", 
     "__on-screen-keyboard",
     "__character-map",
     "__remote-desktop",
-    "__wordpad",
     "__hyperterminal",
     "__internet-explorer",
     "__msn",

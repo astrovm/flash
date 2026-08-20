@@ -430,6 +430,12 @@ const wireDisplayProperties = (win) => {
     controls.status.textContent = message;
     controls.status.hidden = !message;
   };
+  const syncScreenSaverPreview = () =>
+    renderScreenSaver(
+      controls.saverPreview,
+      pending.screenSaver,
+      !content.querySelector("#display-panel-saver").hidden,
+    );
   const themes = {
     "windows-xp": {
       appearance: "blue",
@@ -481,6 +487,7 @@ const wireDisplayProperties = (win) => {
     content.querySelector(".display-color-button span").style.backgroundColor =
       pending.backgroundColor;
     controls.saverPreview.dataset.saver = pending.screenSaver;
+    syncScreenSaverPreview();
     controls.appearancePreview.dataset.appearance = pending.appearance;
     controls.themeSample.dataset.appearance = pending.appearance;
     controls.themeSample.style.backgroundColor = pending.backgroundColor;
@@ -509,6 +516,7 @@ const wireDisplayProperties = (win) => {
     });
     if (panelId === "display-panel-desktop")
       requestAnimationFrame(syncWallpaperScrollbar);
+    syncScreenSaverPreview();
   };
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => showTab(tab));
@@ -831,10 +839,11 @@ const wireDisplayProperties = (win) => {
     .addEventListener("click", () => {
       const saver = document.getElementById("screen-saver-overlay");
       if (!saver || pending.screenSaver === "none") return;
-      saver.dataset.saver = pending.screenSaver;
-      saver.hidden = false;
+      showScreenSaver(saver, pending.screenSaver);
       const closePreview = () => {
-        saver.hidden = true;
+        hideScreenSaver(saver);
+      };
+      screenSaverPreviewCleanup = () => {
         document.removeEventListener("keydown", closePreview);
         saver.removeEventListener("pointerdown", closePreview);
       };
@@ -870,7 +879,10 @@ const wireDisplayProperties = (win) => {
     resolutionPreviewActive = false;
     resolutionPreviewSnapshot = null;
   };
-  win.beforeClose = rollbackResolutionPreview;
+  win.beforeClose = () => {
+    rollbackResolutionPreview();
+    renderScreenSaver(controls.saverPreview, pending.screenSaver, false);
+  };
   content
     .querySelector('[data-display-action="cancel"]')
     .addEventListener("click", () => closeGameWindow(win.gameId));

@@ -1,0 +1,30 @@
+{
+  "runtime": "boxedwine",
+  "windowsXp": {
+    "source": "User-supplied Windows XP Professional SP3 source-media ISO",
+    "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "package": {
+      "file": "xp-hearts.zip",
+      "bytes": 680361,
+      "sha256": "c5faad5c71d74920914a82e43573c192e3ae0c95c0b1592e812bb21b578d900f"
+    },
+    "files": {
+      "mshearts.exe": {
+        "member": "I386/MSHEARTS.EX_",
+        "sha256": "df1f92fa1102e7956867a47f27c76f2ca404a354a01387b7165745e9c41f0d7e"
+      },
+      "mfc42u.dll": {
+        "member": "I386/MFC42U.DL_",
+        "sha256": "3dd81b500d2f378d7491633b4d73e6ba0eb76f7ec0a514d62eb1e1e46a838e1f"
+      },
+      "cards.dll": {
+        "member": "I386/CARDS.DL_",
+        "sha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506"
+      },
+      "mshearts.chm": {
+        "member": "I386/MSHEARTS.CH_",
+        "sha256": "ef388ffb00e23cebd3f0be23404b053e34363fa93a8ce3400b6389bd253a485b"
+      }
+    }
+  }
+}
