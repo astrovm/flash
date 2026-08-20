@@ -595,7 +595,7 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ).not.toBeNull();
   expect(calculatorUrl.searchParams.get("archive")).toBe("xp-runtime");
   expect(calculatorUrl.searchParams.get("executable")).toBe(
-    "calculator/resize-host.exe",
+    "calculator/calc.exe",
   );
 
   shell.document.getElementById("start-button")!.click();
@@ -676,7 +676,7 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
         ".boxedwine-shared-runtime-frame",
       )!.src,
     ).searchParams.get("executable"),
-  ).toBe("calculator/resize-host.exe");
+  ).toBe("calculator/calc.exe");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();

@@ -9,17 +9,22 @@ Local X11 window activation patch: BOXEDWINE-WINDOW-ACTIVATION.patch
 Local X11 focus and z-order patch: BOXEDWINE-WINDOW-FOCUS.patch
 Local direct keyboard input patch: BOXEDWINE-KEYBOARD-INPUT.patch
 Local reproducible build-path patch: BOXEDWINE-REPRODUCIBLE-BUILD.patch
+Local inherited launch-token patch: BOXEDWINE-LAUNCH-TOKEN.patch
+Local shared Win32 window-controller launch patch: BOXEDWINE-WINDOW-CONTROL.patch
 
 The local patches add a validated path-based process launcher, generic numeric
-launch ownership propagated through the process tree, native outer/client
+launch ownership inherited through each process environment, native outer/client
 window metadata and capabilities, a native per-window RGBA frame registry,
 process visibility, input activation, window commands, focus, z-order events,
-and direct SDL keyboard input used by the Windows XP shell. The browser reads
+and direct SDL keyboard input used by the Windows XP shell. One generic Win32
+controller maps Wine X11 window IDs to HWNDs, applies commands inside Wine's
+virtual desktop, and reports the actual Win32 outer/client frame metrics. The
+browser reads
 the latest registered frame on request. It does not receive full pixel buffers
 through postMessage. Apply the patches in the order listed in SOURCES.json
 before building.
 Compiler: Emscripten 6.0.6
-Container: emscripten/emsdk:6.0.6
+Container: docker.io/emscripten/emsdk:6.0.6@sha256:e70c319784885fc4740761e3d473dbfa5bf092c5b55b6d08f41f7b2c9248c4a4
 Resource-safe build command:
 make -j1 BUILD_DIR=Build/Release SHELL_FILE=shell.html EXTRA_CPP_FLAGS=
 Normalize the generated JavaScript before verification:
@@ -28,6 +33,11 @@ Before applying BOXEDWINE-FILE-TRACE.patch, normalize its upstream files to LF:
 perl -pi -e 's/\r$//' include/ksystem.h source/io/fsfilenode.cpp source/io/fszipnode.h source/io/fszipopennode.cpp source/kernel/ksystem.cpp source/sdl/startupArgs.cpp source/sdl/startupArgs.h
 Official release: https://github.com/danoon2/Boxedwine/releases/tag/26R1.0
 Official Web runtime: https://boxedwine.org/v/26R1/wine11/st/
+
+The shared Win32 controller source, pinned compiler container, build command,
+and output hash are recorded in native/boxedwine/SOURCES.json. The runtime
+archive builder adds one controller to the shared archive; applications still
+launch their original executables directly.
 
 The full boxedwine.zip archive is the verified build input. The deployed
 xp-accessories.zip archive contains the shared Wine prefix and the runtime files

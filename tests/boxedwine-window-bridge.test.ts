@@ -174,7 +174,10 @@ describe("BoxedWine window bridge", () => {
       },
     });
     expect(messages).toHaveLength(messagesBeforeMove);
-    expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
+    expect(commands).toEqual([
+      [41, 0, 0, 0, 0, 0],
+      [41, 5, 300, 200, 593, 437],
+    ]);
 
     listeners.get("message")({
       source: parent,
@@ -197,6 +200,7 @@ describe("BoxedWine window bridge", () => {
     ).toBe(false);
     expect(commands).toEqual([
       [41, 0, 0, 0, 0, 0],
+      [41, 5, 300, 200, 593, 437],
       [41, 3, 0, 0, 1280, 690],
     ]);
 
@@ -495,7 +499,7 @@ describe("BoxedWine window bridge", () => {
       expect(surface.attach(51, target)).toBeTrue();
       const cropped = surface.getCanvas(51);
       expect(cropped.width).toBe(260);
-      expect(cropped.height).toBe(232);
+      expect(cropped.height).toBe(260);
       expect(cropped.dataset.boxedwineLaunchToken).toBe("99");
 
       send({

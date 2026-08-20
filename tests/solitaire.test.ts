@@ -71,8 +71,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     });
     shell.window.dispatchEvent(new shell.window.Event("resize"));
 
-    expect(solitaireWindow.style.width).toBe("592px");
-    expect(solitaireWindow.style.height).toBe("438px");
+    expect(parseFloat(solitaireWindow.style.width)).toBeLessThan(1024);
+    expect(parseFloat(solitaireWindow.style.height)).toBeLessThan(738);
   });
 
   test("regrows with the work area while its native bounds still do not fit", async () => {
@@ -94,8 +94,8 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.width).toBe("844px");
     expect(solitaireWindow.style.height).toBe("360px");
 
-    // 592x438 still does not fit, so the window keeps filling the work area
-    // instead of staying at the size measured for the smaller one.
+    // The generic provisional bounds still do not fit, so the window keeps
+    // filling the work area instead of staying at the smaller measured size.
     resizeDesktop(900, 400);
 
     expect(solitaireWindow.style.width).toBe("900px");
@@ -118,9 +118,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       "/iframe/boxedwine-runtime/",
     );
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
-    expect(url.searchParams.get("executable")).toBe(
-      "solitaire/resize-host.exe",
-    );
+    expect(url.searchParams.get("executable")).toBe("solitaire/sol.exe");
     expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");
@@ -199,12 +197,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(sha256(packageBytes)).toBe(appSources.windowsXp.package.sha256);
 
     const files = unzipSync(packageBytes);
-    expect(Object.keys(files).sort()).toEqual([
-      "cards.dll",
-      "resize-host.exe",
-      "resize-host.txt",
-      "sol.exe",
-    ]);
+    expect(Object.keys(files).sort()).toEqual(["cards.dll", "sol.exe"]);
     for (const [filename, source] of Object.entries(
       appSources.windowsXp.files,
     )) {

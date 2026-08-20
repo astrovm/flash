@@ -26,7 +26,7 @@ const games = [
     title: "FreeCell",
     archive: "xp-freecell",
     executable: "freecell.exe",
-    files: ["cards.dll", "freecell.exe", "resize-host.exe", "resize-host.txt"],
+    files: ["cards.dll", "freecell.exe"],
   },
   {
     id: "spider-solitaire",
@@ -34,7 +34,7 @@ const games = [
     title: "Spider Solitaire",
     archive: "xp-spider-solitaire",
     executable: "spider.exe",
-    files: ["resize-host.exe", "resize-host.txt", "spider.exe"],
+    files: ["spider.exe"],
   },
 ];
 
@@ -69,7 +69,7 @@ describe("Windows XP card games through BoxedWine", () => {
       );
       expect(url.searchParams.get("archive")).toBe("xp-runtime");
       expect(url.searchParams.get("executable")).toBe(
-        `${game.id}/resize-host.exe`,
+        `${game.id}/${game.executable}`,
       );
       expect(url.searchParams.get("persistent")).toBe("true");
       expect(url.searchParams.get("sound")).toBe("true");

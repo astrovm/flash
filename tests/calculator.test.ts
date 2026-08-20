@@ -168,22 +168,20 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     ).not.toBeNull();
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
     expect(url.searchParams.get("root")).toBe("xp-accessories");
-    expect(url.searchParams.get("executable")).toBe(
-      "calculator/resize-host.exe",
-    );
+    expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
     expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("cache")).toBe("false");
     expect(url.searchParams.get("trace")).toBe("false");
   });
 
-  test("sizes the XP window from the client when native frame extents are missing", async () => {
+  test("does not invent native frame extents when metadata omits them", async () => {
     const { shell, calculator } = await launchCalculator();
     showNativeCalculator(shell, 41, undefined, { includeFrame: false });
     await flushShell();
 
     expect(calculator.style.width).toBe("260px");
-    expect(calculator.style.height).toBe("260px");
+    expect(calculator.style.height).toBe("288px");
   });
 
   test("reuses one persistent runtime for repeated Calculator launches", async () => {
@@ -445,12 +443,7 @@ describe("original Windows XP Calculator through BoxedWine", () => {
 
     expect(packageContent.byteLength).toBe(manifest.windowsXp.package.bytes);
     expect(sha256(packageContent)).toBe(manifest.windowsXp.package.sha256);
-    expect(Object.keys(files).sort()).toEqual([
-      "calc.chm",
-      "calc.exe",
-      "resize-host.exe",
-      "resize-host.txt",
-    ]);
+    expect(Object.keys(files).sort()).toEqual(["calc.chm", "calc.exe"]);
     for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
       expect(sha256(files[name])).toBe(source.sha256);
     }
