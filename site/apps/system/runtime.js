@@ -1278,7 +1278,7 @@ export const createSystemRuntime = (context) => {
                 </div>
                 <fieldset class="display-saver-group"><legend>Screen saver</legend>
                     <div class="display-saver-row">
-                        <select id="display-saver" aria-label="Screen saver"><option value="none">(None)</option><option value="flowerbox">3D FlowerBox</option><option value="flying-objects">3D Flying Objects</option><option value="pipes">3D Pipes</option><option value="text">3D Text</option><option value="beziers">Beziers</option><option value="blank">Blank</option><option value="marquee">Marquee</option><option value="pictures">My Pictures Slideshow</option><option value="mystify">Mystify</option><option value="stars">Starfield</option><option value="windows-xp">Windows XP</option></select>
+                        <select id="display-saver" aria-label="Screen saver"><option value="none">(None)</option><option value="pipes">3D Pipes</option><option value="blank">Blank</option><option value="marquee">Marquee</option><option value="stars">Starfield</option><option value="windows-xp">Windows XP</option></select>
                         <button type="button" class="xp-property-button display-saver-settings">Settings</button>
                         <button type="button" class="xp-property-button display-saver-preview-button">Preview</button>
                     </div>

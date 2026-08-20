@@ -99,7 +99,7 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   backgroundColor: "#3a6ea5",
   appearance: "blue",
   fontSize: "normal",
-  screenSaver: "windows-xp",
+  screenSaver: "pipes",
   screenSaverWait: 10,
   requireLoginOnResume: false,
   transitionEffect: "fade",
@@ -110,6 +110,14 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   hideKeyboardCues: true,
   resolution: "auto",
 });
+const SUPPORTED_SCREEN_SAVERS = Object.freeze([
+  "none",
+  "pipes",
+  "blank",
+  "marquee",
+  "stars",
+  "windows-xp",
+]);
 const SIMULATED_RESOLUTIONS = Object.freeze({
   "800x600": { width: 800, height: 600 },
   "1024x768": { width: 1024, height: 768 },
@@ -445,20 +453,7 @@ const isDisplaySettings = (value) =>
   ["blue", "olive", "silver", "classic"].includes(value.appearance) &&
   (value.fontSize === undefined ||
     ["normal", "large", "extra-large"].includes(value.fontSize)) &&
-  [
-    "none",
-    "flowerbox",
-    "flying-objects",
-    "pipes",
-    "text",
-    "beziers",
-    "blank",
-    "marquee",
-    "pictures",
-    "mystify",
-    "stars",
-    "windows-xp",
-  ].includes(value.screenSaver) &&
+  SUPPORTED_SCREEN_SAVERS.includes(value.screenSaver) &&
   Number.isInteger(value.screenSaverWait) &&
   value.screenSaverWait >= 1 &&
   value.screenSaverWait <= 60 &&
@@ -476,10 +471,23 @@ const isDisplaySettings = (value) =>
     typeof value.hideKeyboardCues === "boolean") &&
   ["auto", "800x600", "1024x768", "1440x900"].includes(value.resolution);
 
-const getDisplaySettings = () => ({
-  ...DEFAULT_DISPLAY_SETTINGS,
-  ...readJsonStorage(DISPLAY_SETTINGS_KEY, {}, isDisplaySettings),
-});
+const getDisplaySettings = () => {
+  const stored = readJsonStorage(
+    DISPLAY_SETTINGS_KEY,
+    {},
+    (value) => value && typeof value === "object" && !Array.isArray(value),
+  );
+  const settings = {
+    ...DEFAULT_DISPLAY_SETTINGS,
+    ...stored,
+    screenSaver: SUPPORTED_SCREEN_SAVERS.includes(stored.screenSaver)
+      ? stored.screenSaver
+      : DEFAULT_DISPLAY_SETTINGS.screenSaver,
+  };
+  return isDisplaySettings(settings)
+    ? settings
+    : { ...DEFAULT_DISPLAY_SETTINGS };
+};
 
 const DEFAULT_DESKTOP_SYSTEM_ICONS = Object.freeze({
   "__my-computer": true,

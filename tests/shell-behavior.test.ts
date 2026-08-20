@@ -405,8 +405,15 @@ test("3D Pipes renders in the monitor and full-screen previews and cleans up", a
   )!;
   display.querySelector<HTMLButtonElement>("#display-tab-saver")!.click();
   const select = display.querySelector<HTMLSelectElement>("#display-saver")!;
-  select.value = "pipes";
-  select.dispatchEvent(new shell.window.Event("change"));
+  expect(select.value).toBe("pipes");
+  expect([...select.options].map(({ value }) => value)).toEqual([
+    "none",
+    "pipes",
+    "blank",
+    "marquee",
+    "stars",
+    "windows-xp",
+  ]);
 
   const monitor = display.querySelector<HTMLElement>(".screen-saver-preview")!;
   const monitorFrame = monitor.querySelector<HTMLIFrameElement>(
@@ -439,6 +446,63 @@ test("3D Pipes renders in the monitor and full-screen previews and cleans up", a
   expect(monitor.querySelector(".pipes-screen-saver")).toBeNull();
   display.querySelector<HTMLButtonElement>(".close-btn")!.click();
   expect(shell.document.querySelector(".pipes-screen-saver")).toBeNull();
+});
+
+test("removed screen savers migrate to 3D Pipes without resetting display settings", async () => {
+  const shell = await login(
+    await loadShell({
+      initialStorage: {
+        displaySettings: JSON.stringify({
+          theme: "windows-xp",
+          wallpaper: "ascent",
+          customWallpaper: "",
+          position: "stretch",
+          backgroundColor: "#3a6ea5",
+          appearance: "blue",
+          fontSize: "normal",
+          screenSaver: "flowerbox",
+          screenSaverWait: 15,
+          requireLoginOnResume: false,
+          transitionEffect: "fade",
+          fontSmoothing: "standard",
+          largeIcons: false,
+          menuShadows: true,
+          showWindowContents: true,
+          hideKeyboardCues: true,
+          resolution: "auto",
+        }),
+      },
+    }),
+  );
+
+  clickStartAction(shell, "controlPanel");
+  const controlPanel = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__control-panel"]',
+  )!;
+  controlPanel
+    .querySelector<HTMLButtonElement>(
+      '[data-control-panel-category="appearance"]',
+    )!
+    .click();
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="display"]')!
+    .click();
+  const display = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="__display-properties"]',
+  )!;
+  display.querySelector<HTMLButtonElement>("#display-tab-saver")!.click();
+
+  expect(
+    display.querySelector<HTMLSelectElement>("#display-saver")!.value,
+  ).toBe("pipes");
+  expect(
+    display.querySelector<HTMLInputElement>("#display-saver-wait")!.value,
+  ).toBe("15");
+  expect(
+    shell.document
+      .getElementById("desktop")!
+      .style.getPropertyValue("--desktop-background"),
+  ).toContain("ascent.jpg");
 });
 
 test("Windows Classic applies the native Classic appearance and solid desktop", async () => {

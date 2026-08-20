@@ -36,6 +36,7 @@ export const flushShell = () =>
 
 export async function loadShell({
   gameLibraryManager,
+  initialStorage = {},
   offlineSettings = {},
 } = {}) {
   const window = new Window({
@@ -52,6 +53,9 @@ export async function loadShell({
   });
   const { document } = window;
   activeWindows.add(window);
+  for (const [key, value] of Object.entries(initialStorage)) {
+    window.localStorage.setItem(key, value);
+  }
   Object.assign(window, {
     Array,
     ArrayBuffer,
