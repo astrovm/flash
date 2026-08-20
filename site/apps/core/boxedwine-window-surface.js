@@ -103,6 +103,7 @@ export const createBoxedWineWindowSurface = ({
   };
   const isOwnedDialog = (entry) =>
     Boolean(
+      entry?.win32Metrics === true &&
       entry?.ownerId &&
       entry.dialog &&
       entry.mapped &&
@@ -287,7 +288,10 @@ export const createBoxedWineWindowSurface = ({
   const reportFirstFrame = (topId, canvas) => {
     if (!canvas || canvas.dataset.firstFrame) return;
     const top = windows.get(topId);
-    if (!top) return;
+    // The X11 framebuffer includes Wine's painted non-client area. Do not
+    // attach a top-level canvas to the shell until the shared Win32 controller
+    // has reported the exact client/frame split needed to crop that area.
+    if (!top || top.win32Metrics !== true) return;
     canvas.dataset.firstFrame = "true";
     onFirstFrame?.({
       id: topId,
@@ -593,6 +597,20 @@ export const createBoxedWineWindowSurface = ({
     if (detail.type === "frame") {
       // Frame events carry the framebuffer size, not the window geometry.
       entry.generation = detail.generation;
+    } else if (detail.type === "metadata" && detail.win32Metrics !== true) {
+      // X11 metadata supplies ownership while the controller starts, but its
+      // geometry describes Wine's host surface rather than the Win32 client.
+      // Never let it overwrite confirmed Win32 bounds or capabilities.
+      for (const property of [
+        "parentId",
+        "ownerId",
+        "processId",
+        "parentProcessId",
+        "launchToken",
+        "dialog",
+      ]) {
+        if (detail[property] != null) entry[property] = detail[property];
+      }
     } else {
       Object.assign(entry, detail);
     }
@@ -627,7 +645,13 @@ export const createBoxedWineWindowSurface = ({
     const topId = topLevelId(detail.id);
     if (detail.type === "frame" && topId)
       reportFirstFrame(topId, canvases.get(topId));
-    onLifecycle?.({ ...detail, ...entry, topId });
+    onLifecycle?.({
+      ...detail,
+      ...entry,
+      type: detail.type,
+      win32Metrics: detail.win32Metrics === true,
+      topId,
+    });
     if (topId) {
       if (detail.type === "mapped" && !canvases.has(topId)) render(topId);
       const canvas = canvases.get(topId);

@@ -110,21 +110,6 @@ static void notify_size(HWND window, WPARAM type) {
                RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
 }
 
-static BOOL set_client_bounds(HWND window, HWND insert_after, LONG x, LONG y,
-                              DWORD width, DWORD height, UINT flags) {
-  RECT outer;
-  RECT client;
-  LONG frame_width;
-  LONG frame_height;
-  if (!width || !height || !GetWindowRect(window, &outer) ||
-      !GetClientRect(window, &client))
-    return FALSE;
-  frame_width = (outer.right - outer.left) - (client.right - client.left);
-  frame_height = (outer.bottom - outer.top) - (client.bottom - client.top);
-  return SetWindowPos(window, insert_after, x, y, width + frame_width,
-                      height + frame_height, flags);
-}
-
 static void apply_command(const CommandRecord *command) {
   HWND window = window_from_x_id(command->window_id);
   RestoreRecord *restore;
@@ -137,8 +122,9 @@ static void apply_command(const CommandRecord *command) {
     restore = restore_for(command->window_id, TRUE);
     if (restore) GetWindowRect(window, &restore->bounds);
     ShowWindow(window, SW_RESTORE);
-    set_client_bounds(window, HWND_TOP, command->x, command->y, command->width,
-                      command->height, SWP_NOACTIVATE);
+    if (command->width && command->height)
+      SetWindowPos(window, HWND_TOP, command->x, command->y, command->width,
+                   command->height, SWP_NOACTIVATE);
     notify_size(window, SIZE_MAXIMIZED);
   } else if (command->command == COMMAND_RESTORE) {
     ShowWindow(window, SW_RESTORE);
@@ -153,8 +139,8 @@ static void apply_command(const CommandRecord *command) {
     notify_size(window, SIZE_RESTORED);
   } else if (command->command == COMMAND_BOUNDS && command->width &&
              command->height) {
-    set_client_bounds(window, NULL, command->x, command->y, command->width,
-                      command->height, SWP_NOZORDER | SWP_NOACTIVATE);
+    SetWindowPos(window, NULL, command->x, command->y, command->width,
+                 command->height, SWP_NOZORDER | SWP_NOACTIVATE);
     notify_size(window, SIZE_RESTORED);
   } else if (command->command == COMMAND_ACTIVATE) {
     if (IsIconic(window)) ShowWindow(window, SW_RESTORE);

@@ -109,16 +109,6 @@ const showNativeCalculator = (
       y: 0,
       width: 260,
       height: 260,
-      ...(includeFrame
-        ? {
-            frameTop: 28,
-            clientWidth: 260,
-            clientHeight: 232,
-          }
-        : {
-            clientWidth: 260,
-            clientHeight: 260,
-          }),
       canResize: false,
       canMaximize: false,
       canMinimize: true,
@@ -131,6 +121,33 @@ const showNativeCalculator = (
     runtimeWindow,
   );
   sendNativeWindow(shell, { type: "mapped", id }, runtimeWindow);
+  if (includeFrame)
+    sendNativeWindow(
+      shell,
+      {
+        type: "metadata",
+        lifecycleType: "bounds",
+        id,
+        parentId: 1,
+        processId: 10,
+        launchToken,
+        outerX: 0,
+        outerY: 0,
+        outerWidth: 260,
+        outerHeight: 260,
+        clientWidth: 260,
+        clientHeight: 232,
+        frameLeft: 0,
+        frameTop: 28,
+        frameRight: 0,
+        frameBottom: 0,
+        canResize: false,
+        canMaximize: false,
+        canMinimize: true,
+        win32Metrics: true,
+      },
+      runtimeWindow,
+    );
   const generation =
     (runtimeWindow.__boxedwineTestFrames.get(id)?.generation || 0) + 1;
   runtimeWindow.__boxedwineTestFrames.set(id, {
@@ -175,13 +192,15 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(url.searchParams.get("trace")).toBe("false");
   });
 
-  test("does not invent native frame extents when metadata omits them", async () => {
+  test("waits for native frame metrics instead of exposing Wine chrome", async () => {
     const { shell, calculator } = await launchCalculator();
     showNativeCalculator(shell, 41, undefined, { includeFrame: false });
     await flushShell();
 
-    expect(calculator.style.width).toBe("260px");
-    expect(calculator.style.height).toBe("288px");
+    expect(
+      calculator.querySelector(".boxedwine-shared-loading"),
+    ).not.toBeNull();
+    expect(calculator.querySelector(".boxedwine-native-window")).toBeNull();
   });
 
   test("reuses one persistent runtime for repeated Calculator launches", async () => {
@@ -244,6 +263,25 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       clientWidth: 544,
       clientHeight: 320,
       frameTop: 28,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("544px");
+    expect(calculator.style.height).toBe("348px");
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken: nativeLaunchToken(shell),
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 1,
+      outerHeight: 1,
+      clientWidth: 1,
+      clientHeight: 1,
     });
     await flushShell();
 
@@ -277,6 +315,7 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       clientWidth: 544,
       clientHeight: 320,
       frameTop: 28,
+      win32Metrics: true,
     });
     await flushShell();
 

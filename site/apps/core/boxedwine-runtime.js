@@ -291,7 +291,8 @@ const createRuntime = (initialApplicationId) => {
         mounted?.context.setTitle(detail.title);
       }
       if (
-        ["mapped", "bounds", "metadata"].includes(detail.type) &&
+        detail.type === "metadata" &&
+        detail.win32Metrics === true &&
         drivesShell
       ) {
         mounted?.context.applyNativeWindowMetadata(detail);

@@ -31,6 +31,10 @@ export const installBoxedWineWindowControlBridge = (hostWindow, module) => {
     const detail = event.detail;
     if (!Number.isInteger(detail?.id)) return;
     if (detail.type === "frame") return;
+    // Ignore the metadata event dispatched by this bridge. Feeding it back
+    // into the raw X11 metadata cache lets later X11 bounds inherit the
+    // win32Metrics marker and overwrite trusted client/frame geometry.
+    if (detail.win32Metrics === true) return;
     if (detail.type === "destroyed") {
       metadata.delete(detail.id);
       reported.delete(detail.id);

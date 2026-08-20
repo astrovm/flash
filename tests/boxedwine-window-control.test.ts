@@ -226,6 +226,50 @@ describe("generic BoxedWine Win32 window control", () => {
       canMinimize: false,
     });
 
+    harness.emit("boxedwine-native-window", {
+      type: "metadata",
+      id: 71,
+      outerWidth: 1,
+      outerHeight: 1,
+      win32Metrics: true,
+    });
+    harness.emit("boxedwine-native-window", {
+      type: "bounds",
+      id: 71,
+      width: 1,
+      height: 1,
+    });
+    harness.files.set(
+      "/d_drive/boxedwine-window-control.out",
+      stateBytes(2, [
+        {
+          id: 71,
+          outerX: 12,
+          outerY: 34,
+          outerWidth: 800,
+          outerHeight: 600,
+          clientX: 16,
+          clientY: 62,
+          clientWidth: 792,
+          clientHeight: 568,
+          frameLeft: 4,
+          frameTop: 28,
+          frameRight: 4,
+          frameBottom: 4,
+          capabilities: 7,
+        },
+      ]),
+    );
+    harness.tick();
+    expect(received.at(-1)).toMatchObject({
+      id: 71,
+      outerWidth: 800,
+      outerHeight: 600,
+      clientWidth: 792,
+      clientHeight: 568,
+      win32Metrics: true,
+    });
+
     dispose();
     const before = received.length;
     harness.tick();

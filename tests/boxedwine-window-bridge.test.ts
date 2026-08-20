@@ -440,6 +440,7 @@ describe("BoxedWine window bridge", () => {
         frameTop: 28,
         clientWidth: 260,
         clientHeight: 232,
+        win32Metrics: true,
         canResize: false,
         canMaximize: false,
         canMinimize: true,
@@ -496,10 +497,26 @@ describe("BoxedWine window bridge", () => {
         rgba: new Uint8ClampedArray(260 * 260 * 4),
       });
       flushRenders();
+      expect(firstFrames).toHaveLength(1);
+      send({
+        type: "metadata",
+        lifecycleType: "bounds",
+        id: 51,
+        outerX: 0,
+        outerY: 0,
+        outerWidth: 260,
+        outerHeight: 260,
+        clientWidth: 260,
+        clientHeight: 232,
+        frameTop: 28,
+        win32Metrics: true,
+      });
+      flushRenders();
+      expect(firstFrames).toHaveLength(2);
       expect(surface.attach(51, target)).toBeTrue();
       const cropped = surface.getCanvas(51);
       expect(cropped.width).toBe(260);
-      expect(cropped.height).toBe(260);
+      expect(cropped.height).toBe(232);
       expect(cropped.dataset.boxedwineLaunchToken).toBe("99");
 
       send({
@@ -653,6 +670,7 @@ describe("BoxedWine window bridge", () => {
         frameTop: 28,
         clientWidth: 400,
         clientHeight: 308,
+        win32Metrics: true,
       });
       send({ type: "owner", id: 44, parentId: 41 });
       send({ type: "title", id: 44, title: "About Calculator" });
