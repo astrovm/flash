@@ -652,6 +652,19 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   expect(intermediateCells).toHaveLength(256);
   intermediateCells[128]!.click();
   expect(intermediateCells[128]!.dataset.open).toBe("true");
+  minesweeperWindow
+    .querySelector<HTMLButtonElement>(".minesweeper-menu-trigger")!
+    .click();
+  minesweeperWindow
+    .querySelector<HTMLButtonElement>('[data-command="expert"]')!
+    .click();
+  expect(
+    minesweeperWindow.querySelectorAll<HTMLButtonElement>(
+      ".xp-minesweeper-board [role='gridcell']",
+    ),
+  ).toHaveLength(480);
+  expect((minesweeperWindow as HTMLElement).style.width).toBe("506px");
+  expect((minesweeperWindow as HTMLElement).style.height).toBe("377px");
 
   shell.document.getElementById("start-button")!.click();
   shell.document.getElementById("all-programs-button")!.click();
