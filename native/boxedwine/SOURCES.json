@@ -4,6 +4,6 @@
     "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -fno-builtin -mwindows -Wl,--no-insert-timestamp native/boxedwine/window-control.c -lkernel32 -luser32 -o window-control.exe",
     "compiler": "i686-w64-mingw32-gcc (GCC) 12-win32",
     "container": "docker.io/library/debian:bookworm-slim@sha256:362e64223cc0da95422b3b13c045186fc0a81250e765d31c025fbddf257f6143",
-    "sha256": "9e3a04a3897343becf662937342201ae82597fe616ecea96aa94bdeebab6b75a"
+    "sha256": "4e89f12e266492dc4f325ac550a0f10c850b4c6c6669fa1fc4f84daf00edaeaa"
   }
 }

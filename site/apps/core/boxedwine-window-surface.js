@@ -1,7 +1,11 @@
 const MESSAGE_TYPE = "boxedwine-native-window";
 const frameMetrics = (entry) => {
   const left = Math.max(0, entry.frameLeft || 0);
-  const top = Math.max(0, entry.frameTop || 0);
+  const menu = Math.min(
+    Math.max(0, entry.menuHeight || 0),
+    Math.max(0, entry.frameTop || 0),
+  );
+  const top = Math.max(0, (entry.frameTop || 0) - menu);
   const right = Math.max(0, entry.frameRight || 0);
   const bottom = Math.max(0, entry.frameBottom || 0);
   return {
@@ -10,7 +14,12 @@ const frameMetrics = (entry) => {
     right,
     bottom,
     width: Math.max(1, entry.clientWidth || entry.width - left - right),
-    height: Math.max(1, entry.clientHeight || entry.height - top - bottom),
+    height: Math.max(
+      1,
+      entry.clientHeight
+        ? entry.clientHeight + menu
+        : entry.height - top - bottom,
+    ),
   };
 };
 
@@ -275,8 +284,8 @@ export const createBoxedWineWindowSurface = ({
       ownerId: entry.ownerId,
       topId: top.id,
       title: entry.title,
-      x: entry.x - (anchoredWindows.has(top.id) ? 0 : top.x),
-      y: entry.y - (anchoredWindows.has(top.id) ? 0 : top.y),
+      x: entry.x - top.x,
+      y: entry.y - top.y,
       width: entry.width,
       height: entry.height,
       clientWidth: frame.width,
@@ -412,9 +421,10 @@ export const createBoxedWineWindowSurface = ({
     if (canvas.height !== canvasHeight) canvas.height = canvasHeight;
     canvas.style.left = anchoredWindows.has(topId) ? "0px" : `${top.x}px`;
     canvas.style.top = anchoredWindows.has(topId) ? "0px" : `${top.y}px`;
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
-    canvas.style.objectFit = "none";
+    const anchored = anchoredWindows.has(topId);
+    canvas.style.width = anchored ? "100%" : `${canvasWidth}px`;
+    canvas.style.height = anchored ? "100%" : `${canvasHeight}px`;
+    canvas.style.objectFit = anchored ? "contain" : "none";
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -442,12 +452,11 @@ export const createBoxedWineWindowSurface = ({
       for (const child of children) {
         if (anchoredWindows.has(topId) && ownedDialogAncestor(child.id, topId))
           continue;
-        const anchoredOwner = child.ownerId && anchoredWindows.has(topId);
         const childX = child.ownerId
-          ? child.x - (anchoredOwner ? 0 : top.x)
+          ? child.x - top.x - frameLeft
           : offsetX + child.x;
         const childY = child.ownerId
-          ? child.y - (anchoredOwner ? frameTop : top.y)
+          ? child.y - top.y - frameTop
           : offsetY + child.y;
         drawTree(child.id, childX, childY);
       }

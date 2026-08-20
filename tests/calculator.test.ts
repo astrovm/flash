@@ -84,7 +84,7 @@ const showNativeCalculator = (
   runtimeWindow = shell.document.querySelector(
     ".boxedwine-shared-runtime-frame",
   ).contentWindow,
-  { includeFrame = true } = {},
+  { includeFrame = true, capabilities = {} } = {},
 ) => {
   runtimeWindow.__boxedwineTestFrames ||= new Map();
   runtimeWindow.BoxedWineFrames ||= {
@@ -112,6 +112,7 @@ const showNativeCalculator = (
       canResize: false,
       canMaximize: false,
       canMinimize: true,
+      ...capabilities,
     },
     runtimeWindow,
   );
@@ -136,14 +137,16 @@ const showNativeCalculator = (
         outerWidth: 260,
         outerHeight: 260,
         clientWidth: 260,
-        clientHeight: 232,
+        clientHeight: 209,
         frameLeft: 0,
-        frameTop: 28,
+        frameTop: 51,
+        menuHeight: 23,
         frameRight: 0,
         frameBottom: 0,
         canResize: false,
         canMaximize: false,
         canMinimize: true,
+        ...capabilities,
         win32Metrics: true,
       },
       runtimeWindow,
@@ -201,6 +204,19 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       calculator.querySelector(".boxedwine-shared-loading"),
     ).not.toBeNull();
     expect(calculator.querySelector(".boxedwine-native-window")).toBeNull();
+  });
+
+  test("gives resizable native windows a generic content-safe launch area", async () => {
+    const { shell, calculator } = await launchCalculator();
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: { canResize: true, canMaximize: true },
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("768px");
+    expect(calculator.style.height).toBe("560px");
+    expect(calculator.querySelector(".resize-handle").hidden).toBeFalse();
+    expect(calculator.querySelector(".maximize-btn").disabled).toBeFalse();
   });
 
   test("reuses one persistent runtime for repeated Calculator launches", async () => {
@@ -261,8 +277,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       outerWidth: 544,
       outerHeight: 348,
       clientWidth: 544,
-      clientHeight: 320,
-      frameTop: 28,
+      clientHeight: 297,
+      frameTop: 51,
+      menuHeight: 23,
       win32Metrics: true,
     });
     await flushShell();
@@ -313,8 +330,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       outerWidth: 544,
       outerHeight: 348,
       clientWidth: 544,
-      clientHeight: 320,
-      frameTop: 28,
+      clientHeight: 297,
+      frameTop: 51,
+      menuHeight: 23,
       win32Metrics: true,
     });
     await flushShell();

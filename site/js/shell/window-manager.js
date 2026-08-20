@@ -193,8 +193,8 @@ const fitNativeProgramToWorkArea = (win) => {
   win.workAreaFitRect ||= {
     left: win.el.style.left,
     top: win.el.style.top,
-    width: `${preferred.width || actualWidth}px`,
-    height: `${preferred.height || actualHeight}px`,
+    width: `${win.nativePreferredShellSize?.width || preferred.width || actualWidth}px`,
+    height: `${win.nativePreferredShellSize?.height || preferred.height || actualHeight}px`,
     minWidth: win.el.style.minWidth,
     minHeight: win.el.style.minHeight,
   };

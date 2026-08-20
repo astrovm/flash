@@ -44,6 +44,7 @@ typedef struct {
   DWORD frame_bottom;
   DWORD owner_id;
   DWORD capabilities;
+  DWORD menu_height;
 } StateRecord;
 
 typedef struct {
@@ -154,6 +155,7 @@ static BOOL CALLBACK collect_window(HWND window, LPARAM parameter) {
   RECT outer;
   RECT client;
   POINT origin = {0, 0};
+  MENUBARINFO menu = {0};
   DWORD window_id = x_window_id(window);
   LONG style;
   HWND owner;
@@ -186,6 +188,15 @@ static BOOL CALLBACK collect_window(HWND window, LPARAM parameter) {
       ((style & WS_THICKFRAME) ? 1u : 0u) |
       ((style & WS_MAXIMIZEBOX) && (style & WS_THICKFRAME) ? 2u : 0u) |
       ((style & WS_MINIMIZEBOX) ? 4u : 0u);
+  menu.cbSize = sizeof(menu);
+  record->menu_height = 0;
+  if (GetMenu(window)) {
+    record->menu_height =
+        GetMenuBarInfo(window, OBJID_MENU, 0, &menu) &&
+                menu.rcBar.bottom > menu.rcBar.top
+            ? menu.rcBar.bottom - menu.rcBar.top
+            : GetSystemMetrics(SM_CYMENU);
+  }
   return TRUE;
 }
 

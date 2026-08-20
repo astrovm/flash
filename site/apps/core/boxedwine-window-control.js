@@ -2,7 +2,7 @@ const COMMAND_PATH = "/d_drive/boxedwine-window-control.in";
 const STATE_PATH = "/d_drive/boxedwine-window-control.out";
 const COMMAND_MAGIC = 0x42574331;
 const STATE_MAGIC = 0x42575331;
-const STATE_RECORD_BYTES = 60;
+const STATE_RECORD_BYTES = 64;
 
 const commandCodes = Object.freeze({
   close: 1,
@@ -126,6 +126,7 @@ export const installBoxedWineWindowControlBridge = (hostWindow, module) => {
         canResize: Boolean(capabilities & 1),
         canMaximize: Boolean(capabilities & 2),
         canMinimize: Boolean(capabilities & 4),
+        menuHeight: view.getUint32(offset + 60, true),
         win32Metrics: true,
       };
       const signature = JSON.stringify(detail);

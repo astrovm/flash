@@ -437,9 +437,10 @@ describe("BoxedWine window bridge", () => {
         y: 50,
         width: 260,
         height: 260,
-        frameTop: 28,
+        frameTop: 51,
+        menuHeight: 23,
         clientWidth: 260,
-        clientHeight: 232,
+        clientHeight: 209,
         win32Metrics: true,
         canResize: false,
         canMaximize: false,
@@ -468,10 +469,14 @@ describe("BoxedWine window bridge", () => {
       expect(canvas.hidden).toBeTrue();
       expect(surface.attach(41, target)).toBeTrue();
       expect(surface.show(41)).toBeTrue();
+      flushRenders();
       expect(canvas.style.left).toBe("0px");
-      expect(canvas.style.width).toBe("260px");
-      expect(canvas.style.height).toBe("232px");
-      expect(canvas.style.objectFit).toBe("none");
+      expect(canvas.width).toBe(260);
+      expect(canvas.height).toBe(232);
+      expect(canvas.style.width).toBe("100%");
+      expect(canvas.style.height).toBe("100%");
+      expect(canvas.style.objectFit).toBe("contain");
+      expect(canvas.draws.some(([, x, y]) => x === 0 && y === -28)).toBeTrue();
 
       send({
         type: "created",
@@ -634,8 +639,8 @@ describe("BoxedWine window bridge", () => {
         id: 43,
         parentId: 1,
         processId: 9,
-        x: 4,
-        y: 49,
+        x: 104,
+        y: 99,
         width: 100,
         height: 60,
       });
@@ -663,8 +668,8 @@ describe("BoxedWine window bridge", () => {
         id: 44,
         parentId: 1,
         processId: 9,
-        x: 27,
-        y: 101,
+        x: 127,
+        y: 151,
         width: 400,
         height: 336,
         frameTop: 28,

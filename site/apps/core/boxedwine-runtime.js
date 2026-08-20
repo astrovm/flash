@@ -540,12 +540,16 @@ const createRuntime = (initialApplicationId) => {
         }
         const action = pendingWindowAction;
         pendingWindowAction = "bounds";
+        const nativeSize = context.nativeCommandSize?.(width, height) || {
+          width,
+          height,
+        };
         return surfaces.command(windowId, action, {
           x: context.windowElement.offsetLeft,
           y: context.windowElement.offsetTop,
           appId,
-          width,
-          height,
+          width: nativeSize.width,
+          height: nativeSize.height,
         });
       };
       const scheduleNativeWindow = (action = "bounds") => {

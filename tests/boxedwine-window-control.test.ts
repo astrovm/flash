@@ -4,13 +4,13 @@ import { describe, expect, test } from "bun:test";
 import { installBoxedWineWindowControlBridge } from "../site/apps/core/boxedwine-window-control.js";
 
 const stateBytes = (generation, records) => {
-  const bytes = new Uint8Array(12 + records.length * 60);
+  const bytes = new Uint8Array(12 + records.length * 64);
   const view = new DataView(bytes.buffer);
   view.setUint32(0, 0x42575331, true);
   view.setUint32(4, generation, true);
   view.setUint32(8, records.length, true);
   records.forEach((record, index) => {
-    const offset = 12 + index * 60;
+    const offset = 12 + index * 64;
     const values = [
       record.id,
       record.outerX,
@@ -27,6 +27,7 @@ const stateBytes = (generation, records) => {
       record.frameBottom,
       record.ownerId || 0,
       record.capabilities,
+      record.menuHeight || 0,
     ];
     values.forEach((value, field) =>
       [1, 2, 5, 6].includes(field)
@@ -176,6 +177,7 @@ describe("generic BoxedWine Win32 window control", () => {
           frameRight: 4,
           frameBottom: 4,
           capabilities: 7,
+          menuHeight: 20,
         },
         {
           id: 72,
@@ -212,6 +214,7 @@ describe("generic BoxedWine Win32 window control", () => {
       clientWidth: 792,
       clientHeight: 568,
       frameTop: 28,
+      menuHeight: 20,
       canResize: true,
       canMaximize: true,
       canMinimize: true,

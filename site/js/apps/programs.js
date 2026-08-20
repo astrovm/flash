@@ -258,19 +258,56 @@ const applicationContext = (win) => ({
     }
 
     const frameLeft = Math.max(0, Number(metadata.frameLeft) || 0);
-    const frameTop = Math.max(0, Number(metadata.frameTop) || 0);
+    const totalFrameTop = Math.max(0, Number(metadata.frameTop) || 0);
+    const menuHeight = Math.min(
+      Math.max(0, Number(metadata.menuHeight) || 0),
+      totalFrameTop,
+    );
+    const frameTop = totalFrameTop - menuHeight;
     const frameRight = Math.max(0, Number(metadata.frameRight) || 0);
     const frameBottom = Math.max(0, Number(metadata.frameBottom) || 0);
     const outerWidth = Number(metadata.outerWidth) || Number(metadata.width);
     const outerHeight = Number(metadata.outerHeight) || Number(metadata.height);
-    const width =
+    let width =
       Number(metadata.clientWidth) ||
       (outerWidth > 0 ? outerWidth - frameLeft - frameRight : 0);
-    const height =
-      Number(metadata.clientHeight) ||
-      (outerHeight > 0 ? outerHeight - frameTop - frameBottom : 0);
+    let height =
+      (Number(metadata.clientHeight)
+        ? Number(metadata.clientHeight) + menuHeight
+        : 0) || (outerHeight > 0 ? outerHeight - frameTop - frameBottom : 0);
     if (width <= 0 || height <= 0) return;
     const first = !win.nativeMetadataApplied;
+    if (first && canResize && !getWindowPlacements()[win.gameId]) {
+      const workArea = getVisibleWorkArea();
+      const caption = parseWindowLength(
+        win.el.ownerDocument.defaultView
+          ?.getComputedStyle?.(win.el)
+          ?.getPropertyValue("--boxedwine-shell-caption-height"),
+        28,
+      );
+      // Small resizable Win32 defaults can expose only part of an application's
+      // layout. Give every resizable application the same useful launch area;
+      // fixed windows continue to use their exact native dimensions.
+      width = Math.max(width, Math.floor(workArea.width * 0.75));
+      height = Math.max(
+        height,
+        Math.floor(Math.max(1, workArea.height - caption) * 0.75),
+      );
+    }
+    if (first) {
+      const caption = parseWindowLength(
+        win.el.ownerDocument.defaultView
+          ?.getComputedStyle?.(win.el)
+          ?.getPropertyValue("--boxedwine-shell-caption-height"),
+        28,
+      );
+      win.nativePreferredClientSize = { width, height };
+      win.nativePreferredShellSize = { width, height: height + caption };
+      if (win.workAreaFitRect) {
+        win.workAreaFitRect.width = `${width}px`;
+        win.workAreaFitRect.height = `${height + caption}px`;
+      }
+    }
     // A stored placement only decides where the window opens. Later metadata
     // reports the size the application chose for itself (Calculator switching
     // to scientific mode, for example), so the frame has to keep following it.
@@ -295,6 +332,11 @@ const applicationContext = (win) => ({
     }
     win.nativeMetadataApplied = true;
     this.nativeWindowReady = true;
+  },
+  nativeCommandSize(width, height) {
+    return win.workAreaFitRect && win.nativePreferredClientSize
+      ? win.nativePreferredClientSize
+      : { width, height };
   },
   applyNativeClose: () => {
     clearNativeOwnedWindows(win);
