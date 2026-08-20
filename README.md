@@ -1,8 +1,7 @@
 # Astro Flash Collection
 
-Use a Windows XP-style desktop in your browser, play classic games with Ruffle,
-js-dos, ScummVM, and embedded web runtimes, and run selected original Windows
-XP applications through BoxedWine.
+Use a Windows XP-style desktop in your browser to play classic games and run
+selected original Windows XP applications.
 
 [Open Astro Flash Collection](https://flash.4st.li/)
 
@@ -109,9 +108,6 @@ Deploy the Worker manually with:
 ```bash
 bun run deploy:worker
 ```
-
-Ruffle, js-dos, and WebTorrent are declared in `package.json`, locked to exact
-versions by `bun.lock`, and copied into the build output from `node_modules`.
 
 ## Contributing
 
