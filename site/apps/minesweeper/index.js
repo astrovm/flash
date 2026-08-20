@@ -157,7 +157,10 @@ const mountMinesweeper = (context, instance) => {
   const resizeWindow = () => {
     const owner = instance.window.el;
     const width = level.columns * 16 + 26;
-    const height = level.rows * 16 + 115;
+    // Board rows plus the menu, score panel, frame, content padding, title bar,
+    // and the shell's bottom frame. The old calculation counted only one side
+    // of the content padding, so the board extended six pixels below the shell.
+    const height = level.rows * 16 + 121;
     owner.style.width = `${width}px`;
     owner.style.height = `${height}px`;
     owner.style.minWidth = `${width}px`;
