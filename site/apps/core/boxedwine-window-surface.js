@@ -1,6 +1,4 @@
 const MESSAGE_TYPE = "boxedwine-native-window";
-const WINE_LUNA_CAPTION_HEIGHT = 28;
-
 const frameMetrics = (entry) => {
   const left = Math.max(0, entry.frameLeft || 0);
   const top = Math.max(0, entry.frameTop || 0);
@@ -14,29 +12,6 @@ const frameMetrics = (entry) => {
     width: Math.max(1, entry.clientWidth || entry.width - left - right),
     height: Math.max(1, entry.clientHeight || entry.height - top - bottom),
   };
-};
-
-const hasReportedFrame = (entry) =>
-  entry.frameLeft > 0 ||
-  entry.frameTop > 0 ||
-  entry.frameRight > 0 ||
-  entry.frameBottom > 0;
-
-const looksDecorated = (entry) =>
-  Boolean(entry.title?.trim()) ||
-  entry.canMinimize === true ||
-  entry.canMaximize === true ||
-  entry.dialog === true;
-
-const applyDecoratedFrameFallback = (entry) => {
-  if (hasReportedFrame(entry) || !looksDecorated(entry)) return;
-  entry.frameTop = WINE_LUNA_CAPTION_HEIGHT;
-  const fullHeight = Number(entry.outerHeight) || Number(entry.height) || 0;
-  const clientHeight = Number(entry.clientHeight);
-  if (clientHeight > WINE_LUNA_CAPTION_HEIGHT && clientHeight >= fullHeight)
-    entry.clientHeight = clientHeight - WINE_LUNA_CAPTION_HEIGHT;
-  else if (!clientHeight && fullHeight > WINE_LUNA_CAPTION_HEIGHT)
-    entry.clientHeight = fullHeight - WINE_LUNA_CAPTION_HEIGHT;
 };
 
 export const createBoxedWineWindowSurface = ({
@@ -591,7 +566,6 @@ export const createBoxedWineWindowSurface = ({
         launchToken: Number(detail.launchToken) >>> 0,
         stack: nativeStack++,
       };
-      applyDecoratedFrameFallback(created);
       windows.set(detail.id, created);
       onLifecycle?.({ ...created, topId: topLevelId(detail.id) });
       return;
@@ -638,7 +612,6 @@ export const createBoxedWineWindowSurface = ({
       entry.clientHeight = detail.height;
     }
     if (detail.type === "title") entry.title = detail.title;
-    applyDecoratedFrameFallback(entry);
     if (detail.type === "owner") entry.ownerId = detail.parentId;
     if (typeof detail.dialog === "boolean") entry.dialog = detail.dialog;
     if (detail.type === "raised") entry.stack = nativeStack++;
@@ -775,9 +748,6 @@ export const createBoxedWineWindowSurface = ({
     },
     getCanvas(id) {
       return canvases.get(id) || ownedCanvases.get(id) || null;
-    },
-    canResize(id) {
-      return windows.get(id)?.canResize !== false;
     },
     reset() {
       for (const canvas of canvases.values()) canvas.remove();

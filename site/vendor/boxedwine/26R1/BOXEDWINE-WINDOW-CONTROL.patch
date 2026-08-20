@@ -1,0 +1,73 @@
+diff --git a/source/sdl/emscripten/mainloop.cpp b/source/sdl/emscripten/mainloop.cpp
+index cdef408..9b5d403 100644
+--- a/source/sdl/emscripten/mainloop.cpp
++++ b/source/sdl/emscripten/mainloop.cpp
+@@ -29,6 +29,9 @@ static BString pendingApplication;
+ static U32 pendingTermination;
+ static U32 launchResult;
+ static U32 pendingLaunchToken;
++static bool windowControllerRequested;
++static bool windowControllerStarted;
++static U32 windowControllerRequestedAt;
+ 
+ static bool isValidApplicationPath(const char* path, U32 length) {
+     if (!path || !length || length > 240) return false;
+@@ -110,6 +113,29 @@ static void applyPendingProcessChanges() {
+             launchToken, executable.c_str());
+     }
+ }
++
++void boxedwineNativeStartWindowController() {
++    if (!windowControllerRequested)
++        windowControllerRequestedAt = KSystem::getMilliesSinceStart();
++    windowControllerRequested = true;
++}
++
++static void applyPendingWindowController() {
++    if (!windowControllerRequested || windowControllerStarted ||
++        KSystem::getMilliesSinceStart() - windowControllerRequestedAt < 8000)
++        return;
++    windowControllerStarted = true;
++    BString executable = B("C:\\files\\boxedwine-window-control.exe");
++    std::vector<BString> args = {B("/bin/wine"), executable};
++    std::vector<BString> environment = {
++        B("HOME=/home/username"), B("LOGNAME=username"), B("USERNAME=username"),
++        B("USER=username"), B("PWD=/home/username/.wine/dosdevices/c:/files"),
++        B("DISPLAY=:0"), B("WINE_FAKE_WAIT_VBLANK=60"),
++        B("PATH=/bin:/usr/bin:/usr/local/bin")};
++    KProcessPtr process = KProcess::create();
++    process->startProcess(B("/home/username/.wine/dosdevices/c:/files"),
++        args, environment, UID, GID, UID, GID);
++}
+ extern "C" EMSCRIPTEN_KEEPALIVE void boxedwine_resize_screen(U32 width, U32 height) {
+     pendingScreenWidth = width;
+     pendingScreenHeight = height;
+@@ -283,6 +309,7 @@ static BString getSize(int pages)
+ extern int allocatedRamPages;
+ void mainloop() {
+     isMainThread = true;
++        applyPendingWindowController();
+         applyPendingScreenResize();
+         applyPendingProcessChanges();
+         U32 t = KSystem::getMilliesSinceStart();
+@@ -326,6 +353,7 @@ bool isMainthread() {
+ 
+ void mainloop() {
+     U64 startTime = KSystem::getMicroCounter();
++    applyPendingWindowController();
+     applyPendingScreenResize();
+     applyPendingProcessChanges();
+     U32 t;
+diff --git a/platform/sdl/knativewindowbridge.cpp b/platform/sdl/knativewindowbridge.cpp
+index 3f1f0ea..c767e54 100644
+--- a/platform/sdl/knativewindowbridge.cpp
++++ b/platform/sdl/knativewindowbridge.cpp
+@@ -328,6 +328,8 @@ void boxedwineNativeWindowDestroyed(U32 id) {
+ 
+ void boxedwineNativeWindowMapped(const std::shared_ptr<XWindow>& wnd, bool mapped) {
+     if (mapped) {
++        extern void boxedwineNativeStartWindowController();
++        if (metadata(wnd).processId) boxedwineNativeStartWindowController();
+         XPropertyPtr name = wnd->getProperty(_NET_WM_NAME);
+         if (!name || !name->length) {
+             name = wnd->getProperty(XA_WM_NAME);

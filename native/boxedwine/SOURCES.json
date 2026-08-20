@@ -1,8 +1,9 @@
 {
-  "resize-host.exe": {
-    "source": "native/boxedwine/resize-host.c",
-    "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -fno-builtin -mwindows -Wl,--no-insert-timestamp native/boxedwine/resize-host.c -lkernel32 -luser32 -o resize-host.exe",
-    "compiler": "i686-w64-mingw32-gcc (GCC) 12-win32 (debian:bookworm-slim)",
-    "sha256": "8961157158c592da9c0a6c3294a9c4d9937f25c2cd02f2907a6be992f114534d"
+  "window-control.exe": {
+    "source": "native/boxedwine/window-control.c",
+    "build": "SOURCE_DATE_EPOCH=0 i686-w64-mingw32-gcc -Os -s -nostdlib -fno-builtin -mwindows -Wl,--no-insert-timestamp native/boxedwine/window-control.c -lkernel32 -luser32 -o window-control.exe",
+    "compiler": "i686-w64-mingw32-gcc (GCC) 12-win32",
+    "container": "docker.io/library/debian:bookworm-slim@sha256:362e64223cc0da95422b3b13c045186fc0a81250e765d31c025fbddf257f6143",
+    "sha256": "60bd34401a512dbcbeaf772e913fb1b51000aa682694f7154b854f3a613c8a89"
   }
 }
