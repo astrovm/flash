@@ -1,5 +1,27 @@
-const NATIVE_TITLE_BAR_HEIGHT = 28;
 const MESSAGE_TYPE = "boxedwine-native-window";
+const frameMetrics = (entry) => {
+  const left = Math.max(0, entry.frameLeft || 0);
+  const menu = Math.min(
+    Math.max(0, entry.menuHeight || 0),
+    Math.max(0, entry.frameTop || 0),
+  );
+  const top = Math.max(0, (entry.frameTop || 0) - menu);
+  const right = Math.max(0, entry.frameRight || 0);
+  const bottom = Math.max(0, entry.frameBottom || 0);
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: Math.max(1, entry.clientWidth || entry.width - left - right),
+    height: Math.max(
+      1,
+      entry.clientHeight
+        ? entry.clientHeight + menu
+        : entry.height - top - bottom,
+    ),
+  };
+};
 
 export const createBoxedWineWindowSurface = ({
   host,
@@ -34,9 +56,7 @@ export const createBoxedWineWindowSurface = ({
     const renderedHeight = canvas.height * scale;
     const renderedLeft = rect.left + (rect.width - renderedWidth) / 2;
     const renderedTop = rect.top + (rect.height - renderedHeight) / 2;
-    const titleBarHeight = anchoredWindows.has(top.id)
-      ? NATIVE_TITLE_BAR_HEIGHT
-      : 0;
+    const frame = frameMetrics(top);
     return {
       x:
         top.x +
@@ -48,7 +68,7 @@ export const createBoxedWineWindowSurface = ({
           scale,
       y:
         top.y +
-        titleBarHeight +
+        (anchoredWindows.has(top.id) ? frame.top : 0) +
         (Math.min(
           Math.max(event.clientY, renderedTop),
           renderedTop + renderedHeight,
@@ -92,12 +112,13 @@ export const createBoxedWineWindowSurface = ({
   };
   const isOwnedDialog = (entry) =>
     Boolean(
+      entry?.win32Metrics === true &&
       entry?.ownerId &&
       entry.dialog &&
       entry.mapped &&
       entry.title?.trim() &&
       entry.width > 1 &&
-      entry.height > NATIVE_TITLE_BAR_HEIGHT,
+      frameMetrics(entry).height > 1,
     );
   const topLevelId = (id) => {
     let current = windows.get(id);
@@ -140,9 +161,10 @@ export const createBoxedWineWindowSurface = ({
     ownedCanvases.set(entry.id, canvas);
     const coordinates = (event) => {
       const local = scaledCanvasCoordinates(canvas, event);
+      const frame = frameMetrics(entry);
       return {
-        x: entry.x + local.x,
-        y: entry.y + NATIVE_TITLE_BAR_HEIGHT + local.y,
+        x: entry.x + frame.left + local.x,
+        y: entry.y + frame.top + local.y,
       };
     };
     const forwardPointer = (eventType, event) => {
@@ -230,14 +252,15 @@ export const createBoxedWineWindowSurface = ({
     canvas.dataset.boxedwineTitle = entry.title;
     canvas.dataset.boxedwineNativeWidth = String(entry.width);
     canvas.dataset.boxedwineNativeHeight = String(entry.height);
-    canvas.width = entry.width;
-    canvas.height = Math.max(1, entry.height - NATIVE_TITLE_BAR_HEIGHT);
-    canvas.style.width = `${entry.width}px`;
-    canvas.style.height = `${canvas.height}px`;
+    const frame = frameMetrics(entry);
+    canvas.width = frame.width;
+    canvas.height = frame.height;
+    canvas.style.width = `${frame.width}px`;
+    canvas.style.height = `${frame.height}px`;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
     const surface = surfaces.get(entry.id);
-    if (surface) context.drawImage(surface, 0, -NATIVE_TITLE_BAR_HEIGHT);
+    if (surface) context.drawImage(surface, -frame.left, -frame.top);
     const children = [...windows.values()]
       .filter(
         (child) =>
@@ -251,8 +274,8 @@ export const createBoxedWineWindowSurface = ({
       if (!childSurface) continue;
       const childX = child.ownerId ? child.x - entry.x : child.x;
       const childY = child.ownerId
-        ? child.y - entry.y - NATIVE_TITLE_BAR_HEIGHT
-        : child.y - NATIVE_TITLE_BAR_HEIGHT;
+        ? child.y - entry.y - frame.top
+        : child.y - frame.top;
       context.drawImage(childSurface, childX, childY);
     }
     onOwnedWindow?.({
@@ -261,10 +284,12 @@ export const createBoxedWineWindowSurface = ({
       ownerId: entry.ownerId,
       topId: top.id,
       title: entry.title,
-      x: entry.x - (anchoredWindows.has(top.id) ? 0 : top.x),
-      y: entry.y - (anchoredWindows.has(top.id) ? 0 : top.y),
+      x: entry.x - top.x,
+      y: entry.y - top.y,
       width: entry.width,
       height: entry.height,
+      clientWidth: frame.width,
+      clientHeight: frame.height,
       canvas,
     });
   };
@@ -272,11 +297,15 @@ export const createBoxedWineWindowSurface = ({
   const reportFirstFrame = (topId, canvas) => {
     if (!canvas || canvas.dataset.firstFrame) return;
     const top = windows.get(topId);
-    if (!top) return;
+    // The X11 framebuffer includes Wine's painted non-client area. Do not
+    // attach a top-level canvas to the shell until the shared Win32 controller
+    // has reported the exact client/frame split needed to crop that area.
+    if (!top || top.win32Metrics !== true) return;
     canvas.dataset.firstFrame = "true";
     onFirstFrame?.({
       id: topId,
       appId: top.appId || "",
+      launchToken: String(top.launchToken || ""),
       processId: top.processId || 0,
       title: top.title || "",
       canvas,
@@ -379,20 +408,23 @@ export const createBoxedWineWindowSurface = ({
     canvas.dataset.boxedwineY = String(top.y);
     canvas.dataset.boxedwineParent = String(top.parentId || 0);
     canvas.dataset.boxedwineProcess = String(top.processId || 0);
+    canvas.dataset.boxedwineLaunchToken = String(top.launchToken || "");
     canvas.dataset.boxedwineTitle = top.title || "";
     canvas.dataset.boxedwineNativeWidth = String(top.width);
     canvas.dataset.boxedwineNativeHeight = String(top.height);
-    const titleBarHeight = anchoredWindows.has(topId)
-      ? NATIVE_TITLE_BAR_HEIGHT
-      : 0;
-    if (canvas.width !== top.width) canvas.width = top.width;
-    if (canvas.height !== Math.max(1, top.height - titleBarHeight))
-      canvas.height = Math.max(1, top.height - titleBarHeight);
+    const frame = frameMetrics(top);
+    const frameLeft = anchoredWindows.has(topId) ? frame.left : 0;
+    const frameTop = anchoredWindows.has(topId) ? frame.top : 0;
+    const canvasWidth = anchoredWindows.has(topId) ? frame.width : top.width;
+    const canvasHeight = anchoredWindows.has(topId) ? frame.height : top.height;
+    if (canvas.width !== canvasWidth) canvas.width = canvasWidth;
+    if (canvas.height !== canvasHeight) canvas.height = canvasHeight;
     canvas.style.left = anchoredWindows.has(topId) ? "0px" : `${top.x}px`;
     canvas.style.top = anchoredWindows.has(topId) ? "0px" : `${top.y}px`;
-    canvas.style.width = `${top.width}px`;
-    canvas.style.height = `${Math.max(1, top.height - titleBarHeight)}px`;
-    canvas.style.objectFit = "none";
+    const anchored = anchoredWindows.has(topId);
+    canvas.style.width = anchored ? "100%" : `${canvasWidth}px`;
+    canvas.style.height = anchored ? "100%" : `${canvasHeight}px`;
+    canvas.style.objectFit = anchored ? "contain" : "none";
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -420,17 +452,16 @@ export const createBoxedWineWindowSurface = ({
       for (const child of children) {
         if (anchoredWindows.has(topId) && ownedDialogAncestor(child.id, topId))
           continue;
-        const anchoredOwner = child.ownerId && anchoredWindows.has(topId);
         const childX = child.ownerId
-          ? child.x - (anchoredOwner ? 0 : top.x)
+          ? child.x - top.x - frameLeft
           : offsetX + child.x;
         const childY = child.ownerId
-          ? child.y - (anchoredOwner ? titleBarHeight : top.y)
+          ? child.y - top.y - frameTop
           : offsetY + child.y;
         drawTree(child.id, childX, childY);
       }
     };
-    drawTree(topId, 0, -titleBarHeight);
+    drawTree(topId, -frameLeft, -frameTop);
     const processWindows = [...windows.values()].sort(
       (left, right) => left.stack - right.stack,
     );
@@ -442,7 +473,11 @@ export const createBoxedWineWindowSurface = ({
         !drawnWindows.has(entry.id) &&
         !(anchoredWindows.has(topId) && ownedDialogAncestor(entry.id, topId))
       )
-        drawTree(entry.id, entry.x - top.x, entry.y - top.y - titleBarHeight);
+        drawTree(
+          entry.id,
+          entry.x - top.x - frameLeft,
+          entry.y - top.y - frameTop,
+        );
     }
     if (drewNativePixels) reportFirstFrame(topId, canvas);
   };
@@ -537,13 +572,15 @@ export const createBoxedWineWindowSurface = ({
       detail.height || 0,
     ].join(":");
     if (detail.type === "created") {
-      windows.set(detail.id, {
+      const created = {
         ...detail,
         mapped: false,
-        title: "",
+        title: detail.title || "",
+        launchToken: Number(detail.launchToken) >>> 0,
         stack: nativeStack++,
-      });
-      onLifecycle?.({ ...detail, topId: topLevelId(detail.id) });
+      };
+      windows.set(detail.id, created);
+      onLifecycle?.({ ...created, topId: topLevelId(detail.id) });
       return;
     }
     const entry = windows.get(detail.id);
@@ -566,6 +603,41 @@ export const createBoxedWineWindowSurface = ({
       return;
     }
     if (!entry) return;
+    if (detail.type === "frame") {
+      // Frame events carry the framebuffer size, not the window geometry.
+      entry.generation = detail.generation;
+    } else if (detail.type === "metadata" && detail.win32Metrics !== true) {
+      // X11 metadata supplies ownership while the controller starts, but its
+      // geometry describes Wine's host surface rather than the Win32 client.
+      // Never let it overwrite confirmed Win32 bounds or capabilities.
+      for (const property of [
+        "parentId",
+        "ownerId",
+        "processId",
+        "parentProcessId",
+        "launchToken",
+        "dialog",
+      ]) {
+        if (detail[property] != null) entry[property] = detail[property];
+      }
+    } else {
+      Object.assign(entry, detail);
+    }
+    if (detail.type === "metadata") {
+      if (Number.isFinite(detail.outerX)) entry.x = detail.outerX;
+      if (Number.isFinite(detail.outerY)) entry.y = detail.outerY;
+      if (detail.outerWidth > 0) entry.width = detail.outerWidth;
+      if (detail.outerHeight > 0) entry.height = detail.outerHeight;
+      if (detail.launchToken != null)
+        entry.launchToken = Number(detail.launchToken) >>> 0;
+    }
+    // Lifecycle bounds report the client size; the matching metadata message
+    // that follows restores the outer size. Refreshing the client size here
+    // keeps frameMetrics from measuring against the previous geometry.
+    if (detail.type === "bounds" && detail.width > 0 && detail.height > 0) {
+      entry.clientWidth = detail.width;
+      entry.clientHeight = detail.height;
+    }
     if (detail.type === "title") entry.title = detail.title;
     if (detail.type === "owner") entry.ownerId = detail.parentId;
     if (typeof detail.dialog === "boolean") entry.dialog = detail.dialog;
@@ -578,12 +650,17 @@ export const createBoxedWineWindowSurface = ({
       ownedCanvases.get(detail.id)?.remove();
       ownedCanvases.delete(detail.id);
     }
-    if (detail.type === "bounds") Object.assign(entry, detail);
     if (detail.type === "frame") pendingFrameIds.add(detail.id);
     const topId = topLevelId(detail.id);
     if (detail.type === "frame" && topId)
       reportFirstFrame(topId, canvases.get(topId));
-    onLifecycle?.({ ...detail, topId });
+    onLifecycle?.({
+      ...detail,
+      ...entry,
+      type: detail.type,
+      win32Metrics: detail.win32Metrics === true,
+      topId,
+    });
     if (topId) {
       if (detail.type === "mapped" && !canvases.has(topId)) render(topId);
       const canvas = canvases.get(topId);
@@ -637,6 +714,12 @@ export const createBoxedWineWindowSurface = ({
     command(id, action, detail = {}) {
       const top = windows.get(id);
       if (!top) return false;
+      if (action === "minimize" && top.canMinimize === false) return false;
+      if (action === "maximize" && top.canMaximize === false) return false;
+      const frame = frameMetrics(top);
+      const requestedWidth = Number(detail.width) || frame.width;
+      const requestedHeight = Number(detail.height) || frame.height;
+      const canResize = top.canResize !== false;
       getRuntimeWindow().postMessage(
         {
           type: "boxedwine-native-command",
@@ -645,6 +728,12 @@ export const createBoxedWineWindowSurface = ({
           sourceWidth: top.width,
           sourceHeight: top.height,
           ...detail,
+          width: canResize
+            ? requestedWidth + frame.left + frame.right
+            : top.width,
+          height: canResize
+            ? requestedHeight + frame.top + frame.bottom
+            : top.height,
         },
         origin,
       );

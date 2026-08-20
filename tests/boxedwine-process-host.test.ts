@@ -52,8 +52,8 @@ const createModule = () => {
   const launchedExecutables = [];
   const module = {
     _boxedwine_install_bridge_api() {
-      module.boxedwineLaunchProcess = (executable) => {
-        launchedExecutables.push(executable);
+      module.boxedwineLaunchProcess = (executable, launchToken) => {
+        launchedExecutables.push({ executable, launchToken });
         return executable.endsWith(".exe");
       };
     },
@@ -93,6 +93,7 @@ describe("persistent BoxedWine process host", () => {
     host.send({
       type: "boxedwine-launch-process",
       appId: "calculator",
+      launchToken: "1011",
       requestId: "first",
     });
     processHost.setLaunchResult(101);
@@ -100,14 +101,21 @@ describe("persistent BoxedWine process host", () => {
     host.send({
       type: "boxedwine-launch-process",
       appId: "solitaire",
+      launchToken: "2022",
       requestId: "second",
     });
     processHost.setLaunchResult(102);
     host.tick();
 
     expect(processHost.launchedExecutables).toEqual([
-      "calculator/calc.exe",
-      "solitaire/resize-host.exe",
+      {
+        executable: "calculator/calc.exe",
+        launchToken: "1011",
+      },
+      {
+        executable: "solitaire/sol.exe",
+        launchToken: "2022",
+      },
     ]);
 
     expect(
@@ -118,6 +126,7 @@ describe("persistent BoxedWine process host", () => {
       {
         type: "boxedwine-process-launched",
         appId: "calculator",
+        launchToken: "1011",
         requestId: "first",
         processId: 101,
         error: 0,
@@ -125,6 +134,7 @@ describe("persistent BoxedWine process host", () => {
       {
         type: "boxedwine-process-launched",
         appId: "solitaire",
+        launchToken: "2022",
         requestId: "second",
         processId: 102,
         error: 0,
@@ -141,18 +151,21 @@ describe("persistent BoxedWine process host", () => {
     host.send({
       type: "boxedwine-launch-process",
       appId: "calculator",
+      launchToken: "1011",
       requestId: "launch",
     });
     host.tick();
     host.send({
       type: "boxedwine-terminate-process",
       appId: "calculator",
+      launchToken: "1011",
       processId: 101,
       requestId: "close",
     });
     expect(host.messages.at(-1).message).toEqual({
       type: "boxedwine-process-terminated",
       appId: "calculator",
+      launchToken: "1011",
       requestId: "close",
       processId: 101,
       error: 0,
@@ -169,12 +182,14 @@ describe("persistent BoxedWine process host", () => {
     host.send({
       type: "boxedwine-observe-process",
       appId: "calculator",
+      launchToken: "1011",
       processId: 101,
       requestId: "observe",
     });
     expect(host.messages.at(-1).message).toEqual({
       type: "boxedwine-process-observed",
       appId: "calculator",
+      launchToken: "1011",
       requestId: "observe",
       processId: 101,
     });
@@ -184,6 +199,7 @@ describe("persistent BoxedWine process host", () => {
     expect(host.messages.at(-1).message).toEqual({
       type: "boxedwine-process-exited",
       appId: "calculator",
+      launchToken: "1011",
       processId: 101,
     });
   });
@@ -197,6 +213,7 @@ describe("persistent BoxedWine process host", () => {
     host.send({
       type: "boxedwine-launch-process",
       appId: "unknown.exe",
+      launchToken: "3033",
       requestId: "bad",
     });
     expect(host.messages).toHaveLength(count);

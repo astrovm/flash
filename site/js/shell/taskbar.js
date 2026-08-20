@@ -73,8 +73,13 @@ const wireTaskbarMenuKeyboard = (menu) => {
 const activateTaskButton = (gameId) => {
   const win = openWindows.get(gameId);
   if (!win) return;
-  if (gameId === focusedGameId && !win.minimized) minimizeWindow(gameId);
-  else {
+  if (
+    gameId === focusedGameId &&
+    !win.minimized &&
+    !win.nativeOwnedWindows?.size
+  ) {
+    minimizeWindow(gameId);
+  } else {
     restoreWindow(gameId);
     focusWindow(gameId);
   }

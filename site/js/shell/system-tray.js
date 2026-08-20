@@ -4,13 +4,13 @@
 // System Tray
 // ============================================
 
-const getMasterVolume = () => ({
+const getSystemVolume = () => ({
   volume: parseInt(localStorage.getItem("volume") || "100", 10),
   isMuted: localStorage.getItem("isMuted") === "true",
 });
 
 const syncTrayVolumeUI = () => {
-  const { volume, isMuted } = getMasterVolume();
+  const { volume, isMuted } = getSystemVolume();
   const button = document.getElementById("tray-volume-button");
   const slider = document.getElementById("tray-volume-slider");
   const muteBox = document.getElementById("tray-mute-checkbox");
@@ -20,11 +20,14 @@ const syncTrayVolumeUI = () => {
   muteBox.checked = isMuted;
 };
 
-const setMasterVolume = (volume, isMuted) => {
+const setSystemVolume = (volume, isMuted) => {
+  // Like the real XP Volume Control's Master fader, this scales every
+  // audio source - games included - on top of each game's own volume
+  // (see getGameVolume/setGameVolume, normalizeGameVolume), rather than
+  // being a separate, unrelated channel.
   localStorage.setItem("volume", String(volume));
   localStorage.setItem("isMuted", String(isMuted));
   applyFocusVolumes();
-  openWindows.forEach((win) => syncWindowVolumeUI(win));
   syncTrayVolumeUI();
 };
 
@@ -1206,13 +1209,13 @@ const setupSystemTray = () => {
       const volume = parseInt(event.target.value, 10);
       if (Number.isFinite(volume)) {
         // Moving the XP volume slider clears the mute flag.
-        setMasterVolume(volume, false);
+        setSystemVolume(volume, false);
       }
     });
   document
     .getElementById("tray-mute-checkbox")
     .addEventListener("change", (event) => {
-      setMasterVolume(getMasterVolume().volume, event.target.checked);
+      setSystemVolume(getSystemVolume().volume, event.target.checked);
     });
 
   syncTrayVolumeUI();

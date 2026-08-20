@@ -12,7 +12,6 @@ import {
   loadShell,
   login,
 } from "./helpers/shell-harness";
-import { installBoxedWineResizeBridge } from "../site/apps/core/boxedwine-resize.js";
 
 const require = createRequire(import.meta.url);
 const { unzipSync } = require("fflate");
@@ -40,7 +39,7 @@ const launchSolitaire = (shell) => {
 };
 
 describe("Windows XP Solitaire through BoxedWine", () => {
-  test("uses the complete phone work area when its native bounds do not fit", async () => {
+  test("fits proportionally when its native bounds do not fit", async () => {
     const shell = await login(await loadShell());
     const desktop = shell.document.getElementById("desktop");
     Object.defineProperties(desktop, {
@@ -53,7 +52,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.left).toBe("0px");
     expect(solitaireWindow.style.top).toBe("0px");
     expect(solitaireWindow.style.width).toBe("390px");
-    expect(solitaireWindow.style.height).toBe("814px");
+    expect(solitaireWindow.style.height).toBe("297px");
 
     Object.defineProperties(desktop, {
       clientWidth: { configurable: true, value: 844 },
@@ -63,7 +62,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
 
     expect(solitaireWindow.style.left).toBe("0px");
     expect(solitaireWindow.style.top).toBe("0px");
-    expect(solitaireWindow.style.width).toBe("844px");
+    expect(solitaireWindow.style.width).toBe("480px");
     expect(solitaireWindow.style.height).toBe("360px");
 
     Object.defineProperties(desktop, {
@@ -72,8 +71,35 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     });
     shell.window.dispatchEvent(new shell.window.Event("resize"));
 
-    expect(solitaireWindow.style.width).toBe("592px");
-    expect(solitaireWindow.style.height).toBe("438px");
+    expect(parseFloat(solitaireWindow.style.width)).toBeLessThan(1024);
+    expect(parseFloat(solitaireWindow.style.height)).toBeLessThan(738);
+  });
+
+  test("regrows with the work area while its native bounds still do not fit", async () => {
+    const shell = await login(await loadShell());
+    const desktop = shell.document.getElementById("desktop");
+    const resizeDesktop = (clientWidth, clientHeight) => {
+      Object.defineProperties(desktop, {
+        clientWidth: { configurable: true, value: clientWidth },
+        clientHeight: { configurable: true, value: clientHeight },
+      });
+      shell.window.dispatchEvent(new shell.window.Event("resize"));
+    };
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 844 },
+      clientHeight: { configurable: true, value: 360 },
+    });
+
+    const solitaireWindow = launchSolitaire(shell);
+    expect(solitaireWindow.style.width).toBe("480px");
+    expect(solitaireWindow.style.height).toBe("360px");
+
+    // The generic provisional bounds still do not fit, so the window grows
+    // proportionally as more space becomes available.
+    resizeDesktop(900, 400);
+
+    expect(solitaireWindow.style.width).toBe("538px");
+    expect(solitaireWindow.style.height).toBe("400px");
   });
 
   test("mounts in the boot-prepared shared runtime as a resizable XP window", async () => {
@@ -84,8 +110,6 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     );
     const url = new URL(frame.src);
 
-    expect(solitaireWindow.style.width).toBe("592px");
-    expect(solitaireWindow.style.height).toBe("438px");
     expect(solitaireWindow.querySelector(".title-text").textContent).toBe(
       "Solitaire",
     );
@@ -94,9 +118,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
       "/iframe/boxedwine-runtime/",
     );
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
-    expect(url.searchParams.get("executable")).toBe(
-      "solitaire/resize-host.exe",
-    );
+    expect(url.searchParams.get("executable")).toBe("solitaire/sol.exe");
     expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");
@@ -153,102 +175,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     ).toHaveLength(2);
   });
 
-  test("forwards the latest client size into the BoxedWine display layer", () => {
-    let messageListener;
-    const runnerWindow = {
-      location: { origin: "https://flash.test" },
-      addEventListener(type, listener) {
-        if (type === "message") messageListener = listener;
-      },
-      removeEventListener(type, listener) {
-        if (type === "message" && messageListener === listener)
-          messageListener = null;
-      },
-    };
-    const module = {};
-    const resizeCalls = [];
-    const files = new Map();
-    const dispose = installBoxedWineResizeBridge(runnerWindow, module);
-
-    messageListener({
-      origin: "https://flash.test",
-      data: {
-        type: "boxedwine-framebuffer-resize",
-        width: 1372,
-        height: 844,
-        baseWidth: 586,
-        baseHeight: 438,
-      },
-    });
-    module._boxedwine_resize_screen = (width, height) =>
-      resizeCalls.push({ width, height });
-    module.FS = {
-      writeFile(path, content) {
-        const file = files.get(path);
-        if (file) file.content = content;
-        else files.set(path, { content });
-      },
-      unlink(path) {
-        if (!files.delete(path)) throw new Error("ENOENT");
-      },
-      rename(from, to) {
-        files.set(to, files.get(from));
-        files.delete(from);
-      },
-    };
-    module.onRuntimeInitialized();
-    const solitaireSizeFile = files.get("/d_drive/solsize.txt");
-    expect(solitaireSizeFile.content).toBe("");
-    expect(resizeCalls).toEqual([{ width: 1372, height: 844 }]);
-    expect(files.get("/d_drive/boxedwine-size.txt").content).toBe(
-      "1372 844 586 438",
-    );
-
-    messageListener({
-      origin: "https://flash.test",
-      data: {
-        type: "boxedwine-framebuffer-resize",
-        width: 586,
-        height: 438,
-        baseWidth: 586,
-        baseHeight: 438,
-      },
-    });
-    expect(resizeCalls.at(-1)).toEqual({ width: 586, height: 438 });
-    expect(files.get("/d_drive/boxedwine-size.txt").content).toBe(
-      "586 438 586 438",
-    );
-
-    messageListener({
-      origin: "https://flash.test",
-      data: {
-        type: "boxedwine-framebuffer-resize",
-        appId: "solitaire",
-        width: 900,
-        height: 600,
-        baseWidth: 586,
-        baseHeight: 438,
-      },
-    });
-    expect(resizeCalls.at(-1)).toEqual({ width: 586, height: 438 });
-    expect(files.get("/d_drive/solsize.txt")).toBe(solitaireSizeFile);
-    expect(solitaireSizeFile.content).toBe("900 600 586 438");
-
-    messageListener({
-      origin: "https://other.test",
-      data: {
-        type: "boxedwine-framebuffer-resize",
-        width: 1,
-        height: 1,
-      },
-    });
-    expect(resizeCalls).toHaveLength(2);
-
-    dispose();
-    expect(messageListener).toBeNull();
-  });
-
-  test("packages the pinned runtime, XP files, and resize launcher", async () => {
+  test("packages the pinned runtime and original XP files", async () => {
     const runtimeSources = JSON.parse(
       await readFile(join(runtimeDirectory, "SOURCES.json"), "utf8"),
     );
@@ -270,11 +197,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(sha256(packageBytes)).toBe(appSources.windowsXp.package.sha256);
 
     const files = unzipSync(packageBytes);
-    expect(Object.keys(files).sort()).toEqual([
-      "cards.dll",
-      "resize-host.exe",
-      "sol.exe",
-    ]);
+    expect(Object.keys(files).sort()).toEqual(["cards.dll", "sol.exe"]);
     for (const [filename, source] of Object.entries(
       appSources.windowsXp.files,
     )) {

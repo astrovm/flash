@@ -624,7 +624,13 @@ const setupScreenSaver = () => {
   overlay.id = "screen-saver-overlay";
   overlay.hidden = true;
   overlay.setAttribute("aria-label", "Screen saver");
-  document.getElementById("desktop")?.appendChild(overlay);
+  // Appended to <body>, not #desktop: #desktop has overflow:hidden (it
+  // clips desktop icons/windows to its own bounds, which stop 30px short of
+  // the bottom for the taskbar), and that clip applies to this overlay too
+  // if it's a descendant - fixed positioning and z-index only control where
+  // an element is placed and stacked, not whether an ancestor's overflow
+  // clips it out of view.
+  document.body.appendChild(overlay);
   const wake = () => scheduleScreenSaver();
   ["pointerdown", "keydown", "mousemove", "touchstart"].forEach((eventName) => {
     document.addEventListener(eventName, wake, { passive: true });
@@ -658,11 +664,10 @@ const getGameVolume = (gameId) => {
       isMuted: gameVolumes[gameId].isMuted,
     };
   }
-  // Fall back to global settings if no game-specific settings exist
-  return {
-    volume: parseInt(localStorage.getItem("volume") || "100", 10),
-    isMuted: localStorage.getItem("isMuted") === "true",
-  };
+  // Game volume is independent of the system tray volume, so an
+  // unconfigured game defaults to full volume rather than inheriting
+  // whatever the system sound level happens to be set to.
+  return { volume: 100, isMuted: false };
 };
 
 const setGameVolume = (gameId, volume, isMuted) => {
@@ -731,7 +736,18 @@ const normalizeGameVolume = (gameId) => {
     ? Math.min(Math.max(numericVolume, 0), 100)
     : 100;
 
-  return isMuted ? 0 : clampedVolume / 100;
+  // Windows XP's Volume Control has one Master fader that scales every
+  // audio source on top of that source's own level, like a hardware
+  // mixer - so the system volume slider still attenuates games, in
+  // addition to (not instead of) each game's own volume.
+  const systemVolume = parseInt(localStorage.getItem("volume") || "100", 10);
+  const systemMuted = localStorage.getItem("isMuted") === "true";
+  const clampedSystemVolume = Number.isFinite(systemVolume)
+    ? Math.min(Math.max(systemVolume, 0), 100)
+    : 100;
+
+  if (isMuted || systemMuted) return 0;
+  return (clampedVolume / 100) * (clampedSystemVolume / 100);
 };
 
 const setPlayerVolume = (player, type, normalizedVolume) => {

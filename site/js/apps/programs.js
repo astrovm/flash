@@ -17,13 +17,23 @@ const wireSystemWindowControls = (win) => {
   if (win.application?.window.resizable !== false) wireResize(win);
 };
 
-const focusNativeOwnedWindow = (owner, dialog) => {
-  focusWindow(owner.gameId, { notifyApplication: false });
+const activateNativeOwnedWindow = (owner, dialog) => {
+  owner.nativeFocusedOwnedWindow = dialog;
+  for (const owned of owner.nativeOwnedWindows?.values() || [])
+    owned.el.classList.remove("active");
   owner.el.classList.remove("active");
   dialog.el.classList.add("active");
   dialog.el.style.zIndex = String(++zIndexCounter);
   dialog.canvas.focus({ preventScroll: true });
   dialog.focus?.();
+};
+
+const focusNativeOwnedWindow = (owner, dialog) => {
+  focusWindow(owner.gameId, {
+    notifyApplication: false,
+    focusOwnedWindow: false,
+  });
+  activateNativeOwnedWindow(owner, dialog);
 };
 
 const wireNativeOwnedWindowDrag = (owner, dialog) => {
@@ -69,6 +79,8 @@ const removeNativeOwnedWindow = (owner, id) => {
   if (!dialog) return false;
   dialog.el.remove();
   owner.nativeOwnedWindows.delete(id);
+  if (owner.nativeFocusedOwnedWindow === dialog)
+    owner.nativeFocusedOwnedWindow = null;
   if (owner.nativeOwnedWindows.size === 0) {
     owner.el.removeAttribute("aria-disabled");
     owner.el.classList.remove("native-owned-window-blocked");
@@ -79,7 +91,11 @@ const removeNativeOwnedWindow = (owner, id) => {
     );
     owner.el.removeEventListener("click", owner.nativeDialogBlocker, true);
     owner.nativeDialogBlocker = null;
+    owner.focusOwnedWindow = null;
+    owner.setOwnedWindowsVisible = null;
     focusWindow(owner.gameId, { notifyApplication: false });
+  } else if (!owner.nativeFocusedOwnedWindow) {
+    owner.focusOwnedWindow?.();
   }
   return true;
 };
@@ -118,6 +134,21 @@ const upsertNativeOwnedWindow = (owner, detail) => {
       moved: false,
     };
     owner.nativeOwnedWindows.set(detail.id, dialog);
+    owner.setOwnedWindowsVisible = (visible) => {
+      for (const owned of owner.nativeOwnedWindows.values())
+        owned.el.style.display = visible ? "flex" : "none";
+    };
+    owner.focusOwnedWindow = () => {
+      const focused = owner.nativeFocusedOwnedWindow;
+      const topDialog =
+        (focused &&
+          [...owner.nativeOwnedWindows.values()].includes(focused) &&
+          focused) ||
+        [...owner.nativeOwnedWindows.values()].at(-1);
+      if (!topDialog) return false;
+      activateNativeOwnedWindow(owner, topDialog);
+      return true;
+    };
     el.querySelector(".close-btn").addEventListener("click", () =>
       dialog.close?.(),
     );
@@ -147,11 +178,19 @@ const upsertNativeOwnedWindow = (owner, detail) => {
   dialog.close = detail.close;
   dialog.focus = detail.focus;
   dialog.el.querySelector(".title-text").textContent = detail.title;
-  dialog.el.style.width = `${detail.width}px`;
-  dialog.el.style.height = `${detail.height}px`;
+  const dialogWidth = Number(detail.clientWidth) || Number(detail.width);
+  const dialogHeight = Number(detail.clientHeight) || Number(detail.height);
+  const dialogCaption = parseWindowLength(
+    dialog.el.ownerDocument.defaultView
+      ?.getComputedStyle?.(dialog.el)
+      ?.getPropertyValue("--boxedwine-shell-caption-height"),
+    28,
+  );
+  dialog.el.style.width = `${dialogWidth}px`;
+  dialog.el.style.height = `${dialogHeight + dialogCaption}px`;
   if (!dialog.moved) {
     const position = clampWindowPosition(
-      { el: dialog.el },
+      { el: dialog.el, application: owner.application },
       owner.el.offsetLeft + detail.x,
       owner.el.offsetTop + detail.y,
     );
@@ -163,6 +202,8 @@ const upsertNativeOwnedWindow = (owner, detail) => {
 
 const applicationContext = (win) => ({
   windowElement: win.el,
+  nativeWindowReady: false,
+  nativeCanMaximize: true,
   XP_ICON_PATHS,
   dialogs: XPDialogs,
   fileOps,
@@ -175,8 +216,8 @@ const applicationContext = (win) => ({
     return true;
   },
   getDesktopSize,
-  getMasterVolume,
-  setMasterVolume,
+  getSystemVolume,
+  setSystemVolume,
   setSize(width, height) {
     win.el.style.width = `${width}px`;
     win.el.style.height = `${height}px`;
@@ -188,6 +229,9 @@ const applicationContext = (win) => ({
     if (titleText) titleText.textContent = title;
     renderTaskButtons();
     updateDocumentTitle();
+  },
+  setNativeRuntimeSize(width, height) {
+    if (width > 0 && height > 0) win.nativeRuntimeSize = { width, height };
   },
   setAccessKeyText,
   close: () => closeGameWindow(win.gameId),
@@ -201,11 +245,175 @@ const applicationContext = (win) => ({
     if (win.maximized) return;
     const host = win.el.querySelector(".boxedwine-shared-app-host");
     if (!host) return;
-    const frameWidth = Math.max(0, win.el.offsetWidth - host.clientWidth);
-    const frameHeight = Math.max(0, win.el.offsetHeight - host.clientHeight);
-    win.el.style.width = `${width + frameWidth}px`;
-    win.el.style.height = `${height + frameHeight}px`;
+    // .boxedwine-shared-app-host is always positioned at
+    // `inset: var(--boxedwine-shell-caption-height) 0 0` with no borders on
+    // .xp-boxedwine-shared-window (see boxedwine.css), so the chrome overhead
+    // is a fixed constant, not something to remeasure live. Measuring it from
+    // the current win.el/host layout instead let a stale mid-update read feed
+    // back into itself: applyNativeClientSize sets win.el's size from this
+    // measurement, which changes host's size via that same CSS relationship,
+    // which re-triggers this method through the resize observer, compounding
+    // any measurement error into unbounded growth on every metadata echo.
+    const caption = parseWindowLength(
+      win.el.ownerDocument.defaultView
+        ?.getComputedStyle?.(win.el)
+        ?.getPropertyValue("--boxedwine-shell-caption-height"),
+      28,
+    );
+    win.el.style.width = `${width}px`;
+    win.el.style.height = `${height + caption}px`;
     fitNativeProgramToWorkArea(win);
+  },
+  applyNativeWindowMetadata(metadata) {
+    const canResize = metadata.canResize !== false;
+    const canMaximize = metadata.canMaximize !== false;
+    const canMinimize = metadata.canMinimize !== false;
+    win.el.querySelectorAll(".resize-handle").forEach((handle) => {
+      handle.hidden = !canResize;
+    });
+    const maximize = win.el.querySelector(".maximize-btn");
+    if (maximize) {
+      maximize.disabled = !canMaximize;
+      maximize.setAttribute("aria-disabled", String(!canMaximize));
+    }
+    const minimize = win.el.querySelector(".minimize-btn");
+    if (minimize) {
+      minimize.disabled = !canMinimize;
+      minimize.setAttribute("aria-disabled", String(!canMinimize));
+    }
+    this.nativeCanMaximize = canMaximize;
+
+    // Geometry is owned by the shell while maximized, and unmeasurable while
+    // minimized (the frame is display:none), so only the capability flags
+    // above apply in those states.
+    if (win.maximized || win.minimized) {
+      this.nativeWindowReady = true;
+      return;
+    }
+
+    const frameLeft = Math.max(0, Number(metadata.frameLeft) || 0);
+    const totalFrameTop = Math.max(0, Number(metadata.frameTop) || 0);
+    const menuHeight = Math.min(
+      Math.max(0, Number(metadata.menuHeight) || 0),
+      totalFrameTop,
+    );
+    const frameTop = totalFrameTop - menuHeight;
+    const frameRight = Math.max(0, Number(metadata.frameRight) || 0);
+    const frameBottom = Math.max(0, Number(metadata.frameBottom) || 0);
+    const outerWidth = Number(metadata.outerWidth) || Number(metadata.width);
+    const outerHeight = Number(metadata.outerHeight) || Number(metadata.height);
+    let width =
+      Number(metadata.clientWidth) ||
+      (outerWidth > 0 ? outerWidth - frameLeft - frameRight : 0);
+    let height =
+      (Number(metadata.clientHeight)
+        ? Number(metadata.clientHeight) + menuHeight
+        : 0) || (outerHeight > 0 ? outerHeight - frameTop - frameBottom : 0);
+    // Wine can expose a top-level HWND as 1x1 while the application is still
+    // creating it. Treating that placeholder as the first real window enables
+    // shell-to-native resize synchronization too early and collapses the app
+    // to its non-client chrome. Wait for usable client bounds instead.
+    if (width <= 1 || height <= 1) return;
+    const first = !win.nativeMetadataApplied;
+    const caption = parseWindowLength(
+      win.el.ownerDocument.defaultView
+        ?.getComputedStyle?.(win.el)
+        ?.getPropertyValue("--boxedwine-shell-caption-height"),
+      28,
+    );
+    if (!first && win.nativeResizeTarget) {
+      const target = win.nativeResizeTarget;
+      const confirmed =
+        Math.abs(width - target.width) <= 1 &&
+        Math.abs(height - target.height) <= 1;
+      if (confirmed) {
+        win.nativeResizeTarget = null;
+      } else if (performance.now() < target.expiresAt) {
+        // The Win32 controller polls independently from the shell resize
+        // observer. It can report the previous bounds before the pending
+        // shell command arrives. Do not let that stale echo undo the resize.
+        this.nativeWindowReady = true;
+        return;
+      } else {
+        win.nativeResizeTarget = null;
+      }
+    }
+    const savedPlacement = first
+      ? getWindowPlacements()[win.gameId]
+      : undefined;
+    const savedSizeIsUsable =
+      savedPlacement &&
+      canResize &&
+      savedPlacement.width >= MIN_WINDOW_WIDTH &&
+      savedPlacement.height >= MIN_WINDOW_HEIGHT;
+    const firstResizableMetadata = canResize && !win.nativeResizableConfirmed;
+    if (firstResizableMetadata && !savedSizeIsUsable) {
+      const launchArea = win.nativeRuntimeSize || getVisibleWorkArea();
+      // Small resizable Win32 defaults can expose only part of an application's
+      // layout. Give every resizable application the same useful launch area;
+      // fixed windows continue to use their exact native dimensions.
+      width = Math.max(width, Math.floor(launchArea.width * 0.75));
+      height = Math.max(
+        height,
+        Math.floor(Math.max(1, launchArea.height - caption) * 0.75),
+      );
+    }
+    if (first || firstResizableMetadata) {
+      win.nativePreferredClientSize = { width, height };
+      win.nativePreferredShellSize = { width, height: height + caption };
+      if (win.workAreaFitRect) {
+        win.workAreaFitRect.width = `${width}px`;
+        win.workAreaFitRect.height = `${height + caption}px`;
+      }
+    }
+    // A stored placement only decides where the window opens. Later metadata
+    // reports the size the application chose for itself (Calculator switching
+    // to scientific mode, for example), so the frame has to keep following it.
+    if (first && savedPlacement) {
+      if (!savedSizeIsUsable) this.applyNativeClientSize(width, height);
+      restoreWindowPlacement(win, { restoreSize: savedSizeIsUsable });
+    } else {
+      if (first) win.workAreaFitRect = null;
+      if (!win.resizing) this.applyNativeClientSize(width, height);
+      if (first) {
+        const workArea = getVisibleWorkArea();
+        const offset = (cascadeCount++ % 6) * 28;
+        win.el.style.left = `${Math.max(0, (workArea.width - win.el.offsetWidth) / 2 + offset - 56)}px`;
+        win.el.style.top = `${Math.max(0, (workArea.height - win.el.offsetHeight) / 2 + offset - 40)}px`;
+      }
+      const position = clampWindowPosition(
+        win,
+        win.el.offsetLeft,
+        win.el.offsetTop,
+      );
+      win.el.style.left = `${position.left}px`;
+      win.el.style.top = `${position.top}px`;
+    }
+    const requestedWidth = parseWindowLength(win.el.style.width, width);
+    const requestedHeight = Math.max(
+      1,
+      parseWindowLength(win.el.style.height, height + caption) - caption,
+    );
+    if (
+      (first && canResize) ||
+      Math.abs(requestedWidth - width) > 1 ||
+      Math.abs(requestedHeight - height) > 1
+    ) {
+      win.nativeResizeTarget = {
+        width: requestedWidth,
+        height: requestedHeight,
+        expiresAt: performance.now() + 2000,
+      };
+    }
+    this.nativeBoundsSyncRequired = Boolean(win.nativeResizeTarget);
+    if (canResize) win.nativeResizableConfirmed = true;
+    win.nativeMetadataApplied = true;
+    this.nativeWindowReady = true;
+  },
+  nativeCommandSize(width, height) {
+    return win.workAreaFitRect && win.nativePreferredClientSize
+      ? win.nativePreferredClientSize
+      : { width, height };
   },
   applyNativeClose: () => {
     clearNativeOwnedWindows(win);
@@ -268,12 +476,14 @@ const openXPProgram = (programId, options = {}) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
-  const windowWidth = program.window.fitToWorkArea
+  const usesNativeDefaults =
+    program.window.fitToWorkArea || program.window.nativeMetadata;
+  const windowWidth = usesNativeDefaults
     ? preferredWidth
     : desktopWidth > 16
       ? Math.min(preferredWidth, desktopWidth - 16)
       : preferredWidth;
-  const windowHeight = program.window.fitToWorkArea
+  const windowHeight = usesNativeDefaults
     ? preferredHeight
     : desktopHeight > 16
       ? Math.min(preferredHeight, desktopHeight - 16)

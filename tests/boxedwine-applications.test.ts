@@ -4,6 +4,8 @@ import { validateBoxedWineApplications } from "../site/apps/core/boxedwine-appli
 
 const application = (index: number) => ({
   id: `application-${index}`,
+  title: `Application ${index}`,
+  icon: `Application-${index}.png`,
   executable: `application-${index}/program.exe`,
   packagePath: `site/iframe/application-${index}/application-${index}.zip`,
 });

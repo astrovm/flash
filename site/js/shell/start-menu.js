@@ -658,10 +658,18 @@ const buildPlaces = () => {
         clearTimeout(startFlyoutTimer);
         startFlyoutTimer = setTimeout(open, 220);
       });
-      item.addEventListener("click", () => open(true));
+      // Without clearing here, a hover just before the click leaves its
+      // 220ms timer pending; it later fires open() again on its own stale
+      // closure over this item, which can reposition the flyout against
+      // whatever the anchor's rect happens to be by then.
+      item.addEventListener("click", () => {
+        clearTimeout(startFlyoutTimer);
+        open(true);
+      });
       item.addEventListener("keydown", (event) => {
         if (!["ArrowRight", "Enter"].includes(event.key)) return;
         event.preventDefault();
+        clearTimeout(startFlyoutTimer);
         open(true);
       });
     } else {
@@ -997,12 +1005,6 @@ const getAllProgramsTree = () => {
       ],
     },
     {
-      id: "startup",
-      label: "Startup",
-      icon: programFolder,
-      children: [],
-    },
-    {
       id: "winamp",
       label: "Winamp",
       icon: programFolder,
@@ -1072,10 +1074,18 @@ const createProgramMenuItem = (definition, depth) => {
       clearTimeout(startFlyoutTimer);
       startFlyoutTimer = setTimeout(open, 220);
     });
-    item.addEventListener("click", () => open(true));
+    // Without clearing here, a hover just before the click leaves its
+    // 220ms timer pending; it later fires open() again on its own stale
+    // closure over this item, which can reposition the flyout against
+    // whatever the anchor's rect happens to be by then.
+    item.addEventListener("click", () => {
+      clearTimeout(startFlyoutTimer);
+      open(true);
+    });
     item.addEventListener("keydown", (event) => {
       if (!["ArrowRight", "Enter"].includes(event.key)) return;
       event.preventDefault();
+      clearTimeout(startFlyoutTimer);
       open(true);
     });
   } else {
@@ -1088,6 +1098,10 @@ const createProgramMenuItem = (definition, depth) => {
 };
 
 const openProgramSubmenu = (definitions, anchor, depth = 0) => {
+  // A detached anchor (e.g. a stale hover-timer firing after the menu
+  // already closed/rebuilt) has an all-zero getBoundingClientRect(), which
+  // positionStartFlyout would otherwise clamp to the top-left corner.
+  if (!anchor.isConnected) return;
   const host = document.getElementById("start-menu-flyouts");
   [...host.querySelectorAll(".start-program-flyout")]
     .slice(depth)

@@ -15,7 +15,7 @@ const xpSoundPaths = {
 };
 
 const playXPSound = (name) => {
-  const { volume, isMuted } = getMasterVolume();
+  const { volume, isMuted } = getSystemVolume();
   const audio = new Audio(xpSoundPaths[name]);
   audio.volume = isMuted ? 0 : Math.min(Math.max(volume, 0), 100) / 100;
   audio.play().catch(() => {});

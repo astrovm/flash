@@ -14,6 +14,12 @@ const outputDirectory = join(
   "boxedwine-runtime",
 );
 const fixedTime = new Date(2000, 0, 1);
+const windowControllerPath = join(
+  projectRoot,
+  "native",
+  "boxedwine",
+  "window-control.exe",
+);
 
 const archiveFiles = async (path: string) =>
   unzipSync(new Uint8Array(await readFile(path)));
@@ -25,10 +31,14 @@ export const buildBoxedWineRuntimeArchive = async ({
   for (const { id, packagePath } of boxedWineApplications) {
     const entries = await archiveFiles(join(projectRoot, packagePath));
     for (const [name, bytes] of Object.entries(entries)) {
-      if (name.endsWith("/") || name === "window-host.exe") continue;
+      if (name.endsWith("/")) continue;
       files[`${id}/${name}`] = [bytes, { mtime: fixedTime }];
     }
   }
+  files["boxedwine-window-control.exe"] = [
+    new Uint8Array(await readFile(windowControllerPath)),
+    { mtime: fixedTime },
+  ];
   const output = zipSync(files, { level: 9, mtime: fixedTime });
   await writeFile(outputPath, output);
   return { entries: Object.keys(files).sort(), outputBytes: output.byteLength };

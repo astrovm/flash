@@ -14,6 +14,63 @@ const getDesktopSize = () => {
   return { width: desktop.clientWidth, height: desktop.clientHeight };
 };
 
+const XP_TASKBAR_HEIGHT = 30;
+const sameWorkAreaBand = (left, right) => Math.abs(left - right) <= 1;
+
+const getVisibleWorkArea = () => {
+  let { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const viewportWidth =
+    Number(window.visualViewport?.width) || Number(window.innerWidth) || 0;
+  const viewportHeight =
+    Number(window.visualViewport?.height) || Number(window.innerHeight) || 0;
+  if (desktopWidth <= 0) desktopWidth = viewportWidth;
+  if (desktopHeight <= 0) desktopHeight = viewportHeight;
+  const measuredTaskbar = Number(
+    document.getElementById("taskbar")?.getBoundingClientRect().height,
+  );
+  const taskbarHeight =
+    measuredTaskbar > 0 && measuredTaskbar <= XP_TASKBAR_HEIGHT + 8
+      ? measuredTaskbar
+      : 0;
+  let width = desktopWidth;
+  let height = desktopHeight;
+  const alignedWidth =
+    viewportWidth > 0 && sameWorkAreaBand(desktopWidth, viewportWidth);
+  const alignedHeight =
+    viewportHeight > 0 && sameWorkAreaBand(desktopHeight, viewportHeight);
+  if (alignedWidth && alignedHeight) {
+    height = Math.max(0, height - (taskbarHeight || XP_TASKBAR_HEIGHT));
+  } else if (
+    alignedWidth &&
+    viewportHeight > 0 &&
+    viewportHeight < desktopHeight
+  ) {
+    height = Math.max(0, Math.floor(viewportHeight - taskbarHeight));
+  } else if (
+    alignedHeight &&
+    viewportWidth > 0 &&
+    viewportWidth < desktopWidth
+  ) {
+    width = Math.floor(viewportWidth);
+  } else if (
+    Number(window.visualViewport?.scale) > 1 &&
+    viewportWidth > 0 &&
+    viewportHeight > 0
+  ) {
+    // Pinch zoom shrinks both axes at once, so neither aligns with the
+    // desktop; clamp to what the reader can actually reach.
+    width = Math.min(width, Math.floor(viewportWidth));
+    height = Math.min(
+      height,
+      Math.max(0, Math.floor(viewportHeight - taskbarHeight)),
+    );
+  }
+  return {
+    width: width > 0 ? width : desktopWidth,
+    height: height > 0 ? height : desktopHeight,
+  };
+};
+
 const isWindowPlacement = (value) =>
   value &&
   typeof value === "object" &&
@@ -53,14 +110,20 @@ const persistWindowPlacement = (win) => {
   });
 };
 
-const restoreWindowPlacement = (win) => {
+const restoreWindowPlacement = (win, { restoreSize = true } = {}) => {
   const saved = getWindowPlacements()[win.gameId];
   if (!saved) return;
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
-  const width =
-    desktopWidth > 0 ? Math.min(saved.width, desktopWidth) : saved.width;
-  const height =
-    desktopHeight > 0 ? Math.min(saved.height, desktopHeight) : saved.height;
+  const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
+  const width = restoreSize
+    ? desktopWidth > 0
+      ? Math.min(saved.width, desktopWidth)
+      : saved.width
+    : parseWindowLength(win.el.style.width, win.el.offsetWidth);
+  const height = restoreSize
+    ? desktopHeight > 0
+      ? Math.min(saved.height, desktopHeight)
+      : saved.height
+    : parseWindowLength(win.el.style.height, win.el.offsetHeight);
   Object.assign(win.el.style, {
     width: `${width}px`,
     height: `${height}px`,
@@ -77,31 +140,27 @@ const restoreWindowPlacement = (win) => {
 // Keep at least part of the title bar reachable inside the work area,
 // matching how Windows XP constrains window positions.
 const clampWindowPosition = (win, left, top) => {
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
+  const width = parseWindowLength(win.el.style.width, win.el.offsetWidth);
+  const height = parseWindowLength(win.el.style.height, win.el.offsetHeight);
+  if (win.application?.window.nativeMetadata) {
+    return {
+      left: Math.min(Math.max(left, 0), Math.max(0, desktopWidth - width)),
+      top: Math.min(Math.max(top, 0), Math.max(0, desktopHeight - height)),
+    };
+  }
   return {
-    left: Math.min(Math.max(left, 60 - win.el.offsetWidth), desktopWidth - 60),
+    left: Math.min(Math.max(left, 60 - width), desktopWidth - 60),
     top: Math.min(Math.max(top, 0), desktopHeight - 28),
   };
 };
 
 const fitNativeProgramToWorkArea = (win) => {
   const preferred = win.application?.window;
-  if (!preferred?.fitToWorkArea || win.maximized) return false;
+  if (!(preferred?.fitToWorkArea || preferred?.nativeMetadata) || win.maximized)
+    return false;
 
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
-  const viewport = window.visualViewport;
-  const taskbarHeight = document
-    .getElementById("taskbar")
-    ?.getBoundingClientRect().height;
-  const visibleWidth = viewport?.width
-    ? Math.min(desktopWidth, Math.floor(viewport.width))
-    : desktopWidth;
-  const visibleHeight = viewport?.height
-    ? Math.min(
-        desktopHeight,
-        Math.max(0, Math.floor(viewport.height - (taskbarHeight || 0))),
-      )
-    : desktopHeight;
+  const { width: visibleWidth, height: visibleHeight } = getVisibleWorkArea();
   if (visibleWidth <= 0 || visibleHeight <= 0) return false;
   const actualWidth = parseWindowLength(
     win.el.style.width,
@@ -111,13 +170,7 @@ const fitNativeProgramToWorkArea = (win) => {
     win.el.style.height,
     win.el.offsetHeight || preferred.height,
   );
-  if (
-    actualWidth <= visibleWidth &&
-    actualHeight <= visibleHeight &&
-    preferred.width <= visibleWidth &&
-    preferred.height <= visibleHeight
-  ) {
-    if (!win.workAreaFitRect) return false;
+  if (win.workAreaFitRect) {
     const originalWidth = parseWindowLength(
       win.workAreaFitRect.width,
       preferred.width,
@@ -126,27 +179,63 @@ const fitNativeProgramToWorkArea = (win) => {
       win.workAreaFitRect.height,
       preferred.height,
     );
-    if (visibleWidth < originalWidth || visibleHeight < originalHeight)
-      return false;
-    Object.assign(win.el.style, win.workAreaFitRect);
-    win.workAreaFitRect = null;
-    return true;
+    if (originalWidth <= visibleWidth && originalHeight <= visibleHeight) {
+      Object.assign(win.el.style, win.workAreaFitRect);
+      win.workAreaFitRect = null;
+      return true;
+    }
+    // The original size still does not fit, so scale it again for the current
+    // work area.
+  } else if (actualWidth <= visibleWidth && actualHeight <= visibleHeight) {
+    return false;
   }
 
+  // Remembering the size measured at this exact moment (rather than the
+  // application's own stable declared size) let it capture a value already
+  // corrupted by a mid-update read. Since a metadata echo can retrigger this
+  // same capture-then-restore path on every resize confirmation, a corrupted
+  // capture becomes a new, larger "original" each cycle instead of ever
+  // converging back to the true size - unbounded growth on every echo.
   win.workAreaFitRect ||= {
     left: win.el.style.left,
     top: win.el.style.top,
-    width: `${actualWidth}px`,
-    height: `${actualHeight}px`,
+    width: `${win.nativePreferredShellSize?.width || preferred.width || actualWidth}px`,
+    height: `${win.nativePreferredShellSize?.height || preferred.height || actualHeight}px`,
     minWidth: win.el.style.minWidth,
     minHeight: win.el.style.minHeight,
   };
 
+  const preferredWidth = parseWindowLength(
+    win.workAreaFitRect.width,
+    actualWidth,
+  );
+  const preferredHeight = parseWindowLength(
+    win.workAreaFitRect.height,
+    actualHeight,
+  );
+  const caption = parseWindowLength(
+    win.el.ownerDocument.defaultView
+      ?.getComputedStyle?.(win.el)
+      ?.getPropertyValue("--boxedwine-shell-caption-height"),
+    28,
+  );
+  const preferredClientHeight = Math.max(1, preferredHeight - caption);
+  const scale = Math.min(
+    1,
+    visibleWidth / preferredWidth,
+    Math.max(1, visibleHeight - caption) / preferredClientHeight,
+  );
+  const fittedWidth = Math.max(1, Math.floor(preferredWidth * scale));
+  const fittedHeight = Math.max(
+    caption + 1,
+    Math.floor(preferredClientHeight * scale) + caption,
+  );
+
   Object.assign(win.el.style, {
     left: "0px",
     top: "0px",
-    width: `${visibleWidth}px`,
-    height: `${visibleHeight}px`,
+    width: `${fittedWidth}px`,
+    height: `${fittedHeight}px`,
     minWidth: "0px",
     minHeight: "0px",
   });
@@ -768,7 +857,10 @@ const loadIframe = (gameId, win) => {
   );
 };
 
-const focusWindow = (gameId, { notifyApplication = true } = {}) => {
+const focusWindow = (
+  gameId,
+  { notifyApplication = true, focusOwnedWindow = true } = {},
+) => {
   const win = openWindows.get(gameId);
   if (!win) return;
 
@@ -782,6 +874,7 @@ const focusWindow = (gameId, { notifyApplication = true } = {}) => {
   openWindows.forEach((w, id) => {
     w.el.classList.toggle("active", id === gameId);
   });
+  if (focusOwnedWindow) win.focusOwnedWindow?.();
 
   applyFocusVolumes();
   syncWindowVolumeUI(win);
@@ -829,6 +922,7 @@ const minimizeWindow = (gameId, { notifyApplication = true } = {}) => {
   if (notifyApplication && win.mountedApplication?.minimize?.() === false)
     return;
   win.minimized = true;
+  win.setOwnedWindowsVisible?.(false);
   const taskButton = document.querySelector(
     `.task-button[data-game="${gameId}"]`,
   );
@@ -875,6 +969,7 @@ const restoreWindow = (gameId, { notifyApplication = true } = {}) => {
     return;
   win.minimized = false;
   win.el.style.display = "flex";
+  win.setOwnedWindowsVisible?.(true);
   win.el.animate(
     [
       { transform: "scale(0.92)", opacity: 0.45 },
@@ -888,6 +983,7 @@ const minimizeAllWindows = () => {
   openWindows.forEach((win) => {
     win.minimized = true;
     win.el.style.display = "none";
+    win.setOwnedWindowsVisible?.(false);
   });
   focusedGameId = null;
   applyFocusVolumes();
@@ -1009,7 +1105,10 @@ const closeGameWindow = (
 };
 
 const wireDrag = (win) => {
-  restoreWindowPlacement(win);
+  // Native windows need their first metadata before a stored size can be
+  // validated. Applying it here can resize the native window to stale or
+  // corrupted geometry before its real default size and capabilities arrive.
+  if (!win.application?.window.nativeMetadata) restoreWindowPlacement(win);
   const bar = win.el.querySelector(".title-bar");
   const titleIcon = bar.querySelector(".title-icon");
 
@@ -1179,6 +1278,9 @@ const wireResize = (win) => {
       e.preventDefault();
 
       const direction = handle.dataset.dir;
+      // Native windows echo their new client size back as metadata; ignore it
+      // while dragging so the frame does not fight the pointer.
+      win.resizing = true;
       const start = {
         x: e.clientX,
         y: e.clientY,
@@ -1216,6 +1318,7 @@ const wireResize = (win) => {
           nextPointer = { x: ev.clientX, y: ev.clientY };
         }
         updateSize();
+        win.resizing = false;
         persistWindowPlacement(win);
         win.mountedApplication?.bounds?.(
           win.el.offsetLeft,

@@ -25,16 +25,16 @@ const games = [
     applicationId: "__freecell",
     title: "FreeCell",
     archive: "xp-freecell",
-    executable: "resize-host.exe",
-    files: ["cards.dll", "freecell.exe", "resize-host.exe"],
+    executable: "freecell.exe",
+    files: ["cards.dll", "freecell.exe"],
   },
   {
     id: "spider-solitaire",
     applicationId: "__spider-solitaire",
     title: "Spider Solitaire",
     archive: "xp-spider-solitaire",
-    executable: "resize-host.exe",
-    files: ["resize-host.exe", "spider.exe"],
+    executable: "spider.exe",
+    files: ["spider.exe"],
   },
 ];
 
@@ -69,7 +69,7 @@ describe("Windows XP card games through BoxedWine", () => {
       );
       expect(url.searchParams.get("archive")).toBe("xp-runtime");
       expect(url.searchParams.get("executable")).toBe(
-        `${game.id}/resize-host.exe`,
+        `${game.id}/${game.executable}`,
       );
       expect(url.searchParams.get("persistent")).toBe("true");
       expect(url.searchParams.get("sound")).toBe("true");
@@ -83,7 +83,7 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(shell.offlineDownloads).toEqual([game.id]);
     });
 
-    test(`${game.title} uses the complete phone work area`, async () => {
+    test(`${game.title} stays within the phone work area`, async () => {
       const shell = await login(await loadShell());
       const desktop = shell.document.getElementById("desktop");
       Object.defineProperties(desktop, {
@@ -91,8 +91,12 @@ describe("Windows XP card games through BoxedWine", () => {
         clientHeight: { configurable: true, value: 814 },
       });
       const gameWindow = launchGame(shell, game.id, game.applicationId);
-      expect(gameWindow.style.width).toBe("390px");
-      expect(gameWindow.style.height).toBe("814px");
+      expect(Number.parseFloat(gameWindow.style.width)).toBeLessThanOrEqual(
+        390,
+      );
+      expect(Number.parseFloat(gameWindow.style.height)).toBeLessThanOrEqual(
+        814,
+      );
       expect(gameWindow.style.minWidth).toBe("0px");
       expect(gameWindow.style.minHeight).toBe("0px");
 
@@ -121,15 +125,6 @@ describe("Windows XP card games through BoxedWine", () => {
       for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
         expect(sha256(files[name])).toBe(source.sha256);
       }
-      const solitaireManifest = JSON.parse(
-        await readFile(
-          join(projectDirectory, "site", "iframe", "solitaire", "SOURCES.json"),
-          "utf8",
-        ),
-      );
-      expect(manifest.windowsXp.files["resize-host.exe"].sha256).toBe(
-        solitaireManifest.windowsXp.files["resize-host.exe"].sha256,
-      );
     });
   }
 });

@@ -1,15 +1,17 @@
 export interface BoxedWineApplication {
   readonly id: string;
+  readonly title: string;
+  readonly icon: string;
   readonly executable: string;
   readonly packagePath: string;
-  readonly processExecutables: readonly string[];
 }
 
 export interface BoxedWineApplicationDefinition {
   id: string;
+  title: string;
+  icon: string;
   executable: string;
   packagePath: string;
-  processExecutables?: readonly string[];
 }
 
 export function validateBoxedWineApplications(

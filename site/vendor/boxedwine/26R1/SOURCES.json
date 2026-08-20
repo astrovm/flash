@@ -8,6 +8,7 @@
   "runtimeUrl": "https://boxedwine.org/v/26R1/wine11/st/",
   "build": {
     "compiler": "Emscripten 6.0.6",
+    "container": "docker.io/emscripten/emsdk:6.0.6@sha256:e70c319784885fc4740761e3d473dbfa5bf092c5b55b6d08f41f7b2c9248c4a4",
     "command": "make -j1 BUILD_DIR=Build/Release SHELL_FILE=shell.html EXTRA_CPP_FLAGS=",
     "normalizeCommand": "perl -pi -e 's/[ \\t]+$//' Build/Release/boxedwine.js",
     "patches": [
@@ -17,15 +18,23 @@
       "BOXEDWINE-WINDOW-ACTIVATION.patch",
       "BOXEDWINE-WINDOW-FOCUS.patch",
       "BOXEDWINE-KEYBOARD-INPUT.patch",
-      "BOXEDWINE-REPRODUCIBLE-BUILD.patch"
+      "BOXEDWINE-REPRODUCIBLE-BUILD.patch",
+      "BOXEDWINE-LAUNCH-TOKEN.patch",
+      "BOXEDWINE-WINDOW-CONTROL.patch"
     ],
+    "patchSha256": {
+      "BOXEDWINE-WINDOW-BRIDGE.patch": "38cd616188b1f284e7aeb7140868dc81cb764eb4b6537936977522bf85685185",
+      "BOXEDWINE-WINDOW-ACTIVATION.patch": "2a2c80741fc14242b203280df4af75ac6e3fd315496d8105b484f2877861ac1f",
+      "BOXEDWINE-LAUNCH-TOKEN.patch": "f11e3513b0e15db476a073a177914edae6e48b1901c47f8f9a99a971f3c1d7fd",
+      "BOXEDWINE-WINDOW-CONTROL.patch": "bc6edf8427288004aef48ff253fb0004bab54b21db5844576eec1a5b8e318457"
+    },
     "filesystemCommand": "bun tools/build-boxedwine-xp-filesystem.ts"
   },
   "files": {
     "boxedwine-shell.js": "ee18b4cf9812c5dd7d16b2708d9c33080cb1dc16dc757f79a2f11ac6b7802490",
     "boxedwine-startup.js": "276ca5a89cfc69b46b34051207bbe7590b7812fe30fd53cf01b9e2b3a1057aa0",
-    "boxedwine.js": "1c736afad0191519b45f556055e482778cfa3c39efab1868c3c7b17e4a35bce3",
-    "boxedwine.wasm": "3d1b13227e89418dcf9cbe8cf5920430543e3a0cb94ae20d8d44b1b2467c1c98",
+    "boxedwine.js": "2fffcd60bf440c79370b5bbe1149126b7dcf93447bf92c1226b7254bffe2272d",
+    "boxedwine.wasm": "a8e6232d9b7726a146315707d145e6da60ef98895a366958d5ac6cc9ef5442f1",
     "boxedwine.zip": "5d251b6d53cad1c31de254c5285603d193f91bc3129b9c9ba39c4cc65a24edb3",
     "xp-accessories-files.json": "a7ce518544382d5a44d20b9139c736152dfca9fadb54ccc6fb09c13a11664a5a",
     "xp-accessories.zip": "e00ef715adf08ea064e95127f947104fded64b71ef8b138613afab3126c35413"

@@ -12,7 +12,6 @@ import {
   loadShell,
   login,
 } from "./helpers/shell-harness";
-import { installBoxedWineResizeBridge } from "../site/apps/core/boxedwine-resize.js";
 
 const require = createRequire(import.meta.url);
 const { unzipSync } = require("fflate");
@@ -59,12 +58,33 @@ const sendNativeWindow = (shell, detail, runtimeWindow) => {
   shell.window.dispatchEvent(event);
 };
 
+// Happy DOM fires an error on the runtime iframe, which would restart the
+// runtime and drop its native windows; suppress it so lifecycle messages that
+// arrive after the first frame still reach the shell.
+const silenceRuntimeFrameErrors = (shell) => {
+  const addFrameListener =
+    shell.window.HTMLIFrameElement.prototype.addEventListener;
+  shell.window.HTMLIFrameElement.prototype.addEventListener = function (
+    type,
+    ...arguments_
+  ) {
+    if (type === "error") return;
+    return addFrameListener.call(this, type, ...arguments_);
+  };
+};
+
+const nativeLaunchToken = (shell) =>
+  new URL(
+    shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+  ).searchParams.get("launchToken");
+
 const showNativeCalculator = (
   shell,
   id = 41,
   runtimeWindow = shell.document.querySelector(
     ".boxedwine-shared-runtime-frame",
   ).contentWindow,
+  { includeFrame = true, capabilities = {} } = {},
 ) => {
   runtimeWindow.__boxedwineTestFrames ||= new Map();
   runtimeWindow.BoxedWineFrames ||= {
@@ -74,6 +94,9 @@ const showNativeCalculator = (
     },
     setProcessVisible() {},
   };
+  const launchToken = new URL(
+    shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+  ).searchParams.get("launchToken");
   sendNativeWindow(
     shell,
     {
@@ -81,10 +104,15 @@ const showNativeCalculator = (
       id,
       parentId: 1,
       processId: 10,
+      launchToken,
       x: 0,
       y: 0,
       width: 260,
       height: 260,
+      canResize: false,
+      canMaximize: false,
+      canMinimize: true,
+      ...capabilities,
     },
     runtimeWindow,
   );
@@ -94,6 +122,35 @@ const showNativeCalculator = (
     runtimeWindow,
   );
   sendNativeWindow(shell, { type: "mapped", id }, runtimeWindow);
+  if (includeFrame)
+    sendNativeWindow(
+      shell,
+      {
+        type: "metadata",
+        lifecycleType: "bounds",
+        id,
+        parentId: 1,
+        processId: 10,
+        launchToken,
+        outerX: 0,
+        outerY: 0,
+        outerWidth: 260,
+        outerHeight: 260,
+        clientWidth: 260,
+        clientHeight: 209,
+        frameLeft: 0,
+        frameTop: 51,
+        menuHeight: 23,
+        frameRight: 0,
+        frameBottom: 0,
+        canResize: false,
+        canMaximize: false,
+        canMinimize: true,
+        ...capabilities,
+        win32Metrics: true,
+      },
+      runtimeWindow,
+    );
   const generation =
     (runtimeWindow.__boxedwineTestFrames.get(id)?.generation || 0) + 1;
   runtimeWindow.__boxedwineTestFrames.set(id, {
@@ -117,6 +174,8 @@ describe("original Windows XP Calculator through BoxedWine", () => {
       ".boxedwine-shared-runtime-frame",
     );
     const url = new URL(frame.src);
+    showNativeCalculator(shell);
+    await flushShell();
 
     expect(calculator.style.width).toBe("260px");
     expect(calculator.style.height).toBe("260px");
@@ -136,6 +195,91 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(url.searchParams.get("trace")).toBe("false");
   });
 
+  test("waits for native frame metrics instead of exposing Wine chrome", async () => {
+    const { shell, calculator } = await launchCalculator();
+    showNativeCalculator(shell, 41, undefined, { includeFrame: false });
+    await flushShell();
+
+    expect(
+      calculator.querySelector(".boxedwine-shared-loading"),
+    ).not.toBeNull();
+    expect(calculator.querySelector(".boxedwine-native-window")).toBeNull();
+  });
+
+  test("gives resizable native windows a generic content-safe launch area", async () => {
+    const { shell, calculator } = await launchCalculator();
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: { canResize: true, canMaximize: true },
+    });
+    const launchToken = nativeLaunchToken(shell);
+    await flushShell();
+
+    expect(calculator.style.width).toBe("768px");
+    expect(calculator.style.height).toBe("560px");
+    expect(calculator.querySelector(".resize-handle").hidden).toBeFalse();
+    expect(calculator.querySelector(".maximize-btn").disabled).toBeFalse();
+
+    // A controller poll can still contain the old native size while the shell
+    // resize command is in flight. That stale echo must not collapse the app.
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken,
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 160,
+      outerHeight: 48,
+      clientWidth: 160,
+      clientHeight: 20,
+      frameTop: 28,
+      canResize: true,
+      canMaximize: true,
+      canMinimize: true,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("768px");
+    expect(calculator.style.height).toBe("560px");
+  });
+
+  test("uses a landscape runtime and proportional shell on a phone", async () => {
+    const shell = await login(await loadShell());
+    const desktop = shell.document.getElementById("desktop");
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 390 },
+      clientHeight: { configurable: true, value: 814 },
+    });
+    Object.defineProperties(shell.window, {
+      innerWidth: { configurable: true, value: 390 },
+      innerHeight: { configurable: true, value: 844 },
+    });
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: {
+        canResize: true,
+        canMaximize: true,
+        outerWidth: 600,
+        outerHeight: 428,
+        clientWidth: 600,
+        clientHeight: 400,
+        frameTop: 28,
+        menuHeight: 0,
+      },
+    });
+    await flushShell();
+
+    const runtimeUrl = new URL(
+      shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+    );
+    expect(runtimeUrl.searchParams.get("resolution")).toBe("1086x814");
+    expect(calculator.style.width).toBe("390px");
+    expect(calculator.style.height).toBe("310px");
+    expect(calculator.style.height).not.toBe("814px");
+  });
+
   test("reuses one persistent runtime for repeated Calculator launches", async () => {
     const { shell } = await launchCalculator();
     shell.document.getElementById("start-button").click();
@@ -150,6 +294,219 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-app-host"),
     ).toHaveLength(1);
+  });
+
+  test("restores and clamps saved native placement before applying defaults", async () => {
+    const shell = await login(await loadShell());
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: {
+          left: 4000,
+          top: 3000,
+          width: 260,
+          height: 260,
+        },
+      }),
+    );
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+
+    expect(calculator.style.width).toBe("260px");
+    expect(calculator.style.height).toBe("260px");
+    expect(Number.parseFloat(calculator.style.left)).toBeLessThanOrEqual(764);
+    expect(Number.parseFloat(calculator.style.top)).toBeLessThanOrEqual(478);
+  });
+
+  test("repairs an unusably small saved size from native launch metadata", async () => {
+    const shell = await login(await loadShell());
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: { left: 40, top: 30, width: 170, height: 48 },
+      }),
+    );
+    const calculator = openCalculator(shell);
+
+    // Native placement is deferred until metadata supplies capabilities, so a
+    // stale placement cannot resize the process before its default is known.
+    expect(calculator.style.width).toBe("640px");
+    expect(calculator.style.height).toBe("470px");
+
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: { canResize: true, canMaximize: true },
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("768px");
+    expect(calculator.style.height).toBe("560px");
+    expect(calculator.style.left).toBe("40px");
+    expect(calculator.style.top).toBe("30px");
+  });
+
+  test("keeps a usable saved size for a resizable native window", async () => {
+    const shell = await login(await loadShell());
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: { left: 24, top: 18, width: 700, height: 500 },
+      }),
+    );
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: { canResize: true, canMaximize: true },
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("700px");
+    expect(calculator.style.height).toBe("500px");
+    expect(calculator.style.left).toBe("24px");
+    expect(calculator.style.top).toBe("18px");
+  });
+
+  test("ignores transient 1x1 startup metadata", async () => {
+    const { shell, calculator } = await launchCalculator();
+    showNativeCalculator(shell, 41, undefined, { includeFrame: false });
+    const launchToken = nativeLaunchToken(shell);
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken,
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 1,
+      outerHeight: 1,
+      clientWidth: 1,
+      clientHeight: 1,
+      canResize: false,
+      canMaximize: false,
+      canMinimize: true,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("640px");
+    expect(calculator.style.height).toBe("470px");
+  });
+
+  test("follows the native window when Scientific mode resizes it", async () => {
+    const shell = await login(await loadShell());
+    silenceRuntimeFrameErrors(shell);
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+    expect(calculator.style.width).toBe("260px");
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken: nativeLaunchToken(shell),
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 544,
+      outerHeight: 348,
+      clientWidth: 544,
+      clientHeight: 297,
+      frameTop: 51,
+      menuHeight: 23,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("544px");
+    expect(calculator.style.height).toBe("348px");
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken: nativeLaunchToken(shell),
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 1,
+      outerHeight: 1,
+      clientWidth: 1,
+      clientHeight: 1,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("544px");
+    expect(calculator.style.height).toBe("348px");
+  });
+
+  test("keeps following native sizes after restoring a saved placement", async () => {
+    const shell = await login(await loadShell());
+    silenceRuntimeFrameErrors(shell);
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: { left: 20, top: 20, width: 260, height: 260 },
+      }),
+    );
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken: nativeLaunchToken(shell),
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 544,
+      outerHeight: 348,
+      clientWidth: 544,
+      clientHeight: 297,
+      frameTop: 51,
+      menuHeight: 23,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("544px");
+    expect(calculator.style.height).toBe("348px");
+  });
+
+  test("ignores metadata from a second top-level window of the same launch", async () => {
+    const shell = await login(await loadShell());
+    silenceRuntimeFrameErrors(shell);
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell);
+    await flushShell();
+    const launchToken = nativeLaunchToken(shell);
+
+    sendNativeWindow(shell, {
+      type: "created",
+      id: 42,
+      parentId: 1,
+      processId: 11,
+      launchToken,
+      x: 0,
+      y: 0,
+      width: 900,
+      height: 700,
+      clientWidth: 900,
+      clientHeight: 672,
+      frameTop: 28,
+    });
+    sendNativeWindow(shell, { type: "title", id: 42, title: "Helper" });
+    sendNativeWindow(shell, { type: "mapped", id: 42 });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("260px");
+    expect(calculator.style.height).toBe("260px");
+    expect(calculator.querySelector(".title-text").textContent).toBe(
+      "Calculator",
+    );
   });
 
   test("keeps the runtime alive without relaunching a closed application", async () => {
@@ -194,6 +551,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
         value: {
           type: "boxedwine-process-terminated",
           appId: "calculator",
+          launchToken: new URL(
+            shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+          ).searchParams.get("launchToken"),
           processId: 10,
           error: 0,
         },
@@ -264,7 +624,7 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     ).not.toBeNull();
   });
 
-  test("packages the original executable, complete help, and window host", async () => {
+  test("packages the original executable and complete help", async () => {
     const manifest = JSON.parse(
       await readFile(join(calculatorDirectory, "SOURCES.json"), "utf8"),
     );
@@ -275,69 +635,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
 
     expect(packageContent.byteLength).toBe(manifest.windowsXp.package.bytes);
     expect(sha256(packageContent)).toBe(manifest.windowsXp.package.sha256);
-    expect(Object.keys(files).sort()).toEqual([
-      "calc.chm",
-      "calc.exe",
-      "window-host.exe",
-    ]);
+    expect(Object.keys(files).sort()).toEqual(["calc.chm", "calc.exe"]);
     for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
       expect(sha256(files[name])).toBe(source.sha256);
     }
-  });
-
-  test("publishes native Standard and Scientific window sizes to the shell", () => {
-    let pollWindowSize;
-    const posted = [];
-    const startupReports = [];
-    const runnerWindow = {
-      location: { origin: "https://flash.test" },
-      BoxedWineStartup: {
-        report(stage, detail) {
-          startupReports.push({ stage, ...detail });
-        },
-      },
-      parent: {
-        postMessage(message, origin) {
-          posted.push({ message, origin });
-        },
-      },
-      addEventListener() {},
-      removeEventListener() {},
-      setInterval(callback) {
-        pollWindowSize = callback;
-        return 1;
-      },
-      clearInterval() {},
-    };
-    let nativeSize = "260 260";
-    const module = {
-      _boxedwine_resize_screen() {},
-      FS: {
-        readFile() {
-          return nativeSize;
-        },
-        writeFile() {},
-        unlink() {},
-        rename() {},
-      },
-    };
-    installBoxedWineResizeBridge(runnerWindow, module);
-    module.onRuntimeInitialized();
-
-    pollWindowSize();
-    expect(posted.at(-1)).toEqual({
-      message: { type: "boxedwine-window-size", width: 260, height: 260 },
-      origin: "https://flash.test",
-    });
-
-    nativeSize = "480 260";
-    pollWindowSize();
-    expect(posted.at(-1)).toEqual({
-      message: { type: "boxedwine-window-size", width: 480, height: 260 },
-      origin: "https://flash.test",
-    });
-    expect(startupReports).toEqual([
-      { stage: "window-ready", width: 260, height: 260 },
-    ]);
   });
 });

@@ -62,6 +62,7 @@
             "executable",
             /^(?:[a-z0-9_. -]+\/)*[a-z0-9_. -]+\.exe$/i,
           ),
+          launchToken: value("launchToken", /^\d{1,10}$/),
           resolution: value("resolution", /^\d{3,4}x\d{3,4}$/),
           sound: value("sound", /^(?:true|false)$/),
           cache: value("cache", /^(?:true|false)$/),
@@ -120,18 +121,19 @@
           `trace=${runner.trace}`,
         ].join("&");
         window.BoxedWinePersistentRuntime = runner.persistent;
+        window.BoxedWineInitialLaunchToken = runner.launchToken;
         if (runner.persistent) Config.storageMode = "MEMORY";
         delete window.BoxedWineRunnerConfig;
       })();
 
     </script>
     <script type="module">
-      import { installBoxedWineResizeBridge } from "../../../apps/core/boxedwine-resize.js";
       import { installBoxedWineProcessHostBridge } from "../../../apps/core/boxedwine-process-host.js";
+      import { installBoxedWineWindowControlBridge } from "../../../apps/core/boxedwine-window-control.js";
       import { installBoxedWineWindowBridge } from "../../../apps/core/boxedwine-window-bridge.js";
 
-      installBoxedWineResizeBridge(window, Module);
       if (window.BoxedWinePersistentRuntime) {
+        installBoxedWineWindowControlBridge(window, Module);
         installBoxedWineProcessHostBridge(window, Module);
         installBoxedWineWindowBridge(window, Module);
       }

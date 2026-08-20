@@ -689,16 +689,6 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
     sans-serif;
 }
 
-.xp-calculator-window {
-  min-width: min(260px, calc(100% - 8px));
-  min-height: min(260px, calc(100% - 8px));
-}
-
-.xp-calculator-window .window-content,
-.xp-calculator-window .boxedwine-app-host {
-  background: #ece9d8;
-}
-
 .xp-command-prompt-window {
   min-width: min(320px, calc(100% - 8px));
   min-height: min(180px, calc(100% - 8px));
@@ -863,96 +853,6 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
 .xp-minesweeper-board button[data-count="3"],
 .xp-minesweeper-board button.mine {
   color: #ff0000;
-}
-
-.xp-freecell {
-  padding: 0;
-  overflow: hidden;
-  background: #087b3d;
-}
-
-.xp-freecell-menu {
-  display: flex;
-  height: 24px;
-  align-items: center;
-  border-bottom: 1px solid #808080;
-  background: #ece9d8;
-}
-
-.xp-freecell-menu button {
-  height: 22px;
-  padding: 1px 8px;
-  border: 0;
-  background: transparent;
-}
-
-.xp-freecell-menu span {
-  margin-left: auto;
-  padding-right: 8px;
-}
-
-.xp-freecell-board {
-  display: grid;
-  height: calc(100% - 24px);
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 105px 1fr;
-  gap: 12px;
-  box-sizing: border-box;
-  padding: 12px;
-}
-
-.xp-freecell-cells,
-.xp-freecell-foundations {
-  display: grid;
-  grid-template-columns: repeat(4, 70px);
-  gap: 8px;
-}
-
-.xp-freecell-foundations {
-  justify-content: end;
-}
-
-.xp-freecell-cells button,
-.xp-freecell-foundations button,
-.xp-freecell-cascade button {
-  box-sizing: border-box;
-  width: 70px;
-  height: 96px;
-  min-width: 0;
-  padding: 5px;
-  border: 1px solid #111;
-  border-radius: 5px;
-}
-
-.xp-freecell-cells .empty,
-.xp-freecell-foundations .empty {
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(0, 0, 0, 0.08);
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 32px;
-}
-
-.xp-freecell-cascades {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(8, 70px);
-  justify-content: space-between;
-}
-
-.xp-freecell-cascade {
-  position: relative;
-  min-height: 290px;
-}
-
-.xp-freecell-cascade button {
-  position: absolute;
-  top: calc(var(--card-index) * 32px);
-  left: 0;
-}
-
-.xp-freecell .selected {
-  outline: 3px solid #ffd800;
-  outline-offset: -4px;
 }
 
 .xp-hyperterminal-connect {

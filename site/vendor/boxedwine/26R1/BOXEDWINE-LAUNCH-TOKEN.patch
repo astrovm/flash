@@ -1,0 +1,57 @@
+diff --git a/source/kernel/kprocess.cpp b/source/kernel/kprocess.cpp
+index f405dde..23a142e 100644
+--- a/source/kernel/kprocess.cpp
++++ b/source/kernel/kprocess.cpp
+@@ -28,6 +28,7 @@
+ #include "../io/fsmemopennode.h"
+ #include "../io/fsfilenode.h"
+ #include "../x11/x11.h"
++#include "knativewindowbridge.h"
+ #include "kunixsocket.h"
+ 
+ #include <stdlib.h>
+@@ -716,6 +717,31 @@ U32 KProcess::execve(KThread* thread, BString path, std::vector<BString>& args,
+     std::vector<BString> cmdLine;
+ 
+     this->systemProcess = false;
++#ifdef __EMSCRIPTEN__
++    const BString launchTokenPrefix = B("BOXEDWINE_LAUNCH_TOKEN=");
++    for (const auto& environment : envs) {
++        if (!environment.startsWith(launchTokenPrefix)) continue;
++        U32 launchToken = 0;
++        bool valid = environment.length() > launchTokenPrefix.length();
++        for (int i = launchTokenPrefix.length(); valid && i < environment.length(); ++i) {
++            const char value = environment.charAt(i);
++            if (value < '0' || value > '9') {
++                valid = false;
++                break;
++            }
++            const U32 digit = value - '0';
++            if (launchToken > (0xffffffffu - digit) / 10u) {
++                valid = false;
++                break;
++            }
++            launchToken = launchToken * 10u + digit;
++        }
++        if (valid && launchToken) {
++            boxedwineNativeRegisterLaunch(this->id, launchToken);
++        }
++        break;
++    }
++#endif
+     for (auto& s : args) {
+         if (s.endsWith("wineboot.exe", true)) {
+             this->systemProcess = true;
+diff --git a/source/sdl/emscripten/mainloop.cpp b/source/sdl/emscripten/mainloop.cpp
+index fa97b32..b7820cd 100644
+--- a/source/sdl/emscripten/mainloop.cpp
++++ b/source/sdl/emscripten/mainloop.cpp
+@@ -114,6 +114,8 @@ static void applyPendingProcessChanges() {
+         B("USER=username"), B("PWD=/home/username/.wine/dosdevices/c:/files"),
+         B("DISPLAY=:0"), B("WINE_FAKE_WAIT_VBLANK=60"),
+         B("PATH=/bin:/usr/bin:/usr/local/bin")};
++    environment.push_back(
++        B("BOXEDWINE_LAUNCH_TOKEN=") + BString::valueOf(launchToken));
+     KProcessPtr process = KProcess::create();
+     KThread* thread = process->startProcess(
+         B("/home/username/.wine/dosdevices/c:/files"), args, environment,

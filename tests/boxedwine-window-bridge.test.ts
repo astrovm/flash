@@ -77,6 +77,36 @@ describe("BoxedWine window bridge", () => {
     expect(messages[0].message.window.id).toBe(41);
     expect(messages[0].message.window).not.toHaveProperty("rgba");
     expect(messages[0].transfer).toEqual([]);
+    listeners.get("boxedwine-native-window")({
+      detail: {
+        type: "metadata",
+        lifecycleType: "mapped",
+        id: 41,
+        processId: 202,
+        parentProcessId: 101,
+        launchToken: 4242,
+        outerWidth: 640,
+        outerHeight: 480,
+        clientWidth: 632,
+        clientHeight: 444,
+        frameLeft: 4,
+        frameTop: 32,
+        frameRight: 4,
+        frameBottom: 4,
+        canResize: true,
+        canMaximize: true,
+        canMinimize: true,
+      },
+    });
+    expect(messages[1].message.window).toMatchObject({
+      type: "metadata",
+      processId: 202,
+      parentProcessId: 101,
+      launchToken: 4242,
+      outerWidth: 640,
+      clientHeight: 444,
+      canResize: true,
+    });
 
     listeners.get("message")({
       source: parent,
@@ -144,7 +174,10 @@ describe("BoxedWine window bridge", () => {
       },
     });
     expect(messages).toHaveLength(messagesBeforeMove);
-    expect(commands).toEqual([[41, 0, 0, 0, 0, 0]]);
+    expect(commands).toEqual([
+      [41, 0, 0, 0, 0, 0],
+      [41, 5, 300, 200, 593, 437],
+    ]);
 
     listeners.get("message")({
       source: parent,
@@ -160,16 +193,14 @@ describe("BoxedWine window bridge", () => {
         sourceHeight: 437,
       },
     });
-    expect(messages.at(-1).message).toEqual({
-      type: "boxedwine-framebuffer-resize",
-      appId: "solitaire",
-      width: 1280,
-      height: 690,
-      baseWidth: 593,
-      baseHeight: 437,
-    });
+    expect(
+      messages.some(
+        (entry) => entry.message?.type === "boxedwine-framebuffer-resize",
+      ),
+    ).toBe(false);
     expect(commands).toEqual([
       [41, 0, 0, 0, 0, 0],
+      [41, 5, 300, 200, 593, 437],
       [41, 3, 0, 0, 1280, 690],
     ]);
 
@@ -401,10 +432,19 @@ describe("BoxedWine window bridge", () => {
         id: 41,
         parentId: 1,
         processId: 9,
+        launchToken: 4242,
         x: 100,
         y: 50,
         width: 260,
         height: 260,
+        frameTop: 51,
+        menuHeight: 23,
+        clientWidth: 260,
+        clientHeight: 209,
+        win32Metrics: true,
+        canResize: false,
+        canMaximize: false,
+        canMinimize: true,
       });
       send({ type: "title", id: 41, title: "Calculator" });
       send({ type: "mapped", id: 41 });
@@ -429,10 +469,86 @@ describe("BoxedWine window bridge", () => {
       expect(canvas.hidden).toBeTrue();
       expect(surface.attach(41, target)).toBeTrue();
       expect(surface.show(41)).toBeTrue();
+      flushRenders();
       expect(canvas.style.left).toBe("0px");
-      expect(canvas.style.width).toBe("260px");
-      expect(canvas.style.height).toBe("232px");
-      expect(canvas.style.objectFit).toBe("none");
+      expect(canvas.width).toBe(260);
+      expect(canvas.height).toBe(232);
+      expect(canvas.style.width).toBe("100%");
+      expect(canvas.style.height).toBe("100%");
+      expect(canvas.style.objectFit).toBe("contain");
+      expect(canvas.draws.some(([, x, y]) => x === 0 && y === -28)).toBeTrue();
+
+      send({
+        type: "created",
+        id: 51,
+        parentId: 1,
+        processId: 11,
+        launchToken: 99,
+        x: 0,
+        y: 0,
+        width: 260,
+        height: 260,
+        canMinimize: true,
+        canMaximize: false,
+        canResize: false,
+      });
+      send({ type: "title", id: 51, title: "Calculator" });
+      send({ type: "mapped", id: 51 });
+      send({
+        type: "frame",
+        id: 51,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      flushRenders();
+      expect(firstFrames).toHaveLength(1);
+      send({
+        type: "metadata",
+        lifecycleType: "bounds",
+        id: 51,
+        outerX: 0,
+        outerY: 0,
+        outerWidth: 260,
+        outerHeight: 260,
+        clientWidth: 260,
+        clientHeight: 232,
+        frameTop: 28,
+        win32Metrics: true,
+      });
+      flushRenders();
+      expect(firstFrames).toHaveLength(2);
+      expect(surface.attach(51, target)).toBeTrue();
+      const cropped = surface.getCanvas(51);
+      expect(cropped.width).toBe(260);
+      expect(cropped.height).toBe(232);
+      expect(cropped.dataset.boxedwineLaunchToken).toBe("99");
+
+      send({
+        type: "created",
+        id: 52,
+        parentId: 1,
+        processId: 12,
+        launchToken: -2020735226,
+        x: 0,
+        y: 0,
+        width: 260,
+        height: 260,
+        canMinimize: true,
+      });
+      send({ type: "title", id: 52, title: "Solitaire" });
+      send({ type: "mapped", id: 52 });
+      send({
+        type: "frame",
+        id: 52,
+        width: 260,
+        height: 260,
+        rgba: new Uint8ClampedArray(260 * 260 * 4),
+      });
+      flushRenders();
+      expect(surface.getCanvas(52).dataset.boxedwineLaunchToken).toBe(
+        "2274232070",
+      );
       expect(canvas.width).toBe(260);
       expect(canvas.height).toBe(232);
       expect(canvas.hidden).toBeFalse();
@@ -523,8 +639,8 @@ describe("BoxedWine window bridge", () => {
         id: 43,
         parentId: 1,
         processId: 9,
-        x: 4,
-        y: 49,
+        x: 104,
+        y: 99,
         width: 100,
         height: 60,
       });
@@ -552,10 +668,14 @@ describe("BoxedWine window bridge", () => {
         id: 44,
         parentId: 1,
         processId: 9,
-        x: 27,
-        y: 101,
+        x: 127,
+        y: 151,
         width: 400,
         height: 336,
+        frameTop: 28,
+        clientWidth: 400,
+        clientHeight: 308,
+        win32Metrics: true,
       });
       send({ type: "owner", id: 44, parentId: 41 });
       send({ type: "title", id: 44, title: "About Calculator" });
@@ -640,7 +760,6 @@ describe("BoxedWine window bridge", () => {
       for (const action of [
         "activate",
         "minimize",
-        "maximize",
         "restore",
         "bounds",
         "close",
@@ -650,6 +769,10 @@ describe("BoxedWine window bridge", () => {
         ).toBeTrue();
         expect(runtimeMessages.at(-1).message.action).toBe(action);
       }
+      expect(
+        surface.command(41, "maximize", { width: 640, height: 480 }),
+      ).toBeFalse();
+      expect(runtimeMessages.at(-1).message.action).toBe("close");
 
       send({ type: "unmapped", id: 41 });
       expect(canvas.hidden).toBeTrue();
