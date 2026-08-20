@@ -639,6 +639,58 @@ test("system tray volume controls persist volume and mute state", async () => {
   );
 });
 
+test("game volume changes remain scaled by the system volume", async () => {
+  const shell = await login(
+    await loadShell({ initialStorage: { volume: "40" } }),
+  );
+  shell.document.getElementById("start-button")!.click();
+  shell.document.getElementById("all-programs-button")!.click();
+  const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+  flyouts
+    .querySelector<HTMLButtonElement>('[data-program-id="games"]')!
+    .click();
+  const adventure = [
+    ...flyouts.querySelectorAll<HTMLButtonElement>(".start-program-folder"),
+  ].find((button) => button.textContent?.trim().startsWith("Adventure"))!;
+  adventure.click();
+  const game = [
+    ...flyouts.querySelectorAll<HTMLButtonElement>(".sm-game"),
+  ].find((button) => button.textContent?.includes("Inside the Firewall"))!;
+  game.click();
+  await flushShell();
+
+  const gameWindow = shell.document.querySelector<HTMLElement>(
+    '.xp-window[data-game="inside-the-firewall"]',
+  )!;
+  const iframe = gameWindow.querySelector<HTMLIFrameElement>("iframe")!;
+  const appliedVolumes: number[] = [];
+  iframe.contentWindow!.postMessage = ((message: unknown) => {
+    if (
+      message &&
+      typeof message === "object" &&
+      "type" in message &&
+      message.type === "setVolume" &&
+      "volume" in message &&
+      typeof message.volume === "number"
+    ) {
+      appliedVolumes.push(message.volume);
+    }
+  }) as typeof iframe.contentWindow.postMessage;
+
+  const gameVolume = gameWindow.querySelector<HTMLInputElement>(
+    ".game-volume-slider",
+  )!;
+  gameVolume.value = "50";
+  gameVolume.dispatchEvent(new shell.window.Event("input", { bubbles: true }));
+  expect(appliedVolumes.at(-1)).toBe(0.2);
+
+  const mute = gameWindow.querySelector<HTMLButtonElement>(".volume-btn")!;
+  mute.click();
+  expect(appliedVolumes.at(-1)).toBe(0);
+  mute.click();
+  expect(appliedVolumes.at(-1)).toBe(0.2);
+});
+
 test("clock and network tray buttons open their corresponding dialogs", async () => {
   const shell = await login(await loadShell());
   shell.document.getElementById("taskbar-clock")!.click();

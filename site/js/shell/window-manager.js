@@ -365,7 +365,7 @@ const setWindowVolume = (win, value) => {
   setGameVolume(win.gameId, numericValue, isMuted);
 
   if (win.gameId === focusedGameId) {
-    setPlayerVolume(win.player, win.type, isMuted ? 0 : numericValue / 100);
+    setPlayerVolume(win.player, win.type, normalizeGameVolume(win.gameId));
   }
   syncWindowVolumeUI(win);
 };
@@ -378,7 +378,7 @@ const toggleWindowMute = (win) => {
     const volume = gameSettings.volume || 100;
     setGameVolume(win.gameId, volume, false);
     if (win.gameId === focusedGameId) {
-      setPlayerVolume(win.player, win.type, volume / 100);
+      setPlayerVolume(win.player, win.type, normalizeGameVolume(win.gameId));
     }
   } else {
     // Muting - store current volume before setting to 0
