@@ -189,10 +189,25 @@ const upsertNativeOwnedWindow = (owner, detail) => {
   dialog.el.style.width = `${dialogWidth}px`;
   dialog.el.style.height = `${dialogHeight + dialogCaption}px`;
   if (!dialog.moved) {
+    const ownerWidth =
+      owner.el.offsetWidth || Number.parseFloat(owner.el.style.width);
+    const ownerHeight =
+      owner.el.offsetHeight || Number.parseFloat(owner.el.style.height);
+    let relativeLeft = Number(detail.x) || 0;
+    let relativeTop = Number(detail.y) || 0;
+    const nativeCenterIsOutsideOwner =
+      relativeLeft + dialogWidth / 2 < 0 ||
+      relativeLeft + dialogWidth / 2 > ownerWidth ||
+      relativeTop + (dialogHeight + dialogCaption) / 2 < 0 ||
+      relativeTop + (dialogHeight + dialogCaption) / 2 > ownerHeight;
+    if (nativeCenterIsOutsideOwner) {
+      relativeLeft = (ownerWidth - dialogWidth) / 2;
+      relativeTop = (ownerHeight - dialogHeight - dialogCaption) / 2;
+    }
     const position = clampWindowPosition(
       { el: dialog.el, application: owner.application },
-      owner.el.offsetLeft + detail.x,
-      owner.el.offsetTop + detail.y,
+      owner.el.offsetLeft + relativeLeft,
+      owner.el.offsetTop + relativeTop,
     );
     dialog.el.style.left = `${position.left}px`;
     dialog.el.style.top = `${position.top}px`;

@@ -1,0 +1,26 @@
+{
+  "runtime": "boxedwine",
+  "windowsXp": {
+    "source": "User-supplied Windows XP Professional SP3 source-media ISO",
+    "sourceSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "package": {
+      "file": "xp-wordpad.zip",
+      "bytes": 559330,
+      "sha256": "fa2e78a86f401548a889d3f10b40cacca8e918dbf6e53dbf59a41bf6429aca80"
+    },
+    "files": {
+      "wordpad.exe": {
+        "member": "I386/WORDPAD.EX_",
+        "sha256": "c0343d0642c6f5efad0d74ea3c6a14b96b209d2413f060039f0874aaf998c7a4"
+      },
+      "mfc42u.dll": {
+        "member": "I386/MFC42U.DL_",
+        "sha256": "3dd81b500d2f378d7491633b4d73e6ba0eb76f7ec0a514d62eb1e1e46a838e1f"
+      },
+      "wordpad.hlp": {
+        "member": "I386/WORDPAD.HL_",
+        "sha256": "c9f566b9b15c4c39ed3e010dbe95c377c20d646641f9b796c639cd527a8db86b"
+      }
+    }
+  }
+}

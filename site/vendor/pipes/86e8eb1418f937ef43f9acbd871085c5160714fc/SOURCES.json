@@ -1,0 +1,17 @@
+{
+  "project": "Pipes",
+  "repository": "https://github.com/1j01/pipes",
+  "commit": "86e8eb1418f937ef43f9acbd871085c5160714fc",
+  "license": "MIT",
+  "upstreamFiles": {
+    "LICENSE": "30cde42364705e51dc7e4badcef570d6603c8830c659771a020b0d12c8ef5107",
+    "screensaver.js": "3434438cc2ef805e083dcf475980ac40885c6b61a730341fccb02f20deb3f87e",
+    "lib/OrbitControls.js": "6e089c2930f178fd9d793c7ac18452609b539ddfe93cff869711edca665c21f5",
+    "lib/TeapotBufferGeometry.js": "1fcbd089dd8a219564da1559cac2567c9f1d0b2367cc23eae1d7ce90c3781240",
+    "lib/three.min.js": "31b21ca4e8481062da6ea9ed1f507b66013b6ba5744eba1c98aa2ecf59e94f58",
+    "images/textures/candycane.png": "5a71c7316f155811d6d817a393c739628e034ea6105961f92f86a076d5efae5f"
+  },
+  "localFiles": {
+    "index.html": "Flash-specific UI-free host document"
+  }
+}

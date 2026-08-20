@@ -25,6 +25,10 @@ let iconsBuilt = false;
 let renderedPlacesStyle = null;
 let screenSaverTimeout = null;
 let screenSaverWired = false;
+let screenSaverPreviewCleanup = null;
+
+const PIPES_SCREEN_SAVER_URL =
+  "vendor/pipes/86e8eb1418f937ef43f9acbd871085c5160714fc/index.html";
 
 const gamesList = { ...window.FLASH_GAMES };
 const installedGameIds = new Set();
@@ -55,6 +59,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   WINDOW_PLACEMENTS_KEY,
   "gameVolumes",
   "isMuted",
+  "minesweeperSettings",
   "runHistory",
   "volume",
 ]);
@@ -94,7 +99,7 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   backgroundColor: "#3a6ea5",
   appearance: "blue",
   fontSize: "normal",
-  screenSaver: "windows-xp",
+  screenSaver: "pipes",
   screenSaverWait: 10,
   requireLoginOnResume: false,
   transitionEffect: "fade",
@@ -105,6 +110,14 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   hideKeyboardCues: true,
   resolution: "auto",
 });
+const SUPPORTED_SCREEN_SAVERS = Object.freeze([
+  "none",
+  "pipes",
+  "blank",
+  "marquee",
+  "stars",
+  "windows-xp",
+]);
 const SIMULATED_RESOLUTIONS = Object.freeze({
   "800x600": { width: 800, height: 600 },
   "1024x768": { width: 1024, height: 768 },
@@ -440,20 +453,7 @@ const isDisplaySettings = (value) =>
   ["blue", "olive", "silver", "classic"].includes(value.appearance) &&
   (value.fontSize === undefined ||
     ["normal", "large", "extra-large"].includes(value.fontSize)) &&
-  [
-    "none",
-    "flowerbox",
-    "flying-objects",
-    "pipes",
-    "text",
-    "beziers",
-    "blank",
-    "marquee",
-    "pictures",
-    "mystify",
-    "stars",
-    "windows-xp",
-  ].includes(value.screenSaver) &&
+  SUPPORTED_SCREEN_SAVERS.includes(value.screenSaver) &&
   Number.isInteger(value.screenSaverWait) &&
   value.screenSaverWait >= 1 &&
   value.screenSaverWait <= 60 &&
@@ -471,10 +471,23 @@ const isDisplaySettings = (value) =>
     typeof value.hideKeyboardCues === "boolean") &&
   ["auto", "800x600", "1024x768", "1440x900"].includes(value.resolution);
 
-const getDisplaySettings = () => ({
-  ...DEFAULT_DISPLAY_SETTINGS,
-  ...readJsonStorage(DISPLAY_SETTINGS_KEY, {}, isDisplaySettings),
-});
+const getDisplaySettings = () => {
+  const stored = readJsonStorage(
+    DISPLAY_SETTINGS_KEY,
+    {},
+    (value) => value && typeof value === "object" && !Array.isArray(value),
+  );
+  const settings = {
+    ...DEFAULT_DISPLAY_SETTINGS,
+    ...stored,
+    screenSaver: SUPPORTED_SCREEN_SAVERS.includes(stored.screenSaver)
+      ? stored.screenSaver
+      : DEFAULT_DISPLAY_SETTINGS.screenSaver,
+  };
+  return isDisplaySettings(settings)
+    ? settings
+    : { ...DEFAULT_DISPLAY_SETTINGS };
+};
 
 const DEFAULT_DESKTOP_SYSTEM_ICONS = Object.freeze({
   "__my-computer": true,
@@ -601,17 +614,47 @@ const applyDisplaySettings = (settings) => {
   scheduleScreenSaver(settings);
 };
 
+const renderScreenSaver = (container, saver, active) => {
+  container.dataset.saver = saver;
+  const current = container.querySelector(".pipes-screen-saver");
+  if (saver !== "pipes" || !active) {
+    current?.remove();
+    return;
+  }
+  if (current) return;
+  const frame = document.createElement("iframe");
+  frame.className = "pipes-screen-saver";
+  frame.src = PIPES_SCREEN_SAVER_URL;
+  frame.title = "3D Pipes";
+  frame.tabIndex = -1;
+  frame.setAttribute("aria-hidden", "true");
+  container.appendChild(frame);
+};
+
+const hideScreenSaver = (saver) => {
+  screenSaverPreviewCleanup?.();
+  screenSaverPreviewCleanup = null;
+  saver.hidden = true;
+  renderScreenSaver(saver, saver.dataset.saver || "none", false);
+};
+
+const showScreenSaver = (saver, type) => {
+  saver.dataset.saver = type;
+  saver.hidden = false;
+  renderScreenSaver(saver, type, true);
+};
+
 const scheduleScreenSaver = (settings = getDisplaySettings()) => {
   clearTimeout(screenSaverTimeout);
   const desktop = document.getElementById("desktop");
   const saver = document.getElementById("screen-saver-overlay");
   if (!desktop || !saver) return;
-  saver.hidden = true;
+  hideScreenSaver(saver);
   saver.dataset.saver = settings.screenSaver;
   if (settings.screenSaver === "none" || !loggedIn) return;
   screenSaverTimeout = setTimeout(
     () => {
-      saver.hidden = false;
+      showScreenSaver(saver, settings.screenSaver);
     },
     settings.screenSaverWait * 60 * 1000,
   );

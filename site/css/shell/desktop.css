@@ -47,6 +47,15 @@
   background: #000;
 }
 
+.pipes-screen-saver {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+  pointer-events: none;
+}
+
 #screen-saver-overlay[data-saver="marquee"]::after {
   content: "Astro Flash";
   position: absolute;

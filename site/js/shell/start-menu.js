@@ -982,6 +982,7 @@ const getAllProgramsTree = () => {
           action: openNotepad,
         },
         xpProgramMenuItem("__paint"),
+        xpProgramMenuItem("__wordpad"),
         {
           id: "windows-explorer",
           label: "Windows Explorer",
@@ -996,6 +997,7 @@ const getAllProgramsTree = () => {
       icon: programFolder,
       children: [
         xpProgramMenuItem("__freecell"),
+        xpProgramMenuItem("__hearts"),
         xpProgramMenuItem("__minesweeper"),
         xpProgramMenuItem("__pinball"),
         xpProgramMenuItem("__solitaire"),

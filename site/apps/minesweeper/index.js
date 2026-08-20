@@ -7,6 +7,14 @@ import {
 } from "./game.js";
 
 const ASSET_ROOT = "/assets/xp/minesweeper";
+const SETTINGS_KEY = "minesweeperSettings";
+const DEFAULT_SETTINGS = Object.freeze({
+  difficulty: "beginner",
+  customLevel: Object.freeze({ rows: 20, columns: 20, mines: 80 }),
+  marks: true,
+  color: true,
+  sound: true,
+});
 const DIGIT_FRAMES = Object.freeze({
   "-": 0,
   9: 2,
@@ -52,6 +60,50 @@ const setCounter = (counter, value) => {
   counter.dataset.value = String(normalized);
   counter.setAttribute("aria-valuenow", String(normalized));
   counter.setAttribute("aria-valuetext", String(normalized));
+};
+
+const readSettings = () => {
+  try {
+    const value = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    const difficulty = [...Object.keys(MINESWEEPER_LEVELS), "custom"].includes(
+      value?.difficulty,
+    )
+      ? value.difficulty
+      : DEFAULT_SETTINGS.difficulty;
+    const rows = Math.max(
+      9,
+      Math.min(24, Number(value?.customLevel?.rows) || 20),
+    );
+    const columns = Math.max(
+      9,
+      Math.min(30, Number(value?.customLevel?.columns) || 20),
+    );
+    const mines = Math.max(
+      10,
+      Math.min(Number(value?.customLevel?.mines) || 80, rows * columns - 9),
+    );
+    return {
+      difficulty,
+      customLevel: { rows, columns, mines },
+      marks:
+        typeof value?.marks === "boolean"
+          ? value.marks
+          : DEFAULT_SETTINGS.marks,
+      color:
+        typeof value?.color === "boolean"
+          ? value.color
+          : DEFAULT_SETTINGS.color,
+      sound:
+        typeof value?.sound === "boolean"
+          ? value.sound
+          : DEFAULT_SETTINGS.sound,
+    };
+  } catch {
+    return {
+      ...DEFAULT_SETTINGS,
+      customLevel: { ...DEFAULT_SETTINGS.customLevel },
+    };
+  }
 };
 
 const createMenu = (label, items) => {
@@ -127,17 +179,32 @@ const mountMinesweeper = (context, instance) => {
   content.append(scorePanel, boardFrame);
   root.append(menuBar, content);
 
-  let difficulty = "beginner";
-  let level = MINESWEEPER_LEVELS[difficulty];
-  let customLevel = { rows: 20, columns: 20, mines: 80 };
+  const savedSettings = readSettings();
+  let difficulty = savedSettings.difficulty;
+  let customLevel = savedSettings.customLevel;
+  let level =
+    difficulty === "custom"
+      ? { ...customLevel }
+      : MINESWEEPER_LEVELS[difficulty];
   let mines = null;
   let elapsed = 0;
   let flags = 0;
   let timer = null;
   let status = "ready";
-  let marks = true;
-  let color = true;
-  let sound = true;
+  let marks = savedSettings.marks;
+  let color = savedSettings.color;
+  let sound = savedSettings.sound;
+
+  const saveSettings = () => {
+    try {
+      localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({ difficulty, customLevel, marks, color, sound }),
+      );
+    } catch {
+      // A storage failure must not stop a game from starting.
+    }
+  };
 
   const stopTimer = () => {
     if (timer) clearInterval(timer);
@@ -303,6 +370,7 @@ const mountMinesweeper = (context, instance) => {
     }
     resizeWindow();
     updateMenuChecks();
+    saveSettings();
   };
 
   const showCustomDialog = () => {
@@ -391,13 +459,16 @@ const mountMinesweeper = (context, instance) => {
         });
       }
       updateMenuChecks();
+      saveSettings();
     } else if (command === "color") {
       color = !color;
       root.classList.toggle("monochrome", !color);
       updateMenuChecks();
+      saveSettings();
     } else if (command === "sound") {
       sound = !sound;
       updateMenuChecks();
+      saveSettings();
     } else if (command === "best-times") {
       context.showMessage(
         "Best Times",

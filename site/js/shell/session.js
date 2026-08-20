@@ -153,7 +153,7 @@ const startShutdown = (restart = false) => {
 const closeCurrentSession = () => {
   clearTimeout(screenSaverTimeout);
   const saver = document.getElementById("screen-saver-overlay");
-  if (saver) saver.hidden = true;
+  if (saver) hideScreenSaver(saver);
   showDesktopSnapshot = null;
   closeStartMenu();
   closeDesktopContextMenu();

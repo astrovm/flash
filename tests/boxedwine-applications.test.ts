@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { validateBoxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
+import {
+  boxedWineApplications,
+  validateBoxedWineApplications,
+} from "../site/apps/core/boxedwine-applications.js";
 
 const application = (index: number) => ({
   id: `application-${index}`,
@@ -11,6 +14,29 @@ const application = (index: number) => ({
 });
 
 describe("BoxedWine application catalog", () => {
+  test("registers Hearts and WordPad with only generic application data", () => {
+    expect(
+      boxedWineApplications.filter(({ id }) =>
+        ["hearts", "wordpad"].includes(id),
+      ),
+    ).toEqual([
+      {
+        id: "wordpad",
+        title: "WordPad",
+        icon: "WordPad.png",
+        executable: "wordpad/wordpad.exe",
+        packagePath: "site/iframe/wordpad/xp-wordpad.zip",
+      },
+      {
+        id: "hearts",
+        title: "Hearts",
+        icon: "Hearts.png",
+        executable: "hearts/mshearts.exe",
+        packagePath: "site/iframe/hearts/xp-hearts.zip",
+      },
+    ]);
+  });
+
   test("validates a catalog with twenty independently registered applications", () => {
     const applications = validateBoxedWineApplications(
       Array.from({ length: 20 }, (_, index) => application(index + 1)),
