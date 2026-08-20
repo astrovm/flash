@@ -178,8 +178,8 @@ const fitNativeProgramToWorkArea = (win) => {
       win.workAreaFitRect = null;
       return true;
     }
-    // The original size still does not fit, so keep filling the work area
-    // instead of leaving the window at the size measured for the old one.
+    // The original size still does not fit, so scale it again for the current
+    // work area.
   } else if (actualWidth <= visibleWidth && actualHeight <= visibleHeight) {
     return false;
   }
@@ -199,11 +199,37 @@ const fitNativeProgramToWorkArea = (win) => {
     minHeight: win.el.style.minHeight,
   };
 
+  const preferredWidth = parseWindowLength(
+    win.workAreaFitRect.width,
+    actualWidth,
+  );
+  const preferredHeight = parseWindowLength(
+    win.workAreaFitRect.height,
+    actualHeight,
+  );
+  const caption = parseWindowLength(
+    win.el.ownerDocument.defaultView
+      ?.getComputedStyle?.(win.el)
+      ?.getPropertyValue("--boxedwine-shell-caption-height"),
+    28,
+  );
+  const preferredClientHeight = Math.max(1, preferredHeight - caption);
+  const scale = Math.min(
+    1,
+    visibleWidth / preferredWidth,
+    Math.max(1, visibleHeight - caption) / preferredClientHeight,
+  );
+  const fittedWidth = Math.max(1, Math.floor(preferredWidth * scale));
+  const fittedHeight = Math.max(
+    caption + 1,
+    Math.floor(preferredClientHeight * scale) + caption,
+  );
+
   Object.assign(win.el.style, {
     left: "0px",
     top: "0px",
-    width: `${visibleWidth}px`,
-    height: `${visibleHeight}px`,
+    width: `${fittedWidth}px`,
+    height: `${fittedHeight}px`,
     minWidth: "0px",
     minHeight: "0px",
   });
@@ -825,7 +851,10 @@ const loadIframe = (gameId, win) => {
   );
 };
 
-const focusWindow = (gameId, { notifyApplication = true } = {}) => {
+const focusWindow = (
+  gameId,
+  { notifyApplication = true, focusOwnedWindow = true } = {},
+) => {
   const win = openWindows.get(gameId);
   if (!win) return;
 
@@ -839,6 +868,7 @@ const focusWindow = (gameId, { notifyApplication = true } = {}) => {
   openWindows.forEach((w, id) => {
     w.el.classList.toggle("active", id === gameId);
   });
+  if (focusOwnedWindow) win.focusOwnedWindow?.();
 
   applyFocusVolumes();
   syncWindowVolumeUI(win);
@@ -886,6 +916,7 @@ const minimizeWindow = (gameId, { notifyApplication = true } = {}) => {
   if (notifyApplication && win.mountedApplication?.minimize?.() === false)
     return;
   win.minimized = true;
+  win.setOwnedWindowsVisible?.(false);
   const taskButton = document.querySelector(
     `.task-button[data-game="${gameId}"]`,
   );
@@ -932,6 +963,7 @@ const restoreWindow = (gameId, { notifyApplication = true } = {}) => {
     return;
   win.minimized = false;
   win.el.style.display = "flex";
+  win.setOwnedWindowsVisible?.(true);
   win.el.animate(
     [
       { transform: "scale(0.92)", opacity: 0.45 },
@@ -945,6 +977,7 @@ const minimizeAllWindows = () => {
   openWindows.forEach((win) => {
     win.minimized = true;
     win.el.style.display = "none";
+    win.setOwnedWindowsVisible?.(false);
   });
   focusedGameId = null;
   applyFocusVolumes();

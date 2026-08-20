@@ -39,7 +39,7 @@ const launchSolitaire = (shell) => {
 };
 
 describe("Windows XP Solitaire through BoxedWine", () => {
-  test("uses the complete phone work area when its native bounds do not fit", async () => {
+  test("fits proportionally when its native bounds do not fit", async () => {
     const shell = await login(await loadShell());
     const desktop = shell.document.getElementById("desktop");
     Object.defineProperties(desktop, {
@@ -52,7 +52,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     expect(solitaireWindow.style.left).toBe("0px");
     expect(solitaireWindow.style.top).toBe("0px");
     expect(solitaireWindow.style.width).toBe("390px");
-    expect(solitaireWindow.style.height).toBe("814px");
+    expect(solitaireWindow.style.height).toBe("297px");
 
     Object.defineProperties(desktop, {
       clientWidth: { configurable: true, value: 844 },
@@ -62,7 +62,7 @@ describe("Windows XP Solitaire through BoxedWine", () => {
 
     expect(solitaireWindow.style.left).toBe("0px");
     expect(solitaireWindow.style.top).toBe("0px");
-    expect(solitaireWindow.style.width).toBe("844px");
+    expect(solitaireWindow.style.width).toBe("480px");
     expect(solitaireWindow.style.height).toBe("360px");
 
     Object.defineProperties(desktop, {
@@ -91,14 +91,14 @@ describe("Windows XP Solitaire through BoxedWine", () => {
     });
 
     const solitaireWindow = launchSolitaire(shell);
-    expect(solitaireWindow.style.width).toBe("844px");
+    expect(solitaireWindow.style.width).toBe("480px");
     expect(solitaireWindow.style.height).toBe("360px");
 
-    // The generic provisional bounds still do not fit, so the window keeps
-    // filling the work area instead of staying at the smaller measured size.
+    // The generic provisional bounds still do not fit, so the window grows
+    // proportionally as more space becomes available.
     resizeDesktop(900, 400);
 
-    expect(solitaireWindow.style.width).toBe("900px");
+    expect(solitaireWindow.style.width).toBe("538px");
     expect(solitaireWindow.style.height).toBe("400px");
   });
 

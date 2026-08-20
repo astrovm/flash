@@ -219,6 +219,41 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(calculator.querySelector(".maximize-btn").disabled).toBeFalse();
   });
 
+  test("uses a landscape runtime and proportional shell on a phone", async () => {
+    const shell = await login(await loadShell());
+    const desktop = shell.document.getElementById("desktop");
+    Object.defineProperties(desktop, {
+      clientWidth: { configurable: true, value: 390 },
+      clientHeight: { configurable: true, value: 814 },
+    });
+    Object.defineProperties(shell.window, {
+      innerWidth: { configurable: true, value: 390 },
+      innerHeight: { configurable: true, value: 844 },
+    });
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: {
+        canResize: true,
+        canMaximize: true,
+        outerWidth: 600,
+        outerHeight: 428,
+        clientWidth: 600,
+        clientHeight: 400,
+        frameTop: 28,
+        menuHeight: 0,
+      },
+    });
+    await flushShell();
+
+    const runtimeUrl = new URL(
+      shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
+    );
+    expect(runtimeUrl.searchParams.get("resolution")).toBe("1086x814");
+    expect(calculator.style.width).toBe("390px");
+    expect(calculator.style.height).toBe("310px");
+    expect(calculator.style.height).not.toBe("814px");
+  });
+
   test("reuses one persistent runtime for repeated Calculator launches", async () => {
     const { shell } = await launchCalculator();
     shell.document.getElementById("start-button").click();

@@ -3,6 +3,9 @@ import { getBoxedWineApplication } from "./boxedwine-applications.js";
 
 const RUNTIME_ROOT = "vendor/boxedwine/26R1/";
 const ROOT_ARCHIVE = "xp-accessories";
+const MIN_RUNTIME_WIDTH = 800;
+const MIN_RUNTIME_HEIGHT = 600;
+const MIN_RUNTIME_ASPECT_RATIO = 4 / 3;
 
 let runtime;
 
@@ -14,6 +17,24 @@ const packageRoot = () => {
   return url.endsWith("/") ? url : `${url}/`;
 };
 
+const runtimeResolution = () => {
+  const desktop = document.getElementById("desktop");
+  const screenWidth = desktop?.clientWidth || window.innerWidth;
+  const screenHeight = Math.min(
+    desktop?.clientHeight || window.innerHeight,
+    window.innerHeight - 30,
+  );
+  const height = Math.max(MIN_RUNTIME_HEIGHT, screenHeight);
+  return {
+    width: Math.max(
+      MIN_RUNTIME_WIDTH,
+      screenWidth,
+      Math.ceil(height * MIN_RUNTIME_ASPECT_RATIO),
+    ),
+    height,
+  };
+};
+
 const runnerUrl = (initialApplicationId, launchToken) => {
   const application = getBoxedWineApplication(initialApplicationId);
   if (!application)
@@ -21,19 +42,14 @@ const runnerUrl = (initialApplicationId, launchToken) => {
       `Unknown BoxedWine application: ${initialApplicationId}`,
     );
   const url = new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);
-  const desktop = document.getElementById("desktop");
-  const screenWidth = desktop?.clientWidth || window.innerWidth;
-  const screenHeight = Math.min(
-    desktop?.clientHeight || window.innerHeight,
-    window.innerHeight - 30,
-  );
+  const { width, height } = runtimeResolution();
   url.search = new URLSearchParams({
     appRoot: packageRoot(),
     root: ROOT_ARCHIVE,
     archive: "xp-runtime",
     executable: application.executable,
     launchToken,
-    resolution: `${Math.max(320, screenWidth)}x${Math.max(240, screenHeight)}`,
+    resolution: `${width}x${height}`,
     frameTop: "0",
     sound: "true",
     cache: "false",
@@ -63,6 +79,7 @@ const createRuntime = (initialApplicationId) => {
   const pendingNativeMinimizes = new Map();
   const launchFailures = new Map();
   const mounts = new Map();
+  let runtimeSize = null;
   let request = 0;
   const normalizeLaunchToken = (value) => {
     const token = Number(value) >>> 0;
@@ -301,6 +318,7 @@ const createRuntime = (initialApplicationId) => {
         scheduleNativeMinimize(appId, detail.id);
       } else if (detail.type === "mapped" && drivesShell) {
         cancelNativeMinimize(appId);
+        surfaces.show(detail.id);
         mounted?.context.applyNativeRestore();
       } else if (
         drivesShell &&
@@ -366,6 +384,15 @@ const createRuntime = (initialApplicationId) => {
     const [runtimeWidth, runtimeHeight] = url.searchParams
       .get("resolution")
       .split("x");
+    runtimeSize = {
+      width: Number(runtimeWidth),
+      height: Number(runtimeHeight),
+    };
+    for (const mounted of mounts.values())
+      mounted.context.setNativeRuntimeSize?.(
+        runtimeSize.width,
+        runtimeSize.height,
+      );
     for (const element of [frame, staging]) {
       element.style.width = `${runtimeWidth}px`;
       element.style.height = `${runtimeHeight}px`;
@@ -523,6 +550,8 @@ const createRuntime = (initialApplicationId) => {
       status.textContent = "Starting Windows application…";
       element.appendChild(status);
       mounts.set(appId, { context, element, startedAt: performance.now() });
+      if (runtimeSize)
+        context.setNativeRuntimeSize?.(runtimeSize.width, runtimeSize.height);
       let resizeFrame = 0;
       let pendingWindowAction = "bounds";
       const syncNativeWindow = () => {
@@ -578,7 +607,10 @@ const createRuntime = (initialApplicationId) => {
         },
         minimize() {
           const windowId = runningWindows.get(appId);
-          return windowId ? surfaces.command(windowId, "minimize") : false;
+          if (!windowId) return false;
+          const minimized = surfaces.command(windowId, "minimize");
+          if (minimized) surfaces.hide(windowId);
+          return minimized;
         },
         maximize() {
           if (mounts.get(appId)?.context.nativeCanMaximize === false)
@@ -586,6 +618,8 @@ const createRuntime = (initialApplicationId) => {
           return scheduleNativeWindow("maximize");
         },
         restore() {
+          const windowId = runningWindows.get(appId);
+          if (windowId) surfaces.show(windowId);
           return scheduleNativeWindow("restore");
         },
         bounds() {

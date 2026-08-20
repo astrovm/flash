@@ -83,7 +83,7 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(shell.offlineDownloads).toEqual([game.id]);
     });
 
-    test(`${game.title} uses the complete phone work area`, async () => {
+    test(`${game.title} stays within the phone work area`, async () => {
       const shell = await login(await loadShell());
       const desktop = shell.document.getElementById("desktop");
       Object.defineProperties(desktop, {
@@ -91,8 +91,12 @@ describe("Windows XP card games through BoxedWine", () => {
         clientHeight: { configurable: true, value: 814 },
       });
       const gameWindow = launchGame(shell, game.id, game.applicationId);
-      expect(gameWindow.style.width).toBe("390px");
-      expect(gameWindow.style.height).toBe("814px");
+      expect(Number.parseFloat(gameWindow.style.width)).toBeLessThanOrEqual(
+        390,
+      );
+      expect(Number.parseFloat(gameWindow.style.height)).toBeLessThanOrEqual(
+        814,
+      );
       expect(gameWindow.style.minWidth).toBe("0px");
       expect(gameWindow.style.minHeight).toBe("0px");
 

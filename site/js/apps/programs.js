@@ -17,13 +17,23 @@ const wireSystemWindowControls = (win) => {
   if (win.application?.window.resizable !== false) wireResize(win);
 };
 
-const focusNativeOwnedWindow = (owner, dialog) => {
-  focusWindow(owner.gameId, { notifyApplication: false });
+const activateNativeOwnedWindow = (owner, dialog) => {
+  owner.nativeFocusedOwnedWindow = dialog;
+  for (const owned of owner.nativeOwnedWindows?.values() || [])
+    owned.el.classList.remove("active");
   owner.el.classList.remove("active");
   dialog.el.classList.add("active");
   dialog.el.style.zIndex = String(++zIndexCounter);
   dialog.canvas.focus({ preventScroll: true });
   dialog.focus?.();
+};
+
+const focusNativeOwnedWindow = (owner, dialog) => {
+  focusWindow(owner.gameId, {
+    notifyApplication: false,
+    focusOwnedWindow: false,
+  });
+  activateNativeOwnedWindow(owner, dialog);
 };
 
 const wireNativeOwnedWindowDrag = (owner, dialog) => {
@@ -69,6 +79,8 @@ const removeNativeOwnedWindow = (owner, id) => {
   if (!dialog) return false;
   dialog.el.remove();
   owner.nativeOwnedWindows.delete(id);
+  if (owner.nativeFocusedOwnedWindow === dialog)
+    owner.nativeFocusedOwnedWindow = null;
   if (owner.nativeOwnedWindows.size === 0) {
     owner.el.removeAttribute("aria-disabled");
     owner.el.classList.remove("native-owned-window-blocked");
@@ -79,7 +91,11 @@ const removeNativeOwnedWindow = (owner, id) => {
     );
     owner.el.removeEventListener("click", owner.nativeDialogBlocker, true);
     owner.nativeDialogBlocker = null;
+    owner.focusOwnedWindow = null;
+    owner.setOwnedWindowsVisible = null;
     focusWindow(owner.gameId, { notifyApplication: false });
+  } else if (!owner.nativeFocusedOwnedWindow) {
+    owner.focusOwnedWindow?.();
   }
   return true;
 };
@@ -118,6 +134,21 @@ const upsertNativeOwnedWindow = (owner, detail) => {
       moved: false,
     };
     owner.nativeOwnedWindows.set(detail.id, dialog);
+    owner.setOwnedWindowsVisible = (visible) => {
+      for (const owned of owner.nativeOwnedWindows.values())
+        owned.el.style.display = visible ? "flex" : "none";
+    };
+    owner.focusOwnedWindow = () => {
+      const focused = owner.nativeFocusedOwnedWindow;
+      const topDialog =
+        (focused &&
+          [...owner.nativeOwnedWindows.values()].includes(focused) &&
+          focused) ||
+        [...owner.nativeOwnedWindows.values()].at(-1);
+      if (!topDialog) return false;
+      activateNativeOwnedWindow(owner, topDialog);
+      return true;
+    };
     el.querySelector(".close-btn").addEventListener("click", () =>
       dialog.close?.(),
     );
@@ -159,7 +190,7 @@ const upsertNativeOwnedWindow = (owner, detail) => {
   dialog.el.style.height = `${dialogHeight + dialogCaption}px`;
   if (!dialog.moved) {
     const position = clampWindowPosition(
-      { el: dialog.el },
+      { el: dialog.el, application: owner.application },
       owner.el.offsetLeft + detail.x,
       owner.el.offsetTop + detail.y,
     );
@@ -198,6 +229,9 @@ const applicationContext = (win) => ({
     if (titleText) titleText.textContent = title;
     renderTaskButtons();
     updateDocumentTitle();
+  },
+  setNativeRuntimeSize(width, height) {
+    if (width > 0 && height > 0) win.nativeRuntimeSize = { width, height };
   },
   setAccessKeyText,
   close: () => closeGameWindow(win.gameId),
@@ -278,7 +312,7 @@ const applicationContext = (win) => ({
     if (width <= 0 || height <= 0) return;
     const first = !win.nativeMetadataApplied;
     if (first && canResize && !getWindowPlacements()[win.gameId]) {
-      const workArea = getVisibleWorkArea();
+      const launchArea = win.nativeRuntimeSize || getVisibleWorkArea();
       const caption = parseWindowLength(
         win.el.ownerDocument.defaultView
           ?.getComputedStyle?.(win.el)
@@ -288,10 +322,10 @@ const applicationContext = (win) => ({
       // Small resizable Win32 defaults can expose only part of an application's
       // layout. Give every resizable application the same useful launch area;
       // fixed windows continue to use their exact native dimensions.
-      width = Math.max(width, Math.floor(workArea.width * 0.75));
+      width = Math.max(width, Math.floor(launchArea.width * 0.75));
       height = Math.max(
         height,
-        Math.floor(Math.max(1, workArea.height - caption) * 0.75),
+        Math.floor(Math.max(1, launchArea.height - caption) * 0.75),
       );
     }
     if (first) {
