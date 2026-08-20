@@ -309,16 +309,46 @@ const applicationContext = (win) => ({
       (Number(metadata.clientHeight)
         ? Number(metadata.clientHeight) + menuHeight
         : 0) || (outerHeight > 0 ? outerHeight - frameTop - frameBottom : 0);
-    if (width <= 0 || height <= 0) return;
+    // Wine can expose a top-level HWND as 1x1 while the application is still
+    // creating it. Treating that placeholder as the first real window enables
+    // shell-to-native resize synchronization too early and collapses the app
+    // to its non-client chrome. Wait for usable client bounds instead.
+    if (width <= 1 || height <= 1) return;
     const first = !win.nativeMetadataApplied;
-    if (first && canResize && !getWindowPlacements()[win.gameId]) {
+    const caption = parseWindowLength(
+      win.el.ownerDocument.defaultView
+        ?.getComputedStyle?.(win.el)
+        ?.getPropertyValue("--boxedwine-shell-caption-height"),
+      28,
+    );
+    if (!first && win.nativeResizeTarget) {
+      const target = win.nativeResizeTarget;
+      const confirmed =
+        Math.abs(width - target.width) <= 1 &&
+        Math.abs(height - target.height) <= 1;
+      if (confirmed) {
+        win.nativeResizeTarget = null;
+      } else if (performance.now() < target.expiresAt) {
+        // The Win32 controller polls independently from the shell resize
+        // observer. It can report the previous bounds before the pending
+        // shell command arrives. Do not let that stale echo undo the resize.
+        this.nativeWindowReady = true;
+        return;
+      } else {
+        win.nativeResizeTarget = null;
+      }
+    }
+    const savedPlacement = first
+      ? getWindowPlacements()[win.gameId]
+      : undefined;
+    const savedSizeIsUsable =
+      savedPlacement &&
+      canResize &&
+      savedPlacement.width >= MIN_WINDOW_WIDTH &&
+      savedPlacement.height >= MIN_WINDOW_HEIGHT;
+    const firstResizableMetadata = canResize && !win.nativeResizableConfirmed;
+    if (firstResizableMetadata && !savedSizeIsUsable) {
       const launchArea = win.nativeRuntimeSize || getVisibleWorkArea();
-      const caption = parseWindowLength(
-        win.el.ownerDocument.defaultView
-          ?.getComputedStyle?.(win.el)
-          ?.getPropertyValue("--boxedwine-shell-caption-height"),
-        28,
-      );
       // Small resizable Win32 defaults can expose only part of an application's
       // layout. Give every resizable application the same useful launch area;
       // fixed windows continue to use their exact native dimensions.
@@ -328,13 +358,7 @@ const applicationContext = (win) => ({
         Math.floor(Math.max(1, launchArea.height - caption) * 0.75),
       );
     }
-    if (first) {
-      const caption = parseWindowLength(
-        win.el.ownerDocument.defaultView
-          ?.getComputedStyle?.(win.el)
-          ?.getPropertyValue("--boxedwine-shell-caption-height"),
-        28,
-      );
+    if (first || firstResizableMetadata) {
       win.nativePreferredClientSize = { width, height };
       win.nativePreferredShellSize = { width, height: height + caption };
       if (win.workAreaFitRect) {
@@ -345,8 +369,9 @@ const applicationContext = (win) => ({
     // A stored placement only decides where the window opens. Later metadata
     // reports the size the application chose for itself (Calculator switching
     // to scientific mode, for example), so the frame has to keep following it.
-    if (first && getWindowPlacements()[win.gameId]) {
-      restoreWindowPlacement(win);
+    if (first && savedPlacement) {
+      if (!savedSizeIsUsable) this.applyNativeClientSize(width, height);
+      restoreWindowPlacement(win, { restoreSize: savedSizeIsUsable });
     } else {
       if (first) win.workAreaFitRect = null;
       if (!win.resizing) this.applyNativeClientSize(width, height);
@@ -364,6 +389,24 @@ const applicationContext = (win) => ({
       win.el.style.left = `${position.left}px`;
       win.el.style.top = `${position.top}px`;
     }
+    const requestedWidth = parseWindowLength(win.el.style.width, width);
+    const requestedHeight = Math.max(
+      1,
+      parseWindowLength(win.el.style.height, height + caption) - caption,
+    );
+    if (
+      (first && canResize) ||
+      Math.abs(requestedWidth - width) > 1 ||
+      Math.abs(requestedHeight - height) > 1
+    ) {
+      win.nativeResizeTarget = {
+        width: requestedWidth,
+        height: requestedHeight,
+        expiresAt: performance.now() + 2000,
+      };
+    }
+    this.nativeBoundsSyncRequired = Boolean(win.nativeResizeTarget);
+    if (canResize) win.nativeResizableConfirmed = true;
     win.nativeMetadataApplied = true;
     this.nativeWindowReady = true;
   },

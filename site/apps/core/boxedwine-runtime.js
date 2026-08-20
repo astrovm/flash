@@ -259,8 +259,13 @@ const createRuntime = (initialApplicationId) => {
     launchFailures.delete(appId);
     surfaces.hide(windowId);
     attachMount(appId);
-    if (replacesDestroyedWindow)
-      mounts.get(appId)?.context.applyNativeRestore();
+    const mounted = mounts.get(appId);
+    if (
+      mounted?.context.nativeBoundsSyncRequired &&
+      mounted.scheduleNativeWindow?.()
+    )
+      mounted.context.nativeBoundsSyncRequired = false;
+    if (replacesDestroyedWindow) mounted?.context.applyNativeRestore();
     updateMountedReadiness();
     ensureMountedApplications();
   };
@@ -313,6 +318,13 @@ const createRuntime = (initialApplicationId) => {
         drivesShell
       ) {
         mounted?.context.applyNativeWindowMetadata(detail);
+        if (
+          mounted?.context.nativeWindowReady &&
+          mounted.context.nativeBoundsSyncRequired
+        ) {
+          if (mounted.scheduleNativeWindow?.())
+            mounted.context.nativeBoundsSyncRequired = false;
+        }
       }
       if (detail.type === "unmapped" && drivesShell) {
         scheduleNativeMinimize(appId, detail.id);

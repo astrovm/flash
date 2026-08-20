@@ -110,14 +110,20 @@ const persistWindowPlacement = (win) => {
   });
 };
 
-const restoreWindowPlacement = (win) => {
+const restoreWindowPlacement = (win, { restoreSize = true } = {}) => {
   const saved = getWindowPlacements()[win.gameId];
   if (!saved) return;
   const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
-  const width =
-    desktopWidth > 0 ? Math.min(saved.width, desktopWidth) : saved.width;
-  const height =
-    desktopHeight > 0 ? Math.min(saved.height, desktopHeight) : saved.height;
+  const width = restoreSize
+    ? desktopWidth > 0
+      ? Math.min(saved.width, desktopWidth)
+      : saved.width
+    : parseWindowLength(win.el.style.width, win.el.offsetWidth);
+  const height = restoreSize
+    ? desktopHeight > 0
+      ? Math.min(saved.height, desktopHeight)
+      : saved.height
+    : parseWindowLength(win.el.style.height, win.el.offsetHeight);
   Object.assign(win.el.style, {
     width: `${width}px`,
     height: `${height}px`,
@@ -1099,7 +1105,10 @@ const closeGameWindow = (
 };
 
 const wireDrag = (win) => {
-  restoreWindowPlacement(win);
+  // Native windows need their first metadata before a stored size can be
+  // validated. Applying it here can resize the native window to stale or
+  // corrupted geometry before its real default size and capabilities arrive.
+  if (!win.application?.window.nativeMetadata) restoreWindowPlacement(win);
   const bar = win.el.querySelector(".title-bar");
   const titleIcon = bar.querySelector(".title-icon");
 

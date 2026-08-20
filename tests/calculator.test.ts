@@ -211,12 +211,38 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     showNativeCalculator(shell, 41, undefined, {
       capabilities: { canResize: true, canMaximize: true },
     });
+    const launchToken = nativeLaunchToken(shell);
     await flushShell();
 
     expect(calculator.style.width).toBe("768px");
     expect(calculator.style.height).toBe("560px");
     expect(calculator.querySelector(".resize-handle").hidden).toBeFalse();
     expect(calculator.querySelector(".maximize-btn").disabled).toBeFalse();
+
+    // A controller poll can still contain the old native size while the shell
+    // resize command is in flight. That stale echo must not collapse the app.
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken,
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 160,
+      outerHeight: 48,
+      clientWidth: 160,
+      clientHeight: 20,
+      frameTop: 28,
+      canResize: true,
+      canMaximize: true,
+      canMinimize: true,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("768px");
+    expect(calculator.style.height).toBe("560px");
   });
 
   test("uses a landscape runtime and proportional shell on a phone", async () => {
@@ -291,6 +317,80 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(calculator.style.height).toBe("260px");
     expect(Number.parseFloat(calculator.style.left)).toBeLessThanOrEqual(764);
     expect(Number.parseFloat(calculator.style.top)).toBeLessThanOrEqual(478);
+  });
+
+  test("repairs an unusably small saved size from native launch metadata", async () => {
+    const shell = await login(await loadShell());
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: { left: 40, top: 30, width: 170, height: 48 },
+      }),
+    );
+    const calculator = openCalculator(shell);
+
+    // Native placement is deferred until metadata supplies capabilities, so a
+    // stale placement cannot resize the process before its default is known.
+    expect(calculator.style.width).toBe("640px");
+    expect(calculator.style.height).toBe("470px");
+
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: { canResize: true, canMaximize: true },
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("768px");
+    expect(calculator.style.height).toBe("560px");
+    expect(calculator.style.left).toBe("40px");
+    expect(calculator.style.top).toBe("30px");
+  });
+
+  test("keeps a usable saved size for a resizable native window", async () => {
+    const shell = await login(await loadShell());
+    shell.window.localStorage.setItem(
+      "windowPlacements",
+      JSON.stringify({
+        __calculator: { left: 24, top: 18, width: 700, height: 500 },
+      }),
+    );
+    const calculator = openCalculator(shell);
+    showNativeCalculator(shell, 41, undefined, {
+      capabilities: { canResize: true, canMaximize: true },
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("700px");
+    expect(calculator.style.height).toBe("500px");
+    expect(calculator.style.left).toBe("24px");
+    expect(calculator.style.top).toBe("18px");
+  });
+
+  test("ignores transient 1x1 startup metadata", async () => {
+    const { shell, calculator } = await launchCalculator();
+    showNativeCalculator(shell, 41, undefined, { includeFrame: false });
+    const launchToken = nativeLaunchToken(shell);
+
+    sendNativeWindow(shell, {
+      type: "metadata",
+      id: 41,
+      parentId: 1,
+      processId: 10,
+      launchToken,
+      outerX: 0,
+      outerY: 0,
+      outerWidth: 1,
+      outerHeight: 1,
+      clientWidth: 1,
+      clientHeight: 1,
+      canResize: false,
+      canMaximize: false,
+      canMinimize: true,
+      win32Metrics: true,
+    });
+    await flushShell();
+
+    expect(calculator.style.width).toBe("640px");
+    expect(calculator.style.height).toBe("470px");
   });
 
   test("follows the native window when Scientific mode resizes it", async () => {
