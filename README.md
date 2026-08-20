@@ -1,13 +1,13 @@
 # Astro Flash Collection
 
-Boot Windows XP in your browser and play classic games with Ruffle, js-dos,
-ScummVM, and embedded web runtimes.
+Use a Windows XP-style desktop in your browser to play classic games and run
+selected original Windows XP applications.
 
 [Open Astro Flash Collection](https://flash.4st.li/)
 
 ## Highlights
 
-- Authentic Windows XP shell, Explorer, Paint, Notepad, card games, Pinball, themes, and settings
+- Windows XP-style shell, Explorer, Paint, Notepad, original XP applications, Pinball, themes, and settings
 - Draggable game windows, task switching, fullscreen, and volume controls
 - Favorites, recently played games, categories, search, and deep links
 - Automatic offline support with optional per-game downloads
@@ -62,6 +62,7 @@ disk. Use `--write-base` only when changes must be saved to that disk.
 
 - `site/apps/` — first-party applications, manifests, and lifecycle modules
 - `native/pinball/` — MIT Space Cadet source used to build the first-party WebAssembly runtime
+- `native/boxedwine/` and `site/vendor/boxedwine/` — native window control and the patched BoxedWine runtime
 - `site/js/shell/` — desktop, windows, taskbar, Start menu, and shell services
 - `site/js/apps/` — temporary shell adapters used by application modules
 - `site/css/shell/` and `site/css/apps/` — shell and application presentation
@@ -73,15 +74,16 @@ disk. Use `--write-base` only when changes must be saved to that disk.
 
 ## Games and offline support
 
-Included games are defined in `site/js/games.js`. Ruffle games use `type: "swf"`;
+Catalog games are defined in `site/js/games.js`. Ruffle games use `type: "swf"`;
 embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
-Windows XP Pinball is a first-party application mounted directly from
-`site/apps/pinball/`.
+Original XP applications such as Calculator, WordPad, and the card games are
+registered in `site/apps/core/boxedwine-applications.js` and share a BoxedWine
+runtime. Windows XP Pinball is mounted directly from `site/apps/pinball/`.
 
 The Windows XP shell is cached automatically. Opening an included game queues a
 complete background download for offline play. Games can also be downloaded or
-removed individually, or all at once, from **Settings > Offline**. The shared
-Ruffle and ScummVM runtimes are downloaded only when needed.
+removed individually, or all at once, from **Settings > Games**. Shared Ruffle,
+ScummVM, and BoxedWine runtimes are downloaded only when needed.
 
 Games installed through **Internet Games** are stored separately in IndexedDB
 and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
@@ -106,9 +108,6 @@ Deploy the Worker manually with:
 ```bash
 bun run deploy:worker
 ```
-
-Ruffle, js-dos, and WebTorrent are pinned in `package.json` and copied into the
-build output from `node_modules`.
 
 ## Contributing
 
