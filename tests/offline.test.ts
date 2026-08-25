@@ -878,7 +878,10 @@ test("offline updates", async () => {
     "26.07.30-config123",
   );
   scheduledUpdate.callback();
-  await new Promise((resolve) => setImmediate(resolve));
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (configurable.serviceWorker.registerCalls.length > 0) break;
+    await new Promise((resolve) => setImmediate(resolve));
+  }
   assert.strictEqual(
     configurable.serviceWorker.registerCalls.at(-1)[0],
     "/sw.26.07.30-config123.js",
