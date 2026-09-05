@@ -13,10 +13,6 @@ import { applicationMetadata as notepadMetadata } from "./notepad/metadata.js";
 const notepadApplication = defineLazyApplication(notepadMetadata, () =>
   import("./notepad/index.js").then((module) => module.notepadApplication),
 );
-import { applicationMetadata as winampMetadata } from "./winamp/metadata.js";
-const winampApplication = defineLazyApplication(winampMetadata, () =>
-  import("./winamp/index.js").then((module) => module.winampApplication),
-);
 import { applicationMetadata as minesweeperMetadata } from "./minesweeper/metadata.js";
 const minesweeperApplication = defineLazyApplication(minesweeperMetadata, () =>
   import("./minesweeper/index.js").then(
@@ -36,7 +32,6 @@ export const applicationRegistry = createApplicationRegistry([
   minesweeperApplication,
   notepadApplication,
   paintApplication,
-  winampApplication,
   pinballApplication,
 ]);
 

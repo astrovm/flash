@@ -53,12 +53,6 @@ export const systemApplications = [
       className: "add-remove-programs-window",
     },
   ),
-  system("__security-center", "Windows Security Center", "SecurityCenter.png", {
-    width: 748,
-    height: 600,
-    left: 138,
-    top: 70,
-  }),
   system(
     "__printers",
     "Printers and Faxes",

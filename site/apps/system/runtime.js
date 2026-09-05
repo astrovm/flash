@@ -1,6 +1,5 @@
 import { createUserAccountsContent } from "./user-accounts.js";
 import { createAddRemoveProgramsContent } from "./program-management.js";
-import { createSecurityCenterContent } from "./security-center.js";
 export const createSystemRuntime = (context) => {
   const {
     XPDialogs,
@@ -141,7 +140,6 @@ export const createSystemRuntime = (context) => {
         "PerformanceAndMaintenance.png",
         "left",
       ],
-      ["security", "Security Center", "SecurityCenter.png", "right"],
     ];
     const categoryGrid = content.querySelector(".control-panel-categories");
     categories.forEach(([id, label, icon, column]) => {
@@ -247,7 +245,6 @@ export const createSystemRuntime = (context) => {
       ],
       ["scanners-cameras", "Scanners and Cameras", "ScannersAndCameras.png"],
       ["scheduled-tasks", "Scheduled Tasks", "ScheduledTasks.png"],
-      ["security-center", "Security Center", "SecurityCenter.png"],
       ["sounds-audio", "Sounds and Audio Devices", "SoundsAndAudioDevices.png"],
       ["speech", "Speech", "Speech.png"],
       ["system", "System", "System.png"],
@@ -579,7 +576,6 @@ export const createSystemRuntime = (context) => {
       sounds: renderSoundsCategory,
       accessibility: renderAccessibilityCategory,
       performance: renderPerformanceCategory,
-      security: () => openSystemWindow("__security-center"),
     };
     content.addEventListener("click", (event) => {
       const sectionToggle = event.target.closest(".explorer-section-toggle");
@@ -621,8 +617,6 @@ export const createSystemRuntime = (context) => {
           "Windows Update",
           "info",
         );
-      } else if (action === "security-center") {
-        openSystemWindow("__security-center");
       } else if (action === "programs") {
         openSystemWindow("__add-remove-programs");
       } else if (action === "users") {
@@ -834,9 +828,6 @@ export const createSystemRuntime = (context) => {
     },
     "__add-remove-programs": (win) => {
       return createAddRemoveProgramsContent(context);
-    },
-    "__security-center": (win) => {
-      return createSecurityCenterContent(context);
     },
     __printers: (win) => {
       const content = createSystemContentRoot();

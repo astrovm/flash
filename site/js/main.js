@@ -287,11 +287,6 @@ const systemShortcuts = {
     icon: "assets/xp/icons/AddRemovePrograms.png",
     desktop: false,
   },
-  "__security-center": {
-    title: "Windows Security Center",
-    icon: "assets/xp/icons/SecurityCenter.png",
-    desktop: false,
-  },
   __printers: {
     title: "Printers and Faxes",
     icon: "assets/xp/icons/PrintersAndFaxes.png",

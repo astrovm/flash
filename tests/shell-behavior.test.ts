@@ -710,28 +710,14 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     [...flyouts.querySelectorAll<HTMLElement>("[data-program-id]")].map(
       (item) => item.dataset.programId,
     ),
-  ).toEqual([
-    "accessories",
-    "games",
-    "winamp",
-    "astro-settings",
-    "internet-games",
-  ]);
-  for (const programId of ["accessories", "games", "winamp"]) {
+  ).toEqual(["accessories", "games", "astro-settings", "internet-games"]);
+  for (const programId of ["accessories", "games"]) {
     expect(
       flyouts
         .querySelector(`[data-program-id="${programId}"] img`)!
         .getAttribute("src"),
     ).toEndWith("/ProgramFolder.png");
   }
-
-  flyouts
-    .querySelector<HTMLButtonElement>('[data-program-id="winamp"]')!
-    .click();
-  const winampGroup = flyouts.querySelectorAll(".start-program-flyout")[1]!;
-  expect(
-    winampGroup.querySelector<HTMLElement>('[data-program-id="winamp"]'),
-  ).not.toBeNull();
 
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
@@ -742,7 +728,6 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ].map((item) => item.dataset.programId);
   for (const programId of [
     "entertainment",
-    "system-tools",
     "calculator",
     "command-prompt",
     "notepad",
@@ -1074,6 +1059,8 @@ test("bundled iframe deep links use the production release base URL", async () =
 test("placeholder-only applications are not installed or exposed by the shell", async () => {
   const shell = await login(await loadShell());
   const removedApplicationIds = [
+    "__winamp",
+    "__security-center",
     "__accessibility-wizard",
     "__magnifier",
     "__narrator",
@@ -1131,7 +1118,6 @@ test("placeholder-only applications are not installed or exposed by the shell", 
     "accessories",
     "accessibility",
     "communications",
-    "system-tools",
     "games",
   ]) {
     flyouts

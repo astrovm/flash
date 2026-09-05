@@ -820,11 +820,6 @@ const buildPinnedPrograms = () => {
             "info",
           ),
       },
-      {
-        label: "Windows Update",
-        icon: "WindowsUpdateMenu.png",
-        action: () => openSystemWindow("__security-center"),
-      },
     ].forEach((definition) => container.appendChild(createCommand(definition)));
     return;
   }
@@ -960,19 +955,6 @@ const getAllProgramsTree = () => {
           icon: programFolder,
           children: [xpProgramMenuItem("__volume-control")],
         },
-        {
-          id: "system-tools",
-          label: "System Tools",
-          icon: programFolder,
-          children: [
-            {
-              id: "security-center",
-              label: "Security Center",
-              icon: "SecurityCenter.png",
-              action: () => openSystemWindow("__security-center"),
-            },
-          ],
-        },
         xpProgramMenuItem("__calculator"),
         xpProgramMenuItem("__command-prompt"),
         {
@@ -1005,12 +987,6 @@ const getAllProgramsTree = () => {
         { separator: true },
         ...gameGroups,
       ],
-    },
-    {
-      id: "winamp",
-      label: "Winamp",
-      icon: programFolder,
-      children: [xpProgramMenuItem("__winamp")],
     },
     { separator: true },
     {
