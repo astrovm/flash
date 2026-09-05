@@ -84,7 +84,6 @@ const showBootScreen = () => {
   clearTimeout(shutdownTimeout);
   muteAllWindows();
   setScreen("boot-screen");
-  document.getElementById("boot-screen").focus({ preventScroll: true });
   startupSoundPending = true;
   clearTimeout(bootTimeout);
   bootTimeout = setTimeout(finishBootSequence, BOOT_DURATION_MS);
@@ -265,14 +264,6 @@ const login = (playSound = true) => {
 const setupScreenFlow = () => {
   // Hide BoxedWine preparation behind the normal boot and Welcome screens.
   // Do not make either screen wait when the browser needs more time.
-  const bootScreen = document.getElementById("boot-screen");
-  const skipBootScreen = () => finishBootSequence();
-  bootScreen.addEventListener("click", skipBootScreen);
-  bootScreen.addEventListener("keydown", (event) => {
-    if (!["Enter", " "].includes(event.key)) return;
-    event.preventDefault();
-    skipBootScreen();
-  });
   document
     .getElementById("welcome-screen")
     .addEventListener("click", (event) => {

@@ -10,34 +10,26 @@ import {
 
 afterEach(cleanupShells);
 
-test("startup accepts pointer and keyboard input before showing the desktop", async () => {
-  const pointerShell = await loadShell();
-  const pointerDocument = pointerShell.document;
-  expect(pointerDocument.getElementById("boot-screen")!.hidden).toBeFalse();
-  pointerDocument.getElementById("boot-screen")!.click();
-  await flushShell();
-  expect(pointerDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
-  pointerDocument.getElementById("welcome-screen")!.click();
-  await flushShell();
-  expect(pointerDocument.getElementById("desktop")!.hidden).toBeFalse();
-  expect(pointerDocument.getElementById("taskbar")!.hidden).toBeFalse();
-
-  const keyboardShell = await loadShell();
-  const keyboardDocument = keyboardShell.document;
-  keyboardDocument
-    .getElementById("boot-screen")!
-    .dispatchEvent(
-      new keyboardShell.window.KeyboardEvent("keydown", { key: "Enter" }),
+test("boot is passive and advances to Welcome when startup completes", async () => {
+  const shell = await loadShell();
+  const boot = shell.document.getElementById("boot-screen")!;
+  expect(boot.hidden).toBeFalse();
+  expect(boot.getAttribute("role")).toBe("status");
+  boot.click();
+  for (const key of ["Enter", " "]) {
+    boot.dispatchEvent(
+      new shell.window.KeyboardEvent("keydown", { key, bubbles: true }),
     );
+  }
   await flushShell();
-  expect(keyboardDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
-  keyboardDocument
-    .getElementById("welcome-screen")!
-    .dispatchEvent(
-      new keyboardShell.window.KeyboardEvent("keydown", { key: " " }),
-    );
+  expect(boot.hidden).toBeFalse();
+  expect(shell.document.getElementById("welcome-screen")!.hidden).toBeTrue();
+  shell.completeBoot();
+  expect(boot.hidden).toBeTrue();
+  expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  shell.document.getElementById("welcome-screen")!.click();
   await flushShell();
-  expect(keyboardDocument.getElementById("desktop")!.hidden).toBeFalse();
+  expect(shell.document.getElementById("desktop")!.hidden).toBeFalse();
 });
 
 test("Start menu opens, closes, and exposes working XP destinations", async () => {

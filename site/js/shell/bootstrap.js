@@ -171,6 +171,7 @@ gameLibraryInitialization = Promise.race([
 ]);
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupExplorerFilesystemSync();
   initializeOfflineMode();
   setupScreenFlow();
   setupDesktopContextMenu();

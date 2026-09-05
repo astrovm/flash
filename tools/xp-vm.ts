@@ -1,3 +1,4 @@
+import { mkdir, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { createInterface } from "node:readline";
 import { dirname, resolve } from "node:path";
@@ -186,8 +187,30 @@ for await (const input of commands) {
     if (!command) continue;
     if (command === "help") {
       console.log(
-        "Commands: screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], save <name>, load <name>, status, quit",
+        "Commands: record-boot <directory>, screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], save <name>, load <name>, status, quit",
       );
+    } else if (command === "record-boot") {
+      if (!args[0]) throw new Error("record-boot requires an output directory");
+      const directory = resolve(args[0]);
+      await mkdir(directory, { recursive: true });
+      await execute("system_reset");
+      const started = performance.now();
+      const frames: Array<{ file: string; elapsedMs: number }> = [];
+      while (performance.now() - started < 20000) {
+        const file = `${String(frames.length).padStart(4, "0")}.png`;
+        const elapsedMs = performance.now() - started;
+        await execute("screendump", {
+          filename: resolve(directory, file),
+          format: "png",
+        });
+        frames.push({ file, elapsedMs });
+        await Bun.sleep(50);
+      }
+      await writeFile(
+        resolve(directory, "frames.json"),
+        JSON.stringify(frames, null, 2),
+      );
+      console.log(`Recorded ${frames.length} frames in ${directory}`);
     } else if (command === "screenshot") {
       const filename = resolve(
         sharedProjectDirectory,
