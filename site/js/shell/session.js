@@ -147,23 +147,9 @@ const showWelcomeScreen = (autoLogin = false) => {
   status.hidden = !loggedIn;
   const programCount = loggedIn ? openWindows.size : 0;
   status.classList.toggle("has-programs", programCount > 0);
-  status.textContent = "Logged on";
-  if (programCount) {
-    status.replaceChildren();
-    for (const digit of String(programCount)) {
-      const span = document.createElement("span");
-      span.className = "welcome-program-digit";
-      span.textContent = digit;
-      span.style.setProperty("--digit-offset", `${-Number(digit) * 7}px`);
-      status.append(span);
-    }
-    const suffix = document.createElement("span");
-    suffix.className =
-      programCount === 1 ? "welcome-program-one" : "welcome-program-many";
-    suffix.textContent =
-      programCount === 1 ? " program running." : " programs running.";
-    status.append(suffix);
-  }
+  status.textContent = programCount
+    ? `${programCount} program${programCount === 1 ? "" : "s"} running.`
+    : "Logged on";
   if (autoLogin) {
     welcomeScreen.setAttribute("role", "button");
     welcomeScreen.setAttribute("tabindex", "0");

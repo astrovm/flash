@@ -10,10 +10,14 @@ All images retain their captured dimensions. No screenshots were resized.
 `xp-*.png` files are QEMU framebuffer captures; `app-*.jpg` files are in-app
 browser captures at the corresponding viewport size. The 1280×1024 guest uses
 16-bit color, which visibly quantizes gradients. Browser JPEG encoding, color
-management also prevent a whole-screen pixel equality claim. Welcome labels now
-use XP GDI pixels, so the browser no longer substitutes its own font smoothing.
+management also prevent a whole-screen pixel equality claim. The older app captures used bitmap labels and are historical evidence only;
+native text now uses the original XP fonts through the browser renderer.
 
-The pairs cover automatic Welcome and user selection at 1024×768 and 1280×1024.
+`app-native-selection-*.jpg` records the replacement native text implementation
+at 1024×768 and 1280×1024, captured without resizing. It was also checked at
+390×844; no separate display-density emulation was available in this browser.
+
+The older pairs cover automatic Welcome and user selection at 1024×768 and 1280×1024.
 Additional guest captures show logged-off selection and selected-user loading.
 The VM account is Administrator; the simulation uses its existing astro profile.
 
@@ -58,23 +62,21 @@ and constrain the selected-user welcome text to keep the controls usable.
 
 ## XP text rendering
 
-`tools/reference/render-logon-text.c` runs inside XP and calls GDI with the
-ISO-installed Arial and Tahoma fonts. It writes black-and-white coverage bitmaps
-onto a disposable shared drive. `bun tools/render-logon-text.ts <directory>`
-converts those pixels to alpha masks; it never resizes them. The original GDI
-outputs and font hashes are recorded in `gdi/`. Dynamic program counts compose
-XP-rendered digits and singular/plural suffixes. Accessible DOM text remains.
+`site/css/fonts.css` defines the original ISO-extracted font files for the whole
+page. Shell text defaults to Tahoma, including native form controls; application
+styles can select the supplied Arial, Trebuchet MS and Lucida Console faces.
+Bold and italic faces use the corresponding original files.
 
-Tests verify every mask against its GDI source. The instruction reproduces the
-native capture within one RGB level (integer alpha blending), and the composed
-program-count glyphs match the native capture exactly. Mobile layouts wrap the
-original word masks and put longer status text below the user picture.
+Welcome uses real DOM text: Arial bold italic 48px, Arial 19px instructions,
+Tahoma 19px user/power labels, and Tahoma bold 11px status. Counts are ordinary
+strings; narrow layouts wrap naturally. No text images, glyph sprites, or
+host-specific smoothing overrides are used. Browser zoom and display density
+are handled by the native text engine.
 
-Build the helper using the command in its source header. Launch a temporary VM
-with `bun run xp:vm --instance logon-fonts --share /private/tmp/logon-fonts`;
-the explicitly shared directory is writable by the guest and should contain
-only disposable export files. Run the helper from that drive (E: in this VM).
-The base XP disk remains protected by QEMU's snapshot mode.
+Original font outlines do not guarantee identical rasterization: browser/OS
+hinting, antialiasing and fractional advances can differ from XP GDI. This is
+not a claim of pixel-exact text across platforms. The native VM captures remain
+the reference for type sizes, positions and appearance.
 
 ## Recorded sound behavior
 

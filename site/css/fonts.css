@@ -1,0 +1,72 @@
+/* Original XP font files; shared by shell and application text. */
+@font-face {
+  font-family: "Tahoma";
+  font-display: block;
+  src: url("fonts/tahoma.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Tahoma";
+  font-display: block;
+  src: url("fonts/tahomabd.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Trebuchet MS";
+  font-display: block;
+  src: url("fonts/trebuc.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Trebuchet MS";
+  font-display: block;
+  src: url("fonts/trebucbd.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Lucida Console";
+  font-display: block;
+  src: url("fonts/lucon.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Arial";
+  font-display: block;
+  src: url("fonts/arial.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Arial";
+  font-display: block;
+  src: url("fonts/arialbd.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Arial";
+  font-display: block;
+  src: url("fonts/arialbi.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Franklin Gothic Medium";
+  font-display: block;
+  src: url("fonts/framdit.ttf") format("truetype");
+  font-style: italic;
+  font-weight: 400;
+}

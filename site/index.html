@@ -11,7 +11,21 @@
     <meta name="application-name" content="Astro Flash Collection" />
     <meta name="astro-version" content="development" />
     <script src="js/startup-recovery.js"></script>
-    <link rel="preload" href="assets/logon-text/welcome.png" as="image" />
+    <link
+      rel="preload"
+      href="css/fonts/tahoma.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="css/fonts/arialbi.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/fonts.css" />
     <link rel="canonical" href="https://flash.4st.li/" />
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <meta property="og:type" content="website" />
@@ -122,10 +136,7 @@
         />
         <p class="welcome-message">welcome</p>
         <div class="welcome-panel">
-          <p class="welcome-instruction">
-            <span>To</span> <span>begin,</span> <span>click</span>
-            <span>your</span> <span>user</span> <span>name</span>
-          </p>
+          <p class="welcome-instruction">To begin, click your user name</p>
           <button id="login-user" type="button">
             <span class="welcome-avatar" aria-hidden="true"
               ><img src="assets/xp/Chess.bmp" alt="" width="48" height="48"

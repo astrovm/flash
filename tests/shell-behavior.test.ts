@@ -1559,8 +1559,6 @@ test("switched-session program count reflects the open windows", async () => {
   shell.document.getElementById("switch-user-confirm").click();
   const status = shell.document.getElementById("welcome-user-status");
   expect(status.textContent).toBe("2 programs running.");
-  expect(status.querySelectorAll(".welcome-program-digit").length).toBe(1);
-  expect(status.querySelector(".welcome-program-many")).not.toBeNull();
 });
 
 test("a Welcome gesture retries startup audio blocked by autoplay", async () => {

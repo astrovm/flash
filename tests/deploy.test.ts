@@ -78,6 +78,7 @@ async function makeSource(root: string): Promise<void> {
       '<script type="module" src="apps/index.js"></script>',
       '<script src="js/shell/desktop.js"></script>',
       '<script src="js/main.js?v=old"></script>',
+      '<link rel="preload" href="css/fonts/test.ttf" as="font" crossorigin>',
       '<link rel="stylesheet" href="css/main.css?v=old">',
       '<link rel="stylesheet" href="css/shell/desktop.css">',
       '<link rel="icon" href="favicon.ico">',

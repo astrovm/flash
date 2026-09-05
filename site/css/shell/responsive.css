@@ -88,31 +88,13 @@
     right: calc(50% + 40px);
     width: calc(50vw - 48px);
     height: auto;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 3px 6px;
-  }
-  .welcome-instruction::before {
-    display: none;
-  }
-  .welcome-instruction > span {
-    position: relative;
-    height: 18px;
-    flex: 0 0 var(--word-width);
-  }
-  .welcome-instruction > span::before {
-    display: block;
   }
   #welcome-screen.logging-in .welcome-message {
     left: 8px;
     width: calc(50% - 24px);
     padding: 0;
-  }
-  #welcome-screen.logging-in .welcome-message::before,
-  #welcome-screen.logging-in .welcome-message::after {
-    mask-size: contain;
-    mask-position: right center;
+    font-size: clamp(24px, 7.5vw, 48px);
+    text-align: right;
   }
   #welcome-user-status.has-programs,
   #welcome-screen.logging-in #welcome-user-status {
@@ -120,11 +102,6 @@
     left: 7px;
     top: 66px;
     margin-top: 0;
-  }
-  #welcome-screen.logging-in #welcome-user-status {
     width: calc(100% - 14px);
-  }
-  #welcome-screen.logging-in #welcome-user-status::before {
-    mask-size: contain;
   }
 }
