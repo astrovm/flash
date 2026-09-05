@@ -1403,6 +1403,58 @@ test("Taskbar Properties applies Classic Start menu independently and switches p
   expect(document.documentElement.dataset.xpStartMenu).toBe("classic");
 });
 
+test("selected logon shows personal-settings progress until storage is ready", async () => {
+  const shell = await login(await loadShell());
+  shell.document.getElementById("logoff-confirm")!.click();
+  await flushShell();
+  let ready;
+  Object.defineProperty(shell.window.VirtualFS, "ready", {
+    value: new Promise((resolve) => {
+      ready = resolve;
+    }),
+  });
+  const screen = shell.document.getElementById("welcome-screen")!;
+  const tile = shell.document.getElementById("login-user")!;
+  tile.click();
+  expect(screen.classList.contains("logging-in")).toBeTrue();
+  expect(screen.getAttribute("aria-busy")).toBe("true");
+  expect(tile.disabled).toBeTrue();
+  expect(
+    shell.document.getElementById("welcome-user-status")!.textContent,
+  ).toBe("Loading your personal settings...");
+  expect(shell.document.getElementById("desktop")!.hidden).toBeTrue();
+  ready();
+  await flushShell();
+  expect(shell.document.getElementById("desktop")!.hidden).toBeFalse();
+  expect(tile.disabled).toBeFalse();
+  expect(screen.hasAttribute("aria-busy")).toBeFalse();
+});
+
+test("user selection requires the tile and restores the switched session", async () => {
+  const shell = await login(await loadShell());
+  const { document } = shell;
+  clickStartAction(shell, "documents");
+  const explorer = document.querySelector(
+    '.xp-window[data-game="__my-documents"]',
+  );
+  document.getElementById("switch-user-confirm")!.click();
+  expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  expect(document.getElementById("welcome-user-status")!.hidden).toBeFalse();
+  document.getElementById("welcome-screen")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeTrue();
+  document.getElementById("welcome-turn-off")!.click();
+  expect(document.getElementById("shutdown-dialog")!.hidden).toBeFalse();
+  document.getElementById("shutdown-cancel")!.click();
+  expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  document.getElementById("login-user")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeFalse();
+  expect(document.querySelector('.xp-window[data-game="__my-documents"]')).toBe(
+    explorer,
+  );
+});
+
 test("logoff and shutdown actions change the visible session screen", async () => {
   const shell = await login(await loadShell());
   const { document } = shell;
@@ -1413,8 +1465,12 @@ test("logoff and shutdown actions change the visible session screen", async () =
   document.getElementById("logoff-confirm")!.click();
   await flushShell();
   expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
-
+  expect(document.getElementById("welcome-user-status")!.hidden).toBeTrue();
   document.getElementById("welcome-screen")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeTrue();
+
+  document.getElementById("login-user")!.click();
   await flushShell();
   document.getElementById("start-button")!.click();
   document.getElementById("turn-off-button")!.click();

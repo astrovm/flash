@@ -1,14 +1,11 @@
 /* ============ Small screens ============ */
 
 @media (max-width: 560px) {
-  .welcome-panel {
-    flex-direction: column;
-    gap: 22px;
-    margin-top: 110px;
-  }
-
-  .welcome-instruction {
-    text-align: center;
+  #welcome-screen.logging-in .welcome-message {
+    left: 25%;
+    width: 50%;
+    padding-right: 10px;
+    font-size: clamp(24px, 6vw, 36px);
   }
 
   .start-menu-right {

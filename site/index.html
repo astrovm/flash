@@ -113,30 +113,30 @@
 
     <!-- Welcome screen -->
     <div id="welcome-screen" hidden>
-      <img
-        class="welcome-wordmark"
-        src="assets/xp/WindowsWordmark.png"
-        alt="Microsoft Windows XP"
-      />
-      <p class="welcome-message">welcome</p>
-      <div class="welcome-panel">
-        <p class="welcome-instruction">To begin, click your user name</p>
-        <button id="login-user" type="button">
-          <span class="welcome-avatar xp-user-tile" aria-hidden="true"></span>
-          <span class="welcome-username">astro</span>
-        </button>
+      <div class="welcome-content">
+        <img
+          class="welcome-wordmark"
+          src="assets/xp/WindowsWordmark.png"
+          alt="Microsoft Windows XP"
+        />
+        <p class="welcome-message">welcome</p>
+        <div class="welcome-panel">
+          <p class="welcome-instruction">To begin, click your user name</p>
+          <button id="login-user" type="button">
+            <span class="welcome-avatar" aria-hidden="true"
+              ><img src="assets/xp/Chess.bmp" alt="" width="48" height="48"
+            /></span>
+            <span class="welcome-user-details"
+              ><span class="welcome-username">astro</span
+              ><span id="welcome-user-status" hidden>Logged on</span></span
+            >
+          </button>
+        </div>
       </div>
       <button id="welcome-turn-off" type="button">
-        <span
-          class="welcome-turn-off-icon xp-power-icon"
-          aria-hidden="true"
-        ></span>
+        <span class="welcome-turn-off-icon" aria-hidden="true"></span>
         <span>Turn off computer</span>
       </button>
-      <p class="welcome-help">
-        After you log on, you can add or change accounts.<br />
-        Just go to Control Panel and click User Accounts.
-      </p>
     </div>
 
     <!-- Desktop -->

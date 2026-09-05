@@ -138,6 +138,8 @@ const showWelcomeScreen = (autoLogin = false) => {
   const welcomeScreen = document.getElementById("welcome-screen");
   const loginUser = document.getElementById("login-user");
   welcomeScreen.classList.toggle("auto-login", autoLogin);
+  document.getElementById("welcome-user-status").hidden = !loggedIn;
+  document.getElementById("welcome-user-status").textContent = "Logged on";
   if (autoLogin) {
     welcomeScreen.setAttribute("role", "button");
     welcomeScreen.setAttribute("tabindex", "0");
@@ -268,8 +270,22 @@ const turnOff = async () => {
 let loginPromise = null;
 const login = (playSound = true) => {
   if (loginPromise) return loginPromise;
+  const welcomeScreen = document.getElementById("welcome-screen");
+  const loginUser = document.getElementById("login-user");
+  if (
+    !welcomeScreen.hidden &&
+    !welcomeScreen.classList.contains("auto-login")
+  ) {
+    welcomeScreen.classList.add("logging-in");
+    welcomeScreen.setAttribute("aria-busy", "true");
+    loginUser.disabled = true;
+    const status = document.getElementById("welcome-user-status");
+    status.textContent = "Loading your personal settings...";
+    status.hidden = false;
+  }
   loginPromise = (async () => {
     await fs.ready;
+    if (!shellInitialized) await syncGameFiles();
     clearTimeout(bootTimeout);
     loggedIn = true;
     showDesktop();
@@ -282,7 +298,6 @@ const login = (playSound = true) => {
 
     if (!shellInitialized) {
       shellInitialized = true;
-      await syncGameFiles();
       buildDesktopIcons();
       buildPlaces();
       setupSearch();
@@ -297,6 +312,9 @@ const login = (playSound = true) => {
     }
     scheduleScreenSaver();
   })().finally(() => {
+    welcomeScreen.classList.remove("logging-in");
+    welcomeScreen.removeAttribute("aria-busy");
+    loginUser.disabled = false;
     loginPromise = null;
   });
   return loginPromise;
@@ -316,12 +334,17 @@ const setupScreenFlow = () => {
     .getElementById("welcome-screen")
     .addEventListener("click", (event) => {
       if (event.target.closest("#welcome-turn-off")) return;
-      login();
+      if (
+        event.currentTarget.classList.contains("auto-login") ||
+        event.target.closest("#login-user")
+      )
+        login();
     });
   document
     .getElementById("welcome-screen")
     .addEventListener("keydown", (event) => {
       if (
+        !event.currentTarget.classList.contains("auto-login") ||
         event.target !== event.currentTarget ||
         !["Enter", " "].includes(event.key)
       ) {
