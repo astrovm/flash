@@ -512,6 +512,7 @@ iframe {
     progress;
 }
 
+#boot-screen:focus,
 #welcome-screen:focus {
   outline: none;
 }
