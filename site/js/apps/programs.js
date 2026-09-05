@@ -462,7 +462,24 @@ const applicationContext = (win) => ({
 });
 
 const openXPProgram = (programId, options = {}) => {
-  const program = window.XPApplicationRegistry.get(programId);
+  let program = window.XPApplicationRegistry.get(programId);
+  if (program.load) {
+    if (!program.loaded) {
+      return program
+        .load()
+        .then(() => openXPProgram(programId, options))
+        .catch((error) => {
+          void XPDialogs.alert(
+            error.message ||
+              "The application could not be loaded. Try opening it again.",
+            program.title,
+            "error",
+          );
+          return null;
+        });
+    }
+    program = program.loaded;
+  }
   const activateNativeGame = () => {
     if (program.kind !== "native-game") return;
     if (program.offlineGameId) {

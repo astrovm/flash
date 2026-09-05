@@ -10,14 +10,14 @@
 // an in-memory storage fallback.
 
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.VirtualFS = api;
   }
-})(typeof self !== "undefined" ? self : globalThis, function () {
+})(typeof self !== "undefined" ? self : globalThis, function (root) {
   const STORAGE_KEY = "virtualFileSystem";
   const FS_VERSION = 1;
 
@@ -37,12 +37,14 @@
 
   // ---- Storage (localStorage in the browser, in-memory under Node) ----
 
+  let persistentStorage = false;
   const storage = (() => {
     try {
       if (typeof localStorage !== "undefined") {
         const probe = "__vfs_probe__";
         localStorage.setItem(probe, "1");
         localStorage.removeItem(probe);
+        persistentStorage = true;
         return localStorage;
       }
     } catch (error) {
@@ -57,6 +59,15 @@
   })();
 
   let nodes = {};
+  let writable = !root?.document;
+  let ready = Promise.resolve();
+  let releaseWriter = null;
+  let writerRequest = null;
+  const readOnlyMessage = !persistentStorage
+    ? "Browser storage is unavailable. Enable site storage before saving files."
+    : !root?.navigator?.locks && root?.document
+      ? "This browser cannot safely coordinate file writes. Use a browser with Web Locks support to save files."
+      : "Files are read-only in this tab while another Astro Flash tab is open. Close the other tab, then save again.";
   const listeners = new Set();
   const fileTypeHandlers = new Map();
   let folderHandler = null;
@@ -185,12 +196,21 @@
 
   const save = () => {
     try {
+      if (!writable) throw new Error(readOnlyMessage);
       storage.setItem(
         STORAGE_KEY,
         JSON.stringify({ version: FS_VERSION, nodes }),
       );
     } catch (error) {
-      console.error("VirtualFS: failed to persist filesystem:", error);
+      // Do not leave a successful-looking in-memory edit after a failed write.
+      load();
+      if (error.name === "QuotaExceededError" || error.code === 22) {
+        throw new Error(
+          "Browser storage is full. Free some space and save again.",
+          { cause: error },
+        );
+      }
+      throw error;
     }
   };
 
@@ -212,8 +232,7 @@
     healSeed();
   };
 
-  const emitChange = () => {
-    save();
+  const notify = () => {
     listeners.forEach((listener) => {
       try {
         listener();
@@ -221,6 +240,14 @@
         console.error("VirtualFS listener error:", error);
       }
     });
+  };
+
+  const emitChange = () => {
+    try {
+      save();
+    } finally {
+      notify();
+    }
   };
 
   const subscribe = (listener) => {
@@ -323,9 +350,16 @@
 
   // ---- Name deduplication ----
 
-  const dedupeName = (parentId, desiredName, copyStyle = false) => {
+  const dedupeName = (
+    parentId,
+    desiredName,
+    copyStyle = false,
+    exceptId = null,
+  ) => {
     const names = new Set(
-      getChildren(parentId).map((child) => child.name.toLowerCase()),
+      getChildren(parentId)
+        .filter((child) => child.id !== exceptId)
+        .map((child) => child.name.toLowerCase()),
     );
     if (!names.has(desiredName.toLowerCase())) return desiredName;
 
@@ -429,7 +463,10 @@
       throw new Error(`Cannot rename "${node.name}": access is denied`);
     }
     const validName = validateName(newName);
-    node.name = node.parent ? dedupeName(node.parent, validName) : validName;
+    if (node.name === validName) return node;
+    node.name = node.parent
+      ? dedupeName(node.parent, validName, false, id)
+      : validName;
     if (node.type === "file") {
       node.ext = extractExtension(node.name);
     }
@@ -503,9 +540,13 @@
     if (node.protected) {
       throw new Error(`Cannot delete "${node.name}": access is denied`);
     }
-    [...node.children].forEach(destroy);
+    const erase = (nodeId) => {
+      const current = nodes[nodeId];
+      [...current.children].forEach(erase);
+      delete nodes[nodeId];
+    };
     detach(node);
-    delete nodes[id];
+    erase(id);
     emitChange();
   };
 
@@ -574,10 +615,15 @@
     return node.type === "file" ? node.content : null;
   };
 
-  const setContent = (id, content) => {
+  const setContent = (id, content, { name } = {}) => {
     const node = requireNode(id);
     if (node.type !== "file") {
       throw new Error(`VirtualFS: "${node.name}" is not a file`);
+    }
+    if (name !== undefined) {
+      const validName = validateName(name);
+      node.name = dedupeName(node.parent, validName, false, id);
+      node.ext = extractExtension(node.name);
     }
     node.content = String(content ?? "");
     node.size = node.content.length;
@@ -627,7 +673,65 @@
 
   load();
 
+  if (root?.document) {
+    const locks = root.navigator?.locks;
+    const acquireWriter = () => {
+      if (!locks || !persistentStorage) return Promise.resolve();
+      writerRequest = new root.AbortController();
+      const signal = writerRequest.signal;
+      return new Promise((resolve) => {
+        const hold = async () => {
+          if (signal.aborted) {
+            resolve();
+            return;
+          }
+          load();
+          writable = true;
+          notify();
+          resolve();
+          let releaseThisWriter;
+          await new Promise((release) => {
+            releaseThisWriter = release;
+            releaseWriter = release;
+          });
+          if (releaseWriter === releaseThisWriter) releaseWriter = null;
+        };
+        void locks
+          .request("astro-flash-files", { ifAvailable: true }, (lock) => {
+            if (lock) return hold();
+            resolve();
+            // Queue a takeover, but let the read-only tab finish booting now.
+            void locks
+              .request("astro-flash-files", { signal }, hold)
+              .catch(() => {});
+          })
+          .catch(() => resolve());
+      });
+    };
+    ready = acquireWriter();
+    root.addEventListener("storage", (event) => {
+      if (!writable && (event.key === STORAGE_KEY || event.key === null)) {
+        load();
+        notify();
+      }
+    });
+    root.addEventListener("pagehide", () => {
+      writable = false;
+      writerRequest?.abort();
+      releaseWriter?.();
+    });
+    root.addEventListener("pageshow", (event) => {
+      if (event.persisted) ready = acquireWriter();
+    });
+  }
+
   return {
+    get ready() {
+      return ready;
+    },
+    get canWrite() {
+      return writable;
+    },
     ...WELL_KNOWN,
     WELL_KNOWN,
     subscribe,

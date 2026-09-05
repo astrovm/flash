@@ -93,6 +93,14 @@ Games installed through **Internet Games** are stored separately in IndexedDB
 and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
 additional files as they are requested.
 
+Automatic updates prepare the new version in the background and leave the current
+page open. Reopen the site to use it, or press **Update Now** to reload immediately.
+
+Documents are stored in browser local storage. One tab at a time can change files;
+other tabs show saved changes and take over when the writing tab closes. Saving
+requires persistent storage and the browser Web Locks API. Failed saves keep the
+editor draft open and show an error.
+
 ## Deployment
 
 Pushes to `main` run tests, build the site, deploy and smoke-test the Cloudflare

@@ -1371,6 +1371,7 @@ test("logoff and shutdown actions change the visible session screen", async () =
   document.getElementById("log-off-button")!.click();
   expect(document.getElementById("logoff-dialog")!.hidden).toBeFalse();
   document.getElementById("logoff-confirm")!.click();
+  await flushShell();
   expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
 
   document.getElementById("welcome-screen")!.click();

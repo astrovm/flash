@@ -1,3 +1,6 @@
+import { createUserAccountsContent } from "./user-accounts.js";
+import { createAddRemoveProgramsContent } from "./program-management.js";
+import { createSecurityCenterContent } from "./security-center.js";
 export const createSystemRuntime = (context) => {
   const {
     XPDialogs,
@@ -816,243 +819,6 @@ export const createSystemRuntime = (context) => {
     });
   };
 
-  const createUserAccountsContent = () => {
-    const content = document.createElement("div");
-    content.className = "user-accounts-content";
-    content.innerHTML = `
-    <div class="user-accounts-toolbar">
-      <button type="button" data-user-accounts-action="back" disabled><img src="assets/xp/icons/Back.png" alt=""> Back</button>
-      <button type="button" disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""></button>
-      <button type="button" data-user-accounts-action="home"><img src="assets/xp/icons/UserAccounts.png" alt=""> Home</button>
-    </div>
-    <div class="user-accounts-body">
-      <aside class="user-accounts-sidebar">
-        <section><h2>Learn About</h2>
-          <button type="button" data-user-accounts-action="help"><span>?</span> User accounts</button>
-          <button type="button" data-user-accounts-action="help"><span>?</span> User account types</button>
-          <button type="button" data-user-accounts-action="help"><span>?</span> Switching users</button>
-        </section>
-      </aside>
-      <main class="user-accounts-main"></main>
-    </div>`;
-    const main = content.querySelector(".user-accounts-main");
-    const sidebar = content.querySelector(".user-accounts-sidebar");
-    const back = content.querySelector('[data-user-accounts-action="back"]');
-    const home = content.querySelector('[data-user-accounts-action="home"]');
-    const renderHeader = () => `
-    <div class="user-accounts-heading"><img src="assets/xp/icons/UserAccounts.png" alt=""><strong>User Accounts</strong></div>`;
-    const learnLink = (label) =>
-      `<button type="button" data-user-accounts-action="help"><span>?</span> ${label}</button>`;
-    const renderSidebar = (markup) => {
-      sidebar.innerHTML = markup;
-    };
-    const showSubpage = (sidebarMarkup, pageMarkup) => {
-      back.disabled = false;
-      home.disabled = false;
-      main.className = "user-accounts-main user-accounts-subpage";
-      renderSidebar(sidebarMarkup);
-      main.innerHTML = pageMarkup;
-    };
-    const renderHome = () => {
-      back.disabled = true;
-      home.disabled = true;
-      main.className = "user-accounts-main";
-      renderSidebar(`<section><h2>Learn About</h2>
-      ${learnLink("User accounts")}
-      ${learnLink("User account types")}
-      ${learnLink("Switching users")}
-    </section>`);
-      main.innerHTML = `${renderHeader()}
-      <div class="user-accounts-page">
-        <h1>Pick a task...</h1>
-        <div class="user-account-task-links">
-          <button type="button" data-user-accounts-action="change"><img src="assets/xp/icons/Go.png" alt="">Change an account</button>
-          <button type="button" data-user-accounts-action="create"><img src="assets/xp/icons/Go.png" alt="">Create a new account</button>
-          <button type="button" data-user-accounts-action="logon"><img src="assets/xp/icons/Go.png" alt="">Change the way users log on or off</button>
-        </div>
-        <h2>or pick an account to change</h2>
-        <div class="user-account-choices">
-          <button type="button" data-user-accounts-action="administrator"><img src="assets/xp/system/UserAdministrator.bmp" alt=""><span><strong>Administrator</strong><small>Computer administrator</small></span></button>
-          <button type="button" data-user-accounts-action="guest"><img src="assets/xp/system/UserGuest.bmp" alt=""><span><strong>Guest</strong><small>Guest account is off</small></span></button>
-        </div>
-      </div>`;
-    };
-    const accountChoice = (guest = false, selected = false) => {
-      const name = guest ? "Guest" : "Administrator";
-      const detail = guest ? "Guest account is off" : "Computer administrator";
-      const image = guest
-        ? "assets/xp/system/UserGuest.bmp"
-        : "assets/xp/system/UserAdministrator.bmp";
-      return `<button type="button" class="${selected ? "selected" : ""}" data-user-accounts-action="${guest ? "guest" : "administrator"}"><img src="${image}" alt=""><span><strong>${name}</strong><small>${detail}</small></span></button>`;
-    };
-    const renderChange = () => {
-      showSubpage(
-        `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="create">Create a new account</button></section>
-       <section><h2>Learn About</h2>${learnLink("User accounts")}</section>`,
-        `<div class="user-account-change"><h1>Pick an account to change</h1><div class="user-account-picker">${accountChoice(false, true)}${accountChoice(true)}</div></div>`,
-      );
-    };
-    const renderAccount = (guest = false) => {
-      if (guest) {
-        showSubpage(
-          `<div class="user-account-sidebar-summary"><img src="assets/xp/system/UserGuest.bmp" alt=""><span><strong>Guest</strong><small>Guest account is off</small></span></div><section><h2>Learn About</h2>${learnLink("Using the guest account")}</section>`,
-          `<div class="user-account-guest"><h1>Do you want to turn on the guest account?</h1><p>If you turn on the guest account, people who do not have an account can use the guest account to log on to the computer. Password-protected files, folders, or settings are not accessible to guest users.</p><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default">Turn On the Guest Account</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
-        );
-        return;
-      }
-      showSubpage(
-        `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="help">Manage my network passwords</button><button type="button" data-user-accounts-action="help">Prevent a forgotten password</button><button type="button" data-user-accounts-action="change">Change another account</button><button type="button" data-user-accounts-action="create">Create a new account</button></section><section><h2>Learn About</h2>${learnLink("Deleting your own account")}${learnLink("Switching users")}${learnLink("Using a .NET Passport")}</section>`,
-        `<div class="user-account-administrator"><h1>What do you want to change about your<br>account?</h1><div class="user-account-summary"><img src="assets/xp/system/UserAdministrator.bmp" alt=""><span><strong>Administrator</strong><small>Computer administrator</small></span></div><div class="user-account-detail-links"><button type="button"><img src="assets/xp/icons/Go.png" alt="">Create a password</button><button type="button"><img src="assets/xp/icons/Go.png" alt="">Change my picture</button><button type="button"><img src="assets/xp/icons/Go.png" alt="">Set up my account to use a .NET Passport</button></div><p>The administrator account is only visible on the Welcome screen when no other user accounts exist (except the guest account), or when you start your computer in Safe Mode.</p></div>`,
-      );
-    };
-    const renderCreate = () => {
-      showSubpage(
-        "",
-        `<div class="user-account-create"><h1>Name the new account</h1><label for="new-account-name">Type a name for the new account:</label><input id="new-account-name" type="text" aria-label="New account name"><p>This name will appear on the <button type="button" data-user-accounts-action="help">Welcome screen</button> and on the <button type="button" data-user-accounts-action="help">Start menu</button>.</p><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default">Next &gt;</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
-      );
-      main.querySelector("input").focus();
-    };
-    const renderLogon = () => {
-      showSubpage(
-        `<section><h2>Related Tasks</h2><button type="button" data-user-accounts-action="change">Manage accounts</button></section><section><h2>Learn About</h2>${learnLink("Logon options")}</section>`,
-        `<div class="user-account-logon"><h1>Select logon and logoff options</h1><label><input type="checkbox" checked><span><strong>Use the Welcome screen</strong><small>By using the Welcome screen, you can simply click your account name to log on. For added security, you can turn off this feature and use the classic logon prompt which requires users to type an account name.</small></span></label><label><input type="checkbox" checked><span><strong>Use Fast User Switching</strong><small>With Fast User Switching, you can quickly switch to another user account without having to close any programs. Then, when the other user is finished, you can switch back to your own account.</small></span></label><div class="user-account-divider"></div><div class="user-account-page-buttons"><button type="button" class="xp-btn default" data-user-accounts-action="home">Apply Options</button><button type="button" class="xp-btn" data-user-accounts-action="home">Cancel</button></div></div>`,
-      );
-    };
-    content.addEventListener("click", (event) => {
-      const action = event.target.closest("[data-user-accounts-action]")
-        ?.dataset.userAccountsAction;
-      if (action === "home" || action === "back") renderHome();
-      else if (action === "change") renderChange();
-      else if (action === "administrator") renderAccount(false);
-      else if (action === "guest") renderAccount(true);
-      else if (action === "create") renderCreate();
-      else if (action === "logon") renderLogon();
-      else if (action === "help") openHelpAndSupport();
-    });
-    renderHome();
-    return content;
-  };
-
-  const createAddRemoveProgramsContent = () => {
-    const content = document.createElement("div");
-    content.className = "add-remove-programs-content";
-    content.innerHTML = `
-    <nav class="add-remove-programs-nav" aria-label="Add or Remove Programs tasks">
-      <button type="button" data-add-remove-page="change" class="selected"><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><span>Change or<br>Remove<br>Programs</span></button>
-      <button type="button" data-add-remove-page="add"><img src="assets/xp/system/AddNewPrograms.png" alt=""><span>Add New<br>Programs</span></button>
-      <button type="button" data-add-remove-page="components"><img src="assets/xp/system/AddRemoveWindowsComponents.png" alt=""><span>Add/Remove<br>Windows<br>Components</span></button>
-      <button type="button" data-add-remove-page="defaults"><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><span>Set Program<br>Access and<br>Defaults</span></button>
-    </nav>
-    <main class="add-remove-programs-main"></main>`;
-    const main = content.querySelector(".add-remove-programs-main");
-    const selectPage = (page) =>
-      content
-        .querySelectorAll("[data-add-remove-page]")
-        .forEach((button) =>
-          button.classList.toggle(
-            "selected",
-            button.dataset.addRemovePage === page,
-          ),
-        );
-    const renderChange = () => {
-      selectPage("change");
-      main.innerHTML = `<div class="add-remove-programs-toolbar"><span>Currently installed programs:</span><label><input type="checkbox"> Show updates</label><label>Sort by: <select><option>Name</option><option>Size</option><option>Frequency of Use</option><option>Date Last Used</option></select></label></div><div class="add-remove-programs-list" aria-label="Currently installed programs"></div>`;
-    };
-    const renderAdd = () => {
-      selectPage("add");
-      main.innerHTML = `<section class="add-new-program-section"><h2>Add a program from CD-ROM or floppy disk</h2><img src="assets/xp/system/ChangeRemovePrograms.png" alt=""><p>To add a program from a CD-ROM or floppy disk, click CD or Floppy.</p><button type="button" class="xp-btn" data-add-remove-action="cd">CD or Floppy</button></section><section class="add-new-program-section"><h2>Add programs from Microsoft</h2><img src="assets/xp/system/ProgramAccessDefaults.png" alt=""><p>To add new Windows features, device drivers, and system updates over the Internet, click<br>Windows Update.</p><button type="button" class="xp-btn" data-add-remove-action="update">Windows Update</button></section>`;
-    };
-    const renderDefaults = () => {
-      selectPage("defaults");
-      main.innerHTML = `<div class="program-defaults-intro"><p>A program configuration specifies default programs for certain activities, such as Web browsing or sending e-mail, and which<br>programs are accessible from the Start menu, desktop, and other locations.</p><p>Choose a configuration:</p></div><div class="program-defaults-list"><label><input type="radio" name="program-default" value="microsoft"> Microsoft Windows <button type="button" aria-label="Expand Microsoft Windows">⌄</button></label><label><input type="radio" name="program-default" value="other"> Non-Microsoft <button type="button" aria-label="Expand Non-Microsoft">⌄</button></label><label class="selected"><input type="radio" name="program-default" value="custom" checked> Custom <button type="button" aria-label="Expand Custom">⌄</button></label></div><div class="program-defaults-buttons"><button type="button" class="xp-btn" data-add-remove-action="ok">OK</button><button type="button" class="xp-btn" data-add-remove-action="cancel">Cancel</button><button type="button" class="xp-btn" data-add-remove-action="help">Help</button></div>`;
-    };
-    content.addEventListener("click", (event) => {
-      const page = event.target.closest("[data-add-remove-page]")?.dataset
-        .addRemovePage;
-      if (page === "change") renderChange();
-      else if (page === "add") renderAdd();
-      else if (page === "components") {
-        selectPage("components");
-        const setup = XPDialogs.createDialog({ title: "Windows XP Setup" });
-        setup.el.classList.add("windows-setup-wait-dialog");
-        setup.body.innerHTML = "<p>Please wait...</p>";
-        setTimeout(() => setup.close("ready"), 1800);
-      } else if (page === "defaults") renderDefaults();
-      const action = event.target.closest("[data-add-remove-action]")?.dataset
-        .addRemoveAction;
-      if (action === "cd")
-        XPDialogs.alert(
-          "Please insert the program installation disc.",
-          "Install Program From Floppy Disk or CD-ROM",
-          "info",
-        );
-      else if (action === "update")
-        XPDialogs.alert(
-          "Windows Update is not available in Astro Flash Collection.",
-          "Windows Update",
-          "info",
-        );
-      else if (action === "cancel") renderChange();
-      else if (action === "help") openHelpAndSupport();
-    });
-    renderChange();
-    return content;
-  };
-
-  const createSecurityCenterContent = () => {
-    const content = document.createElement("div");
-    content.className = "security-center-content";
-    content.innerHTML = `
-    <header class="security-center-header">
-      <img src="assets/xp/system/SecurityCenterHeader.png" alt="">
-      <span><strong>Security Center</strong><small>Help protect your PC</small></span>
-    </header>
-    <div class="security-center-body">
-      <aside class="security-center-resources">
-        <section>
-          <h2><img src="assets/xp/system/SecurityHelp.png" alt=""> Resources <img class="security-section-toggle" src="assets/xp/system/SecurityCollapse.png" alt=""></h2>
-          <button type="button">Get the latest security and virus<br>information from Microsoft</button>
-          <button type="button">Check for the latest updates from<br>Windows Update</button>
-          <button type="button">Get support for security-related<br>issues</button>
-          <button type="button">Get help about Security Center</button>
-          <button type="button">Change the way Security Center<br>alerts me</button>
-        </section>
-      </aside>
-      <main class="security-center-main">
-        <h1>Security essentials</h1>
-        <p>Security Center helps you manage your Windows security settings. To help protect your computer,<br>make sure the three security essentials are marked ON. If the settings are not ON, follow the<br>recommendations. To return to the Security Center later, open Control Panel.<br><a href="#">What's new in Windows to help protect my computer?</a></p>
-        <section class="security-status security-firewall">
-          <h2><img src="assets/xp/system/SecurityFirewall.png" alt=""> <span>Firewall</span><strong><img src="assets/xp/system/SecurityStatusGreen.png" alt=""> ON</strong><button type="button" aria-label="Expand Firewall"><img src="assets/xp/system/SecurityExpand.png" alt=""></button></h2>
-        </section>
-        <section class="security-status security-updates">
-          <h2><img src="assets/xp/system/SecurityAutomaticUpdates.png" alt=""> <span>Automatic Updates</span><strong><img data-security-update-indicator src="assets/xp/system/SecurityStatusYellow.png" alt=""> <b data-security-update-status>CHECK SETTINGS</b></strong><button type="button" aria-label="Collapse Automatic Updates"><img src="assets/xp/system/SecurityCollapse.png" alt=""></button></h2>
-          <div><p>Automatic Updates is not yet configured for this computer. Click Turn on Automatic Updates to<br>have Windows automatically keep your computer current with important updates<br>(recommended). <a href="#">How does Automatic Updates help protect my computer?</a></p><button type="button" class="xp-btn" data-security-action="updates">Turn on Automatic Updates</button></div>
-        </section>
-        <section class="security-status security-virus">
-          <h2><img src="assets/xp/system/SecurityVirusProtection.png" alt=""> <span>Virus Protection</span><strong><img src="assets/xp/system/SecurityStatusRed.png" alt=""> NOT FOUND</strong><button type="button" aria-label="Collapse Virus Protection"><img src="assets/xp/system/SecurityCollapse.png" alt=""></button></h2>
-          <div><p>Windows did not find antivirus software on this computer. Antivirus software helps protect your<br>computer against viruses and other security threats. Click Recommendations for<br>suggested actions you can take. <a href="#">How does antivirus software help protect my computer?</a></p><p>Note: Windows does not detect all antivirus programs.</p><button type="button" class="xp-btn">Recommendations...</button></div>
-        </section>
-        <h2 class="security-manage-heading">Manage security settings for:</h2>
-        <div class="security-manage-links">
-          <button type="button"><img src="assets/xp/icons/InternetOptions.png" alt="">Internet Options</button>
-          <button type="button"><img src="assets/xp/icons/WindowsFirewall.png" alt="">Windows Firewall</button>
-          <button type="button"><img src="assets/xp/system/SecurityAutomaticUpdates.png" alt="">Automatic Updates</button>
-        </div>
-      </main>
-    </div>
-    <footer>At Microsoft, we care about your privacy. Please read our <a href="#">privacy statement.</a></footer>`;
-    content.addEventListener("click", (event) => {
-      if (event.target.closest('[data-security-action="updates"]')) {
-        content.querySelector("[data-security-update-status]").textContent =
-          "ON";
-        content.querySelector("[data-security-update-indicator]").src =
-          "assets/xp/system/SecurityStatusGreen.png";
-        content.querySelector(".security-updates").classList.add("enabled");
-        event.target.closest("button").disabled = true;
-      }
-    });
-    return content;
-  };
   const createSystemContentRoot = () => {
     const content = document.createElement("div");
     content.className = "explorer-content";
@@ -1064,13 +830,13 @@ export const createSystemRuntime = (context) => {
       return createControlPanelContent();
     },
     "__user-accounts": (win) => {
-      return createUserAccountsContent();
+      return createUserAccountsContent(context);
     },
     "__add-remove-programs": (win) => {
-      return createAddRemoveProgramsContent();
+      return createAddRemoveProgramsContent(context);
     },
     "__security-center": (win) => {
-      return createSecurityCenterContent();
+      return createSecurityCenterContent(context);
     },
     __printers: (win) => {
       const content = createSystemContentRoot();

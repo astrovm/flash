@@ -38,6 +38,7 @@ export async function loadShell({
   gameLibraryManager,
   initialStorage = {},
   offlineSettings = {},
+  preloadApplications = true,
 } = {}) {
   const window = new Window({
     url: "http://127.0.0.1/",
@@ -49,6 +50,12 @@ export async function loadShell({
       enableJavaScriptEvaluation: false,
       handleDisabledFileLoadingAsSuccess: true,
       suppressInsecureJavaScriptEnvironmentWarning: true,
+    },
+  });
+  Object.defineProperty(window.navigator, "locks", {
+    value: {
+      request: (_name, _options, callback) =>
+        Promise.resolve(callback({ name: "astro-flash-files" })),
     },
   });
   const { document } = window;
@@ -297,6 +304,12 @@ export async function loadShell({
   const applicationScript = document.createElement("script");
   applicationScript.textContent = await applicationBundle.outputs[0].text();
   document.body.appendChild(applicationScript);
+  if (preloadApplications)
+    await Promise.all(
+      window.XPApplicationRegistry.values().map((application) =>
+        application.load?.(),
+      ),
+    );
 
   // The real browser runs the WebAssembly guest while the XP welcome screen
   // is visible. Happy DOM cannot execute an iframe guest, so resolve only the

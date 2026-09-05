@@ -1,18 +1,10 @@
+import {
+  applicationMetadata,
+  AUDIO_TYPES,
+  PLAYLIST_TYPES,
+} from "./metadata.js";
 import { defineApplication } from "../core/application.js";
 
-const AUDIO_TYPES = [
-  ".aac",
-  ".flac",
-  ".m4a",
-  ".mp3",
-  ".oga",
-  ".ogg",
-  ".opus",
-  ".wav",
-  ".webm",
-];
-const PLAYLIST_TYPES = [".m3u", ".m3u8", ".pls"];
-const FILE_TYPES = [...AUDIO_TYPES, ...PLAYLIST_TYPES];
 const EQ_FREQUENCIES = [
   60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000,
 ];
@@ -477,16 +469,6 @@ const mountWinamp = (shell, instance) => {
 };
 
 export const winampApplication = defineApplication({
-  id: "__winamp",
-  title: "Winamp",
-  icon: "apps/winamp/icon.png",
-  kind: "winamp",
-  fileTypes: FILE_TYPES,
-  window: {
-    width: 275,
-    height: 348,
-    className: "xp-native-winamp-window",
-    customChrome: true,
-  },
+  ...applicationMetadata,
   mount: mountWinamp,
 });

@@ -251,8 +251,8 @@
   async function install(record, zipBytes, dependencies = {}) {
     if (!(zipBytes instanceof Uint8Array))
       fail("Game archive must be a Uint8Array");
-    if (typeof dependencies.unzipSync !== "function")
-      fail("unzipSync dependency is required");
+    const unzip = dependencies.unzip || dependencies.unzipSync;
+    if (typeof unzip !== "function") fail("ZIP reader dependency is required");
     if (
       !dependencies.cache ||
       typeof dependencies.cache.put !== "function" ||
@@ -276,7 +276,7 @@
     const launchPath = archiveLaunchPath(game.launchCommand);
     validateZipMetadata(zipBytes, dependencies.limits);
     const files = validateZipEntries(
-      dependencies.unzipSync(zipBytes),
+      await unzip(zipBytes, { signal: dependencies.signal }),
       dependencies.limits,
     );
     const launchFile = files.find(
@@ -286,6 +286,7 @@
     const written = [];
     try {
       for (const file of files) {
+        dependencies.signal?.throwIfAborted();
         const key = cacheKey(origin, game.uuid, file.path);
         await dependencies.cache.put(
           key,
@@ -293,6 +294,7 @@
         );
         written.push(key);
       }
+      dependencies.signal?.throwIfAborted();
       const resolvedLaunchPath = cacheKey(origin, game.uuid, launchFile.path);
       const metadata = Object.assign({}, game, {
         id: "flashpoint:" + game.uuid,

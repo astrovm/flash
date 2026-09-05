@@ -24,7 +24,9 @@ window.fetch = async (...args) => {
   }
   if (gameLibraryReady && gameLibrary && !gameLibraryError) {
     try {
-      const installedResponse = await gameLibrary.match(originalRequest);
+      const installedResponse = await gameLibrary.match(originalRequest, {
+        gameId: focusedGameId,
+      });
       if (installedResponse) {
         const originalUrl =
           originalRequest instanceof Request

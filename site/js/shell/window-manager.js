@@ -131,7 +131,9 @@ const restoreWindowPlacement = (win, { restoreSize = true } = {}) => {
     top: `${saved.top}px`,
   });
   if (desktopWidth > 0 && desktopHeight > 0) {
-    const position = clampWindowPosition(win, saved.left, saved.top);
+    const position = clampWindowPosition(win, saved.left, saved.top, {
+      fullyVisible: true,
+    });
     win.el.style.left = `${position.left}px`;
     win.el.style.top = `${position.top}px`;
   }
@@ -139,11 +141,11 @@ const restoreWindowPlacement = (win, { restoreSize = true } = {}) => {
 
 // Keep at least part of the title bar reachable inside the work area,
 // matching how Windows XP constrains window positions.
-const clampWindowPosition = (win, left, top) => {
+const clampWindowPosition = (win, left, top, { fullyVisible = false } = {}) => {
   const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
   const width = parseWindowLength(win.el.style.width, win.el.offsetWidth);
   const height = parseWindowLength(win.el.style.height, win.el.offsetHeight);
-  if (win.application?.window.nativeMetadata) {
+  if (fullyVisible || win.application?.window.nativeMetadata) {
     return {
       left: Math.min(Math.max(left, 0), Math.max(0, desktopWidth - width)),
       top: Math.min(Math.max(top, 0), Math.max(0, desktopHeight - height)),
@@ -254,7 +256,9 @@ const keepWindowsInWorkArea = () => {
     const height = parseWindowLength(el.style.height, el.offsetHeight);
     el.style.width = `${Math.min(width, desktopWidth)}px`;
     el.style.height = `${Math.min(height, desktopHeight)}px`;
-    const position = clampWindowPosition(win, el.offsetLeft, el.offsetTop);
+    const position = clampWindowPosition(win, el.offsetLeft, el.offsetTop, {
+      fullyVisible: true,
+    });
     el.style.left = `${position.left}px`;
     el.style.top = `${position.top}px`;
   });
@@ -1060,36 +1064,48 @@ const closeGameWindow = (
   { skipBeforeClose = false, skipUnmount = false } = {},
 ) => {
   const win = openWindows.get(gameId);
-  if (!win) return;
+  if (!win) return true;
+  if (!skipBeforeClose && win.closePromise) return win.closePromise;
 
   if (!skipBeforeClose && win.beforeClose) {
     const result = win.beforeClose();
     if (result && typeof result.then === "function") {
-      result.then((shouldClose) => {
-        if (shouldClose !== false) {
-          closeGameWindow(gameId, { skipBeforeClose: true });
-        }
-      });
-      return;
+      win.closePromise = result
+        .then((shouldClose) => {
+          return shouldClose !== false
+            ? closeGameWindow(gameId, { skipBeforeClose: true })
+            : false;
+        })
+        .catch((error) => {
+          void XPDialogs.alert(
+            error.message || "The window could not be closed.",
+            "Astro Flash",
+            "error",
+          );
+          return false;
+        })
+        .finally(() => {
+          win.closePromise = null;
+        });
+      return win.closePromise;
     }
-    if (result === false) return;
+    if (result === false) return false;
   }
-  if (!skipBeforeClose && win.removeGameDataOnClose) {
+  if (win.removeGameDataOnClose) {
     const temporaryData = win.removeGameDataOnClose;
     win.removeGameDataOnClose = false;
-    gameDataManager
+    return gameDataManager
       .removeTemporary(temporaryData.storageId, temporaryData.fileName)
       .catch((error) =>
         console.error("Could not remove temporary %s data:", gameId, error),
       )
-      .finally(() => {
+      .then(() => {
         window.postMessage(
           { event: "astro.game-data-changed" },
           location.origin,
         );
-        closeGameWindow(gameId, { skipBeforeClose: true });
+        return closeGameWindow(gameId, { skipBeforeClose: true });
       });
-    return;
   }
   persistWindowPlacement(win);
   if (!skipUnmount) win.mountedApplication?.unmount?.();
@@ -1102,6 +1118,7 @@ const closeGameWindow = (
   } else {
     renderTaskButtons();
   }
+  return true;
 };
 
 const wireDrag = (win) => {

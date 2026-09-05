@@ -420,6 +420,14 @@ test("offline updates", async () => {
   assert.deepStrictEqual(manualUpdates.registration.waiting.messages, [
     { type: "SKIP_WAITING" },
   ]);
+  manualUpdates.serviceWorker.dispatch("controllerchange");
+  assert.strictEqual(manualUpdates.getReloads(), 1);
+  manualUpdates.serviceWorker.dispatch("controllerchange");
+  assert.strictEqual(
+    manualUpdates.getReloads(),
+    1,
+    "manual reload intent is consumed once",
+  );
 
   const legacyActiveWorker = new Worker(
     "activated",
@@ -589,6 +597,12 @@ test("offline updates", async () => {
   repaired.setRemote({ version: "26.07.30-repair111" });
   repaired.registration.waiting = new Worker("installed", "26.07.30-repair111");
   await repairedManager.repair();
+  repaired.serviceWorker.dispatch("controllerchange");
+  assert.strictEqual(
+    repaired.getReloads(),
+    0,
+    "repair does not reload the current session",
+  );
   assert.strictEqual(repaired.registration.unregisterCalls, 1);
   assert(repaired.deletedCaches.includes("astro-flash-precache"));
   assert.deepStrictEqual(repaired.registration.waiting.messages, [
@@ -831,6 +845,28 @@ test("offline updates", async () => {
   });
   delayed.setNow(secondReleaseTime + sixHours);
   delayedRegistration.waiting = new Worker("installed", "26.07.30-second22");
+  const dueTimer = delayed.timers.find(
+    ({ delay }) => delay === 3 * 60 * 60 * 1000,
+  );
+  assert.ok(dueTimer);
+  dueTimer.callback();
+  for (
+    let attempt = 0;
+    attempt < 20 && !delayedRegistration.waiting.messages.length;
+    attempt++
+  ) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  assert.deepStrictEqual(delayedRegistration.waiting.messages, [
+    { type: "SKIP_WAITING" },
+  ]);
+  delayed.serviceWorker.dispatch("controllerchange");
+  assert.strictEqual(
+    delayed.getReloads(),
+    0,
+    "automatic activation keeps the current session open",
+  );
+  delayedRegistration.waiting.messages.length = 0;
   const nextLoadManager = createManager({
     currentVersion: manifest.version,
     environment: delayed.environment,
@@ -840,7 +876,7 @@ test("offline updates", async () => {
     { type: "SKIP_WAITING" },
   ]);
   delayed.serviceWorker.dispatch("controllerchange");
-  assert.strictEqual(delayed.getReloads(), 1);
+  assert.strictEqual(delayed.getReloads(), 0);
 
   const configurableReleaseTime = now - 7 * 60 * 60 * 1000;
   const configurableRegistration = new Registration({
@@ -879,7 +915,7 @@ test("offline updates", async () => {
   );
   scheduledUpdate.callback();
   for (let attempt = 0; attempt < 10; attempt += 1) {
-    if (configurable.serviceWorker.registerCalls.length > 0) break;
+    if (configurableRegistration.waiting.messages.length > 0) break;
     await new Promise((resolve) => setImmediate(resolve));
   }
   assert.strictEqual(
@@ -927,6 +963,9 @@ test("offline updates", async () => {
   });
   await activatedManager.initialize();
   await activatedManager.checkForUpdates();
+  assert.strictEqual(activatedUpdate.getReloads(), 0);
+  assert.strictEqual(activatedManager.getSnapshot().updateReady, true);
+  await activatedManager.updateNow();
   assert.strictEqual(activatedUpdate.getReloads(), 1);
 
   const inconsistentUpdate = makeEnvironment({
@@ -945,6 +984,7 @@ test("offline updates", async () => {
   await inconsistentManager.initialize();
   await inconsistentManager.checkForUpdates();
   assert.strictEqual(inconsistentUpdate.getReloads(), 0);
+  await inconsistentManager.updateNow();
   assert.strictEqual(
     inconsistentManager.getSnapshot().phase,
     "repair-required",

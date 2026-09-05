@@ -1,3 +1,4 @@
+import { applicationMetadata } from "./metadata.js";
 import { defineApplication } from "../core/application.js";
 import {
   MINESWEEPER_LEVELS,
@@ -522,16 +523,6 @@ const mountMinesweeper = (context, instance) => {
 };
 
 export const minesweeperApplication = defineApplication({
-  id: "__minesweeper",
-  title: "Minesweeper",
-  icon: "Minesweeper.png",
-  kind: "native-game",
-  deepLinkId: "minesweeper",
-  window: {
-    width: 170,
-    height: 259,
-    maximizable: false,
-    resizable: false,
-  },
+  ...applicationMetadata,
   mount: mountMinesweeper,
 });

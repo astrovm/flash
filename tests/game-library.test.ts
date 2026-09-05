@@ -101,6 +101,7 @@ test("game library", async () => {
     "installed artwork should use the browser-loadable proxy URL",
   );
 
+  let assetRequests = 0;
   const fetchObject = async (url) => {
     if (url === "/api/games?q=Bike%20Mania") {
       return new Response(JSON.stringify({ games: [details] }), {
@@ -113,6 +114,7 @@ test("game library", async () => {
       });
     }
     if (url.includes("/asset?")) {
+      assetRequests++;
       return new Response(new Uint8Array([6, 7]), {
         headers: { "Content-Type": "application/octet-stream" },
       });
@@ -227,6 +229,33 @@ test("game library", async () => {
       `https://flash.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/config.bin`,
     ),
   );
+  const beforeUnrelated = assetRequests;
+  assert.equal(
+    await legacyManager.match("https://unrelated.example/missing.bin"),
+    null,
+  );
+  assert.equal(assetRequests, beforeUnrelated);
+  const concurrent = await Promise.all([
+    legacyManager.match("http://localflash/bikemania3/shared.bin"),
+    legacyManager.match("http://localflash/bikemania3/shared.bin"),
+  ]);
+  assert.equal(assetRequests, beforeUnrelated + 1);
+  for (const result of concurrent)
+    assert.deepEqual([...new Uint8Array(await result.arrayBuffer())], [6, 7]);
+  await legacyManager.install({ ...details, packageType: "legacy" });
+  const beforeAmbiguous = assetRequests;
+  assert.equal(
+    await legacyManager.match("http://localflash/ambiguous.bin"),
+    null,
+  );
+  assert.equal(assetRequests, beforeAmbiguous);
+  assert(
+    await legacyManager.match("http://localflash/scoped.bin", {
+      gameId: legacyInstalled.id,
+    }),
+  );
+  assert.equal(assetRequests, beforeAmbiguous + 1);
+  await legacyManager.uninstall(uuid);
   const originalLegacyPut = legacyCache.put.bind(legacyCache);
   legacyCache.put = async () => {
     throw new DOMException("full", "QuotaExceededError");

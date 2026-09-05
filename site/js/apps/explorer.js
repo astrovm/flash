@@ -12,7 +12,8 @@ const refreshInstalledGames = (installedGames) => {
   installedGameIds.forEach((gameId) => {
     if (nextIds.has(gameId)) return;
     closeGameWindow(gameId);
-    fs.findByApp(gameId).forEach((node) => fs.destroy(node.id));
+    if (fs.canWrite)
+      fs.findByApp(gameId).forEach((node) => fs.destroy(node.id));
     delete gamesList[gameId];
     const favorites = getFavorites().filter((id) => id !== gameId);
     setFavorites(favorites);
@@ -1398,6 +1399,7 @@ const gameFileName = (gameId) =>
     .trim()}.game`;
 
 const syncGameFiles = () => {
+  if (!fs.canWrite) return;
   Object.keys(gamesList).forEach((gameId) => {
     // Managed shortcuts remain valid after the user renames, moves, or
     // recycles them. Only recreate one after it has been destroyed.

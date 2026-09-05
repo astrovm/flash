@@ -1340,6 +1340,21 @@ export async function replaceOutput(
   }
 }
 
+export function deferShellScripts(html: string): string {
+  const moduleScripts: string[] = [];
+  const deferred = html
+    .replace(/<script type="module" src="[^"]+"><\/script>/g, (script) => {
+      moduleScripts.push(script);
+      return "";
+    })
+    .replace(
+      /<script src="([^"]+)"><\/script>/g,
+      '<script defer src="$1"></script>',
+    );
+  // Module registration consumes globals defined by the ordered classic scripts.
+  return deferred.replace("</head>", `${moduleScripts.join("\n")}\n</head>`);
+}
+
 export async function assembleReleaseOutput(
   stagingDir: string,
   version: string,
@@ -1348,7 +1363,7 @@ export async function assembleReleaseOutput(
   const releaseDir = join(stagingDir, ...releasePath.split("/"));
   const rootHtml = join(stagingDir, "index.html");
   const html = await replaceExactlyOnce(
-    await readFile(rootHtml, "utf8"),
+    deferShellScripts(await readFile(rootHtml, "utf8")),
     /<head>/g,
     `<head>\n    <base href="/${releasePath}/" />`,
     "Could not set the immutable release base URL",

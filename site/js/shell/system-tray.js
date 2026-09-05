@@ -147,7 +147,8 @@ const offlineStatusText = (state) => {
     updating: "Downloading the latest update...",
     "update-available": "An update is available.",
     "update-pending": "An automatic update is scheduled.",
-    "update-ready": "An update is ready to apply.",
+    "update-ready":
+      "An update is ready for your next visit. Select Update Now to reload now.",
     "repair-required":
       "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
@@ -285,8 +286,8 @@ const wireProjectSettings = (win) => {
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
         <legend>Automatic updates</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Download and apply updates automatically</label>
-        <p class="project-settings-description">Astro Flash checks for updates automatically. It waits for the selected time before it downloads and applies a new release.</p>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Download updates automatically</label>
+        <p class="project-settings-description">Astro Flash downloads updates after the selected delay. The new version opens on your next visit. Your current session stays open.</p>
         <label class="project-update-delay">Wait before automatic update: <output data-project-value="update-delay">6 hours</output>
           <input type="range" min="0" max="72" step="1" value="6" data-project-setting="update-delay">
           <span><span>No delay</span><span>3 days</span></span>
@@ -621,9 +622,9 @@ const wireProjectSettings = (win) => {
         : state.phase === "checking"
           ? "Checking for updates..."
           : state.phase === "update-pending"
-            ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to install it immediately.`
+            ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to update and reload immediately.`
             : state.updateReady
-              ? `Astro Flash ${state.availableVersion || "update"} is ready to apply.`
+              ? `Astro Flash ${state.availableVersion || "update"} is ready for your next visit. Select Update Now to reload now.`
               : state.availableVersion
                 ? `Astro Flash ${state.availableVersion} is available.`
                 : state.lastChecked

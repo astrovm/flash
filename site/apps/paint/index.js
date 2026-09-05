@@ -1,3 +1,4 @@
+import { applicationMetadata } from "./metadata.js";
 import { defineApplication } from "../core/application.js";
 import { showXPAboutDialog } from "../core/about-dialog.js";
 import { createCanvasEngine } from "./canvas-engine.js";
@@ -439,16 +440,25 @@ const mountPaint = (shell, instance) => {
     const normalizedName = /\.[^.]+$/.test(destination.name)
       ? destination.name
       : `${destination.name}.bmp`;
-    const content = await encodeCanvas(canvas, normalizedName);
-    const file = destination.existingId
-      ? shell.setFileContent(destination.existingId, content)
-      : shell.createFile(destination.parentId, normalizedName, content);
-    fileId = file.id;
-    fileName = file.name;
-    dirty = false;
-    setTitle();
-    updateFileCommandState();
-    return true;
+    try {
+      const content = await encodeCanvas(canvas, normalizedName);
+      const file = destination.existingId
+        ? shell.setFileContent(destination.existingId, content)
+        : shell.createFile(destination.parentId, normalizedName, content);
+      fileId = file.id;
+      fileName = file.name;
+      dirty = false;
+      setTitle();
+      updateFileCommandState();
+      return true;
+    } catch (error) {
+      await shell.dialogs.alert(
+        error.message || "The picture could not be saved.",
+        "Paint",
+        "error",
+      );
+      return false;
+    }
   };
   const confirmSaveChanges = async () => {
     if (!dirty) return true;
@@ -610,17 +620,6 @@ const mountPaint = (shell, instance) => {
 };
 
 export const paintApplication = defineApplication({
-  id: "__paint",
-  title: "Paint",
-  icon: "Paint.png",
-  kind: "paint",
-  window: {
-    width: 760,
-    height: 560,
-    left: 0,
-    top: 0,
-    className: "xp-native-paint-window",
-  },
-  fileTypes: [".bmp", ".dib", ".gif", ".jpg", ".jpeg", ".png"],
+  ...applicationMetadata,
   mount: mountPaint,
 });
