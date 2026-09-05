@@ -41,6 +41,9 @@ pixels across platforms.
 - Ask for confirmation once when deleting from the context menu.
 - Retain desktop upload as an intentional web convenience. Text is stored as
   text and binary files as data URLs, preserving bytes instead of discarding them.
+- Replace the ordinary-file emoji fallback with original shell32 icons: group 1
+  for generic files and group 152 for text documents, extracted at 32×32. Their
+  provenance is recorded in `site/assets/xp/SOURCES.json`.
 
 ## Validation
 
@@ -51,5 +54,24 @@ sourced-icon validation. Formatting, lint, and the production build passed.
 In-app browser checks covered all four schemes at both listed resolutions,
 additive selection, submenu keyboard navigation, Tab leaving the icon group,
 and creating, renaming, deleting, and emptying the test folders. The final browser
-run reported no console errors. Drag cancellation is covered by regression tests;
-a real browser drag gesture was not part of this verification.
+run reported no console errors.
+
+The final pass used real in-app browser drag gestures at 1280×1024 and 1024×768:
+
+- Move My Computer to empty space, confirm grid snapping, reload, and confirm its
+  saved position.
+- Move a text document into a newly created folder and open the folder to confirm
+  the document moved.
+- Drag that folder into Recycle Bin, then verify it appears there.
+- Draw a selection rectangle from empty space and confirm the intersecting icons
+  are selected.
+- Enable Auto Arrange, drag an icon away, and confirm it returns to its grid slot.
+- Upload a text file and PNG through the actual multi-file picker; open the text
+  in Notepad and the PNG in Paint to verify their contents.
+- Select both uploaded files and drag them together into Recycle Bin; confirm
+  both appear there. The test fixtures remain recoverable in the local test bin.
+
+`app-upload-paint-1024x768.jpg` shows the uploaded PNG rendered in Paint, and
+`app-drag-recycle-1024x768.jpg` records the three recycled test objects. Pointer
+cancellation remains covered by the automated regression test. The temporary
+browser tab and viewport override were closed/reset after verification.

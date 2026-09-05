@@ -126,6 +126,8 @@ const SIMULATED_RESOLUTIONS = Object.freeze({
   "1440x900": { width: 1440, height: 900 },
 });
 const XP_ICON_PATHS = Object.freeze({
+  "GenericFile.png": "assets/xp/icons/GenericFile.png",
+  "TextDocument.png": "assets/xp/icons/TextDocument.png",
   "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
   "AccessibilitySound.png": "assets/xp/icons/AccessibilitySound.png",
   "AddressBook.png": "assets/xp/icons/AddressBook.png",
