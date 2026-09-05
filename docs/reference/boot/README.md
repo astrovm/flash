@@ -48,29 +48,30 @@ boot captures; `tests/boot-assets.test.ts` checks this without a tolerance.
 
 ## Browser behavior
 
-The boot framebuffer stays at 640 × 480 CSS pixels at browser viewports of
-640 × 480, 1024 × 768, 1280 × 1024, and 1920 × 1080. Larger viewports center it
-on black without enlarging the original artwork. A web page cannot switch the
-physical monitor's video mode: this is the explicit browser boundary. Viewports
-smaller than the framebuffer fit it down to keep the screen accessible; those
-are not claimed as native XP video modes.
+The browser fits the original 4:3 framebuffer to the available viewport, scaling
+uniformly and centering it on black. This is an intentional web adaptation:
+XP itself switches to a 640 × 480 video mode, while a web page cannot change the
+physical monitor mode. The artwork is never stretched to another aspect ratio.
+Browser screenshots show the actual rendered page; the captured files themselves
+are not resized for comparison.
 
 The app waits for the boot images to decode before starting the two-second
 palette fade. The fade sheet applies twenty palettes observed in the VM to the
 original bitmap; it does not invent intermediate colors. Progress uses the
 original sprite with the observed 8-pixel steps. Boot completion waits for the
-fade, document storage, and the existing bounded game-library initialization,
-rather than a fixed total duration. Fast startup can finish before a full
-progress loop; slower startup keeps it running. VM disk stalls are not replayed
+two-second fade plus one complete 1.8-second progress pass, document storage,
+and the existing bounded game-library initialization. Fast startup therefore
+remains visible for at least 3.8 seconds after image decoding; slower startup
+keeps the progress animation running. VM disk stalls are not replayed
 as fake browser work.
 
 The final palette is painted, then the boot framebuffer is cleared to black
-before Welcome appears. Pointer and keyboard input do not skip boot; the cursor
-is hidden. Restart repeats the decode/fade/handoff lifecycle. Welcome/login
+before Welcome appears. Clicking boot skips directly to Welcome, as do Enter and Space when boot is
+focused. This is another intentional web adaptation. Restart repeats the decode/fade/handoff lifecycle. Welcome/login
 appearance and behavior remain the next separate area.
 
 Verification includes the native bitmap comparisons, a delayed-startup test
-that checks the black handoff before Welcome, passive-input tests, and in-app
+that checks the black handoff before Welcome, click/keyboard skip and minimum-duration tests, and in-app
 browser checks. The production build reached the desktop with no console errors.
 
 ## Repeat the comparison

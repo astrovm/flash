@@ -235,13 +235,13 @@ iframe {
   z-index: 9000;
   background: #000;
   overflow: hidden;
-  cursor: none;
+  cursor: var(--xp-cursor);
 }
 
-/* XP switches to a 640 x 480 boot framebuffer, independent of desktop mode. */
+/* Fit the original 4:3 artwork to the browser without stretching it. */
 .boot-display {
   position: absolute;
-  width: min(640px, 100vw, calc(100vh * 4 / 3));
+  width: min(100vw, calc(100vh * 4 / 3));
   aspect-ratio: 4 / 3;
   left: 50%;
   top: 50%;

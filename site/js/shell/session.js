@@ -89,6 +89,7 @@ const showBootScreen = () => {
   setScreen("boot-screen");
   const bootScreen = document.getElementById("boot-screen");
   bootScreen.classList.remove("boot-running", "boot-handoff");
+  bootScreen.focus({ preventScroll: true });
   startupSoundPending = true;
   clearTimeout(bootTimeout);
   const isCurrentBoot = () =>
@@ -98,17 +99,17 @@ const showBootScreen = () => {
   const imagesReady = Promise.allSettled(
     [...bootScreen.querySelectorAll("img")].map((image) => image.decode()),
   );
-  const fadeComplete = imagesReady.then(() => {
+  const minimumDisplayComplete = imagesReady.then(() => {
     if (!isCurrentBoot()) return;
     bootScreen.classList.add("boot-running");
     return new Promise((resolve) => {
-      bootTimeout = setTimeout(resolve, BOOT_FADE_DURATION_MS);
+      bootTimeout = setTimeout(resolve, BOOT_MINIMUM_DURATION_MS);
     });
   });
   // XP advances when startup finishes; a browser's storage/runtime startup
   // takes a different amount of time from an emulated machine's disk I/O.
   void Promise.allSettled([
-    fadeComplete,
+    minimumDisplayComplete,
     fs.ready,
     gameLibraryInitialization,
   ]).then(() => {
@@ -302,6 +303,13 @@ const login = (playSound = true) => {
 };
 
 const setupScreenFlow = () => {
+  const bootScreen = document.getElementById("boot-screen");
+  bootScreen.addEventListener("click", finishBootSequence);
+  bootScreen.addEventListener("keydown", (event) => {
+    if (!["Enter", " "].includes(event.key)) return;
+    event.preventDefault();
+    finishBootSequence();
+  });
   // Hide BoxedWine preparation behind the normal boot and Welcome screens.
   // Do not make either screen wait when the browser needs more time.
   document

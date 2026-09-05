@@ -33,6 +33,9 @@ test("boot waits for startup readiness and clears the framebuffer before Welcome
   await new Promise((resolve) => setTimeout(resolve, 2100));
   expect(boot.classList.contains("boot-running")).toBeTrue();
   expect(boot.hidden).toBeFalse();
+  // One complete progress pass has now elapsed, but storage is still loading.
+  await new Promise((resolve) => setTimeout(resolve, 1800));
+  expect(boot.hidden).toBeFalse();
   releaseLibrary({});
   await new Promise((resolve) => setTimeout(resolve, 150));
   expect(clearedBeforeWelcome).toBeTrue();
@@ -41,26 +44,38 @@ test("boot waits for startup readiness and clears the framebuffer before Welcome
   observer.disconnect();
 });
 
-test("boot is passive and advances to Welcome when startup completes", async () => {
+test.each(["click", "Enter", " "])(
+  "boot can be skipped with %s",
+  async (input) => {
+    const shell = await loadShell();
+    const boot = shell.document.getElementById("boot-screen")!;
+    expect(boot.hidden).toBeFalse();
+    expect(boot.getAttribute("role")).toBe("button");
+    expect(shell.document.activeElement).toBe(boot);
+    if (input === "click") boot.click();
+    else
+      boot.dispatchEvent(
+        new shell.window.KeyboardEvent("keydown", {
+          key: input,
+          bubbles: true,
+        }),
+      );
+    await flushShell();
+    expect(boot.hidden).toBeTrue();
+    expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();
+    shell.document.getElementById("welcome-screen")!.click();
+    await flushShell();
+    expect(shell.document.getElementById("desktop")!.hidden).toBeFalse();
+  },
+);
+
+test("fast startup still shows the fade and a complete progress pass", async () => {
   const shell = await loadShell();
   const boot = shell.document.getElementById("boot-screen")!;
+  await new Promise((resolve) => setTimeout(resolve, 2200));
   expect(boot.hidden).toBeFalse();
-  expect(boot.getAttribute("role")).toBe("status");
-  boot.click();
-  for (const key of ["Enter", " "]) {
-    boot.dispatchEvent(
-      new shell.window.KeyboardEvent("keydown", { key, bubbles: true }),
-    );
-  }
-  await flushShell();
-  expect(boot.hidden).toBeFalse();
-  expect(shell.document.getElementById("welcome-screen")!.hidden).toBeTrue();
-  shell.completeBoot();
+  await new Promise((resolve) => setTimeout(resolve, 1800));
   expect(boot.hidden).toBeTrue();
-  expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();
-  shell.document.getElementById("welcome-screen")!.click();
-  await flushShell();
-  expect(shell.document.getElementById("desktop")!.hidden).toBeFalse();
 });
 
 test("Start menu opens, closes, and exposes working XP destinations", async () => {
