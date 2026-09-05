@@ -1,5 +1,3 @@
-import { createUserAccountsContent } from "./user-accounts.js";
-import { createAddRemoveProgramsContent } from "./program-management.js";
 export const createSystemRuntime = (context) => {
   const {
     XPDialogs,
@@ -13,24 +11,16 @@ export const createSystemRuntime = (context) => {
     fs,
     navigateExplorer,
     openAboutWindows,
-    openAccessibilityOptions,
     openControlPanel,
     openDateTimeProperties,
     openFolderOptions,
-    openGameControllers,
-    openHelpAndSupport,
     openInternetProperties,
-    openKeyboardProperties,
-    openMouseProperties,
     openNetworkStatus,
     openPowerOptions,
-    openPrintersAndFaxes,
     openProjectSettings,
     openRegionalLanguageOptions,
     openSearchDialog,
     openShellProperties,
-    openSoundsAudioProperties,
-    openSystemProperties,
     openSystemWindow,
     openTaskbarProperties,
     openWindows,
@@ -41,8 +31,6 @@ export const createSystemRuntime = (context) => {
     selectedExplorerNodes,
     setAccessKeyText,
     toggleTrayVolumePopup,
-    wireHelpAndSupport,
-    wirePrintersAndFaxes,
     wireProjectSettings,
   } = context;
 
@@ -80,13 +68,7 @@ export const createSystemRuntime = (context) => {
           <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span><b aria-hidden="true">⌃</b></button></h3>
           <div class="explorer-section-body"><button type="button" data-control-panel-action="classic"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span>Switch to Classic View</span></button></div>
         </section>
-        <section>
-          <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-          <div class="explorer-section-body">
-            <button type="button" data-control-panel-action="updates"><span class="control-panel-see-icon windows-update" aria-hidden="true"></span><span>Windows Update</span></button>
-            <button type="button" data-control-panel-action="help"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><span>Help and Support</span></button>
-          </div>
-        </section>
+
       </aside>
       <main class="control-panel-main">
         <h1>Pick a category</h1>
@@ -103,35 +85,15 @@ export const createSystemRuntime = (context) => {
         "left",
       ],
       [
-        "printers",
-        "Printers and Other Hardware",
-        "PrintersAndHardware.png",
-        "right",
-      ],
-      [
         "network",
         "Network and Internet Connections",
         "NetworkAndInternet.png",
         "left",
       ],
-      ["users", "User Accounts", "UserAccounts.png", "right"],
-      ["programs", "Add or Remove Programs", "AddRemovePrograms.png", "left"],
       [
         "datetime",
         "Date, Time, Language, and Regional Options",
         "DateTimeRegional.png",
-        "right",
-      ],
-      [
-        "sounds",
-        "Sounds, Speech, and Audio Devices",
-        "SoundsSpeechAudio.png",
-        "left",
-      ],
-      [
-        "accessibility",
-        "Accessibility Options",
-        "AccessibilityOptions.png",
         "right",
       ],
       [
@@ -208,57 +170,21 @@ export const createSystemRuntime = (context) => {
         "assets/xp/icons/WirelessNetworkSetupWizard.png",
     };
     const classicItems = [
-      [
-        "accessibility-options",
-        "Accessibility Options",
-        "AccessibilityOptions.png",
-      ],
-      ["add-hardware", "Add Hardware", "AddHardware.png"],
-      ["programs", "Add or Remove Programs", "AddRemovePrograms.png"],
-      [
-        "administrative-tools",
-        "Administrative Tools",
-        "AdministrativeTools.png",
-      ],
-      ["updates", "Automatic Updates", "UpdateEnabled.png"],
       ["date-time", "Date and Time", "DateAndTime.png"],
       ["display", "Display", "Display.png"],
       ["folder-options", "Folder Options", "FolderOptions.png"],
-      ["fonts", "Fonts", "Fonts.png"],
-      ["game-controllers", "Game Controllers", "GameControllers.png"],
       ["internet-options", "Internet Options", "InternetOptions.png"],
-      ["keyboard", "Keyboard", "Keyboard.png"],
-      ["mouse", "Mouse", "Mouse.png"],
       ["network-connections", "Network Connections", "NetworkConnections.png"],
-      ["network-setup", "Network Setup Wizard", "NetworkSetupWizard.png"],
-      [
-        "phone-modem",
-        "Phone and Modem Options",
-        "PhoneAndModemOptionsLarge.png",
-      ],
       ["power-options", "Power Options", "PowerOptions.png"],
-      ["view-printers", "Printers and Faxes", "PrintersAndFaxesLarge.png"],
       [
         "regional-language",
         "Regional and Language Options",
         "RegionalAndLanguage.png",
       ],
-      ["scanners-cameras", "Scanners and Cameras", "ScannersAndCameras.png"],
-      ["scheduled-tasks", "Scheduled Tasks", "ScheduledTasks.png"],
-      ["sounds-audio", "Sounds and Audio Devices", "SoundsAndAudioDevices.png"],
-      ["speech", "Speech", "Speech.png"],
-      ["system", "System", "System.png"],
       [
         "taskbar-properties",
         "Taskbar and Start Menu",
         "TaskbarAndStartMenu.png",
-      ],
-      ["users", "User Accounts", "UserAccounts.png"],
-      ["firewall", "Windows Firewall", "WindowsFirewall.png"],
-      [
-        "wireless-network",
-        "Wireless Network Setup Wizard",
-        "WirelessNetworkSetupWizard.png",
       ],
     ];
     const renderClassicItems = () => {
@@ -298,22 +224,8 @@ export const createSystemRuntime = (context) => {
       backButton.disabled = false;
       upButton.disabled = false;
       content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="fonts"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>Fonts</span></button>
-          <button type="button" data-control-panel-action="mouse"><span class="control-panel-small-glyph mouse-glyph" aria-hidden="true"></span><span>Mouse Pointers</span></button>
-          <button type="button" data-control-panel-action="contrast"><span class="control-panel-small-glyph contrast-glyph" aria-hidden="true"></span><span>High Contrast</span></button>
-          <button type="button" data-control-panel-action="user-picture"><img src="assets/xp/icons/UserAccounts.png" alt=""><span>User Account Picture</span></button>
-        </div>
-      </section>
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="display-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Display</span></button>
-          <button type="button" data-control-panel-action="sound-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Sound</span></button>
-        </div>
-      </section>`;
+
+      `;
       content.querySelector(".control-panel-main").innerHTML = `
       <div class="control-panel-category-heading"><img src="assets/xp/icons/AppearanceAndThemes.png" alt=""><strong>Appearance and Themes</strong></div>
       <h1>Pick a task...</h1>
@@ -345,100 +257,19 @@ export const createSystemRuntime = (context) => {
         <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
         <div class="explorer-section-body">
           <button type="button" data-control-panel-action="file-types"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>File Types</span></button>
-          <button type="button" data-control-panel-action="system-restore"><img src="assets/xp/system/SystemRestore.png" alt=""><span>System Restore</span></button>
         </div>
       </section>
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="startup-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Startup and Shutdown</span></button>
-        </div>
-      </section>`;
+      `;
       content.querySelector(".control-panel-main").innerHTML = `
       <div class="control-panel-category-heading"><img src="assets/xp/icons/PerformanceAndMaintenance.png" alt=""><strong>Performance and Maintenance</strong></div>
       <h1>Pick a task...</h1>
       <div class="control-panel-task-links performance-task-links">
-        <button type="button" data-control-panel-action="system-info"><img src="assets/xp/icons/Go.png" alt=""><span>See basic information about your computer</span></button>
-        <button type="button" data-control-panel-action="visual-effects"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust visual effects</span></button>
-        <button type="button" data-control-panel-action="disk-cleanup"><img src="assets/xp/icons/Go.png" alt=""><span>Free up space on your hard disk</span></button>
-        <button type="button" data-control-panel-action="backup"><img src="assets/xp/icons/Go.png" alt=""><span>Back up your data</span></button>
-        <button type="button" data-control-panel-action="defrag"><img src="assets/xp/icons/Go.png" alt=""><span>Rearrange items on your hard disk to make programs run faster</span></button>
+
+
       </div>
       <h2>or pick a Control Panel icon</h2>
       <div class="control-panel-category-icons">
-        <button type="button" data-control-panel-action="administrative-tools"><img src="assets/xp/icons/AdministrativeTools.png" alt=""><span>Administrative Tools</span></button>
         <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptions.png" alt=""><span>Power Options</span></button>
-        <button type="button" data-control-panel-action="scheduled-tasks"><img src="assets/xp/icons/ScheduledTasks.png" alt=""><span>Scheduled Tasks</span></button>
-        <button type="button" data-control-panel-action="system"><img src="assets/xp/icons/System.png" alt=""><span>System</span></button>
-      </div>`;
-    };
-
-    const renderAccessibilityCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Accessibility Options",
-        XP_ICON_PATHS["AccessibilityOptions.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="magnifier"><img src="assets/xp/icons/Magnifier.png" alt=""><span>Magnifier</span></button>
-          <button type="button" data-control-panel-action="on-screen-keyboard"><img src="assets/xp/icons/OnScreenKeyboard.png" alt=""><span>On-Screen Keyboard</span></button>
-        </div>
-      </section>`;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/AccessibilityOptions.png" alt=""><strong>Accessibility Options</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links">
-        <button type="button" data-control-panel-action="accessibility-contrast"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust the contrast for text and colors on your screen</span></button>
-        <button type="button" data-control-panel-action="accessibility-wizard"><img src="assets/xp/icons/Go.png" alt=""><span>Configure Windows to work for your vision, hearing, and mobility needs</span></button>
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons accessibility-category-icons">
-        <button type="button" data-control-panel-action="accessibility-options"><img src="assets/xp/icons/AccessibilityOptions.png" alt=""><span>Accessibility Options</span></button>
-      </div>`;
-    };
-
-    const renderSoundsCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Sounds, Speech, and Audio Devices",
-        XP_ICON_PATHS["SoundsSpeechAudio.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="accessibility-sound"><img src="assets/xp/icons/AccessibilitySound.png" alt=""><span>Accessibility Sound Options</span></button>
-          <button type="button" data-control-panel-action="advanced-volume"><img src="assets/xp/icons/AdvancedVolumeControls.png" alt=""><span>Advanced Volume Controls</span></button>
-        </div>
-      </section>
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="sound-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Sound</span></button>
-          <button type="button" data-control-panel-action="dvd-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>DVD</span></button>
-        </div>
-      </section>`;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/SoundsSpeechAudio.png" alt=""><strong>Sounds, Speech, and Audio Devices</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links">
-        <button type="button" data-control-panel-action="system-volume"><img src="assets/xp/icons/Go.png" alt=""><span>Adjust the system volume</span></button>
-        <button type="button" data-control-panel-action="sound-scheme"><img src="assets/xp/icons/Go.png" alt=""><span>Change the sound scheme</span></button>
-        <button type="button" data-control-panel-action="speaker-settings"><img src="assets/xp/icons/Go.png" alt=""><span>Change the speaker settings</span></button>
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons sounds-category-icons">
-        <button type="button" data-control-panel-action="sounds-audio"><img src="assets/xp/icons/SoundsAndAudioDevices.png" alt=""><span>Sounds and Audio Devices</span></button>
-        <button type="button" data-control-panel-action="speech"><img src="assets/xp/icons/Speech.png" alt=""><span>Speech</span></button>
       </div>`;
     };
 
@@ -452,12 +283,7 @@ export const createSystemRuntime = (context) => {
       backButton.disabled = false;
       upButton.disabled = false;
       content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="scheduled-tasks"><img src="assets/xp/icons/ScheduledTasks.png" alt=""><span>Scheduled Tasks</span></button>
-        </div>
-      </section>`;
+      `;
       content.querySelector(".control-panel-main").innerHTML = `
       <div class="control-panel-category-heading"><img src="assets/xp/icons/DateTimeRegional.png" alt=""><strong>Date, Time, Language, and Regional Options</strong></div>
       <h1>Pick a task...</h1>
@@ -487,94 +313,29 @@ export const createSystemRuntime = (context) => {
         <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
         <div class="explorer-section-body">
           <button type="button" data-control-panel-action="my-network-places"><img src="assets/xp/icons/MyNetworkPlacesSmall.png" alt=""><span>My Network Places</span></button>
-          <button type="button" data-control-panel-action="printers"><img src="assets/xp/icons/PrintersAndFaxesSmall.png" alt=""><span>Printers and Other Hardware</span></button>
-          <button type="button" data-control-panel-action="remote-desktop"><img src="assets/xp/icons/RemoteDesktop.png" alt=""><span>Remote Desktop</span></button>
-          <button type="button" data-control-panel-action="phone-modem"><img src="assets/xp/icons/PhoneAndModemOptions.png" alt=""><span>Phone and Modem Options</span></button>
+
         </div>
       </section>
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="network-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Home or Small Office Networking</span></button>
-          <button type="button" data-control-panel-action="internet-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Internet Explorer</span></button>
-          <button type="button" data-control-panel-action="network-diagnostics"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Network Diagnostics</span></button>
-        </div>
-      </section>`;
+      `;
       content.querySelector(".control-panel-main").innerHTML = `
       <div class="control-panel-category-heading"><img src="assets/xp/icons/NetworkAndInternet.png" alt=""><strong>Network and Internet Connections</strong></div>
       <h1>Pick a task...</h1>
       <div class="control-panel-task-links network-task-links">
-        <button type="button" data-control-panel-action="internet-connection"><img src="assets/xp/icons/Go.png" alt=""><span>Set up or change your Internet connection</span></button>
-        <button type="button" data-control-panel-action="workplace-connection"><img src="assets/xp/icons/Go.png" alt=""><span>Create a connection to the network at your workplace</span></button>
-        <button type="button" data-control-panel-action="home-network"><img src="assets/xp/icons/Go.png" alt=""><span>Set up or change your home or small office network</span></button>
-        <button type="button" data-control-panel-action="wireless-network"><img src="assets/xp/icons/Go.png" alt=""><span>Set up a wireless network for a home or small office</span></button>
-        <button type="button" data-control-panel-action="firewall"><img src="assets/xp/icons/Go.png" alt=""><span>Change Windows Firewall settings</span></button>
+
+
       </div>
       <h2>or pick a Control Panel icon</h2>
       <div class="control-panel-category-icons network-category-icons">
         <button type="button" data-control-panel-action="internet-options"><img src="assets/xp/icons/InternetOptions.png" alt=""><span>Internet Options</span></button>
         <button type="button" data-control-panel-action="network-connections"><img src="assets/xp/icons/NetworkConnections.png" alt=""><span>Network Connections</span></button>
-        <button type="button" data-control-panel-action="network-setup"><img src="assets/xp/icons/NetworkSetupWizard.png" alt=""><span>Network Setup Wizard</span></button>
-        <button type="button" data-control-panel-action="firewall"><img src="assets/xp/icons/WindowsFirewall.png" alt=""><span>Windows Firewall</span></button>
-        <button type="button" data-control-panel-action="wireless-network"><img src="assets/xp/icons/WirelessNetworkSetupWizard.png" alt=""><span>Wireless Network Setup Wizard</span></button>
-      </div>`;
-    };
 
-    const renderHardwareCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Printers and Other Hardware",
-        XP_ICON_PATHS["PrintersAndHardware.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="add-hardware"><img src="assets/xp/icons/AddHardwareSmall.png" alt=""><span>Add Hardware</span></button>
-          <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/DisplaySmall.png" alt=""><span>Display</span></button>
-          <button type="button" data-control-panel-action="sounds-audio"><img src="assets/xp/icons/SoundsAudioSmall.png" alt=""><span>Sounds, Speech, and Audio Devices</span></button>
-          <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptionsSmall.png" alt=""><span>Power Options</span></button>
-          <button type="button" data-control-panel-action="system"><img src="assets/xp/icons/SystemSmall.png" alt=""><span>System</span></button>
-        </div>
-      </section>
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>Troubleshooters</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="hardware-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Hardware</span></button>
-          <button type="button" data-control-panel-action="printing-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Printing</span></button>
-          <button type="button" data-control-panel-action="network-help"><span class="control-panel-help-glyph" aria-hidden="true">?</span><span>Home or Small Office Networking</span></button>
-        </div>
-      </section>`;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/PrintersAndHardware.png" alt=""><strong>Printers and Other Hardware</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links">
-        <button type="button" data-control-panel-action="view-printers"><img src="assets/xp/icons/Go.png" alt=""><span>View installed printers or fax printers</span></button>
-        <button type="button" data-control-panel-action="add-printer"><img src="assets/xp/icons/Go.png" alt=""><span>Add a printer</span></button>
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons hardware-category-icons">
-        <button type="button" data-control-panel-action="game-controllers"><img src="assets/xp/icons/GameControllers.png" alt=""><span>Game Controllers</span></button>
-        <button type="button" data-control-panel-action="keyboard"><img src="assets/xp/icons/Keyboard.png" alt=""><span>Keyboard</span></button>
-        <button type="button" data-control-panel-action="mouse"><img src="assets/xp/icons/Mouse.png" alt=""><span>Mouse</span></button>
-        <button type="button" data-control-panel-action="phone-modem"><img src="assets/xp/icons/PhoneAndModemOptionsLarge.png" alt=""><span>Phone and Modem Options</span></button>
-        <button type="button" data-control-panel-action="view-printers"><img src="assets/xp/icons/PrintersAndFaxesLarge.png" alt=""><span>Printers and Faxes</span></button>
-        <button type="button" data-control-panel-action="scanners-cameras"><img src="assets/xp/icons/ScannersAndCameras.png" alt=""><span>Scanners and Cameras</span></button>
       </div>`;
     };
 
     const actions = {
       appearance: renderAppearanceCategory,
-      printers: renderHardwareCategory,
       network: renderNetworkCategory,
-      users: () => openSystemWindow("__user-accounts"),
-      programs: () => openSystemWindow("__add-remove-programs"),
       datetime: renderDateRegionalCategory,
-      sounds: renderSoundsCategory,
-      accessibility: renderAccessibilityCategory,
       performance: renderPerformanceCategory,
     };
     content.addEventListener("click", (event) => {
@@ -609,18 +370,12 @@ export const createSystemRuntime = (context) => {
         event.target
           .closest("button")
           .setAttribute("aria-pressed", String(pressed));
-      } else if (action === "help") {
-        openHelpAndSupport();
       } else if (action === "updates") {
         XPDialogs.alert(
           "Astro Flash Collection does not connect to Windows Update.",
           "Windows Update",
           "info",
         );
-      } else if (action === "programs") {
-        openSystemWindow("__add-remove-programs");
-      } else if (action === "users") {
-        openSystemWindow("__user-accounts");
       } else if (action === "back") {
         closeGameWindow("__control-panel");
         setTimeout(openControlPanel, 0);
@@ -643,51 +398,14 @@ export const createSystemRuntime = (context) => {
             ".folder-options-dialog [data-folder-tab='file-types']",
           )
           ?.click();
-      } else if (action === "system-info" || action === "system") {
-        openSystemProperties();
-      } else if (action === "visual-effects") {
-        openSystemProperties();
-        document
-          .querySelector(
-            ".system-properties-dialog [data-system-tab='advanced']",
-          )
-          ?.click();
-      } else if (action === "system-restore") {
-        openSystemProperties();
-        document
-          .querySelector(
-            ".system-properties-dialog [data-system-tab='restore']",
-          )
-          ?.click();
-      } else if (action === "startup-help") {
-        openHelpAndSupport();
-      } else if (
-        action === "accessibility-contrast" ||
-        action === "accessibility-options"
-      ) {
-        openAccessibilityOptions(
-          action === "accessibility-contrast" ? "display" : "keyboard",
-        );
-      } else if (action === "accessibility-wizard") {
-        openHelpAndSupport();
       } else if (action === "magnifier" || action === "on-screen-keyboard") {
         XPDialogs.alert(
           `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in Astro Flash Collection.`,
           action === "magnifier" ? "Magnifier" : "On-Screen Keyboard",
           "info",
         );
-      } else if (action === "accessibility-sound") {
-        openAccessibilityOptions("sound");
-      } else if (action === "system-volume") {
-        openSoundsAudioProperties("volume");
       } else if (action === "advanced-volume") {
         toggleTrayVolumePopup();
-      } else if (action === "sound-help" || action === "dvd-help") {
-        openHelpAndSupport();
-      } else if (action === "sound-scheme") {
-        openSoundsAudioProperties("sounds");
-      } else if (action === "speaker-settings" || action === "sounds-audio") {
-        openSoundsAudioProperties("volume");
       } else if (action === "speech") {
         XPDialogs.alert(
           "Speech Properties is not available in Astro Flash Collection.",
@@ -701,19 +419,6 @@ export const createSystemRuntime = (context) => {
         action === "my-network-places"
       ) {
         openNetworkStatus();
-      } else if (action === "printers") {
-        openPrintersAndFaxes();
-      } else if (action === "view-printers" || action === "add-printer") {
-        openPrintersAndFaxes();
-      } else if (
-        action === "network-help" ||
-        action === "internet-help" ||
-        action === "network-diagnostics" ||
-        action === "remote-desktop" ||
-        action === "hardware-help" ||
-        action === "printing-help"
-      ) {
-        openHelpAndSupport();
       } else if (
         [
           "internet-connection",
@@ -741,12 +446,6 @@ export const createSystemRuntime = (context) => {
         );
       } else if (action === "internet-options") {
         openInternetProperties();
-      } else if (action === "mouse") {
-        openMouseProperties();
-      } else if (action === "keyboard") {
-        openKeyboardProperties();
-      } else if (action === "game-controllers") {
-        openGameControllers();
       } else if (action === "power-options") {
         openPowerOptions();
       } else if (
@@ -798,17 +497,6 @@ export const createSystemRuntime = (context) => {
           labels[action],
           "info",
         );
-      } else if (
-        [
-          "fonts",
-          "mouse",
-          "contrast",
-          "user-picture",
-          "display-help",
-          "sound-help",
-        ].includes(action)
-      ) {
-        openHelpAndSupport();
       }
     });
   };
@@ -822,87 +510,6 @@ export const createSystemRuntime = (context) => {
   const XP_SYSTEM_RENDERERS = Object.freeze({
     "__control-panel": (win) => {
       return createControlPanelContent();
-    },
-    "__user-accounts": (win) => {
-      return createUserAccountsContent(context);
-    },
-    "__add-remove-programs": (win) => {
-      return createAddRemoveProgramsContent(context);
-    },
-    __printers: (win) => {
-      const content = createSystemContentRoot();
-
-      content.className = "explorer-content printers-content";
-      content.innerHTML = `
-      <div class="explorer-chrome printers-chrome">
-        <div class="explorer-menu-row">
-          <div class="explorer-menu-bar" role="menubar"><button data-printers-menu="file">File</button><button data-printers-menu="edit">Edit</button><button data-printers-menu="view">View</button><button data-printers-menu="favorites">Favorites</button><button data-printers-menu="tools">Tools</button><button data-printers-menu="help">Help</button></div>
-          <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
-        </div>
-        <div class="explorer-toolbar">
-          <button disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-          <button disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-          <button data-printers-action="control-panel" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
-          <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-          <button data-printers-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-          <button data-printers-action="folders"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
-          <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-          <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-        </div>
-        <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><input type="text" aria-label="Address" value="Printers and Faxes" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
-        <div class="game-menu explorer-menu printers-menu" role="menu" hidden></div>
-      </div>
-      <div class="printers-body">
-        <aside class="explorer-sidebar printers-sidebar">
-          <section><h3><button type="button" class="explorer-section-toggle">Printer Tasks<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="add"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><span>Add a printer</span></button><button data-printers-action="fax"><img src="assets/xp/icons/PrintersAndFaxes.png" alt=""><span>Set up faxing</span></button></div></section>
-          <section><h3><button type="button" class="explorer-section-toggle">See Also<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="troubleshoot"><span>Troubleshoot printing</span></button><button data-printers-action="help"><span>Get help with printing</span></button></div></section>
-          <section><h3><button type="button" class="explorer-section-toggle">Other Places<span aria-hidden="true">⌃</span></button></h3><div class="explorer-section-body"><button data-printers-action="control-panel"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span></button><button data-printers-action="scanners"><img src="assets/xp/icons/MyPictures.png" alt=""><span>Scanners and Cameras</span></button><button data-printers-action="documents"><img src="assets/xp/icons/MyDocuments.png" alt=""><span>My Documents</span></button><button data-printers-action="pictures"><img src="assets/xp/icons/MyPictures.png" alt=""><span>My Pictures</span></button><button data-printers-action="computer"><img src="assets/xp/icons/MyComputer.png" alt=""><span>My Computer</span></button></div></section>
-          <section class="collapsed"><h3><button type="button" class="explorer-section-toggle">Details<span aria-hidden="true">⌄</span></button></h3></section>
-        </aside>
-        <main class="printers-main"></main>
-      </div>`;
-      return content;
-    },
-    __help: (win) => {
-      const content = createSystemContentRoot();
-
-      content.className = "help-center-content";
-      content.innerHTML = `
-      <nav class="help-center-toolbar" aria-label="Help navigation">
-        <button type="button" disabled><span class="help-toolbar-icon help-toolbar-back"></span><span>Back</span><b aria-hidden="true">⌄</b></button>
-        <button type="button" disabled aria-label="Forward"><span class="help-toolbar-icon help-toolbar-forward"></span></button>
-        <button type="button" data-help-action="home" aria-label="Home"><span class="help-toolbar-icon help-toolbar-home"></span></button>
-        <button type="button" data-help-action="index"><span class="help-toolbar-icon help-toolbar-index"></span><span>Index</span></button>
-        <button type="button" data-help-action="favorites"><span class="help-toolbar-icon help-toolbar-favorites"></span><span>Favorites</span></button>
-        <button type="button" data-help-action="history"><span class="help-toolbar-icon help-toolbar-history"></span><span>History</span></button>
-        <button type="button" data-help-action="support"><span class="help-toolbar-icon help-toolbar-support"></span><span>Support</span></button>
-        <button type="button" data-help-action="options"><span class="help-toolbar-icon help-toolbar-options"></span><span>Options</span></button>
-      </nav>
-      <header class="help-center-search">
-        <form><label for="help-query">Search</label><input id="help-query" type="search"><button type="submit" aria-label="Search"><img src="assets/xp/icons/Go.png" alt=""></button><button type="button" class="help-search-options" data-help-action="search-options">Set search options</button></form>
-        <div class="help-center-brand"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><strong>Help and Support Center</strong><small>Windows XP Professional</small></div>
-      </header>
-      <main class="help-center-home">
-        <section class="help-topic-column">
-          <h1>Pick a Help topic</h1>
-          <div class="help-topic-group"><img src="assets/xp/help/TopicComputer.png" alt=""><div><button data-help-topic>What's new in Windows XP</button><button data-help-topic>Music, video, games, and photos</button><button data-help-topic>Windows basics</button><button data-help-topic>Protecting your PC: security basics</button></div></div>
-          <div class="help-topic-group"><img src="assets/xp/help/TopicNetwork.png" alt=""><div><button data-help-topic>Networking and the Web</button><button data-help-topic>Working remotely</button><button data-help-topic>System administration</button></div></div>
-          <div class="help-topic-group"><img src="assets/xp/help/TopicAccessibility.png" alt=""><div><button data-help-topic>Customizing your computer</button><button data-help-topic>Accessibility</button></div></div>
-          <div class="help-topic-group"><img src="assets/xp/help/TopicHardware.png" alt=""><div><button data-help-topic>Printing and faxing</button><button data-help-topic>Performance and maintenance</button><button data-help-topic>Hardware</button><button data-help-topic>Fixing a problem</button><button data-help-topic>Send your feedback to Microsoft</button></div></div>
-        </section>
-        <section class="help-task-column">
-          <h1>Ask for assistance</h1>
-          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Invite a friend to connect to your computer with <strong>Remote Assistance</strong></button>
-          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Get support, or find information in Windows XP <strong>newsgroups</strong></button>
-          <h1>Pick a task</h1>
-          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Keep your computer up-to-date with <strong>Windows Update</strong></button>
-          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Find compatible hardware and software for Windows XP</button>
-          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Undo changes to your computer with <strong>System Restore</strong></button>
-          <button data-help-topic><img src="assets/xp/icons/Go.png" alt="">Use <strong>Tools</strong> to view your computer information and diagnose problems</button>
-          <div class="help-did-you-know"><h1>Did you know?</h1><span>Updating...</span></div>
-        </section>
-      </main>`;
-      return content;
     },
     "__astro-settings": (win) => {
       const content = createSystemContentRoot();
@@ -1165,7 +772,6 @@ export const createSystemRuntime = (context) => {
                         <button type="button" data-search-kind="documents">Documents (word processing, spreadsheet, etc.)</button>
                         <button type="button" data-search-kind="all">All files and folders</button>
                         <button type="button" data-search-kind="people">Computers or people</button>
-                        <button type="button" data-search-kind="help">Information in Help and Support Center</button>
                         <span>You may also want to...</span>
                         <button type="button" data-search-extra>Search the Internet</button>
                         <button type="button" data-search-extra>Change preferences</button>
@@ -1739,7 +1345,6 @@ export const createSystemRuntime = (context) => {
             { label: "Folder Options...", action: "folder-options" },
           ],
           help: [
-            { label: "Help and Support Center", action: "help-center" },
             { separator: true },
             {
               label: "Is this copy of Windows legal?",
@@ -1823,7 +1428,7 @@ export const createSystemRuntime = (context) => {
                 .querySelectorAll(".explorer-item")
                 .forEach((item) => item.classList.toggle("selected"));
             if (command === "refresh") renderExplorerItems(win);
-            if (command === "help-center") openHelpAndSupport();
+
             if (command === "about-windows") openAboutWindows();
             if (
               [
@@ -2115,8 +1720,6 @@ export const createSystemRuntime = (context) => {
     search: context.wireSearchCompanion,
     "internet-games": context.wireInternetGames,
     "control-panel": wireControlPanel,
-    printers: wirePrintersAndFaxes,
-    help: wireHelpAndSupport,
   });
 
   return Object.freeze({

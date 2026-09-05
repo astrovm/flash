@@ -336,7 +336,7 @@ const openTaskManager = () => {
     <div class="task-manager-menu-popup" data-task-manager-popup="view" role="menu" hidden><button role="menuitem" data-task-manager-action="refresh">Refresh Now</button><hr><button role="menuitem">Update Speed <span>▶</span></button><button role="menuitem">CPU History <span>▶</span></button><button role="menuitem">Show Kernel Times</button></div>
     <div class="task-manager-menu-popup" data-task-manager-popup="windows" role="menu" hidden><button role="menuitem" data-task-manager-action="cascade">Cascade</button><button role="menuitem" data-task-manager-action="tile-horizontal">Tile Horizontally</button><button role="menuitem" data-task-manager-action="tile-vertical">Tile Vertically</button><hr><button role="menuitem">Minimize</button><button role="menuitem">Maximize</button><button role="menuitem">Bring To Front</button></div>
     <div class="task-manager-menu-popup" data-task-manager-popup="shutdown" role="menu" hidden><button role="menuitem">Stand By</button><button role="menuitem">Hibernate</button><hr><button role="menuitem" data-task-manager-action="turn-off">Turn Off</button><button role="menuitem" data-task-manager-action="restart">Restart</button><hr><button role="menuitem" data-task-manager-action="log-off">Log Off Administrator</button><button role="menuitem">Switch User</button></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="help" role="menu" hidden><button role="menuitem" data-task-manager-action="help">Task Manager Help Topics</button><hr><button role="menuitem" data-task-manager-action="about">About Task Manager</button></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="help" role="menu" hidden><hr><button role="menuitem" data-task-manager-action="about">About Task Manager</button></div>
     <div class="task-manager-tabs" role="tablist" aria-label="Windows Task Manager">
       <button type="button" role="tab" data-task-manager-tab="applications" aria-selected="true">Applications</button>
       <button type="button" role="tab" data-task-manager-tab="processes" aria-selected="false" tabindex="-1">Processes</button>
@@ -429,8 +429,7 @@ const openTaskManager = () => {
       dialog.close("switch");
       restoreWindow(selectedWindow);
       focusWindow(selectedWindow);
-    } else if (action === "help") openHelpAndSupport();
-    else if (action === "about") openAboutWindows();
+    } else if (action === "about") openAboutWindows();
     else if (action === "cascade") arrangeTaskbarWindows("cascade");
     else if (action === "tile-horizontal")
       arrangeTaskbarWindows("tile-horizontal");
@@ -452,181 +451,6 @@ const openTaskManager = () => {
   );
 };
 
-const openKeyboardProperties = (initialTab = "speed") => {
-  const dialog = XPDialogs.createDialog({ title: "Keyboard Properties" });
-  dialog.el.classList.add("keyboard-properties-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(110, Math.max(4, window.innerWidth - 404))}px`,
-    top: `${Math.min(144, Math.max(4, window.innerHeight - 454))}px`,
-  });
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.setAttribute("aria-label", "Help");
-  help.addEventListener("click", openHelpAndSupport);
-  dialog.el.querySelector(".title-buttons").prepend(help);
-  dialog.body.innerHTML = `
-    <div class="keyboard-properties-tabs" role="tablist"><button type="button" role="tab" data-keyboard-tab="speed">Speed</button><button type="button" role="tab" data-keyboard-tab="hardware">Hardware</button></div>
-    <div class="keyboard-properties-panels">
-      <section data-keyboard-panel="speed"><fieldset class="keyboard-repeat"><legend>Character repeat</legend><img class="keyboard-delay-icon" src="assets/xp/icons/KeyboardRepeatDelay.png" alt=""><img class="keyboard-rate-icon" src="assets/xp/icons/KeyboardRepeatRate.png" alt=""><label><b>Repeat delay:</b><span>Long</span><input type="range" min="0" max="10" value="7"><span>Short</span></label><label><b>Repeat rate:</b><span>Slow</span><input type="range" min="0" max="10" value="10"><span>Fast</span></label><label>Click here and hold down a key to test repeat rate:<input type="text"></label></fieldset><fieldset class="keyboard-cursor"><legend>Cursor blink rate</legend><i aria-hidden="true"></i><label><span>None</span><input type="range" min="0" max="10" value="6"><span>Fast</span></label></fieldset></section>
-      <section data-keyboard-panel="hardware" hidden><p class="keyboard-devices-label">Devices:</p><div class="keyboard-hardware-list" role="listbox"><strong><span>Name</span><span>Type</span></strong><span class="selected"><img src="assets/xp/system/KeyboardDevice.png" alt="">Standard 101/102-Key or Microsoft Natural PS/2 Keyboard <i>Keyboards</i></span></div><fieldset class="keyboard-device-properties"><legend>Device Properties</legend><p>Manufacturer: (Standard keyboards)</p><p>Location: plugged into keyboard port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
-    </div>`;
-  const activate = (tab) => {
-    dialog.body
-      .querySelectorAll("[data-keyboard-tab]")
-      .forEach((button) =>
-        button.setAttribute(
-          "aria-selected",
-          String(button.dataset.keyboardTab === tab),
-        ),
-      );
-    dialog.body.querySelectorAll("[data-keyboard-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.keyboardPanel !== tab;
-    });
-  };
-  dialog.body.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-keyboard-tab]")?.dataset
-      .keyboardTab;
-    if (tab) activate(tab);
-  });
-  XPDialogs.addButtonRow(dialog, [
-    { id: "ok", label: "OK", isDefault: true },
-    { id: "cancel", label: "Cancel", isCancel: true },
-    { id: "apply", label: "Apply" },
-  ]);
-  dialog.body.lastElementChild.classList.add("keyboard-properties-buttons");
-  dialog.body.querySelector('[data-action="apply"]').disabled = true;
-  activate(initialTab);
-};
-
-const addDialogHelpButton = (dialog) => {
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.setAttribute("aria-label", "Help");
-  help.addEventListener("click", openHelpAndSupport);
-  dialog.el.querySelector(".title-buttons").prepend(help);
-};
-
-const openAdvancedGameControllerSettings = () => {
-  const dialog = XPDialogs.createDialog({ title: "Advanced Settings" });
-  dialog.el.classList.add("game-controller-advanced-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(28, Math.max(4, window.innerWidth - 335))}px`,
-    top: `${Math.min(80, Math.max(4, window.innerHeight - 171))}px`,
-  });
-  addDialogHelpButton(dialog);
-  dialog.body.innerHTML = `
-    <p>Select the device you want to use with older programs.</p>
-    <div class="game-controller-preferred"><img src="assets/xp/icons/GameControllers.png" alt=""><label>Preferred device:<select><option>(none)</option></select></label></div>`;
-  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.okCancel);
-};
-
-const openAddGameController = (onAdd) => {
-  const dialog = XPDialogs.createDialog({ title: "Add Game Controller" });
-  dialog.el.classList.add("add-game-controller-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(28, Math.max(4, window.innerWidth - 404))}px`,
-    top: `${Math.min(80, Math.max(4, window.innerHeight - 356))}px`,
-  });
-  addDialogHelpButton(dialog);
-  const controllerTypes = [
-    "2-axis, 2-button joystick",
-    "2-axis, 4-button joystick",
-    "2-button flight yoke",
-    "2-button flight yoke w/throttle",
-    "2-button gamepad",
-    "3-axis, 2-button joystick",
-    "3-axis, 4-button joystick",
-    "3-axis, 4-button flight yoke",
-    "3-axis, 4-button flight yoke w/throttle",
-    "4-button gamepad",
-  ];
-  dialog.body.innerHTML = `
-    <div class="add-game-controller-intro"><img src="assets/xp/icons/GameControllers.png" alt=""><p>Select a game controller from the list below, and then click OK. If<br>your game controller does not appear in the list, click Custom.</p></div>
-    <label class="game-controller-types">Game controllers:<select size="7">${controllerTypes.map((type) => `<option>${type}</option>`).join("")}</select></label>
-    <label class="game-controller-rudders"><input type="checkbox"> Enable rudders and pedals</label>
-    <button type="button" class="xp-btn game-controller-custom">Custom...</button>
-    <hr>`;
-  const select = dialog.body.querySelector("select");
-  select.selectedIndex = 0;
-  dialog.body
-    .querySelector(".game-controller-custom")
-    .addEventListener("click", () =>
-      XPDialogs.alert(
-        "Custom game controllers can be configured after compatible hardware is connected.",
-        "Custom Game Controller",
-      ),
-    );
-  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.okCancel);
-  dialog.onResult((result) => {
-    if (result === "ok") onAdd(select.value);
-  });
-};
-
-const openGameControllers = () => {
-  const dialog = XPDialogs.createDialog({ title: "Game Controllers" });
-  dialog.el.classList.add("game-controllers-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(25, Math.max(4, window.innerWidth - 383))}px`,
-    top: `${Math.min(51, Math.max(4, window.innerHeight - 369))}px`,
-  });
-  addDialogHelpButton(dialog);
-  dialog.body.innerHTML = `
-    <div class="game-controllers-intro"><img src="assets/xp/icons/GameControllers.png" alt=""><p>These settings help you configure the game controllers installed on<br>your computer.</p></div>
-    <fieldset><legend>Installed game controllers</legend><div class="game-controller-list" role="listbox" tabindex="0"><div class="game-controller-list-header"><span>Controller</span><span>Status</span></div><div class="game-controller-list-items"></div></div><div class="game-controller-actions"><button type="button" class="xp-btn" data-game-controller-action="add">Add...</button><button type="button" class="xp-btn" data-game-controller-action="remove" disabled>Remove</button><button type="button" class="xp-btn" data-game-controller-action="properties" disabled>Properties</button></div></fieldset>
-    <div class="game-controller-secondary"><button type="button" class="xp-btn" data-game-controller-action="advanced">Advanced...</button><button type="button" class="xp-btn" data-game-controller-action="troubleshoot">Troubleshoot...</button></div>`;
-  const items = dialog.body.querySelector(".game-controller-list-items");
-  const remove = dialog.body.querySelector(
-    '[data-game-controller-action="remove"]',
-  );
-  const properties = dialog.body.querySelector(
-    '[data-game-controller-action="properties"]',
-  );
-  let selected = null;
-  const addController = (name) => {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.innerHTML = `<span>${name}</span><span>OK</span>`;
-    item.addEventListener("click", () => {
-      items
-        .querySelectorAll("button")
-        .forEach((entry) =>
-          entry.setAttribute("aria-selected", String(entry === item)),
-        );
-      selected = item;
-      remove.disabled = false;
-      properties.disabled = false;
-    });
-    items.appendChild(item);
-    item.click();
-  };
-  dialog.body.addEventListener("click", (event) => {
-    const action = event.target.closest("[data-game-controller-action]")
-      ?.dataset.gameControllerAction;
-    if (action === "add") openAddGameController(addController);
-    if (action === "advanced") openAdvancedGameControllerSettings();
-    if (action === "troubleshoot") openHelpAndSupport();
-    if (action === "remove" && selected) {
-      selected.remove();
-      selected = null;
-      remove.disabled = true;
-      properties.disabled = true;
-    }
-    if (action === "properties" && selected) {
-      XPDialogs.alert(
-        "This game controller is connected and working properly.",
-        "Game Controller Properties",
-      );
-    }
-  });
-  XPDialogs.addButtonRow(dialog, XPDialogs.BUTTON_SETS.ok);
-};
-
 const openPowerOptions = (initialTab = "power-schemes") => {
   const dialog = XPDialogs.createDialog({ title: "Power Options Properties" });
   dialog.el.classList.add("power-options-dialog");
@@ -635,7 +459,7 @@ const openPowerOptions = (initialTab = "power-schemes") => {
     left: `${Math.min(22, Math.max(4, window.innerWidth - 404))}px`,
     top: `${Math.min(30, Math.max(4, window.innerHeight - 454))}px`,
   });
-  addDialogHelpButton(dialog);
+
   const select = (options, selected) =>
     `<select>${options.map((option) => `<option${option === selected ? " selected" : ""}>${option}</option>`).join("")}</select>`;
   const timeOptions = [
@@ -697,7 +521,7 @@ const openRegionalLanguageOptions = (initialTab = "regional-options") => {
     left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
     top: `${Math.min(58, Math.max(4, window.innerHeight - 484))}px`,
   });
-  addDialogHelpButton(dialog);
+
   dialog.body.innerHTML = `
     <div class="regional-language-tabs" role="tablist"><button type="button" role="tab" data-regional-tab="regional-options">Regional Options</button><button type="button" role="tab" data-regional-tab="languages">Languages</button><button type="button" role="tab" data-regional-tab="advanced">Advanced</button></div>
     <div class="regional-language-panels">
@@ -737,61 +561,6 @@ const openRegionalLanguageOptions = (initialTab = "regional-options") => {
   activate(initialTab);
 };
 
-const openMouseProperties = (initialTab = "buttons") => {
-  const dialog = XPDialogs.createDialog({ title: "Mouse Properties" });
-  dialog.el.classList.add("mouse-properties-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(88, Math.max(4, window.innerWidth - 404))}px`,
-    top: `${Math.min(117, Math.max(4, window.innerHeight - 454))}px`,
-  });
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.setAttribute("aria-label", "Help");
-  help.addEventListener("click", openHelpAndSupport);
-  dialog.el.querySelector(".title-buttons").prepend(help);
-  const tabs = ["Buttons", "Pointers", "Pointer Options", "Wheel", "Hardware"];
-  dialog.body.innerHTML = `
-    <div class="mouse-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-mouse-tab="${tab.toLowerCase().replace(" ", "-")}">${tab}</button>`).join("")}</div>
-    <div class="mouse-properties-panels">
-      <section data-mouse-panel="buttons">
-        <fieldset class="mouse-buttons-configuration"><legend>Button configuration</legend><label><input type="checkbox"> Switch primary and secondary buttons</label><p>Select this check box to make the button on the<br>right the one you use for primary functions such<br>as selecting and dragging.</p><img src="assets/xp/system/MouseButtonConfiguration.png" alt=""></fieldset>
-        <fieldset class="mouse-double-click"><legend>Double-click speed</legend><p>Double-click the folder to test your setting. If the<br>folder does not open or close, try using a slower<br>setting.</p><label>Speed: <span>Slow</span><input type="range" min="0" max="10" value="5"><span>Fast</span></label><button type="button" aria-label="Test double-click"><img src="assets/xp/system/MouseDoubleClickFolder.png" alt=""></button></fieldset>
-        <fieldset class="mouse-click-lock"><legend>ClickLock</legend><label><input type="checkbox"> Turn on ClickLock</label><button class="xp-btn" disabled>Settings...</button><p>Enables you to highlight or drag without holding down the mouse<br>button. To set, briefly press the mouse button. To release, click the<br>mouse button again.</p></fieldset>
-      </section>
-      <section data-mouse-panel="pointers"><fieldset class="mouse-scheme"><legend>Scheme</legend><select><option>Windows Default (system scheme)</option></select><button class="xp-btn">Save As...</button><button class="xp-btn" disabled>Delete</button></fieldset><div class="mouse-pointer-preview"><img src="assets/xp/system/cursors/NormalSelect.png" alt=""></div><p class="mouse-customize-label">Customize:</p><div class="mouse-pointer-list" role="listbox"><span class="selected">Normal Select <img src="assets/xp/system/cursors/NormalSelect.png" alt=""></span><span>Help Select <img src="assets/xp/system/cursors/HelpSelect.png" alt=""></span><span>Working In Background <img src="assets/xp/system/cursors/WorkingInBackground.png" alt=""></span><span>Busy <img src="assets/xp/system/cursors/Busy.png" alt=""></span><span>Precision Select <img src="assets/xp/system/cursors/PrecisionSelect.png" alt=""></span><span>Text Select <img src="assets/xp/system/cursors/TextSelect.png" alt=""></span><span>Handwriting <img src="assets/xp/system/cursors/Handwriting.png" alt=""></span><span>Unavailable <img src="assets/xp/system/cursors/Unavailable.png" alt=""></span></div><label class="mouse-pointer-shadow"><input type="checkbox" checked> Enable pointer shadow</label><button class="xp-btn mouse-pointer-default" disabled>Use Default</button><button class="xp-btn mouse-pointer-browse">Browse...</button></section>
-      <section data-mouse-panel="pointer-options" hidden><fieldset class="mouse-motion"><legend>Motion</legend><img src="assets/xp/system/MouseMotion.png" alt=""><p>Select a pointer speed:</p><label><span>Slow</span><input type="range" min="0" max="10" value="5"><span>Fast</span></label><label><input type="checkbox" checked> Enhance pointer precision</label></fieldset><fieldset class="mouse-snap"><legend>Snap To</legend><img src="assets/xp/system/MouseSnapTo.png" alt=""><label><input type="checkbox"> Automatically move pointer to the default button in a<br>dialog box</label></fieldset><fieldset class="mouse-visibility"><legend>Visibility</legend><label><img src="assets/xp/system/MouseTrails.png" alt=""><input type="checkbox"> Display pointer trails</label><div><span>Short</span><input type="range" min="0" max="10" value="8" disabled><span>Long</span></div><label><img src="assets/xp/system/MouseHideWhileTyping.png" alt=""><input type="checkbox" checked> Hide pointer while typing</label><label><img src="assets/xp/system/MouseLocate.png" alt=""><input type="checkbox"> Show location of pointer when I press the CTRL key</label></fieldset></section>
-      <section data-mouse-panel="wheel" hidden><fieldset class="mouse-wheel-scroll"><legend>Scrolling</legend><img src="assets/xp/system/MouseWheel.png" alt=""><p>Roll the wheel one notch to scroll:</p><label><input type="radio" name="wheel-scroll" checked> The following number of lines at a time:</label><input type="number" value="3" min="1"><label><input type="radio" name="wheel-scroll"> One screen at a time</label></fieldset></section>
-      <section data-mouse-panel="hardware" hidden><p class="mouse-devices-label">Devices:</p><div class="mouse-hardware-list" role="listbox"><strong><span>Name</span><span>Type</span></strong><span class="selected"><img src="assets/xp/system/MouseDevice.png" alt="">PS/2 Compatible Mouse <i>Mouse and other pointing devices</i></span><span><img src="assets/xp/system/MouseDevice.png" alt="">HID-compliant mouse <i>Mouse and other pointing devices</i></span></div><fieldset class="mouse-device-properties"><legend>Device Properties</legend><p>Manufacturer: Microsoft</p><p>Location: plugged into PS/2 mouse port</p><p>Device Status: This device is working properly.</p><button class="xp-btn">Troubleshoot...</button><button class="xp-btn">Properties</button></fieldset></section>
-    </div>`;
-  const activate = (tab) => {
-    dialog.body
-      .querySelectorAll("[data-mouse-tab]")
-      .forEach((button) =>
-        button.setAttribute(
-          "aria-selected",
-          String(button.dataset.mouseTab === tab),
-        ),
-      );
-    dialog.body.querySelectorAll("[data-mouse-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.mousePanel !== tab;
-    });
-  };
-  dialog.body.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-mouse-tab]")?.dataset.mouseTab;
-    if (tab) activate(tab);
-  });
-  XPDialogs.addButtonRow(dialog, [
-    { id: "ok", label: "OK", isDefault: true },
-    { id: "cancel", label: "Cancel", isCancel: true },
-    { id: "apply", label: "Apply" },
-  ]);
-  dialog.body.lastElementChild.classList.add("mouse-properties-buttons");
-  dialog.body.querySelector('[data-action="apply"]').disabled = true;
-  activate(initialTab);
-};
-
 const openInternetProperties = (initialTab = "general") => {
   const dialog = XPDialogs.createDialog({ title: "Internet Properties" });
   dialog.el.classList.add("internet-properties-dialog");
@@ -800,12 +569,7 @@ const openInternetProperties = (initialTab = "general") => {
     left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
     top: `${Math.min(58, Math.max(4, window.innerHeight - 458))}px`,
   });
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.setAttribute("aria-label", "Help");
-  help.addEventListener("click", openHelpAndSupport);
-  dialog.el.querySelector(".title-buttons").prepend(help);
+
   const tabs = [
     "General",
     "Security",
@@ -898,13 +662,7 @@ const openFolderOptions = () => {
       top: `${parentRect.top}px`,
     });
   }
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.title = "Help";
-  help.setAttribute("aria-label", "Help");
-  help.addEventListener("click", openHelpAndSupport);
-  dialog.el.querySelector(".title-buttons").prepend(help);
+
   dialog.body.innerHTML = `
     <div class="folder-options-tabs" role="tablist" aria-label="Folder Options">
       <button type="button" role="tab" data-folder-options-tab="general" aria-selected="true">General</button>
@@ -1053,13 +811,7 @@ const openTaskbarProperties = () => {
     title: "Taskbar and Start Menu Properties",
   });
   dialog.el.classList.add("taskbar-properties-dialog");
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.title = "Help";
-  help.setAttribute("aria-label", "Help");
-  help.addEventListener("click", openHelpAndSupport);
-  dialog.el.querySelector(".title-buttons").prepend(help);
+
   const currentStartMenuStyle = getStartMenuStyle();
   dialog.body.innerHTML = `
     <div class="taskbar-properties-tabs" role="tablist">

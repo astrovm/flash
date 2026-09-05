@@ -59,8 +59,6 @@ test("Start menu opens, closes, and exposes working XP destinations", async () =
     "music",
     "computer",
     "controlPanel",
-    "printers",
-    "help",
     "search",
     "run",
   ]);
@@ -79,8 +77,6 @@ test("Start menu opens, closes, and exposes working XP destinations", async () =
     ["music", "__my-music"],
     ["computer", "__my-computer"],
     ["controlPanel", "__control-panel"],
-    ["printers", "__printers"],
-    ["help", "__help"],
     ["search", "__search"],
   ];
   for (const [action, windowId] of routes) {
@@ -294,9 +290,7 @@ test("My Computer exposes the native desktop shell menu and opens Properties", a
   menu
     .querySelector<HTMLButtonElement>('[data-action="computer-properties"]')!
     .click();
-  expect(
-    shell.document.querySelector(".system-properties-dialog"),
-  ).not.toBeNull();
+  expect(shell.document.querySelector(".xp-dialog")).not.toBeNull();
 });
 
 test("Control Panel navigation opens applets and switches their tabs", async () => {
@@ -305,6 +299,33 @@ test("Control Panel navigation opens applets and switches their tabs", async () 
   const controlPanel = shell.document.querySelector<HTMLElement>(
     '.xp-window[data-game="__control-panel"]',
   )!;
+
+  expect(
+    controlPanel.querySelector('[data-control-panel-category="accessibility"]'),
+  ).toBeNull();
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="classic"]')!
+    .click();
+  for (const action of [
+    "users",
+    "programs",
+    "system",
+    "accessibility-options",
+    "mouse",
+    "keyboard",
+    "sounds-audio",
+    "game-controllers",
+    "view-printers",
+    "help",
+    "firewall",
+  ]) {
+    expect(
+      controlPanel.querySelector(`[data-control-panel-action="${action}"]`),
+    ).toBeNull();
+  }
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="classic"]')!
+    .click();
 
   controlPanel
     .querySelector<HTMLButtonElement>(
@@ -1059,6 +1080,10 @@ test("bundled iframe deep links use the production release base URL", async () =
 test("placeholder-only applications are not installed or exposed by the shell", async () => {
   const shell = await login(await loadShell());
   const removedApplicationIds = [
+    "__user-accounts",
+    "__add-remove-programs",
+    "__printers",
+    "__help",
     "__winamp",
     "__security-center",
     "__accessibility-wizard",

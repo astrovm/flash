@@ -85,24 +85,7 @@ const SHELL_COMMANDS = [
     aliases: ["control panel"],
     run: () => openControlPanel(),
   },
-  {
-    id: "system-properties",
-    title: "System Properties",
-    aliases: ["sysdm.cpl", "system properties"],
-    run: () => openSystemProperties(),
-  },
-  {
-    id: "printers",
-    title: "Printers and Faxes",
-    aliases: ["printers", "printers and faxes"],
-    run: () => openPrintersAndFaxes(),
-  },
-  {
-    id: "help",
-    title: "Help and Support",
-    aliases: ["help", "help and support"],
-    run: () => openHelpAndSupport(),
-  },
+
   {
     id: "notepad",
     title: "Notepad",

@@ -946,7 +946,7 @@ const setupDesktopContextMenu = () => {
       } else if (action === "rename-my-computer") {
         beginSystemDesktopRename("__my-computer");
       } else if (action === "computer-properties") {
-        openSystemProperties();
+        openShellProperties(fs.MY_COMPUTER);
       } else if (action === "explore" && itemId === "__recycle-bin") {
         openDesktopItem(itemId);
       } else if (action === "empty-recycle-bin") {

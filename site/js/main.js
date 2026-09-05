@@ -277,26 +277,6 @@ const systemShortcuts = {
     icon: "assets/xp/icons/ControlPanel.png",
     desktop: false,
   },
-  "__user-accounts": {
-    title: "User Accounts",
-    icon: "assets/xp/icons/UserAccounts.png",
-    desktop: false,
-  },
-  "__add-remove-programs": {
-    title: "Add or Remove Programs",
-    icon: "assets/xp/icons/AddRemovePrograms.png",
-    desktop: false,
-  },
-  __printers: {
-    title: "Printers and Faxes",
-    icon: "assets/xp/icons/PrintersAndFaxes.png",
-    desktop: false,
-  },
-  __help: {
-    title: "Help and Support Center",
-    icon: "assets/xp/icons/HelpAndSupport.png",
-    desktop: false,
-  },
   __notepad: {
     title: "Notepad",
     icon: "assets/xp/icons/Notepad.png",
