@@ -15,6 +15,10 @@ selected original Windows XP applications.
 
 ## Development
 
+Use the Bun version pinned in `package.json` (CI reads the same pin).
+Typechecking uses the native TypeScript 7 compiler through `@typescript/native`;
+TypeScript 6 remains installed for TypeScript ESLint compatibility.
+
 Install dependencies and run the checks:
 
 ```bash
