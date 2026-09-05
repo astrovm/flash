@@ -240,7 +240,6 @@ const login = (playSound = true) => {
       playXPSound("logon");
     }
 
-    networkConnectedAt = Date.now();
     if (!shellInitialized) {
       shellInitialized = true;
       await syncGameFiles();

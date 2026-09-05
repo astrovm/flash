@@ -13,12 +13,9 @@ export const createSystemRuntime = (context) => {
     openAboutWindows,
     openControlPanel,
     openDateTimeProperties,
-    openFolderOptions,
-    openInternetProperties,
-    openNetworkStatus,
-    openPowerOptions,
+
     openProjectSettings,
-    openRegionalLanguageOptions,
+
     openSearchDialog,
     openShellProperties,
     openSystemWindow,
@@ -40,14 +37,7 @@ export const createSystemRuntime = (context) => {
     content.innerHTML = `
     <div class="explorer-chrome control-panel-chrome">
       <div class="explorer-menu-row">
-        <div class="explorer-menu-bar" role="menubar">
-          <button type="button" role="menuitem">File</button>
-          <button type="button" role="menuitem">Edit</button>
-          <button type="button" role="menuitem">View</button>
-          <button type="button" role="menuitem">Favorites</button>
-          <button type="button" role="menuitem">Tools</button>
-          <button type="button" role="menuitem">Help</button>
-        </div>
+
         <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
       </div>
       <div class="explorer-toolbar">
@@ -58,9 +48,9 @@ export const createSystemRuntime = (context) => {
         <button type="button" data-control-panel-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
         <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
         <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-        <button type="button" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+
       </div>
-      <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/ControlPanel.png" alt=""><input type="text" aria-label="Address" value="Control Panel" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
+      <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/ControlPanel.png" alt=""><input type="text" aria-label="Address" value="Control Panel" readonly></span></label>
     </div>
     <div class="control-panel-body">
       <aside class="explorer-sidebar control-panel-sidebar">
@@ -84,23 +74,12 @@ export const createSystemRuntime = (context) => {
         "AppearanceAndThemes.png",
         "left",
       ],
-      [
-        "network",
-        "Network and Internet Connections",
-        "NetworkAndInternet.png",
-        "left",
-      ],
+
       [
         "datetime",
         "Date, Time, Language, and Regional Options",
         "DateTimeRegional.png",
         "right",
-      ],
-      [
-        "performance",
-        "Performance and Maintenance",
-        "PerformanceAndMaintenance.png",
-        "left",
       ],
     ];
     const categoryGrid = content.querySelector(".control-panel-categories");
@@ -137,50 +116,14 @@ export const createSystemRuntime = (context) => {
     const categoryGrid = content.querySelector(".control-panel-categories");
     const categoryMarkup = categoryGrid.innerHTML;
     const classicIconPaths = {
-      "AccessibilityOptions.png": "assets/xp/icons/AccessibilityOptions.png",
-      "AddHardware.png": "assets/xp/icons/AddHardware.png",
-      "AddRemovePrograms.png": "assets/xp/icons/AddRemovePrograms.png",
-      "AdministrativeTools.png": "assets/xp/icons/AdministrativeTools.png",
-      "UpdateEnabled.png": "assets/xp/system/UpdateEnabled.png",
       "DateAndTime.png": "assets/xp/icons/DateAndTime.png",
       "Display.png": "assets/xp/icons/Display.png",
-      "FolderOptions.png": "assets/xp/icons/FolderOptions.png",
-      "Fonts.png": "assets/xp/icons/Fonts.png",
-      "GameControllers.png": "assets/xp/icons/GameControllers.png",
-      "InternetOptions.png": "assets/xp/icons/InternetOptions.png",
-      "Keyboard.png": "assets/xp/icons/Keyboard.png",
-      "Mouse.png": "assets/xp/icons/Mouse.png",
-      "NetworkConnections.png": "assets/xp/icons/NetworkConnections.png",
-      "NetworkSetupWizard.png": "assets/xp/icons/NetworkSetupWizard.png",
-      "PhoneAndModemOptionsLarge.png":
-        "assets/xp/icons/PhoneAndModemOptionsLarge.png",
-      "PowerOptions.png": "assets/xp/icons/PowerOptions.png",
-      "PrintersAndFaxesLarge.png": "assets/xp/icons/PrintersAndFaxesLarge.png",
-      "RegionalAndLanguage.png": "assets/xp/icons/RegionalAndLanguage.png",
-      "ScannersAndCameras.png": "assets/xp/icons/ScannersAndCameras.png",
-      "ScheduledTasks.png": "assets/xp/icons/ScheduledTasks.png",
-      "SecurityCenter.png": "assets/xp/icons/SecurityCenter.png",
-      "SoundsAndAudioDevices.png": "assets/xp/icons/SoundsAndAudioDevices.png",
-      "Speech.png": "assets/xp/icons/Speech.png",
-      "System.png": "assets/xp/icons/System.png",
       "TaskbarAndStartMenu.png": "assets/xp/icons/TaskbarAndStartMenu.png",
-      "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
-      "WindowsFirewall.png": "assets/xp/icons/WindowsFirewall.png",
-      "WirelessNetworkSetupWizard.png":
-        "assets/xp/icons/WirelessNetworkSetupWizard.png",
     };
     const classicItems = [
       ["date-time", "Date and Time", "DateAndTime.png"],
       ["display", "Display", "Display.png"],
-      ["folder-options", "Folder Options", "FolderOptions.png"],
-      ["internet-options", "Internet Options", "InternetOptions.png"],
-      ["network-connections", "Network Connections", "NetworkConnections.png"],
-      ["power-options", "Power Options", "PowerOptions.png"],
-      [
-        "regional-language",
-        "Regional and Language Options",
-        "RegionalAndLanguage.png",
-      ],
+
       [
         "taskbar-properties",
         "Taskbar and Start Menu",
@@ -238,38 +181,8 @@ export const createSystemRuntime = (context) => {
       <h2>or pick a Control Panel icon</h2>
       <div class="control-panel-category-icons">
         <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/Display.png" alt=""><span>Display</span></button>
-        <button type="button" data-control-panel-action="folder-options"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>Folder Options</span></button>
+
         <button type="button" data-control-panel-action="taskbar-properties"><img src="assets/xp/icons/TaskbarAndStartMenu.png" alt=""><span>Taskbar and Start Menu</span></button>
-      </div>`;
-    };
-
-    const renderPerformanceCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Performance and Maintenance",
-        XP_ICON_PATHS["PerformanceAndMaintenance.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="file-types"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>File Types</span></button>
-        </div>
-      </section>
-      `;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/PerformanceAndMaintenance.png" alt=""><strong>Performance and Maintenance</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links performance-task-links">
-
-
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons">
-        <button type="button" data-control-panel-action="power-options"><img src="assets/xp/icons/PowerOptions.png" alt=""><span>Power Options</span></button>
       </div>`;
     };
 
@@ -289,54 +202,19 @@ export const createSystemRuntime = (context) => {
       <h1>Pick a task...</h1>
       <div class="control-panel-task-links">
         <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/Go.png" alt=""><span>Change the date and time</span></button>
-        <button type="button" data-control-panel-action="regional-format"><img src="assets/xp/icons/Go.png" alt=""><span>Change the format of numbers, dates, and times</span></button>
-        <button type="button" data-control-panel-action="languages"><img src="assets/xp/icons/Go.png" alt=""><span>Add other languages</span></button>
+
       </div>
       <h2>or pick a Control Panel icon</h2>
       <div class="control-panel-category-icons date-regional-category-icons">
         <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/DateAndTime.png" alt=""><span>Date and Time</span></button>
-        <button type="button" data-control-panel-action="regional-language"><img src="assets/xp/icons/RegionalAndLanguage.png" alt=""><span>Regional and Language Options</span></button>
-      </div>`;
-    };
-
-    const renderNetworkCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Network and Internet Connections",
-        XP_ICON_PATHS["NetworkAndInternet.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-      <section>
-        <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><span>See Also</span><b aria-hidden="true">⌃</b></button></h3>
-        <div class="explorer-section-body">
-          <button type="button" data-control-panel-action="my-network-places"><img src="assets/xp/icons/MyNetworkPlacesSmall.png" alt=""><span>My Network Places</span></button>
-
-        </div>
-      </section>
-      `;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/NetworkAndInternet.png" alt=""><strong>Network and Internet Connections</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links network-task-links">
-
-
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons network-category-icons">
-        <button type="button" data-control-panel-action="internet-options"><img src="assets/xp/icons/InternetOptions.png" alt=""><span>Internet Options</span></button>
-        <button type="button" data-control-panel-action="network-connections"><img src="assets/xp/icons/NetworkConnections.png" alt=""><span>Network Connections</span></button>
 
       </div>`;
     };
 
     const actions = {
       appearance: renderAppearanceCategory,
-      network: renderNetworkCategory,
+
       datetime: renderDateRegionalCategory,
-      performance: renderPerformanceCategory,
     };
     content.addEventListener("click", (event) => {
       const sectionToggle = event.target.closest(".explorer-section-toggle");
@@ -370,12 +248,6 @@ export const createSystemRuntime = (context) => {
         event.target
           .closest("button")
           .setAttribute("aria-pressed", String(pressed));
-      } else if (action === "updates") {
-        XPDialogs.alert(
-          "Astro Flash Collection does not connect to Windows Update.",
-          "Windows Update",
-          "info",
-        );
       } else if (action === "back") {
         closeGameWindow("__control-panel");
         setTimeout(openControlPanel, 0);
@@ -389,114 +261,10 @@ export const createSystemRuntime = (context) => {
         openDisplayTab("settings");
       } else if (action === "taskbar-properties") {
         openTaskbarProperties();
-      } else if (action === "folder-options") {
-        openFolderOptions();
-      } else if (action === "file-types") {
-        openFolderOptions();
-        document
-          .querySelector(
-            ".folder-options-dialog [data-folder-tab='file-types']",
-          )
-          ?.click();
-      } else if (action === "magnifier" || action === "on-screen-keyboard") {
-        XPDialogs.alert(
-          `${action === "magnifier" ? "Magnifier" : "On-Screen Keyboard"} is not available in Astro Flash Collection.`,
-          action === "magnifier" ? "Magnifier" : "On-Screen Keyboard",
-          "info",
-        );
       } else if (action === "advanced-volume") {
         toggleTrayVolumePopup();
-      } else if (action === "speech") {
-        XPDialogs.alert(
-          "Speech Properties is not available in Astro Flash Collection.",
-          "Speech Properties",
-          "info",
-        );
       } else if (action === "date-time") {
         openDateTimeProperties();
-      } else if (
-        action === "network-connections" ||
-        action === "my-network-places"
-      ) {
-        openNetworkStatus();
-      } else if (
-        [
-          "internet-connection",
-          "workplace-connection",
-          "home-network",
-          "network-setup",
-        ].includes(action)
-      ) {
-        XPDialogs.alert(
-          "The Network Setup Wizard is not available in Astro Flash Collection.",
-          "Network Setup Wizard",
-          "info",
-        );
-      } else if (action === "wireless-network") {
-        XPDialogs.alert(
-          "The Wireless Network Setup Wizard is not available in Astro Flash Collection.",
-          "Wireless Network Setup Wizard",
-          "info",
-        );
-      } else if (action === "firewall") {
-        XPDialogs.alert(
-          "Windows Firewall settings are not available in Astro Flash Collection.",
-          "Windows Firewall",
-          "info",
-        );
-      } else if (action === "internet-options") {
-        openInternetProperties();
-      } else if (action === "power-options") {
-        openPowerOptions();
-      } else if (
-        action === "phone-modem" ||
-        action === "add-hardware" ||
-        action === "scanners-cameras"
-      ) {
-        const hardwareLabels = {
-          "add-hardware": "Add Hardware Wizard",
-          "game-controllers": "Game Controllers",
-          keyboard: "Keyboard Properties",
-          mouse: "Mouse Properties",
-          "scanners-cameras": "Scanners and Cameras",
-        };
-        const label =
-          action === "phone-modem"
-            ? "Phone and Modem Options"
-            : hardwareLabels[action];
-        XPDialogs.alert(
-          `${label} is not available in Astro Flash Collection.`,
-          label,
-          "info",
-        );
-      } else if (action === "languages") {
-        openRegionalLanguageOptions("languages");
-      } else if (
-        action === "regional-format" ||
-        action === "regional-language"
-      ) {
-        openRegionalLanguageOptions();
-      } else if (
-        [
-          "disk-cleanup",
-          "backup",
-          "defrag",
-          "administrative-tools",
-          "scheduled-tasks",
-        ].includes(action)
-      ) {
-        const labels = {
-          "disk-cleanup": "Disk Cleanup",
-          backup: "Backup Utility",
-          defrag: "Disk Defragmenter",
-          "administrative-tools": "Administrative Tools",
-          "scheduled-tasks": "Scheduled Tasks",
-        };
-        XPDialogs.alert(
-          `${labels[action]} is not available in Astro Flash Collection.`,
-          labels[action],
-          "info",
-        );
       }
     });
   };
@@ -621,9 +389,9 @@ export const createSystemRuntime = (context) => {
                 <p class="display-theme-description">A theme is a background plus a set of sounds, icons, and other elements<br>to help you personalize your computer with one click.</p>
                 <label class="display-control-label" for="display-theme">Theme:</label>
                 <div class="display-theme-row">
-                    <select id="display-theme"><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option><option value="online">More themes online...</option><option value="browse">Browse...</option></select>
-                    <button type="button" class="xp-property-button display-theme-save">Save As...</button>
-                    <button type="button" class="xp-property-button" disabled>Delete</button>
+                    <select id="display-theme"><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option></select>
+
+
                 </div>
                 <span class="display-sample-label">Sample:</span>
                 <div class="display-theme-sample" aria-label="Theme sample">
@@ -653,10 +421,7 @@ export const createSystemRuntime = (context) => {
                         <label><input type="checkbox" class="display-saver-login"> On resume, password protect</label>
                     </div>
                 </fieldset>
-                <fieldset class="display-power-group"><legend>Monitor power</legend>
-                    <p>To adjust monitor power settings and save energy,<br>click <u>Power</u>.</p>
-                    <button type="button" class="xp-property-button display-power-button">Power...</button>
-                </fieldset>
+
             </div>
             <div class="display-panel" id="display-panel-appearance" role="tabpanel" aria-labelledby="display-tab-appearance" hidden>
                 <div class="appearance-preview" aria-label="Appearance sample">
@@ -680,7 +445,7 @@ export const createSystemRuntime = (context) => {
                     <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="display-resolution-preview"><span></span></div>
                 </div>
-                <p class="display-device-label">Display:<br>Default Monitor on Cirrus Logic 5446 Compatible Graphics Adapter</p>
+
                 <div class="display-settings-groups">
                     <fieldset class="display-resolution-group"><legend>Screen resolution</legend>
                         <div class="resolution-endpoints"><span>Less</span><span>More</span></div>
@@ -688,16 +453,9 @@ export const createSystemRuntime = (context) => {
                         <select id="display-resolution" hidden><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option><option value="1440x900">1440 by 900 pixels</option><option value="auto">Use browser size</option></select>
                         <p class="display-resolution-value"></p>
                     </fieldset>
-                    <fieldset class="display-color-quality"><legend>Color quality</legend>
-                        <select disabled><option>High (24 bit)</option></select>
-                        <div class="display-color-spectrum"></div>
-                    </fieldset>
+
                 </div>
-                <div class="display-settings-actions">
-                    <button type="button" class="xp-property-button display-troubleshoot">Troubleshoot...</button>
-                    <button type="button" class="xp-property-button display-monitor-advanced">Advanced</button>
-                </div>
-                <p class="display-settings-note" hidden>Changes are previewed on the simulated monitor and limited to the available browser viewport.</p>
+
             </div>
             <div class="display-dialog-buttons">
                 <button type="button" data-display-action="ok">OK</button>
@@ -924,36 +682,7 @@ export const createSystemRuntime = (context) => {
         '<h3><button type="button" class="explorer-section-toggle" aria-expanded="true">Other Places<span aria-hidden="true">⌃</span></button></h3>';
       const placesBody = document.createElement("div");
       placesBody.className = "explorer-section-body";
-      if (shortcutId === "__my-computer") {
-        appendSidebarAction(
-          placesBody,
-          "My Computer",
-          "MyComputer.png",
-          () => navigateExplorer(win, fs.MY_COMPUTER),
-          "computer",
-        );
-        appendSidebarAction(
-          placesBody,
-          "My Pictures",
-          "MyPictures.png",
-          () => navigateExplorer(win, fs.MY_PICTURES),
-          "pictures",
-        );
-        appendSidebarAction(
-          placesBody,
-          "My Music",
-          "MyMusic.png",
-          () => navigateExplorer(win, fs.MY_MUSIC),
-          "music",
-        );
-        appendSidebarAction(
-          placesBody,
-          "My Network Places",
-          "MyNetworkPlaces.png",
-          openNetworkStatus,
-          "network",
-        );
-      } else {
+      {
         appendSidebarAction(
           placesBody,
           "My Computer",
@@ -1017,7 +746,7 @@ export const createSystemRuntime = (context) => {
       chrome.className = "explorer-chrome";
       chrome.innerHTML = `
         <div class="explorer-menu-row">
-            <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="favorites">Favorites</button><button data-explorer-menu="tools">Tools</button><button data-explorer-menu="help">Help</button></div>
+            <div class="explorer-menu-bar" role="menubar"><button data-explorer-menu="file">File</button><button data-explorer-menu="edit">Edit</button><button data-explorer-menu="view">View</button><button data-explorer-menu="help">Help</button></div>
             <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
         </div>
         <div class="explorer-toolbar">
@@ -1062,73 +791,27 @@ export const createSystemRuntime = (context) => {
       ];
       const explorerSubmenus = {
         "folder-menu": [
-          { label: "Explore", action: "explore", default: true },
-          { label: "Open", action: "open-current" },
           { label: "Search...", action: "search-current" },
-          { label: "Manage", action: "manage" },
+
           { separator: true },
-          { label: "Map Network Drive...", action: "map-network-drive" },
-          {
-            label: "Disconnect Network Drive...",
-            action: "disconnect-network-drive",
-          },
+
           { separator: true },
-          { label: "Create Shortcut", action: "create-shortcut-current" },
-          { label: "Delete", action: "delete-current" },
+
           { separator: true },
           { label: "Properties", action: "properties-current" },
         ],
-        toolbars: [
-          {
-            label: "Standard Buttons",
-            action: "standard-buttons",
-            checked: true,
-          },
-          { label: "Address Bar", action: "address-bar", checked: true },
-          { label: "Links", action: "links-toolbar" },
-          { separator: true },
-          {
-            label: "Lock the Toolbars",
-            action: "lock-toolbars",
-            checked: true,
-          },
-          { label: "Customize...", action: "customize-toolbar" },
-        ],
+
         "explorer-bar": [
           { label: "Search", action: "search-current", shortcut: "Ctrl+E" },
-          { label: "Favorites", action: "favorites-bar", shortcut: "Ctrl+I" },
-          { label: "History", action: "history-bar", shortcut: "Ctrl+H" },
+
           { label: "Folders", action: "folders-bar", checked: true },
           { separator: true },
-          { label: "Tip of the Day", action: "tip-of-day" },
         ],
-        "arrange-icons": [
-          { label: "Name", action: "arrange-name" },
-          { label: "Type", action: "arrange-type", radio: true, checked: true },
-          { label: "Total Size", action: "arrange-total-size" },
-          { label: "Free Space", action: "arrange-free-space" },
-          { label: "Comments", action: "arrange-comments" },
-          { separator: true },
-          { label: "Show in Groups", action: "show-groups", checked: true },
-          { label: "Auto Arrange", action: "auto-arrange", disabled: true },
-          { label: "Align to Grid", action: "align-grid", disabled: true },
-        ],
+
         "go-to": [
-          {
-            label: "Back",
-            action: "back",
-            shortcut: "Alt+Left Arrow",
-            disabled: true,
-          },
-          {
-            label: "Forward",
-            action: "forward",
-            shortcut: "Alt+Right Arrow",
-            disabled: true,
-          },
           { label: "Up One Level", action: "up-one-level" },
           { separator: true },
-          { label: "Home Page", action: "home-page", shortcut: "Alt+Home" },
+
           { separator: true },
           { label: "My Computer", action: "my-computer", checked: true },
         ],
@@ -1145,47 +828,59 @@ export const createSystemRuntime = (context) => {
       });
       const renderExplorerMenuEntries = (menu, entries, commandAttribute) => {
         menu.replaceChildren();
-        entries.forEach((entry) => {
-          if (entry.separator) {
-            const separator = document.createElement("div");
-            separator.className = "game-menu-separator";
-            separator.setAttribute("role", "separator");
-            menu.appendChild(separator);
-            return;
-          }
-          const item = document.createElement("button");
-          item.type = "button";
-          item.className = "game-menu-item";
-          item.dataset[commandAttribute] = entry.action;
-          item.disabled = !!entry.disabled;
-          item.setAttribute("role", "menuitem");
-          if (entry.default) item.classList.add("explorer-menu-default");
-          if (entry.checked) item.classList.add("checked");
-          if (entry.radio || entry.checked) {
-            const check = document.createElement("span");
-            check.className = "menu-check explorer-menu-radio";
-            check.textContent = entry.checked ? (entry.radio ? "•" : "✓") : "";
-            item.appendChild(check);
-          }
-          const label = document.createElement("span");
-          label.textContent = entry.label;
-          item.appendChild(label);
-          if (entry.shortcut) {
-            const shortcut = document.createElement("span");
-            shortcut.className = "menu-shortcut";
-            shortcut.textContent = entry.shortcut;
-            item.appendChild(shortcut);
-          }
-          if (entry.submenu) {
-            item.classList.add("has-submenu");
-            item.setAttribute("aria-haspopup", "menu");
-            const arrow = document.createElement("span");
-            arrow.className = "explorer-menu-arrow";
-            arrow.textContent = "▶";
-            item.appendChild(arrow);
-          }
-          menu.appendChild(item);
-        });
+        entries
+          .filter(
+            (entry, index) =>
+              !entry.separator ||
+              (index > 0 &&
+                index < entries.length - 1 &&
+                !entries[index - 1].separator),
+          )
+          .forEach((entry) => {
+            if (entry.separator) {
+              const separator = document.createElement("div");
+              separator.className = "game-menu-separator";
+              separator.setAttribute("role", "separator");
+              menu.appendChild(separator);
+              return;
+            }
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "game-menu-item";
+            item.dataset[commandAttribute] = entry.action;
+            item.disabled = !!entry.disabled;
+            item.setAttribute("role", "menuitem");
+            if (entry.default) item.classList.add("explorer-menu-default");
+            if (entry.checked) item.classList.add("checked");
+            if (entry.radio || entry.checked) {
+              const check = document.createElement("span");
+              check.className = "menu-check explorer-menu-radio";
+              check.textContent = entry.checked
+                ? entry.radio
+                  ? "•"
+                  : "✓"
+                : "";
+              item.appendChild(check);
+            }
+            const label = document.createElement("span");
+            label.textContent = entry.label;
+            item.appendChild(label);
+            if (entry.shortcut) {
+              const shortcut = document.createElement("span");
+              shortcut.className = "menu-shortcut";
+              shortcut.textContent = entry.shortcut;
+              item.appendChild(shortcut);
+            }
+            if (entry.submenu) {
+              item.classList.add("has-submenu");
+              item.setAttribute("aria-haspopup", "menu");
+              const arrow = document.createElement("span");
+              arrow.className = "explorer-menu-arrow";
+              arrow.textContent = "▶";
+              item.appendChild(arrow);
+            }
+            menu.appendChild(item);
+          });
       };
       const showExplorerSubmenu = (name, parentItem, focusFirst = false) => {
         const entries = explorerSubmenus[name];
@@ -1215,11 +910,6 @@ export const createSystemRuntime = (context) => {
         const actions = {
           file: [
             {
-              label: "Create Shortcut",
-              action: "create-shortcut",
-              disabled: true,
-            },
-            {
               label: "Delete",
               action:
                 win.currentFolderId === fs.MY_COMPUTER
@@ -1246,12 +936,6 @@ export const createSystemRuntime = (context) => {
             { label: "Close", action: "close" },
           ],
           edit: [
-            {
-              label: "Undo",
-              action: "undo",
-              shortcut: "Ctrl+Z",
-              disabled: true,
-            },
             { separator: true },
             {
               label: "Cut",
@@ -1271,18 +955,12 @@ export const createSystemRuntime = (context) => {
               shortcut: "Ctrl+V",
               disabled: !writable || !fileOps.canPaste(win.currentFolderId),
             },
-            {
-              label: "Paste Shortcut",
-              action: "paste-shortcut",
-              disabled: true,
-            },
+
             { separator: true },
             { label: "Select All", action: "select-all", shortcut: "Ctrl+A" },
             { label: "Invert Selection", action: "invert-selection" },
           ],
           view: [
-            { label: "Toolbars", action: "toolbars", submenu: true },
-            { label: "Status Bar", action: "status-bar" },
             { label: "Explorer Bar", action: "explorer-bar", submenu: true },
             { separator: true },
             {
@@ -1316,40 +994,16 @@ export const createSystemRuntime = (context) => {
               checked: win.explorerView === "details",
             },
             { separator: true },
-            {
-              label: "Arrange Icons By",
-              action: "arrange-icons",
-              submenu: true,
-            },
+
             { separator: true },
-            { label: "Choose Details...", action: "choose-details" },
+
             { label: "Go To", action: "go-to", submenu: true },
             { label: "Refresh", action: "refresh" },
           ],
-          favorites: [
-            { label: "Add to Favorites...", action: "add-favorite" },
-            { label: "Organize Favorites...", action: "organize-favorites" },
-            { separator: true },
-            { label: "Links", action: "links", submenu: true },
-            { label: "MSN.com", action: "msn" },
-            { label: "Radio Station Guide", action: "radio-guide" },
-          ],
-          tools: [
-            { label: "Map Network Drive...", action: "map-network-drive" },
-            {
-              label: "Disconnect Network Drive...",
-              action: "disconnect-network-drive",
-            },
-            { label: "Synchronize...", action: "synchronize" },
-            { separator: true },
-            { label: "Folder Options...", action: "folder-options" },
-          ],
+
           help: [
             { separator: true },
-            {
-              label: "Is this copy of Windows legal?",
-              action: "windows-legal",
-            },
+
             { label: "About Windows", action: "about-windows" },
           ],
         }[name];
@@ -1430,25 +1084,6 @@ export const createSystemRuntime = (context) => {
             if (command === "refresh") renderExplorerItems(win);
 
             if (command === "about-windows") openAboutWindows();
-            if (
-              [
-                "add-favorite",
-                "organize-favorites",
-                "msn",
-                "radio-guide",
-                "map-network-drive",
-                "disconnect-network-drive",
-                "synchronize",
-                "folder-options",
-                "windows-legal",
-                "choose-details",
-              ].includes(command)
-            )
-              XPDialogs.alert(
-                "This Windows XP feature is not available in Astro Flash Collection.",
-                commandButton.textContent.trim() || "Windows Explorer",
-                "info",
-              );
             explorerMenu.hidden = true;
             explorerSubmenu.hidden = true;
             explorerMenuButtons.forEach((button) =>
@@ -1477,29 +1112,7 @@ export const createSystemRuntime = (context) => {
               navigateExplorer(win, fs.MY_COMPUTER);
             if (subcommand === "properties-current")
               openShellProperties(win.currentFolderId);
-            if (
-              [
-                "manage",
-                "map-network-drive",
-                "disconnect-network-drive",
-                "create-shortcut-current",
-                "delete-current",
-                "standard-buttons",
-                "address-bar",
-                "links-toolbar",
-                "lock-toolbars",
-                "customize-toolbar",
-                "favorites-bar",
-                "history-bar",
-                "tip-of-day",
-                "home-page",
-              ].includes(subcommand)
-            )
-              XPDialogs.alert(
-                "This Windows XP feature is not available in Astro Flash Collection.",
-                subcommandButton.textContent.trim() || "Windows Explorer",
-                "info",
-              );
+
             explorerMenu.hidden = true;
             explorerSubmenu.hidden = true;
             explorerMenuButtons.forEach((button) =>

@@ -223,10 +223,6 @@
   outline-offset: -4px;
 }
 
-.tray-network {
-  background-image: url("../../assets/xp/icons/NetworkConnection.png");
-}
-
 .tray-volume {
   background-image: url("../../assets/xp/icons/Volume.png");
 }

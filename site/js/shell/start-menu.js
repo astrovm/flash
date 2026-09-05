@@ -389,38 +389,6 @@ const buildPinnedPrograms = () => {
     programsImage.alt = "";
     programsIcon.appendChild(programsImage);
     allProgramsButton.prepend(programsIcon);
-    const createCommand = ({ label, icon, action }) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "sm-game classic-start-command";
-      const glyph = document.createElement("span");
-      glyph.className = "sm-game-icon has-image";
-      const image = document.createElement("img");
-      image.src = XP_ICON_PATHS[icon];
-      image.alt = "";
-      glyph.appendChild(image);
-      const title = document.createElement("span");
-      title.className = "sm-game-title";
-      title.textContent = label;
-      item.append(glyph, title);
-      item.addEventListener("click", () => {
-        closeStartMenu();
-        action();
-      });
-      return item;
-    };
-    [
-      {
-        label: "Windows Catalog",
-        icon: "WindowsCatalogMenu.png",
-        action: () =>
-          XPDialogs.alert(
-            "Windows Catalog is not available in Astro Flash Collection.",
-            "Windows Catalog",
-            "info",
-          ),
-      },
-    ].forEach((definition) => container.appendChild(createCommand(definition)));
     return;
   }
   allProgramsLabel.textContent = "All Programs";

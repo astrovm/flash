@@ -495,8 +495,7 @@
   border: 0;
 }
 
-.display-saver-group,
-.display-power-group {
+.display-saver-group {
   box-sizing: border-box;
   width: 100%;
   max-width: none !important;
@@ -542,24 +541,6 @@
 
 .display-saver-wait-row label:last-child {
   margin-left: auto;
-}
-
-.display-power-group {
-  position: relative;
-  height: 79px;
-  min-height: 73px;
-}
-
-.display-power-group p {
-  margin: 2px 90px 0 83px;
-  line-height: 14px;
-  transform: translateY(-10px);
-}
-
-.display-power-button {
-  position: absolute;
-  right: 9px;
-  bottom: 7px;
 }
 
 /* Appearance tab */
@@ -709,11 +690,6 @@
   background: linear-gradient(#f5f5f5 0 17%, #fff 17% 100%);
 }
 
-.display-device-label {
-  margin: 2px 7px 14px;
-  line-height: 14px;
-}
-
 .display-settings-groups {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -737,8 +713,7 @@
   margin-bottom: 3px;
 }
 
-.display-resolution-group #display-resolution,
-.display-color-quality select {
+.display-resolution-group #display-resolution {
   width: 100%;
   margin: 0;
 }
@@ -776,30 +751,6 @@
   margin-top: 0;
   white-space: nowrap;
   font-weight: 700;
-}
-
-.display-color-spectrum {
-  height: 16px;
-  margin-top: 8px;
-  background: linear-gradient(90deg, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
-}
-
-.display-settings-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 9px;
-  margin-top: 4px;
-}
-
-.display-settings-note {
-  position: absolute;
-  right: 15px;
-  bottom: 4px;
-  left: 15px;
-  margin: 0;
-  color: #555;
-  font-size: 10px;
-  text-align: center;
 }
 
 .display-properties-window {
@@ -994,8 +945,7 @@
 }
 
 .display-effects-dialog .dlg-buttons,
-.advanced-appearance-dialog .dlg-buttons,
-.monitor-properties-dialog .dlg-buttons {
+.advanced-appearance-dialog .dlg-buttons {
   justify-content: flex-end;
   margin-top: 19px;
 }
@@ -1138,71 +1088,6 @@
 
 .advanced-disabled {
   color: #aaa;
-}
-
-.monitor-properties-dialog {
-  width: min(470px, calc(100vw - 32px));
-}
-
-.monitor-property-tabs {
-  display: flex;
-  height: 25px;
-  align-items: end;
-}
-
-.monitor-property-tabs button {
-  height: 23px;
-  padding: 2px 10px;
-  border: 1px solid #919b9c;
-  background: #ece9d8;
-  font: inherit;
-}
-
-.monitor-property-tabs button.selected {
-  height: 25px;
-  border-bottom-color: #fff;
-  border-top: 2px solid #e68b2c;
-  background: #fff;
-}
-
-.monitor-property-panel {
-  min-height: 342px;
-  margin-top: -1px;
-  padding: 12px 13px;
-  border: 1px solid #919b9c;
-  background: #fff;
-}
-
-.monitor-property-panel[hidden] {
-  display: none;
-}
-
-.monitor-acceleration {
-  display: grid !important;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 8px;
-}
-
-.monitor-property-panel fieldset {
-  margin: 0 0 12px;
-  padding: 8px 11px;
-  border: 1px solid #d0cdbd;
-}
-
-.monitor-property-panel legend {
-  color: #0645d1;
-}
-
-.monitor-property-panel label {
-  display: block;
-  margin: 6px 0;
-}
-
-.monitor-property-panel select {
-  display: block;
-  width: 250px;
-  margin-top: 5px;
 }
 
 .wallpaper-browse-dialog {

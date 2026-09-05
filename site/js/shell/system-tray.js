@@ -67,74 +67,6 @@ const toggleTrayVolumePopup = () => {
 };
 
 // Connection "duration" counts from logon, like an XP dial-up/LAN session.
-let networkConnectedAt = Date.now();
-
-const formatDuration = (ms) => {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return [hours, minutes, seconds]
-    .map((part) => String(part).padStart(2, "0"))
-    .join(":");
-};
-
-const openNetworkStatus = () => {
-  const dialog = XPDialogs.createDialog({
-    title: "Local Area Connection Status",
-  });
-
-  const header = document.createElement("div");
-  header.className = "dlg-props-header";
-  const icon = document.createElement("img");
-  icon.className = "dlg-network-icon";
-  icon.src = "assets/xp/icons/NetworkConnection.png";
-  icon.alt = "";
-  icon.draggable = false;
-  const name = document.createElement("span");
-  name.className = "dlg-props-name";
-  name.textContent = "Local Area Connection";
-  header.append(icon, name);
-
-  const table = document.createElement("dl");
-  table.className = "dlg-props-table";
-  const cells = {};
-  const addRow = (label, id, value) => {
-    const dt = document.createElement("dt");
-    dt.textContent = label;
-    const dd = document.createElement("dd");
-    dd.id = id;
-    dd.textContent = value;
-    table.append(dt, dd);
-    cells[id] = dd;
-  };
-  addRow("Status:", "network-status-state", "Connected");
-  addRow("Duration:", "network-status-duration", "00:00:00");
-  addRow("Speed:", "network-status-speed", "100.0 Mbps");
-  addRow("Packets Sent:", "network-status-sent", "0");
-  addRow("Packets Received:", "network-status-received", "0");
-
-  dialog.body.append(header, table);
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
-
-  let sent = Math.floor(1000 + Math.random() * 9000);
-  let received = Math.floor(sent * (1.4 + Math.random()));
-  const tick = () => {
-    sent += Math.floor(Math.random() * 40);
-    received += Math.floor(Math.random() * 60);
-    cells["network-status-duration"].textContent = formatDuration(
-      Date.now() - networkConnectedAt,
-    );
-    cells["network-status-sent"].textContent = sent.toLocaleString("en-US");
-    cells["network-status-received"].textContent =
-      received.toLocaleString("en-US");
-  };
-  tick();
-  const timer = setInterval(tick, 1000);
-  dialog.onResult(() => clearInterval(timer));
-};
 
 let offlineManagerInitialized = false;
 
@@ -1213,9 +1145,7 @@ const setupSystemTray = () => {
   document
     .getElementById("tray-volume-button")
     .addEventListener("click", toggleTrayVolumePopup);
-  document
-    .getElementById("tray-network-button")
-    .addEventListener("click", openNetworkStatus);
+
   document
     .getElementById("taskbar-clock")
     .addEventListener("click", openDateTimeProperties);

@@ -276,9 +276,6 @@ test("My Computer exposes the native desktop shell menu and opens Properties", a
     "Open",
     "Explore",
     "Search...",
-    "Manage",
-    "Map Network Drive...",
-    "Disconnect Network Drive...",
     "Create Shortcut",
     "Delete",
     "Rename",
@@ -318,6 +315,11 @@ test("Control Panel navigation opens applets and switches their tabs", async () 
     "view-printers",
     "help",
     "firewall",
+    "power-options",
+    "regional-language",
+    "internet-options",
+    "folder-options",
+    "network-connections",
   ]) {
     expect(
       controlPanel.querySelector(`[data-control-panel-action="${action}"]`),
@@ -338,28 +340,11 @@ test("Control Panel navigation opens applets and switches their tabs", async () 
       .textContent,
   ).toBe("Appearance and Themes");
   controlPanel
-    .querySelector<HTMLButtonElement>(
-      '[data-control-panel-action="folder-options"]',
-    )!
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="display"]')!
     .click();
-
-  const dialog = shell.document.querySelector<HTMLElement>(
-    ".folder-options-dialog",
-  )!;
-  expect(dialog).not.toBeNull();
-  const viewTab = dialog.querySelector<HTMLButtonElement>(
-    '[data-folder-options-tab="view"]',
-  )!;
-  viewTab.click();
-  expect(viewTab.getAttribute("aria-selected")).toBe("true");
   expect(
-    dialog.querySelector<HTMLElement>('[data-folder-options-panel="view"]')!
-      .hidden,
-  ).toBeFalse();
-  expect(
-    dialog.querySelector<HTMLElement>('[data-folder-options-panel="general"]')!
-      .hidden,
-  ).toBeTrue();
+    shell.document.querySelector(".display-properties-content"),
+  ).not.toBeNull();
 });
 
 test("Display Properties applies and persists a selected wallpaper", async () => {
@@ -712,13 +697,12 @@ test("game volume changes remain scaled by the system volume", async () => {
   expect(appliedVolumes.at(-1)).toBe(0.2);
 });
 
-test("clock and network tray buttons open their corresponding dialogs", async () => {
+test("clock opens its dialog and the fabricated network status is absent", async () => {
   const shell = await login(await loadShell());
   shell.document.getElementById("taskbar-clock")!.click();
   expect(shell.document.querySelector(".datetime-dialog")).not.toBeNull();
 
-  shell.document.getElementById("tray-network-button")!.click();
-  expect(shell.document.getElementById("network-status-state")).not.toBeNull();
+  expect(shell.document.getElementById("tray-network-button")).toBeNull();
 });
 
 test("All Programs exposes system applications and games in the XP hierarchy", async () => {
@@ -1193,11 +1177,17 @@ test("Paint mounts natively and owns supported picture file associations", async
       ),
     ].find((button) => button.textContent === label)!;
   menuButton("File").click();
-  expect(
-    paintWindow.querySelector<HTMLButtonElement>(
-      '[data-paint-command="scanner"]',
-    )!.disabled,
-  ).toBeTrue();
+  for (const command of [
+    "scanner",
+    "print-preview",
+    "page-setup",
+    "print",
+    "send",
+  ]) {
+    expect(
+      paintWindow.querySelector(`[data-paint-command="${command}"]`),
+    ).toBeNull();
+  }
   expect(
     paintWindow.querySelector('[data-paint-command="wallpaper-tiled"]'),
   ).not.toBeNull();
@@ -1395,4 +1385,35 @@ test("logoff and shutdown actions change the visible session screen", async () =
   expect(document.getElementById("standby-screen")!.hidden).toBeFalse();
   document.getElementById("standby-resume")!.click();
   expect(document.getElementById("standby-screen")!.hidden).toBeTrue();
+});
+
+test("Task Manager exposes real applications without fabricated metrics", async () => {
+  const shell = await login(await loadShell());
+  clickStartAction(shell, "documents");
+  shell.document
+    .querySelector<HTMLButtonElement>('[data-taskbar-action="task-manager"]')!
+    .click();
+  const manager = shell.document.querySelector<HTMLElement>(
+    ".task-manager-dialog",
+  )!;
+  expect(manager).not.toBeNull();
+  expect(
+    [...manager.querySelectorAll("[data-task-manager-tab]")].map(
+      (tab) => tab.dataset.taskManagerTab,
+    ),
+  ).toEqual(["applications"]);
+  expect(manager.querySelector(".task-manager-status")).toBeNull();
+  expect(
+    manager.querySelector('[data-task-manager-window="__my-documents"]'),
+  ).not.toBeNull();
+  manager
+    .querySelector<HTMLButtonElement>('[data-task-manager-action="end-task"]')!
+    .click();
+  await flushShell();
+  expect(
+    shell.document.querySelector('.xp-window[data-game="__my-documents"]'),
+  ).toBeNull();
+  expect(
+    manager.querySelector('[data-task-manager-window="__my-documents"]'),
+  ).toBeNull();
 });

@@ -617,12 +617,9 @@ const systemApplicationContext = () => ({
   openAboutWindows,
   openControlPanel,
   openDateTimeProperties,
-  openFolderOptions,
-  openInternetProperties,
-  openNetworkStatus,
-  openPowerOptions,
+
   openProjectSettings,
-  openRegionalLanguageOptions,
+
   openSearchDialog,
   openShellProperties,
   openSystemWindow,
@@ -709,12 +706,6 @@ const openSystemWindow = (shortcutId) => {
   if (win.currentFolderId) renderExplorerItems(win);
   wireSystemWindowControls(win);
   if (application.window.dialogControls) {
-    const helpBtn = document.createElement("button");
-    helpBtn.type = "button";
-    helpBtn.className = "tb-btn help-btn";
-    helpBtn.title = "Help";
-    helpBtn.setAttribute("aria-label", "Help");
-    el.querySelector(".title-buttons").prepend(helpBtn);
     el.querySelector(".minimize-btn").remove();
     el.querySelector(".maximize-btn").remove();
   }

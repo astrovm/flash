@@ -707,14 +707,9 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
     addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
     addDesktopMenuItem(menu, "Explore", "explore-my-computer");
     addDesktopMenuItem(menu, "Search...", "search-my-computer");
-    addDesktopMenuItem(menu, "Manage", "manage-my-computer");
+
     addDesktopSeparator(menu);
-    addDesktopMenuItem(menu, "Map Network Drive...", "map-network-drive");
-    addDesktopMenuItem(
-      menu,
-      "Disconnect Network Drive...",
-      "disconnect-network-drive",
-    );
+
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Create Shortcut", "create-computer-shortcut");
     addDesktopMenuItem(menu, "Delete", "hide-my-computer");
@@ -912,23 +907,6 @@ const setupDesktopContextMenu = () => {
         openDesktopItem("__my-computer");
       } else if (action === "search-my-computer") {
         openSearchDialog();
-      } else if (action === "manage-my-computer") {
-        XPDialogs.alert(
-          "Computer Management is not available in Astro Flash Collection.",
-          "Computer Management",
-          "info",
-        );
-      } else if (
-        action === "map-network-drive" ||
-        action === "disconnect-network-drive"
-      ) {
-        XPDialogs.alert(
-          "This Windows XP network feature is not available in Astro Flash Collection.",
-          action === "map-network-drive"
-            ? "Map Network Drive"
-            : "Disconnect Network Drive",
-          "info",
-        );
       } else if (action === "create-computer-shortcut") {
         const shortcut = await fileOps.createFile(
           fs.DESKTOP,

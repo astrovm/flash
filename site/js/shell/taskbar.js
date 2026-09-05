@@ -299,78 +299,29 @@ const openTaskManager = () => {
         )
         .join("")
     : '<p class="task-manager-empty">No applications are running.</p>';
-  const processes = [
-    ["taskmgr.exe", "Administrator", "06", "3,828 K"],
-    ["wscntfy.exe", "Administrator", "00", "1,852 K"],
-    ["alg.exe", "LOCAL SERVICE", "00", "3,328 K"],
-    ["spoolsv.exe", "SYSTEM", "00", "4,376 K"],
-    ["explorer.exe", "Administrator", "00", "21,960 K"],
-    ["svchost.exe", "LOCAL SERVICE", "00", "4,100 K"],
-    ["svchost.exe", "NETWORK SERVICE", "00", "2,640 K"],
-    ["svchost.exe", "SYSTEM", "00", "16,864 K"],
-    ["lsass.exe", "SYSTEM", "00", "3,996 K"],
-    ["services.exe", "SYSTEM", "00", "3,000 K"],
-    ["winlogon.exe", "SYSTEM", "00", "6,396 K"],
-    ["csrss.exe", "SYSTEM", "00", "3,148 K"],
-    ["smss.exe", "SYSTEM", "00", "372 K"],
-    ["System", "SYSTEM", "00", "212 K"],
-    ["System Idle Process", "SYSTEM", "94", "16 K"],
-  ];
-  const processRows = processes
-    .map(
-      (process, index) =>
-        `<button type="button" class="task-manager-process-row${index ? "" : " selected"}" role="option" aria-selected="${index ? "false" : "true"}">${process.map((value) => `<span>${value}</span>`).join("")}</button>`,
-    )
-    .join("");
   dialog.body.innerHTML = `
     <div class="task-manager-menu-bar" role="menubar">
       <button type="button" role="menuitem" data-task-manager-menu="file">File</button>
-      <button type="button" role="menuitem" data-task-manager-menu="options">Options</button>
-      <button type="button" role="menuitem" data-task-manager-menu="view">View</button>
+
       <button type="button" role="menuitem" data-task-manager-menu="windows">Windows</button>
       <button type="button" role="menuitem" data-task-manager-menu="shutdown">Shut Down</button>
       <button type="button" role="menuitem" data-task-manager-menu="help">Help</button>
     </div>
     <div class="task-manager-menu-popup" data-task-manager-popup="file" role="menu" hidden><button role="menuitem" data-task-manager-action="new-task">New Task (Run...)</button><hr><button role="menuitem" data-task-manager-action="exit">Exit Task Manager</button></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="options" role="menu" hidden><button role="menuitem" data-task-manager-action="always-on-top">✓ Always On Top</button><button role="menuitem">Minimize On Use</button><button role="menuitem">Hide When Minimized</button></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="view" role="menu" hidden><button role="menuitem" data-task-manager-action="refresh">Refresh Now</button><hr><button role="menuitem">Update Speed <span>▶</span></button><button role="menuitem">CPU History <span>▶</span></button><button role="menuitem">Show Kernel Times</button></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="windows" role="menu" hidden><button role="menuitem" data-task-manager-action="cascade">Cascade</button><button role="menuitem" data-task-manager-action="tile-horizontal">Tile Horizontally</button><button role="menuitem" data-task-manager-action="tile-vertical">Tile Vertically</button><hr><button role="menuitem">Minimize</button><button role="menuitem">Maximize</button><button role="menuitem">Bring To Front</button></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="shutdown" role="menu" hidden><button role="menuitem">Stand By</button><button role="menuitem">Hibernate</button><hr><button role="menuitem" data-task-manager-action="turn-off">Turn Off</button><button role="menuitem" data-task-manager-action="restart">Restart</button><hr><button role="menuitem" data-task-manager-action="log-off">Log Off Administrator</button><button role="menuitem">Switch User</button></div>
+
+    <div class="task-manager-menu-popup" data-task-manager-popup="windows" role="menu" hidden><button role="menuitem" data-task-manager-action="cascade">Cascade</button><button role="menuitem" data-task-manager-action="tile-horizontal">Tile Horizontally</button><button role="menuitem" data-task-manager-action="tile-vertical">Tile Vertically</button><hr></div>
+    <div class="task-manager-menu-popup" data-task-manager-popup="shutdown" role="menu" hidden><hr><button role="menuitem" data-task-manager-action="turn-off">Turn Off</button><button role="menuitem" data-task-manager-action="restart">Restart</button><hr><button role="menuitem" data-task-manager-action="log-off">Log Off Administrator</button></div>
     <div class="task-manager-menu-popup" data-task-manager-popup="help" role="menu" hidden><hr><button role="menuitem" data-task-manager-action="about">About Task Manager</button></div>
     <div class="task-manager-tabs" role="tablist" aria-label="Windows Task Manager">
       <button type="button" role="tab" data-task-manager-tab="applications" aria-selected="true">Applications</button>
-      <button type="button" role="tab" data-task-manager-tab="processes" aria-selected="false" tabindex="-1">Processes</button>
-      <button type="button" role="tab" data-task-manager-tab="performance" aria-selected="false" tabindex="-1">Performance</button>
-      <button type="button" role="tab" data-task-manager-tab="networking" aria-selected="false" tabindex="-1">Networking</button>
-      <button type="button" role="tab" data-task-manager-tab="users" aria-selected="false" tabindex="-1">Users</button>
+
     </div>
     <div class="task-manager-panel task-manager-applications" data-task-manager-panel="applications">
       <div class="task-manager-list-head"><span>Task</span><span>Status</span></div>
       <div class="task-manager-app-list" role="listbox">${applicationRows}</div>
       <div class="task-manager-panel-buttons"><button type="button" class="xp-btn" data-task-manager-action="end-task">End Task</button><button type="button" class="xp-btn" data-task-manager-action="switch-to">Switch To</button><button type="button" class="xp-btn" data-task-manager-action="new-task">New Task...</button></div>
     </div>
-    <div class="task-manager-panel task-manager-processes" data-task-manager-panel="processes" hidden>
-      <div class="task-manager-process-head"><span>Image Name</span><span>User Name</span><span>CPU</span><span>Mem Usage</span></div>
-      <div class="task-manager-process-list" role="listbox">${processRows}</div>
-      <label><input type="checkbox"> Show processes from all users</label><button type="button" class="xp-btn">End Process</button>
-    </div>
-    <div class="task-manager-panel task-manager-performance" data-task-manager-panel="performance" hidden>
-      <fieldset class="task-manager-meter cpu-meter"><legend>CPU Usage</legend><div class="task-manager-black-meter"><span></span><b>5%</b></div></fieldset>
-      <fieldset class="task-manager-chart cpu-history"><legend>CPU Usage History</legend><div class="task-manager-graph"><svg viewBox="0 0 230 58" preserveAspectRatio="none"><polyline points="0,55 120,55 122,2 126,52 180,55 183,45 186,55 230,52"/></svg></div></fieldset>
-      <fieldset class="task-manager-meter pf-meter"><legend>PF Usage</legend><div class="task-manager-black-meter"><span></span><b>81.0 MB</b></div></fieldset>
-      <fieldset class="task-manager-chart pf-history"><legend>Page File Usage History</legend><div class="task-manager-graph"><svg viewBox="0 0 230 58" preserveAspectRatio="none"><polyline points="0,53 110,53 115,51 230,51"/></svg></div></fieldset>
-      <fieldset class="task-manager-stats totals"><legend>Totals</legend><dl><dt>Handles</dt><dd>4061</dd><dt>Threads</dt><dd>243</dd><dt>Processes</dt><dd>17</dd></dl></fieldset>
-      <fieldset class="task-manager-stats physical"><legend>Physical Memory (K)</legend><dl><dt>Total</dt><dd>523696</dd><dt>Available</dt><dd>400248</dd><dt>System Cache</dt><dd>126496</dd></dl></fieldset>
-      <fieldset class="task-manager-stats commit"><legend>Commit Charge (K)</legend><dl><dt>Total</dt><dd>83032</dd><dt>Limit</dt><dd>1279408</dd><dt>Peak</dt><dd>108992</dd></dl></fieldset>
-      <fieldset class="task-manager-stats kernel"><legend>Kernel Memory (K)</legend><dl><dt>Total</dt><dd>18640</dd><dt>Paged</dt><dd>15004</dd><dt>Nonpaged</dt><dd>3636</dd></dl></fieldset>
-    </div>
-    <div class="task-manager-panel task-manager-networking" data-task-manager-panel="networking" hidden><p>No Active Network Adapters Found.</p></div>
-    <div class="task-manager-panel task-manager-users" data-task-manager-panel="users" hidden>
-      <div class="task-manager-user-head"><span>User</span><span>ID</span><span>Status</span><span>Client Name</span></div>
-      <button type="button" class="task-manager-user-row selected"><span>♟ Administrator</span><span>0</span><span>Active</span><span></span></button>
-      <div class="task-manager-panel-buttons"><button type="button" class="xp-btn">Disconnect</button><button type="button" class="xp-btn" data-task-manager-action="log-off">Logoff</button><button type="button" class="xp-btn" disabled>Send Message...</button></div>
-    </div>
-    <div class="task-manager-status"><span>Processes: 17</span><span>CPU Usage: 5%</span><span>Commit Charge: 81M / 1249M</span></div>`;
+`;
 
   const tabs = [...dialog.body.querySelectorAll("[data-task-manager-tab]")];
   const panels = [...dialog.body.querySelectorAll("[data-task-manager-panel]")];
@@ -404,7 +355,7 @@ const openTaskManager = () => {
       popup.style.left = `${button.offsetLeft}px`;
     }),
   );
-  dialog.body.addEventListener("click", (event) => {
+  dialog.body.addEventListener("click", async (event) => {
     const row = event.target.closest(".task-manager-row");
     if (row) {
       dialog.body.querySelectorAll(".task-manager-row").forEach((entry) => {
@@ -423,8 +374,10 @@ const openTaskManager = () => {
     if (action === "new-task") openRunDialog();
     else if (action === "exit") dialog.close("exit");
     else if (action === "end-task" && selectedWindow) {
-      closeGameWindow(selectedWindow);
-      dialog.body.querySelector(".task-manager-row.selected")?.remove();
+      if (await closeGameWindow(selectedWindow))
+        dialog.body
+          .querySelector(`[data-task-manager-window="${selectedWindow}"]`)
+          ?.remove();
     } else if (action === "switch-to" && selectedWindow) {
       dialog.close("switch");
       restoreWindow(selectedWindow);
@@ -449,348 +402,6 @@ const openTaskManager = () => {
   maximize.addEventListener("click", () =>
     dialog.el.classList.toggle("task-manager-maximized"),
   );
-};
-
-const openPowerOptions = (initialTab = "power-schemes") => {
-  const dialog = XPDialogs.createDialog({ title: "Power Options Properties" });
-  dialog.el.classList.add("power-options-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(22, Math.max(4, window.innerWidth - 404))}px`,
-    top: `${Math.min(30, Math.max(4, window.innerHeight - 454))}px`,
-  });
-
-  const select = (options, selected) =>
-    `<select>${options.map((option) => `<option${option === selected ? " selected" : ""}>${option}</option>`).join("")}</select>`;
-  const timeOptions = [
-    "After 1 min",
-    "After 5 mins",
-    "After 10 mins",
-    "After 20 mins",
-    "After 30 mins",
-    "After 45 mins",
-    "After 1 hour",
-    "Never",
-  ];
-  dialog.body.innerHTML = `
-    <div class="power-options-tabs" role="tablist"><button type="button" role="tab" data-power-tab="power-schemes">Power Schemes</button><button type="button" role="tab" data-power-tab="advanced">Advanced</button><button type="button" role="tab" data-power-tab="hibernate">Hibernate</button><button type="button" role="tab" data-power-tab="ups">UPS</button></div>
-    <div class="power-options-panels">
-      <section class="power-schemes-panel" data-power-panel="power-schemes"><div class="power-options-intro"><img src="assets/xp/icons/PowerOptions.png" alt=""><p>Select the power scheme with the most appropriate settings for<br>this computer. Note that changing the settings below will modify<br>the selected scheme.</p></div><fieldset class="power-scheme-picker"><legend>Power schemes</legend>${select(["Home/Office Desk", "Portable/Laptop", "Presentation", "Always On", "Minimal Power Management", "Max Battery"], "Home/Office Desk")}<div><button class="xp-btn">Save As...</button><button class="xp-btn">Delete</button></div></fieldset><fieldset class="power-scheme-settings"><legend>Settings for Home/Office Desk power scheme</legend><label>Turn off monitor:${select(timeOptions, "After 20 mins")}</label><label>Turn off hard disks:${select(timeOptions, "Never")}</label><hr><label>System standby:${select(timeOptions, "Never")}</label><label>System hibernates:${select(timeOptions, "Never")}</label></fieldset></section>
-      <section class="power-advanced-panel" data-power-panel="advanced" hidden><div class="power-options-intro"><img src="assets/xp/icons/PowerOptions.png" alt=""><p>Select the power-saving settings you want to use.</p></div><fieldset><legend>Options</legend><label><input type="checkbox"> Always show icon on the taskbar</label><label><input type="checkbox" checked> Prompt for password when computer resumes from standby</label></fieldset><fieldset class="power-buttons-field"><legend>Power buttons</legend><label>When I press the power button on my computer:${select(["Do nothing", "Ask me what to do", "Stand by", "Shut down"], "Shut down")}</label></fieldset></section>
-      <section class="power-hibernate-panel" data-power-panel="hibernate" hidden><div class="power-hibernate-intro"><img src="assets/xp/icons/PowerHibernate.png" alt=""><p>When your computer hibernates, it stores whatever it has in<br>memory on your hard disk and then shuts down. When your<br>computer comes out of hibernation, it returns to its previous state.</p></div><fieldset><legend>Hibernate</legend><label><input type="checkbox" checked> Enable hibernation</label></fieldset><fieldset><legend>Disk space for hibernation</legend><p>Free disk space: <span>5,682 MB</span></p><p>Disk space required to hibernate: <span>512 MB</span></p></fieldset></section>
-      <section class="power-ups-panel" data-power-panel="ups" hidden><h2>Uninterruptible Power Supply</h2><fieldset class="power-ups-status"><legend>Status</legend><img src="assets/xp/icons/PowerUpsStatus.png" alt=""><div><p>Current power source:</p><p>Estimated UPS runtime:</p><p>Estimated UPS capacity:</p><p>Battery condition:</p></div></fieldset><fieldset class="power-ups-details"><legend>Details</legend><img src="assets/xp/icons/PowerUpsDetails.png" alt=""><p>Manufacturer: <span>(None)</span><br>Model:</p><div><button class="xp-btn" disabled>Configure...</button><button class="xp-btn">Select...</button></div></fieldset><div class="power-ups-warning"><img src="assets/xp/icons/SystemWarning.png" alt=""><p>The UPS service is currently stopped.</p></div><button class="xp-btn power-ups-about">About...</button></section>
-    </div>`;
-  const activate = (tab) => {
-    dialog.body
-      .querySelectorAll("[data-power-tab]")
-      .forEach((button) =>
-        button.setAttribute(
-          "aria-selected",
-          String(button.dataset.powerTab === tab),
-        ),
-      );
-    dialog.body.querySelectorAll("[data-power-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.powerPanel !== tab;
-    });
-  };
-  dialog.body.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-power-tab]")?.dataset.powerTab;
-    if (tab) activate(tab);
-  });
-  XPDialogs.addButtonRow(dialog, [
-    { id: "ok", label: "OK", isDefault: true },
-    { id: "cancel", label: "Cancel", isCancel: true },
-    { id: "apply", label: "Apply" },
-  ]);
-  dialog.body.lastElementChild.classList.add("power-options-buttons");
-  const apply = dialog.body.querySelector('[data-action="apply"]');
-  apply.disabled = true;
-  dialog.body.addEventListener("change", () => {
-    apply.disabled = false;
-  });
-  activate(initialTab);
-};
-
-const openRegionalLanguageOptions = (initialTab = "regional-options") => {
-  const dialog = XPDialogs.createDialog({
-    title: "Regional and Language Options",
-  });
-  dialog.el.classList.add("regional-language-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
-    top: `${Math.min(58, Math.max(4, window.innerHeight - 484))}px`,
-  });
-
-  dialog.body.innerHTML = `
-    <div class="regional-language-tabs" role="tablist"><button type="button" role="tab" data-regional-tab="regional-options">Regional Options</button><button type="button" role="tab" data-regional-tab="languages">Languages</button><button type="button" role="tab" data-regional-tab="advanced">Advanced</button></div>
-    <div class="regional-language-panels">
-      <section class="regional-options-panel" data-regional-panel="regional-options"><fieldset class="regional-formats"><legend>Standards and formats</legend><p>This option affects how some programs format numbers, currencies,<br>dates, and time.</p><p>Select an item to match its preferences, or click Customize to choose<br>your own formats:</p><div class="regional-format-select"><select><option>English (United States)</option></select><button class="xp-btn">Customize...</button></div><p>Samples</p><div class="regional-samples"><label>Number:<input readonly value="123,456,789.00"></label><label>Currency:<input readonly value="$123,456,789.00"></label><label>Time:<input readonly value="3:22:38 AM"></label><label>Short date:<input readonly value="8/2/2026"></label><label>Long date:<input readonly value="Sunday, August 02, 2026"></label></div></fieldset><fieldset class="regional-location"><legend>Location</legend><p>To help services provide you with local information, such as news and<br>weather, select your present location:</p><select><option>United States</option></select></fieldset></section>
-      <section class="regional-languages-panel" data-regional-panel="languages" hidden><fieldset><legend>Text services and input languages</legend><p>To view or change the languages and methods you can use to enter<br>text, click Details.</p><button class="xp-btn">Details...</button></fieldset><fieldset><legend>Supplemental language support</legend><p>Most languages are installed by default. To install additional languages,<br>select the appropriate check box below.</p><label><input type="checkbox"> Install files for complex script and right-to-left languages (including<br><span>Thai)</span></label><label><input type="checkbox"> Install files for East Asian languages</label></fieldset></section>
-      <section class="regional-advanced-panel" data-regional-panel="advanced" hidden><fieldset><legend>Language for non-Unicode programs</legend><p>This system setting enables non-Unicode programs to display menus<br>and dialogs in their native language. It does not affect Unicode<br>programs, but it does apply to all users of this computer.</p><p>Select a language to match the language version of the non-Unicode<br>programs you want to use:</p><select><option>English (United States)</option></select></fieldset><fieldset><legend>Code page conversion tables</legend><div class="regional-code-pages">${["10000 (MAC - Roman)", "10001 (MAC - Japanese)", "10002 (MAC - Traditional Chinese Big5)", "10003 (MAC - Korean)", "10004 (MAC - Arabic)", "10005 (MAC - Hebrew)"].map((label, index) => `<label><input type="checkbox" ${index === 0 ? "checked disabled" : ""}> ${label}</label>`).join("")}</div></fieldset><fieldset><legend>Default user account settings</legend><label><input type="checkbox"> Apply all settings to the current user account and to the default<br><span>user profile</span></label></fieldset></section>
-    </div>`;
-  const activate = (tab) => {
-    dialog.body
-      .querySelectorAll("[data-regional-tab]")
-      .forEach((button) =>
-        button.setAttribute(
-          "aria-selected",
-          String(button.dataset.regionalTab === tab),
-        ),
-      );
-    dialog.body.querySelectorAll("[data-regional-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.regionalPanel !== tab;
-    });
-  };
-  dialog.body.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-regional-tab]")?.dataset
-      .regionalTab;
-    if (tab) activate(tab);
-  });
-  XPDialogs.addButtonRow(dialog, [
-    { id: "ok", label: "OK", isDefault: true },
-    { id: "cancel", label: "Cancel", isCancel: true },
-    { id: "apply", label: "Apply" },
-  ]);
-  dialog.body.lastElementChild.classList.add("regional-language-buttons");
-  const apply = dialog.body.querySelector('[data-action="apply"]');
-  apply.disabled = true;
-  dialog.body.addEventListener("change", () => {
-    apply.disabled = false;
-  });
-  activate(initialTab);
-};
-
-const openInternetProperties = (initialTab = "general") => {
-  const dialog = XPDialogs.createDialog({ title: "Internet Properties" });
-  dialog.el.classList.add("internet-properties-dialog");
-  Object.assign(dialog.el.style, {
-    position: "fixed",
-    left: `${Math.min(44, Math.max(4, window.innerWidth - 404))}px`,
-    top: `${Math.min(58, Math.max(4, window.innerHeight - 458))}px`,
-  });
-
-  const tabs = [
-    "General",
-    "Security",
-    "Privacy",
-    "Content",
-    "Connections",
-    "Programs",
-    "Advanced",
-  ];
-  dialog.body.innerHTML = `
-    <div class="internet-properties-tabs" role="tablist">${tabs.map((tab) => `<button type="button" role="tab" data-internet-tab="${tab.toLowerCase()}">${tab}</button>`).join("")}</div>
-    <div class="internet-properties-panels">
-      <section data-internet-panel="general">
-        <fieldset><legend>Home page</legend><img src="assets/xp/system/InternetHomePage.png" alt=""><p>You can change which page to use for your home page.</p><label>Address: <input type="text" value="isapi/redir.dll?prd=ie&amp;pver=6&amp;ar=msnhome"></label><div><button class="xp-btn" disabled>Use Current</button><button class="xp-btn">Use Default</button><button class="xp-btn">Use Blank</button></div></fieldset>
-        <fieldset><legend>Temporary Internet files</legend><img src="assets/xp/system/TemporaryInternetFiles.png" alt=""><p>Pages you view on the Internet are stored in a special folder<br>for quick viewing later.</p><div><button class="xp-btn">Delete Cookies...</button><button class="xp-btn">Delete Files...</button><button class="xp-btn">Settings...</button></div></fieldset>
-        <fieldset><legend>History</legend><img src="assets/xp/system/InternetHistory.png" alt=""><p>The History folder contains links to pages you've visited, for<br>quick access to recently viewed pages.</p><label>Days to keep pages in history: <input type="number" value="20" min="0"></label><button class="xp-btn">Clear History</button></fieldset>
-        <div class="internet-general-actions"><button class="xp-btn">Colors...</button><button class="xp-btn">Fonts...</button><button class="xp-btn">Languages...</button><button class="xp-btn">Accessibility...</button></div>
-      </section>
-      <section data-internet-panel="security" hidden><p class="internet-security-intro">Select a Web content zone to specify its security settings.</p><div class="internet-zone-list">${[
-        ["Internet", "assets/xp/system/InternetZone.png"],
-        ["Local intranet", "assets/xp/system/LocalIntranetZone.png"],
-        ["Trusted sites", "assets/xp/system/TrustedSitesZone.png"],
-        ["Restricted sites", "assets/xp/system/RestrictedSitesZone.png"],
-      ]
-        .map(
-          ([label, icon], index) =>
-            `<button class="${index === 0 ? "selected" : ""}"><img src="${icon}" alt=""><span>${label}</span></button>`,
-        )
-        .join(
-          "",
-        )}</div><div class="internet-zone-description"><img src="assets/xp/system/InternetZone.png" alt=""><strong>Internet</strong><p>This zone contains all Web sites you<br>haven't placed in other zones.</p><button class="xp-btn" disabled>Sites...</button></div><fieldset class="internet-security-level"><legend>Security level for this zone</legend><strong>Custom</strong><p>Custom settings.<br>· To change the settings, click Custom Level.<br>· To use the recommended settings, click Default Level.</p><button class="xp-btn">Custom Level...</button><button class="xp-btn">Default Level</button></fieldset></section>
-      <section data-internet-panel="privacy" hidden><fieldset class="internet-privacy-settings"><legend>Settings</legend><img src="assets/xp/system/PrivacySettings.png" alt=""><p>Move the slider to select a privacy setting for the Internet<br>zone.</p><div class="internet-privacy-scale"><input type="range" min="0" max="5" value="2"><i aria-hidden="true"></i></div><strong>Medium</strong><ul><li>Blocks third-party cookies that do not have a compact<br>privacy policy</li><li>Blocks third-party cookies that use personally identifiable<br>information without your implicit consent</li><li>Restricts first-party cookies that use personally identifiable<br>information without implicit consent</li></ul><div><button class="xp-btn">Sites...</button><button class="xp-btn">Import...</button><button class="xp-btn">Advanced...</button><button class="xp-btn" disabled>Default</button></div></fieldset><fieldset class="internet-popup-settings"><legend>Pop-up Blocker</legend><img src="assets/xp/system/PopUpBlocker.png" alt=""><p>Prevent most pop-up windows from appearing.</p><label><input type="checkbox" checked> Block pop-ups</label><button class="xp-btn">Settings...</button></fieldset></section>
-      <section data-internet-panel="content" hidden><fieldset><legend>Content Advisor</legend><img src="assets/xp/system/TrustedSitesZone.png" alt=""><p>Ratings help you control the Internet content that can be<br>viewed on this computer.</p><button class="xp-btn">Enable...</button><button class="xp-btn" disabled>Settings...</button></fieldset><fieldset><legend>Certificates</legend><img src="assets/xp/system/PrivacySettings.png" alt=""><p>Use certificates to positively identify yourself, certification<br>authorities, and publishers.</p><button class="xp-btn">Clear SSL State</button><button class="xp-btn">Certificates...</button><button class="xp-btn">Publishers...</button></fieldset><fieldset><legend>Personal information</legend><img src="assets/xp/icons/RecentDocuments.png" alt=""><p>AutoComplete stores previous entries<br>and suggests matches for you.</p><button class="xp-btn">AutoComplete...</button><p>Microsoft Profile Assistant stores your<br>personal information.</p><button class="xp-btn">My Profile...</button></fieldset></section>
-      <section data-internet-panel="connections" hidden><div class="internet-setup-copy"><img src="assets/xp/system/LocalIntranetZone.png" alt=""><p>To set up an Internet connection, click<br>Setup.</p><button class="xp-btn">Setup...</button></div><fieldset class="internet-dialup-settings"><legend>Dial-up and Virtual Private Network settings</legend><div class="internet-connection-list"></div><button class="xp-btn">Add...</button><button class="xp-btn" disabled>Remove</button><button class="xp-btn" disabled>Settings...</button><p>Choose Settings if you need to configure a proxy<br>server for a connection.</p><label><input type="radio" disabled> Never dial a connection</label><label><input type="radio" disabled> Dial whenever a network connection is not present</label><label><input type="radio" disabled> Always dial my default connection</label><span>Current: <i>None</i></span><button class="xp-btn" disabled>Set Default</button></fieldset><fieldset class="internet-lan-settings"><legend>Local Area Network (LAN) settings</legend><p>LAN Settings do not apply to dial-up connections.<br>Choose Settings above for dial-up settings.</p><button class="xp-btn">LAN Settings...</button></fieldset></section>
-      <section data-internet-panel="programs" hidden><fieldset><legend>Internet programs</legend><img src="assets/xp/system/InternetPrograms.png" alt=""><p>You can specify which program Windows automatically uses<br>for each Internet service.</p>${[
-        ["HTML editor:", ""],
-        ["E-mail:", "Outlook Express"],
-        ["Newsgroups:", "Outlook Express"],
-        ["Internet call:", "NetMeeting"],
-        ["Calendar:", ""],
-        ["Contact list:", "Address Book"],
-      ]
-        .map(
-          ([label, value]) =>
-            `<label>${label}<select><option>${value}</option></select></label>`,
-        )
-        .join(
-          "",
-        )}</fieldset><div class="internet-program-actions"><button class="xp-btn">Reset Web Settings...</button><p>You can reset Internet Explorer to the default<br>home and search pages.</p><button class="xp-btn">Manage Add-ons...</button><p>Enable or disable browser add-ons installed on<br>your computer.</p><label><input type="checkbox" checked> Internet Explorer should check to see whether it is the default browser</label></div></section>
-      <section data-internet-panel="advanced" hidden><p>Settings:</p><div class="internet-advanced-list"><strong>🌐 Accessibility</strong>${["Always expand ALT text for images", "Move system caret with focus/selection changes"].map((label) => `<label><input type="checkbox"> ${label}</label>`).join("")}<strong>▣ Browsing</strong>${["Always send URLs as UTF-8 (requires restart)", "Automatically check for Internet Explorer updates", "Close unused folders in History and Favorites (requires restart)", "Disable Script Debugging (Internet Explorer)", "Disable Script Debugging (Other)", "Display a notification about every script error", "Enable folder view for FTP sites", "Enable Install On Demand (Internet Explorer)", "Enable Install On Demand (Other)", "Enable offline items to be synchronized on a schedule", "Enable page transitions", "Enable Personalized Favorites Menu"].map((label, index) => `<label><input type="checkbox" ${[0, 2, 3, 4, 6, 8, 9, 10].includes(index) ? "checked" : ""}> ${label}</label>`).join("")}</div><button class="xp-btn internet-restore-defaults">Restore Defaults</button></section>
-    </div>`;
-  const activate = (tab) => {
-    dialog.body
-      .querySelectorAll("[data-internet-tab]")
-      .forEach((button) =>
-        button.setAttribute(
-          "aria-selected",
-          String(button.dataset.internetTab === tab),
-        ),
-      );
-    dialog.body.querySelectorAll("[data-internet-panel]").forEach((panel) => {
-      panel.hidden = panel.dataset.internetPanel !== tab;
-    });
-  };
-  dialog.body.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-internet-tab]")?.dataset
-      .internetTab;
-    if (tab) activate(tab);
-  });
-  XPDialogs.addButtonRow(dialog, [
-    { id: "ok", label: "OK", isDefault: true },
-    { id: "cancel", label: "Cancel", isCancel: true },
-    { id: "apply", label: "Apply" },
-  ]);
-  dialog.body.lastElementChild.classList.add("internet-properties-buttons");
-  dialog.body.querySelector('[data-action="apply"]').disabled = true;
-  activate(initialTab);
-};
-
-const openFolderOptions = () => {
-  const dialog = XPDialogs.createDialog({ title: "Folder Options" });
-  dialog.el.classList.add("folder-options-dialog");
-  const parentRect = openWindows
-    .get("__control-panel")
-    ?.el.getBoundingClientRect();
-  if (parentRect) {
-    Object.assign(dialog.el.style, {
-      position: "fixed",
-      left: `${parentRect.left}px`,
-      top: `${parentRect.top}px`,
-    });
-  }
-
-  dialog.body.innerHTML = `
-    <div class="folder-options-tabs" role="tablist" aria-label="Folder Options">
-      <button type="button" role="tab" data-folder-options-tab="general" aria-selected="true">General</button>
-      <button type="button" role="tab" data-folder-options-tab="view" aria-selected="false" tabindex="-1">View</button>
-      <button type="button" role="tab" data-folder-options-tab="file-types" aria-selected="false" tabindex="-1">File Types</button>
-      <button type="button" role="tab" data-folder-options-tab="offline" aria-selected="false" tabindex="-1">Offline Files</button>
-    </div>
-    <div class="folder-options-panel" data-folder-options-panel="general">
-      <fieldset><legend>Tasks</legend><img src="assets/xp/icons/FolderViewClassic.png" alt="">
-        <label><input type="radio" name="folder-tasks" checked> Show common tasks in folders</label>
-        <label><input type="radio" name="folder-tasks"> Use Windows classic folders</label>
-      </fieldset>
-      <fieldset><legend>Browse folders</legend><img src="assets/xp/system/FolderBrowse.png" alt="">
-        <label><input type="radio" name="browse-folders" checked> Open each folder in the same window</label>
-        <label><input type="radio" name="browse-folders"> Open each folder in its own window</label>
-      </fieldset>
-      <fieldset class="folder-click-options"><legend>Click items as follows</legend><img class="folder-click-illustration" src="assets/xp/system/FolderClickItems.png" alt="">
-        <label><input type="radio" name="click-items"> Single-click to open an item (point to select)</label>
-        <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles consistent with my browser</label>
-        <label class="folder-suboption"><input type="radio" name="underline-items" disabled> Underline icon titles only when I point at them</label>
-        <label><input type="radio" name="click-items" checked> Double-click to open an item (single-click to select)</label>
-      </fieldset>
-      <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
-    </div>
-    <div class="folder-options-panel folder-view-panel" data-folder-options-panel="view" hidden>
-      <fieldset class="folder-views-group"><legend>Folder views</legend><img src="assets/xp/system/FolderViews.png" alt=""><p>You can apply the view (such as Details or Tiles) that<br>you are using for this folder to all folders.</p><button type="button" class="xp-btn" disabled>Apply to All Folders</button><button type="button" class="xp-btn">Reset All Folders</button></fieldset>
-      <label class="folder-advanced-label">Advanced settings:</label>
-      <div class="folder-advanced-list">
-        <strong><img src="assets/xp/system/FolderTree.png" alt="">Files and Folders</strong>
-        <label><input type="checkbox" checked> Automatically search for network folders and printers</label>
-        <label><input type="checkbox" checked> Display file size information in folder tips</label>
-        <label><input type="checkbox" checked> Display simple folder view in Explorer's Folders list</label>
-        <label><input type="checkbox"> Display the contents of system folders</label>
-        <label><input type="checkbox" checked> Display the full path in the address bar</label>
-        <label><input type="checkbox"> Display the full path in the title bar</label>
-        <label><input type="checkbox"> Do not cache thumbnails</label>
-        <strong><img src="assets/xp/system/FolderTree.png" alt="">Hidden files and folders</strong>
-        <label class="folder-indented"><input type="radio" name="hidden-files" checked> Do not show hidden files and folders</label>
-        <label class="folder-indented"><input type="radio" name="hidden-files"> Show hidden files and folders</label>
-        <label><input type="checkbox" checked> Hide extensions for known file types</label>
-        <label><input type="checkbox" checked> Hide protected operating system files (Recommended)</label>
-      </div>
-      <button type="button" class="xp-btn folder-restore-defaults">Restore Defaults</button>
-    </div>
-    <div class="folder-options-panel folder-file-types-panel" data-folder-options-panel="file-types" hidden>
-      <p>Registered file types:</p>
-      <div class="folder-file-types-list" role="listbox" aria-label="Registered file types">
-        <div class="folder-file-types-head"><span>Extensions</span><span>File Types</span></div>
-        <button type="button" class="selected"><img src="assets/xp/icons/LocalDisk.png" alt=""><span>(NONE)</span><span>AudioCD</span></button>
-        <button type="button"><img src="assets/xp/icons/LocalDisk.png" alt=""><span>(NONE)</span><span>Drive</span></button>
-        <button type="button"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>(NONE)</span><span>DVD</span></button>
-        <button type="button"><img src="assets/xp/icons/SharedFolder.png" alt=""><span>(NONE)</span><span>File Folder</span></button>
-        <button type="button"><img src="assets/xp/icons/FolderOptions.png" alt=""><span>(NONE)</span><span>Folder</span></button>
-        <button type="button"><img src="assets/xp/icons/HelpAndSupport.png" alt=""><span>(NONE)</span><span>Help and Support Center protocol</span></button>
-      </div>
-      <button type="button" class="xp-btn folder-file-new">New</button><button type="button" class="xp-btn folder-file-delete" disabled>Delete</button>
-      <fieldset class="folder-file-details"><legend>Details for 'AudioCD' file type</legend><label>Opens with:</label><button type="button" class="xp-btn" disabled>Change...</button><p>To change settings that affect all 'AudioCD' files, click Advanced.</p><button type="button" class="xp-btn">Advanced</button></fieldset>
-    </div>
-    <div class="folder-options-panel folder-offline-panel" data-folder-options-panel="offline" hidden>
-      <img src="assets/xp/icons/OfflineFiles.png" alt=""><p>Use Offline Files to work with files and programs stored on the<br>network even when you are not connected.</p>
-      <p>Fast User Switching is enabled on this computer. &nbsp;Offline Files<br>cannot be enabled while Fast User Switching is enabled.</p>
-      <p>To change your Fast User Switching setting, open User Accounts<br>in Control Panel and select "Change the way users log on or off."</p>
-    </div>
-    <div class="dlg-buttons folder-options-buttons"></div>`;
-
-  const tabs = [...dialog.body.querySelectorAll("[data-folder-options-tab]")];
-  const panels = [
-    ...dialog.body.querySelectorAll("[data-folder-options-panel]"),
-  ];
-  tabs.forEach((tab) =>
-    tab.addEventListener("click", () => {
-      tabs.forEach((entry) => {
-        const selected =
-          entry.dataset.folderOptionsTab === tab.dataset.folderOptionsTab;
-        entry.setAttribute("aria-selected", String(selected));
-        entry.tabIndex = selected ? 0 : -1;
-      });
-      panels.forEach((panel) => {
-        panel.hidden =
-          panel.dataset.folderOptionsPanel !== tab.dataset.folderOptionsTab;
-      });
-    }),
-  );
-  const buttons = dialog.body.querySelector(".folder-options-buttons");
-  const apply = XPDialogs.createDialogButton(
-    { id: "apply", label: "Apply" },
-    () => {
-      apply.disabled = true;
-    },
-  );
-  apply.disabled = true;
-  const ok = XPDialogs.createDialogButton(
-    { id: "ok", label: "OK", isDefault: true },
-    () => {
-      dialog.close("ok");
-    },
-  );
-  const cancel = XPDialogs.createDialogButton(
-    { id: "cancel", label: "Cancel", isCancel: true },
-    () => dialog.close("cancel"),
-  );
-  dialog.defaultButton = ok;
-  buttons.append(ok, cancel, apply);
-  dialog.body.addEventListener("change", () => {
-    apply.disabled = false;
-  });
-  dialog.body.querySelectorAll(".folder-restore-defaults").forEach((button) =>
-    button.addEventListener("click", () => {
-      dialog.body
-        .querySelectorAll('input[type="checkbox"]')
-        .forEach((input) => (input.checked = input.defaultChecked));
-      dialog.body
-        .querySelectorAll('input[type="radio"]')
-        .forEach((input) => (input.checked = input.defaultChecked));
-      apply.disabled = false;
-    }),
-  );
-  dialog.body
-    .querySelectorAll(".folder-file-types-list button")
-    .forEach((button) =>
-      button.addEventListener("click", () => {
-        dialog.body
-          .querySelectorAll(".folder-file-types-list button")
-          .forEach((entry) =>
-            entry.classList.toggle("selected", entry === button),
-          );
-      }),
-    );
 };
 
 const getStartMenuStyle = () =>

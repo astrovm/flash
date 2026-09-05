@@ -111,12 +111,7 @@ const TOOLS = [
 ];
 
 const separator = ["separator"];
-const disabled = (command, label, shortcut = "") => [
-  command,
-  label,
-  shortcut,
-  { disabled: true },
-];
+const disabled = (command, label, shortcut = "") => [command, label, shortcut];
 const check = (command, label, shortcut = "") => [
   command,
   label,
@@ -130,18 +125,8 @@ const MENU_ITEMS = {
     ["save", "Save", "Ctrl+S"],
     ["save-as", "Save As..."],
     separator,
-    disabled("scanner", "From Scanner or Camera..."),
-    separator,
-    ["print-preview", "Print Preview"],
-    ["page-setup", "Page Setup..."],
-    ["print", "Print...", "Ctrl+P"],
-    separator,
-    ["send", "Send..."],
-    separator,
     disabled("wallpaper-tiled", "Set As Background (Tiled)"),
     disabled("wallpaper-centered", "Set As Background (Centered)"),
-    separator,
-    disabled("recent", "Recent File"),
     separator,
     ["exit", "Exit", "Alt+F4"],
   ],
@@ -535,11 +520,6 @@ const mountPaint = (shell, instance) => {
       shell.setWallpaper(canvas.toDataURL());
     else if (command === "view-bitmap")
       root.classList.toggle("paint-bitmap-view");
-    else if (["print-preview", "page-setup", "print", "send"].includes(command))
-      shell.showMessage(
-        "Paint",
-        "This command is not available in this browser.",
-      );
     else if (command === "about")
       showXPAboutDialog(shell.dialogs, {
         title: "About Paint",
