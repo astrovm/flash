@@ -5,10 +5,11 @@
 // ============================================
 
 const DESKTOP_ICON_METRICS = Object.freeze({
-  regular: { width: 76, height: 74, gap: 6, margin: 8 },
+  regular: { width: 75, height: 75, gap: 0, margin: 0 },
   compact: { width: 60, height: 58, gap: 4, margin: 4 },
 });
 let desktopDragged = false;
+let desktopSelectionAnchor = null;
 
 const getDesktopIconMetrics = (container) =>
   container.clientWidth <= 480
@@ -42,6 +43,7 @@ const saveDesktopIconPosition = (icon) => {
 };
 
 const selectDesktopIcon = (desktopId, additive = false) => {
+  if (!additive) desktopSelectionAnchor = desktopId;
   document.querySelectorAll(".desktop-icon").forEach((el) => {
     const shouldSelect = el.dataset.desktopId === desktopId;
     el.classList.toggle(
@@ -151,14 +153,6 @@ const layoutDesktopIcons = (force = false) => {
     const row = overflowsViewport ? Math.floor(index / columns) : index % rows;
     let fallbackLeft = margin + column * (width + gap);
     let fallbackTop = margin + row * (height + gap);
-    // The Recycle Bin anchors to the bottom-right corner unless the
-    // user has dragged it somewhere else.
-    if (icon.dataset.desktopId === "__recycle-bin") {
-      if (!overflowsViewport) {
-        fallbackLeft = container.clientWidth - width - margin;
-        fallbackTop = container.clientHeight - height - margin;
-      }
-    }
     const savedLeft = saved?.left;
     const savedTop = saved?.top;
     const savedIsValid =
@@ -210,8 +204,10 @@ const wireDesktopIconDrag = (icon) => {
   icon.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
 
-    const additive = event.ctrlKey || event.metaKey;
-    if (!icon.classList.contains("selected")) {
+    const additive = event.ctrlKey || event.metaKey || event.shiftKey;
+    const wasSelected = icon.classList.contains("selected");
+    icon.dataset.pointerSelected = String(wasSelected);
+    if (!wasSelected) {
       selectDesktopIcon(icon.dataset.desktopId, additive);
     }
 
@@ -279,6 +275,13 @@ const wireDesktopIconDrag = (icon) => {
         eligibility.movable && upEvent.type === "pointerup"
           ? findDesktopDropTarget(upEvent.clientX, upEvent.clientY, draggedIds)
           : null;
+      if (upEvent.type === "pointercancel") {
+        selected.forEach(({ item, left, top }) => {
+          item.style.left = `${left}px`;
+          item.style.top = `${top}px`;
+        });
+        return;
+      }
       if (desktopDragged) {
         if (dropTarget) {
           if (dropTarget.action === "recycle") {
@@ -287,6 +290,8 @@ const wireDesktopIconDrag = (icon) => {
             fileOps.cut(eligibility.filesystemIds);
             await pasteIntoFolder(dropTarget.destinationId);
           }
+        } else if (getDesktopLayoutSettings().autoArrange) {
+          layoutDesktopIcons(true);
         } else {
           const { alignToGrid } = getDesktopLayoutSettings();
           selected.forEach(({ item }) => {
@@ -295,6 +300,8 @@ const wireDesktopIconDrag = (icon) => {
               item.style.left = `${metrics.margin + Math.round((item.offsetLeft - metrics.margin) / (metrics.width + metrics.gap)) * (metrics.width + metrics.gap)}px`;
               item.style.top = `${metrics.margin + Math.round((item.offsetTop - metrics.margin) / (metrics.height + metrics.gap)) * (metrics.height + metrics.gap)}px`;
             }
+            item.style.left = `${Math.max(0, Math.min(item.offsetLeft, container.clientWidth - item.offsetWidth))}px`;
+            item.style.top = `${Math.max(0, Math.min(item.offsetTop, container.clientHeight - item.offsetHeight))}px`;
             saveDesktopIconPosition(item);
           });
         }
@@ -320,6 +327,10 @@ const wireDesktopSelectionRectangle = () => {
   container.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || event.target !== container) return;
 
+    container.tabIndex = 0;
+    container.querySelectorAll(".desktop-icon").forEach((icon) => {
+      icon.tabIndex = -1;
+    });
     container.focus({ preventScroll: true });
     closeDesktopContextMenu();
     const additive = event.ctrlKey || event.metaKey;
@@ -364,10 +375,10 @@ const wireDesktopSelectionRectangle = () => {
 
       document.querySelectorAll(".desktop-icon").forEach((icon) => {
         const intersects =
-          icon.offsetLeft < left + width &&
-          icon.offsetLeft + icon.offsetWidth > left &&
-          icon.offsetTop < top + height &&
-          icon.offsetTop + icon.offsetHeight > top;
+          icon.offsetLeft - container.scrollLeft < left + width &&
+          icon.offsetLeft - container.scrollLeft + icon.offsetWidth > left &&
+          icon.offsetTop - container.scrollTop < top + height &&
+          icon.offsetTop - container.scrollTop + icon.offsetHeight > top;
         icon.classList.toggle(
           "selected",
           intersects ||
@@ -403,6 +414,7 @@ const buildDesktopIcons = () => {
   const container = document.getElementById("desktop-icons");
   container.hidden = getDesktopLayoutSettings().showIcons === false;
   container.replaceChildren();
+  container.tabIndex = 0;
   // System places stay available even though regular desktop files are
   // rendered directly from VirtualFS.DESKTOP.
   const desktopItems = [
@@ -440,20 +452,25 @@ const buildDesktopIcons = () => {
   };
   const entries = [
     ...desktopItems.map((id) => ({ id, system: true })),
+    ...recycleBinItems.map((id) => ({ id, system: true })),
     ...fs
       .getChildren(fs.DESKTOP)
       .slice()
       .sort(compareDesktopNodes)
       .map((node) => ({ id: node.id, node })),
-    // Recycle Bin is anchored independently, so keep it after flowing
-    // entries to avoid leaving an unused grid slot near the first game.
-    ...recycleBinItems.map((id) => ({ id, system: true })),
   ];
 
   entries.forEach(({ id, system, node }) => {
     const icon = document.createElement("button");
     icon.type = "button";
     icon.className = "desktop-icon";
+    icon.tabIndex = -1;
+    icon.addEventListener("focus", () => {
+      container.tabIndex = -1;
+      container.querySelectorAll(".desktop-icon").forEach((item) => {
+        item.tabIndex = item === icon ? 0 : -1;
+      });
+    });
     icon.dataset.desktopId = id;
     if (system) icon.dataset.systemId = id;
     if (node?.type === "folder") icon.dataset.dropDestinationId = node.id;
@@ -465,6 +482,12 @@ const buildDesktopIcons = () => {
         ? createGameIconElement(node.app, "icon-glyph")
         : createExplorerIcon(node);
     glyph.classList.add("icon-glyph");
+    const image = glyph.querySelector("img");
+    if (image)
+      glyph.style.setProperty(
+        "--desktop-icon-mask",
+        `url(${JSON.stringify(image.src)})`,
+      );
 
     const label = document.createElement("span");
     label.className = "icon-label";
@@ -477,7 +500,30 @@ const buildDesktopIcons = () => {
     icon.append(glyph, label);
     icon.addEventListener("click", (event) => {
       if (!desktopDragged) {
-        selectDesktopIcon(id, event.ctrlKey || event.metaKey);
+        const additive = event.ctrlKey || event.metaKey;
+        if (event.shiftKey && desktopSelectionAnchor) {
+          const icons = [...container.querySelectorAll(".desktop-icon")];
+          const anchor = icons.findIndex(
+            (item) => item.dataset.desktopId === desktopSelectionAnchor,
+          );
+          const current = icons.indexOf(icon);
+          icons.forEach((item, index) =>
+            item.classList.toggle(
+              "selected",
+              index >= Math.min(anchor, current) &&
+                index <= Math.max(anchor, current),
+            ),
+          );
+        } else if (additive) {
+          const wasSelected = icon.dataset.pointerSelected;
+          icon.classList.toggle(
+            "selected",
+            wasSelected === undefined
+              ? !icon.classList.contains("selected")
+              : wasSelected !== "true",
+          );
+        } else selectDesktopIcon(id);
+        delete icon.dataset.pointerSelected;
       }
     });
     icon.addEventListener("dblclick", () => {
@@ -613,6 +659,7 @@ const addDesktopMenuItem = (
   if (checked) button.setAttribute("aria-checked", "true");
   const gutter = document.createElement("span");
   gutter.className = "context-check";
+  gutter.setAttribute("aria-hidden", "true");
   gutter.textContent = checked ? "✓" : "";
   const text = document.createElement("span");
   text.className = "context-label";
@@ -632,6 +679,7 @@ const addDesktopSubmenu = (menu, label, buildItems) => {
   button.setAttribute("aria-expanded", "false");
   const gutter = document.createElement("span");
   gutter.className = "context-check";
+  gutter.setAttribute("aria-hidden", "true");
   const text = document.createElement("span");
   text.className = "context-label";
   text.textContent = label;
@@ -651,11 +699,17 @@ const addDesktopSubmenu = (menu, label, buildItems) => {
     const rect = child.getBoundingClientRect();
     if (rect.right > window.innerWidth)
       child.style.left = `${-child.offsetWidth + 2}px`;
+    const bottom = document
+      .getElementById("desktop")
+      .getBoundingClientRect().bottom;
+    if (rect.bottom > bottom)
+      child.style.top = `${-2 - (rect.bottom - bottom)}px`;
   };
   const close = () => {
     parent.classList.remove("open");
     button.setAttribute("aria-expanded", "false");
   };
+  button.addEventListener("click", open);
   parent.addEventListener("pointerenter", open);
   parent.addEventListener("pointerleave", close);
   button.addEventListener("keydown", (event) => {
@@ -666,8 +720,9 @@ const addDesktopSubmenu = (menu, label, buildItems) => {
     }
   });
   child.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowLeft") {
+    if (event.key === "ArrowLeft" || event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       close();
       button.focus();
     }
@@ -707,8 +762,6 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
     addDesktopMenuItem(menu, "Open", "open", { defaultItem: true });
     addDesktopMenuItem(menu, "Explore", "explore-my-computer");
     addDesktopMenuItem(menu, "Search...", "search-my-computer");
-
-    addDesktopSeparator(menu);
 
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Create Shortcut", "create-computer-shortcut");
@@ -768,8 +821,6 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
       addDesktopMenuItem(submenu, "Folder", "new-folder");
       addDesktopMenuItem(submenu, "Text Document", "new-text");
       addDesktopMenuItem(submenu, "Bitmap Image", "new-bitmap");
-      addDesktopSeparator(submenu);
-      addDesktopMenuItem(submenu, "Upload from Computer...", "upload");
     });
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Properties", "properties");
@@ -831,8 +882,8 @@ const setupDesktopContextMenu = () => {
         saveDesktopLayoutSettings({
           ...getDesktopLayoutSettings(),
           sort: action.slice(5),
-          autoArrange: true,
         });
+        buildDesktopIcons();
         layoutDesktopIcons(true);
       } else if (action === "auto-arrange") {
         const settings = getDesktopLayoutSettings();
@@ -871,34 +922,6 @@ const setupDesktopContextMenu = () => {
         refreshDesktop();
         selectDesktopIcon(node.id);
         beginDesktopRename(node.id);
-      } else if (action === "upload") {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.multiple = true;
-        input.addEventListener(
-          "change",
-          async () => {
-            try {
-              for (const file of input.files) {
-                await fileOps.createFile(fs.DESKTOP, file.name, {
-                  content: file.type.startsWith("text/")
-                    ? await file.text()
-                    : "",
-                  size: file.size,
-                });
-              }
-              refreshDesktop();
-            } catch (error) {
-              await XPDialogs.alert(
-                error.message || "The file operation failed.",
-                "File operation",
-                "error",
-              );
-            }
-          },
-          { once: true },
-        );
-        input.click();
       } else if (action === "paste") {
         pasteIntoFolder(fs.DESKTOP);
       } else if (action === "open" && itemId) {
@@ -943,13 +966,7 @@ const setupDesktopContextMenu = () => {
       } else if (action === "copy") {
         fileOps.copy(selectedFsIds);
       } else if (action === "delete") {
-        XPDialogs.confirm(
-          selectedFsIds.length === 1
-            ? "Are you sure you want to send this item to the Recycle Bin?"
-            : "Are you sure you want to send these items to the Recycle Bin?",
-          "Confirm File Delete",
-          "warning",
-        ).then((yes) => yes && confirmRecycleDelete(selectedFsIds));
+        confirmRecycleDelete(selectedFsIds);
       } else if (action === "rename" && selectedFsIds[0]) {
         beginDesktopRename(selectedFsIds[0]);
       } else if (action === "item-properties" && selectedFsIds[0]) {
@@ -967,10 +984,18 @@ const setupDesktopContextMenu = () => {
     }
   });
   menu.addEventListener("keydown", (event) => {
-    const items = [...menu.querySelectorAll("button:not(:disabled)")];
+    const scope = event.target.closest('[role="menu"]');
+    const items = [...scope.querySelectorAll("button:not(:disabled)")].filter(
+      (item) => item.closest('[role="menu"]') === scope,
+    );
     const current = items.indexOf(document.activeElement);
     if (event.key === "Escape") {
+      event.preventDefault();
       closeDesktopContextMenu();
+      (
+        document.querySelector(".desktop-icon.selected") ||
+        document.getElementById("desktop-icons")
+      ).focus();
       return;
     }
     if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {

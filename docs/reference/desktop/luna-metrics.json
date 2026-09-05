@@ -1,0 +1,24 @@
+{
+  "source": "source-media/xp-sp3/extracted/themes/Luna.msstyles",
+  "sha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+  "metrics": {
+    "blue": {
+      "Highlight": "49 106 197",
+      "HighlightText": "255 255 255",
+      "MenuHilight": "49 106 197",
+      "IconTitleFont": "Tahoma, 8"
+    },
+    "silver": {
+      "Highlight": "178 180 191",
+      "HighlightText": "0 0 0",
+      "MenuHilight": "187 183 199",
+      "IconTitleFont": "Tahoma, 8"
+    },
+    "olive": {
+      "Highlight": "147 160 112",
+      "HighlightText": "255 255 255",
+      "MenuHilight": "147 160 112",
+      "IconTitleFont": "Tahoma, 8"
+    }
+  }
+}

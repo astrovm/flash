@@ -1,0 +1,160 @@
+// @ts-nocheck -- Happy DOM supplies the browser objects.
+import { afterEach, expect, test } from "bun:test";
+import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
+afterEach(cleanupShells);
+
+const openMenu = (shell) => {
+  shell.document.getElementById("desktop-icons").dispatchEvent(
+    new shell.window.MouseEvent("contextmenu", {
+      bubbles: true,
+      clientX: 300,
+      clientY: 200,
+    }),
+  );
+  return shell.document.getElementById("desktop-context-menu");
+};
+const key = (shell, element, value, options = {}) =>
+  element.dispatchEvent(
+    new shell.window.KeyboardEvent("keydown", {
+      key: value,
+      bubbles: true,
+      cancelable: true,
+      ...options,
+    }),
+  );
+
+test("Ctrl-click toggles a selected desktop icon without clearing other icons", async () => {
+  const s = await login(await loadShell());
+  const [a, b] = s.document.querySelectorAll(".desktop-icon");
+  a.click();
+  for (const icon of [b, b]) {
+    icon.dispatchEvent(
+      new s.window.PointerEvent("pointerdown", { button: 0, ctrlKey: true }),
+    );
+    icon.dispatchEvent(new s.window.PointerEvent("pointerup", { button: 0 }));
+    icon.dispatchEvent(new s.window.MouseEvent("click", { ctrlKey: true }));
+  }
+  expect(a.classList.contains("selected")).toBeTrue();
+  expect(b.classList.contains("selected")).toBeFalse();
+});
+
+test("desktop menu arrows stay at their own submenu level", async () => {
+  const s = await login(await loadShell());
+  const menu = openMenu(s);
+  const parent = menu.querySelector(".context-submenu-button");
+  key(s, parent, "ArrowDown");
+  expect(s.document.activeElement.dataset.action).toBe("refresh");
+  parent.focus();
+  key(s, parent, "ArrowRight");
+  expect(s.document.activeElement.dataset.action).toBe("sort-name");
+  key(s, s.document.activeElement, "ArrowDown");
+  expect(s.document.activeElement.dataset.action).toBe("sort-size");
+  key(s, s.document.activeElement, "ArrowLeft");
+  expect(s.document.activeElement).toBe(parent);
+  expect(parent.getAttribute("aria-expanded")).toBe("false");
+});
+
+test("sorting the desktop does not enable Auto Arrange", async () => {
+  const s = await login(await loadShell());
+  openMenu(s).querySelector('[data-action="sort-type"]').click();
+  const settings = JSON.parse(
+    s.window.localStorage.getItem("desktopLayoutSettings"),
+  );
+  expect(settings.sort).toBe("type");
+  expect(settings.autoArrange).toBeFalse();
+});
+
+test("desktop keyboard navigation can enter the icon list and toggle selection", async () => {
+  const s = await login(await loadShell());
+  const container = s.document.getElementById("desktop-icons");
+  const icons = [...container.querySelectorAll(".desktop-icon")];
+  container.focus();
+  key(s, container, "ArrowDown");
+  expect(s.document.activeElement).toBe(icons[0]);
+  key(s, icons[0], " ", { ctrlKey: true });
+  expect(icons[0].classList.contains("selected")).toBeFalse();
+  key(s, icons[0], "End");
+  expect(s.document.activeElement).toBe(icons.at(-1));
+});
+
+test("Shift-click selects the range from the desktop selection anchor", async () => {
+  const s = await login(await loadShell());
+  const icons = [...s.document.querySelectorAll(".desktop-icon")];
+  icons[0].click();
+  icons[3].dispatchEvent(new s.window.MouseEvent("click", { shiftKey: true }));
+  expect(
+    icons.slice(0, 4).every((icon) => icon.classList.contains("selected")),
+  ).toBeTrue();
+  expect(icons[4].classList.contains("selected")).toBeFalse();
+});
+
+test("cancelling a desktop drag restores positions without saving them", async () => {
+  const s = await login(await loadShell());
+  const icon = s.document.querySelector(".desktop-icon");
+  const container = s.document.getElementById("desktop-icons");
+  for (const [key, value] of Object.entries({
+    clientWidth: 1024,
+    clientHeight: 738,
+  }))
+    Object.defineProperty(container, key, { get: () => value });
+  for (const [key, value] of Object.entries({
+    offsetLeft: 20,
+    offsetTop: 30,
+    offsetWidth: 75,
+    offsetHeight: 54,
+  }))
+    Object.defineProperty(icon, key, { get: () => value });
+  icon.dispatchEvent(
+    new s.window.PointerEvent("pointerdown", {
+      button: 0,
+      clientX: 30,
+      clientY: 40,
+    }),
+  );
+  icon.dispatchEvent(
+    new s.window.PointerEvent("pointermove", { clientX: 100, clientY: 100 }),
+  );
+  expect(icon.style.left).toBe("90px");
+  icon.dispatchEvent(new s.window.PointerEvent("pointercancel", {}));
+  expect(icon.style.left).toBe("20px");
+  expect(icon.style.top).toBe("30px");
+  expect(s.window.localStorage.getItem("desktopIconPositions")).toBeNull();
+});
+
+test("desktop icons form one tab stop while arrows change focus", async () => {
+  const s = await login(await loadShell());
+  const icons = [...s.document.querySelectorAll(".desktop-icon")];
+  icons[0].focus();
+  expect(icons.filter((icon) => icon.tabIndex === 0)).toEqual([icons[0]]);
+  icons[2].focus();
+  expect(icons.filter((icon) => icon.tabIndex === 0)).toEqual([icons[2]]);
+  expect(s.document.getElementById("desktop-icons").tabIndex).toBe(-1);
+});
+
+test("desktop delete asks once before recycling the selected file", async () => {
+  const s = await login(await loadShell());
+  openMenu(s).querySelector('[data-action="new-folder"]').click();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  const input = s.document.querySelector(".desktop-rename");
+  key(s, input, "Enter");
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  const icon = [...s.document.querySelectorAll(".desktop-icon")].find(
+    (icon) => icon.textContent === "New Folder",
+  );
+  icon.dispatchEvent(new s.window.MouseEvent("contextmenu", { bubbles: true }));
+  s.document
+    .querySelector('#desktop-context-menu [data-action="delete"]')
+    .click();
+  const yes = [
+    ...s.document.querySelectorAll(".xp-dialog-overlay button"),
+  ].find((button) => button.textContent === "Yes");
+  expect(yes).toBeDefined();
+  yes.click();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(s.document.querySelector(".xp-dialog-overlay")).toBeNull();
+  expect(
+    [...s.document.querySelectorAll(".desktop-icon")].some(
+      (icon) => icon.textContent === "New Folder",
+    ),
+  ).toBeFalse();
+});

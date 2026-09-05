@@ -534,6 +534,10 @@ const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
   const desktop = document.getElementById("desktop");
   const taskbar = document.getElementById("taskbar");
   if (!desktop || !taskbar) return;
+  desktop.style.setProperty(
+    "--desktop-taskbar-height",
+    `${getTaskbarHeight()}px`,
+  );
   if (resolution === "auto") {
     desktop.style.removeProperty("width");
     desktop.style.removeProperty("height");
