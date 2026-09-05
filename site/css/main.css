@@ -241,12 +241,21 @@ iframe {
 /* XP switches to a 640 x 480 boot framebuffer, independent of desktop mode. */
 .boot-display {
   position: absolute;
-  width: min(100vw, calc(100vh * 4 / 3));
+  width: min(640px, 100vw, calc(100vh * 4 / 3));
   aspect-ratio: 4 / 3;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   image-rendering: pixelated;
+  visibility: hidden;
+}
+
+#boot-screen.boot-running .boot-display {
+  visibility: visible;
+}
+
+#boot-screen.boot-handoff .boot-display {
+  visibility: hidden;
 }
 
 .boot-background {
@@ -269,6 +278,10 @@ iframe {
   width: 18.6440678%; /* 22 / 118 */
   height: 100%;
   max-width: none;
+  left: -20.3389831%;
+}
+
+.boot-running .boot-progress img {
   animation: boot-slide 1.8s steps(18, end) 2s infinite backwards;
 }
 
@@ -278,13 +291,19 @@ iframe {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  animation: boot-fade-hide 2s step-end forwards;
 }
 .boot-fade img {
   display: block;
   width: 100%;
   height: 2000%;
   max-width: none;
+}
+
+.boot-running .boot-fade {
+  animation: boot-fade-hide 2s step-end forwards;
+}
+
+.boot-running .boot-fade img {
   animation: boot-palette-in 2s steps(19, end) forwards;
 }
 @keyframes boot-palette-in {

@@ -22,6 +22,7 @@ const playXPSound = (name) => {
 };
 
 let startupSoundPending = true;
+let bootGeneration = 0;
 
 const setScreen = (...visibleIds) => {
   [
@@ -74,19 +75,58 @@ const muteAllWindows = () => {
 };
 
 const finishBootSequence = () => {
+  bootGeneration++;
   clearTimeout(bootTimeout);
   if (!document.getElementById("boot-screen").hidden) showWelcomeScreen(true);
 };
 
 const showBootScreen = () => {
+  const generation = ++bootGeneration;
   setSuspended(false);
   hideSystemDialogs();
   clearTimeout(shutdownTimeout);
   muteAllWindows();
   setScreen("boot-screen");
+  const bootScreen = document.getElementById("boot-screen");
+  bootScreen.classList.remove("boot-running", "boot-handoff");
   startupSoundPending = true;
   clearTimeout(bootTimeout);
-  bootTimeout = setTimeout(finishBootSequence, BOOT_DURATION_MS);
+  const isCurrentBoot = () =>
+    generation === bootGeneration && !bootScreen.hidden;
+  // Start the palette only once its original bitmaps are decoded. Slow asset
+  // loading must not consume the animation while the screen is still blank.
+  const imagesReady = Promise.allSettled(
+    [...bootScreen.querySelectorAll("img")].map((image) => image.decode()),
+  );
+  const fadeComplete = imagesReady.then(() => {
+    if (!isCurrentBoot()) return;
+    bootScreen.classList.add("boot-running");
+    return new Promise((resolve) => {
+      bootTimeout = setTimeout(resolve, BOOT_FADE_DURATION_MS);
+    });
+  });
+  // XP advances when startup finishes; a browser's storage/runtime startup
+  // takes a different amount of time from an emulated machine's disk I/O.
+  void Promise.allSettled([
+    fadeComplete,
+    fs.ready,
+    gameLibraryInitialization,
+  ]).then(() => {
+    if (!isCurrentBoot()) return;
+    // Present the final palette even when storage was ready before the fade.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (!isCurrentBoot()) return;
+        bootScreen.classList.add("boot-handoff");
+        // Paint the cleared framebuffer before entering the desktop mode.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            if (isCurrentBoot()) finishBootSequence();
+          }),
+        );
+      }),
+    );
+  });
 };
 
 const showWelcomeScreen = (autoLogin = false) => {

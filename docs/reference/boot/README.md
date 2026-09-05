@@ -2,53 +2,91 @@
 
 Reference: the repository's English XP Professional SP3 x86 VL ISO, SHA-256
 `fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927`.
-Captured on 2026-09-05 using an isolated QEMU instance (temporary disk changes).
+Captured on 2026-09-05 using QEMU with temporary disk changes.
 
-## What was observed
+## Direct VM observations
 
-- The XP splash uses a 640 × 480 framebuffer before switching to the desktop mode.
+Two VM boot recordings used actual desktop modes of 1024 × 768 and 1280 × 1024.
+The latter was selected and applied through XP Display Properties, with the
+Cirrus adapter using 16-bit color. Neither recording was resized.
+
+| Desktop mode | Boot framebuffer entered         | Desktop mode restored   |
+| ------------ | -------------------------------- | ----------------------- |
+| 1024 × 768   | 640 × 480 at 6.321 s after reset | 1024 × 768 at 15.739 s  |
+| 1280 × 1024  | 640 × 480 at 6.581 s after reset | 1280 × 1024 at 16.576 s |
+
+The second run cleared the 640 × 480 splash to black at 15.257 s, before the
+resolution changed. BIOS/firmware used a separate 720 × 400 mode and is outside
+this Windows boot area. Timing includes emulated disk and firmware work and is
+not a universal XP duration.
+
 - `ntoskrnl.exe` bitmap 1 contains the complete background, lettering and bar border.
   Its stored palette is black; the running kernel supplies the visible palette.
 - Bitmap 8 is the 22 × 9 blue three-block progress sprite.
 - The progress clip is x=259, y=354, width=118, height=9.
-- The sprite advances 8 pixels at approximately 100 ms intervals. Loading can
-  pause it: the recorded run paused at x=323 for about 1.6 seconds.
-- The palette fades in through stepped brightness levels before progress begins.
-  The recording reached full brightness around 9.64 seconds after reset and
-  cleared the splash at 14.37 seconds. These include VM firmware and disk time.
+- The sprite advances 8 pixels at approximately 100 ms intervals. Disk loading
+  can pause it; the first recording included a roughly 1.6-second pause.
+- The palette fades through discrete colors before the progress sprite appears.
 
-`xp-sp3-boot.png` is an unmodified VM capture. Palette entries in
-`tools/xp-assets.json` were recovered by matching the bitmap's pixel indices to
-this fully illuminated frame. Unused index 15 retains black. The generated
-`BootScreen.png` matches every pixel outside the animated bar in this capture;
-`tests/boot-assets.test.ts` checks this without a tolerance.
+## Unaltered evidence
 
-## Browser implementation and scope
+- `xp-display-1280x1024.png`: actual applied desktop setting, 1280 × 1024 capture.
+- `xp-sp3-boot.png`: boot capture from the 1024 × 768 desktop run, 640 × 480.
+- `xp-sp3-boot-from-1280.png`: boot capture from the 1280 × 1024 run, 640 × 480.
+- `xp-boot-cleared.png`: black boot framebuffer before the resolution transition.
+- `app-1280x1024.jpg` and `app-1920x1080.jpg`: direct browser captures during boot.
 
-The app uses the extracted background and sprite, not recreated text, borders,
-logos or gradients. The framebuffer scales uniformly with black letterboxing;
-it does not stretch to a different aspect ratio. Pointer and keyboard input do
-not skip the boot screen, and the cursor is hidden while it is displayed.
+All files above are original capture bytes, without resizing, cropping, or
+compositing. Browser capture output is JPEG, so it is visual/layout evidence,
+not a lossless pixel-equivalence assertion. The earlier scaled screenshot
+comparison is not used as evidence.
 
-The browser uses a two-second stepped brightness fade and an uninterrupted
-1.8-second progress loop. Its splash lasts 4.6 seconds; VM disk stalls and
-firmware timing are not reproduced. The fade sheet applies twenty palettes
-observed in the VM recording to the original bitmap, including black and full
-brightness; it does not generate intermediate colors. Welcome/login remains a separate area to compare.
+Palette entries in `tools/xp-assets.json` were recovered by matching the bitmap's
+pixel indices to the VM recording. Unused index 15 retains black. The generated
+`BootScreen.png` matches every pixel outside the animated bar in both native VM
+boot captures; `tests/boot-assets.test.ts` checks this without a tolerance.
+
+## Browser behavior
+
+The boot framebuffer stays at 640 × 480 CSS pixels at browser viewports of
+640 × 480, 1024 × 768, 1280 × 1024, and 1920 × 1080. Larger viewports center it
+on black without enlarging the original artwork. A web page cannot switch the
+physical monitor's video mode: this is the explicit browser boundary. Viewports
+smaller than the framebuffer fit it down to keep the screen accessible; those
+are not claimed as native XP video modes.
+
+The app waits for the boot images to decode before starting the two-second
+palette fade. The fade sheet applies twenty palettes observed in the VM to the
+original bitmap; it does not invent intermediate colors. Progress uses the
+original sprite with the observed 8-pixel steps. Boot completion waits for the
+fade, document storage, and the existing bounded game-library initialization,
+rather than a fixed total duration. Fast startup can finish before a full
+progress loop; slower startup keeps it running. VM disk stalls are not replayed
+as fake browser work.
+
+The final palette is painted, then the boot framebuffer is cleared to black
+before Welcome appears. Pointer and keyboard input do not skip boot; the cursor
+is hidden. Restart repeats the decode/fade/handoff lifecycle. Welcome/login
+appearance and behavior remain the next separate area.
+
+Verification includes the native bitmap comparisons, a delayed-startup test
+that checks the black handoff before Welcome, passive-input tests, and in-app
+browser checks. The production build reached the desktop with no console errors.
 
 ## Repeat the comparison
 
-Run `bun run xp:vm --instance boot-reference`, then enter:
+Run `bun run xp:vm --instance boot-reference`, select the desired desktop mode
+inside XP, then enter:
 
 ```
 record-boot /private/tmp/xp-boot-reference
 ```
 
 This resets only that VM and records PNGs plus elapsed timestamps for 20 seconds.
-Use `screenshot <path>` for a single frame and `quit` when finished. Do not use
+Use `screenshot <path>` for later frames and `quit` when finished. Do not use
 `--write-base` for reference comparisons.
 
-Run `bun run extract:xp-assets` to regenerate the resources from the authenticated
-ISO, and `bun run verify:xp-assets` to check their provenance. Compare screenshots
-at matching dimensions with `bun run compare:xp-ui <xp.png> <app.png> <prefix>`;
-compare moving progress frames at the same animation position.
+Run `bun run extract:xp-assets` to regenerate resources from the authenticated
+ISO, and `bun run verify:xp-assets` to check provenance. Keep all captures at
+their original dimensions. `bun run compare:xp-ui <xp.png> <app.png> <prefix>`
+requires equal dimensions; do not resize either input to satisfy that check.

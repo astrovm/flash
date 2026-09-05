@@ -7,8 +7,8 @@ const MIN_WINDOW_WIDTH = 340;
 const MIN_WINDOW_HEIGHT = 240;
 const RESIZE_DIRECTIONS = ["n", "s", "e", "w", "ne", "nw", "se", "sw"];
 const MOVE_SIZE_STEP = 8;
-// Include the kernel palette fade before the visible progress cycle.
-const BOOT_DURATION_MS = 4600;
+// Let the observed palette fade finish before handing off to the desktop mode.
+const BOOT_FADE_DURATION_MS = 2000;
 const WELCOME_DURATION_MS = 1200;
 const APP_VERSION = "26.07.28-2";
 const offlineManager = window.AstroOffline.createManager({

@@ -10,6 +10,37 @@ import {
 
 afterEach(cleanupShells);
 
+test("boot waits for startup readiness and clears the framebuffer before Welcome", async () => {
+  let releaseLibrary;
+  const shell = await loadShell({
+    gameLibraryManager: {
+      subscribe: () => () => {},
+      initialize: () =>
+        new Promise((resolve) => {
+          releaseLibrary = resolve;
+        }),
+    },
+  });
+  const boot = shell.document.getElementById("boot-screen")!;
+  let clearedBeforeWelcome = false;
+  const observer = new shell.window.MutationObserver(() => {
+    if (boot.classList.contains("boot-handoff") && !boot.hidden) {
+      clearedBeforeWelcome =
+        shell.document.getElementById("welcome-screen")!.hidden;
+    }
+  });
+  observer.observe(boot, { attributes: true });
+  await new Promise((resolve) => setTimeout(resolve, 2100));
+  expect(boot.classList.contains("boot-running")).toBeTrue();
+  expect(boot.hidden).toBeFalse();
+  releaseLibrary({});
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  expect(clearedBeforeWelcome).toBeTrue();
+  expect(boot.hidden).toBeTrue();
+  expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  observer.disconnect();
+});
+
 test("boot is passive and advances to Welcome when startup completes", async () => {
   const shell = await loadShell();
   const boot = shell.document.getElementById("boot-screen")!;
