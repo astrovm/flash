@@ -821,6 +821,8 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
       addDesktopMenuItem(submenu, "Folder", "new-folder");
       addDesktopMenuItem(submenu, "Text Document", "new-text");
       addDesktopMenuItem(submenu, "Bitmap Image", "new-bitmap");
+      addDesktopSeparator(submenu);
+      addDesktopMenuItem(submenu, "Upload from Computer...", "upload");
     });
     addDesktopSeparator(menu);
     addDesktopMenuItem(menu, "Properties", "properties");
@@ -922,6 +924,38 @@ const setupDesktopContextMenu = () => {
         refreshDesktop();
         selectDesktopIcon(node.id);
         beginDesktopRename(node.id);
+      } else if (action === "upload") {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.multiple = true;
+        input.addEventListener(
+          "change",
+          async () => {
+            try {
+              for (const file of input.files) {
+                const content =
+                  file.type.startsWith("text/") ||
+                  /\.(txt|log|csv|md)$/i.test(file.name)
+                    ? await file.text()
+                    : await dataUrlFromBlob(file);
+                await fileOps.createFile(fs.DESKTOP, file.name, {
+                  content,
+                  size: file.size,
+                });
+              }
+            } catch (error) {
+              await XPDialogs.alert(
+                error.message || "The file operation failed.",
+                "File operation",
+                "error",
+              );
+            } finally {
+              refreshDesktop();
+            }
+          },
+          { once: true },
+        );
+        input.click();
       } else if (action === "paste") {
         pasteIntoFolder(fs.DESKTOP);
       } else if (action === "open" && itemId) {

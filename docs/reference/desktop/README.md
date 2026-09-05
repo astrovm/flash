@@ -39,11 +39,12 @@ pixels across platforms.
 - Repair additive and range selection, desktop keyboard focus, canceled drags,
   and sorting without implicitly enabling Auto Arrange.
 - Ask for confirmation once when deleting from the context menu.
-- Remove the non-XP desktop upload command, which discarded binary contents.
+- Retain desktop upload as an intentional web convenience. Text is stored as
+  text and binary files as data URLs, preserving bytes instead of discarding them.
 
 ## Validation
 
-`bun run test` passed 197 tests across 38 files, including eight desktop
+`bun run test` passed 198 tests across 38 files, including nine desktop
 interaction regression tests, type checking, browser JavaScript validation, and
 sourced-icon validation. Formatting, lint, and the production build passed.
 

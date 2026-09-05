@@ -3,6 +3,38 @@ import { afterEach, expect, test } from "bun:test";
 import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
 afterEach(cleanupShells);
 
+test("desktop upload preserves text and binary contents", async () => {
+  const s = await login(await loadShell());
+  const pickers = [];
+  s.window.HTMLInputElement.prototype.click = function () {
+    pickers.push(this);
+  };
+  openMenu(s).querySelector('[data-action="upload"]').click();
+  const [picker] = pickers;
+  expect(picker.multiple).toBeTrue();
+  Object.defineProperty(picker, "files", {
+    value: [
+      new s.window.File(["hello"], "note.txt"),
+      new s.window.File([new Uint8Array([0, 255, 128, 42])], "bytes.bin", {
+        type: "application/octet-stream",
+      }),
+    ],
+  });
+  picker.dispatchEvent(new s.window.Event("change"));
+  const fs = s.window.VirtualFS;
+  for (
+    let attempt = 0;
+    attempt < 50 && !fs.findChild(fs.DESKTOP, "bytes.bin");
+    attempt++
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  expect(fs.findChild(fs.DESKTOP, "note.txt").content).toBe("hello");
+  const binary = fs.findChild(fs.DESKTOP, "bytes.bin");
+  expect(binary.content).toBe("data:application/octet-stream;base64,AP+AKg==");
+  expect(binary.size).toBe(4);
+});
+
 const openMenu = (shell) => {
   shell.document.getElementById("desktop-icons").dispatchEvent(
     new shell.window.MouseEvent("contextmenu", {
