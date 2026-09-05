@@ -260,6 +260,8 @@ const mountPaint = (shell, instance) => {
   let fileId = null;
   let fileName = "untitled";
   let dirty = false;
+  let editRevision = 0;
+  let savedContent;
   let tool = "rect-select";
   const panelState = {
     toolbox: true,
@@ -306,7 +308,10 @@ const mountPaint = (shell, instance) => {
         [primary, secondary] = detail.colors;
         updateCurrent();
       }
-      if (detail?.dirty !== false) dirty = true;
+      if (detail?.dirty !== false) {
+        dirty = true;
+        editRevision++;
+      }
     },
     onPosition({ x, y }) {
       status.querySelector("[data-paint-position]").textContent =
@@ -416,6 +421,7 @@ const mountPaint = (shell, instance) => {
       engine.replace(await imageFromFile(file));
       fileId = file.id;
       fileName = file.name;
+      savedContent = file.content;
       dirty = false;
       setTitle();
       updateFileCommandState();
@@ -441,16 +447,21 @@ const mountPaint = (shell, instance) => {
       ? destination.name
       : `${destination.name}.bmp`;
     try {
+      const revisionToSave = editRevision;
       const content = await encodeCanvas(canvas, normalizedName);
       const file = destination.existingId
-        ? shell.setFileContent(destination.existingId, content)
-        : shell.createFile(destination.parentId, normalizedName, content);
+        ? await shell.setFileContent(destination.existingId, content, {
+            expectedContent:
+              destination.existingId === fileId ? savedContent : undefined,
+          })
+        : await shell.createFile(destination.parentId, normalizedName, content);
       fileId = file.id;
       fileName = file.name;
-      dirty = false;
+      savedContent = content;
+      dirty = editRevision !== revisionToSave;
       setTitle();
       updateFileCommandState();
-      return true;
+      return !dirty;
     } catch (error) {
       await shell.dialogs.alert(
         error.message || "The picture could not be saved.",

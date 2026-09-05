@@ -58,6 +58,7 @@ export async function loadShell({
         Promise.resolve(callback({ name: "astro-flash-files" })),
     },
   });
+  window.ASTRO_FS_MEMORY_ONLY = true;
   const { document } = window;
   activeWindows.add(window);
   for (const [key, value] of Object.entries(initialStorage)) {

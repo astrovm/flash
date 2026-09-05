@@ -450,7 +450,7 @@ const applicationContext = (win) => ({
   saveFile: (options) => XPDialogs.saveFile(options),
   myPictures: fs.MY_PICTURES,
   dataUrlFromBlob,
-  setFileContent: (id, content) => fs.setContent(id, content),
+  setFileContent: (id, content, options) => fs.setContent(id, content, options),
   createFile: (parentId, name, content) =>
     fs.createFile(parentId, name, { content }),
   setWallpaper(dataUrl) {

@@ -243,18 +243,20 @@
       const planned = decisions.find(
         ({ conflict }) => conflict.source.id === id,
       );
-      if (
-        planned?.decision === "replace" &&
-        planned.conflict.source.type === "file" &&
-        planned.conflict.existing.type === "file"
-      ) {
-        fs.destroy(planned.conflict.existing.id);
-      }
-      results.push(
-        mode === "cut"
-          ? fs.move(id, destinationId)
-          : fs.copy(id, destinationId),
-      );
+      await fs.transaction(() => {
+        if (
+          planned?.decision === "replace" &&
+          planned.conflict.source.type === "file" &&
+          planned.conflict.existing.type === "file"
+        ) {
+          fs.destroy(planned.conflict.existing.id);
+        }
+        results.push(
+          mode === "cut"
+            ? fs.move(id, destinationId)
+            : fs.copy(id, destinationId),
+        );
+      });
       options.onProgress?.({
         completed: index + 1,
         total: ids.length,
@@ -351,15 +353,16 @@
     canPaste,
     copy,
     cut,
-    paste,
+    paste: (...args) => fs.transaction(() => paste(...args)),
     getConflicts,
     pasteWithConflicts,
     createFolder,
     createFile,
     rename,
-    removeToBin,
-    permanentlyDelete,
-    restore,
+    removeToBin: (...args) => fs.transaction(() => removeToBin(...args)),
+    permanentlyDelete: (...args) =>
+      fs.transaction(() => permanentlyDelete(...args)),
+    restore: (...args) => fs.transaction(() => restore(...args)),
     emptyRecycleBin,
     resetForTests,
   };

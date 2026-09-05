@@ -784,24 +784,40 @@ const wireProjectSettings = (win) => {
     });
   });
   restoreDesktopButton.addEventListener("click", async () => {
-    const accepted = await XPDialogs.confirm(
-      "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
-      "Restore Default Desktop",
-      "question",
-    );
-    if (!accepted) return;
-    restoreDefaultDesktop();
-    window.location.reload();
+    try {
+      const accepted = await XPDialogs.confirm(
+        "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
+        "Restore Default Desktop",
+        "question",
+      );
+      if (!accepted) return;
+      await restoreDefaultDesktop();
+      window.location.reload();
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
+      );
+    }
   });
   resetButton.addEventListener("click", async () => {
-    const accepted = await XPDialogs.confirm(
-      "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
-      "Reset Astro Flash",
-      "warning",
-    );
-    if (!accepted) return;
-    resetAstroFlash();
-    window.location.reload();
+    try {
+      const accepted = await XPDialogs.confirm(
+        "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
+        "Reset Astro Flash",
+        "warning",
+      );
+      if (!accepted) return;
+      await resetAstroFlash();
+      window.location.reload();
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
+      );
+    }
   });
 };
 

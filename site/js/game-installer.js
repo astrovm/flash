@@ -296,6 +296,7 @@
       }
       dependencies.signal?.throwIfAborted();
       const resolvedLaunchPath = cacheKey(origin, game.uuid, launchFile.path);
+      dependencies.signal?.throwIfAborted();
       const metadata = Object.assign({}, game, {
         id: "flashpoint:" + game.uuid,
         type: "swf",
@@ -316,13 +317,251 @@
     }
   }
 
+  // Read only the ZIP index into memory. File bodies remain in the temporary
+  // browser file and are read in small chunks as each cache response consumes them.
+  async function readArchiveIndex(blob, limits = {}) {
+    const max = { ...DEFAULT_LIMITS, ...limits };
+    const tailOffset = Math.max(0, blob.size - 65557);
+    const tail = new Uint8Array(await blob.slice(tailOffset).arrayBuffer());
+    const view = new DataView(tail.buffer);
+    let end = -1;
+    for (let i = tail.length - 22; i >= 0; i--) {
+      if (
+        view.getUint32(i, true) === 0x06054b50 &&
+        i + 22 + view.getUint16(i + 20, true) === tail.length
+      ) {
+        end = i;
+        break;
+      }
+    }
+    if (
+      end < 0 ||
+      view.getUint16(end + 4, true) ||
+      view.getUint16(end + 6, true)
+    )
+      fail("ZIP metadata is invalid");
+    const count = view.getUint16(end + 10, true);
+    const size = view.getUint32(end + 12, true);
+    const offset = view.getUint32(end + 16, true);
+    if (
+      count > max.maxFiles ||
+      count === 65535 ||
+      view.getUint16(end + 8, true) !== count ||
+      size > 8 * 1024 * 1024 ||
+      offset + size !== tailOffset + end
+    )
+      fail("ZIP metadata is invalid or too large");
+    const bytes = new Uint8Array(
+      await blob.slice(offset, offset + size).arrayBuffer(),
+    );
+    const directory = new DataView(bytes.buffer);
+    const decoder = new TextDecoder("utf-8", { fatal: true });
+    const files = [];
+    const names = new Set();
+    let position = 0,
+      total = 0;
+    for (let index = 0; index < count; index++) {
+      if (
+        position + 46 > bytes.length ||
+        directory.getUint32(position, true) !== 0x02014b50
+      )
+        fail("ZIP metadata is invalid");
+      const flags = directory.getUint16(position + 8, true),
+        method = directory.getUint16(position + 10, true);
+      const crc = directory.getUint32(position + 16, true),
+        compressed = directory.getUint32(position + 20, true),
+        expanded = directory.getUint32(position + 24, true);
+      const nameLength = directory.getUint16(position + 28, true),
+        extraLength = directory.getUint16(position + 30, true),
+        commentLength = directory.getUint16(position + 32, true);
+      const localOffset = directory.getUint32(position + 42, true);
+      const next = position + 46 + nameLength + extraLength + commentLength;
+      if (
+        next > bytes.length ||
+        flags & 1 ||
+        ![0, 8].includes(method) ||
+        directory.getUint16(position + 34, true) !== 0 ||
+        compressed === 0xffffffff ||
+        expanded === 0xffffffff ||
+        localOffset >= offset
+      )
+        fail("Unsupported or invalid ZIP entry");
+      const path = safeArchivePath(
+        decoder.decode(
+          bytes.subarray(position + 46, position + 46 + nameLength),
+        ),
+      );
+      if (names.has(path.toLowerCase())) fail("ZIP contains duplicate paths");
+      names.add(path.toLowerCase());
+      if (
+        expanded > max.maxFileBytes ||
+        (total += expanded) > max.maxTotalBytes
+      )
+        fail("ZIP is too large");
+      const header = new DataView(
+        await blob.slice(localOffset, localOffset + 30).arrayBuffer(),
+      );
+      if (
+        header.byteLength !== 30 ||
+        header.getUint32(0, true) !== 0x04034b50 ||
+        header.getUint16(8, true) !== method ||
+        header.getUint16(6, true) !== flags
+      )
+        fail("ZIP local header is invalid");
+      const localNameLength = header.getUint16(26, true);
+      const start =
+        localOffset + 30 + localNameLength + header.getUint16(28, true);
+      const localName = decoder.decode(
+        await blob
+          .slice(localOffset + 30, localOffset + 30 + localNameLength)
+          .arrayBuffer(),
+      );
+      if (
+        localName !== path ||
+        start + compressed > offset ||
+        (method === 0 && compressed !== expanded)
+      )
+        fail("ZIP local header is invalid");
+      if (!path.endsWith("/"))
+        files.push({ path, method, crc, compressed, expanded, start });
+      else if (expanded !== 0) fail("ZIP directory contains file data");
+      position = next;
+    }
+    if (position !== bytes.length) fail("ZIP metadata is invalid");
+    return files;
+  }
+
+  const crcTable = Uint32Array.from({ length: 256 }, (_, index) => {
+    let value = index;
+    for (let bit = 0; bit < 8; bit++)
+      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+    return value >>> 0;
+  });
+  async function installStream(record, blob, dependencies = {}) {
+    const { cache, store, signal, Inflate } = dependencies;
+    const origin = dependencies.origin || location.origin;
+    const game = validateCatalogRecord(record, { origin });
+    if (game.packageType !== "gamezip") fail("A GameZIP archive is required");
+    signal?.throwIfAborted();
+    const files = await readArchiveIndex(blob, dependencies.limits);
+    const launch = files.find(
+      (file) =>
+        file.path.toLowerCase() ===
+        archiveLaunchPath(game.launchCommand).toLowerCase(),
+    );
+    if (!launch) fail("ZIP does not contain the launch SWF");
+    const written = [];
+    try {
+      for (const file of files) {
+        signal?.throwIfAborted();
+        const key = cacheKey(origin, game.uuid, file.path);
+        const stream = new TransformStream();
+        const writer = stream.writable.getWriter();
+        let cacheError, decoder, pending;
+        const cached = cache
+          .put(key, makeResponse(stream.readable, dependencies, file.path))
+          .catch((error) => {
+            cacheError = error;
+            void writer.abort(error).catch(() => {});
+          });
+        // Include the active response in rollback even if cache.put fails late.
+        written.push(key);
+        const abort = () => {
+          const reason =
+            signal.reason ||
+            new DOMException("Download cancelled", "AbortError");
+          pending?.reject(reason);
+          decoder?.terminate();
+          void writer.abort(reason).catch(() => {});
+        };
+        signal?.addEventListener("abort", abort, { once: true });
+        let length = 0,
+          crc = 0xffffffff;
+        try {
+          if (file.method === 8) {
+            decoder = new Inflate((error, data) => {
+              const current = pending;
+              pending = null;
+              if (error) current?.reject(error);
+              else current?.resolve(data);
+            });
+          }
+          for (
+            let offset = 0;
+            offset < file.compressed || offset === 0;
+            offset += 4096
+          ) {
+            signal?.throwIfAborted();
+            const chunk = new Uint8Array(
+              await blob
+                .slice(
+                  file.start + offset,
+                  file.start + Math.min(offset + 4096, file.compressed),
+                )
+                .arrayBuffer(),
+            );
+            signal?.throwIfAborted();
+            const final = offset + 4096 >= file.compressed;
+            const data = decoder
+              ? await new Promise((resolve, reject) => {
+                  pending = { resolve, reject };
+                  decoder.push(chunk, final);
+                })
+              : chunk;
+            length += data.length;
+            if (length > file.expanded)
+              fail("ZIP file exceeds its declared size");
+            for (const byte of data)
+              crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
+            if (data.length) await writer.write(data);
+            if (final) break;
+          }
+          if (length !== file.expanded || (crc ^ 0xffffffff) >>> 0 !== file.crc)
+            fail("ZIP file is corrupt");
+          await writer.close();
+          await cached;
+          if (cacheError) throw cacheError;
+        } catch (error) {
+          await writer.abort(error).catch(() => {});
+          await cached;
+          throw error;
+        } finally {
+          signal?.removeEventListener("abort", abort);
+          decoder?.terminate();
+          writer.releaseLock();
+        }
+      }
+      signal?.throwIfAborted();
+      const launchPath = cacheKey(origin, game.uuid, launch.path);
+      const metadata = {
+        ...game,
+        id: `flashpoint:${game.uuid}`,
+        type: "swf",
+        source: "Flashpoint Archive",
+        launchPath,
+        basePath: launchPath.slice(0, launchPath.lastIndexOf("/") + 1),
+      };
+      await putMetadata(store, metadata);
+      return metadata;
+    } catch (error) {
+      await Promise.all(
+        written.map((key) => cache.delete(key).catch(() => {})),
+      );
+      throw error;
+    }
+  }
+
   async function installLegacy(record, swfBytes, dependencies = {}) {
-    if (!(swfBytes instanceof Uint8Array))
+    if (
+      !(swfBytes instanceof Uint8Array) &&
+      typeof swfBytes?.stream !== "function"
+    )
       fail("Game file must be a Uint8Array");
-    if (swfBytes.byteLength === 0) fail("Game file is empty");
+    const fileSize = swfBytes.byteLength ?? swfBytes.size;
+    if (fileSize === 0) fail("Game file is empty");
     const maxFileBytes =
       dependencies.limits?.maxFileBytes || DEFAULT_LIMITS.maxFileBytes;
-    if (swfBytes.byteLength > maxFileBytes) fail("Game file is too large");
+    if (fileSize > maxFileBytes) fail("Game file is too large");
     if (
       !dependencies.cache ||
       typeof dependencies.cache.put !== "function" ||
@@ -346,10 +585,16 @@
     const launchPath = archiveLaunchPath(game.launchCommand);
     const resolvedLaunchPath = cacheKey(origin, game.uuid, launchPath);
     try {
+      dependencies.signal?.throwIfAborted();
       await dependencies.cache.put(
         resolvedLaunchPath,
-        makeResponse(swfBytes, dependencies, launchPath),
+        makeResponse(
+          swfBytes.stream ? swfBytes.stream() : swfBytes,
+          dependencies,
+          launchPath,
+        ),
       );
+      dependencies.signal?.throwIfAborted();
       const metadata = Object.assign({}, game, {
         id: "flashpoint:" + game.uuid,
         type: "swf",
@@ -408,6 +653,8 @@
     validateZipMetadata,
     validateZipEntries,
     install,
+    installStream,
+    readArchiveIndex,
     installLegacy,
     uninstall,
   };

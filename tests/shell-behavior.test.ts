@@ -963,7 +963,7 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   const prompt = commandWindow.querySelector<HTMLElement>(
     ".xp-terminal-prompt span",
   )!;
-  const run = (command: string) => {
+  const run = async (command: string) => {
     input.value = command;
     input.dispatchEvent(
       new shell.window.KeyboardEvent("keydown", {
@@ -971,6 +971,7 @@ test("Command Prompt uses the XP console layout and operates on the shared files
         key: "Enter",
       }),
     );
+    await flushShell();
   };
 
   expect(commandWindow.style.width).toBe("668px");
@@ -1001,11 +1002,11 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   expect(commandWindow.classList.contains("maximized")).toBeTrue();
   commandWindow.querySelector<HTMLButtonElement>(".maximize-btn")!.click();
 
-  run('cd "My Documents"');
+  await run('cd "My Documents"');
   expect(prompt.textContent).toBe(
     "C:\\Documents and Settings\\Administrator\\My Documents>",
   );
-  run("echo Hello XP>note.txt");
+  await run("echo Hello XP>note.txt");
   const note = shell.window.VirtualFS.findChild(
     shell.window.VirtualFS.MY_DOCUMENTS,
     "note.txt",
@@ -1013,13 +1014,13 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   expect(note).not.toBeNull();
   expect(shell.window.VirtualFS.getContent(note.id)).toBe("Hello XP\n");
 
-  run("type note.txt");
+  await run("type note.txt");
   expect(output.textContent).toContain("Hello XP");
-  run("notepad note.txt");
+  await run("notepad note.txt");
   expect(
     shell.document.querySelector('.xp-window[data-game="__notepad"]'),
   ).not.toBeNull();
-  run("del note.txt");
+  await run("del note.txt");
   expect(shell.window.VirtualFS.getNode(note.id)).toBeNull();
 });
 

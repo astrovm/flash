@@ -37,14 +37,10 @@
 
   // ---- Storage (localStorage in the browser, in-memory under Node) ----
 
-  let persistentStorage = false;
   const storage = (() => {
     try {
       if (typeof localStorage !== "undefined") {
-        const probe = "__vfs_probe__";
-        localStorage.setItem(probe, "1");
-        localStorage.removeItem(probe);
-        persistentStorage = true;
+        localStorage.getItem(STORAGE_KEY);
         return localStorage;
       }
     } catch (error) {
@@ -59,15 +55,15 @@
   })();
 
   let nodes = {};
-  let writable = !root?.document;
+  const memoryOnly = !root?.document || root.ASTRO_FS_MEMORY_ONLY === true;
+  let writable = memoryOnly;
   let ready = Promise.resolve();
-  let releaseWriter = null;
-  let writerRequest = null;
-  const readOnlyMessage = !persistentStorage
-    ? "Browser storage is unavailable. Enable site storage before saving files."
-    : !root?.navigator?.locks && root?.document
-      ? "This browser cannot safely coordinate file writes. Use a browser with Web Locks support to save files."
-      : "Files are read-only in this tab while another Astro Flash tab is open. Close the other tab, then save again.";
+  let database;
+  let batchDepth = 0;
+  let operations = Promise.resolve();
+  let initializationError;
+  const readOnlyMessage =
+    "Document storage is unavailable. Enable browser site storage and reopen Astro Flash.";
   const listeners = new Set();
   const fileTypeHandlers = new Map();
   let folderHandler = null;
@@ -243,6 +239,7 @@
   };
 
   const emitChange = () => {
+    if (batchDepth) return;
     try {
       save();
     } finally {
@@ -615,10 +612,15 @@
     return node.type === "file" ? node.content : null;
   };
 
-  const setContent = (id, content, { name } = {}) => {
+  const setContent = (id, content, { name, expectedContent } = {}) => {
     const node = requireNode(id);
     if (node.type !== "file") {
       throw new Error(`VirtualFS: "${node.name}" is not a file`);
+    }
+    if (expectedContent !== undefined && node.content !== expectedContent) {
+      throw new Error(
+        "This file changed in another window. Save a copy to preserve your draft.",
+      );
     }
     if (name !== undefined) {
       const validName = validateName(name);
@@ -673,57 +675,169 @@
 
   load();
 
-  if (root?.document) {
-    const locks = root.navigator?.locks;
-    const acquireWriter = () => {
-      if (!locks || !persistentStorage) return Promise.resolve();
-      writerRequest = new root.AbortController();
-      const signal = writerRequest.signal;
-      return new Promise((resolve) => {
-        const hold = async () => {
-          if (signal.aborted) {
-            resolve();
-            return;
-          }
-          load();
-          writable = true;
-          notify();
-          resolve();
-          let releaseThisWriter;
-          await new Promise((release) => {
-            releaseThisWriter = release;
-            releaseWriter = release;
-          });
-          if (releaseWriter === releaseThisWriter) releaseWriter = null;
-        };
-        void locks
-          .request("astro-flash-files", { ifAvailable: true }, (lock) => {
-            if (lock) return hold();
-            resolve();
-            // Queue a takeover, but let the read-only tab finish booting now.
-            void locks
-              .request("astro-flash-files", { signal }, hold)
-              .catch(() => {});
-          })
-          .catch(() => resolve());
-      });
-    };
-    ready = acquireWriter();
-    root.addEventListener("storage", (event) => {
-      if (!writable && (event.key === STORAGE_KEY || event.key === null)) {
-        load();
-        notify();
-      }
+  const cloneNodes = (source) =>
+    Object.fromEntries(
+      Object.entries(source).map(([id, node]) => [
+        id,
+        { ...node, children: [...node.children] },
+      ]),
+    );
+  const sameNode = (a, b) =>
+    a &&
+    b &&
+    Object.keys(a).length === Object.keys(b).length &&
+    Object.keys(a).every((key) =>
+      key === "children"
+        ? a.children.length === b.children.length &&
+          a.children.every((id, index) => id === b.children[index])
+        : a[key] === b[key],
+    );
+  const requestValue = (request) =>
+    new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
     });
-    root.addEventListener("pagehide", () => {
+  const transactionDone = (transaction) =>
+    new Promise((resolve, reject) => {
+      transaction.oncomplete = resolve;
+      transaction.onabort = () =>
+        reject(
+          transaction.error || new Error("Document transaction was aborted."),
+        );
+      transaction.onerror = () => {};
+    });
+  const refresh = async () => {
+    const transaction = database.transaction("nodes", "readonly");
+    const done = transactionDone(transaction);
+    const [records] = await Promise.all([
+      requestValue(transaction.objectStore("nodes").getAll()),
+      done,
+    ]);
+    nodes = Object.fromEntries(records.map((node) => [node.id, node]));
+    notify();
+  };
+  const channel =
+    !memoryOnly && root.BroadcastChannel
+      ? new root.BroadcastChannel("astro-documents")
+      : null;
+  const enqueue = (operation) => {
+    const result = operations.then(operation);
+    operations = result.catch(() => {});
+    return result;
+  };
+  if (!memoryOnly) {
+    ready = (async () => {
+      if (!root.indexedDB) throw new Error(readOnlyMessage);
+      const opening = root.indexedDB.open("astro-documents", 1);
+      opening.onupgradeneeded = () => {
+        opening.result.createObjectStore("nodes", { keyPath: "id" });
+        opening.result.createObjectStore("meta");
+      };
+      database = await requestValue(opening);
+      database.onversionchange = () => {
+        writable = false;
+        database.close();
+      };
+      // The marker and all migrated records commit atomically. Failed migration
+      // leaves the old data intact; a concurrent tab observes the same marker.
+      const transaction = database.transaction(["nodes", "meta"], "readwrite");
+      const done = transactionDone(transaction);
+      const marker = transaction.objectStore("meta").get("initialized");
+      marker.onsuccess = () => {
+        if (!marker.result) {
+          for (const node of Object.values(nodes))
+            transaction.objectStore("nodes").put({ ...node, revision: 1 });
+          transaction.objectStore("meta").put(true, "initialized");
+        }
+      };
+      await done;
+      await refresh();
+      writable = true;
+      // Keep the legacy snapshot as a recovery backup. It is never written again.
+    })().catch((error) => {
+      initializationError = error;
       writable = false;
-      writerRequest?.abort();
-      releaseWriter?.();
     });
-    root.addEventListener("pageshow", (event) => {
-      if (event.persisted) ready = acquireWriter();
+    channel?.addEventListener("message", () => {
+      void enqueue(async () => {
+        await ready;
+        if (writable) await refresh();
+      });
+    });
+    root.addEventListener?.("pageshow", () => {
+      void enqueue(async () => {
+        await ready;
+        if (writable) await refresh();
+      });
     });
   }
+  const transaction = (mutate, { retry = 0 } = {}) => {
+    if (batchDepth || memoryOnly) return mutate();
+    const commit = async (remainingRetries) => {
+      await ready;
+      if (!writable) throw initializationError || new Error(readOnlyMessage);
+      const before = nodes;
+      nodes = cloneNodes(before);
+      let result, candidate;
+      batchDepth++;
+      try {
+        result = mutate();
+        candidate = nodes;
+      } finally {
+        batchDepth--;
+        nodes = before;
+      }
+      const changed = [
+        ...new Set([...Object.keys(before), ...Object.keys(candidate)]),
+      ].filter((id) => !sameNode(before[id], candidate[id]));
+      if (!changed.length) return result;
+      const write = database.transaction("nodes", "readwrite");
+      const done = transactionDone(write);
+      const store = write.objectStore("nodes");
+      let conflict = false;
+      for (const id of changed) {
+        const read = store.get(id);
+        read.onsuccess = () => {
+          if ((read.result?.revision || 0) !== (before[id]?.revision || 0)) {
+            conflict = true;
+            write.abort();
+            return;
+          }
+          if (candidate[id]) {
+            candidate[id].revision = (before[id]?.revision || 0) + 1;
+            store.put(candidate[id]);
+          } else store.delete(id);
+        };
+      }
+      try {
+        await done;
+      } catch (error) {
+        await refresh();
+        if (conflict && remainingRetries > 0)
+          return commit(remainingRetries - 1);
+        if (conflict)
+          throw new Error(
+            "These files changed in another tab. Review the latest files and try again.",
+            { cause: error },
+          );
+        if (error.name === "QuotaExceededError")
+          throw new Error(
+            "Browser storage is full. Free some space and save again.",
+            { cause: error },
+          );
+        throw error;
+      }
+      nodes = candidate;
+      notify();
+      channel?.postMessage("changed");
+      return result;
+    };
+    return enqueue(() => commit(retry));
+  };
+  const mutate =
+    (operation) =>
+    (...args) =>
+      transaction(() => operation(...args));
 
   return {
     get ready() {
@@ -734,6 +848,11 @@
     },
     ...WELL_KNOWN,
     WELL_KNOWN,
+    transaction,
+    close: () => {
+      channel?.close();
+      database?.close();
+    },
     subscribe,
     getNode,
     getParent,
@@ -747,19 +866,19 @@
     isProtected,
     getSize,
     validateName,
-    createFolder,
-    createFile,
-    rename,
-    move,
-    copy,
-    remove,
-    delete: remove,
-    restore,
-    destroy,
-    emptyRecycleBin,
-    reset,
+    createFolder: mutate(createFolder),
+    createFile: mutate(createFile),
+    rename: mutate(rename),
+    move: mutate(move),
+    copy: mutate(copy),
+    remove: mutate(remove),
+    delete: mutate(remove),
+    restore: mutate(restore),
+    destroy: mutate(destroy),
+    emptyRecycleBin: mutate(emptyRecycleBin),
+    reset: mutate(reset),
     getContent,
-    setContent,
+    setContent: mutate(setContent),
     registerFileType,
     registerFolderHandler,
     open,

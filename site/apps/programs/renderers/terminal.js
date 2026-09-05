@@ -19,7 +19,7 @@ export const renderTerminal = (context, program, programId) => {
   };
   updatePrompt();
 
-  input.addEventListener("keydown", (event) => {
+  input.addEventListener("keydown", async (event) => {
     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
       event.preventDefault();
       if (!history.length) return;
@@ -39,7 +39,16 @@ export const renderTerminal = (context, program, programId) => {
     if (command.trim()) history.push(command);
     historyIndex = history.length;
     const enteredPrompt = session.prompt;
-    const result = session.execute(command);
+    input.disabled = true;
+    let result;
+    try {
+      result = await session.execute(command);
+    } catch (error) {
+      result = { output: error.message };
+    } finally {
+      input.disabled = false;
+      input.focus();
+    }
     if (result.exit) return;
     if (result.clear) output.textContent = "";
     else

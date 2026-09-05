@@ -1259,14 +1259,22 @@ export const createSystemRuntime = (context) => {
         restoreAll.type = "button";
         restoreAll.className = "recycle-task";
         restoreAll.textContent = "Restore all items";
-        restoreAll.addEventListener("click", () => {
-          fs.getChildren(fs.RECYCLE_BIN).forEach((node) => {
+        restoreAll.addEventListener("click", async () => {
+          try {
             try {
-              fileOps.restore([node.id]);
+              await fileOps.restore(
+                fs.getChildren(fs.RECYCLE_BIN).map((node) => node.id),
+              );
             } catch (error) {
-              console.error(error);
+              await XPDialogs.alert(error.message, "Restore files", "error");
             }
-          });
+          } catch (error) {
+            await XPDialogs.alert(
+              error.message || "The file operation failed.",
+              "File operation",
+              "error",
+            );
+          }
         });
 
         tasksBody.append(emptyBin, restoreAll);
@@ -1274,9 +1282,17 @@ export const createSystemRuntime = (context) => {
         restoreSelected.type = "button";
         restoreSelected.className = "recycle-task";
         restoreSelected.textContent = "Restore selected items";
-        restoreSelected.addEventListener("click", () => {
-          const ids = selectedExplorerNodes(win);
-          if (ids.length) fileOps.restore(ids);
+        restoreSelected.addEventListener("click", async () => {
+          try {
+            const ids = selectedExplorerNodes(win);
+            if (ids.length) await fileOps.restore(ids);
+          } catch (error) {
+            await XPDialogs.alert(
+              error.message || "The file operation failed.",
+              "File operation",
+              "error",
+            );
+          }
         });
         const deleteSelected = document.createElement("button");
         deleteSelected.type = "button";
@@ -1289,7 +1305,7 @@ export const createSystemRuntime = (context) => {
             "Are you sure you want to permanently delete the selected items?",
             "Confirm File Delete",
             "warning",
-          ).then((yes) => yes && fileOps.permanentlyDelete(ids));
+          ).then(async (yes) => yes && (await fileOps.permanentlyDelete(ids)));
         });
         tasksBody.append(restoreSelected, deleteSelected);
       } else {
@@ -1753,176 +1769,187 @@ export const createSystemRuntime = (context) => {
         if (focusFirst)
           explorerMenu.querySelector("button:not(:disabled)")?.focus();
       };
-      chrome.addEventListener("click", (event) => {
-        const menuButton = event.target.closest("[data-explorer-menu]");
-        const menuName = menuButton?.dataset.explorerMenu;
-        if (menuName) {
-          showExplorerMenu(menuName, menuButton, false);
-          return;
-        }
-        const commandButton = event.target.closest("[data-explorer-command]");
-        const command = commandButton?.dataset.explorerCommand;
-        if (command) {
-          if (commandButton.classList.contains("has-submenu")) {
-            showExplorerSubmenu(command, commandButton, false);
+      chrome.addEventListener("click", async (event) => {
+        try {
+          const menuButton = event.target.closest("[data-explorer-menu]");
+          const menuName = menuButton?.dataset.explorerMenu;
+          if (menuName) {
+            showExplorerMenu(menuName, menuButton, false);
             return;
           }
-          const selected = selectedExplorerNodes(win);
-          if (
-            command === "new" &&
-            ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)
-          )
-            fileOps.createFolder(win.currentFolderId, "New Folder");
-          if (command === "close") closeGameWindow(win.gameId);
-          if (command === "cut") fileOps.cut(selected);
-          if (command === "copy") fileOps.copy(selected);
-          if (
-            command === "paste" &&
-            ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)
-          )
-            pasteIntoFolder(win.currentFolderId);
-          if (command === "delete") confirmRecycleDelete(selected);
-          if (command === "delete-current" || command === "rename-current")
-            XPDialogs.alert(
-              `Cannot ${command === "delete-current" ? "delete" : "rename"} My Computer.`,
-              "Windows Explorer",
-              "info",
-            );
-          if (command === "rename") {
-            const name = window.prompt("Rename", fs.getNode(selected[0]).name);
-            if (name !== null) fileOps.rename(selected[0], name);
-          }
-          if (
-            ["thumbnails", "tiles", "icons", "list", "details"].includes(
-              command,
+          const commandButton = event.target.closest("[data-explorer-command]");
+          const command = commandButton?.dataset.explorerCommand;
+          if (command) {
+            if (commandButton.classList.contains("has-submenu")) {
+              showExplorerSubmenu(command, commandButton, false);
+              return;
+            }
+            const selected = selectedExplorerNodes(win);
+            if (
+              command === "new" &&
+              ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)
             )
-          ) {
-            win.explorerView = command;
-            renderExplorerItems(win);
-          }
-          if (command === "documents") openSystemWindow("__my-documents");
-          if (command === "properties-current")
-            openShellProperties(selected[0] || win.currentFolderId);
-          if (command === "select-all")
-            win.el
-              .querySelectorAll(".explorer-item")
-              .forEach((item) => item.classList.add("selected"));
-          if (command === "invert-selection")
-            win.el
-              .querySelectorAll(".explorer-item")
-              .forEach((item) => item.classList.toggle("selected"));
-          if (command === "refresh") renderExplorerItems(win);
-          if (command === "help-center") openHelpAndSupport();
-          if (command === "about-windows") openAboutWindows();
-          if (
-            [
-              "add-favorite",
-              "organize-favorites",
-              "msn",
-              "radio-guide",
-              "map-network-drive",
-              "disconnect-network-drive",
-              "synchronize",
-              "folder-options",
-              "windows-legal",
-              "choose-details",
-            ].includes(command)
-          )
-            XPDialogs.alert(
-              "This Windows XP feature is not available in Astro Flash Collection.",
-              commandButton.textContent.trim() || "Windows Explorer",
-              "info",
+              await fileOps.createFolder(win.currentFolderId, "New Folder");
+            if (command === "close") closeGameWindow(win.gameId);
+            if (command === "cut") fileOps.cut(selected);
+            if (command === "copy") fileOps.copy(selected);
+            if (
+              command === "paste" &&
+              ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)
+            )
+              pasteIntoFolder(win.currentFolderId);
+            if (command === "delete") confirmRecycleDelete(selected);
+            if (command === "delete-current" || command === "rename-current")
+              XPDialogs.alert(
+                `Cannot ${command === "delete-current" ? "delete" : "rename"} My Computer.`,
+                "Windows Explorer",
+                "info",
+              );
+            if (command === "rename") {
+              const name = window.prompt(
+                "Rename",
+                fs.getNode(selected[0]).name,
+              );
+              if (name !== null) await fileOps.rename(selected[0], name);
+            }
+            if (
+              ["thumbnails", "tiles", "icons", "list", "details"].includes(
+                command,
+              )
+            ) {
+              win.explorerView = command;
+              renderExplorerItems(win);
+            }
+            if (command === "documents") openSystemWindow("__my-documents");
+            if (command === "properties-current")
+              openShellProperties(selected[0] || win.currentFolderId);
+            if (command === "select-all")
+              win.el
+                .querySelectorAll(".explorer-item")
+                .forEach((item) => item.classList.add("selected"));
+            if (command === "invert-selection")
+              win.el
+                .querySelectorAll(".explorer-item")
+                .forEach((item) => item.classList.toggle("selected"));
+            if (command === "refresh") renderExplorerItems(win);
+            if (command === "help-center") openHelpAndSupport();
+            if (command === "about-windows") openAboutWindows();
+            if (
+              [
+                "add-favorite",
+                "organize-favorites",
+                "msn",
+                "radio-guide",
+                "map-network-drive",
+                "disconnect-network-drive",
+                "synchronize",
+                "folder-options",
+                "windows-legal",
+                "choose-details",
+              ].includes(command)
+            )
+              XPDialogs.alert(
+                "This Windows XP feature is not available in Astro Flash Collection.",
+                commandButton.textContent.trim() || "Windows Explorer",
+                "info",
+              );
+            explorerMenu.hidden = true;
+            explorerSubmenu.hidden = true;
+            explorerMenuButtons.forEach((button) =>
+              button.setAttribute("aria-expanded", "false"),
             );
-          explorerMenu.hidden = true;
-          explorerSubmenu.hidden = true;
-          explorerMenuButtons.forEach((button) =>
-            button.setAttribute("aria-expanded", "false"),
-          );
-          return;
-        }
-        const subcommandButton = event.target.closest(
-          "[data-explorer-subcommand]",
-        );
-        const subcommand = subcommandButton?.dataset.explorerSubcommand;
-        if (subcommand) {
-          if (subcommand === "search-current") openSearchDialog();
-          if (subcommand === "folders-bar") {
-            content.classList.add("folders-visible");
-            chrome
-              .querySelector('[data-explorer-action="folders"]')
-              ?.setAttribute("aria-pressed", "true");
+            return;
           }
-          if (subcommand === "up-one-level") {
+          const subcommandButton = event.target.closest(
+            "[data-explorer-subcommand]",
+          );
+          const subcommand = subcommandButton?.dataset.explorerSubcommand;
+          if (subcommand) {
+            if (subcommand === "search-current") openSearchDialog();
+            if (subcommand === "folders-bar") {
+              content.classList.add("folders-visible");
+              chrome
+                .querySelector('[data-explorer-action="folders"]')
+                ?.setAttribute("aria-pressed", "true");
+            }
+            if (subcommand === "up-one-level") {
+              const parent =
+                fs.getParent(win.currentFolderId) || fs.getNode(fs.DESKTOP);
+              if (parent) navigateExplorer(win, parent.id);
+            }
+            if (subcommand === "my-computer")
+              navigateExplorer(win, fs.MY_COMPUTER);
+            if (subcommand === "properties-current")
+              openShellProperties(win.currentFolderId);
+            if (
+              [
+                "manage",
+                "map-network-drive",
+                "disconnect-network-drive",
+                "create-shortcut-current",
+                "delete-current",
+                "standard-buttons",
+                "address-bar",
+                "links-toolbar",
+                "lock-toolbars",
+                "customize-toolbar",
+                "favorites-bar",
+                "history-bar",
+                "tip-of-day",
+                "home-page",
+              ].includes(subcommand)
+            )
+              XPDialogs.alert(
+                "This Windows XP feature is not available in Astro Flash Collection.",
+                subcommandButton.textContent.trim() || "Windows Explorer",
+                "info",
+              );
+            explorerMenu.hidden = true;
+            explorerSubmenu.hidden = true;
+            explorerMenuButtons.forEach((button) =>
+              button.setAttribute("aria-expanded", "false"),
+            );
+            return;
+          }
+          const actionButton = event.target.closest("[data-explorer-action]");
+          const action = actionButton?.dataset.explorerAction;
+          if (!action) return;
+          if (action === "back") explorerBack(win);
+          if (action === "forward") explorerForward(win);
+          if (action === "up") {
             const parent =
-              fs.getParent(win.currentFolderId) || fs.getNode(fs.DESKTOP);
+              fs.getParent(win.currentFolderId) ||
+              ([fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId)
+                ? fs.getNode(fs.DESKTOP)
+                : null);
             if (parent) navigateExplorer(win, parent.id);
           }
-          if (subcommand === "my-computer")
-            navigateExplorer(win, fs.MY_COMPUTER);
-          if (subcommand === "properties-current")
-            openShellProperties(win.currentFolderId);
-          if (
-            [
-              "manage",
-              "map-network-drive",
-              "disconnect-network-drive",
-              "create-shortcut-current",
-              "delete-current",
-              "standard-buttons",
-              "address-bar",
-              "links-toolbar",
-              "lock-toolbars",
-              "customize-toolbar",
-              "favorites-bar",
-              "history-bar",
-              "tip-of-day",
-              "home-page",
-            ].includes(subcommand)
-          )
-            XPDialogs.alert(
-              "This Windows XP feature is not available in Astro Flash Collection.",
-              subcommandButton.textContent.trim() || "Windows Explorer",
-              "info",
-            );
-          explorerMenu.hidden = true;
-          explorerSubmenu.hidden = true;
-          explorerMenuButtons.forEach((button) =>
-            button.setAttribute("aria-expanded", "false"),
+          if (action === "folders") {
+            const foldersVisible = content.classList.toggle("folders-visible");
+            actionButton.setAttribute("aria-pressed", String(foldersVisible));
+          }
+          if (action === "view") {
+            const views = ["tiles", "thumbnails", "icons", "list", "details"];
+            win.explorerView =
+              views[
+                (views.indexOf(win.explorerView || "tiles") + 1) % views.length
+              ];
+            renderExplorerItems(win);
+          }
+          if (action === "search") openSearchDialog();
+          if (action === "go") {
+            const input = chrome.querySelector(".explorer-address input");
+            const destination = fs.resolvePath(input.value);
+            if (destination && fs.getNode(destination)?.type === "folder")
+              navigateExplorer(win, destination);
+            else input.value = fs.getPath(win.currentFolderId);
+          }
+        } catch (error) {
+          await XPDialogs.alert(
+            error.message || "The file operation failed.",
+            "File operation",
+            "error",
           );
-          return;
-        }
-        const actionButton = event.target.closest("[data-explorer-action]");
-        const action = actionButton?.dataset.explorerAction;
-        if (!action) return;
-        if (action === "back") explorerBack(win);
-        if (action === "forward") explorerForward(win);
-        if (action === "up") {
-          const parent =
-            fs.getParent(win.currentFolderId) ||
-            ([fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId)
-              ? fs.getNode(fs.DESKTOP)
-              : null);
-          if (parent) navigateExplorer(win, parent.id);
-        }
-        if (action === "folders") {
-          const foldersVisible = content.classList.toggle("folders-visible");
-          actionButton.setAttribute("aria-pressed", String(foldersVisible));
-        }
-        if (action === "view") {
-          const views = ["tiles", "thumbnails", "icons", "list", "details"];
-          win.explorerView =
-            views[
-              (views.indexOf(win.explorerView || "tiles") + 1) % views.length
-            ];
-          renderExplorerItems(win);
-        }
-        if (action === "search") openSearchDialog();
-        if (action === "go") {
-          const input = chrome.querySelector(".explorer-address input");
-          const destination = fs.resolvePath(input.value);
-          if (destination && fs.getNode(destination)?.type === "folder")
-            navigateExplorer(win, destination);
-          else input.value = fs.getPath(win.currentFolderId);
         }
       });
       explorerMenu.addEventListener("pointerover", (event) => {

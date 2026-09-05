@@ -282,7 +282,7 @@ const wireDesktopIconDrag = (icon) => {
       if (desktopDragged) {
         if (dropTarget) {
           if (dropTarget.action === "recycle") {
-            fileOps.removeToBin(eligibility.filesystemIds);
+            await fileOps.removeToBin(eligibility.filesystemIds);
           } else {
             fileOps.cut(eligibility.filesystemIds);
             await pasteIntoFolder(dropTarget.destinationId);
@@ -539,13 +539,13 @@ const beginDesktopRename = (id) => {
   input.focus();
   input.select();
   let finished = false;
-  function finish(save) {
+  async function finish(save) {
     if (finished) return;
     finished = true;
     document.removeEventListener("pointerdown", onOutsidePointerDown, true);
     if (save) {
       try {
-        fileOps.rename(id, input.value);
+        await fileOps.rename(id, input.value);
       } catch (error) {
         console.error(error);
       }
@@ -825,150 +825,168 @@ const setupDesktopContextMenu = () => {
     );
   });
 
-  menu.addEventListener("click", (event) => {
-    const action = event.target.closest("[data-action]")?.dataset.action;
-    if (!action) return;
+  menu.addEventListener("click", async (event) => {
+    try {
+      const action = event.target.closest("[data-action]")?.dataset.action;
+      if (!action) return;
 
-    const itemId = menu.dataset.itemId || null;
-    const selectedFsIds = getSelectedFilesystemIds();
-    if (action.startsWith("sort-")) {
-      saveDesktopLayoutSettings({
-        ...getDesktopLayoutSettings(),
-        sort: action.slice(5),
-        autoArrange: true,
-      });
-      layoutDesktopIcons(true);
-    } else if (action === "auto-arrange") {
-      const settings = getDesktopLayoutSettings();
-      saveDesktopLayoutSettings({
-        ...settings,
-        autoArrange: !settings.autoArrange,
-      });
-      if (!settings.autoArrange) layoutDesktopIcons(true);
-    } else if (action === "align-grid") {
-      const settings = getDesktopLayoutSettings();
-      saveDesktopLayoutSettings({
-        ...settings,
-        alignToGrid: !settings.alignToGrid,
-      });
-    } else if (action === "show-icons") {
-      const settings = getDesktopLayoutSettings();
-      const showIcons = settings.showIcons === false;
-      saveDesktopLayoutSettings({ ...settings, showIcons });
-      document.getElementById("desktop-icons").hidden = !showIcons;
-    } else if (action === "refresh") {
-      refreshDesktop();
-    } else if (
-      action === "new-folder" ||
-      action === "new-text" ||
-      action === "new-bitmap"
-    ) {
-      const node =
-        action === "new-folder"
-          ? fileOps.createFolder(fs.DESKTOP, "New Folder")
-          : fileOps.createFile(
-              fs.DESKTOP,
-              action === "new-bitmap"
-                ? "New Bitmap Image.bmp"
-                : "New Text Document.txt",
-            );
-      refreshDesktop();
-      selectDesktopIcon(node.id);
-      beginDesktopRename(node.id);
-    } else if (action === "upload") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.multiple = true;
-      input.addEventListener(
-        "change",
-        async () => {
-          for (const file of input.files) {
-            fileOps.createFile(fs.DESKTOP, file.name, {
-              content: file.type.startsWith("text/") ? await file.text() : "",
-              size: file.size,
-            });
-          }
-          refreshDesktop();
-        },
-        { once: true },
+      const itemId = menu.dataset.itemId || null;
+      const selectedFsIds = getSelectedFilesystemIds();
+      if (action.startsWith("sort-")) {
+        saveDesktopLayoutSettings({
+          ...getDesktopLayoutSettings(),
+          sort: action.slice(5),
+          autoArrange: true,
+        });
+        layoutDesktopIcons(true);
+      } else if (action === "auto-arrange") {
+        const settings = getDesktopLayoutSettings();
+        saveDesktopLayoutSettings({
+          ...settings,
+          autoArrange: !settings.autoArrange,
+        });
+        if (!settings.autoArrange) layoutDesktopIcons(true);
+      } else if (action === "align-grid") {
+        const settings = getDesktopLayoutSettings();
+        saveDesktopLayoutSettings({
+          ...settings,
+          alignToGrid: !settings.alignToGrid,
+        });
+      } else if (action === "show-icons") {
+        const settings = getDesktopLayoutSettings();
+        const showIcons = settings.showIcons === false;
+        saveDesktopLayoutSettings({ ...settings, showIcons });
+        document.getElementById("desktop-icons").hidden = !showIcons;
+      } else if (action === "refresh") {
+        refreshDesktop();
+      } else if (
+        action === "new-folder" ||
+        action === "new-text" ||
+        action === "new-bitmap"
+      ) {
+        const node =
+          action === "new-folder"
+            ? await fileOps.createFolder(fs.DESKTOP, "New Folder")
+            : await fileOps.createFile(
+                fs.DESKTOP,
+                action === "new-bitmap"
+                  ? "New Bitmap Image.bmp"
+                  : "New Text Document.txt",
+              );
+        refreshDesktop();
+        selectDesktopIcon(node.id);
+        beginDesktopRename(node.id);
+      } else if (action === "upload") {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.multiple = true;
+        input.addEventListener(
+          "change",
+          async () => {
+            try {
+              for (const file of input.files) {
+                await fileOps.createFile(fs.DESKTOP, file.name, {
+                  content: file.type.startsWith("text/")
+                    ? await file.text()
+                    : "",
+                  size: file.size,
+                });
+              }
+              refreshDesktop();
+            } catch (error) {
+              await XPDialogs.alert(
+                error.message || "The file operation failed.",
+                "File operation",
+                "error",
+              );
+            }
+          },
+          { once: true },
+        );
+        input.click();
+      } else if (action === "paste") {
+        pasteIntoFolder(fs.DESKTOP);
+      } else if (action === "open" && itemId) {
+        openDesktopItem(itemId);
+      } else if (action === "explore-my-computer") {
+        openDesktopItem("__my-computer");
+      } else if (action === "search-my-computer") {
+        openSearchDialog();
+      } else if (action === "manage-my-computer") {
+        XPDialogs.alert(
+          "Computer Management is not available in Astro Flash Collection.",
+          "Computer Management",
+          "info",
+        );
+      } else if (
+        action === "map-network-drive" ||
+        action === "disconnect-network-drive"
+      ) {
+        XPDialogs.alert(
+          "This Windows XP network feature is not available in Astro Flash Collection.",
+          action === "map-network-drive"
+            ? "Map Network Drive"
+            : "Disconnect Network Drive",
+          "info",
+        );
+      } else if (action === "create-computer-shortcut") {
+        const shortcut = await fileOps.createFile(
+          fs.DESKTOP,
+          "Shortcut to My Computer.game",
+          { app: "__my-computer" },
+        );
+        refreshDesktop();
+        selectDesktopIcon(shortcut.id);
+      } else if (action === "hide-my-computer") {
+        saveDesktopSystemIcons({
+          ...getDesktopSystemIcons(),
+          "__my-computer": false,
+        });
+        refreshDesktop();
+      } else if (action === "rename-my-computer") {
+        beginSystemDesktopRename("__my-computer");
+      } else if (action === "computer-properties") {
+        openSystemProperties();
+      } else if (action === "explore" && itemId === "__recycle-bin") {
+        openDesktopItem(itemId);
+      } else if (action === "empty-recycle-bin") {
+        confirmEmptyRecycleBin();
+      } else if (action === "create-recycle-shortcut") {
+        const shortcut = await fileOps.createFile(
+          fs.DESKTOP,
+          "Shortcut to Recycle Bin.game",
+          { app: "__recycle-bin" },
+        );
+        selectDesktopIcon(shortcut.id);
+      } else if (action === "recycle-properties") {
+        openShellProperties(fs.RECYCLE_BIN);
+      } else if (action === "cut") {
+        fileOps.cut(selectedFsIds);
+      } else if (action === "copy") {
+        fileOps.copy(selectedFsIds);
+      } else if (action === "delete") {
+        XPDialogs.confirm(
+          selectedFsIds.length === 1
+            ? "Are you sure you want to send this item to the Recycle Bin?"
+            : "Are you sure you want to send these items to the Recycle Bin?",
+          "Confirm File Delete",
+          "warning",
+        ).then((yes) => yes && confirmRecycleDelete(selectedFsIds));
+      } else if (action === "rename" && selectedFsIds[0]) {
+        beginDesktopRename(selectedFsIds[0]);
+      } else if (action === "item-properties" && selectedFsIds[0]) {
+        openShellProperties(selectedFsIds[0]);
+      } else if (action === "properties") {
+        openSystemWindow("__display-properties");
+      }
+      closeDesktopContextMenu();
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
       );
-      input.click();
-    } else if (action === "paste") {
-      pasteIntoFolder(fs.DESKTOP);
-    } else if (action === "open" && itemId) {
-      openDesktopItem(itemId);
-    } else if (action === "explore-my-computer") {
-      openDesktopItem("__my-computer");
-    } else if (action === "search-my-computer") {
-      openSearchDialog();
-    } else if (action === "manage-my-computer") {
-      XPDialogs.alert(
-        "Computer Management is not available in Astro Flash Collection.",
-        "Computer Management",
-        "info",
-      );
-    } else if (
-      action === "map-network-drive" ||
-      action === "disconnect-network-drive"
-    ) {
-      XPDialogs.alert(
-        "This Windows XP network feature is not available in Astro Flash Collection.",
-        action === "map-network-drive"
-          ? "Map Network Drive"
-          : "Disconnect Network Drive",
-        "info",
-      );
-    } else if (action === "create-computer-shortcut") {
-      const shortcut = fileOps.createFile(
-        fs.DESKTOP,
-        "Shortcut to My Computer.game",
-        { app: "__my-computer" },
-      );
-      refreshDesktop();
-      selectDesktopIcon(shortcut.id);
-    } else if (action === "hide-my-computer") {
-      saveDesktopSystemIcons({
-        ...getDesktopSystemIcons(),
-        "__my-computer": false,
-      });
-      refreshDesktop();
-    } else if (action === "rename-my-computer") {
-      beginSystemDesktopRename("__my-computer");
-    } else if (action === "computer-properties") {
-      openSystemProperties();
-    } else if (action === "explore" && itemId === "__recycle-bin") {
-      openDesktopItem(itemId);
-    } else if (action === "empty-recycle-bin") {
-      confirmEmptyRecycleBin();
-    } else if (action === "create-recycle-shortcut") {
-      const shortcut = fileOps.createFile(
-        fs.DESKTOP,
-        "Shortcut to Recycle Bin.game",
-        { app: "__recycle-bin" },
-      );
-      selectDesktopIcon(shortcut.id);
-    } else if (action === "recycle-properties") {
-      openShellProperties(fs.RECYCLE_BIN);
-    } else if (action === "cut") {
-      fileOps.cut(selectedFsIds);
-    } else if (action === "copy") {
-      fileOps.copy(selectedFsIds);
-    } else if (action === "delete") {
-      XPDialogs.confirm(
-        selectedFsIds.length === 1
-          ? "Are you sure you want to send this item to the Recycle Bin?"
-          : "Are you sure you want to send these items to the Recycle Bin?",
-        "Confirm File Delete",
-        "warning",
-      ).then((yes) => yes && confirmRecycleDelete(selectedFsIds));
-    } else if (action === "rename" && selectedFsIds[0]) {
-      beginDesktopRename(selectedFsIds[0]);
-    } else if (action === "item-properties" && selectedFsIds[0]) {
-      openShellProperties(selectedFsIds[0]);
-    } else if (action === "properties") {
-      openSystemWindow("__display-properties");
     }
-    closeDesktopContextMenu();
   });
   menu.addEventListener("keydown", (event) => {
     const items = [...menu.querySelectorAll("button:not(:disabled)")];

@@ -243,7 +243,7 @@ const login = (playSound = true) => {
     networkConnectedAt = Date.now();
     if (!shellInitialized) {
       shellInitialized = true;
-      syncGameFiles();
+      await syncGameFiles();
       buildDesktopIcons();
       buildPlaces();
       setupSearch();

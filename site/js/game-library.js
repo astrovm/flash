@@ -192,9 +192,71 @@
       }
     });
 
+  const createTemporaryArchive = async (
+    response,
+    {
+      signal,
+      onProgress,
+      maxBytes = MAX_DOWNLOAD_BYTES,
+      storageManager = root.navigator?.storage,
+    } = {},
+  ) => {
+    if (!response.ok)
+      throw new Error(`Game download failed (${response.status}).`);
+    const expected = Number(response.headers.get("Content-Length")) || null;
+    if (expected && expected > maxBytes)
+      throw new Error("This game is larger than the supported download limit.");
+    if (!storageManager?.getDirectory)
+      throw new Error(
+        "This browser does not support temporary file storage for game downloads.",
+      );
+    const directory = await storageManager.getDirectory();
+    const name = `astro-download-${root.crypto.randomUUID()}.zip`;
+    const handle = await directory.getFileHandle(name, { create: true });
+    let writable, reader;
+    const cleanup = () => directory.removeEntry(name);
+    const abort = () => {
+      void reader?.cancel(signal.reason).catch(() => {});
+    };
+    try {
+      signal?.throwIfAborted();
+      writable = await handle.createWritable();
+      if (!response.body) throw new Error("Game download has no body.");
+      reader = response.body.getReader();
+      signal?.addEventListener("abort", abort, { once: true });
+      let received = 0;
+      while (true) {
+        signal?.throwIfAborted();
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.byteLength;
+        if (received > maxBytes)
+          throw new Error(
+            "This game is larger than the supported download limit.",
+          );
+        await writable.write(value);
+        onProgress?.({ loaded: received, total: expected });
+      }
+      signal?.throwIfAborted();
+      await writable.close();
+      writable = null;
+      return { blob: await handle.getFile(), cleanup };
+    } catch (error) {
+      await reader?.cancel(error).catch(() => {});
+      await writable?.abort().catch(() => {});
+      await cleanup().catch(() => {});
+      throw error;
+    } finally {
+      signal?.removeEventListener("abort", abort);
+      reader?.releaseLock();
+    }
+  };
+
   const createManager = ({
     installer = root.AstroGameInstaller,
     unzipSync = root.fflate?.unzipSync,
+    temporaryArchive = root.document ? createTemporaryArchive : null,
+    Inflate = root.fflate?.AsyncInflate,
     unzip = root.fflate?.unzip ? unzipInBackground : null,
     fetchObject = root.fetch?.bind(root),
     cachesObject = root.caches,
@@ -370,25 +432,61 @@
         }
         await storagePolicy.requestPersistence(storageManager);
         const response = await fetchObject(checked.downloadUrl, { signal });
-        const bytes = await readDownload(response, { onProgress });
+        let archive;
         let metadata;
         try {
-          metadata =
-            checked.packageType === "legacy"
-              ? await installer.installLegacy(checked, bytes, {
-                  cache,
-                  store,
-                  origin,
-                })
-              : await installer.install(checked, bytes, {
-                  cache,
-                  store,
-                  unzip: unzip || unzipSync,
-                  signal,
-                  origin,
-                });
+          if (temporaryArchive) {
+            archive = await temporaryArchive(response, {
+              onProgress,
+              signal,
+              storageManager,
+              maxBytes:
+                checked.packageType === "legacy"
+                  ? MAX_LEGACY_ASSET_BYTES
+                  : MAX_DOWNLOAD_BYTES,
+            });
+            metadata =
+              checked.packageType === "legacy"
+                ? await installer.installLegacy(checked, archive.blob, {
+                    cache,
+                    store,
+                    origin,
+                    signal,
+                  })
+                : await installer.installStream(checked, archive.blob, {
+                    cache,
+                    store,
+                    origin,
+                    signal,
+                    Inflate,
+                  });
+          } else {
+            // Injectable byte-array path for non-browser consumers.
+            const bytes = await readDownload(response, { onProgress });
+            metadata =
+              checked.packageType === "legacy"
+                ? await installer.installLegacy(checked, bytes, {
+                    cache,
+                    store,
+                    origin,
+                    signal,
+                  })
+                : await installer.install(checked, bytes, {
+                    cache,
+                    store,
+                    unzip: unzip || unzipSync,
+                    signal,
+                    origin,
+                  });
+          }
         } catch (error) {
           throw storagePolicy.normalizeError(error);
+        } finally {
+          await archive
+            ?.cleanup()
+            .catch((error) =>
+              console.error("Could not remove temporary game archive:", error),
+            );
         }
 
         if (checked.logoUrl) {
@@ -498,6 +596,7 @@
     asGameConfig,
     assetRewriteRules,
     readDownload,
+    createTemporaryArchive,
     createMetadataStore,
     createManager,
   };

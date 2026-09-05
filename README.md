@@ -96,10 +96,16 @@ additional files as they are requested.
 Automatic updates prepare the new version in the background and leave the current
 page open. Reopen the site to use it, or press **Update Now** to reload immediately.
 
-Documents are stored in browser local storage. One tab at a time can change files;
-other tabs show saved changes and take over when the writing tab closes. Saving
-requires persistent storage and the browser Web Locks API. Failed saves keep the
-editor draft open and show an error.
+Documents are stored as individual records in IndexedDB. Existing localStorage
+files migrate automatically in one transaction; the old snapshot remains as a
+recovery backup. Saves wait for the database commit, and conflicting changes from
+another tab are rejected so the editor can keep its draft. All tabs can write.
+
+Game installation streams the download to a temporary file in the browser's
+private filesystem (OPFS), validates the ZIP index, and extracts one file at a
+time into Cache Storage. Extraction uses bounded reads and checks sizes and CRCs.
+Cancellation or failure removes partial cache entries and the temporary archive.
+This requires a browser supporting IndexedDB, OPFS, and streaming responses.
 
 ## Deployment
 
