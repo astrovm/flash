@@ -1440,6 +1440,12 @@ test("user selection requires the tile and restores the switched session", async
   document.getElementById("switch-user-confirm")!.click();
   expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
   expect(document.getElementById("welcome-user-status")!.hidden).toBeFalse();
+  expect(document.getElementById("welcome-user-status")!.textContent).toBe(
+    "1 program running.",
+  );
+  document.getElementById("welcome-user-status")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeTrue();
   document.getElementById("welcome-screen")!.click();
   await flushShell();
   expect(document.getElementById("desktop")!.hidden).toBeTrue();
@@ -1510,4 +1516,73 @@ test("Task Manager exposes real applications without fabricated metrics", async 
   expect(
     manager.querySelector('[data-task-manager-window="__my-documents"]'),
   ).toBeNull();
+});
+
+test("startup plays one sound and manual session transitions keep their XP sounds", async () => {
+  const shell = await loadShell();
+  const sounds = [];
+  shell.window.Audio = function Audio(path) {
+    sounds.push(path);
+    return { volume: 1, play: () => Promise.resolve() };
+  };
+  await login(shell);
+  expect(sounds).toEqual(["assets/xp/sounds/startup.wav"]);
+  const { document } = shell;
+  document.getElementById("log-off-button").click();
+  document.getElementById("switch-user-confirm").click();
+  document.getElementById("login-user").click();
+  await flushShell();
+  expect(sounds).toEqual([
+    "assets/xp/sounds/startup.wav",
+    "assets/xp/sounds/logoff.wav",
+    "assets/xp/sounds/logon.wav",
+  ]);
+  document.getElementById("log-off-button").click();
+  document.getElementById("logoff-confirm").click();
+  await flushShell();
+  expect(sounds.at(-1)).toBe("assets/xp/sounds/shutdown.wav");
+  document.getElementById("login-user").click();
+  await flushShell();
+  expect(sounds).toEqual([
+    "assets/xp/sounds/startup.wav",
+    "assets/xp/sounds/logoff.wav",
+    "assets/xp/sounds/logon.wav",
+    "assets/xp/sounds/shutdown.wav",
+    "assets/xp/sounds/startup.wav",
+  ]);
+});
+
+test("switched-session program count reflects the open windows", async () => {
+  const shell = await login(await loadShell());
+  clickStartAction(shell, "documents");
+  clickStartAction(shell, "computer");
+  shell.document.getElementById("switch-user-confirm").click();
+  const status = shell.document.getElementById("welcome-user-status");
+  expect(status.textContent).toBe("2 programs running.");
+  expect(status.querySelectorAll(".welcome-program-digit").length).toBe(1);
+  expect(status.querySelector(".welcome-program-many")).not.toBeNull();
+});
+
+test("a Welcome gesture retries startup audio blocked by autoplay", async () => {
+  const shell = await loadShell();
+  const attempts = [];
+  shell.window.Audio = function Audio(path) {
+    attempts.push(path);
+    return {
+      volume: 1,
+      play: () =>
+        attempts.length === 1
+          ? Promise.reject(new Error("NotAllowedError"))
+          : Promise.resolve(),
+    };
+  };
+  shell.completeBoot();
+  await flushShell();
+  shell.document.getElementById("welcome-screen").click();
+  await flushShell();
+  expect(attempts).toEqual([
+    "assets/xp/sounds/startup.wav",
+    "assets/xp/sounds/startup.wav",
+  ]);
+  expect(shell.document.getElementById("desktop").hidden).toBeFalse();
 });

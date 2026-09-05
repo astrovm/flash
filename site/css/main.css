@@ -380,18 +380,14 @@ iframe {
 .welcome-message {
   display: none;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 384px;
-  padding-right: 30px;
   margin: 0;
-  transform: translate(-50%, -50%);
-  color: #eff7ff;
-  font:
-    italic bold 48px/normal "Arial",
-    sans-serif;
-  text-align: right;
-  text-shadow: 2px 3px 0 #3151b5;
+  --logon-text: url("../assets/logon-text/welcome.png");
+  left: calc(50% - 38px);
+  top: calc(50% - 19px);
+  width: 200px;
+  height: 35px;
+  padding: 0;
+  transform: none;
 }
 #welcome-screen.auto-login .welcome-message {
   display: block;
@@ -417,15 +413,13 @@ iframe {
 }
 .welcome-instruction {
   position: absolute;
-  top: calc(50% + 41px);
-  right: calc(50% + 40px);
-  width: min(344px, calc(50vw - 48px));
   margin: 0;
-  color: #eff7ff;
-  font:
-    19px/normal "Arial",
-    sans-serif;
-  text-align: right;
+  --logon-text: url("../assets/logon-text/instruction.png");
+  top: calc(50% + 46px);
+  right: calc(50% + 46px);
+  width: 255px;
+  height: 18px;
+  font-size: 0;
 }
 #login-user {
   position: absolute;
@@ -478,13 +472,21 @@ iframe {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  --logon-text: url("../assets/logon-text/astro.png");
+  position: relative;
+  width: 40px;
+  height: 23px;
 }
 #welcome-user-status {
   display: block;
-  margin-top: 1px;
   font:
     bold 11px/13px "Tahoma",
     sans-serif;
+  --logon-text: url("../assets/logon-text/logged-on.png");
+  position: relative;
+  width: 57px;
+  height: 11px;
+  margin-top: 2px;
 }
 #welcome-turn-off {
   position: absolute;
@@ -492,8 +494,6 @@ iframe {
   left: 25px;
   bottom: 48px;
   display: flex;
-  align-items: center;
-  gap: 2px;
   padding: 0;
   border: 0;
   background: none;
@@ -502,6 +502,8 @@ iframe {
     19px/normal "Tahoma",
     sans-serif;
   cursor: var(--xp-link-cursor, pointer);
+  align-items: flex-start;
+  gap: 4px;
 }
 #welcome-turn-off:hover,
 #welcome-turn-off:focus-visible {
@@ -549,7 +551,7 @@ iframe {
 
 #welcome-screen.logging-in .welcome-message {
   display: block;
-  left: calc(50% - 192px);
+  left: calc(50% - 233px);
 }
 #welcome-screen.logging-in .welcome-wordmark,
 #welcome-screen.logging-in .welcome-instruction,
@@ -561,11 +563,140 @@ iframe {
   opacity: 1;
 }
 #welcome-screen.logging-in #welcome-user-status {
-  color: #00309c;
+  --logon-text: url("../assets/logon-text/loading.png");
+  width: 182px;
+  color: transparent;
 }
 #welcome-screen.logging-in,
 #welcome-screen.logging-in #login-user {
   cursor:
     url("../assets/xp/system/cursors/WorkingInBackground.png") 0 0,
     progress;
+}
+
+/* XP GDI rasterized the ISO fonts. Keep real text for accessibility while
+   displaying those glyph pixels without the host browser's font smoothing. */
+#welcome-screen:focus {
+  outline: none;
+}
+.welcome-message,
+.welcome-instruction,
+.welcome-username,
+#welcome-user-status,
+#welcome-turn-off > span:last-child {
+  color: transparent;
+  text-shadow: none;
+}
+.welcome-message::before,
+.welcome-message::after,
+.welcome-instruction::before,
+.welcome-username::before,
+#welcome-user-status::before,
+#welcome-turn-off > span:last-child::before,
+.welcome-instruction > span::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #eff7ff;
+  mask: var(--logon-text) left top / auto no-repeat;
+}
+.welcome-message::before {
+  background: #3151b5;
+  transform: translate(2px, 3px);
+}
+.welcome-instruction > span::before {
+  display: none;
+}
+.welcome-username::before {
+  top: 6px;
+}
+#welcome-screen.logging-in #login-user #welcome-user-status::before {
+  background: #00309c;
+}
+#welcome-turn-off > span:last-child {
+  --logon-text: url("../assets/logon-text/power.png");
+  position: relative;
+  width: 155px;
+  height: 19px;
+  margin-top: 4px;
+}
+#welcome-turn-off > span:last-child::before {
+  background: #fff;
+}
+#welcome-turn-off:hover > span:last-child,
+#welcome-turn-off:focus-visible > span:last-child {
+  border-bottom: 1px solid #fff;
+}
+#welcome-user-status::before {
+  background: #00309c;
+}
+#login-user:focus #welcome-user-status::before {
+  background: #eff7ff;
+}
+#welcome-user-status.has-programs {
+  display: flex;
+  width: max-content;
+  height: 13px;
+  margin-top: 0;
+}
+#welcome-user-status.has-programs::before {
+  display: none;
+}
+#welcome-user-status.has-programs > span {
+  position: relative;
+  height: 13px;
+  color: transparent;
+}
+#welcome-user-status.has-programs > span::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #00309c;
+  mask: var(--logon-text) var(--digit-offset, 0) top / auto no-repeat;
+}
+#login-user:focus #welcome-user-status.has-programs > span::before {
+  background: #eff7ff;
+}
+.welcome-program-digit {
+  --logon-text: url("../assets/logon-text/digits.png");
+  width: 7px;
+}
+.welcome-program-one {
+  --logon-text: url("../assets/logon-text/program-running.png");
+  width: 100px;
+}
+.welcome-program-many {
+  --logon-text: url("../assets/logon-text/programs-running.png");
+  width: 106px;
+}
+
+/* URLs share the stylesheet that consumes these custom properties. */
+.welcome-instruction > span:nth-child(1) {
+  --logon-text: url("../assets/logon-text/instruction-0.png");
+  --word-width: 21px;
+}
+
+.welcome-instruction > span:nth-child(2) {
+  --logon-text: url("../assets/logon-text/instruction-1.png");
+  --word-width: 49px;
+}
+
+.welcome-instruction > span:nth-child(3) {
+  --logon-text: url("../assets/logon-text/instruction-2.png");
+  --word-width: 36px;
+}
+
+.welcome-instruction > span:nth-child(4) {
+  --logon-text: url("../assets/logon-text/instruction-3.png");
+  --word-width: 36px;
+}
+
+.welcome-instruction > span:nth-child(5) {
+  --logon-text: url("../assets/logon-text/instruction-4.png");
+  --word-width: 36px;
+}
+
+.welcome-instruction > span:nth-child(6) {
+  --logon-text: url("../assets/logon-text/instruction-5.png");
+  --word-width: 45px;
 }

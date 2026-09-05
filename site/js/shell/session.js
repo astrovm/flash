@@ -18,10 +18,14 @@ const playXPSound = (name) => {
   const { volume, isMuted } = getSystemVolume();
   const audio = new Audio(xpSoundPaths[name]);
   audio.volume = isMuted ? 0 : Math.min(Math.max(volume, 0), 100) / 100;
-  audio.play().catch(() => {});
+  return audio.play().then(
+    () => true,
+    () => false,
+  );
 };
 
 let startupSoundPending = true;
+let startupSoundBlocked = false;
 let bootGeneration = 0;
 
 const setScreen = (...visibleIds) => {
@@ -91,6 +95,7 @@ const showBootScreen = () => {
   bootScreen.classList.remove("boot-running", "boot-handoff");
   bootScreen.focus({ preventScroll: true });
   startupSoundPending = true;
+  startupSoundBlocked = false;
   clearTimeout(bootTimeout);
   const isCurrentBoot = () =>
     generation === bootGeneration && !bootScreen.hidden;
@@ -138,19 +143,38 @@ const showWelcomeScreen = (autoLogin = false) => {
   const welcomeScreen = document.getElementById("welcome-screen");
   const loginUser = document.getElementById("login-user");
   welcomeScreen.classList.toggle("auto-login", autoLogin);
-  document.getElementById("welcome-user-status").hidden = !loggedIn;
-  document.getElementById("welcome-user-status").textContent = "Logged on";
+  const status = document.getElementById("welcome-user-status");
+  status.hidden = !loggedIn;
+  const programCount = loggedIn ? openWindows.size : 0;
+  status.classList.toggle("has-programs", programCount > 0);
+  status.textContent = "Logged on";
+  if (programCount) {
+    status.replaceChildren();
+    for (const digit of String(programCount)) {
+      const span = document.createElement("span");
+      span.className = "welcome-program-digit";
+      span.textContent = digit;
+      span.style.setProperty("--digit-offset", `${-Number(digit) * 7}px`);
+      status.append(span);
+    }
+    const suffix = document.createElement("span");
+    suffix.className =
+      programCount === 1 ? "welcome-program-one" : "welcome-program-many";
+    suffix.textContent =
+      programCount === 1 ? " program running." : " programs running.";
+    status.append(suffix);
+  }
   if (autoLogin) {
     welcomeScreen.setAttribute("role", "button");
     welcomeScreen.setAttribute("tabindex", "0");
     welcomeScreen.setAttribute("aria-label", "Continue to the desktop");
   } else {
     welcomeScreen.removeAttribute("role");
-    welcomeScreen.removeAttribute("tabindex");
+    welcomeScreen.setAttribute("tabindex", "-1");
     welcomeScreen.removeAttribute("aria-label");
   }
   setScreen("welcome-screen");
-  const focusTarget = autoLogin ? welcomeScreen : loginUser;
+  const focusTarget = autoLogin || !loggedIn ? welcomeScreen : loginUser;
   focusTarget.focus({ preventScroll: true });
   // Keyboard activation can finish after this handler moves focus.
   requestAnimationFrame(() => {
@@ -158,7 +182,11 @@ const showWelcomeScreen = (autoLogin = false) => {
   });
   if (startupSoundPending) {
     startupSoundPending = false;
-    playXPSound("startup");
+    const generation = bootGeneration;
+    void playXPSound("startup").then((played) => {
+      if (generation === bootGeneration)
+        startupSoundBlocked = !played && !welcomeScreen.hidden && autoLogin;
+    });
   }
   if (autoLogin) {
     bootTimeout = setTimeout(() => login(), WELCOME_DURATION_MS);
@@ -244,7 +272,7 @@ const closeCurrentSession = () => {
 const logOff = async () => {
   hideSystemDialogs();
   if (!(await closeCurrentSession())) return;
-  playXPSound("logoff");
+  playXPSound("shutdown");
   showWelcomeScreen(false);
 };
 
@@ -270,8 +298,11 @@ const turnOff = async () => {
 let loginPromise = null;
 const login = (playSound = true) => {
   if (loginPromise) return loginPromise;
+  startupSoundBlocked = false;
   const welcomeScreen = document.getElementById("welcome-screen");
   const loginUser = document.getElementById("login-user");
+  const manualLogon = !welcomeScreen.classList.contains("auto-login");
+  const logonSound = loggedIn ? "logon" : "startup";
   if (
     !welcomeScreen.hidden &&
     !welcomeScreen.classList.contains("auto-login")
@@ -280,6 +311,7 @@ const login = (playSound = true) => {
     welcomeScreen.setAttribute("aria-busy", "true");
     loginUser.disabled = true;
     const status = document.getElementById("welcome-user-status");
+    status.classList.remove("has-programs");
     status.textContent = "Loading your personal settings...";
     status.hidden = false;
   }
@@ -292,8 +324,8 @@ const login = (playSound = true) => {
     applyDisplaySettings(getDisplaySettings());
     applyStartMenuStyle(getStartMenuStyle(), false);
     applyFocusVolumes();
-    if (playSound) {
-      playXPSound("logon");
+    if (playSound && manualLogon) {
+      playXPSound(logonSound);
     }
 
     if (!shellInitialized) {
@@ -320,6 +352,14 @@ const login = (playSound = true) => {
   return loginPromise;
 };
 
+const continueWelcomeFromInput = () => {
+  if (startupSoundBlocked) {
+    startupSoundBlocked = false;
+    void playXPSound("startup");
+  }
+  return login();
+};
+
 const setupScreenFlow = () => {
   const bootScreen = document.getElementById("boot-screen");
   bootScreen.addEventListener("click", finishBootSequence);
@@ -333,12 +373,13 @@ const setupScreenFlow = () => {
   document
     .getElementById("welcome-screen")
     .addEventListener("click", (event) => {
-      if (event.target.closest("#welcome-turn-off")) return;
+      if (event.target.closest("#welcome-turn-off, #welcome-user-status"))
+        return;
       if (
         event.currentTarget.classList.contains("auto-login") ||
         event.target.closest("#login-user")
       )
-        login();
+        continueWelcomeFromInput();
     });
   document
     .getElementById("welcome-screen")
@@ -351,7 +392,7 @@ const setupScreenFlow = () => {
         return;
       }
       event.preventDefault();
-      login();
+      continueWelcomeFromInput();
     });
   document
     .getElementById("turn-off-screen")

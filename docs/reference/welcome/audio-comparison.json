@@ -1,0 +1,46 @@
+{
+  "device": "QEMU AC97 with XP ISO WDMA_INT.INF driver",
+  "recording": "xp-session-audio.wav",
+  "pcmSha256": "106477c25151e788163ddd2364677a9788206b314fc71250993c47aa017f6cd4",
+  "sampleRate": 44100,
+  "channels": 2,
+  "notes": "PCM is unchanged; RIFF lengths finalized from the captured byte count. The WAV backend omits idle periods. Correlation uses mono PCM and linear resampling of the 22050 Hz ISO WAVs to 44100 Hz; no capture samples were resampled.",
+  "events": [
+    {
+      "action": "automatic startup",
+      "asset": "site/assets/xp/sounds/startup.wav",
+      "offsetSeconds": 0.0337,
+      "normalizedCorrelation": 0.82035
+    },
+    {
+      "action": "Control Panel test",
+      "asset": "site/assets/xp/sounds/error.wav",
+      "offsetSeconds": 4.8775,
+      "normalizedCorrelation": 1
+    },
+    {
+      "action": "Switch User",
+      "asset": "site/assets/xp/sounds/logoff.wav",
+      "offsetSeconds": 6.126,
+      "normalizedCorrelation": 1
+    },
+    {
+      "action": "resume switched user",
+      "asset": "site/assets/xp/sounds/logon.wav",
+      "offsetSeconds": 8.2695,
+      "normalizedCorrelation": 0.99976
+    },
+    {
+      "action": "Log Off",
+      "asset": "site/assets/xp/sounds/shutdown.wav",
+      "offsetSeconds": 10.4456,
+      "normalizedCorrelation": 1
+    },
+    {
+      "action": "fresh user logon",
+      "asset": "site/assets/xp/sounds/startup.wav",
+      "offsetSeconds": 13.956,
+      "normalizedCorrelation": 1
+    }
+  ]
+}

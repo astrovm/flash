@@ -10,7 +10,8 @@ All images retain their captured dimensions. No screenshots were resized.
 `xp-*.png` files are QEMU framebuffer captures; `app-*.jpg` files are in-app
 browser captures at the corresponding viewport size. The 1280×1024 guest uses
 16-bit color, which visibly quantizes gradients. Browser JPEG encoding, color
-management, and font smoothing also prevent a whole-screen pixel equality claim.
+management also prevent a whole-screen pixel equality claim. Welcome labels now
+use XP GDI pixels, so the browser no longer substitutes its own font smoothing.
 
 The pairs cover automatic Welcome and user selection at 1024×768 and 1280×1024.
 Additional guest captures show logged-off selection and selected-user loading.
@@ -39,8 +40,10 @@ this directly, without resizing either input.
 
 - Automatic Welcome retains the requested click/keyboard skip behavior.
 - Selection requires the user tile; clicking the background does not sign in.
-- Switch User preserves the session and shows Logged on; Log Off closes it and
-  removes that status.
+- Switch User preserves the session and shows its real running-program count,
+  or Logged on when no windows are open. Log Off closes the session, removes
+  that status, and returns to an unselected user tile.
+- Clicking the status text does not accidentally activate the user tile.
 - Selected-user login displays Loading your personal settings while storage is
   pending. The desktop is revealed after initial game-file synchronization.
 - The power control opens the existing shutdown dialog; cancel returns to
@@ -53,6 +56,50 @@ management. XP's footer instruction pointing to User Accounts is omitted because
 that control panel does not exist here. Narrow viewports wrap the instruction
 and constrain the selected-user welcome text to keep the controls usable.
 
-The ISO's HIVEDEF.INF maps SystemStart and WindowsLogon to the existing startup
-and logon sound assets. Playback behavior was preserved; VM audio was not
-recorded for this comparison. Boot behavior from PR #146 is unchanged.
+## XP text rendering
+
+`tools/reference/render-logon-text.c` runs inside XP and calls GDI with the
+ISO-installed Arial and Tahoma fonts. It writes black-and-white coverage bitmaps
+onto a disposable shared drive. `bun tools/render-logon-text.ts <directory>`
+converts those pixels to alpha masks; it never resizes them. The original GDI
+outputs and font hashes are recorded in `gdi/`. Dynamic program counts compose
+XP-rendered digits and singular/plural suffixes. Accessible DOM text remains.
+
+Tests verify every mask against its GDI source. The instruction reproduces the
+native capture within one RGB level (integer alpha blending), and the composed
+program-count glyphs match the native capture exactly. Mobile layouts wrap the
+original word masks and put longer status text below the user picture.
+
+Build the helper using the command in its source header. Launch a temporary VM
+with `bun run xp:vm --instance logon-fonts --share /private/tmp/logon-fonts`;
+the explicitly shared directory is writable by the guest and should contain
+only disposable export files. Run the helper from that drive (E: in this VM).
+The base XP disk remains protected by QEMU's snapshot mode.
+
+## Recorded sound behavior
+
+The AC'97 reference capture uses the Intel driver supplied in the XP ISO's
+WDMA_INT.INF. `xp-session-audio.wav` contains the unchanged captured PCM with
+its RIFF byte counts finalized. `audio-comparison.json` records template-match
+offsets and correlations against the original extracted WAVs. Idle periods
+are omitted by the recording backend, so offsets are not wall-clock timings.
+
+| Action                         | Original sound used |
+| ------------------------------ | ------------------- |
+| Automatic startup              | Windows XP Startup  |
+| Switch User                    | Windows XP Logoff   |
+| Return to the switched session | Windows XP Logon    |
+| Full Log Off                   | Windows XP Shutdown |
+| Fresh logon after Log Off      | Windows XP Startup  |
+
+The recording also includes one deliberate Control Panel test of Windows XP
+Error. The switch sounds, full-logoff sound, and fresh-startup sound match their
+ISO templates at normalized correlations of 0.99976 or higher. The first cold
+startup has a lower correlation while the newly configured device starts.
+An earlier ES1370 recording had a driver/buffering fault and was discarded.
+
+The app follows this observed distinction between ending a session and
+switching it. It no longer adds a logon chime to automatic startup. Browser
+autoplay rules can block the first startup sound; a Welcome gesture retries
+that blocked sound once, without adding a second audible startup. Boot visuals
+and click skipping from PR #146 are unchanged.
