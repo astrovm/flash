@@ -1,15 +1,22 @@
 // @ts-nocheck -- Happy DOM supplies the browser objects.
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, spyOn, test } from "bun:test";
 import { cleanupShells, loadShell, login } from "./helpers/shell-harness";
 afterEach(cleanupShells);
 
 test("desktop upload preserves text and binary contents", async () => {
   const s = await login(await loadShell());
   const pickers = [];
-  s.window.HTMLInputElement.prototype.click = function () {
+  const pickerClick = spyOn(
+    s.window.HTMLInputElement.prototype,
+    "click",
+  ).mockImplementation(function () {
     pickers.push(this);
-  };
-  openMenu(s).querySelector('[data-action="upload"]').click();
+  });
+  try {
+    openMenu(s).querySelector('[data-action="upload"]').click();
+  } finally {
+    pickerClick.mockRestore();
+  }
   const [picker] = pickers;
   expect(picker.multiple).toBeTrue();
   Object.defineProperty(picker, "files", {
