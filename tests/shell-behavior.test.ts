@@ -1403,6 +1403,64 @@ test("Taskbar Properties applies Classic Start menu independently and switches p
   expect(document.documentElement.dataset.xpStartMenu).toBe("classic");
 });
 
+test("selected logon shows personal-settings progress until storage is ready", async () => {
+  const shell = await login(await loadShell());
+  shell.document.getElementById("logoff-confirm")!.click();
+  await flushShell();
+  let ready;
+  Object.defineProperty(shell.window.VirtualFS, "ready", {
+    value: new Promise((resolve) => {
+      ready = resolve;
+    }),
+  });
+  const screen = shell.document.getElementById("welcome-screen")!;
+  const tile = shell.document.getElementById("login-user")!;
+  tile.click();
+  expect(screen.classList.contains("logging-in")).toBeTrue();
+  expect(screen.getAttribute("aria-busy")).toBe("true");
+  expect(tile.disabled).toBeTrue();
+  expect(
+    shell.document.getElementById("welcome-user-status")!.textContent,
+  ).toBe("Loading your personal settings...");
+  expect(shell.document.getElementById("desktop")!.hidden).toBeTrue();
+  ready();
+  await flushShell();
+  expect(shell.document.getElementById("desktop")!.hidden).toBeFalse();
+  expect(tile.disabled).toBeFalse();
+  expect(screen.hasAttribute("aria-busy")).toBeFalse();
+});
+
+test("user selection requires the tile and restores the switched session", async () => {
+  const shell = await login(await loadShell());
+  const { document } = shell;
+  clickStartAction(shell, "documents");
+  const explorer = document.querySelector(
+    '.xp-window[data-game="__my-documents"]',
+  );
+  document.getElementById("switch-user-confirm")!.click();
+  expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  expect(document.getElementById("welcome-user-status")!.hidden).toBeFalse();
+  expect(document.getElementById("welcome-user-status")!.textContent).toBe(
+    "1 program running.",
+  );
+  document.getElementById("welcome-user-status")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeTrue();
+  document.getElementById("welcome-screen")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeTrue();
+  document.getElementById("welcome-turn-off")!.click();
+  expect(document.getElementById("shutdown-dialog")!.hidden).toBeFalse();
+  document.getElementById("shutdown-cancel")!.click();
+  expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  document.getElementById("login-user")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeFalse();
+  expect(document.querySelector('.xp-window[data-game="__my-documents"]')).toBe(
+    explorer,
+  );
+});
+
 test("logoff and shutdown actions change the visible session screen", async () => {
   const shell = await login(await loadShell());
   const { document } = shell;
@@ -1413,8 +1471,12 @@ test("logoff and shutdown actions change the visible session screen", async () =
   document.getElementById("logoff-confirm")!.click();
   await flushShell();
   expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
-
+  expect(document.getElementById("welcome-user-status")!.hidden).toBeTrue();
   document.getElementById("welcome-screen")!.click();
+  await flushShell();
+  expect(document.getElementById("desktop")!.hidden).toBeTrue();
+
+  document.getElementById("login-user")!.click();
   await flushShell();
   document.getElementById("start-button")!.click();
   document.getElementById("turn-off-button")!.click();
@@ -1454,4 +1516,71 @@ test("Task Manager exposes real applications without fabricated metrics", async 
   expect(
     manager.querySelector('[data-task-manager-window="__my-documents"]'),
   ).toBeNull();
+});
+
+test("startup plays one sound and manual session transitions keep their XP sounds", async () => {
+  const shell = await loadShell();
+  const sounds = [];
+  shell.window.Audio = function Audio(path) {
+    sounds.push(path);
+    return { volume: 1, play: () => Promise.resolve() };
+  };
+  await login(shell);
+  expect(sounds).toEqual(["assets/xp/sounds/startup.wav"]);
+  const { document } = shell;
+  document.getElementById("log-off-button").click();
+  document.getElementById("switch-user-confirm").click();
+  document.getElementById("login-user").click();
+  await flushShell();
+  expect(sounds).toEqual([
+    "assets/xp/sounds/startup.wav",
+    "assets/xp/sounds/logoff.wav",
+    "assets/xp/sounds/logon.wav",
+  ]);
+  document.getElementById("log-off-button").click();
+  document.getElementById("logoff-confirm").click();
+  await flushShell();
+  expect(sounds.at(-1)).toBe("assets/xp/sounds/shutdown.wav");
+  document.getElementById("login-user").click();
+  await flushShell();
+  expect(sounds).toEqual([
+    "assets/xp/sounds/startup.wav",
+    "assets/xp/sounds/logoff.wav",
+    "assets/xp/sounds/logon.wav",
+    "assets/xp/sounds/shutdown.wav",
+    "assets/xp/sounds/startup.wav",
+  ]);
+});
+
+test("switched-session program count reflects the open windows", async () => {
+  const shell = await login(await loadShell());
+  clickStartAction(shell, "documents");
+  clickStartAction(shell, "computer");
+  shell.document.getElementById("switch-user-confirm").click();
+  const status = shell.document.getElementById("welcome-user-status");
+  expect(status.textContent).toBe("2 programs running.");
+});
+
+test("a Welcome gesture retries startup audio blocked by autoplay", async () => {
+  const shell = await loadShell();
+  const attempts = [];
+  shell.window.Audio = function Audio(path) {
+    attempts.push(path);
+    return {
+      volume: 1,
+      play: () =>
+        attempts.length === 1
+          ? Promise.reject(new Error("NotAllowedError"))
+          : Promise.resolve(),
+    };
+  };
+  shell.completeBoot();
+  await flushShell();
+  shell.document.getElementById("welcome-screen").click();
+  await flushShell();
+  expect(attempts).toEqual([
+    "assets/xp/sounds/startup.wav",
+    "assets/xp/sounds/startup.wav",
+  ]);
+  expect(shell.document.getElementById("desktop").hidden).toBeFalse();
 });

@@ -3594,6 +3594,97 @@
       "pixelSha256": "5d3ffee3f31e0977e7fbae1ca8d79a34ab5ed508b6c401e007cd5bfe9fe17e3b"
     }
   },
+  "assets/xp/logon/Glow.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "ada259f7d634089e13a7880b6ed9c72e82dc55576af44e71627e51e6b4dc6717",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 100,
+      "language": 1033,
+      "frame": "219x207x32",
+      "pixelSha256": "157c3d5dd68019305cc831673dc43186c75a5094cca4fceacbcc6733353be73b"
+    }
+  },
+  "assets/xp/logon/UserSelection.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "153d69995c88356de7145a67ce5ec1f443bf935c2f48a0609c78b7ea6a69141b",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 112,
+      "language": 1033,
+      "frame": "308x72x32",
+      "pixelSha256": "abf828ef60afe4b2cdb646f57e1d4a0659796da56dc1bfedddd90cce1117907c"
+    }
+  },
+  "assets/xp/logon/UserFrame.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "d60e3e2b18cb2839f1abbfed2fa4eb49c392202b02455eef81445fc6ce57e282",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 113,
+      "language": 1033,
+      "frame": "58x58x32",
+      "pixelSha256": "eb958c30d861ca9a6e9ef4989603436e9fe1b494ada071bd9619f8927ddbcdee"
+    }
+  },
+  "assets/xp/logon/UserFrameSelected.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "4c0f69ef1f9ecd128290a2d41c80b07a75ec65b82a869579c823be00a51cee62",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 119,
+      "language": 1033,
+      "frame": "58x58x32",
+      "pixelSha256": "a9bffde7e06fd42f0dfe4ec960cb3de5dfd610831719b5542633b037067e1c6f"
+    }
+  },
+  "assets/xp/logon/VerticalDivider.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "f0c6feca26acef65158fcbd649307ec6e883abee01d3573a95663b18f23ac7b2",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 124,
+      "language": 1033,
+      "frame": "1x340x32",
+      "pixelSha256": "114e32f9ae8c75a4a9ef288552256cc5c77854bc5ece3b298d2abea0f8194b66"
+    }
+  },
+  "assets/xp/logon/TopDivider.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "af054f89d83dbb3063c98eac0ca2e0857d3435d6c270bec41511be4ef3c0cd39",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 125,
+      "language": 1033,
+      "frame": "800x2x32",
+      "pixelSha256": "ed368f034ab4c3d3f2a1cd033a35dc725cc8ad1c4f7b63b7e410d3e3319f054d"
+    }
+  },
+  "assets/xp/logon/BottomDivider.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LOGONUI.EX_",
+    "sha256": "969a91dbb2fcaa20a48294780f17e72b6704be067a5a4ec898fbac5bb79c4bcd",
+    "resource": {
+      "parentSha256": "032b6d1f541f180a2fe619664ef180d3fd748aef7e311ba925fced74e7ed4713",
+      "type": 2,
+      "id": 126,
+      "language": 1033,
+      "frame": "800x3x32",
+      "pixelSha256": "59c4c8af78fb0184f6d565713189aeafc85151f9048f0b69ab81bc32aa80c051"
+    }
+  },
   "assets/xp/icons/Logout.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LOGONUI.EX_",

@@ -1,16 +1,6 @@
 /* ============ Small screens ============ */
 
 @media (max-width: 560px) {
-  .welcome-panel {
-    flex-direction: column;
-    gap: 22px;
-    margin-top: 110px;
-  }
-
-  .welcome-instruction {
-    text-align: center;
-  }
-
   .start-menu-right {
     width: 128px;
   }
@@ -90,5 +80,28 @@
   #taskbar-clock {
     font-size: 10px;
     padding: 1px;
+  }
+}
+
+@media (max-width: 560px) {
+  .welcome-instruction {
+    right: calc(50% + 40px);
+    width: calc(50vw - 48px);
+    height: auto;
+  }
+  #welcome-screen.logging-in .welcome-message {
+    left: 8px;
+    width: calc(50% - 24px);
+    padding: 0;
+    font-size: clamp(24px, 7.5vw, 48px);
+    text-align: right;
+  }
+  #welcome-user-status.has-programs,
+  #welcome-screen.logging-in #welcome-user-status {
+    position: absolute;
+    left: 7px;
+    top: 66px;
+    margin-top: 0;
+    width: calc(100% - 14px);
   }
 }

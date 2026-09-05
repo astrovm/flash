@@ -1168,7 +1168,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
   }
   for (const document of referenceDocuments) {
     for (const match of document.content.matchAll(
-      /(?:\.\.\/)*assets\/[^"'`()\s]+|fonts\/[^"'`()\s]+|favicon[^"'`()\s]+/g,
+      /(?:\.\.\/)*assets\/[^"'`()\s]+|(?:css\/)?fonts\/[^"'`()\s]+|favicon[^"'`()\s]+/g,
     )) {
       const reference = match[0];
       if (!/\.[a-f0-9]{8}\.[^./]+$/.test(reference)) {

@@ -2503,6 +2503,55 @@
       "member": "LOGONUI.EX_",
       "expandedName": "logonui.exe",
       "resourceType": 2,
+      "resourceId": 100,
+      "output": "site/assets/xp/logon/Glow.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 112,
+      "output": "site/assets/xp/logon/UserSelection.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 113,
+      "output": "site/assets/xp/logon/UserFrame.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 119,
+      "output": "site/assets/xp/logon/UserFrameSelected.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 124,
+      "output": "site/assets/xp/logon/VerticalDivider.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 125,
+      "output": "site/assets/xp/logon/TopDivider.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
+      "resourceId": 126,
+      "output": "site/assets/xp/logon/BottomDivider.png"
+    },
+    {
+      "member": "LOGONUI.EX_",
+      "expandedName": "logonui.exe",
+      "resourceType": 2,
       "resourceId": 108,
       "output": "site/assets/xp/icons/Logout.png"
     },

@@ -26,6 +26,8 @@ const diskPath = resolve(
 let instanceName = `agent-${process.pid}`;
 let snapshotName: string | undefined;
 let writeBase = false;
+let audioOutput: string | undefined;
+let sharedDirectory: string | undefined;
 const arguments_ = Bun.argv.slice(2);
 for (let index = 0; index < arguments_.length; index += 1) {
   const argument = arguments_[index];
@@ -37,6 +39,11 @@ for (let index = 0; index < arguments_.length; index += 1) {
     snapshotName = arguments_[index + 1];
     if (!snapshotName) throw new Error("--snapshot requires a name");
     index += 1;
+  } else if (argument === "--audio-output" || argument === "--share") {
+    const value = arguments_[++index];
+    if (!value) throw new Error(`${argument} requires a path`);
+    if (argument === "--audio-output") audioOutput = resolve(value);
+    else sharedDirectory = resolve(value);
   } else if (argument === "--write-base") {
     writeBase = true;
   } else {
@@ -75,6 +82,20 @@ const qemu = spawn(
     "usb-tablet,bus=usb.0",
     "-nic",
     "none",
+    ...(audioOutput
+      ? [
+          "-audiodev",
+          `wav,id=reference,path=${audioOutput}`,
+          "-device",
+          "AC97,audiodev=reference",
+        ]
+      : []),
+    ...(sharedDirectory
+      ? [
+          "-drive",
+          `file=fat:rw:${sharedDirectory},format=raw,if=ide,snapshot=off`,
+        ]
+      : []),
     "-rtc",
     "base=localtime",
     "-display",

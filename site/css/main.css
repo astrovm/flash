@@ -4,69 +4,6 @@
    boot/login artwork and system sounds
    ============================================ */
 
-@font-face {
-  font-family: "Tahoma";
-  src: url("fonts/tahoma.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "Tahoma";
-  src: url("fonts/tahomabd.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 700;
-}
-
-@font-face {
-  font-family: "Trebuchet MS";
-  src: url("fonts/trebuc.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "Trebuchet MS";
-  src: url("fonts/trebucbd.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 700;
-}
-
-@font-face {
-  font-family: "Lucida Console";
-  src: url("fonts/lucon.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "Arial";
-  src: url("fonts/arial.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "Arial";
-  src: url("fonts/arialbd.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 700;
-}
-
-@font-face {
-  font-family: "Arial";
-  src: url("fonts/arialbi.ttf") format("truetype");
-  font-style: italic;
-  font-weight: 700;
-}
-
-@font-face {
-  font-family: "Franklin Gothic Medium";
-  src: url("fonts/framdit.ttf") format("truetype");
-  font-style: italic;
-  font-weight: 400;
-}
-
 :root {
   --xp-beige: #ece9d8;
   --xp-beige-dark: #d6d2c2;
@@ -201,7 +138,10 @@ body {
   cursor: var(--xp-cursor);
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -335,143 +275,185 @@ iframe {
   position: fixed;
   inset: 0;
   z-index: 9000;
-  background:
-    linear-gradient(
-      90deg,
-      transparent calc(50% - 1px),
-      rgba(126, 157, 229, 0.42) 50%,
-      transparent calc(50% + 1px)
-    ),
-    #5a7edc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  background: #5a7edc;
+  color: #eff7ff;
 }
 
+/* logonui.exe UIFILE 1000: fixed bands and original bitmap dividers. */
 #welcome-screen::before,
 #welcome-screen::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  z-index: -1;
-  background: linear-gradient(180deg, #0643b8 0%, #003399 100%);
 }
-
 #welcome-screen::before {
   top: 0;
-  height: 12.8%;
-  border-bottom: 2px solid #90a8e3;
+  height: 80px;
+  background:
+    url("../assets/xp/logon/TopDivider.png") bottom / 100% 2px no-repeat,
+    #00309c;
 }
-
 #welcome-screen::after {
   bottom: 0;
-  height: 16%;
-  border-top: 2px solid #e69232;
+  height: 96px;
+  background:
+    url("../assets/xp/logon/BottomDivider.png") top / 100% 2px no-repeat,
+    linear-gradient(to right, #3934ad, #00309c);
 }
-
+.welcome-content {
+  position: absolute;
+  top: 80px;
+  bottom: 96px;
+  left: 0;
+  right: 0;
+  background: url("../assets/xp/logon/Glow.png") left top / 219px 207px
+    no-repeat;
+}
 .welcome-wordmark {
   position: absolute;
-  top: 43.5%;
-  left: 39%;
-  width: min(160px, 29vw);
-  height: auto;
-  transform: translate(-50%, -50%);
-  filter: none;
+  top: calc(50% - 64px);
+  right: calc(50% + 22px);
+  width: 137px;
+  height: 86px;
 }
-
 .welcome-message {
   display: none;
   position: absolute;
-  top: 49%;
-  left: 57.5%;
   margin: 0;
-  color: #fff;
-  font-family: "Franklin Gothic Medium", Arial, sans-serif;
-  font-size: clamp(34px, 5.75vw, 46px);
-  font-weight: 400;
-  font-style: italic;
-  letter-spacing: -1px;
-  text-shadow: 2px 2px 2px rgba(40, 67, 156, 0.45);
-  transform: translate(-50%, -50%);
+  font:
+    italic bold 48px/1 Arial,
+    sans-serif;
+  color: #eff7ff;
+  text-shadow: 2px 3px #3151b5;
+  left: calc(50% - 40px);
+  top: calc(50% - 25px);
+  width: max-content;
+  padding: 0;
+  transform: none;
 }
-
 #welcome-screen.auto-login .welcome-message {
   display: block;
 }
-
-#welcome-screen.auto-login {
-  background:
-    radial-gradient(
-      ellipse 78% 100% at -5% 3%,
-      rgba(190, 216, 255, 0.82) 0%,
-      rgba(146, 181, 246, 0.62) 42%,
-      rgba(103, 139, 226, 0) 78%
-    ),
-    linear-gradient(180deg, #7da1ef 0%, #6689e1 100%);
-}
-
-#welcome-screen.auto-login .welcome-wordmark {
-  display: none;
-}
-
+#welcome-screen.auto-login .welcome-wordmark,
 #welcome-screen.auto-login .welcome-panel,
 #welcome-screen.auto-login #welcome-turn-off {
   display: none;
 }
-
 .welcome-panel {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 50%;
-  transform: translateY(-50%);
+  inset: 0;
 }
-
+.welcome-panel::before {
+  content: "";
+  position: absolute;
+  left: calc(50% - 1px);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: url("../assets/xp/logon/VerticalDivider.png") center / 1px 100%
+    no-repeat;
+}
 .welcome-instruction {
   position: absolute;
-  top: 70px;
-  right: calc(100% + 28px);
-  width: min(300px, 40vw);
   margin: 0;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.45;
+  font:
+    19px/23px Arial,
+    sans-serif;
+  color: #eff7ff;
   text-align: right;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
+  top: calc(50% + 42px);
+  right: calc(50% + 46px);
+  width: max-content;
+  max-width: calc(50% - 54px);
 }
-
 #login-user {
+  position: absolute;
+  top: calc(50% - 40px);
+  left: calc(50% + 26px);
+  width: min(353px, calc(50% - 31px));
+  height: 72px;
   display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: min(340px, 46vw);
-  padding: 9px 30px 9px 9px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid transparent;
-  border-radius: 5px;
-  cursor: var(--xp-cursor);
-  color: #fff;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #eff7ff;
+  text-align: left;
+  cursor: var(--xp-link-cursor, pointer);
+  font:
+    19px/normal "Tahoma",
+    sans-serif;
 }
-
-#login-user:hover {
-  background: rgba(255, 255, 255, 0.24);
-  border-color: rgba(255, 255, 255, 0.72);
+#login-user:focus {
+  outline: none;
+  background: url("../assets/xp/logon/UserSelection.png") left top / 100% 72px
+    no-repeat;
 }
-
 .welcome-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 5px;
-  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.45);
+  position: relative;
+  display: block;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  padding: 5px;
+  background: url("../assets/xp/logon/UserFrame.png") no-repeat;
+}
+.welcome-avatar img {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+#login-user:hover .welcome-avatar,
+#login-user:focus .welcome-avatar {
+  background-image: url("../assets/xp/logon/UserFrameSelected.png");
+}
+.welcome-user-details {
+  min-width: 0;
+}
+.welcome-username {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 23px;
+  height: 23px;
+}
+#welcome-user-status {
+  display: block;
+  font:
+    bold 11px/13px "Tahoma",
+    sans-serif;
+  color: #00309c;
+}
+#welcome-turn-off {
+  position: absolute;
+  z-index: 1;
+  left: 25px;
+  bottom: 48px;
+  display: flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font:
+    19px/normal "Tahoma",
+    sans-serif;
+  cursor: var(--xp-link-cursor, pointer);
+  align-items: flex-start;
+  gap: 4px;
+}
+#welcome-turn-off:hover,
+#welcome-turn-off:focus-visible {
+  text-decoration: underline;
+}
+.welcome-turn-off-icon {
+  display: block;
+  width: 26px;
+  height: 26px;
+  background: url("../assets/xp/icons/Power.png") center / 26px 26px no-repeat;
 }
 
 .xp-user-tile {
@@ -484,56 +466,6 @@ iframe {
 
 .xp-user-tile::after {
   content: none;
-}
-
-.welcome-username {
-  font-size: 18px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
-}
-
-#welcome-turn-off {
-  position: absolute;
-  left: 3.5%;
-  bottom: 4.4%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 6px 3px 3px;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 12px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  cursor: var(--xp-cursor);
-}
-
-.welcome-help {
-  position: absolute;
-  right: 4%;
-  bottom: 4.3%;
-  margin: 0;
-  color: #fff;
-  font-size: 11px;
-  line-height: 1.25;
-  text-shadow: 1px 1px rgba(0, 0, 0, 0.35);
-}
-
-#welcome-screen.auto-login .welcome-help {
-  display: none;
-}
-
-.welcome-turn-off-icon {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #f4ad4b, #cf711f);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    1px 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .xp-power-icon::before {
@@ -557,6 +489,39 @@ iframe {
   transform: translateX(-50%);
 }
 
-#welcome-turn-off:hover .welcome-turn-off-icon {
-  filter: brightness(1.12);
+#welcome-screen.logging-in .welcome-message {
+  display: block;
+  left: calc(50% - 235px);
+}
+#welcome-screen.logging-in .welcome-wordmark,
+#welcome-screen.logging-in .welcome-instruction,
+#welcome-screen.logging-in #welcome-turn-off {
+  display: none;
+}
+#welcome-screen.logging-in #login-user {
+  background: none;
+  opacity: 1;
+}
+#welcome-screen.logging-in #welcome-user-status {
+  color: #00309c;
+}
+#welcome-screen.logging-in,
+#welcome-screen.logging-in #login-user {
+  cursor:
+    url("../assets/xp/system/cursors/WorkingInBackground.png") 0 0,
+    progress;
+}
+
+#boot-screen:focus,
+#welcome-screen:focus {
+  outline: none;
+}
+#login-user:focus #welcome-user-status {
+  color: #eff7ff;
+}
+#welcome-screen.logging-in #login-user #welcome-user-status {
+  color: #00309c;
+}
+#welcome-turn-off > span:last-child {
+  line-height: 26px;
 }
