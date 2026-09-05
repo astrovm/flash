@@ -19,6 +19,7 @@ const gameDataManager = window.AstroGameData.createManager();
 let bootTimeout = null;
 let shutdownTimeout = null;
 let loggedIn = false;
+let sessionGeneration = 0;
 let shellInitialized = false;
 let suspended = false;
 let iconsBuilt = false;

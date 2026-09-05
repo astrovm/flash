@@ -689,6 +689,14 @@ const loadRuffleSWF = (gameId, win) => {
   const config = {
     url: game.url || archiveUrl || `${gameRoot}main.swf`,
     base: game.base || (archiveUrl ? new URL(".", archiveUrl).href : gameRoot),
+    ...(game.installed
+      ? {
+          urlRewriteRules: window.AstroGameLibrary.assetRewriteRules(
+            game.uuid,
+            location.origin,
+          ),
+        }
+      : {}),
     letterbox: "on",
     scale: "showAll",
     forceScale: true,

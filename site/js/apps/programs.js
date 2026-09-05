@@ -465,10 +465,16 @@ const openXPProgram = (programId, options = {}) => {
   let program = window.XPApplicationRegistry.get(programId);
   if (program.load) {
     if (!program.loaded) {
+      const launchSession = sessionGeneration;
       return program
         .load()
-        .then(() => openXPProgram(programId, options))
+        .then(() =>
+          loggedIn && launchSession === sessionGeneration
+            ? openXPProgram(programId, options)
+            : null,
+        )
         .catch((error) => {
+          if (!loggedIn || launchSession !== sessionGeneration) return null;
           void XPDialogs.alert(
             error.message ||
               "The application could not be loaded. Try opening it again.",

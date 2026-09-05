@@ -803,7 +803,7 @@ async function injectGameRoots(
     const content = await readFile(path, "utf8");
     const updated = await replaceExactlyOnce(
       content,
-      /<script src="js\/games\.[a-f0-9]{8}\.js"><\/script>/g,
+      /<script(?: defer)? src="js\/games\.[a-f0-9]{8}\.js"><\/script>/g,
       `${mapping}\n    $&`,
       `Could not inject versioned game roots into ${relative(paths.root, path)}`,
     );
@@ -911,7 +911,7 @@ export async function versionOfflineGameManifest(
   const mapping = `<script>window.ASTRO_OFFLINE_MANIFEST_URL=${JSON.stringify(filename)};</script>`;
   const html = await replaceExactlyOnce(
     await readFile(paths.html, "utf8"),
-    /<script src="js\/offline\.[a-f0-9]{8}\.js"><\/script>/g,
+    /<script(?: defer)? src="js\/offline\.[a-f0-9]{8}\.js"><\/script>/g,
     `${mapping}\n    $&`,
     "Could not inject the versioned offline game manifest",
   );
@@ -1340,21 +1340,6 @@ export async function replaceOutput(
   }
 }
 
-export function deferShellScripts(html: string): string {
-  const moduleScripts: string[] = [];
-  const deferred = html
-    .replace(/<script type="module" src="[^"]+"><\/script>/g, (script) => {
-      moduleScripts.push(script);
-      return "";
-    })
-    .replace(
-      /<script src="([^"]+)"><\/script>/g,
-      '<script defer src="$1"></script>',
-    );
-  // Module registration consumes globals defined by the ordered classic scripts.
-  return deferred.replace("</head>", `${moduleScripts.join("\n")}\n</head>`);
-}
-
 export async function assembleReleaseOutput(
   stagingDir: string,
   version: string,
@@ -1363,7 +1348,7 @@ export async function assembleReleaseOutput(
   const releaseDir = join(stagingDir, ...releasePath.split("/"));
   const rootHtml = join(stagingDir, "index.html");
   const html = await replaceExactlyOnce(
-    deferShellScripts(await readFile(rootHtml, "utf8")),
+    await readFile(rootHtml, "utf8"),
     /<head>/g,
     `<head>\n    <base href="/${releasePath}/" />`,
     "Could not set the immutable release base URL",

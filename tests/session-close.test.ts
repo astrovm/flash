@@ -86,3 +86,43 @@ test("the app host loads a deferred application on first open", async () => {
     "loaded on demand",
   );
 });
+
+for (const fails of [false, true]) {
+  test(`a deferred application ${fails ? "failure" : "load"} cannot outlive its session`, async () => {
+    const shell = await login(await loadShell({ preloadApplications: false }));
+    const { window, document } = shell;
+    const registry = window.XPApplicationRegistry;
+    const original = registry.get("__notepad");
+    let finish;
+    const gate = new Promise((resolve) => {
+      finish = resolve;
+    });
+    const pending = gate.then(() => {
+      if (fails) throw new Error("late import failure");
+      return original.load();
+    });
+    window.XPApplicationRegistry = {
+      ...registry,
+      get(id) {
+        return id === "__notepad"
+          ? { ...original, load: () => pending }
+          : registry.get(id);
+      },
+    };
+    const fs = window.VirtualFS;
+    fs.open(
+      fs.createFile(fs.MY_DOCUMENTS, "late.txt", { content: "pending" }).id,
+    );
+    document.getElementById("start-button").click();
+    document.getElementById("log-off-button").click();
+    document.getElementById("logoff-confirm").click();
+    await flushShell();
+    expect(document.getElementById("welcome-screen").hidden).toBeFalse();
+    await login(shell);
+    finish();
+    await pending.catch(() => {});
+    await flushShell();
+    expect(document.querySelector(".notepad-window")).toBeNull();
+    expect(document.querySelector(".xp-dialog")).toBeNull();
+  });
+}

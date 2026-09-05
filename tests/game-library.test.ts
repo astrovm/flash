@@ -243,6 +243,32 @@ test("game library", async () => {
   for (const result of concurrent)
     assert.deepEqual([...new Uint8Array(await result.arrayBuffer())], [6, 7]);
   await legacyManager.install({ ...details, packageType: "legacy" });
+  const rewrite = (id, url) => {
+    for (const [pattern, replacement] of library.assetRewriteRules(
+      id,
+      "https://flash.example",
+    )) {
+      if (pattern.test(url)) return url.replace(pattern, replacement);
+    }
+    return url;
+  };
+  const remote = "https://cdn.example/shared.bin";
+  const firstScoped = rewrite(legacyUuid, remote);
+  const secondScoped = rewrite(uuid, remote);
+  assert.notEqual(firstScoped, secondScoped);
+  assert.equal(rewrite(legacyUuid, firstScoped), firstScoped);
+  assert(await legacyManager.match(firstScoped));
+  assert(await legacyManager.match(secondScoped));
+  assert(
+    legacyCache.values.has(
+      `https://flash.example/__installed-games/${legacyUuid}/content/cdn.example/shared.bin`,
+    ),
+  );
+  assert(
+    legacyCache.values.has(
+      `https://flash.example/__installed-games/${uuid}/content/cdn.example/shared.bin`,
+    ),
+  );
   const beforeAmbiguous = assetRequests;
   assert.equal(
     await legacyManager.match("http://localflash/ambiguous.bin"),

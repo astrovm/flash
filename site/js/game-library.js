@@ -93,6 +93,16 @@
     installed: true,
   });
 
+  const assetRewriteRules = (uuid, origin) => {
+    const prefix = `${origin}/__installed-games/${encodeURIComponent(uuid)}/`;
+    const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return [
+      // Relative URLs already resolve inside this game's synthetic directory.
+      [new RegExp(`^${escapedPrefix}`), "$&"],
+      [/^https?:\/\/([^/]+)\/(.*)$/i, `${prefix}content/$1/$2`],
+    ];
+  };
+
   const readDownload = async (
     response,
     { onProgress, maxBytes = MAX_DOWNLOAD_BYTES } = {},
@@ -465,7 +475,10 @@
           installedAssetKey(record, archivePath),
         );
         if (cached) return cached;
-        if (new URL(record.launchCommand).hostname !== requested.hostname)
+        if (
+          !activeRecord &&
+          new URL(record.launchCommand).hostname !== requested.hostname
+        )
           return null;
         return fetchLegacyAsset(record, archivePath);
       },
@@ -483,6 +496,7 @@
     MAX_DOWNLOAD_BYTES,
     MAX_LEGACY_ASSET_BYTES,
     asGameConfig,
+    assetRewriteRules,
     readDownload,
     createMetadataStore,
     createManager,

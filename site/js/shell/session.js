@@ -150,6 +150,7 @@ let sessionClosePromise = null;
 const closeCurrentSession = () => {
   if (sessionClosePromise) return sessionClosePromise;
   sessionClosePromise = (async () => {
+    sessionGeneration++;
     const windows = [...openWindows.values()];
     for (const win of windows) {
       if (win.closePromise) {
