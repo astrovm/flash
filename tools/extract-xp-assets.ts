@@ -30,6 +30,8 @@ type ResourceBitmap = DirectAsset & {
   expandedName: string;
   resourceType: number;
   resourceId: number | string;
+  palette?: Array<[number, number, number]>;
+  paletteFrames?: Array<Array<[number, number, number]>>;
   transparentColor?: [number, number, number];
   colorMap?: Array<{
     from: [number, number, number];
@@ -346,6 +348,62 @@ async function extractBitmap(
   ]);
 
   const bitmapFile = await readFile(await firstFile(bitmapDirectory, ".bmp"));
+  if (bitmap.palette) {
+    const depth = bitmapFile.readUInt16LE(28);
+    if (
+      bitmapFile.readUInt32LE(14) !== 40 ||
+      depth !== 4 ||
+      bitmap.palette.length !== 16
+    )
+      throw new Error(
+        "Palette overrides require a 4-bit Windows bitmap and 16 colors",
+      );
+    bitmap.palette.forEach(([red, green, blue], index) => {
+      bitmapFile.set([blue, green, red, 0], 54 + index * 4);
+    });
+  }
+  if (bitmap.paletteFrames) {
+    if (
+      bitmapFile.readUInt32LE(14) !== 40 ||
+      bitmapFile.readUInt16LE(28) !== 4 ||
+      bitmap.paletteFrames.length === 0
+    )
+      throw new Error("Palette frames require a 4-bit Windows bitmap");
+    const width = bitmapFile.readInt32LE(18);
+    const frameHeight = bitmapFile.readInt32LE(22);
+    const height = frameHeight * bitmap.paletteFrames.length;
+    const pixels = new Uint8Array(width * height * 4);
+    for (const [frame, palette] of bitmap.paletteFrames.entries()) {
+      if (palette.length !== 16)
+        throw new Error("Palette frames require 16 colors");
+      palette.forEach(([red, green, blue], index) =>
+        bitmapFile.set([blue, green, red, 0], 54 + index * 4),
+      );
+      const decoded = decodeBmp(bitmapFile);
+      for (let pixel = 0; pixel < width * frameHeight; pixel++) {
+        const source = pixel * decoded.channels;
+        const target = (frame * width * frameHeight + pixel) * 4;
+        const red = decoded.data[source];
+        pixels.set(
+          [
+            red,
+            decoded.channels === 1 ? red : decoded.data[source + 1],
+            decoded.channels === 1 ? red : decoded.data[source + 2],
+            255,
+          ],
+          target,
+        );
+      }
+    }
+    return {
+      png: await sharp(pixels, { raw: { width, height, channels: 4 } })
+        .png()
+        .toBuffer(),
+      parentSha256: sha256(parent),
+      pixelSha256: sha256(pixels),
+      frame: `${width}x${height}x32`,
+    };
+  }
   const os2Bitmap = decodeOs2Bitmap(bitmapFile);
   const decoded = decodeBmp(bitmapFile);
   const rgba = new Uint8Array(decoded.width * decoded.height * 4);

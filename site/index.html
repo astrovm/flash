@@ -93,19 +93,21 @@
       tabindex="0"
       aria-label="Continue to the welcome screen"
     >
-      <div class="boot-center">
+      <div class="boot-display" aria-hidden="true">
         <img
-          class="boot-logo"
-          src="assets/xp/BootLogo.png"
-          alt="Microsoft Windows XP"
+          class="boot-background"
+          src="assets/xp/BootScreen.png"
+          alt=""
+          width="640"
+          height="480"
+          fetchpriority="high"
         />
-        <div class="boot-progress" aria-hidden="true">
-          <i></i><i></i><i></i>
+        <div class="boot-fade">
+          <img src="assets/xp/BootFade.png" alt="" width="640" height="9600" />
         </div>
-      </div>
-      <div class="boot-footer">
-        <p>Copyright © Microsoft Corporation</p>
-        <span class="boot-microsoft">Microsoft</span>
+        <div class="boot-progress">
+          <img src="assets/xp/BootProgress.png" alt="" width="22" height="9" />
+        </div>
       </div>
     </div>
 

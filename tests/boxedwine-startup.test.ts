@@ -88,7 +88,7 @@ describe("BoxedWine startup", () => {
       applicationsReady: () => new Promise(() => {}),
     };
 
-    shell.document.getElementById("boot-screen").click();
+    shell.completeBoot();
     await flushShell();
     expect(shell.document.getElementById("boot-screen").hidden).toBeTrue();
     expect(shell.document.getElementById("welcome-screen").hidden).toBeFalse();
@@ -188,7 +188,7 @@ describe("BoxedWine startup", () => {
     };
     const shell = await loadShell({ gameLibraryManager });
     shell.window.location.hash = "#delayed-installed-game";
-    shell.document.getElementById("boot-screen").click();
+    shell.completeBoot();
     shell.document.getElementById("welcome-screen").click();
     await flushShell();
     expect(

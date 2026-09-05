@@ -285,13 +285,14 @@ export async function loadShell({
   // environments. Real browsers share one global lexical environment, so join
   // the ordered shell modules before evaluation to preserve browser semantics.
   const script = document.createElement("script");
-  script.textContent = (
-    await Promise.all(
-      shellScripts.map((path) =>
-        Bun.file(new URL(path, projectDirectory)).text(),
-      ),
-    )
-  ).join("\n");
+  script.textContent =
+    (
+      await Promise.all(
+        shellScripts.map((path) =>
+          Bun.file(new URL(path, projectDirectory)).text(),
+        ),
+      )
+    ).join("\n") + "\nwindow.__completeBootForTest = finishBootSequence;";
   document.body.appendChild(script);
 
   const applicationBundle = await Bun.build({
@@ -328,11 +329,16 @@ export async function loadShell({
 
   document.dispatchEvent(new window.Event("DOMContentLoaded"));
   await flushShell();
-  return { window, document, offlineDownloads };
+  return {
+    window,
+    document,
+    offlineDownloads,
+    completeBoot: () => window.__completeBootForTest(),
+  };
 }
 
 export async function login(shell: Awaited<ReturnType<typeof loadShell>>) {
-  shell.document.getElementById("boot-screen")!.click();
+  shell.completeBoot();
   shell.document.getElementById("welcome-screen")!.click();
   await flushShell();
   await flushShell();

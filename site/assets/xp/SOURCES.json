@@ -3633,6 +3633,45 @@
       "pixelSha256": "0bcefbaf0aa29e37a184863953ac1f65506e18ee4605f15ed9e9731bb9c29c0c"
     }
   },
+  "assets/xp/BootScreen.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NTOSKRNL.EX_",
+    "sha256": "6bd0b8daa03bf3430bb944576f0323c112f7a1c707921adb66cab74cf0d2ca26",
+    "resource": {
+      "parentSha256": "6005a1a1db35481612ef76856a609954990f058bfc42dfa7b0d43402bf3f3dcf",
+      "type": 2,
+      "id": 1,
+      "language": 1033,
+      "frame": "640x480x32",
+      "pixelSha256": "01519b1fbf5cf12c3752ae9516b0ca5295a5dfd2338ed71ed1666bd8e85cd7d7"
+    }
+  },
+  "assets/xp/BootProgress.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NTOSKRNL.EX_",
+    "sha256": "23d88070ee32c76fd82cd18891438064b3d20d1252bb197e825dac1729a2baa4",
+    "resource": {
+      "parentSha256": "6005a1a1db35481612ef76856a609954990f058bfc42dfa7b0d43402bf3f3dcf",
+      "type": 2,
+      "id": 8,
+      "language": 1033,
+      "frame": "22x9x32",
+      "pixelSha256": "fb99a0b46590eed236dc36db462dcf0378b743b40548c124d789a1223eef0a27"
+    }
+  },
+  "assets/xp/BootFade.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/NTOSKRNL.EX_",
+    "sha256": "cb692cd22d1c691f6f6410cc1129475f1de80d8a3dac143579a1e48ec235fedd",
+    "resource": {
+      "parentSha256": "6005a1a1db35481612ef76856a609954990f058bfc42dfa7b0d43402bf3f3dcf",
+      "type": 2,
+      "id": 1,
+      "language": 1033,
+      "frame": "640x9600x32",
+      "pixelSha256": "0ed5554410d5b5759f6dd6293f381aeb47165a5e02820120f3153db20b045b60"
+    }
+  },
   "assets/xp/DisplaySettings.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/THEMEUI.DL_",

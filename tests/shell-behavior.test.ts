@@ -10,34 +10,72 @@ import {
 
 afterEach(cleanupShells);
 
-test("startup accepts pointer and keyboard input before showing the desktop", async () => {
-  const pointerShell = await loadShell();
-  const pointerDocument = pointerShell.document;
-  expect(pointerDocument.getElementById("boot-screen")!.hidden).toBeFalse();
-  pointerDocument.getElementById("boot-screen")!.click();
-  await flushShell();
-  expect(pointerDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
-  pointerDocument.getElementById("welcome-screen")!.click();
-  await flushShell();
-  expect(pointerDocument.getElementById("desktop")!.hidden).toBeFalse();
-  expect(pointerDocument.getElementById("taskbar")!.hidden).toBeFalse();
+test("boot waits for startup readiness and clears the framebuffer before Welcome", async () => {
+  let releaseLibrary;
+  const shell = await loadShell({
+    gameLibraryManager: {
+      subscribe: () => () => {},
+      initialize: () =>
+        new Promise((resolve) => {
+          releaseLibrary = resolve;
+        }),
+    },
+  });
+  const boot = shell.document.getElementById("boot-screen")!;
+  let clearedBeforeWelcome = false;
+  const observer = new shell.window.MutationObserver(() => {
+    if (boot.classList.contains("boot-handoff") && !boot.hidden) {
+      clearedBeforeWelcome =
+        shell.document.getElementById("welcome-screen")!.hidden;
+    }
+  });
+  observer.observe(boot, { attributes: true });
+  await new Promise((resolve) => setTimeout(resolve, 2100));
+  expect(boot.classList.contains("boot-running")).toBeTrue();
+  expect(boot.hidden).toBeFalse();
+  // One complete progress pass has now elapsed, but storage is still loading.
+  await new Promise((resolve) => setTimeout(resolve, 1800));
+  expect(boot.hidden).toBeFalse();
+  releaseLibrary({});
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  expect(clearedBeforeWelcome).toBeTrue();
+  expect(boot.hidden).toBeTrue();
+  expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();
+  observer.disconnect();
+});
 
-  const keyboardShell = await loadShell();
-  const keyboardDocument = keyboardShell.document;
-  keyboardDocument
-    .getElementById("boot-screen")!
-    .dispatchEvent(
-      new keyboardShell.window.KeyboardEvent("keydown", { key: "Enter" }),
-    );
-  await flushShell();
-  expect(keyboardDocument.getElementById("welcome-screen")!.hidden).toBeFalse();
-  keyboardDocument
-    .getElementById("welcome-screen")!
-    .dispatchEvent(
-      new keyboardShell.window.KeyboardEvent("keydown", { key: " " }),
-    );
-  await flushShell();
-  expect(keyboardDocument.getElementById("desktop")!.hidden).toBeFalse();
+test.each(["click", "Enter", " "])(
+  "boot can be skipped with %s",
+  async (input) => {
+    const shell = await loadShell();
+    const boot = shell.document.getElementById("boot-screen")!;
+    expect(boot.hidden).toBeFalse();
+    expect(boot.getAttribute("role")).toBe("button");
+    expect(shell.document.activeElement).toBe(boot);
+    if (input === "click") boot.click();
+    else
+      boot.dispatchEvent(
+        new shell.window.KeyboardEvent("keydown", {
+          key: input,
+          bubbles: true,
+        }),
+      );
+    await flushShell();
+    expect(boot.hidden).toBeTrue();
+    expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();
+    shell.document.getElementById("welcome-screen")!.click();
+    await flushShell();
+    expect(shell.document.getElementById("desktop")!.hidden).toBeFalse();
+  },
+);
+
+test("fast startup still shows the fade and a complete progress pass", async () => {
+  const shell = await loadShell();
+  const boot = shell.document.getElementById("boot-screen")!;
+  await new Promise((resolve) => setTimeout(resolve, 2200));
+  expect(boot.hidden).toBeFalse();
+  await new Promise((resolve) => setTimeout(resolve, 1800));
+  expect(boot.hidden).toBeTrue();
 });
 
 test("Start menu opens, closes, and exposes working XP destinations", async () => {

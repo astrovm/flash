@@ -1492,12 +1492,14 @@ fs.registerFolderHandler((folder) => {
 });
 
 // Keep open explorer windows and desktop shortcuts in sync with filesystem changes.
-fs.subscribe(() => {
-  openWindows.forEach((win) => {
-    if (win.type !== "system" || !win.currentFolderId) return;
-    if (!fs.getNode(win.currentFolderId)) win.currentFolderId = fs.MY_COMPUTER;
-    renderExplorerItems(win);
+const setupExplorerFilesystemSync = () =>
+  fs.subscribe(() => {
+    openWindows.forEach((win) => {
+      if (win.type !== "system" || !win.currentFolderId) return;
+      if (!fs.getNode(win.currentFolderId))
+        win.currentFolderId = fs.MY_COMPUTER;
+      renderExplorerItems(win);
+    });
+    if (iconsBuilt) buildDesktopIcons();
+    renderTaskButtons();
   });
-  if (iconsBuilt) buildDesktopIcons();
-  renderTaskButtons();
-});

@@ -235,92 +235,98 @@ iframe {
   z-index: 9000;
   background: #000;
   overflow: hidden;
-  color: #f1f5f9;
   cursor: var(--xp-cursor);
 }
 
-#boot-screen:focus-visible {
-  outline: none;
-}
-
-.boot-center {
+/* Fit the original 4:3 artwork to the browser without stretching it. */
+.boot-display {
   position: absolute;
-  top: 50%;
+  width: min(100vw, calc(100vh * 4 / 3));
+  aspect-ratio: 4 / 3;
   left: 50%;
-  width: min(400px, 88vw);
+  top: 50%;
   transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  visibility: hidden;
 }
 
-.boot-logo {
+#boot-screen.boot-running .boot-display {
+  visibility: visible;
+}
+
+#boot-screen.boot-handoff .boot-display {
+  visibility: hidden;
+}
+
+.boot-background {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .boot-progress {
-  width: 150px;
-  height: 20px;
-  margin: 150px auto 0;
-  padding: 2px 1px;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: 0;
-  border: 2px solid #b2b2b2;
-  border-radius: 7px;
-}
-
-.boot-progress i {
-  display: inline-block;
-  width: 9px;
-  height: 100%;
-  margin-right: 2px;
-  background: linear-gradient(
-    to bottom,
-    #2838c7 0%,
-    #5979ef 17%,
-    #869ef3 32%,
-    #869ef3 45%,
-    #5979ef 59%,
-    #2838c7 100%
-  );
-  animation: boot-slide 2s linear infinite;
-}
-
-.boot-footer {
   position: absolute;
-  right: 16px;
-  bottom: 24px;
-  left: 16px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
+  left: 40.46875%; /* 259 / 640 */
+  top: 73.75%; /* 354 / 480 */
+  width: 18.4375%; /* 118 / 640 */
+  height: 1.875%; /* 9 / 480 */
+  overflow: hidden;
 }
 
-.boot-footer p {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  font-size: clamp(12px, 2vw, 16px);
+.boot-progress img {
+  position: absolute;
+  width: 18.6440678%; /* 22 / 118 */
+  height: 100%;
+  max-width: none;
+  left: -20.3389831%;
 }
 
-.boot-microsoft {
-  font-family: Arial, sans-serif;
-  font-size: clamp(18px, 3vw, 28px);
-  font-weight: 700;
+.boot-running .boot-progress img {
+  animation: boot-slide 1.8s steps(18, end) 2s infinite backwards;
 }
 
-.boot-footer img {
-  width: min(120px, 30vw);
-  height: auto;
+/* Twenty observed kernel palettes, including black and full brightness. */
+.boot-fade {
+  background: #000;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.boot-fade img {
+  display: block;
+  width: 100%;
+  height: 2000%;
+  max-width: none;
+}
+
+.boot-running .boot-fade {
+  animation: boot-fade-hide 2s step-end forwards;
+}
+
+.boot-running .boot-fade img {
+  animation: boot-palette-in 2s steps(19, end) forwards;
+}
+@keyframes boot-palette-in {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-95%);
+  }
+}
+@keyframes boot-fade-hide {
+  to {
+    visibility: hidden;
+  }
 }
 
 @keyframes boot-slide {
   from {
-    transform: translateX(-30px);
-  }
+    left: -20.3389831%;
+  } /* -24 / 118 */
   to {
-    transform: translateX(150px);
-  }
+    left: 101.6949153%;
+  } /* 120 / 118 */
 }
 
 /* ============ Welcome screen ============ */
