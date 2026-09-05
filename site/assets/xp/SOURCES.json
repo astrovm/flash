@@ -2359,6 +2359,32 @@
       "pixelSha256": "eddbdea8decf0a7f98b5dae1e896eaf147611f0b1a5d28030045bbd64585c050"
     }
   },
+  "assets/xp/icons/GenericFile.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "9acd65899087cf00f25ef418b1125e3c264907edf69811bd0ff77925d8f7e9e8",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 1,
+      "language": 1033,
+      "frame": "32x32x8",
+      "pixelSha256": "23ae3994098795a50518842ec2bb1f76e242d53cb2cd26739760f32b54909114"
+    }
+  },
+  "assets/xp/icons/TextDocument.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "110e70dcde7f0ecad79b46a4e41bf7e2e82ae6219a708bc27fd90405d03bb48e",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 152,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "86830218ae24d205ac76697e77ad279f67b15a786054b2571079cd48c6663f77"
+    }
+  },
   "assets/xp/solitaire/cards/1.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",

@@ -9,8 +9,8 @@
   overflow: hidden;
   background-color: var(--desktop-color, #3a6ea5);
   background-image: var(--desktop-background, url("../../assets/xp/bliss.jpg"));
-  background-position: center;
-  background-size: 100% 100%;
+  background-position: center top;
+  background-size: 100% calc(100% + var(--desktop-taskbar-height, 30px));
   background-repeat: no-repeat;
 }
 
@@ -27,11 +27,14 @@
 }
 
 #desktop[data-wallpaper-position="center"] {
+  background-position: center
+    calc(50% + var(--desktop-taskbar-height, 30px) / 2);
   background-size: auto;
   background-repeat: no-repeat;
 }
 
 #desktop[data-wallpaper-position="tile"] {
+  background-position: left top;
   background-size: auto;
   background-repeat: repeat;
 }
@@ -183,13 +186,13 @@ html[data-xp-appearance="classic"] {
 
 .desktop-icon {
   position: absolute;
-  width: 76px;
-  min-height: 70px;
+  width: 75px;
+  min-height: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px 1px 3px;
+  gap: 6px;
+  padding: 1px 0 0;
   background: none;
   border: 1px solid transparent;
   cursor: var(--xp-cursor);
@@ -202,9 +205,10 @@ html[data-xp-appearance="classic"] {
 }
 
 .desktop-icon .icon-glyph {
+  position: relative;
   font-size: 32px;
   line-height: 1;
-  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+  filter: none;
 }
 
 .desktop-icon .icon-glyph.has-image {
@@ -273,10 +277,10 @@ html[data-xp-appearance="classic"] {
 .desktop-icon .icon-label {
   color: #fff;
   font-size: 11px;
-  line-height: 1.15;
+  line-height: 13px;
   text-align: center;
-  text-shadow: 1px 1px 2px #000;
-  padding: 1px 3px;
+  text-shadow: 1px 1px 1px #000;
+  padding: 0 2px;
   max-width: 74px;
   overflow: hidden;
   overflow-wrap: break-word;
@@ -286,16 +290,17 @@ html[data-xp-appearance="classic"] {
 }
 
 .desktop-icon.selected .icon-glyph {
-  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+  filter: none;
 }
 
-.desktop-icon.selected .icon-glyph.has-image::before {
+.desktop-icon.selected .icon-glyph:has(img)::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: rgba(11, 97, 206, 0.55);
-  mix-blend-mode: color;
+  background: var(--desktop-highlight, #316ac5);
+  opacity: 0.5;
+  mask: var(--desktop-icon-mask) center / contain no-repeat;
   pointer-events: none;
 }
 
@@ -305,13 +310,14 @@ html[data-xp-appearance="classic"] {
 
 /* Like Windows XP, a selected icon reveals its full label text. */
 .desktop-icon.selected .icon-label {
-  background: #0b61ce;
-  outline: 1px dotted #fff;
+  background: var(--desktop-highlight, #316ac5);
+  color: var(--desktop-highlight-text, #fff);
+  outline: none;
   text-shadow: none;
   -webkit-line-clamp: unset;
 }
 
-.desktop-icon.selected:focus .icon-label {
+.desktop-icon.selected:focus-visible .icon-label {
   outline: 1px dotted #fff;
 }
 
@@ -320,7 +326,8 @@ html[data-xp-appearance="classic"] {
 }
 
 #desktop-icons:not(:focus-within) .desktop-icon.selected .icon-label {
-  background: #7f7f7f;
+  background: #d4d0c8;
+  color: #000;
   outline-color: #fff;
 }
 
@@ -341,8 +348,12 @@ html[data-xp-appearance="classic"] {
 #desktop-selection {
   position: absolute;
   z-index: 900;
-  border: 1px dotted #fff;
-  background: rgba(49, 106, 197, 0.2);
+  border: 1px solid var(--desktop-highlight, #316ac5);
+  background: color-mix(
+    in srgb,
+    var(--desktop-highlight, #316ac5) 25%,
+    transparent
+  );
   pointer-events: none;
 }
 
@@ -367,8 +378,8 @@ html[data-xp-appearance="classic"] {
   position: relative;
   display: block;
   width: 100%;
-  min-height: 20px;
-  padding: 2px 22px 2px 2px;
+  min-height: 17px;
+  padding: 0 22px 0 2px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -393,8 +404,8 @@ html[data-xp-appearance="classic"] {
 
 .xp-context-menu button:not(:disabled):hover,
 .xp-context-menu button:not(:disabled):focus-visible {
-  background: #316ac5;
-  color: #fff;
+  background: var(--desktop-menu-highlight, #316ac5);
+  color: var(--desktop-highlight-text, #fff);
   outline: 0;
 }
 
@@ -410,7 +421,7 @@ html[data-xp-appearance="classic"] {
 .context-separator {
   display: block;
   height: 1px;
-  margin: 1px 2px;
+  margin: 4px 0;
   background: #aca899;
   box-shadow: 0 1px #fff;
 }
@@ -438,4 +449,37 @@ html[data-xp-appearance="classic"] {
 
 .context-parent.open > .context-submenu {
   display: block;
+}
+
+/* SysMetrics from the original Luna.msstyles color schemes. */
+html[data-xp-appearance="olive"] {
+  --desktop-highlight: #93a070;
+  --desktop-menu-highlight: #93a070;
+}
+html[data-xp-appearance="silver"] {
+  --desktop-highlight: #b2b4bf;
+  --desktop-menu-highlight: #bbb7c7;
+  --desktop-highlight-text: #000;
+}
+html[data-xp-appearance="classic"] {
+  --desktop-highlight: #0a246a;
+  --desktop-menu-highlight: #0a246a;
+}
+html[data-xp-appearance="classic"] .xp-context-menu {
+  background: #d4d0c8;
+  border: 1px solid #808080;
+  box-shadow:
+    inset 1px 1px #fff,
+    inset -1px -1px #404040;
+}
+
+#desktop:has(#desktop-context-menu:not([hidden]))
+  .desktop-icon.selected
+  .icon-label {
+  background: var(--desktop-highlight, #316ac5);
+  color: var(--desktop-highlight-text, #fff);
+}
+
+html[data-xp-appearance="classic"] .desktop-icon .icon-label {
+  text-shadow: none;
 }

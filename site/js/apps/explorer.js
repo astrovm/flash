@@ -1133,9 +1133,11 @@ const createExplorerIcon = (node) => {
     return icon;
   }
 
-  icon.classList.add("explorer-item-emoji");
-  icon.textContent = "📄";
-  return icon;
+  return addImage(
+    /\.(txt|log|csv|md)$/i.test(node.name)
+      ? "TextDocument.png"
+      : "GenericFile.png",
+  );
 };
 
 const explorerItemDescription = (node) => {

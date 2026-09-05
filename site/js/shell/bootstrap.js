@@ -300,6 +300,31 @@ document.addEventListener("keydown", async (e) => {
       desktopIcon || document.activeElement?.id === "desktop-icons";
     if (desktopHasFocus) {
       const desktopIcons = [...document.querySelectorAll(".desktop-icon")];
+      if (e.key === "F5") {
+        e.preventDefault();
+        refreshDesktop();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === " " && desktopIcon) {
+        e.preventDefault();
+        desktopIcon.classList.toggle("selected");
+        return;
+      }
+      if (
+        ["Home", "End"].includes(e.key) ||
+        (!desktopIcon &&
+          ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key))
+      ) {
+        const target = e.key === "End" ? desktopIcons.at(-1) : desktopIcons[0];
+        if (target) {
+          e.preventDefault();
+          if (!e.ctrlKey && !e.metaKey && !e.shiftKey)
+            selectDesktopIcon(target.dataset.desktopId);
+          if (e.shiftKey) target.classList.add("selected");
+          target.focus();
+        }
+        return;
+      }
       const typeaheadTarget = cycleTypeaheadItem(
         e,
         document.getElementById("desktop-icons"),

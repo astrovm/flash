@@ -1792,6 +1792,26 @@
       "height": 48,
       "bitDepth": 32,
       "output": "site/assets/xp/icons/WallpaperNone.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 1,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 8,
+      "output": "site/assets/xp/icons/GenericFile.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 152,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/TextDocument.png"
     }
   ],
   "resourceBitmaps": [
