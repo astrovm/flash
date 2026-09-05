@@ -326,8 +326,8 @@ iframe {
     sans-serif;
   color: #eff7ff;
   text-shadow: 2px 3px #3151b5;
-  left: calc(50% - 38px);
-  top: calc(50% - 27px);
+  left: calc(50% - 40px);
+  top: calc(50% - 25px);
   width: max-content;
   padding: 0;
   transform: none;
@@ -491,7 +491,7 @@ iframe {
 
 #welcome-screen.logging-in .welcome-message {
   display: block;
-  left: calc(50% - 233px);
+  left: calc(50% - 235px);
 }
 #welcome-screen.logging-in .welcome-wordmark,
 #welcome-screen.logging-in .welcome-instruction,

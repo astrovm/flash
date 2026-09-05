@@ -13,9 +13,29 @@ browser captures at the corresponding viewport size. The 1280×1024 guest uses
 management also prevent a whole-screen pixel equality claim. The older app captures used bitmap labels and are historical evidence only;
 native text now uses the original XP fonts through the browser renderer.
 
-`app-native-selection-*.jpg` records the replacement native text implementation
-at 1024×768 and 1280×1024, captured without resizing. It was also checked at
-390×844; no separate display-density emulation was available in this browser.
+`app-native-*.jpg` records the completed native text implementation. Automatic
+Welcome, selected-user loading, logged-off selection and program counts were
+checked at 1024×768 and 1280×1024 without resizing captures. At 390×844, both
+plural counts and loading text fit below the avatar and the instruction wraps.
+Separate display-density emulation was not available in this browser.
+
+The final pass corrected the native Welcome label position by two CSS pixels
+left and down, including selected-user loading. The reference remains XP's
+original Arial bold italic; the browser's antialiasing and fractional advances
+are accepted platform differences, not reproduced with bitmap text.
+
+To capture the brief loading state, a temporary local HTTP preview delayed only
+manual login by eight seconds immediately before `await fs.ready`. The served
+DOM, CSS, fonts and remaining session code were unchanged. This instrumentation
+is not part of the application. The ordinary build was separately checked for
+immediate login and a clean browser console; deferred-storage behavior is also
+covered by `tests/shell-behavior.test.ts`.
+
+Final interaction checks covered automatic keyboard skip, user-tile login,
+status clicks staying on selection, power-dialog cancellation, switched-window
+preservation with one/two program counts, and full logoff clearing the session.
+All 189 tests, formatting, lint, type checking, asset-reference validation and
+the production build pass.
 
 The older pairs cover automatic Welcome and user selection at 1024×768 and 1280×1024.
 Additional guest captures show logged-off selection and selected-user loading.
