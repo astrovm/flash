@@ -128,10 +128,6 @@ const showDesktop = () => {
   closeStartMenu();
 };
 
-const startWindowsApplicationRuntime = () => {
-  window.XPBoxedWinePreload?.schedule?.();
-};
-
 const showTurnOffScreen = () => {
   muteAllWindows();
   setScreen("turn-off-screen");
@@ -150,30 +146,62 @@ const startShutdown = (restart = false) => {
   );
 };
 
+let sessionClosePromise = null;
 const closeCurrentSession = () => {
-  clearTimeout(screenSaverTimeout);
-  const saver = document.getElementById("screen-saver-overlay");
-  if (saver) hideScreenSaver(saver);
-  showDesktopSnapshot = null;
-  closeStartMenu();
-  closeDesktopContextMenu();
-  closeWindowSystemMenu();
-  closeTaskbarMenus();
-  closeTrayVolumePopup();
-  Array.from(openWindows.keys()).forEach(closeGameWindow);
-  focusedGameId = null;
-  zIndexCounter = 100;
-  cascadeCount = 0;
-  loggedIn = false;
-  history.replaceState(
-    null,
-    "",
-    window.location.pathname + window.location.search,
-  );
+  if (sessionClosePromise) return sessionClosePromise;
+  sessionClosePromise = (async () => {
+    sessionGeneration++;
+    const windows = [...openWindows.values()];
+    for (const win of windows) {
+      if (win.closePromise) {
+        if ((await win.closePromise) === false) return false;
+      } else if (win.beforeClose && (await win.beforeClose()) === false) {
+        return false;
+      }
+    }
+    for (const win of windows) {
+      if (
+        (await closeGameWindow(win.gameId, { skipBeforeClose: true })) === false
+      )
+        return false;
+    }
+    clearTimeout(screenSaverTimeout);
+    const saver = document.getElementById("screen-saver-overlay");
+    if (saver) hideScreenSaver(saver);
+    showDesktopSnapshot = null;
+    closeStartMenu();
+    closeDesktopContextMenu();
+    closeWindowSystemMenu();
+    closeTaskbarMenus();
+    closeTrayVolumePopup();
+    focusedGameId = null;
+    zIndexCounter = 100;
+    cascadeCount = 0;
+    loggedIn = false;
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
+    return true;
+  })()
+    .catch((error) => {
+      void XPDialogs.alert(
+        error.message || "The session could not be closed.",
+        "Astro Flash",
+        "error",
+      );
+      return false;
+    })
+    .finally(() => {
+      sessionClosePromise = null;
+    });
+  return sessionClosePromise;
 };
 
-const logOff = () => {
-  closeCurrentSession();
+const logOff = async () => {
+  hideSystemDialogs();
+  if (!(await closeCurrentSession())) return;
   playXPSound("logoff");
   showWelcomeScreen(false);
 };
@@ -185,13 +213,15 @@ const switchUser = () => {
   showWelcomeScreen(false);
 };
 
-const restart = () => {
-  closeCurrentSession();
+const restart = async () => {
+  hideSystemDialogs();
+  if (!(await closeCurrentSession())) return;
   startShutdown(true);
 };
 
-const turnOff = () => {
-  closeCurrentSession();
+const turnOff = async () => {
+  hideSystemDialogs();
+  if (!(await closeCurrentSession())) return;
   startShutdown(false);
 };
 
@@ -199,6 +229,7 @@ let loginPromise = null;
 const login = (playSound = true) => {
   if (loginPromise) return loginPromise;
   loginPromise = (async () => {
+    await fs.ready;
     clearTimeout(bootTimeout);
     loggedIn = true;
     showDesktop();
@@ -209,10 +240,9 @@ const login = (playSound = true) => {
       playXPSound("logon");
     }
 
-    networkConnectedAt = Date.now();
     if (!shellInitialized) {
       shellInitialized = true;
-      syncGameFiles();
+      await syncGameFiles();
       buildDesktopIcons();
       buildPlaces();
       setupSearch();
@@ -235,7 +265,6 @@ const login = (playSound = true) => {
 const setupScreenFlow = () => {
   // Hide BoxedWine preparation behind the normal boot and Welcome screens.
   // Do not make either screen wait when the browser needs more time.
-  startWindowsApplicationRuntime();
   const bootScreen = document.getElementById("boot-screen");
   const skipBootScreen = () => finishBootSequence();
   bootScreen.addEventListener("click", skipBootScreen);

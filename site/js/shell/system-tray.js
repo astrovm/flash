@@ -67,74 +67,6 @@ const toggleTrayVolumePopup = () => {
 };
 
 // Connection "duration" counts from logon, like an XP dial-up/LAN session.
-let networkConnectedAt = Date.now();
-
-const formatDuration = (ms) => {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return [hours, minutes, seconds]
-    .map((part) => String(part).padStart(2, "0"))
-    .join(":");
-};
-
-const openNetworkStatus = () => {
-  const dialog = XPDialogs.createDialog({
-    title: "Local Area Connection Status",
-  });
-
-  const header = document.createElement("div");
-  header.className = "dlg-props-header";
-  const icon = document.createElement("img");
-  icon.className = "dlg-network-icon";
-  icon.src = "assets/xp/icons/NetworkConnection.png";
-  icon.alt = "";
-  icon.draggable = false;
-  const name = document.createElement("span");
-  name.className = "dlg-props-name";
-  name.textContent = "Local Area Connection";
-  header.append(icon, name);
-
-  const table = document.createElement("dl");
-  table.className = "dlg-props-table";
-  const cells = {};
-  const addRow = (label, id, value) => {
-    const dt = document.createElement("dt");
-    dt.textContent = label;
-    const dd = document.createElement("dd");
-    dd.id = id;
-    dd.textContent = value;
-    table.append(dt, dd);
-    cells[id] = dd;
-  };
-  addRow("Status:", "network-status-state", "Connected");
-  addRow("Duration:", "network-status-duration", "00:00:00");
-  addRow("Speed:", "network-status-speed", "100.0 Mbps");
-  addRow("Packets Sent:", "network-status-sent", "0");
-  addRow("Packets Received:", "network-status-received", "0");
-
-  dialog.body.append(header, table);
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
-
-  let sent = Math.floor(1000 + Math.random() * 9000);
-  let received = Math.floor(sent * (1.4 + Math.random()));
-  const tick = () => {
-    sent += Math.floor(Math.random() * 40);
-    received += Math.floor(Math.random() * 60);
-    cells["network-status-duration"].textContent = formatDuration(
-      Date.now() - networkConnectedAt,
-    );
-    cells["network-status-sent"].textContent = sent.toLocaleString("en-US");
-    cells["network-status-received"].textContent =
-      received.toLocaleString("en-US");
-  };
-  tick();
-  const timer = setInterval(tick, 1000);
-  dialog.onResult(() => clearInterval(timer));
-};
 
 let offlineManagerInitialized = false;
 
@@ -147,7 +79,8 @@ const offlineStatusText = (state) => {
     updating: "Downloading the latest update...",
     "update-available": "An update is available.",
     "update-pending": "An automatic update is scheduled.",
-    "update-ready": "An update is ready to apply.",
+    "update-ready":
+      "An update is ready for your next visit. Select Update Now to reload now.",
     "repair-required":
       "The installed update is incomplete. Repair the system files.",
     applying: "Applying the update...",
@@ -285,8 +218,8 @@ const wireProjectSettings = (win) => {
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
         <legend>Automatic updates</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Download and apply updates automatically</label>
-        <p class="project-settings-description">Astro Flash checks for updates automatically. It waits for the selected time before it downloads and applies a new release.</p>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Download updates automatically</label>
+        <p class="project-settings-description">Astro Flash downloads updates after the selected delay. The new version opens on your next visit. Your current session stays open.</p>
         <label class="project-update-delay">Wait before automatic update: <output data-project-value="update-delay">6 hours</output>
           <input type="range" min="0" max="72" step="1" value="6" data-project-setting="update-delay">
           <span><span>No delay</span><span>3 days</span></span>
@@ -621,9 +554,9 @@ const wireProjectSettings = (win) => {
         : state.phase === "checking"
           ? "Checking for updates..."
           : state.phase === "update-pending"
-            ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to install it immediately.`
+            ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to update and reload immediately.`
             : state.updateReady
-              ? `Astro Flash ${state.availableVersion || "update"} is ready to apply.`
+              ? `Astro Flash ${state.availableVersion || "update"} is ready for your next visit. Select Update Now to reload now.`
               : state.availableVersion
                 ? `Astro Flash ${state.availableVersion} is available.`
                 : state.lastChecked
@@ -783,24 +716,40 @@ const wireProjectSettings = (win) => {
     });
   });
   restoreDesktopButton.addEventListener("click", async () => {
-    const accepted = await XPDialogs.confirm(
-      "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
-      "Restore Default Desktop",
-      "question",
-    );
-    if (!accepted) return;
-    restoreDefaultDesktop();
-    window.location.reload();
+    try {
+      const accepted = await XPDialogs.confirm(
+        "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
+        "Restore Default Desktop",
+        "question",
+      );
+      if (!accepted) return;
+      await restoreDefaultDesktop();
+      window.location.reload();
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
+      );
+    }
   });
   resetButton.addEventListener("click", async () => {
-    const accepted = await XPDialogs.confirm(
-      "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
-      "Reset Astro Flash",
-      "warning",
-    );
-    if (!accepted) return;
-    resetAstroFlash();
-    window.location.reload();
+    try {
+      const accepted = await XPDialogs.confirm(
+        "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
+        "Reset Astro Flash",
+        "warning",
+      );
+      if (!accepted) return;
+      await resetAstroFlash();
+      window.location.reload();
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
+      );
+    }
   });
 };
 
@@ -1196,9 +1145,7 @@ const setupSystemTray = () => {
   document
     .getElementById("tray-volume-button")
     .addEventListener("click", toggleTrayVolumePopup);
-  document
-    .getElementById("tray-network-button")
-    .addEventListener("click", openNetworkStatus);
+
   document
     .getElementById("taskbar-clock")
     .addEventListener("click", openDateTimeProperties);

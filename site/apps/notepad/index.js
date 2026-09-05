@@ -1,3 +1,4 @@
+import { applicationMetadata } from "./metadata.js";
 import { defineApplication } from "../core/application.js";
 
 const mountNotepad = (context, instance) => {
@@ -21,6 +22,7 @@ const mountNotepad = (context, instance) => {
   content.append(menuBar, editor, status);
   win.nodeId = null;
   win.dirty = false;
+  let savedContent = "";
 
   const updateTitle = () => {
     const node = win.nodeId && fs.getNode(win.nodeId);
@@ -38,6 +40,7 @@ const mountNotepad = (context, instance) => {
   const loadDocument = (node) => {
     win.nodeId = node?.id || null;
     editor.value = node ? fs.getContent(node.id) || "" : "";
+    savedContent = editor.value;
     win.dirty = false;
     updateTitle();
     updateStatus();
@@ -56,27 +59,24 @@ const mountNotepad = (context, instance) => {
     const name = result.name.toLowerCase().endsWith(".txt")
       ? result.name
       : `${result.name}.txt`;
+    const contentToSave = editor.value;
     try {
       let target = result.existingId && fs.getNode(result.existingId);
       if (target && target.type !== "file") {
         throw new Error(`"${name}" is not a text file.`);
       }
-      if (target && target.id !== win.nodeId) {
-        fs.destroy(target.id);
-        target = null;
-      }
       if (!target) {
-        target = fileOps.createFile(result.parentId, name, {
-          content: editor.value,
+        target = await fileOps.createFile(result.parentId, name, {
+          content: contentToSave,
         });
       } else {
-        if (target.name !== name) fileOps.rename(target.id, name);
-        fs.setContent(target.id, editor.value);
+        await fs.setContent(target.id, contentToSave, { name });
       }
       win.nodeId = target.id;
-      win.dirty = false;
+      savedContent = contentToSave;
+      win.dirty = editor.value !== savedContent;
       updateTitle();
-      return true;
+      return !win.dirty;
     } catch (error) {
       XPDialogs.alert(
         error.message || "The file could not be saved.",
@@ -90,10 +90,23 @@ const mountNotepad = (context, instance) => {
   const save = async () => {
     const node = win.nodeId && fs.getNode(win.nodeId);
     if (!node) return saveAs();
-    fs.setContent(node.id, editor.value);
-    win.dirty = false;
-    updateTitle();
-    return true;
+    const contentToSave = editor.value;
+    try {
+      await fs.setContent(node.id, contentToSave, {
+        expectedContent: savedContent,
+      });
+      savedContent = contentToSave;
+      win.dirty = editor.value !== savedContent;
+      updateTitle();
+      return !win.dirty;
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file could not be saved.",
+        "Notepad",
+        "error",
+      );
+      return false;
+    }
   };
 
   const confirmSaveChanges = async () => {
@@ -318,17 +331,6 @@ const mountNotepad = (context, instance) => {
 };
 
 export const notepadApplication = defineApplication({
-  id: "__notepad",
-  title: "Notepad",
-  icon: "Notepad.png",
-  kind: "notepad",
-  fileTypes: [".txt"],
-  window: {
-    width: 768,
-    height: 530,
-    left: 44,
-    top: 58,
-    className: "notepad-window",
-  },
+  ...applicationMetadata,
   mount: mountNotepad,
 });

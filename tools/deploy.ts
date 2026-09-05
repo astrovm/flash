@@ -803,7 +803,7 @@ async function injectGameRoots(
     const content = await readFile(path, "utf8");
     const updated = await replaceExactlyOnce(
       content,
-      /<script src="js\/games\.[a-f0-9]{8}\.js"><\/script>/g,
+      /<script(?: defer)? src="js\/games\.[a-f0-9]{8}\.js"><\/script>/g,
       `${mapping}\n    $&`,
       `Could not inject versioned game roots into ${relative(paths.root, path)}`,
     );
@@ -911,7 +911,7 @@ export async function versionOfflineGameManifest(
   const mapping = `<script>window.ASTRO_OFFLINE_MANIFEST_URL=${JSON.stringify(filename)};</script>`;
   const html = await replaceExactlyOnce(
     await readFile(paths.html, "utf8"),
-    /<script src="js\/offline\.[a-f0-9]{8}\.js"><\/script>/g,
+    /<script(?: defer)? src="js\/offline\.[a-f0-9]{8}\.js"><\/script>/g,
     `${mapping}\n    $&`,
     "Could not inject the versioned offline game manifest",
   );

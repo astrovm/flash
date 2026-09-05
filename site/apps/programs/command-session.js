@@ -132,6 +132,10 @@ export class CommandSession {
   }
 
   execute(rawLine) {
+    return this.fs.transaction(() => this.executeInTransaction(rawLine));
+  }
+
+  executeInTransaction(rawLine) {
     const line = this.expandEnvironment(rawLine).trim();
     if (!line) return { output: "" };
     const tokens = tokenize(line);

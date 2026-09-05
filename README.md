@@ -15,6 +15,10 @@ selected original Windows XP applications.
 
 ## Development
 
+Use the Bun version pinned in `package.json` (CI reads the same pin).
+Typechecking uses the native TypeScript 7 compiler through `@typescript/native`;
+TypeScript 6 remains installed for TypeScript ESLint compatibility.
+
 Install dependencies and run the checks:
 
 ```bash
@@ -88,6 +92,20 @@ ScummVM, and BoxedWine runtimes are downloaded only when needed.
 Games installed through **Internet Games** are stored separately in IndexedDB
 and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
 additional files as they are requested.
+
+Automatic updates prepare the new version in the background and leave the current
+page open. Reopen the site to use it, or press **Update Now** to reload immediately.
+
+Documents are stored as individual records in IndexedDB. Existing localStorage
+files migrate automatically in one transaction; the old snapshot remains as a
+recovery backup. Saves wait for the database commit, and conflicting changes from
+another tab are rejected so the editor can keep its draft. All tabs can write.
+
+Game installation streams the download to a temporary file in the browser's
+private filesystem (OPFS), validates the ZIP index, and extracts one file at a
+time into Cache Storage. Extraction uses bounded reads and checks sizes and CRCs.
+Cancellation or failure removes partial cache entries and the temporary archive.
+This requires a browser supporting IndexedDB, OPFS, and streaming responses.
 
 ## Deployment
 

@@ -42,30 +42,29 @@
       content="https://flash.4st.li/assets/xp/bliss.jpg"
     />
     <title>Astro Flash Collection</title>
-    <script src="js/ruffle.js"></script>
-    <script src="vendor/fflate/index.js"></script>
-    <script src="js/games.js"></script>
-    <script src="js/flash-url-router.js"></script>
-    <script src="js/storage-policy.js"></script>
-    <script src="js/game-installer.js"></script>
-    <script src="js/game-library.js"></script>
-    <script src="js/game-data.js"></script>
-    <script src="js/filesystem.js"></script>
-    <script src="js/file-operations.js"></script>
-    <script src="js/dialogs.js"></script>
-    <script src="js/offline.js"></script>
-    <script type="module" src="apps/index.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/shell/window-manager.js"></script>
-    <script src="js/apps/display-properties.js"></script>
-    <script src="js/apps/explorer.js"></script>
-    <script src="js/apps/programs.js"></script>
-    <script src="js/shell/taskbar.js"></script>
-    <script src="js/shell/system-tray.js"></script>
-    <script src="js/shell/desktop.js"></script>
-    <script src="js/shell/start-menu.js"></script>
-    <script src="js/shell/session.js"></script>
-    <script src="js/shell/bootstrap.js"></script>
+    <script defer src="js/ruffle.js"></script>
+    <script defer src="vendor/fflate/index.js"></script>
+    <script defer src="js/games.js"></script>
+    <script defer src="js/flash-url-router.js"></script>
+    <script defer src="js/storage-policy.js"></script>
+    <script defer src="js/game-installer.js"></script>
+    <script defer src="js/game-library.js"></script>
+    <script defer src="js/game-data.js"></script>
+    <script defer src="js/filesystem.js"></script>
+    <script defer src="js/file-operations.js"></script>
+    <script defer src="js/dialogs.js"></script>
+    <script defer src="js/offline.js"></script>
+    <script defer src="js/main.js"></script>
+    <script defer src="js/shell/window-manager.js"></script>
+    <script defer src="js/apps/display-properties.js"></script>
+    <script defer src="js/apps/explorer.js"></script>
+    <script defer src="js/apps/programs.js"></script>
+    <script defer src="js/shell/taskbar.js"></script>
+    <script defer src="js/shell/system-tray.js"></script>
+    <script defer src="js/shell/desktop.js"></script>
+    <script defer src="js/shell/start-menu.js"></script>
+    <script defer src="js/shell/session.js"></script>
+    <script defer src="js/shell/bootstrap.js"></script>
     <link rel="stylesheet" href="css/main.css" />
     <link rel="stylesheet" href="css/shell/desktop.css" />
     <link rel="stylesheet" href="css/shell/windows.css" />
@@ -74,7 +73,6 @@
     <link rel="stylesheet" href="css/apps/programs.css" />
     <link rel="stylesheet" href="css/apps/common.css" />
     <link rel="stylesheet" href="css/apps/paint.css" />
-    <link rel="stylesheet" href="css/apps/winamp.css" />
     <link rel="stylesheet" href="css/apps/boxedwine.css" />
     <link rel="stylesheet" href="css/apps/pinball.css" />
     <link rel="stylesheet" href="css/shell/taskbar.css" />
@@ -84,6 +82,7 @@
     <link rel="stylesheet" href="css/shell/responsive.css" />
     <link rel="stylesheet" href="css/shell/themes.css" />
     <link rel="stylesheet" href="css/apps/minesweeper.css" />
+    <script type="module" src="apps/index.js"></script>
   </head>
 
   <body>
@@ -210,13 +209,6 @@
       </button>
       <div id="task-buttons"></div>
       <div id="taskbar-tray">
-        <button
-          id="tray-network-button"
-          class="tray-icon tray-network"
-          type="button"
-          title="Local Area Connection"
-          aria-label="Local Area Connection Status"
-        ></button>
         <button
           id="tray-volume-button"
           class="tray-icon tray-volume"

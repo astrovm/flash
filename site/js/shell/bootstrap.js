@@ -129,7 +129,9 @@ const confirmPermanentDelete = (ids) =>
       : "Are you sure you want to permanently delete these items?",
     "Confirm File Delete",
     "warning",
-  ).then((yes) => yes && ids.forEach((id) => fs.destroy(id)));
+  ).then(
+    (yes) => yes && fs.transaction(() => ids.forEach((id) => fs.destroy(id))),
+  );
 
 document.addEventListener(
   "keydown",
@@ -260,280 +262,291 @@ document.addEventListener("pointerdown", (e) => {
   }
 });
 
-document.addEventListener("keydown", (e) => {
-  if (suspended) {
-    if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
-      e.preventDefault();
-      setSuspended(false);
+document.addEventListener("keydown", async (e) => {
+  try {
+    if (suspended) {
+      if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
+        e.preventDefault();
+        setSuspended(false);
+      }
+      return;
     }
-    return;
-  }
 
-  // Dialogs and editable controls own their keyboard semantics. Do not
-  // steal browser text editing or modal access keys for shell shortcuts.
-  if (
-    e.defaultPrevented ||
-    document.querySelector(
-      ".xp-dialog-overlay, .system-dialog-overlay:not([hidden])",
-    ) ||
-    isEditableTarget(e.target)
-  )
-    return;
+    // Dialogs and editable controls own their keyboard semantics. Do not
+    // steal browser text editing or modal access keys for shell shortcuts.
+    if (
+      e.defaultPrevented ||
+      document.querySelector(
+        ".xp-dialog-overlay, .system-dialog-overlay:not([hidden])",
+      ) ||
+      isEditableTarget(e.target)
+    )
+      return;
 
-  if (e.altKey && e.key === "Tab") {
-    e.preventDefault();
-    cycleShellWindow(e.shiftKey ? -1 : 1, true);
-    return;
-  }
-  if (e.altKey && e.key === "Escape") {
-    e.preventDefault();
-    cycleShellWindow(1, false);
-    return;
-  }
+    if (e.altKey && e.key === "Tab") {
+      e.preventDefault();
+      cycleShellWindow(e.shiftKey ? -1 : 1, true);
+      return;
+    }
+    if (e.altKey && e.key === "Escape") {
+      e.preventDefault();
+      cycleShellWindow(1, false);
+      return;
+    }
 
-  const desktopIcon = document.activeElement?.closest?.(".desktop-icon");
-  const desktopHasFocus =
-    desktopIcon || document.activeElement?.id === "desktop-icons";
-  if (desktopHasFocus) {
-    const desktopIcons = [...document.querySelectorAll(".desktop-icon")];
-    const typeaheadTarget = cycleTypeaheadItem(
-      e,
-      document.getElementById("desktop-icons"),
-      desktopIcons,
-      typeaheadItemLabel,
-    );
-    if (typeaheadTarget) {
-      selectDesktopIcon(typeaheadTarget.dataset.desktopId);
-      typeaheadTarget.focus();
-      return;
-    }
-    const {
-      filesystemIds: selectedFsIds,
-      allFilesystem,
-      movable,
-    } = getDesktopSelectionEligibility();
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
-      e.preventDefault();
-      document
-        .querySelectorAll(".desktop-icon")
-        .forEach((icon) => icon.classList.add("selected"));
-      return;
-    }
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === "c" &&
-      allFilesystem
-    ) {
-      e.preventDefault();
-      fileOps.copy(selectedFsIds);
-      return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x" && movable) {
-      e.preventDefault();
-      fileOps.cut(selectedFsIds);
-      return;
-    }
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === "v" &&
-      fileOps.canPaste(fs.DESKTOP)
-    ) {
-      e.preventDefault();
-      pasteIntoFolder(fs.DESKTOP);
-      return;
-    }
-    if (e.key === "Delete" && movable) {
-      e.preventDefault();
-      if (e.shiftKey) confirmPermanentDelete(selectedFsIds);
-      else confirmRecycleDelete(selectedFsIds);
-      return;
-    }
-    if (e.key === "F2" && movable && selectedFsIds.length === 1) {
-      e.preventDefault();
-      beginDesktopRename(selectedFsIds[0]);
-      return;
-    }
-    if (e.shiftKey && e.key === "F10") {
-      e.preventDefault();
-      const rect =
-        desktopIcon?.getBoundingClientRect() ||
-        document.getElementById("desktop").getBoundingClientRect();
-      openDesktopContextMenu(
-        rect.left + 8,
-        rect.top + 8,
-        desktopIcon?.dataset.desktopId || null,
-      );
-      return;
-    }
-    if (
-      desktopIcon &&
-      ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
-    ) {
-      e.preventDefault();
-      const target = findDesktopIconInDirection(
-        desktopIcon,
+    const desktopIcon = document.activeElement?.closest?.(".desktop-icon");
+    const desktopHasFocus =
+      desktopIcon || document.activeElement?.id === "desktop-icons";
+    if (desktopHasFocus) {
+      const desktopIcons = [...document.querySelectorAll(".desktop-icon")];
+      const typeaheadTarget = cycleTypeaheadItem(
+        e,
+        document.getElementById("desktop-icons"),
         desktopIcons,
-        e.key,
+        typeaheadItemLabel,
       );
-      if (!target) return;
-      if (!e.ctrlKey && !e.shiftKey)
-        selectDesktopIcon(target.dataset.desktopId);
-      if (e.shiftKey) target.classList.add("selected");
-      target.focus();
+      if (typeaheadTarget) {
+        selectDesktopIcon(typeaheadTarget.dataset.desktopId);
+        typeaheadTarget.focus();
+        return;
+      }
+      const {
+        filesystemIds: selectedFsIds,
+        allFilesystem,
+        movable,
+      } = getDesktopSelectionEligibility();
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        document
+          .querySelectorAll(".desktop-icon")
+          .forEach((icon) => icon.classList.add("selected"));
+        return;
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "c" &&
+        allFilesystem
+      ) {
+        e.preventDefault();
+        fileOps.copy(selectedFsIds);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x" && movable) {
+        e.preventDefault();
+        fileOps.cut(selectedFsIds);
+        return;
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "v" &&
+        fileOps.canPaste(fs.DESKTOP)
+      ) {
+        e.preventDefault();
+        pasteIntoFolder(fs.DESKTOP);
+        return;
+      }
+      if (e.key === "Delete" && movable) {
+        e.preventDefault();
+        if (e.shiftKey) confirmPermanentDelete(selectedFsIds);
+        else confirmRecycleDelete(selectedFsIds);
+        return;
+      }
+      if (e.key === "F2" && movable && selectedFsIds.length === 1) {
+        e.preventDefault();
+        beginDesktopRename(selectedFsIds[0]);
+        return;
+      }
+      if (e.shiftKey && e.key === "F10") {
+        e.preventDefault();
+        const rect =
+          desktopIcon?.getBoundingClientRect() ||
+          document.getElementById("desktop").getBoundingClientRect();
+        openDesktopContextMenu(
+          rect.left + 8,
+          rect.top + 8,
+          desktopIcon?.dataset.desktopId || null,
+        );
+        return;
+      }
+      if (
+        desktopIcon &&
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
+      ) {
+        e.preventDefault();
+        const target = findDesktopIconInDirection(
+          desktopIcon,
+          desktopIcons,
+          e.key,
+        );
+        if (!target) return;
+        if (!e.ctrlKey && !e.shiftKey)
+          selectDesktopIcon(target.dataset.desktopId);
+        if (e.shiftKey) target.classList.add("selected");
+        target.focus();
+        return;
+      }
+    }
+
+    const explorerSurface =
+      document.activeElement?.closest?.(".explorer-items");
+    const explorerItem = document.activeElement?.closest?.(".explorer-item");
+    const explorerWin =
+      explorerSurface &&
+      [...openWindows.values()].find((win) => win.el.contains(explorerSurface));
+    if (explorerWin) {
+      const explorerItems = [
+        ...explorerSurface.querySelectorAll(".explorer-item"),
+      ];
+      const typeaheadTarget = cycleTypeaheadItem(
+        e,
+        explorerSurface,
+        explorerItems,
+        typeaheadItemLabel,
+      );
+      if (typeaheadTarget) {
+        explorerItems.forEach((item) => item.classList.remove("selected"));
+        typeaheadTarget.classList.add("selected");
+        typeaheadTarget.focus();
+        return;
+      }
+      const selected = selectedExplorerNodes(explorerWin);
+      const protectedSelection = selected.some((id) => fs.isProtected(id));
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        explorerWin.el
+          .querySelectorAll(".explorer-item")
+          .forEach((item) => item.classList.add("selected"));
+        return;
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "c" &&
+        selected.length
+      ) {
+        e.preventDefault();
+        fileOps.copy(selected);
+        return;
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "x" &&
+        selected.length &&
+        !protectedSelection
+      ) {
+        e.preventDefault();
+        fileOps.cut(selected);
+        return;
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "v" &&
+        fileOps.canPaste(explorerWin.currentFolderId)
+      ) {
+        e.preventDefault();
+        pasteIntoFolder(explorerWin.currentFolderId);
+        return;
+      }
+      if (e.key === "F2" && selected.length === 1 && !protectedSelection) {
+        e.preventDefault();
+        const name = window.prompt("Rename", fs.getNode(selected[0]).name);
+        if (name !== null) await fileOps.rename(selected[0], name);
+        return;
+      }
+      if (e.key === "Delete" && selected.length && !protectedSelection) {
+        e.preventDefault();
+        if (e.shiftKey) confirmPermanentDelete(selected);
+        else if (explorerWin.currentFolderId === fs.RECYCLE_BIN)
+          XPDialogs.confirm(
+            "Are you sure you want to permanently delete the selected items?",
+            "Confirm File Delete",
+            "warning",
+          ).then(
+            async (yes) => yes && (await fileOps.permanentlyDelete(selected)),
+          );
+        else confirmRecycleDelete(selected);
+        return;
+      }
+      if (e.shiftKey && e.key === "F10") {
+        e.preventDefault();
+        const rect = explorerItem.getBoundingClientRect();
+        openExplorerContextMenu(explorerWin, rect.left, rect.bottom);
+        return;
+      }
+    }
+
+    if (e.key === "F11" && focusedGameId) {
+      const win = openWindows.get(focusedGameId);
+      if (win?.type !== "system" && win?.player) {
+        e.preventDefault();
+        toggleFullscreen(win.player);
+      }
       return;
     }
-  }
 
-  const explorerSurface = document.activeElement?.closest?.(".explorer-items");
-  const explorerItem = document.activeElement?.closest?.(".explorer-item");
-  const explorerWin =
-    explorerSurface &&
-    [...openWindows.values()].find((win) => win.el.contains(explorerSurface));
-  if (explorerWin) {
-    const explorerItems = [
-      ...explorerSurface.querySelectorAll(".explorer-item"),
-    ];
-    const typeaheadTarget = cycleTypeaheadItem(
-      e,
-      explorerSurface,
-      explorerItems,
-      typeaheadItemLabel,
+    const taskButton = document.activeElement?.closest?.(".task-button");
+    if (
+      taskButton &&
+      ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)
+    ) {
+      const buttons = [
+        ...document.querySelectorAll("#task-buttons .task-button"),
+      ];
+      const current = buttons.indexOf(taskButton);
+      const target =
+        e.key === "Home"
+          ? buttons[0]
+          : e.key === "End"
+            ? buttons.at(-1)
+            : buttons[
+                (current + (e.key === "ArrowLeft" ? -1 : 1) + buttons.length) %
+                  buttons.length
+              ];
+      e.preventDefault();
+      target?.focus();
+      return;
+    }
+
+    if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
+      e.preventDefault();
+      toggleStartMenu();
+      return;
+    }
+
+    if (e.altKey && e.key === "F4" && focusedGameId) {
+      e.preventDefault();
+      closeGameWindow(focusedGameId);
+      return;
+    }
+
+    if (e.altKey && e.key === "F4" && !focusedGameId) {
+      e.preventDefault();
+      showShutdownDialog();
+      return;
+    }
+
+    if (e.altKey && (e.key === " " || e.code === "Space") && focusedGameId) {
+      e.preventDefault();
+      const win = openWindows.get(focusedGameId);
+      if (win && !win.minimized) {
+        const rect = win.el.getBoundingClientRect();
+        openWindowSystemMenu(win, rect.left + 6, rect.top + 28);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      closeWindowSystemMenu();
+      closeTaskbarMenus();
+      hideSystemDialogs();
+      closeStartMenu();
+      closeTrayVolumePopup();
+    }
+  } catch (error) {
+    await XPDialogs.alert(
+      error.message || "The file operation failed.",
+      "File operation",
+      "error",
     );
-    if (typeaheadTarget) {
-      explorerItems.forEach((item) => item.classList.remove("selected"));
-      typeaheadTarget.classList.add("selected");
-      typeaheadTarget.focus();
-      return;
-    }
-    const selected = selectedExplorerNodes(explorerWin);
-    const protectedSelection = selected.some((id) => fs.isProtected(id));
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
-      e.preventDefault();
-      explorerWin.el
-        .querySelectorAll(".explorer-item")
-        .forEach((item) => item.classList.add("selected"));
-      return;
-    }
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === "c" &&
-      selected.length
-    ) {
-      e.preventDefault();
-      fileOps.copy(selected);
-      return;
-    }
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === "x" &&
-      selected.length &&
-      !protectedSelection
-    ) {
-      e.preventDefault();
-      fileOps.cut(selected);
-      return;
-    }
-    if (
-      (e.ctrlKey || e.metaKey) &&
-      e.key.toLowerCase() === "v" &&
-      fileOps.canPaste(explorerWin.currentFolderId)
-    ) {
-      e.preventDefault();
-      pasteIntoFolder(explorerWin.currentFolderId);
-      return;
-    }
-    if (e.key === "F2" && selected.length === 1 && !protectedSelection) {
-      e.preventDefault();
-      const name = window.prompt("Rename", fs.getNode(selected[0]).name);
-      if (name !== null) fileOps.rename(selected[0], name);
-      return;
-    }
-    if (e.key === "Delete" && selected.length && !protectedSelection) {
-      e.preventDefault();
-      if (e.shiftKey) confirmPermanentDelete(selected);
-      else if (explorerWin.currentFolderId === fs.RECYCLE_BIN)
-        XPDialogs.confirm(
-          "Are you sure you want to permanently delete the selected items?",
-          "Confirm File Delete",
-          "warning",
-        ).then((yes) => yes && fileOps.permanentlyDelete(selected));
-      else confirmRecycleDelete(selected);
-      return;
-    }
-    if (e.shiftKey && e.key === "F10") {
-      e.preventDefault();
-      const rect = explorerItem.getBoundingClientRect();
-      openExplorerContextMenu(explorerWin, rect.left, rect.bottom);
-      return;
-    }
-  }
-
-  if (e.key === "F11" && focusedGameId) {
-    const win = openWindows.get(focusedGameId);
-    if (win?.type !== "system" && win?.player) {
-      e.preventDefault();
-      toggleFullscreen(win.player);
-    }
-    return;
-  }
-
-  const taskButton = document.activeElement?.closest?.(".task-button");
-  if (
-    taskButton &&
-    ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)
-  ) {
-    const buttons = [
-      ...document.querySelectorAll("#task-buttons .task-button"),
-    ];
-    const current = buttons.indexOf(taskButton);
-    const target =
-      e.key === "Home"
-        ? buttons[0]
-        : e.key === "End"
-          ? buttons.at(-1)
-          : buttons[
-              (current + (e.key === "ArrowLeft" ? -1 : 1) + buttons.length) %
-                buttons.length
-            ];
-    e.preventDefault();
-    target?.focus();
-    return;
-  }
-
-  if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
-    e.preventDefault();
-    toggleStartMenu();
-    return;
-  }
-
-  if (e.altKey && e.key === "F4" && focusedGameId) {
-    e.preventDefault();
-    closeGameWindow(focusedGameId);
-    return;
-  }
-
-  if (e.altKey && e.key === "F4" && !focusedGameId) {
-    e.preventDefault();
-    showShutdownDialog();
-    return;
-  }
-
-  if (e.altKey && (e.key === " " || e.code === "Space") && focusedGameId) {
-    e.preventDefault();
-    const win = openWindows.get(focusedGameId);
-    if (win && !win.minimized) {
-      const rect = win.el.getBoundingClientRect();
-      openWindowSystemMenu(win, rect.left + 6, rect.top + 28);
-    }
-    return;
-  }
-
-  if (e.key === "Escape") {
-    closeWindowSystemMenu();
-    closeTaskbarMenus();
-    hideSystemDialogs();
-    closeStartMenu();
-    closeTrayVolumePopup();
   }
 });
 

@@ -59,8 +59,6 @@ test("Start menu opens, closes, and exposes working XP destinations", async () =
     "music",
     "computer",
     "controlPanel",
-    "printers",
-    "help",
     "search",
     "run",
   ]);
@@ -79,8 +77,6 @@ test("Start menu opens, closes, and exposes working XP destinations", async () =
     ["music", "__my-music"],
     ["computer", "__my-computer"],
     ["controlPanel", "__control-panel"],
-    ["printers", "__printers"],
-    ["help", "__help"],
     ["search", "__search"],
   ];
   for (const [action, windowId] of routes) {
@@ -280,9 +276,6 @@ test("My Computer exposes the native desktop shell menu and opens Properties", a
     "Open",
     "Explore",
     "Search...",
-    "Manage",
-    "Map Network Drive...",
-    "Disconnect Network Drive...",
     "Create Shortcut",
     "Delete",
     "Rename",
@@ -294,9 +287,7 @@ test("My Computer exposes the native desktop shell menu and opens Properties", a
   menu
     .querySelector<HTMLButtonElement>('[data-action="computer-properties"]')!
     .click();
-  expect(
-    shell.document.querySelector(".system-properties-dialog"),
-  ).not.toBeNull();
+  expect(shell.document.querySelector(".xp-dialog")).not.toBeNull();
 });
 
 test("Control Panel navigation opens applets and switches their tabs", async () => {
@@ -305,6 +296,38 @@ test("Control Panel navigation opens applets and switches their tabs", async () 
   const controlPanel = shell.document.querySelector<HTMLElement>(
     '.xp-window[data-game="__control-panel"]',
   )!;
+
+  expect(
+    controlPanel.querySelector('[data-control-panel-category="accessibility"]'),
+  ).toBeNull();
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="classic"]')!
+    .click();
+  for (const action of [
+    "users",
+    "programs",
+    "system",
+    "accessibility-options",
+    "mouse",
+    "keyboard",
+    "sounds-audio",
+    "game-controllers",
+    "view-printers",
+    "help",
+    "firewall",
+    "power-options",
+    "regional-language",
+    "internet-options",
+    "folder-options",
+    "network-connections",
+  ]) {
+    expect(
+      controlPanel.querySelector(`[data-control-panel-action="${action}"]`),
+    ).toBeNull();
+  }
+  controlPanel
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="classic"]')!
+    .click();
 
   controlPanel
     .querySelector<HTMLButtonElement>(
@@ -317,28 +340,11 @@ test("Control Panel navigation opens applets and switches their tabs", async () 
       .textContent,
   ).toBe("Appearance and Themes");
   controlPanel
-    .querySelector<HTMLButtonElement>(
-      '[data-control-panel-action="folder-options"]',
-    )!
+    .querySelector<HTMLButtonElement>('[data-control-panel-action="display"]')!
     .click();
-
-  const dialog = shell.document.querySelector<HTMLElement>(
-    ".folder-options-dialog",
-  )!;
-  expect(dialog).not.toBeNull();
-  const viewTab = dialog.querySelector<HTMLButtonElement>(
-    '[data-folder-options-tab="view"]',
-  )!;
-  viewTab.click();
-  expect(viewTab.getAttribute("aria-selected")).toBe("true");
   expect(
-    dialog.querySelector<HTMLElement>('[data-folder-options-panel="view"]')!
-      .hidden,
-  ).toBeFalse();
-  expect(
-    dialog.querySelector<HTMLElement>('[data-folder-options-panel="general"]')!
-      .hidden,
-  ).toBeTrue();
+    shell.document.querySelector(".display-properties-content"),
+  ).not.toBeNull();
 });
 
 test("Display Properties applies and persists a selected wallpaper", async () => {
@@ -691,13 +697,12 @@ test("game volume changes remain scaled by the system volume", async () => {
   expect(appliedVolumes.at(-1)).toBe(0.2);
 });
 
-test("clock and network tray buttons open their corresponding dialogs", async () => {
+test("clock opens its dialog and the fabricated network status is absent", async () => {
   const shell = await login(await loadShell());
   shell.document.getElementById("taskbar-clock")!.click();
   expect(shell.document.querySelector(".datetime-dialog")).not.toBeNull();
 
-  shell.document.getElementById("tray-network-button")!.click();
-  expect(shell.document.getElementById("network-status-state")).not.toBeNull();
+  expect(shell.document.getElementById("tray-network-button")).toBeNull();
 });
 
 test("All Programs exposes system applications and games in the XP hierarchy", async () => {
@@ -710,28 +715,14 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
     [...flyouts.querySelectorAll<HTMLElement>("[data-program-id]")].map(
       (item) => item.dataset.programId,
     ),
-  ).toEqual([
-    "accessories",
-    "games",
-    "winamp",
-    "astro-settings",
-    "internet-games",
-  ]);
-  for (const programId of ["accessories", "games", "winamp"]) {
+  ).toEqual(["accessories", "games", "astro-settings", "internet-games"]);
+  for (const programId of ["accessories", "games"]) {
     expect(
       flyouts
         .querySelector(`[data-program-id="${programId}"] img`)!
         .getAttribute("src"),
     ).toEndWith("/ProgramFolder.png");
   }
-
-  flyouts
-    .querySelector<HTMLButtonElement>('[data-program-id="winamp"]')!
-    .click();
-  const winampGroup = flyouts.querySelectorAll(".start-program-flyout")[1]!;
-  expect(
-    winampGroup.querySelector<HTMLElement>('[data-program-id="winamp"]'),
-  ).not.toBeNull();
 
   flyouts
     .querySelector<HTMLButtonElement>('[data-program-id="accessories"]')!
@@ -742,7 +733,6 @@ test("All Programs exposes system applications and games in the XP hierarchy", a
   ].map((item) => item.dataset.programId);
   for (const programId of [
     "entertainment",
-    "system-tools",
     "calculator",
     "command-prompt",
     "notepad",
@@ -963,7 +953,7 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   const prompt = commandWindow.querySelector<HTMLElement>(
     ".xp-terminal-prompt span",
   )!;
-  const run = (command: string) => {
+  const run = async (command: string) => {
     input.value = command;
     input.dispatchEvent(
       new shell.window.KeyboardEvent("keydown", {
@@ -971,6 +961,7 @@ test("Command Prompt uses the XP console layout and operates on the shared files
         key: "Enter",
       }),
     );
+    await flushShell();
   };
 
   expect(commandWindow.style.width).toBe("668px");
@@ -1001,11 +992,11 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   expect(commandWindow.classList.contains("maximized")).toBeTrue();
   commandWindow.querySelector<HTMLButtonElement>(".maximize-btn")!.click();
 
-  run('cd "My Documents"');
+  await run('cd "My Documents"');
   expect(prompt.textContent).toBe(
     "C:\\Documents and Settings\\Administrator\\My Documents>",
   );
-  run("echo Hello XP>note.txt");
+  await run("echo Hello XP>note.txt");
   const note = shell.window.VirtualFS.findChild(
     shell.window.VirtualFS.MY_DOCUMENTS,
     "note.txt",
@@ -1013,13 +1004,13 @@ test("Command Prompt uses the XP console layout and operates on the shared files
   expect(note).not.toBeNull();
   expect(shell.window.VirtualFS.getContent(note.id)).toBe("Hello XP\n");
 
-  run("type note.txt");
+  await run("type note.txt");
   expect(output.textContent).toContain("Hello XP");
-  run("notepad note.txt");
+  await run("notepad note.txt");
   expect(
     shell.document.querySelector('.xp-window[data-game="__notepad"]'),
   ).not.toBeNull();
-  run("del note.txt");
+  await run("del note.txt");
   expect(shell.window.VirtualFS.getNode(note.id)).toBeNull();
 });
 
@@ -1073,6 +1064,12 @@ test("bundled iframe deep links use the production release base URL", async () =
 test("placeholder-only applications are not installed or exposed by the shell", async () => {
   const shell = await login(await loadShell());
   const removedApplicationIds = [
+    "__user-accounts",
+    "__add-remove-programs",
+    "__printers",
+    "__help",
+    "__winamp",
+    "__security-center",
     "__accessibility-wizard",
     "__magnifier",
     "__narrator",
@@ -1130,7 +1127,6 @@ test("placeholder-only applications are not installed or exposed by the shell", 
     "accessories",
     "accessibility",
     "communications",
-    "system-tools",
     "games",
   ]) {
     flyouts
@@ -1181,11 +1177,17 @@ test("Paint mounts natively and owns supported picture file associations", async
       ),
     ].find((button) => button.textContent === label)!;
   menuButton("File").click();
-  expect(
-    paintWindow.querySelector<HTMLButtonElement>(
-      '[data-paint-command="scanner"]',
-    )!.disabled,
-  ).toBeTrue();
+  for (const command of [
+    "scanner",
+    "print-preview",
+    "page-setup",
+    "print",
+    "send",
+  ]) {
+    expect(
+      paintWindow.querySelector(`[data-paint-command="${command}"]`),
+    ).toBeNull();
+  }
   expect(
     paintWindow.querySelector('[data-paint-command="wallpaper-tiled"]'),
   ).not.toBeNull();
@@ -1371,6 +1373,7 @@ test("logoff and shutdown actions change the visible session screen", async () =
   document.getElementById("log-off-button")!.click();
   expect(document.getElementById("logoff-dialog")!.hidden).toBeFalse();
   document.getElementById("logoff-confirm")!.click();
+  await flushShell();
   expect(document.getElementById("welcome-screen")!.hidden).toBeFalse();
 
   document.getElementById("welcome-screen")!.click();
@@ -1382,4 +1385,35 @@ test("logoff and shutdown actions change the visible session screen", async () =
   expect(document.getElementById("standby-screen")!.hidden).toBeFalse();
   document.getElementById("standby-resume")!.click();
   expect(document.getElementById("standby-screen")!.hidden).toBeTrue();
+});
+
+test("Task Manager exposes real applications without fabricated metrics", async () => {
+  const shell = await login(await loadShell());
+  clickStartAction(shell, "documents");
+  shell.document
+    .querySelector<HTMLButtonElement>('[data-taskbar-action="task-manager"]')!
+    .click();
+  const manager = shell.document.querySelector<HTMLElement>(
+    ".task-manager-dialog",
+  )!;
+  expect(manager).not.toBeNull();
+  expect(
+    [...manager.querySelectorAll("[data-task-manager-tab]")].map(
+      (tab) => tab.dataset.taskManagerTab,
+    ),
+  ).toEqual(["applications"]);
+  expect(manager.querySelector(".task-manager-status")).toBeNull();
+  expect(
+    manager.querySelector('[data-task-manager-window="__my-documents"]'),
+  ).not.toBeNull();
+  manager
+    .querySelector<HTMLButtonElement>('[data-task-manager-action="end-task"]')!
+    .click();
+  await flushShell();
+  expect(
+    shell.document.querySelector('.xp-window[data-game="__my-documents"]'),
+  ).toBeNull();
+  expect(
+    manager.querySelector('[data-task-manager-window="__my-documents"]'),
+  ).toBeNull();
 });

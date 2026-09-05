@@ -93,6 +93,16 @@
     installed: true,
   });
 
+  const assetRewriteRules = (uuid, origin) => {
+    const prefix = `${origin}/__installed-games/${encodeURIComponent(uuid)}/`;
+    const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return [
+      // Relative URLs already resolve inside this game's synthetic directory.
+      [new RegExp(`^${escapedPrefix}`), "$&"],
+      [/^https?:\/\/([^/]+)\/(.*)$/i, `${prefix}content/$1/$2`],
+    ];
+  };
+
   const readDownload = async (
     response,
     { onProgress, maxBytes = MAX_DOWNLOAD_BYTES } = {},
@@ -159,9 +169,95 @@
     return response.json();
   };
 
+  const unzipInBackground = (bytes, { signal } = {}) =>
+    new Promise((resolve, reject) => {
+      signal?.throwIfAborted();
+      let terminate;
+      const abort = () => {
+        terminate?.();
+        reject(
+          signal.reason || new DOMException("Download cancelled", "AbortError"),
+        );
+      };
+      signal?.addEventListener("abort", abort, { once: true });
+      try {
+        terminate = root.fflate.unzip(bytes, (error, entries) => {
+          signal?.removeEventListener("abort", abort);
+          if (error) reject(error);
+          else resolve(entries);
+        });
+      } catch (error) {
+        signal?.removeEventListener("abort", abort);
+        reject(error);
+      }
+    });
+
+  const createTemporaryArchive = async (
+    response,
+    {
+      signal,
+      onProgress,
+      maxBytes = MAX_DOWNLOAD_BYTES,
+      storageManager = root.navigator?.storage,
+    } = {},
+  ) => {
+    if (!response.ok)
+      throw new Error(`Game download failed (${response.status}).`);
+    const expected = Number(response.headers.get("Content-Length")) || null;
+    if (expected && expected > maxBytes)
+      throw new Error("This game is larger than the supported download limit.");
+    if (!storageManager?.getDirectory)
+      throw new Error(
+        "This browser does not support temporary file storage for game downloads.",
+      );
+    const directory = await storageManager.getDirectory();
+    const name = `astro-download-${root.crypto.randomUUID()}.zip`;
+    const handle = await directory.getFileHandle(name, { create: true });
+    let writable, reader;
+    const cleanup = () => directory.removeEntry(name);
+    const abort = () => {
+      void reader?.cancel(signal.reason).catch(() => {});
+    };
+    try {
+      signal?.throwIfAborted();
+      writable = await handle.createWritable();
+      if (!response.body) throw new Error("Game download has no body.");
+      reader = response.body.getReader();
+      signal?.addEventListener("abort", abort, { once: true });
+      let received = 0;
+      while (true) {
+        signal?.throwIfAborted();
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.byteLength;
+        if (received > maxBytes)
+          throw new Error(
+            "This game is larger than the supported download limit.",
+          );
+        await writable.write(value);
+        onProgress?.({ loaded: received, total: expected });
+      }
+      signal?.throwIfAborted();
+      await writable.close();
+      writable = null;
+      return { blob: await handle.getFile(), cleanup };
+    } catch (error) {
+      await reader?.cancel(error).catch(() => {});
+      await writable?.abort().catch(() => {});
+      await cleanup().catch(() => {});
+      throw error;
+    } finally {
+      signal?.removeEventListener("abort", abort);
+      reader?.releaseLock();
+    }
+  };
+
   const createManager = ({
     installer = root.AstroGameInstaller,
     unzipSync = root.fflate?.unzipSync,
+    temporaryArchive = root.document ? createTemporaryArchive : null,
+    Inflate = root.fflate?.AsyncInflate,
+    unzip = root.fflate?.unzip ? unzipInBackground : null,
     fetchObject = root.fetch?.bind(root),
     cachesObject = root.caches,
     indexedDBObject = root.indexedDB,
@@ -172,7 +268,7 @@
     metadataStore = null,
   } = {}) => {
     if (!installer) throw new Error("The game installer is unavailable.");
-    if (typeof unzipSync !== "function")
+    if (typeof unzip !== "function" && typeof unzipSync !== "function")
       throw new Error("The ZIP reader is unavailable.");
     if (typeof fetchObject !== "function")
       throw new Error("Network access is unavailable.");
@@ -184,6 +280,8 @@
     let initialized = false;
     const installed = new Map();
     const listeners = new Set();
+    const legacyRequests = new Map();
+    const legacyMisses = new Map();
 
     const notify = () => {
       const snapshot = manager.getGames();
@@ -209,7 +307,7 @@
     const installedAssetKey = (record, archivePath) =>
       `${origin}/__installed-games/${record.uuid}/${archivePath}`;
 
-    const fetchLegacyAsset = async (record, archivePath) => {
+    const fetchLegacyAssetOnce = async (record, archivePath) => {
       if (!record.legacyFallback) return null;
       let safePath;
       try {
@@ -224,7 +322,14 @@
       const response = await fetchObject(
         `${apiBase}/${encodeURIComponent(record.uuid)}/asset?path=${encodeURIComponent(safePath)}`,
       );
-      if (!response.ok) return null;
+      if (!response.ok) {
+        if (response.status === 404) {
+          legacyMisses.set(key, Date.now() + 30_000);
+          if (legacyMisses.size > 256)
+            legacyMisses.delete(legacyMisses.keys().next().value);
+        }
+        return null;
+      }
       const bytes = await readDownload(response, {
         maxBytes: MAX_LEGACY_ASSET_BYTES,
       });
@@ -238,6 +343,20 @@
         if (!storagePolicy.isQuotaExceeded(error)) throw error;
       }
       return stored;
+    };
+
+    const fetchLegacyAsset = async (record, archivePath) => {
+      const key = installedAssetKey(record, archivePath);
+      if ((legacyMisses.get(key) || 0) > Date.now()) return null;
+      let pending = legacyRequests.get(key);
+      if (!pending) {
+        pending = fetchLegacyAssetOnce(record, archivePath).finally(() =>
+          legacyRequests.delete(key),
+        );
+        legacyRequests.set(key, pending);
+      }
+      const response = await pending;
+      return response?.clone() || null;
     };
 
     const manager = {
@@ -313,24 +432,61 @@
         }
         await storagePolicy.requestPersistence(storageManager);
         const response = await fetchObject(checked.downloadUrl, { signal });
-        const bytes = await readDownload(response, { onProgress });
+        let archive;
         let metadata;
         try {
-          metadata =
-            checked.packageType === "legacy"
-              ? await installer.installLegacy(checked, bytes, {
-                  cache,
-                  store,
-                  origin,
-                })
-              : await installer.install(checked, bytes, {
-                  cache,
-                  store,
-                  unzipSync,
-                  origin,
-                });
+          if (temporaryArchive) {
+            archive = await temporaryArchive(response, {
+              onProgress,
+              signal,
+              storageManager,
+              maxBytes:
+                checked.packageType === "legacy"
+                  ? MAX_LEGACY_ASSET_BYTES
+                  : MAX_DOWNLOAD_BYTES,
+            });
+            metadata =
+              checked.packageType === "legacy"
+                ? await installer.installLegacy(checked, archive.blob, {
+                    cache,
+                    store,
+                    origin,
+                    signal,
+                  })
+                : await installer.installStream(checked, archive.blob, {
+                    cache,
+                    store,
+                    origin,
+                    signal,
+                    Inflate,
+                  });
+          } else {
+            // Injectable byte-array path for non-browser consumers.
+            const bytes = await readDownload(response, { onProgress });
+            metadata =
+              checked.packageType === "legacy"
+                ? await installer.installLegacy(checked, bytes, {
+                    cache,
+                    store,
+                    origin,
+                    signal,
+                  })
+                : await installer.install(checked, bytes, {
+                    cache,
+                    store,
+                    unzip: unzip || unzipSync,
+                    signal,
+                    origin,
+                  });
+          }
         } catch (error) {
           throw storagePolicy.normalizeError(error);
+        } finally {
+          await archive
+            ?.cleanup()
+            .catch((error) =>
+              console.error("Could not remove temporary game archive:", error),
+            );
         }
 
         if (checked.logoUrl) {
@@ -364,7 +520,7 @@
         installed.delete(`flashpoint:${uuid.toLowerCase()}`);
         notify();
       },
-      async match(request) {
+      async match(request, { gameId } = {}) {
         requireReady();
         const direct = await cache.match(request);
         if (direct) return direct;
@@ -398,16 +554,31 @@
         }
 
         const archivePath = installer.archiveLaunchPath(requested.href);
-        for (const record of installed.values()) {
-          const key = installedAssetKey(record, archivePath);
-          const response = await cache.match(key);
-          if (response) return response;
-        }
-        for (const record of installed.values()) {
-          const response = await fetchLegacyAsset(record, archivePath);
-          if (response) return response;
-        }
-        return null;
+        const activeRecord = gameId ? installed.get(gameId) : null;
+        const candidates = activeRecord
+          ? [activeRecord]
+          : [...installed.values()].filter((record) => {
+              try {
+                return (
+                  new URL(record.launchCommand).hostname === requested.hostname
+                );
+              } catch {
+                return false;
+              }
+            });
+        // A shared archive host is ambiguous without the requesting game's identity.
+        if (candidates.length !== 1) return null;
+        const record = candidates[0];
+        const cached = await cache.match(
+          installedAssetKey(record, archivePath),
+        );
+        if (cached) return cached;
+        if (
+          !activeRecord &&
+          new URL(record.launchCommand).hostname !== requested.hostname
+        )
+          return null;
+        return fetchLegacyAsset(record, archivePath);
       },
       async storageEstimate() {
         return storagePolicy.estimate(storageManager);
@@ -423,7 +594,9 @@
     MAX_DOWNLOAD_BYTES,
     MAX_LEGACY_ASSET_BYTES,
     asGameConfig,
+    assetRewriteRules,
     readDownload,
+    createTemporaryArchive,
     createMetadataStore,
     createManager,
   };

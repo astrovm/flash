@@ -1,3 +1,4 @@
+import { applicationMetadata } from "./metadata.js";
 import { defineApplication } from "../core/application.js";
 import { showXPAboutDialog } from "../core/about-dialog.js";
 import { createCanvasEngine } from "./canvas-engine.js";
@@ -110,12 +111,7 @@ const TOOLS = [
 ];
 
 const separator = ["separator"];
-const disabled = (command, label, shortcut = "") => [
-  command,
-  label,
-  shortcut,
-  { disabled: true },
-];
+const disabled = (command, label, shortcut = "") => [command, label, shortcut];
 const check = (command, label, shortcut = "") => [
   command,
   label,
@@ -129,18 +125,8 @@ const MENU_ITEMS = {
     ["save", "Save", "Ctrl+S"],
     ["save-as", "Save As..."],
     separator,
-    disabled("scanner", "From Scanner or Camera..."),
-    separator,
-    ["print-preview", "Print Preview"],
-    ["page-setup", "Page Setup..."],
-    ["print", "Print...", "Ctrl+P"],
-    separator,
-    ["send", "Send..."],
-    separator,
     disabled("wallpaper-tiled", "Set As Background (Tiled)"),
     disabled("wallpaper-centered", "Set As Background (Centered)"),
-    separator,
-    disabled("recent", "Recent File"),
     separator,
     ["exit", "Exit", "Alt+F4"],
   ],
@@ -259,6 +245,8 @@ const mountPaint = (shell, instance) => {
   let fileId = null;
   let fileName = "untitled";
   let dirty = false;
+  let editRevision = 0;
+  let savedContent;
   let tool = "rect-select";
   const panelState = {
     toolbox: true,
@@ -305,7 +293,10 @@ const mountPaint = (shell, instance) => {
         [primary, secondary] = detail.colors;
         updateCurrent();
       }
-      if (detail?.dirty !== false) dirty = true;
+      if (detail?.dirty !== false) {
+        dirty = true;
+        editRevision++;
+      }
     },
     onPosition({ x, y }) {
       status.querySelector("[data-paint-position]").textContent =
@@ -415,6 +406,7 @@ const mountPaint = (shell, instance) => {
       engine.replace(await imageFromFile(file));
       fileId = file.id;
       fileName = file.name;
+      savedContent = file.content;
       dirty = false;
       setTitle();
       updateFileCommandState();
@@ -439,16 +431,30 @@ const mountPaint = (shell, instance) => {
     const normalizedName = /\.[^.]+$/.test(destination.name)
       ? destination.name
       : `${destination.name}.bmp`;
-    const content = await encodeCanvas(canvas, normalizedName);
-    const file = destination.existingId
-      ? shell.setFileContent(destination.existingId, content)
-      : shell.createFile(destination.parentId, normalizedName, content);
-    fileId = file.id;
-    fileName = file.name;
-    dirty = false;
-    setTitle();
-    updateFileCommandState();
-    return true;
+    try {
+      const revisionToSave = editRevision;
+      const content = await encodeCanvas(canvas, normalizedName);
+      const file = destination.existingId
+        ? await shell.setFileContent(destination.existingId, content, {
+            expectedContent:
+              destination.existingId === fileId ? savedContent : undefined,
+          })
+        : await shell.createFile(destination.parentId, normalizedName, content);
+      fileId = file.id;
+      fileName = file.name;
+      savedContent = content;
+      dirty = editRevision !== revisionToSave;
+      setTitle();
+      updateFileCommandState();
+      return !dirty;
+    } catch (error) {
+      await shell.dialogs.alert(
+        error.message || "The picture could not be saved.",
+        "Paint",
+        "error",
+      );
+      return false;
+    }
   };
   const confirmSaveChanges = async () => {
     if (!dirty) return true;
@@ -514,11 +520,6 @@ const mountPaint = (shell, instance) => {
       shell.setWallpaper(canvas.toDataURL());
     else if (command === "view-bitmap")
       root.classList.toggle("paint-bitmap-view");
-    else if (["print-preview", "page-setup", "print", "send"].includes(command))
-      shell.showMessage(
-        "Paint",
-        "This command is not available in this browser.",
-      );
     else if (command === "about")
       showXPAboutDialog(shell.dialogs, {
         title: "About Paint",
@@ -610,17 +611,6 @@ const mountPaint = (shell, instance) => {
 };
 
 export const paintApplication = defineApplication({
-  id: "__paint",
-  title: "Paint",
-  icon: "Paint.png",
-  kind: "paint",
-  window: {
-    width: 760,
-    height: 560,
-    left: 0,
-    top: 0,
-    className: "xp-native-paint-window",
-  },
-  fileTypes: [".bmp", ".dib", ".gif", ".jpg", ".jpeg", ".png"],
+  ...applicationMetadata,
   mount: mountPaint,
 });

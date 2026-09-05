@@ -88,7 +88,7 @@ test("game installer", async () => {
       put: async (v) => stored.set(v.id, v),
       delete: async (k) => stored.delete(k),
     },
-    unzipSync,
+    unzip: async (bytes) => unzipSync(bytes),
     responseFactory: (x) => x,
   };
   const result = await installer.install(record, gameZip, deps);
@@ -108,6 +108,21 @@ test("game installer", async () => {
   assert.strictEqual(stored.size, 1);
   await installer.uninstall(uuid, deps);
   assert.strictEqual(cache.data.size, 0);
+  const controller = new AbortController();
+  await assert.rejects(
+    installer.install(record, gameZip, {
+      ...deps,
+      signal: controller.signal,
+      unzip: async (bytes) => {
+        controller.abort();
+        return unzipSync(bytes);
+      },
+    }),
+    /abort/i,
+  );
+  assert.strictEqual(cache.data.size, 0);
+  assert.strictEqual(stored.size, 0);
+
   assert.strictEqual(stored.size, 0);
   const legacy = await installer.installLegacy(
     { ...record, packageType: "legacy", legacyFallback: true },

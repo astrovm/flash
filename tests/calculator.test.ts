@@ -182,7 +182,9 @@ describe("original Windows XP Calculator through BoxedWine", () => {
     expect(
       calculator.classList.contains("xp-boxedwine-shared-window"),
     ).toBeTrue();
-    expect(calculator.querySelector(".resize-handle")).toBeNull();
+    const resizeHandles = [...calculator.querySelectorAll(".resize-handle")];
+    expect(resizeHandles.length).toBeGreaterThan(0);
+    expect(resizeHandles.every((handle) => handle.hidden)).toBeTrue();
     expect(
       calculator.querySelector(".boxedwine-shared-app-host"),
     ).not.toBeNull();

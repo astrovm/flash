@@ -122,15 +122,6 @@ const openDisplayNotice = (ownerWindow, title, message) => {
   );
 };
 
-const addDisplayDialogHelpButton = (dialog) => {
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.title = "Help";
-  help.setAttribute("aria-label", "Help");
-  dialog.el.querySelector(".title-buttons").prepend(help);
-};
-
 const openDisplayEffectsDialog = (ownerWindow, settings, onCommit) => {
   const draft = { ...settings };
   const dialog = XPDialogs.createDialog({
@@ -139,7 +130,6 @@ const openDisplayEffectsDialog = (ownerWindow, settings, onCommit) => {
   });
   dialog.el.classList.add("display-effects-dialog");
   setDisplayDialogOwnerActive(ownerWindow, false);
-  addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
     <div class="effects-option"><label><input type="checkbox" data-effect-enabled="transition"> Use the following transition effect for menus and tooltips:</label><select class="xp-select" data-effect="transitionEffect"><option value="fade">Fade effect</option><option value="scroll">Scroll effect</option></select></div>
     <div class="effects-option"><label><input type="checkbox" data-effect-enabled="smoothing"> Use the following method to smooth edges of screen fonts:</label><select class="xp-select" data-effect="fontSmoothing"><option value="standard">Standard</option><option value="cleartype">ClearType</option></select></div>
@@ -220,7 +210,6 @@ const openAdvancedAppearanceDialog = (ownerWindow, settings, onCommit) => {
   });
   dialog.el.classList.add("advanced-appearance-dialog");
   setDisplayDialogOwnerActive(ownerWindow, false);
-  addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
     <div class="advanced-appearance-preview">
       <div class="advanced-inactive">Inactive Window <b>_</b><b>□</b><b>×</b></div>
@@ -268,90 +257,6 @@ const openAdvancedAppearanceDialog = (ownerWindow, settings, onCommit) => {
   dialog.body.querySelector("[data-advanced-color]").focus();
 };
 
-const openMonitorPropertiesDialog = (ownerWindow) => {
-  const dialog = XPDialogs.createDialog({
-    title: "(Default Monitor) and Properties",
-    onCancel: () => dialog.close("cancel"),
-  });
-  dialog.el.classList.add("monitor-properties-dialog");
-  setDisplayDialogOwnerActive(ownerWindow, false);
-  addDisplayDialogHelpButton(dialog);
-  dialog.body.innerHTML = `
-    <div class="monitor-property-tabs" role="tablist" aria-label="Monitor properties">
-      <button type="button" class="selected" role="tab" aria-selected="true" aria-controls="monitor-general-panel" data-monitor-tab="general">General</button>
-      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-adapter-panel" data-monitor-tab="adapter" tabindex="-1">Adapter</button>
-      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-monitor-panel" data-monitor-tab="monitor" tabindex="-1">Monitor</button>
-      <button type="button" role="tab" aria-selected="false" aria-controls="monitor-troubleshoot-panel" data-monitor-tab="troubleshoot" tabindex="-1">Troubleshoot</button>
-    </div>
-    <section class="monitor-property-panel" id="monitor-general-panel" role="tabpanel" data-monitor-panel="general">
-      <fieldset><legend>Display</legend><p>If your screen resolution makes screen items too small to view<br>comfortably, you can increase the DPI to compensate. To change<br>font sizes only, click Cancel and go to the Appearance tab.</p><label>DPI setting:<select class="xp-select" disabled><option>Normal size (96 DPI)</option></select></label><p>Normal size (96 dpi)</p></fieldset>
-      <fieldset><legend>Compatibility</legend><p>Some programs might not operate properly unless you restart the<br>computer after changing display settings.</p><p>After I change display settings:</p><label><input type="radio" name="display-compatibility"> Restart the computer before applying the new display settings</label><label><input type="radio" name="display-compatibility" checked> Apply the new display settings without restarting</label><label><input type="radio" name="display-compatibility"> Ask me before applying the new display settings</label><p>Some games and other programs must be run in 256-color mode.<br>Learn more about <u>running programs in 256-color mode</u>.</p></fieldset>
-    </section>
-    <section class="monitor-property-panel" id="monitor-adapter-panel" role="tabpanel" data-monitor-panel="adapter" hidden>
-      <fieldset><legend>Adapter Information</legend><p>Chip Type: Browser display adapter</p><p>DAC Type: Internal</p><p>Memory Size: Not available</p><p>Adapter String: Browser virtual display</p></fieldset>
-      <fieldset><legend>Adapter</legend><p>This desktop uses the browser's active graphics adapter.</p><button type="button" class="xp-property-button" disabled>List All Modes...</button></fieldset>
-    </section>
-    <section class="monitor-property-panel" id="monitor-monitor-panel" role="tabpanel" data-monitor-panel="monitor" hidden>
-      <fieldset><legend>Monitor type</legend><p>(Default Monitor)</p><button type="button" class="xp-property-button" disabled>Properties</button></fieldset>
-      <fieldset><legend>Monitor settings</legend><label>Screen refresh rate:<select class="xp-select" disabled><option>Use hardware default setting</option></select></label><label><input type="checkbox" checked disabled> Hide modes that this monitor cannot display</label></fieldset>
-    </section>
-    <section class="monitor-property-panel" id="monitor-troubleshoot-panel" role="tabpanel" data-monitor-panel="troubleshoot" hidden>
-      <fieldset><legend>Hardware acceleration</legend><p>If your computer is having problems with graphics, move the slider toward None.</p><label class="monitor-acceleration"><span>None</span><input type="range" min="0" max="5" value="5"><span>Full</span></label><p>All cursor and advanced drawing accelerations are enabled.</p></fieldset>
-      <label><input type="checkbox" checked> Enable write combining</label>
-    </section>
-  `;
-  const tabs = [...dialog.body.querySelectorAll("[data-monitor-tab]")];
-  const panels = [...dialog.body.querySelectorAll("[data-monitor-panel]")];
-  const selectTab = (tab) => {
-    tabs.forEach((candidate) => {
-      const selected = candidate === tab;
-      candidate.classList.toggle("selected", selected);
-      candidate.setAttribute("aria-selected", String(selected));
-      candidate.tabIndex = selected ? 0 : -1;
-    });
-    panels.forEach((panel) => {
-      panel.hidden = panel.dataset.monitorPanel !== tab.dataset.monitorTab;
-    });
-  };
-  tabs.forEach((tab, index) => {
-    tab.addEventListener("click", () => selectTab(tab));
-    tab.addEventListener("keydown", (event) => {
-      const direction =
-        event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-      if (!direction && event.key !== "Home" && event.key !== "End") return;
-      event.preventDefault();
-      const nextIndex =
-        event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? tabs.length - 1
-            : (index + direction + tabs.length) % tabs.length;
-      selectTab(tabs[nextIndex]);
-      tabs[nextIndex].focus();
-    });
-  });
-  const buttons = document.createElement("div");
-  buttons.className = "dlg-buttons";
-  const ok = XPDialogs.createDialogButton(
-    { id: "ok", label: "OK", isDefault: true },
-    () => dialog.close("ok"),
-  );
-  const cancel = XPDialogs.createDialogButton(
-    { id: "cancel", label: "Cancel", isCancel: true },
-    () => dialog.close("cancel"),
-  );
-  const apply = XPDialogs.createDialogButton(
-    { id: "apply", label: "Apply" },
-    () => {},
-  );
-  apply.disabled = true;
-  buttons.append(ok, cancel, apply);
-  dialog.body.append(buttons);
-  dialog.defaultButton = ok;
-  dialog.onResult(() => setDisplayDialogOwnerActive(ownerWindow, true));
-  tabs[0].focus();
-};
-
 const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {
   const dialog = XPDialogs.createDialog({
     title: "Browse",
@@ -359,7 +264,6 @@ const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {
   });
   dialog.el.classList.add("wallpaper-browse-dialog");
   setDisplayDialogOwnerActive(ownerWindow, false);
-  addDisplayDialogHelpButton(dialog);
   dialog.body.innerHTML = `
     <div class="browse-location"><label>Look in:</label><span><img src="assets/xp/icons/MyPictures.png" alt="">My Pictures</span><button type="button" disabled>◀</button><button type="button" disabled>↥</button><button type="button" disabled>☆</button><button type="button" disabled>▦</button></div>
     <div class="browse-body"><aside><button><img src="assets/xp/icons/RecentDocuments.png" alt="">My Recent<br>Documents</button><button><img src="assets/xp/icons/Programs.png" alt="">Desktop</button><button><img src="assets/xp/icons/MyDocuments.png" alt="">My Documents</button><button><img src="assets/xp/icons/MyComputer.png" alt="">My Computer</button><button><img src="assets/xp/icons/MyNetworkPlaces.png" alt="">My Network</button></aside><main><button type="button" class="sample-pictures-folder"><span><i></i><i></i><i></i><i></i></span>Sample Pictures</button></main></div>
@@ -538,17 +442,6 @@ const wireDisplayProperties = (win) => {
     });
   });
   controls.theme.addEventListener("change", () => {
-    if (!Object.hasOwn(themes, controls.theme.value)) {
-      openDisplayNotice(
-        win,
-        controls.theme.value === "online" ? "Windows Themes" : "Open Theme",
-        controls.theme.value === "online"
-          ? "More themes are not available in Astro Flash Collection."
-          : "Select Windows XP or Windows Classic to change the current theme.",
-      );
-      controls.theme.value = pending.theme;
-      return;
-    }
     pending = {
       ...pending,
       theme: controls.theme.value,
@@ -797,18 +690,7 @@ const wireDisplayProperties = (win) => {
         sync();
       });
     });
-  content
-    .querySelector(".display-monitor-advanced")
-    .addEventListener("click", () => openMonitorPropertiesDialog(win));
-  content
-    .querySelector(".display-theme-save")
-    .addEventListener("click", () =>
-      openDisplayNotice(
-        win,
-        "Save Theme",
-        "The current theme settings are already saved for this desktop.",
-      ),
-    );
+
   controls.saverSettings.addEventListener("click", () =>
     openDisplayNotice(
       win,
@@ -816,24 +698,7 @@ const wireDisplayProperties = (win) => {
       "This screen saver has no options that you can set.",
     ),
   );
-  content
-    .querySelector(".display-power-button")
-    .addEventListener("click", () =>
-      openDisplayNotice(
-        win,
-        "Power Options Properties",
-        "Power management is controlled by your browser and operating system.",
-      ),
-    );
-  content
-    .querySelector(".display-troubleshoot")
-    .addEventListener("click", () =>
-      openDisplayNotice(
-        win,
-        "Display Troubleshooter",
-        "Use the screen resolution slider or restore Use browser size to return to the full desktop.",
-      ),
-    );
+
   content
     .querySelector(".display-saver-preview-button")
     .addEventListener("click", () => {

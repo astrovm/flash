@@ -450,7 +450,7 @@ const applicationContext = (win) => ({
   saveFile: (options) => XPDialogs.saveFile(options),
   myPictures: fs.MY_PICTURES,
   dataUrlFromBlob,
-  setFileContent: (id, content) => fs.setContent(id, content),
+  setFileContent: (id, content, options) => fs.setContent(id, content, options),
   createFile: (parentId, name, content) =>
     fs.createFile(parentId, name, { content }),
   setWallpaper(dataUrl) {
@@ -462,7 +462,30 @@ const applicationContext = (win) => ({
 });
 
 const openXPProgram = (programId, options = {}) => {
-  const program = window.XPApplicationRegistry.get(programId);
+  let program = window.XPApplicationRegistry.get(programId);
+  if (program.load) {
+    if (!program.loaded) {
+      const launchSession = sessionGeneration;
+      return program
+        .load()
+        .then(() =>
+          loggedIn && launchSession === sessionGeneration
+            ? openXPProgram(programId, options)
+            : null,
+        )
+        .catch((error) => {
+          if (!loggedIn || launchSession !== sessionGeneration) return null;
+          void XPDialogs.alert(
+            error.message ||
+              "The application could not be loaded. Try opening it again.",
+            program.title,
+            "error",
+          );
+          return null;
+        });
+    }
+    program = program.loaded;
+  }
   const activateNativeGame = () => {
     if (program.kind !== "native-game") return;
     if (program.offlineGameId) {
@@ -592,24 +615,13 @@ const systemApplicationContext = () => ({
   fs,
   navigateExplorer,
   openAboutWindows,
-  openAccessibilityOptions,
   openControlPanel,
   openDateTimeProperties,
-  openFolderOptions,
-  openGameControllers,
-  openHelpAndSupport,
-  openInternetProperties,
-  openKeyboardProperties,
-  openMouseProperties,
-  openNetworkStatus,
-  openPowerOptions,
-  openPrintersAndFaxes,
+
   openProjectSettings,
-  openRegionalLanguageOptions,
+
   openSearchDialog,
   openShellProperties,
-  openSoundsAudioProperties,
-  openSystemProperties,
   openSystemWindow,
   openTaskbarProperties,
   openWindows,
@@ -621,10 +633,8 @@ const systemApplicationContext = () => ({
   setAccessKeyText,
   toggleTrayVolumePopup,
   wireDisplayProperties,
-  wireHelpAndSupport,
   wireSearchCompanion,
   wireInternetGames,
-  wirePrintersAndFaxes,
   wireProjectSettings,
 });
 
@@ -696,12 +706,6 @@ const openSystemWindow = (shortcutId) => {
   if (win.currentFolderId) renderExplorerItems(win);
   wireSystemWindowControls(win);
   if (application.window.dialogControls) {
-    const helpBtn = document.createElement("button");
-    helpBtn.type = "button";
-    helpBtn.className = "tb-btn help-btn";
-    helpBtn.title = "Help";
-    helpBtn.setAttribute("aria-label", "Help");
-    el.querySelector(".title-buttons").prepend(helpBtn);
     el.querySelector(".minimize-btn").remove();
     el.querySelector(".maximize-btn").remove();
   }

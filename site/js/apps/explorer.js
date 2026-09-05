@@ -7,16 +7,20 @@
 const fs = window.VirtualFS;
 const fileOps = window.FileOperations;
 
-const refreshInstalledGames = (installedGames) => {
+const refreshInstalledGames = async (installedGames) => {
   const nextIds = new Set(Object.keys(installedGames));
+  const removedFileIds = [];
   installedGameIds.forEach((gameId) => {
     if (nextIds.has(gameId)) return;
     closeGameWindow(gameId);
-    fs.findByApp(gameId).forEach((node) => fs.destroy(node.id));
+    if (fs.canWrite)
+      removedFileIds.push(...fs.findByApp(gameId).map((node) => node.id));
     delete gamesList[gameId];
     const favorites = getFavorites().filter((id) => id !== gameId);
     setFavorites(favorites);
   });
+  if (removedFileIds.length)
+    await fs.transaction(() => removedFileIds.forEach((id) => fs.destroy(id)));
   Object.entries(installedGames).forEach(([gameId, game]) => {
     gamesList[gameId] = game;
   });
@@ -24,7 +28,7 @@ const refreshInstalledGames = (installedGames) => {
   nextIds.forEach((gameId) => installedGameIds.add(gameId));
 
   if (!shellInitialized) return;
-  syncGameFiles();
+  await syncGameFiles();
   buildDesktopIcons();
   if (!document.getElementById("start-menu").hidden) buildPinnedPrograms();
   const internetWindow = openWindows.get("__internet-games");
@@ -37,8 +41,10 @@ const refreshInstalledGames = (installedGames) => {
 const initializeGameLibrary = async () => {
   try {
     gameLibrary = window.AstroGameLibrary.createManager();
-    gameLibrary.subscribe(refreshInstalledGames);
-    refreshInstalledGames(await gameLibrary.initialize());
+    gameLibrary.subscribe((games) => {
+      void refreshInstalledGames(games).catch((error) => console.error(error));
+    });
+    await refreshInstalledGames(await gameLibrary.initialize());
     gameLibraryReady = true;
   } catch (error) {
     console.error("Internet Games initialization failed:", error);
@@ -79,24 +85,7 @@ const SHELL_COMMANDS = [
     aliases: ["control panel"],
     run: () => openControlPanel(),
   },
-  {
-    id: "system-properties",
-    title: "System Properties",
-    aliases: ["sysdm.cpl", "system properties"],
-    run: () => openSystemProperties(),
-  },
-  {
-    id: "printers",
-    title: "Printers and Faxes",
-    aliases: ["printers", "printers and faxes"],
-    run: () => openPrintersAndFaxes(),
-  },
-  {
-    id: "help",
-    title: "Help and Support",
-    aliases: ["help", "help and support"],
-    run: () => openHelpAndSupport(),
-  },
+
   {
     id: "notepad",
     title: "Notepad",
@@ -559,7 +548,7 @@ const confirmRecycleDelete = (ids) =>
       : "Are you sure you want to send these items to the Recycle Bin?",
     "Confirm File Delete",
     "warning",
-  ).then((yes) => yes && fileOps.removeToBin(ids));
+  ).then(async (yes) => yes && (await fileOps.removeToBin(ids)));
 
 const confirmEmptyRecycleBin = () => {
   const count = fs.getChildren(fs.RECYCLE_BIN).length;
@@ -571,10 +560,18 @@ const confirmEmptyRecycleBin = () => {
       : `Are you sure you want to delete these ${count} items?`,
     single ? "Confirm File Delete" : "Confirm Multiple File Delete",
     "warning",
-  ).then((yes) => {
-    if (!yes) return false;
-    fileOps.emptyRecycleBin();
-    return true;
+  ).then(async (yes) => {
+    try {
+      if (!yes) return false;
+      await fileOps.emptyRecycleBin();
+      return true;
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
+      );
+    }
   });
 };
 
@@ -674,6 +671,7 @@ const importFileEntry = (entry, destinationId, state = {}) =>
         if (state.cancelled) return resolve(false);
         const content = file.type.startsWith("text/") ? await file.text() : "";
         const existing = fs.findChild(destinationId, file.name);
+        let replaceId;
         if (existing) {
           const choice = await choosePasteConflict({ existing });
           if (choice === "cancel") {
@@ -681,11 +679,14 @@ const importFileEntry = (entry, destinationId, state = {}) =>
             return resolve(false);
           }
           if (choice === "replace" && existing.type === "file")
-            fs.destroy(existing.id);
+            replaceId = existing.id;
         }
-        fileOps.createFile(destinationId, file.name, {
-          content,
-          size: file.size,
+        await fs.transaction(() => {
+          if (replaceId) fs.destroy(replaceId);
+          return fileOps.createFile(destinationId, file.name, {
+            content,
+            size: file.size,
+          });
         });
         state.completed = (state.completed || 0) + 1;
         state.progress?.update(0, `Imported ${state.completed} item(s)...`);
@@ -707,9 +708,9 @@ const importDirectoryEntry = async (entry, destinationId, state = {}) => {
         return;
       }
       if (choice === "replace" && existing.type === "folder")
-        fs.destroy(existing.id);
+        await fs.destroy(existing.id);
     }
-    const folder = fileOps.createFolder(destinationId, entry.name);
+    const folder = await fileOps.createFolder(destinationId, entry.name);
     created.push(folder.id);
     const entries = await readAllDirectoryEntries(entry.createReader());
     for (const child of entries) {
@@ -719,9 +720,9 @@ const importDirectoryEntry = async (entry, destinationId, state = {}) => {
       else if (child.isFile) await importFileEntry(child, folder.id, state);
     }
   } catch (error) {
-    created.reverse().forEach((id) => {
-      if (fs.getNode(id)) fs.destroy(id);
-    });
+    for (const id of created.reverse()) {
+      if (fs.getNode(id)) await fs.destroy(id);
+    }
     if (error.message === "Directory import cancelled") return;
     throw error;
   }
@@ -933,7 +934,7 @@ const renderExplorerTaskPane = (win) => {
   addTask(
     "Make a new folder",
     "NewFolder.png",
-    () => fileOps.createFolder(win.currentFolderId, "New Folder"),
+    async () => await fileOps.createFolder(win.currentFolderId, "New Folder"),
     !writable,
   );
   addTask("Publish this folder to the Web", "PublishToWeb.png", null, true);
@@ -1019,33 +1020,41 @@ const openExplorerContextMenu = (win, clientX, clientY) => {
   menu.style.left = `${Math.max(0, Math.min(clientX - rect.left, rect.width - menu.offsetWidth - 2))}px`;
   menu.style.top = `${Math.max(25, Math.min(clientY - rect.top, rect.height - menu.offsetHeight - 2))}px`;
   menu.querySelector("button:not(:disabled)")?.focus();
-  menu.addEventListener("click", (event) => {
-    const command = event.target.dataset.command;
-    if (!command) return;
-    if (command === "open") fs.open(selected[0]);
-    if (command === "cut") fileOps.cut(selected);
-    if (command === "copy") fileOps.copy(selected);
-    if (command === "restore") fileOps.restore(selected);
-    if (command === "properties") XPDialogs.properties(selected[0]);
-    if (command === "rename") {
-      const name = window.prompt("Rename", fs.getNode(selected[0]).name);
-      if (name !== null) fileOps.rename(selected[0], name);
-    }
-    if (command === "delete" || command === "permanent")
-      XPDialogs.confirm(
-        command === "permanent"
-          ? "Are you sure you want to permanently delete the selected items?"
-          : "Are you sure you want to send the selected items to the Recycle Bin?",
-        "Confirm File Delete",
-        "warning",
-      ).then(
-        (yes) =>
-          yes &&
-          (command === "permanent"
-            ? fileOps.permanentlyDelete(selected)
-            : confirmRecycleDelete(selected)),
+  menu.addEventListener("click", async (event) => {
+    try {
+      const command = event.target.dataset.command;
+      if (!command) return;
+      if (command === "open") fs.open(selected[0]);
+      if (command === "cut") fileOps.cut(selected);
+      if (command === "copy") fileOps.copy(selected);
+      if (command === "restore") await fileOps.restore(selected);
+      if (command === "properties") XPDialogs.properties(selected[0]);
+      if (command === "rename") {
+        const name = window.prompt("Rename", fs.getNode(selected[0]).name);
+        if (name !== null) await fileOps.rename(selected[0], name);
+      }
+      if (command === "delete" || command === "permanent")
+        XPDialogs.confirm(
+          command === "permanent"
+            ? "Are you sure you want to permanently delete the selected items?"
+            : "Are you sure you want to send the selected items to the Recycle Bin?",
+          "Confirm File Delete",
+          "warning",
+        ).then(
+          async (yes) =>
+            yes &&
+            (command === "permanent"
+              ? await fileOps.permanentlyDelete(selected)
+              : confirmRecycleDelete(selected)),
+        );
+      close();
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "File operation",
+        "error",
       );
-    close();
+    }
   });
   menu.addEventListener("keydown", (event) => {
     const buttons = [...menu.querySelectorAll("button:not(:disabled)")];
@@ -1359,15 +1368,23 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
       event.dataTransfer.effectAllowed = "move";
     });
     item.addEventListener("dblclick", () => openExplorerNode(win, node));
-    item.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        openExplorerNode(win, node);
-      }
-      if (e.key === "F2" && !node.protected) {
-        e.preventDefault();
-        const next = window.prompt("Rename", node.name);
-        if (next !== null) fileOps.rename(node.id, next);
+    item.addEventListener("keydown", async (e) => {
+      try {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          openExplorerNode(win, node);
+        }
+        if (e.key === "F2" && !node.protected) {
+          e.preventDefault();
+          const next = window.prompt("Rename", node.name);
+          if (next !== null) await fileOps.rename(node.id, next);
+        }
+      } catch (error) {
+        await XPDialogs.alert(
+          error.message || "The file operation failed.",
+          "File operation",
+          "error",
+        );
       }
     });
     item.addEventListener("contextmenu", (event) => {
@@ -1398,16 +1415,16 @@ const gameFileName = (gameId) =>
     .trim()}.game`;
 
 const syncGameFiles = () => {
-  Object.keys(gamesList).forEach((gameId) => {
-    // Managed shortcuts remain valid after the user renames, moves, or
-    // recycles them. Only recreate one after it has been destroyed.
-    if (fs.findByApp(gameId).length) return;
-    try {
-      fs.createFile(fs.DESKTOP, gameFileName(gameId), { app: gameId });
-    } catch (error) {
-      console.error(error);
-    }
-  });
+  if (!fs.canWrite) return;
+  return fs.transaction(
+    () => {
+      for (const gameId of Object.keys(gamesList)) {
+        if (!fs.findByApp(gameId).length)
+          fs.createFile(fs.DESKTOP, gameFileName(gameId), { app: gameId });
+      }
+    },
+    { retry: 3 },
+  );
 };
 
 window.addEventListener("message", (event) => {
@@ -1451,19 +1468,21 @@ fs.registerFileType("app:__recycle-bin", () =>
   openSystemWindow("__recycle-bin"),
 );
 
-const restoreDefaultDesktop = () => {
-  Object.keys(gamesList).forEach((gameId) => {
-    fs.findByApp(gameId).forEach((node) => fs.destroy(node.id));
+const restoreDefaultDesktop = async () => {
+  await fs.transaction(() => {
+    Object.keys(gamesList).forEach((gameId) =>
+      fs.findByApp(gameId).forEach((node) => fs.destroy(node.id)),
+    );
   });
   localStorage.removeItem("desktopIconPositions");
   localStorage.removeItem("desktopLayoutSettings");
-  syncGameFiles();
+  await syncGameFiles();
 };
 
-const resetAstroFlash = () => {
+const resetAstroFlash = async () => {
   USER_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
-  fs.reset();
-  syncGameFiles();
+  await fs.reset();
+  await syncGameFiles();
 };
 
 fs.registerFolderHandler((folder) => {

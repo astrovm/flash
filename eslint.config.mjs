@@ -13,7 +13,7 @@ const indexHtml = readFileSync(
   "utf8",
 );
 const classicScriptPaths = [
-  ...indexHtml.matchAll(/<script src="(js\/[^"]+\.js)"/g),
+  ...indexHtml.matchAll(/<script(?: defer)? src="(js\/[^"]+\.js)"/g),
 ]
   .map((match) => match[1])
   .filter((path) => path !== "js/ruffle.js");

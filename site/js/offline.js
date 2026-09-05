@@ -145,6 +145,7 @@
     let automaticUpdateTimer = null;
     let bypassWorkerCdn = false;
     let applyTargetVersion = null;
+    let reloadTargetVersion = null;
 
     const versionedServiceWorkerUrl = (version) => {
       if (serviceWorkerUrl.includes("{version}")) {
@@ -440,7 +441,7 @@
       });
       if (applyTargetVersion === metadata.version) {
         applyTargetVersion = null;
-        await applyUpdate();
+        await applyUpdate({ reload: reloadTargetVersion === metadata.version });
       }
       return true;
     };
@@ -457,6 +458,16 @@
         availableVersion: targetVersion,
         availableRevision: targetVersion.split("-").at(-1) || null,
       });
+      if (reloadTargetVersion !== targetVersion) {
+        setState({
+          phase: "update-ready",
+          updateReady: true,
+          workerState: "active",
+          error: null,
+        });
+        return true;
+      }
+      reloadTargetVersion = null;
       if (sessionStorage.getItem(ACTIVE_VERSION_RELOAD_KEY) === targetVersion) {
         setState({
           phase: "repair-required",
@@ -896,6 +907,7 @@
     const checkForUpdates = async ({
       applyAutomatically = false,
       bypassDelay = false,
+      reload = false,
     } = {}) => {
       if (!state.enabled) {
         throw new Error("Enable offline access to use offline updates.");
@@ -913,6 +925,10 @@
             applyAutomatically &&
             (state.automaticUpdatesEnabled || bypassDelay);
           rememberVersionMetadata(metadata);
+          if (reload) reloadTargetVersion = metadata.version;
+          if (reloadTargetVersion && reloadTargetVersion !== metadata.version) {
+            reloadTargetVersion = null;
+          }
           if (applyTargetVersion && applyTargetVersion !== metadata.version) {
             applyTargetVersion = null;
           }
@@ -1057,7 +1073,7 @@
       );
     };
 
-    const applyUpdate = async () => {
+    const applyUpdate = async ({ reload = true } = {}) => {
       if (registration?.waiting) {
         const workerVersion = await requestWorkerVersion(registration.waiting);
         if (
@@ -1067,10 +1083,15 @@
           scheduleUpdateRetry();
           throw new Error("The update is not ready to install.");
         }
-        reloadWhenControlled = true;
-        setState({ phase: "applying", error: null });
+        reloadWhenControlled ||= reload;
+        reloadTargetVersion = null;
+        setState({ phase: reload ? "applying" : "update-ready", error: null });
         registration.waiting.postMessage({ type: "SKIP_WAITING" });
         return;
+      }
+      if (state.availableVersion && registration?.active) {
+        if (reload) reloadTargetVersion = state.availableVersion;
+        if (await reconcileActiveVersion(state.availableVersion)) return;
       }
       throw new Error(
         registration?.installing
@@ -1086,6 +1107,8 @@
       if (navigatorObject.onLine === false) {
         throw new Error("Connect to the internet to repair system files.");
       }
+      reloadTargetVersion = null;
+      reloadWhenControlled = false;
       sessionStorage.removeItem?.(ACTIVE_VERSION_RELOAD_KEY);
       setState({ phase: "repairing", error: null });
       const currentRegistration =
@@ -1113,6 +1136,7 @@
       setState({ enabled: false, phase: "disabling", error: null });
       applyTargetVersion = null;
       reloadWhenControlled = false;
+      reloadTargetVersion = null;
       cancelAutomaticUpdate();
       cancelUpdateRetry();
       try {
@@ -1185,8 +1209,15 @@
       return snapshot();
     };
 
-    const updateNow = () =>
-      checkForUpdates({ applyAutomatically: true, bypassDelay: true });
+    const updateNow = async () => {
+      // A background check must not consume the user's explicit reload request.
+      if (checkPromise) await checkPromise.catch(() => {});
+      return checkForUpdates({
+        applyAutomatically: true,
+        bypassDelay: true,
+        reload: true,
+      });
+    };
 
     const automaticCheck = () => {
       const automaticUpdateIsDue =
@@ -1211,7 +1242,10 @@
       navigatorObject.serviceWorker?.addEventListener(
         "controllerchange",
         () => {
-          if (reloadWhenControlled) environment.location.reload();
+          if (reloadWhenControlled) {
+            reloadWhenControlled = false;
+            environment.location.reload();
+          }
         },
       );
       environment.addEventListener?.("online", () => {

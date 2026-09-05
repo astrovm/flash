@@ -19,6 +19,7 @@ const gameDataManager = window.AstroGameData.createManager();
 let bootTimeout = null;
 let shutdownTimeout = null;
 let loggedIn = false;
+let sessionGeneration = 0;
 let shellInitialized = false;
 let suspended = false;
 let iconsBuilt = false;
@@ -274,31 +275,6 @@ const systemShortcuts = {
   "__control-panel": {
     title: "Control Panel",
     icon: "assets/xp/icons/ControlPanel.png",
-    desktop: false,
-  },
-  "__user-accounts": {
-    title: "User Accounts",
-    icon: "assets/xp/icons/UserAccounts.png",
-    desktop: false,
-  },
-  "__add-remove-programs": {
-    title: "Add or Remove Programs",
-    icon: "assets/xp/icons/AddRemovePrograms.png",
-    desktop: false,
-  },
-  "__security-center": {
-    title: "Windows Security Center",
-    icon: "assets/xp/icons/SecurityCenter.png",
-    desktop: false,
-  },
-  __printers: {
-    title: "Printers and Faxes",
-    icon: "assets/xp/icons/PrintersAndFaxes.png",
-    desktop: false,
-  },
-  __help: {
-    title: "Help and Support Center",
-    icon: "assets/xp/icons/HelpAndSupport.png",
     desktop: false,
   },
   __notepad: {
