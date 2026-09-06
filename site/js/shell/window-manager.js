@@ -25,6 +25,13 @@ const getVisibleWorkArea = () => {
     Number(window.visualViewport?.height) || Number(window.innerHeight) || 0;
   if (desktopWidth <= 0) desktopWidth = viewportWidth;
   if (desktopHeight <= 0) desktopHeight = viewportHeight;
+  const taskbarSettings = getTaskbarSettings();
+  if (taskbarSettings.autoHide || !taskbarSettings.onTop) {
+    return {
+      width: Math.min(desktopWidth, viewportWidth),
+      height: Math.min(desktopHeight, viewportHeight),
+    };
+  }
   const measuredTaskbar = Number(
     document.getElementById("taskbar")?.getBoundingClientRect().height,
   );

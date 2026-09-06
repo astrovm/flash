@@ -26,7 +26,7 @@ const positionTaskbarMenu = (menu, clientX, clientY) => {
   menu.style.left = "0";
   menu.style.top = "0";
   menu.style.left = `${Math.max(2, Math.min(clientX, innerWidth - menu.offsetWidth - 2))}px`;
-  menu.style.top = `${Math.max(2, Math.min(clientY - menu.offsetHeight, innerHeight - menu.offsetHeight - 2))}px`;
+  menu.style.top = `${Math.max(2, Math.min(getTaskbarSettings().edge === "bottom" ? clientY - menu.offsetHeight : clientY, innerHeight - menu.offsetHeight - 2))}px`;
   menu.querySelector("button:not(:disabled)")?.focus();
 };
 
@@ -90,7 +90,28 @@ const activateTaskButton = (gameId) => {
 
 const renderTaskButtons = () => {
   const container = document.getElementById("task-buttons");
-  const windows = [...openWindows.entries()];
+  let windows = [...openWindows.entries()];
+  const explorerWindows = windows.filter(
+    ([, win]) => win.type === "system" && win.currentFolderId,
+  );
+  const groupExplorer =
+    getTaskbarSettings().group &&
+    explorerWindows.length >= 3 &&
+    (document.getElementById("taskbar").classList.contains("vertical")
+      ? windows.length * 28 > container.clientHeight
+      : windows.length * 160 >
+        container.clientWidth * getTaskbarSettings().rows);
+  if (groupExplorer) {
+    const first = windows.indexOf(explorerWindows[0]);
+    windows = windows.filter((entry) => !explorerWindows.includes(entry));
+    windows.splice(first, 0, [
+      "__explorer-group",
+      {
+        title: `${explorerWindows.length} Windows Explorer`,
+        groupedWindows: explorerWindows,
+      },
+    ]);
+  }
   const styles = getComputedStyle(container);
   const taskMinWidth =
     Number.parseFloat(styles.getPropertyValue("--task-button-min-width")) || 52;
@@ -104,25 +125,134 @@ const renderTaskButtons = () => {
       (Number.parseFloat(styles.paddingLeft) || 0) -
       (Number.parseFloat(styles.paddingRight) || 0),
   );
+  const vertical = document
+    .getElementById("taskbar")
+    .classList.contains("vertical");
+  const rows = vertical
+    ? Math.max(1, Math.floor(container.clientHeight / 28))
+    : Math.max(
+        1,
+        Math.min(
+          getTaskbarSettings().rows,
+          Math.floor(
+            (parseFloat(document.getElementById("taskbar").style.height) -
+              getTaskbarHeight() -
+              (getTaskbarSettings().locked ? 0 : 4)) /
+              26,
+          ) + 1 || 1,
+        ),
+      );
   const allTasksWidth =
     windows.length * taskMinWidth + Math.max(0, windows.length - 1) * taskGap;
-  const hasOverflow = allTasksWidth > contentWidth;
+  const hasOverflow = vertical
+    ? windows.length > rows
+    : allTasksWidth > contentWidth * rows;
   // The overflow control has a larger minimum than a normal task. Account
   // for that control and its separating gap up front so it cannot be clipped.
   const visibleCapacity = hasOverflow
     ? Math.max(
         0,
-        Math.floor(
-          (contentWidth - overflowMinWidth - taskGap) /
-            (taskMinWidth + taskGap),
-        ),
+        vertical
+          ? rows - 1
+          : Math.floor(
+              contentWidth /
+                (Math.max(taskMinWidth, overflowMinWidth) + taskGap),
+            ) *
+              rows -
+              1,
       )
     : windows.length;
   const visible = windows.slice(0, visibleCapacity);
-  const hidden = windows.slice(visible.length);
+  const hidden = windows
+    .slice(visible.length)
+    .flatMap((entry) => entry[1].groupedWindows || [entry]);
+  container.style.display = "grid";
+  container.style.gridTemplateColumns = vertical
+    ? "minmax(0, 1fr)"
+    : `repeat(${Math.max(1, Math.ceil((visible.length + (hidden.length ? 1 : 0)) / rows))}, minmax(0, 160px))`;
+  container.style.gridAutoRows = "26px";
+  container.style.rowGap = vertical ? "2px" : "0px";
   container.innerHTML = "";
 
   const appendTaskButton = ([gameId, win]) => {
+    if (win.groupedWindows) {
+      const button = document.createElement("button");
+      button.className = "task-button task-button-grouped";
+      const groupIcon = document.createElement("img");
+      groupIcon.src = "assets/xp/icons/NewFolder.png";
+      groupIcon.alt = "";
+      groupIcon.width = 16;
+      groupIcon.height = 16;
+      const groupLabel = document.createElement("span");
+      groupLabel.className = "task-label";
+      groupLabel.textContent = win.title;
+      button.append(groupIcon, groupLabel);
+      button.setAttribute("aria-haspopup", "menu");
+      button.addEventListener("click", () => {
+        closeTaskbarMenus();
+        const menu = document.getElementById("taskbar-overflow-menu");
+        menu.replaceChildren();
+        for (const [id, member] of win.groupedWindows) {
+          const item = document.createElement("button");
+          item.textContent = member.title || formatGameTitle(id);
+          item.setAttribute("role", "menuitem");
+          item.addEventListener("click", () => {
+            closeTaskbarMenus();
+            restoreWindow(id);
+            focusWindow(id);
+          });
+          menu.append(item);
+        }
+        const rect = button.getBoundingClientRect();
+        positionTaskbarMenu(menu, rect.left, rect.top);
+      });
+      button.classList.toggle(
+        "active",
+        win.groupedWindows.some(
+          ([id, member]) => id === focusedGameId && !member.minimized,
+        ),
+      );
+      button.classList.toggle(
+        "needs-attention",
+        win.groupedWindows.some(([, member]) => member.needsAttention),
+      );
+      button.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        closeTaskbarMenus();
+        const menu = document.getElementById("taskbar-overflow-menu");
+        menu.replaceChildren();
+        for (const [label, action] of [
+          [
+            "Restore All",
+            () => win.groupedWindows.forEach(([id]) => restoreWindow(id)),
+          ],
+          [
+            "Minimize All",
+            () => win.groupedWindows.forEach(([id]) => minimizeWindow(id)),
+          ],
+          [
+            "Close Group",
+            async () => {
+              for (const [id] of win.groupedWindows) {
+                if ((await closeGameWindow(id)) === false) break;
+              }
+            },
+          ],
+        ]) {
+          const item = document.createElement("button");
+          item.setAttribute("role", "menuitem");
+          item.textContent = label;
+          item.addEventListener("click", () => {
+            closeTaskbarMenus();
+            void action();
+          });
+          menu.append(item);
+        }
+        positionTaskbarMenu(menu, event.clientX, event.clientY);
+      });
+      container.append(button);
+      return;
+    }
     const taskTitle = win.title || formatGameTitle(gameId);
     const btn = document.createElement("button");
     btn.type = "button";
@@ -186,7 +316,7 @@ const renderTaskButtons = () => {
           "taskbar-overflow-item" +
           (win.needsAttention ? " needs-attention" : "");
         item.setAttribute("role", "menuitem");
-        item.textContent = formatGameTitle(gameId);
+        item.textContent = win.title || formatGameTitle(gameId);
         item.setAttribute(
           "aria-label",
           `${formatGameTitle(gameId)}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
@@ -427,6 +557,8 @@ const openTaskbarProperties = () => {
   dialog.el.classList.add("taskbar-properties-dialog");
 
   const currentStartMenuStyle = getStartMenuStyle();
+  const settings = getTaskbarSettings();
+  let volumeBehavior = settings.volumeBehavior;
   dialog.body.innerHTML = `
     <div class="taskbar-properties-tabs" role="tablist">
       <button type="button" role="tab" data-taskbar-properties-tab="taskbar" aria-selected="true">Taskbar</button>
@@ -435,18 +567,18 @@ const openTaskbarProperties = () => {
     <div class="taskbar-properties-panel" data-taskbar-properties-panel="taskbar">
       <div class="taskbar-properties-group taskbar-appearance-group"><span class="taskbar-properties-legend">Taskbar appearance</span>
         <img class="taskbar-properties-preview" src="assets/xp/system/TaskbarPreview.png" alt="Taskbar preview">
-        <label><input type="checkbox" data-taskbar-setting="locked" disabled ${taskbarLocked ? "checked" : ""}> Lock the taskbar</label>
-        <label><input type="checkbox" data-taskbar-setting="auto-hide" disabled> Auto-hide the taskbar</label>
-        <label><input type="checkbox" data-taskbar-setting="keep-on-top" disabled checked> Keep the taskbar on top of other windows</label>
-        <label><input type="checkbox" data-taskbar-setting="group" disabled> Group similar taskbar buttons</label>
-        <label><input type="checkbox" data-taskbar-setting="quick-launch" disabled> Show Quick Launch</label>
+        <label><input type="checkbox" data-taskbar-setting="locked" ${taskbarLocked ? "checked" : ""}> Lock the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="auto-hide" ${settings.autoHide ? "checked" : ""}> Auto-hide the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="keep-on-top" ${settings.onTop ? "checked" : ""}> Keep the taskbar on top of other windows</label>
+        <label><input type="checkbox" data-taskbar-setting="group" ${settings.group ? "checked" : ""}> Group similar taskbar buttons</label>
+        <label><input type="checkbox" data-taskbar-setting="quick-launch" ${settings.quickLaunch ? "checked" : ""}> Show Quick Launch</label>
       </div>
       <div class="taskbar-properties-group notification-area-group"><span class="taskbar-properties-legend">Notification area</span>
         <img class="taskbar-properties-preview" src="assets/xp/system/NotificationAreaPreview.png" alt="Notification area preview">
         <label><input type="checkbox" data-taskbar-setting="show-clock" ${localStorage.getItem("taskbarShowClock") !== "false" ? "checked" : ""}> Show the clock</label>
         <p>You can keep the notification area uncluttered by hiding icons that you<br>have not clicked recently.</p>
-        <label><input type="checkbox" data-taskbar-setting="hide-inactive" disabled> Hide inactive icons</label>
-        <button type="button" class="xp-btn" disabled>Customize...</button>
+        <label><input type="checkbox" data-taskbar-setting="hide-inactive" ${settings.hideInactive ? "checked" : ""}> Hide inactive icons</label>
+        <button type="button" class="xp-btn" data-customize-tray>Customize...</button>
       </div>
     </div>
     <div class="taskbar-properties-panel taskbar-start-menu-panel" data-taskbar-properties-panel="start-menu" hidden>
@@ -492,9 +624,17 @@ const openTaskbarProperties = () => {
   const apply = XPDialogs.createDialogButton(
     { id: "apply", label: "Apply" },
     () => {
-      setTaskbarLocked(
-        dialog.body.querySelector('[data-taskbar-setting="locked"]').checked,
-      );
+      const checked = (name) =>
+        dialog.body.querySelector(`[data-taskbar-setting="${name}"]`).checked;
+      saveTaskbarSettings({
+        locked: checked("locked"),
+        autoHide: checked("auto-hide"),
+        onTop: checked("keep-on-top"),
+        group: checked("group"),
+        quickLaunch: checked("quick-launch"),
+        hideInactive: checked("hide-inactive"),
+        volumeBehavior,
+      });
       document.getElementById("taskbar-clock").hidden =
         !dialog.body.querySelector('[data-taskbar-setting="show-clock"]')
           .checked;
@@ -535,19 +675,80 @@ const openTaskbarProperties = () => {
         !classic;
     }
   });
+  dialog.body
+    .querySelector("[data-customize-tray]")
+    .addEventListener("click", () => {
+      const customize = XPDialogs.createDialog({
+        title: "Customize Notifications",
+      });
+      customize.el.classList.add("taskbar-customize-notifications");
+      customize.body.innerHTML = `<p>Windows displays icons for active and urgent notifications, and hides inactive ones. You can change this behavior for items in the list below.</p><p>Select an item, then choose its notification behavior:</p><div class="notification-customize-list"><div class="notification-customize-head"><span>Name</span><span>Behavior</span></div><strong>Current Items</strong></div>`;
+      const label = document.createElement("label");
+      const name = document.createElement("span");
+      name.textContent = "Volume";
+      const volumeIcon = document.createElement("img");
+      volumeIcon.src = "assets/xp/icons/Volume.png";
+      volumeIcon.alt = "";
+      name.prepend(volumeIcon);
+      label.append(name);
+      const select = document.createElement("select");
+      select.setAttribute("aria-label", "Volume notification behavior");
+      for (const [value, text] of [
+        ["auto", "Hide when inactive"],
+        ["hide", "Always hide"],
+        ["show", "Always show"],
+      ]) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = text;
+        select.append(option);
+      }
+      select.value = volumeBehavior;
+      label.append(select);
+      customize.body
+        .querySelector(".notification-customize-list")
+        .append(label);
+      const defaults = XPDialogs.createDialogButton(
+        { id: "defaults", label: "Restore Defaults" },
+        () => {
+          select.value = "auto";
+        },
+      );
+      defaults.classList.add("notification-restore-defaults");
+      customize.body.append(defaults);
+      const buttons = document.createElement("div");
+      buttons.className = "notification-customize-buttons";
+      customize.body.append(buttons);
+      buttons.append(
+        XPDialogs.createDialogButton({ id: "ok", label: "OK" }, () => {
+          volumeBehavior = select.value;
+          apply.disabled = false;
+          customize.close("ok");
+        }),
+        XPDialogs.createDialogButton({ id: "cancel", label: "Cancel" }, () =>
+          customize.close("cancel"),
+        ),
+      );
+    });
+  const customizeButton = dialog.body.querySelector("[data-customize-tray]");
+  const hideInactive = dialog.body.querySelector(
+    '[data-taskbar-setting="hide-inactive"]',
+  );
+  customizeButton.disabled = !hideInactive.checked;
+  hideInactive.addEventListener("change", () => {
+    customizeButton.disabled = !hideInactive.checked;
+  });
   ok.focus();
 };
 
 let taskbarLocked = true;
 
 const setTaskbarLocked = (locked) => {
-  taskbarLocked = locked;
-  const button = document.querySelector('[data-taskbar-action="lock"]');
-  button.setAttribute("aria-checked", String(locked));
-  button.querySelector(".context-check").textContent = locked ? "✓" : "";
+  saveTaskbarSettings({ locked });
 };
 
 const setupTaskbarContextMenu = () => {
+  setupTaskbarLayout();
   const taskbar = document.getElementById("taskbar");
   const menu = document.getElementById("taskbar-context-menu");
   const toolbarParent = document.getElementById("taskbar-toolbar-parent");
@@ -583,7 +784,17 @@ const setupTaskbarContextMenu = () => {
     closeToolbarSubmenu();
     toolbarButton.focus();
   });
-  toolbarSubmenu.addEventListener("click", closeTaskbarMenus);
+  toolbarSubmenu.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-taskbar-toolbar]")?.dataset
+      .taskbarToolbar;
+    if (!action) return;
+    closeTaskbarMenus();
+    if (action === "new") openNewTaskbarToolbar();
+    else {
+      const key = action === "desktop" ? "desktopToolbar" : "quickLaunch";
+      saveTaskbarSettings({ [key]: !getTaskbarSettings()[key] });
+    }
+  });
   taskbar.addEventListener("contextmenu", (event) => {
     if (event.target.closest(".task-button, #tray-volume-popup")) return;
     event.preventDefault();
@@ -631,10 +842,15 @@ const startClock = () => {
   clock.hidden = localStorage.getItem("taskbarShowClock") === "false";
   const update = () => {
     const now = getShellTime();
-    clock.textContent = now.toLocaleTimeString("en-US", {
+    const clockTime = now.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
     });
+    clock.textContent =
+      document.getElementById("taskbar").classList.contains("vertical") ||
+      getTaskbarSettings().rows >= 3
+        ? `${clockTime}\n${now.toLocaleDateString("en-US", { weekday: "long" })}\n${now.toLocaleDateString("en-US")}`
+        : clockTime;
     // XP tooltip: hovering the clock shows the full date.
     clock.title = now.toLocaleDateString("en-US", {
       weekday: "long",

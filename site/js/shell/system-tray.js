@@ -56,7 +56,7 @@ const openTrayVolumePopup = () => {
     ),
   );
   popup.style.left = `${left}px`;
-  popup.style.top = `${rect.top - popup.offsetHeight - 4}px`;
+  popup.style.top = `${Math.max(0, Math.min(getTaskbarSettings().edge === "top" ? rect.bottom + 4 : rect.top - popup.offsetHeight - 4, innerHeight - popup.offsetHeight))}px`;
   document.getElementById("tray-volume-slider").focus();
 };
 

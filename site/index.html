@@ -74,6 +74,7 @@
     <script defer src="js/apps/display-properties.js"></script>
     <script defer src="js/apps/explorer.js"></script>
     <script defer src="js/apps/programs.js"></script>
+    <script defer src="js/shell/taskbar-layout.js"></script>
     <script defer src="js/shell/taskbar.js"></script>
     <script defer src="js/shell/system-tray.js"></script>
     <script defer src="js/shell/desktop.js"></script>
@@ -224,8 +225,18 @@
         <img src="assets/xp/WindowsFlag.png" alt="" aria-hidden="true" />
         <span>Start</span>
       </button>
+      <div id="taskbar-resize" aria-hidden="true"></div>
+      <div id="taskbar-toolbars" hidden></div>
       <div id="task-buttons"></div>
       <div id="taskbar-tray">
+        <button
+          id="tray-expand"
+          type="button"
+          aria-label="Show hidden icons"
+          hidden
+        >
+          ‹
+        </button>
         <button
           id="tray-volume-button"
           class="tray-icon tray-volume"
@@ -275,21 +286,7 @@
           class="xp-context-menu context-submenu"
           role="menu"
         >
-          <button
-            type="button"
-            role="menuitem"
-            data-taskbar-toolbar="links"
-            disabled
-          >
-            <span class="context-check" aria-hidden="true"></span>
-            <span class="context-label">Links</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            data-taskbar-toolbar="desktop"
-            disabled
-          >
+          <button type="button" role="menuitem" data-taskbar-toolbar="desktop">
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">Desktop</span>
           </button>
@@ -297,18 +294,12 @@
             type="button"
             role="menuitem"
             data-taskbar-toolbar="quick-launch"
-            disabled
           >
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">Quick Launch</span>
           </button>
           <span class="context-separator" aria-hidden="true"></span>
-          <button
-            type="button"
-            role="menuitem"
-            data-taskbar-toolbar="new"
-            disabled
-          >
+          <button type="button" role="menuitem" data-taskbar-toolbar="new">
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">New Toolbar...</span>
           </button>
@@ -346,7 +337,6 @@
         role="menuitemcheckbox"
         aria-checked="true"
         data-taskbar-action="lock"
-        disabled
       >
         <span class="context-check" aria-hidden="true">✓</span>
         <span class="context-label">Lock the Taskbar</span>

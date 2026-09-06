@@ -708,6 +708,16 @@ const openStartMenu = () => {
     ? " Turn Off Computer..."
     : " Turn Off Computer";
   document.getElementById("start-menu").hidden = false;
+  revealTaskbar();
+  document.getElementById("taskbar").style.zIndex = "8000";
+  const menu = document.getElementById("start-menu");
+  const rect = document.getElementById("start-button").getBoundingClientRect();
+  const edge = getTaskbarSettings().edge;
+  menu.style.position = "fixed";
+  menu.style.bottom = "auto";
+  menu.style.left = `${Math.max(0, Math.min(edge === "left" ? document.getElementById("taskbar").getBoundingClientRect().right : edge === "right" ? rect.left - menu.offsetWidth : rect.left, innerWidth - menu.offsetWidth))}px`;
+  menu.style.top = `${Math.max(0, Math.min(edge === "bottom" ? rect.top - menu.offsetHeight : edge === "top" ? rect.bottom : rect.top, innerHeight - menu.offsetHeight))}px`;
+
   document.getElementById("start-button").classList.add("active");
 };
 
