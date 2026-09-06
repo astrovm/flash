@@ -13,6 +13,11 @@ selected original Windows XP applications.
 - Automatic offline support with optional per-game downloads
 - Internet Games catalog backed by Flashpoint Archive
 
+## XP fidelity work
+
+See the [fidelity roadmap and resume checklist](docs/XP-FIDELITY-ROADMAP.md) for
+known taskbar gaps, completed reference passes, and the remaining areas in order.
+
 ## Development
 
 Use the Bun version pinned in `package.json` (CI reads the same pin).
