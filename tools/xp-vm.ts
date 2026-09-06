@@ -208,7 +208,7 @@ for await (const input of commands) {
     if (!command) continue;
     if (command === "help") {
       console.log(
-        "Commands: record-boot <directory>, screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], save <name>, load <name>, status, quit",
+        "Commands: record-boot <directory>, screenshot <path>, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], drag <x1> <y1> <x2> <y2> <width> <height>, save <name>, load <name>, status, quit",
       );
     } else if (command === "record-boot") {
       if (!args[0]) throw new Error("record-boot requires an output directory");
@@ -263,6 +263,51 @@ for await (const input of commands) {
       if (button !== "left" && button !== "right")
         throw new Error("click button must be left or right");
       await click(x, y, width, height, button);
+    } else if (command === "drag") {
+      const [x1, y1, x2, y2, width, height] = args.map(Number);
+      if (
+        args.length !== 6 ||
+        ![x1, y1, x2, y2, width, height].every(Number.isFinite) ||
+        width <= 1 ||
+        height <= 1
+      )
+        throw new Error("drag requires x1 y1 x2 y2 width height");
+      const move = (x: number, y: number) =>
+        execute("input-send-event", {
+          events: [
+            {
+              type: "abs",
+              data: {
+                axis: "x",
+                value: Math.round((x / (width - 1)) * 0x7fff),
+              },
+            },
+            {
+              type: "abs",
+              data: {
+                axis: "y",
+                value: Math.round((y / (height - 1)) * 0x7fff),
+              },
+            },
+          ],
+        });
+      await move(x1, y1);
+      await execute("input-send-event", {
+        events: [{ type: "btn", data: { down: true, button: "left" } }],
+      });
+      try {
+        for (let step = 1; step <= 20; step++) {
+          await move(
+            x1 + ((x2 - x1) * step) / 20,
+            y1 + ((y2 - y1) * step) / 20,
+          );
+          await Bun.sleep(30);
+        }
+      } finally {
+        await execute("input-send-event", {
+          events: [{ type: "btn", data: { down: false, button: "left" } }],
+        });
+      }
     } else if (command === "save" || command === "load") {
       if (!args[0]) throw new Error(`${command} requires a snapshot name`);
       await execute("human-monitor-command", {

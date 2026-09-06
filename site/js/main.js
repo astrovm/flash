@@ -51,6 +51,8 @@ const USER_STORAGE_KEYS = Object.freeze([
   DISPLAY_SETTINGS_KEY,
   START_MENU_STYLE_KEY,
   "clockOffsetMs",
+  "taskbarShowClock",
+  "taskbarSettings",
   "desktopIconPositions",
   "desktopLayoutSettings",
   DESKTOP_SYSTEM_ICONS_KEY,
@@ -536,40 +538,16 @@ const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
   const desktop = document.getElementById("desktop");
   const taskbar = document.getElementById("taskbar");
   if (!desktop || !taskbar) return;
-  desktop.style.setProperty(
-    "--desktop-taskbar-height",
-    `${getTaskbarHeight()}px`,
+  const monitor = getSimulatedMonitorSize(resolution);
+  const left = Math.max(0, Math.round((window.innerWidth - monitor.width) / 2));
+  const top = Math.max(
+    0,
+    Math.round((window.innerHeight - monitor.height) / 2),
   );
-  if (resolution === "auto") {
-    desktop.style.removeProperty("width");
-    desktop.style.removeProperty("height");
-    desktop.style.removeProperty("left");
-    desktop.style.removeProperty("top");
-    taskbar.style.removeProperty("width");
-    taskbar.style.removeProperty("left");
-    taskbar.style.removeProperty("bottom");
-    desktop.dataset.monitorResolution = "auto";
-    delete desktop.dataset.monitorLimited;
-  } else {
-    const monitor = getSimulatedMonitorSize(resolution);
-    const left = Math.max(
-      0,
-      Math.round((window.innerWidth - monitor.width) / 2),
-    );
-    const top = Math.max(
-      0,
-      Math.round((window.innerHeight - monitor.height) / 2),
-    );
-    desktop.style.width = `${monitor.width}px`;
-    desktop.style.height = `${Math.max(1, monitor.height - getTaskbarHeight())}px`;
-    desktop.style.left = `${left}px`;
-    desktop.style.top = `${top}px`;
-    taskbar.style.width = `${monitor.width}px`;
-    taskbar.style.left = `${left}px`;
-    taskbar.style.bottom = `${Math.max(0, window.innerHeight - top - monitor.height)}px`;
-    desktop.dataset.monitorResolution = resolution;
-    desktop.dataset.monitorLimited = String(monitor.limited);
-  }
+  layoutTaskbar(monitor, left, top);
+  desktop.dataset.monitorResolution = resolution;
+  if (resolution === "auto") delete desktop.dataset.monitorLimited;
+  else desktop.dataset.monitorLimited = String(monitor.limited);
   if (reflow && iconsBuilt) layoutDesktopIcons();
   if (reflow && loggedIn) {
     keepWindowsInWorkArea();

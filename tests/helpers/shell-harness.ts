@@ -21,6 +21,7 @@ const shellScripts = [
   "site/js/apps/display-properties.js",
   "site/js/apps/explorer.js",
   "site/js/apps/programs.js",
+  "site/js/shell/taskbar-layout.js",
   "site/js/shell/taskbar.js",
   "site/js/shell/system-tray.js",
   "site/js/shell/desktop.js",

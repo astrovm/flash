@@ -2385,6 +2385,19 @@
       "pixelSha256": "86830218ae24d205ac76697e77ad279f67b15a786054b2571079cd48c6663f77"
     }
   },
+  "assets/xp/icons/ShowDesktop.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/EXPLORER.EX_",
+    "sha256": "f6d92641525ad352653c18da544df4ddaeed82eb47f505dd4ee33f52cb54acd0",
+    "resource": {
+      "parentSha256": "1e675cb7df214172f7eb0497f7275556038a0d09c6e5a3e6862c5e26885ef455",
+      "type": 14,
+      "id": 103,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "e4410f4aef380d6f5898d7e622e3c43b0aaf1a47a2fb5f63423001d9b80bea2c"
+    }
+  },
   "assets/xp/solitaire/cards/1.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
@@ -3880,6 +3893,1368 @@
       "pixelSha256": "3dfa996afefd52204446895907763f84426a39c10ae676adf822d555bd74267b"
     }
   },
+  "assets/xp/taskbar/blue-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f661e5c39675e33794fc5feb8697c2bb812a4a9d534d1f165da1d70d2ec7631d",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "50x28x32",
+      "pixelSha256": "3c32806f3afb7a817da25633d3f79a8b1ed8f949f0afb509442cb789748ee32c"
+    }
+  },
+  "assets/xp/taskbar/blue-buttons.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "bb10244e081be9240ca64e7ffcc19224e397b052649fbe85dc30440e58c98bda",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "language": 1033,
+      "frame": "26x168x32",
+      "pixelSha256": "8bffda82e5daccd71788ba10ba35ea3fc24780c05a51009f3cbed294abb6e8bb"
+    }
+  },
+  "assets/xp/taskbar/blue-tray.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "7e46d178cf1c85d400d234637f72041bb8af27861e3768ab2fc50eb620cf40bd",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARTRAY_BMP",
+      "language": 1033,
+      "frame": "110x28x32",
+      "pixelSha256": "66f838c4f51b575e426b78d72a429508c8f05e3bb845d2f2925e8b57eef280d0"
+    }
+  },
+  "assets/xp/taskbar/blue-start.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "06589c5e4a9ddd13db9a3d2e0ce1815bc4d39308777fc0e92b48c192864e847c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_STARTBUTTON_BMP",
+      "language": 1033,
+      "frame": "99x99x32",
+      "pixelSha256": "f8dda2a406c89d8a751eeefa52551d06add455721566c18752791c839c9c2713"
+    }
+  },
+  "assets/xp/taskbar/blue-flash.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "365ee7eeb249ef0222a9756ef509ac835061d5bcfee72159dfd0847da1925685",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDFLASHBUTTON_BMP",
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "484fcca3e7ff8c594c7c53f3645f2b62db743e083be4ef3c906230d1767857c5"
+    }
+  },
+  "assets/xp/taskbar/olive-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "686179528f15f071b638f2398211e99d8afeb76eed1cf965fe26a6a4880e041e",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "50x30x32",
+      "pixelSha256": "78e4a3e5cc81a93049c25c9bf5b61a0f39c3e46b7d4181bc1fa7bb694f670be2"
+    }
+  },
+  "assets/xp/taskbar/olive-buttons.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "5bef29dbfeec56824faeabc31d8908df764293e6809737fac07c10e764e052c2",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "language": 1033,
+      "frame": "26x168x32",
+      "pixelSha256": "edc2a2943ef0cb1068338e282fd57f88272a1497854341e2e0b0267171aff0e4"
+    }
+  },
+  "assets/xp/taskbar/olive-tray.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "629343c21bdf2816569f60ca5c61ed5d5fb0d87bf9befac5eb8a74d510d5b773",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARTRAY_BMP",
+      "language": 1033,
+      "frame": "110x28x32",
+      "pixelSha256": "555e3130a2c4aed0ec9487934b1660cf45644ddec3828c8993e8912878c6c334"
+    }
+  },
+  "assets/xp/taskbar/olive-start.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "de7ddceb38c2ee295e06f258540ef09e4f765c4c615ac27207f8d1351dbf3b05",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_STARTBUTTON_BMP",
+      "language": 1033,
+      "frame": "99x99x32",
+      "pixelSha256": "e06f0ba611cd22d492b13b4bb38f1873822fcc190de849edb50ce6482ab1a1cc"
+    }
+  },
+  "assets/xp/taskbar/olive-flash.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "56a44ba93832abc9973f673a99af89e41e885cd2705e0a0d9851289ab8e7bda6",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDFLASHBUTTON_BMP",
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "ad419668a5c4514249add8298d3e219f5ac1d551e273cb07c8f0d94cb129a4fc"
+    }
+  },
+  "assets/xp/taskbar/silver-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2728e5903eadf490f97467033c05225549a71668c8cb598d9ae969593a5a7fa3",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "50x30x32",
+      "pixelSha256": "18337ec8c5000fa5ff35459d35679de3c33a86194684e87faf725dd794e7cda9"
+    }
+  },
+  "assets/xp/taskbar/silver-buttons.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "82df442a2218b6b0ec157551a78c87019cea36e1562c75fc1f2d993ea102d6b3",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "language": 1033,
+      "frame": "27x168x32",
+      "pixelSha256": "f64e4ef24e2833ec11f8e3ff5c8da7eea862c6bc36e85860507b4a473ea5f0ed"
+    }
+  },
+  "assets/xp/taskbar/silver-tray.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "844f2c802528c71dd8afdda255dffb47a7d4f0ff5c5c260f21e6e8378a0f938a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARTRAY_BMP",
+      "language": 1033,
+      "frame": "110x28x32",
+      "pixelSha256": "7cbaa3247fe2695d558774c7cb320d2ff161ddb3b1f80ad3aebb51805a4fd4a8"
+    }
+  },
+  "assets/xp/taskbar/silver-start.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ad5cd97946ac3a47238fdf6ed5f1a64cb1feb40f82e80bc789203d743d685115",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_STARTBUTTON_BMP",
+      "language": 1033,
+      "frame": "99x99x32",
+      "pixelSha256": "3d40125ae4a6db1c6dfe22583c1124e771ae5de597daf09a27228ee4f17bfb0b"
+    }
+  },
+  "assets/xp/taskbar/silver-flash.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "690b7be52420aa2d42cf178811e7f17b502af892785af7d24926fb969c857118",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDFLASHBUTTON_BMP",
+      "language": 1033,
+      "frame": "28x28x32",
+      "pixelSha256": "813ed0328b7fab2089b7e6913646be8dd16a5cf2b017ceaa00ef01a66b58da4f"
+    }
+  },
+  "assets/xp/taskbar/blue-button-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "3ec35bf25546bc26ae6ef7d10cb07ee10179ece5e1230fe4f40fbb127dcd52f0",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "fd97c6ff611c8d92cbf8ff989aa3a7328346579894057f500e97d39c58c46e15"
+    }
+  },
+  "assets/xp/taskbar/blue-button-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e1fe8cbea330d8d775a520ed65124b4913e31bb44ce959a15912f88e7309cc94",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 28,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "c5c7ae16eb1d8f1b2f88cd6eefa872671936176fb69a19ca7c24c71f68cd389b"
+    }
+  },
+  "assets/xp/taskbar/blue-button-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f97a5c696afd31c35cc95ece30adedbb355fa8e3679a4b1ec98fa54c5277c02f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 56,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "5a37bf89c68ba9f19c84ba525f79890201d74cbbb26166b3b643f8e2f9da460e"
+    }
+  },
+  "assets/xp/taskbar/blue-button-disabled.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "c09276edcc35b2dc287b4bbb460e7d0b0e4d6d98fe528a8e45ee90fb7cd47c5f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 84,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "701e4b167303931a8a3276ac46dd52689af078048ec39d3a9054d4e544e44540"
+    }
+  },
+  "assets/xp/taskbar/blue-button-checked.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f97a5c696afd31c35cc95ece30adedbb355fa8e3679a4b1ec98fa54c5277c02f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 112,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "5a37bf89c68ba9f19c84ba525f79890201d74cbbb26166b3b643f8e2f9da460e"
+    }
+  },
+  "assets/xp/taskbar/blue-button-checked-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "c09276edcc35b2dc287b4bbb460e7d0b0e4d6d98fe528a8e45ee90fb7cd47c5f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 140,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "701e4b167303931a8a3276ac46dd52689af078048ec39d3a9054d4e544e44540"
+    }
+  },
+  "assets/xp/taskbar/blue-start-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "3e6469b91b02ed3ddd3ba4eb91265eed8ad5675d8246f3de04865d4ef9283b52",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "b3c5958665495f3116ac8b678a8c207999c48c9cfaa069fb48a9468790b4cd4d"
+    }
+  },
+  "assets/xp/taskbar/blue-start-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e43ae2a3a767b4c71e30ba3cd1e6261cdb4b7e476fe9fb71882d412f9ebca23f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 33,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "050f95a1ca7308d7836650146defb619939be8102c2f7fd526b78e9d1a3bd208"
+    }
+  },
+  "assets/xp/taskbar/blue-start-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "9d7930acdc6441e1752fee0a83c972a8eb4fdfc85ae3c2d7e7b5212d1382591c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 66,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "2b99e29b440b09364011ac35ee7fe605dacd7904f408a1ab170c2b9970f742f4"
+    }
+  },
+  "assets/xp/taskbar/olive-button-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f0397e74c9dbf600b9e5460eec7b6a2b72a963f375f5702427d7e803b3323ccc",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "c007e547b476accb8346a6c6d718f840ddba8b6008d982cefbedeadc73eee64e"
+    }
+  },
+  "assets/xp/taskbar/olive-button-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "dce7d869ea595652c9cd714b66d3452e2dec1669e2e361a8b093ae4f07369681",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 28,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "fbd048ca4e65491a910b050529f3d7598247bec918dbc40fa7ef7d9d68843850"
+    }
+  },
+  "assets/xp/taskbar/olive-button-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a10a643333a9d44b84348c888a0c8f13cc7f0948d90aed975d9d994e5d3da8d8",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 56,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "d24cb4301c16bff3a57cb2f43af6992996fcb8e8cc75dfef74dccd3acd8b9a1c"
+    }
+  },
+  "assets/xp/taskbar/olive-button-disabled.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "089b0ccdb342f51615d278df6e7f7cb89b5a77da377f9ae70cf603312662aa6f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 84,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "d1ac1d9d32269f37f0732ac5666bd9865eb3c1cb6d59405452bdb21422955ca1"
+    }
+  },
+  "assets/xp/taskbar/olive-button-checked.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a10a643333a9d44b84348c888a0c8f13cc7f0948d90aed975d9d994e5d3da8d8",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 112,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "d24cb4301c16bff3a57cb2f43af6992996fcb8e8cc75dfef74dccd3acd8b9a1c"
+    }
+  },
+  "assets/xp/taskbar/olive-button-checked-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "089b0ccdb342f51615d278df6e7f7cb89b5a77da377f9ae70cf603312662aa6f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 140,
+        "width": 26,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "26x28x32",
+      "pixelSha256": "d1ac1d9d32269f37f0732ac5666bd9865eb3c1cb6d59405452bdb21422955ca1"
+    }
+  },
+  "assets/xp/taskbar/olive-start-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2d79081221775bb56da61fbd7209dce0148f2b0a878e48647dcc8a9fa89971c9",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "d52d650dcb16843eb8263ece151f5b94cb7719a5814fd2b660fb73142fd67e39"
+    }
+  },
+  "assets/xp/taskbar/olive-start-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "9bb949e9090a87c8397f7fe52b0e4a125a009a3d24f1858be8bd5b7d24d3a5ec",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 33,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "2c3d0fd2f7a824306c7c78df2989d35fd6af419569fd82f7f81c74184fc33a31"
+    }
+  },
+  "assets/xp/taskbar/olive-start-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f152a0fd2b6533dbd745ff2a700cccbe7dab96451e829bb6ef887618909145d2",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 66,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "ec659b38d83e4617686c4539ff94d5fab2aa326cf23a02e88058778b4c8c5247"
+    }
+  },
+  "assets/xp/taskbar/silver-button-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "afc6b7a3a6544270ef2cf9909d9b0d0996d601cf04718c63b3cd8bfea440ec13",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 27,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "27x28x32",
+      "pixelSha256": "907665175b45541bc002bcd7f015847c866f1f10d9ebd391f498600363239835"
+    }
+  },
+  "assets/xp/taskbar/silver-button-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "bf26361b2a18289748b01f16b6fbf57620d39ec142a9c32304299a0bbee25149",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 28,
+        "width": 27,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "27x28x32",
+      "pixelSha256": "8ab6fae23f4611db1562a8edc2b15f86141515b29a6b1ef2e36009b96cc61d87"
+    }
+  },
+  "assets/xp/taskbar/silver-button-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "cff81c1ae6cbdea8307b27e8f7a67d6f8bb967ed5a5398ff0138ae451baa208d",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 56,
+        "width": 27,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "27x28x32",
+      "pixelSha256": "bbdb1f56cfc4aac4b39a763b4a391b9634368cbe7fc9cc8804961db6eeab8026"
+    }
+  },
+  "assets/xp/taskbar/silver-button-disabled.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "761f3e45bf44ae7a833f5e5c000ba4252943641be03a8494f3a3035dac070ae8",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 84,
+        "width": 27,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "27x28x32",
+      "pixelSha256": "1a786aa1c47e81279c232333bd12bca9dbfb91b81061ccda9ff7d0c642431cd6"
+    }
+  },
+  "assets/xp/taskbar/silver-button-checked.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "cff81c1ae6cbdea8307b27e8f7a67d6f8bb967ed5a5398ff0138ae451baa208d",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 112,
+        "width": 27,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "27x28x32",
+      "pixelSha256": "bbdb1f56cfc4aac4b39a763b4a391b9634368cbe7fc9cc8804961db6eeab8026"
+    }
+  },
+  "assets/xp/taskbar/silver-button-checked-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "761f3e45bf44ae7a833f5e5c000ba4252943641be03a8494f3a3035dac070ae8",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBANDBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 140,
+        "width": 27,
+        "height": 28
+      },
+      "language": 1033,
+      "frame": "27x28x32",
+      "pixelSha256": "1a786aa1c47e81279c232333bd12bca9dbfb91b81061ccda9ff7d0c642431cd6"
+    }
+  },
+  "assets/xp/taskbar/silver-start-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a7914f098b448f649228ddd184121e011cc20d7aa6d1ef4ee6e1105140d2e206",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "fde4fa1ee9282314419cae9bd4b55b0db315073cb1f30fe0f219e8f41c2bd106"
+    }
+  },
+  "assets/xp/taskbar/silver-start-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "61e7fd7d189735125355ac2819598409820846b323e5494d836aa24d6e4ee49e",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 33,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "77812ce8f7bcd378deaee2a821a320694d30ce39ced8654773a79f16a9bb06ca"
+    }
+  },
+  "assets/xp/taskbar/silver-start-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4c71d1f82d3b9c4618dd05b095d202c83923803cce46cafc476b91b2a618f0c3",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_STARTBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 66,
+        "width": 99,
+        "height": 33
+      },
+      "language": 1033,
+      "frame": "99x33x32",
+      "pixelSha256": "825a4b73ce5794a82b93262fab5ccfd1639f244085ef9e7a499a566e28c5de4d"
+    }
+  },
+  "assets/xp/taskbar/blue-background-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2919790beb1dfda6f9d62ab8a3a04494e7ea6361c73eb822d185b4b0b1e26187",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARBACKGROUNDVERTICAL_BMP",
+      "language": 1033,
+      "frame": "28x41x32",
+      "pixelSha256": "39065ca7362a8cd7cf745a056bfcecb153b94a498e1576f733f4442a89a34621"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e09229947578870852efac67d7e84853910f64e644c7e98c430c74ae642a6e75",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARTRAYVERTICAL_BMP",
+      "language": 1033,
+      "frame": "28x110x32",
+      "pixelSha256": "88a8dc5fa7303c055252f9d2aca336a5a979667b7ffff62a528bcfe61df81350"
+    }
+  },
+  "assets/xp/taskbar/blue-gripper.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2c5a03085fba1a7279cd8437b87138360e4e6f058e697962300977ef1d3049c1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARGRIPPER_BMP",
+      "language": 1033,
+      "frame": "6x16x32",
+      "pixelSha256": "0a9a65d4f1a3f7ab9c4ea6fbc640dd2b06b382cbf98c2ec173cd6117190d30f7"
+    }
+  },
+  "assets/xp/taskbar/blue-gripper-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4cf892ac69373e24c7e8f86b81f23313ce367ae4a3b008f3ebf1bbbd44e928e7",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARGRIPPERVERTICAL_BMP",
+      "language": 1033,
+      "frame": "16x6x32",
+      "pixelSha256": "002fef5e02a8dfcdc8e9bc36c5eaebe32d05432763c6153a3877c8698a939cc7"
+    }
+  },
+  "assets/xp/taskbar/blue-sizing-bottom.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f07b23be25563efd5362ec2d819018659427b7bba49b356e127f9706aec4675e",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARSIZINGBARBOTTOM_BMP",
+      "language": 1033,
+      "frame": "15x4x32",
+      "pixelSha256": "55bc1616fa54c98ab95bb19448ba50ffc0d5fe35c0621040cf34cc1a443e3792"
+    }
+  },
+  "assets/xp/taskbar/blue-sizing-left.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ae022a303afe327ceece13ad33f531d357b77e845abb111462653f2eb855c4d2",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARSIZINGBARLEFT_BMP",
+      "language": 1033,
+      "frame": "4x15x32",
+      "pixelSha256": "ef38bc9a9cf8046d87e5d5392e717fff36d48f8ddc2fec11dc07d9bdb793e8fd"
+    }
+  },
+  "assets/xp/taskbar/blue-sizing-right.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6f62ff53c5614b89f2360905a6d7e6561bf004821e5dba0d338332f762df0a9c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARSIZINGBARRIGHT_BMP",
+      "language": 1033,
+      "frame": "4x15x32",
+      "pixelSha256": "7e4b897210f22acb5b80546a0c64f0c00e751d23559bb21a1f53d22395f27586"
+    }
+  },
+  "assets/xp/taskbar/blue-sizing-top.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "97c7ad7a1c0a346a89011f3b32051bcf0e36811155d5c1d068749a02f1873e87",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TASKBARSIZINGBARTOP_BMP",
+      "language": 1033,
+      "frame": "15x4x32",
+      "pixelSha256": "6a00dfdc76ea6444ec1fcd0d6c15d0f870588cf80f7d3b113733273abe23920b"
+    }
+  },
+  "assets/xp/taskbar/olive-background-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "814d19bb1df494de6de12fbc7f1d1a177fc594f9800cd6daab1be43b6fb0e03a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARBACKGROUNDVERTICAL_BMP",
+      "language": 1033,
+      "frame": "28x41x32",
+      "pixelSha256": "7497001175d3b67b01c0c519986442c5ffaa27527cf17b8f3c07cc9b6333bedd"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "915376a3cf8d22496aa4a85fabd741f13275806a06003af1bcd51932d992cf16",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARTRAYVERTICAL_BMP",
+      "language": 1033,
+      "frame": "28x110x32",
+      "pixelSha256": "ff632096bbadae59bdc058d6997c7f8589387deb11c769b06ae65eb283c13913"
+    }
+  },
+  "assets/xp/taskbar/olive-gripper.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f8310b9cbb4fb436cd8f99b6b20fce2b543ab624a83e008944ffff903d6cb02a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARGRIPPER_BMP",
+      "language": 1033,
+      "frame": "6x16x32",
+      "pixelSha256": "44fb7c0ab45437ef0d09f1c2d6cb5fd67a7c2b6ebd2db2cf112e7a595b415c2a"
+    }
+  },
+  "assets/xp/taskbar/olive-gripper-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "8d038394cac65b33402d37276e11e53aa179745f3e49cfd27dfb638f55e35681",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARGRIPPERVERTICAL_BMP",
+      "language": 1033,
+      "frame": "16x6x32",
+      "pixelSha256": "3cfceef93333fc88454e3a92d20ded160baa3022f0db166c343b9f0c998c4068"
+    }
+  },
+  "assets/xp/taskbar/olive-sizing-bottom.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d9c614861e36e59d6e43d37006573b2234bc7ebfc1e7ee589a9ba3c3c6231303",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARSIZINGBARBOTTOM_BMP",
+      "language": 1033,
+      "frame": "15x4x32",
+      "pixelSha256": "4414a7f3a3168314588a7e8b512edd35c33404da647ef59b777f27b508677178"
+    }
+  },
+  "assets/xp/taskbar/olive-sizing-left.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "02e2a1e2e000829b98ce7dd6f8a7e483d654159b35511c0d934a4c6db66ff7d2",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARSIZINGBARLEFT_BMP",
+      "language": 1033,
+      "frame": "4x15x32",
+      "pixelSha256": "deacc7d97be04e47e284172c4f66e9b2bd906c17765b50f62136a12e00a6c080"
+    }
+  },
+  "assets/xp/taskbar/olive-sizing-right.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "b8412765f68edc8d7dc4993721e5d4cbd4d20be33630dfb389ca02416a0f86d0",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARSIZINGBARRIGHT_BMP",
+      "language": 1033,
+      "frame": "4x15x32",
+      "pixelSha256": "521b453242fa4f6faf847343a2a642af9ae4ac6310ffbfc679535e7a4b72346e"
+    }
+  },
+  "assets/xp/taskbar/olive-sizing-top.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4b095f972ff17cc602789f40e2de5c64fa62afa397076ae22cbce58a562f64ae",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TASKBARSIZINGBARTOP_BMP",
+      "language": 1033,
+      "frame": "15x4x32",
+      "pixelSha256": "2db334afceb71b54d444c2d1186fef20b291736dc08a75f1f9b841164019b093"
+    }
+  },
+  "assets/xp/taskbar/silver-background-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "86ddfe5595506db9348547b35d6ea6e812fe11132f929182fbd2af30ac33f40f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARBACKGROUNDVERTICAL_BMP",
+      "language": 1033,
+      "frame": "30x41x32",
+      "pixelSha256": "8f9c64bba08cf7161bc750906142c919f049756c3bcb89e9c1691ae3bc2f5093"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "38c1b407d3841d12000ab028d6edf1b0d3dd13c48f82d78ea92f9230fa101f4a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARTRAYVERTICAL_BMP",
+      "language": 1033,
+      "frame": "28x110x32",
+      "pixelSha256": "c995844bc6f0adb4221b06047056d83d2ced63c5538bf0997bd01f45eaa204bf"
+    }
+  },
+  "assets/xp/taskbar/silver-gripper.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "0dbce77aeab26f1dc65e9fd03699362e041296ea795ce06a3e25a388630abcdc",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARGRIPPER_BMP",
+      "language": 1033,
+      "frame": "6x16x32",
+      "pixelSha256": "0d56d1185a745c95c3a5bb5095ba170d96d3102ad3d1b5ddfcc821f01a382946"
+    }
+  },
+  "assets/xp/taskbar/silver-gripper-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "77dbe3492235fae7637e0684b1f5ba370b60059ee93e9ebcec97ec51abd4f962",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARGRIPPERVERTICAL_BMP",
+      "language": 1033,
+      "frame": "16x6x32",
+      "pixelSha256": "b2e6642c4b6e629c1985fb4c211120d2dc39499a8f82f795950f2f86e3218340"
+    }
+  },
+  "assets/xp/taskbar/silver-sizing-bottom.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ead22312425c1c221b20feb99543594ad0d9b740a9ded1bee80db53af2f74bfe",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARSIZINGBARBOTTOM_BMP",
+      "language": 1033,
+      "frame": "15x4x32",
+      "pixelSha256": "8430b0e32fe788646a2a2d40fc5a0455d76567cef9a5b64afc0e661ff1d41b81"
+    }
+  },
+  "assets/xp/taskbar/silver-sizing-left.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "9586aa6cfa0dcd6b6f64c4717c5441f68857b8e0a664e26a68f7f52616802bf6",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARSIZINGBARLEFT_BMP",
+      "language": 1033,
+      "frame": "4x15x32",
+      "pixelSha256": "2506d76a38fc9c3fe18f66640ca1941ac61e37be2ae6b563e757eded0c89922a"
+    }
+  },
+  "assets/xp/taskbar/silver-sizing-right.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "59593b21a8ae8bf11e362faa257b423bb1dc585e7e450feee7a04319c1a0d991",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARSIZINGBARRIGHT_BMP",
+      "language": 1033,
+      "frame": "4x15x32",
+      "pixelSha256": "c2add8ea0e9193874a52000b0f8cab0f24b86e12bd939970679cebdf49187662"
+    }
+  },
+  "assets/xp/taskbar/silver-sizing-top.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "9e37dbfff2f4a575ef97c3f782f508775cc73da61b2d2119426701c0fe61502c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TASKBARSIZINGBARTOP_BMP",
+      "language": 1033,
+      "frame": "15x4x32",
+      "pixelSha256": "813322696403ae2fa980d7b65ef4a8982c59ec06f6bdc4f0b02ed659ecee260f"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-closed-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e89adf0b69e16e56818b06afc38583b58d5480a6c964f9ef26fbb40353bd9b49",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "9ab12a1e2e15834e202de093cef81d9e008bdc97f8986519e6f91f4738181ea3"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-closed-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "66b22c2988312c4bee1f6d4d787a45a4c30ec4ce5e1486ce109a4e76ba8f9f48",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "30ede40c42407dda5916b5788dd95791cfd5183faf46911e216085e26d823424"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-closed-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e37588f62ec5d3c1f627ee0422fbcb228c01deeae2872b436fff115f507bd664",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 40,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "90d4eba876cfc2482f5e132c8c56fcc9418328f42e2760b4cee7b459778fe527"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-open-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e0b8718da3bf0edd2a88020101b664ee5060131d3fc1ef8f8decc8be370eba3c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "9a5a859e00a18d9fd1c67c7bc6f5d324e0926c3c0f51332da97bbbaa45df1be0"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-open-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ee0325be300dee772cd26824f20bd4307b6cc61bac29813d4f1371484bb8e014",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "444f1b2b40be0fc7ba4bda966d2c19d278c3ce600b3fc583d3abcfe7892f0ddd"
+    }
+  },
+  "assets/xp/taskbar/blue-tray-open-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "cdf8418f7d5714dd5c149d98988c7be90cc9f007d9a197faff3b32b4e825298b",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 40,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "39055f9903a328cec9449151b024b328a4e90b144223855763d227836e60936d"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-closed-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2fa81f1ba5eb26ee314666dbd3e1cafdccb6d3a0a170482cfdc6dce7dc0e92a6",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "498cacff3371aa03ebd0e0b4cbb99794ed0fba9c896da39f825031d7c0628ee5"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-closed-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "1d24088c43dd679f7f5ea33313255b75e124faf4d7337d89a461c7fda725492c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "f047968a8743f0a25c16b721dc85ccc20ee60c827fe64202ce3ea08fd3c1143f"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-closed-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2d1660ed4e7a0a752adc0c229c7b51be65dc53e9af2ab3affe22a82078ae449a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 40,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "dd292916afa99ef8a7fc3a238ec92638b86335e93d027ea526ca4ebc3f7446f7"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-open-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "f0b82904021980a26f7abaa2e5910d5349c46df5e2da727631201ffa5f80b65c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "5a1dc4a520cf5ee993b78ebce878810c16cc9993e6d8eb21deaa36ce54ac85ff"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-open-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "c8ddf8cdc26e481eead19c890a709d279c15538a2667f42cfd15d07b21f4899d",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "09a39929b1be3d4915d98a9061f9b0474668c6000a1483dd2dfccd33956058dd"
+    }
+  },
+  "assets/xp/taskbar/olive-tray-open-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "5e3d23dd22bae974021cc52200c506d6f557154236e2ce93267913e822edb704",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 40,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "0b0e7034b2c225cac7367206c68ad74edbc9c2de28a9a5dfe547ef2494f5436e"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-closed-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ced07f6a8c428e6fd7009784c23f2d14813fe1b42020de9351057c904a7b4473",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "c53282809cad7df18ee2754bcb69d2a5aabc20153a278f1776d2f2fe0d889475"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-closed-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "1bc659f95017bf68ee4afedad52a352b1ce649cba73536a8492cc7393a71fd48",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "7bb35ec1ffaaa8969150971907a69fdeb94ee1f0704e2fd84e7e97ad51c56ed6"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-closed-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "569945aef46729cadd0672938aa6069aa0a32f957fbc7ea439ec72dbafba775c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRAYCHEVRONHORIZONTAL_BMP",
+      "crop": {
+        "left": 0,
+        "top": 40,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "a38ce58bef1a918662cb5788d7ff138c939ae4e7f26085b63e3478e5105a5bc3"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-open-normal.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6a09af137f5276eb977fc9f85c1a22534a54ffe87b9d874b026eace14fee82f0",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "9e14af2e3d44fe87797f45fe2df6a09b52dfa965b9c4e080aed5db72ac7a100d"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-open-hot.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "eb8c0c684e7bba508f697bc6604f72302bdc860d5108c1ace61a8b7b248643f5",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 20,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "e63c98d97a7efec8c17111ea4fdbffded1baaa96621ab993c3222313d44d50d7"
+    }
+  },
+  "assets/xp/taskbar/silver-tray-open-pressed.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "1af7b65c659909fcd6d82c74f0f46f0ab7e1926aa030292ea49fd53384baf13b",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRAYCHEVRONHORIZONTALOPEN_BMP",
+      "crop": {
+        "left": 0,
+        "top": 40,
+        "width": 19,
+        "height": 20
+      },
+      "language": 1033,
+      "frame": "19x20x32",
+      "pixelSha256": "8821c1755ac5491aa841cfa914e1f7f3e1c04bda2699e94e3d19165d69cea642"
+    }
+  },
   "assets/xp/system/SecurityHelp.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/WSCUI.CP_",
@@ -4060,22 +5435,6 @@
       "language": 1033,
       "frame": "raw",
       "pixelSha256": "d492324891bbfd582a9d230f5720d1ea65bd06b69e10db5c44ddc7d6b172cc75"
-    }
-  },
-  "assets/xp/StartButtonRendered.png": {
-    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
-    "member": "I386/LUNA.MS_",
-    "sha256": "959ad525483f765357ec7fc08344a77ccfd9bd954eb7678f9235d2d93aa779fe",
-    "rendered": {
-      "inputs": [
-        "I386/LUNA.MS_!BLUE_STARTBUTTON_BMP",
-        "I386/EXPLORER.EX_!BITMAP/143",
-        "I386/TAHOMA.TT_",
-        "I386/TAHOMABD.TT_"
-      ],
-      "capture": "Windows XP Explorer at 1024x768, 96 DPI, Luna Blue; normal, hot, and pressed states",
-      "frame": "99x90x32",
-      "pixelSha256": "855d5ed3ca725ca415d852b0965bcf4f9b0eb0eaa7712bf87055fe13cb6e8493"
     }
   }
 }

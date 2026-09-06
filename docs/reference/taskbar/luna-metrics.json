@@ -1,0 +1,490 @@
+{
+  "source": "source-media/xp-sp3/extracted/themes/Luna.msstyles",
+  "sha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+  "schemes": {
+    "blue": {
+      "TaskBar.BackgroundBottom": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 15, 11",
+        "ImageFile": "Blue\\TaskbarBackground.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "36 94 220; Average background color (blue)"
+      },
+      "TaskBand::Toolbar": {
+        "BgType": "None",
+        "Font": "Tahoma, 8",
+        "TextColor": "255 255 255"
+      },
+      "TaskBand::Toolbar.Button": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "17, 5, 15, 8",
+        "ContentMargins": "0, 4, 4, 4",
+        "ImageFile": "Blue\\TaskBandButton.bmp",
+        "ImageCount": "6",
+        "ImageLayout": "vertical",
+        "Transparent": "True",
+        "FillColorHint": "54 127 239"
+      },
+      "TrayNotifyHoriz::TrayNotify.Background": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "34, 10, 12, 12",
+        "ContentMargins": "19, 7, 0, 0",
+        "ImageFile": "Blue\\TaskbarTray.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 0",
+        "FillColorHint": "13 141 234"
+      },
+      "TrayNotify::Clock": {
+        "Font": "Tahoma, 8",
+        "TextColor": "255 255 255"
+      },
+      "Start::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "6, 52, 13, 14",
+        "ContentMargins": "10, 24, 2, 4",
+        "ImageFile": "Blue\\StartButton.bmp",
+        "ImageCount": "3",
+        "ImageLayout": "Vertical",
+        "Transparent": "True",
+        "Font": "Franklin Gothic Medium, 14, italic",
+        "TextColor": "255 255 255",
+        "TEXTSHADOWOFFSET": "2, 2",
+        "textshadowcolor": "69 76 16",
+        "TextShadowType": "continuous",
+        "FillColorHint": "74 153 73"
+      },
+      "TaskBar::Rebar.Gripper": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 6, 4",
+        "ContentMargins": "2, 1, 0, 0",
+        "ImageFile": "Blue\\TaskbarGripper.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255",
+        "FillColorHint": "6 45 159; Gripper dot color (dark purple)"
+      },
+      "TaskBar::Rebar.GripperVert": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "4, 6, 0, 0",
+        "ContentMargins": "0, 0, 2, 1",
+        "ImageFile": "Blue\\TaskbarGripperVertical.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255",
+        "FillColorHint": "6 45 159; Gripper dot color (dark purple)"
+      },
+      "TaskBar.SizingBarBottom": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "Blue\\TaskbarSizingBarBottom.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "50 128 231; Average color (blue)"
+      },
+      "TaskBar.BackgroundLeft": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "15, 11, 0, 0",
+        "ImageFile": "Blue\\TaskbarBackgroundVertical.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "36 94 220; Average background color (blue)"
+      },
+      "TaskBar.SizingBarLeft": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "Blue\\TaskbarSizingBarLeft.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "50 128 231; Average color (blue)"
+      },
+      "TaskBar.BackgroundTop": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 15, 11",
+        "ImageFile": "Blue\\TaskbarBackground.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "36 94 220; Average background color (blue)"
+      },
+      "TaskBar.SizingBarTop": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "Blue\\TaskbarSizingBarTop.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "50 128 231; Average color (blue)"
+      },
+      "TaskBar.BackgroundRight": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "11, 13, 0, 0",
+        "ImageFile": "Blue\\TaskbarBackgroundVertical.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "36 94 220; Average background color (blue)"
+      },
+      "TaskBar.SizingBarRight": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "ImageFile": "Blue\\TaskbarSizingBarRight.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "50 128 231; Average color (blue)"
+      },
+      "TrayNotifyHoriz::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "TrueSize",
+        "ImageFile": "Blue\\TrayChevronHorizontal.bmp",
+        "ImageCount": "3",
+        "Imagelayout": "vertical",
+        "FillColorHint": "56 173 243; Average background color (blue)"
+      },
+      "TrayNotifyHorizOpen::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "TrueSize",
+        "ImageFile": "Blue\\TrayChevronHorizontalOpen.bmp",
+        "ImageCount": "3",
+        "Imagelayout": "vertical",
+        "FillColorHint": "56 173 243; Average background color (blue)"
+      },
+      "TrayNotifyVert::TrayNotify.Background": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "12, 12, 34, 10",
+        "ContentMargins": "0, 0, 19, 7",
+        "ImageFile": "Blue\\TaskbarTrayVertical.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 0",
+        "FillColorHint": "13 141 234; Average background color (blue)"
+      }
+    },
+    "olive": {
+      "TaskBar.BackgroundBottom": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 17, 12",
+        "ImageFile": "HomeStead\\TaskbarBackground.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "170 184 131; Average background color (olive)"
+      },
+      "TaskBand::Toolbar": {
+        "BgType": "None",
+        "Font": "Tahoma, 8",
+        "TextColor": "65 64 10"
+      },
+      "TaskBand::Toolbar.Button": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "17, 5, 15, 8",
+        "ContentMargins": "0, 4, 4, 4",
+        "ImageFile": "HomeStead\\TaskBandButton.bmp",
+        "ImageCount": "6",
+        "ImageLayout": "vertical",
+        "Transparent": "True",
+        "FillColorHint": "199 208 168"
+      },
+      "TaskBand::Toolbar(checked)": {
+        "TextColor": "255 255 255"
+      },
+      "TrayNotifyHoriz::TrayNotify.Background": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "34, 10, 12, 12",
+        "ContentMargins": "19, 7, 0, 0",
+        "ImageFile": "HomeStead\\TaskbarTray.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 0",
+        "FillColorHint": "234 226 178"
+      },
+      "TrayNotify::Clock": {
+        "Font": "Tahoma, 8",
+        "TextColor": "65 64 10"
+      },
+      "Start::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "6, 52, 13, 14",
+        "ContentMargins": "10, 24, 2, 4",
+        "ImageFile": "HomeStead\\StartButton.bmp",
+        "ImageCount": "3",
+        "ImageLayout": "Vertical",
+        "Transparent": "True",
+        "Font": "Franklin Gothic Medium, 14, italic",
+        "TextColor": "255 255 255",
+        "TEXTSHADOWOFFSET": "2, 2",
+        "textshadowcolor": "69 76 16",
+        "TextShadowType": "continuous",
+        "FillColorHint": "125 151 96"
+      },
+      "TaskBar::Rebar.Gripper": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 6, 4",
+        "ContentMargins": "2, 1, 0, 0",
+        "ImageFile": "HomeStead\\TaskbarGripper.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255",
+        "FillColorHint": "134 146 105; Gripper dot color (dark olive)"
+      },
+      "TaskBar::Rebar.GripperVert": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "4, 6, 0, 0",
+        "ContentMargins": "0, 0, 2, 1",
+        "ImageFile": "HomeStead\\TaskbarGripperVertical.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255",
+        "FillColorHint": "6 45 159; Gripper dot color (dark purple)"
+      },
+      "TaskBar.SizingBarBottom": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "HomeStead\\TaskbarSizingBarBottom.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "201 219 161; Average color (lighter olive)"
+      },
+      "TaskBar.BackgroundLeft": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "15, 11, 0, 0",
+        "ImageFile": "HomeStead\\TaskbarBackgroundVertical.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "170 184 131; Average background color (olive)"
+      },
+      "TaskBar.SizingBarLeft": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "HomeStead\\TaskbarSizingBarLeft.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "201 219 161; Average color (lighter olive)"
+      },
+      "TaskBar.BackgroundTop": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 15, 11",
+        "ImageFile": "HomeStead\\TaskbarBackground.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "170 184 131; Average background color (olive)"
+      },
+      "TaskBar.SizingBarTop": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "HomeStead\\TaskbarSizingBarTop.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "201 219 161; Average color (lighter olive)"
+      },
+      "TaskBar.BackgroundRight": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "11, 13, 0, 0",
+        "ImageFile": "HomeStead\\TaskbarBackgroundVertical.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "170 184 131; Average background color (olive)"
+      },
+      "TaskBar.SizingBarRight": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "ImageFile": "HomeStead\\TaskbarSizingBarRight.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "201 219 161; Average color (lighter olive)"
+      },
+      "TrayNotifyHoriz::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "TrueSize",
+        "ImageFile": "HomeStead\\TrayChevronHorizontal.bmp",
+        "ImageCount": "3",
+        "Transparent": "True",
+        "Imagelayout": "vertical",
+        "FillColorHint": "170 125 91; Average background color (copper orange)"
+      },
+      "TrayNotifyHorizOpen::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "TrueSize",
+        "ImageFile": "HomeStead\\TrayChevronHorizontalOpen.bmp",
+        "Transparent": "True",
+        "ImageCount": "3",
+        "Imagelayout": "vertical",
+        "FillColorHint": "170 125 91; Average background color (copper orange)"
+      },
+      "TrayNotifyVert::TrayNotify.Background": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "12, 12, 34, 10",
+        "ContentMargins": "0, 0, 19, 7",
+        "ImageFile": "HomeStead\\TaskbarTrayVertical.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 0",
+        "FillColorHint": "234 226 178; Average background color (light orange)"
+      }
+    },
+    "silver": {
+      "TaskBar.BackgroundBottom": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 17, 12",
+        "ImageFile": "Metallic\\TaskbarBackground.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "168 169 191; Average background color (grey)"
+      },
+      "TaskBand::Toolbar": {
+        "BgType": "None",
+        "Font": "Tahoma, 8",
+        "TextColor": "64 64 64"
+      },
+      "TaskBand::Toolbar.Button": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "17, 5, 15, 8",
+        "ContentMargins": "0, 4, 4, 4",
+        "ImageFile": "Metallic\\TaskBandButton.bmp",
+        "ImageCount": "6",
+        "ImageLayout": "vertical",
+        "Transparent": "True",
+        "FillColorHint": "218 219 229"
+      },
+      "TaskBand::Toolbar(checked)": {
+        "TextColor": "255 255 255"
+      },
+      "TrayNotifyHoriz::TrayNotify.Background": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "34, 10, 12, 12",
+        "ContentMargins": "19, 7, 0, 0",
+        "ImageFile": "Metallic\\TaskbarTray.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 0",
+        "FillColorHint": "203 204 218"
+      },
+      "TrayNotify::Clock": {
+        "Font": "Tahoma, 8",
+        "TextColor": "0 0 0"
+      },
+      "Start::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "6, 52, 13, 14",
+        "ContentMargins": "10, 24, 2, 4",
+        "ImageFile": "Metallic\\StartButton.bmp",
+        "ImageCount": "3",
+        "ImageLayout": "Vertical",
+        "Transparent": "True",
+        "Font": "Franklin Gothic Medium, 14, italic",
+        "TextColor": "255 255 255",
+        "TEXTSHADOWOFFSET": "2, 2",
+        "textshadowcolor": "69 76 16",
+        "TextShadowType": "continuous",
+        "FillColorHint": "74 153 73"
+      },
+      "TaskBar::Rebar.Gripper": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 6, 4",
+        "ContentMargins": "2, 1, 0, 0",
+        "ImageFile": "Metallic\\TaskbarGripper.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255",
+        "FillColorHint": "119 119 92; Gripper dot color (dark grey)"
+      },
+      "TaskBar::Rebar.GripperVert": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "4, 6, 0, 0",
+        "ContentMargins": "0, 0, 2, 1",
+        "ImageFile": "Metallic\\TaskbarGripperVertical.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255",
+        "FillColorHint": "119 119 92; Gripper dot color (dark grey)"
+      },
+      "TaskBar.SizingBarBottom": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "Metallic\\TaskbarSizingBarBottom.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "166 167 193; Average color (grey)"
+      },
+      "TaskBar.BackgroundLeft": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "17, 12, 0, 0",
+        "ImageFile": "Metallic\\TaskbarBackgroundVertical.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "177 183 187; Average background color (grey)"
+      },
+      "TaskBar.SizingBarLeft": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "Metallic\\TaskbarSizingBarLeft.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "166 167 193; Average color (grey)"
+      },
+      "TaskBar.BackgroundTop": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "0, 0, 17, 12",
+        "ImageFile": "Metallic\\TaskbarBackground.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "177 183 187; Average background color (grey)"
+      },
+      "TaskBar.SizingBarTop": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "ImageFile": "Metallic\\TaskbarSizingBarTop.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "166 167 193; Average color (gret)"
+      },
+      "TaskBar.BackgroundRight": {
+        "BgType": "ImageFile",
+        "SizingType": "Tile",
+        "SizingMargins": "17, 12, 0, 0",
+        "ImageFile": "Metallic\\TaskbarBackgroundVertical.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "177 183 187; Average background color (grey)"
+      },
+      "TaskBar.SizingBarRight": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "ImageFile": "Metallic\\TaskbarSizingBarRight.bmp",
+        "ImageCount": "1",
+        "FillColorHint": "166 167 193; Average color (grey)"
+      },
+      "TrayNotifyHoriz::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "TrueSize",
+        "ImageFile": "Metallic\\TrayChevronHorizontal.bmp",
+        "ImageCount": "3",
+        "Imagelayout": "vertical",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255"
+      },
+      "TrayNotifyHorizOpen::Button": {
+        "BgType": "ImageFile",
+        "SizingType": "TrueSize",
+        "ImageFile": "Metallic\\TrayChevronHorizontalOpen.bmp",
+        "ImageCount": "3",
+        "Imagelayout": "vertical",
+        "Transparent": "True",
+        "TransparentColor": "255 0 255"
+      },
+      "TrayNotifyVert::TrayNotify.Background": {
+        "BgType": "ImageFile",
+        "SizingType": "Stretch",
+        "SizingMargins": "12, 12, 34, 10",
+        "ContentMargins": "0, 0, 19, 7",
+        "ImageFile": "Metallic\\TaskbarTrayVertical.bmp",
+        "ImageCount": "1",
+        "Transparent": "True",
+        "TransparentColor": "255 0 0",
+        "FillColorHint": "203 204 218; Average background color (grey)"
+      }
+    }
+  }
+}

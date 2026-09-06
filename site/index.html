@@ -74,6 +74,7 @@
     <script defer src="js/apps/display-properties.js"></script>
     <script defer src="js/apps/explorer.js"></script>
     <script defer src="js/apps/programs.js"></script>
+    <script defer src="js/shell/taskbar-layout.js"></script>
     <script defer src="js/shell/taskbar.js"></script>
     <script defer src="js/shell/system-tray.js"></script>
     <script defer src="js/shell/desktop.js"></script>
@@ -224,8 +225,18 @@
         <img src="assets/xp/WindowsFlag.png" alt="" aria-hidden="true" />
         <span>Start</span>
       </button>
+      <div id="taskbar-resize" aria-hidden="true"></div>
+      <div id="taskbar-toolbars" hidden></div>
       <div id="task-buttons"></div>
       <div id="taskbar-tray">
+        <button
+          id="tray-expand"
+          type="button"
+          aria-label="Show hidden icons"
+          hidden
+        >
+          ‹
+        </button>
         <button
           id="tray-volume-button"
           class="tray-icon tray-volume"
@@ -237,6 +248,7 @@
         <button id="taskbar-clock" type="button"></button>
       </div>
       <div id="tray-volume-popup" role="dialog" aria-label="Volume" hidden>
+        <span>Volume</span>
         <input
           type="range"
           id="tray-volume-slider"
@@ -253,6 +265,9 @@
       </div>
     </div>
 
+    <div id="tray-volume-menu" class="xp-context-menu" role="menu" hidden>
+      <button type="button" role="menuitem">Open Volume Control</button>
+    </div>
     <div id="taskbar-context-menu" class="xp-context-menu" role="menu" hidden>
       <div id="taskbar-toolbar-parent" class="context-parent">
         <button
@@ -271,10 +286,6 @@
           class="xp-context-menu context-submenu"
           role="menu"
         >
-          <button type="button" role="menuitem" data-taskbar-toolbar="links">
-            <span class="context-check" aria-hidden="true"></span>
-            <span class="context-label">Links</span>
-          </button>
           <button type="button" role="menuitem" data-taskbar-toolbar="desktop">
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">Desktop</span>

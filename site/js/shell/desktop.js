@@ -282,6 +282,26 @@ const wireDesktopIconDrag = (icon) => {
         });
         return;
       }
+      if (
+        desktopDragged &&
+        document
+          .elementsFromPoint(upEvent.clientX, upEvent.clientY)
+          .some((element) => element.closest?.(".quick-launch-toolbar"))
+      ) {
+        saveTaskbarSettings({
+          quickLaunchItems: [
+            ...new Set([
+              ...getTaskbarSettings().quickLaunchItems,
+              ...selected.map(({ item }) => item.dataset.desktopId),
+            ]),
+          ],
+        });
+        selected.forEach(({ item, left, top }) => {
+          item.style.left = `${left}px`;
+          item.style.top = `${top}px`;
+        });
+        return;
+      }
       if (desktopDragged) {
         if (dropTarget) {
           if (dropTarget.action === "recycle") {

@@ -681,6 +681,10 @@ test("system tray volume controls persist volume and mute state", async () => {
   expect(document.getElementById("tray-volume-button")!.title).toBe(
     "Volume (muted)",
   );
+  slider.value = "60";
+  slider.dispatchEvent(new window.Event("input", { bubbles: true }));
+  expect(window.localStorage.getItem("volume")).toBe("60");
+  expect(window.localStorage.getItem("isMuted")).toBe("true");
 });
 
 test("game volume changes remain scaled by the system volume", async () => {
@@ -737,7 +741,10 @@ test("game volume changes remain scaled by the system volume", async () => {
 
 test("clock opens its dialog and the fabricated network status is absent", async () => {
   const shell = await login(await loadShell());
-  shell.document.getElementById("taskbar-clock")!.click();
+  const clock = shell.document.getElementById("taskbar-clock")!;
+  clock.click();
+  expect(shell.document.querySelector(".datetime-dialog")).toBeNull();
+  clock.dispatchEvent(new shell.window.MouseEvent("dblclick"));
   expect(shell.document.querySelector(".datetime-dialog")).not.toBeNull();
 
   expect(shell.document.getElementById("tray-network-button")).toBeNull();
@@ -1582,5 +1589,54 @@ test("a Welcome gesture retries startup audio blocked by autoplay", async () => 
     "assets/xp/sounds/startup.wav",
     "assets/xp/sounds/startup.wav",
   ]);
+  expect(shell.document.getElementById("desktop").hidden).toBeFalse();
+});
+
+test.each(["checking", "updating", "applying"])(
+  "Settings shows the active %s stage with automatic downloads disabled",
+  async (phase) => {
+    const shell = await login(
+      await loadShell({
+        offlineSettings: { phase, automaticUpdatesEnabled: false },
+      }),
+    );
+    shell.document
+      .querySelector('[data-desktop-id="__astro-settings"]')
+      ?.dispatchEvent(
+        new shell.window.MouseEvent("dblclick", { bubbles: true }),
+      );
+    const settings = shell.document.querySelector(".project-settings-content");
+    expect(settings).not.toBeNull();
+    expect(
+      settings.querySelector("[data-project-update-progress]").hidden,
+    ).toBeFalse();
+    expect(
+      settings.querySelector('[data-project-action="update-now"]').disabled,
+    ).toBeTrue();
+    expect(
+      settings.querySelector('[data-project-status="updates"]').textContent,
+    ).toContain(
+      phase === "checking"
+        ? "Checking"
+        : phase === "updating"
+          ? "Downloading"
+          : "reloading",
+    );
+  },
+);
+
+test("repeated startup gestures cannot restart boot or replay the sound", async () => {
+  const shell = await loadShell();
+  const sounds = [];
+  shell.window.Audio = function Audio(path) {
+    sounds.push(path);
+    return { volume: 1, play: () => Promise.resolve() };
+  };
+  for (let i = 0; i < 8; i++) {
+    shell.document.getElementById("boot-screen").click();
+    shell.document.getElementById("welcome-screen").click();
+    await flushShell();
+  }
+  expect(sounds).toEqual(["assets/xp/sounds/startup.wav"]);
   expect(shell.document.getElementById("desktop").hidden).toBeFalse();
 });

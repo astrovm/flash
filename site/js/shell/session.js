@@ -24,6 +24,20 @@ const playXPSound = (name) => {
   );
 };
 
+// One successful startup playback per boot/logon, including overlapping gestures.
+let startupPlayback = { promise: null, played: false };
+const playStartupSound = () => {
+  const playback = startupPlayback;
+  if (playback.played) return Promise.resolve(true);
+  if (playback.promise) return playback.promise;
+  playback.promise = playXPSound("startup").then((played) => {
+    playback.played = played;
+    playback.promise = null;
+    return played;
+  });
+  return playback.promise;
+};
+
 let startupSoundPending = true;
 let startupSoundBlocked = false;
 let bootGeneration = 0;
@@ -79,6 +93,7 @@ const muteAllWindows = () => {
 };
 
 const finishBootSequence = () => {
+  if (document.getElementById("boot-screen").hidden) return;
   bootGeneration++;
   clearTimeout(bootTimeout);
   if (!document.getElementById("boot-screen").hidden) showWelcomeScreen(true);
@@ -94,6 +109,7 @@ const showBootScreen = () => {
   const bootScreen = document.getElementById("boot-screen");
   bootScreen.classList.remove("boot-running", "boot-handoff");
   bootScreen.focus({ preventScroll: true });
+  startupPlayback = { promise: null, played: false };
   startupSoundPending = true;
   startupSoundBlocked = false;
   clearTimeout(bootTimeout);
@@ -169,7 +185,7 @@ const showWelcomeScreen = (autoLogin = false) => {
   if (startupSoundPending) {
     startupSoundPending = false;
     const generation = bootGeneration;
-    void playXPSound("startup").then((played) => {
+    void playStartupSound().then((played) => {
       if (generation === bootGeneration)
         startupSoundBlocked = !played && !welcomeScreen.hidden && autoLogin;
     });
@@ -259,6 +275,7 @@ const logOff = async () => {
   hideSystemDialogs();
   if (!(await closeCurrentSession())) return;
   playXPSound("shutdown");
+  startupPlayback = { promise: null, played: false };
   showWelcomeScreen(false);
 };
 
@@ -284,6 +301,8 @@ const turnOff = async () => {
 let loginPromise = null;
 const login = (playSound = true) => {
   if (loginPromise) return loginPromise;
+  if (loggedIn && document.getElementById("welcome-screen").hidden)
+    return Promise.resolve();
   startupSoundBlocked = false;
   const welcomeScreen = document.getElementById("welcome-screen");
   const loginUser = document.getElementById("login-user");
@@ -311,7 +330,8 @@ const login = (playSound = true) => {
     applyStartMenuStyle(getStartMenuStyle(), false);
     applyFocusVolumes();
     if (playSound && manualLogon) {
-      playXPSound(logonSound);
+      if (logonSound === "startup") void playStartupSound();
+      else void playXPSound(logonSound);
     }
 
     if (!shellInitialized) {
@@ -339,9 +359,10 @@ const login = (playSound = true) => {
 };
 
 const continueWelcomeFromInput = () => {
+  if (document.getElementById("welcome-screen").hidden || loginPromise) return;
   if (startupSoundBlocked) {
     startupSoundBlocked = false;
-    void playXPSound("startup");
+    void playStartupSound();
   }
   return login();
 };
@@ -380,9 +401,9 @@ const setupScreenFlow = () => {
       event.preventDefault();
       continueWelcomeFromInput();
     });
-  document
-    .getElementById("turn-off-screen")
-    .addEventListener("click", showBootScreen);
+  document.getElementById("turn-off-screen").addEventListener("click", () => {
+    if (!document.getElementById("turn-off-screen").hidden) showBootScreen();
+  });
 
   document.getElementById("welcome-turn-off").addEventListener("click", () => {
     showShutdownDialog();

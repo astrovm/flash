@@ -37,6 +37,7 @@ const closeTrayVolumePopup = () => {
   if (!popup || !button) return;
   popup.hidden = true;
   button.classList.remove("pressed");
+  button.setAttribute("aria-expanded", "false");
 };
 
 const openTrayVolumePopup = () => {
@@ -45,6 +46,7 @@ const openTrayVolumePopup = () => {
   syncTrayVolumeUI();
   popup.hidden = false;
   button.classList.add("pressed");
+  button.setAttribute("aria-expanded", "true");
   const rect = button.getBoundingClientRect();
   const left = Math.max(
     4,
@@ -54,7 +56,7 @@ const openTrayVolumePopup = () => {
     ),
   );
   popup.style.left = `${left}px`;
-  popup.style.top = `${rect.top - popup.offsetHeight - 4}px`;
+  popup.style.top = `${Math.max(0, Math.min(getTaskbarSettings().edge === "top" ? rect.bottom + 4 : rect.top - popup.offsetHeight - 4, innerHeight - popup.offsetHeight))}px`;
   document.getElementById("tray-volume-slider").focus();
 };
 
@@ -65,8 +67,6 @@ const toggleTrayVolumePopup = () => {
     closeTrayVolumePopup();
   }
 };
-
-// Connection "duration" counts from logon, like an XP dial-up/LAN session.
 
 let offlineManagerInitialized = false;
 
@@ -234,6 +234,7 @@ const wireProjectSettings = (win) => {
         </dl>
         <p class="project-settings-status" data-project-status="updates" aria-live="polite"></p>
         <progress class="project-settings-progress" data-project-update-progress aria-label="System file download progress" hidden></progress>
+        <p class="project-settings-description">Update Now downloads the latest system files and reloads the desktop when ready. Automatic downloads apply on your next visit.</p>
         <div class="project-settings-actions">
           <button type="button" class="xp-btn" data-project-action="update-now">Update Now</button>
           <button type="button" class="xp-btn" data-project-action="check">Check for Updates</button>
@@ -545,27 +546,38 @@ const wireProjectSettings = (win) => {
           : state.downloadedGameIds.length
             ? "Selected built-in games are available offline."
             : "No built-in games are available offline.";
+    const updateStage = {
+      starting: "Preparing system files...",
+      checking: "Checking for updates...",
+      downloading: "Downloading system files. Keep this page open...",
+      updating: "Downloading the update. Keep this page open...",
+      applying: "Update downloaded. Applying it and reloading the desktop...",
+      repairing: "Repairing system files...",
+    }[state.phase];
     updateStatus.textContent = !state.enabled
       ? "Enable offline access to use offline updates."
-      : !state.automaticUpdatesEnabled
-        ? state.availableVersion
-          ? `Astro Flash ${state.availableVersion} is available.`
-          : "Automatic updates are disabled. Use Check for Updates or Update Now when you want to update the offline copy."
-        : state.phase === "checking"
-          ? "Checking for updates..."
-          : state.phase === "update-pending"
-            ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. The system files will download at that time. Select Update Now to update and reload immediately.`
-            : state.updateReady
-              ? `Astro Flash ${state.availableVersion || "update"} is ready for your next visit. Select Update Now to reload now.`
-              : state.availableVersion
-                ? `Astro Flash ${state.availableVersion} is available.`
-                : state.lastChecked
-                  ? "Astro Flash is up to date."
-                  : "Updates have not been checked yet.";
+      : updateStage
+        ? updateStage
+        : state.phase === "update-pending" && state.automaticUpdatesEnabled
+          ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. Select Update Now to download and reload immediately.`
+          : state.updateReady
+            ? `Astro Flash ${state.availableVersion || "update"} is ready for your next visit. Select Update Now to reload now.`
+            : state.availableVersion
+              ? `Astro Flash ${state.availableVersion} is available.`
+              : state.lastChecked
+                ? "Astro Flash is up to date."
+                : "Updates have not been checked yet.";
     if (state.error) {
       updateStatus.textContent = state.error;
     }
+    updateNowButton.textContent = updateStage
+      ? state.phase === "applying"
+        ? "Reloading..."
+        : "Please wait..."
+      : "Update Now";
     downloadProgress.hidden = ![
+      "checking",
+      "applying",
       "starting",
       "downloading",
       "updating",
@@ -1142,21 +1154,49 @@ const openDateTimeProperties = () => {
 };
 
 const setupSystemTray = () => {
+  const volumeMenu = document.getElementById("tray-volume-menu");
+  wireTaskbarMenuKeyboard(volumeMenu);
+  document
+    .getElementById("tray-volume-button")
+    .addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeTaskbarMenus();
+      closeTrayVolumePopup();
+      positionTaskbarMenu(volumeMenu, event.clientX, event.clientY);
+    });
+  volumeMenu.querySelector("button").addEventListener("click", () => {
+    closeTaskbarMenus();
+    openXPProgram("__volume-control");
+  });
   document
     .getElementById("tray-volume-button")
     .addEventListener("click", toggleTrayVolumePopup);
 
   document
     .getElementById("taskbar-clock")
-    .addEventListener("click", openDateTimeProperties);
+    .addEventListener("dblclick", openDateTimeProperties);
+  document
+    .getElementById("taskbar-clock")
+    .addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDateTimeProperties();
+      }
+    });
+  document
+    .getElementById("tray-volume-button")
+    .addEventListener("dblclick", () => {
+      closeTrayVolumePopup();
+      openXPProgram("__volume-control");
+    });
 
   document
     .getElementById("tray-volume-slider")
     .addEventListener("input", (event) => {
       const volume = parseInt(event.target.value, 10);
       if (Number.isFinite(volume)) {
-        // Moving the XP volume slider clears the mute flag.
-        setSystemVolume(volume, false);
+        setSystemVolume(volume, getSystemVolume().isMuted);
       }
     });
   document
