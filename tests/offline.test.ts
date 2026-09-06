@@ -397,6 +397,34 @@ test("offline updates", async () => {
     versionFetchesBeforeVisibility + 1,
   );
 
+  const downloading = makeEnvironment();
+  const downloadingManager = createManager({
+    currentVersion: manifest.version,
+    environment: downloading.environment,
+  });
+  await downloadingManager.initialize();
+  downloading.setRemote({ version: "26.07.30-download" });
+  downloading.registration.installing = new Worker(
+    "installing",
+    "26.07.30-download",
+  );
+  const firstUpdate = downloadingManager.updateNow();
+  assert.strictEqual(downloadingManager.getSnapshot().phase, "checking");
+  assert.strictEqual(downloadingManager.updateNow(), firstUpdate);
+  await firstUpdate;
+  assert.strictEqual(downloadingManager.getSnapshot().phase, "updating");
+  assert.strictEqual(
+    downloadingManager.getSnapshot().workerState,
+    "installing",
+  );
+  const registrationsDuringDownload =
+    downloading.serviceWorker.registerCalls.length;
+  await downloadingManager.updateNow();
+  assert.strictEqual(
+    downloading.serviceWorker.registerCalls.length,
+    registrationsDuringDownload,
+  );
+
   const manualUpdates = makeEnvironment({
     storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
   });

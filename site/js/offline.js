@@ -560,7 +560,10 @@
       trackRegistration(nextRegistration, inspectWaiting);
       if (nextRegistration.active) {
         setState({
-          phase: nextRegistration.waiting ? "updating" : "ready",
+          phase:
+            nextRegistration.installing || nextRegistration.waiting
+              ? "updating"
+              : "ready",
           workerState: nextRegistration.waiting ? "waiting" : "active",
           updateReady: false,
           error: null,
@@ -1028,21 +1031,25 @@
             return;
           }
           setState({
-            phase: updateAvailable
-              ? waitingUpdateReady
-                ? "update-ready"
-                : "update-available"
-              : "ready",
+            phase: registration?.installing
+              ? "updating"
+              : updateAvailable
+                ? waitingUpdateReady
+                  ? "update-ready"
+                  : "update-available"
+                : "ready",
             availableVersion: updateAvailable ? metadata.version : null,
             availableRevision: updateAvailable ? metadata.revision : null,
             lastChecked: checkedAt,
             updateEligibleAt: updateAvailable ? eligibleAt : null,
             updateReady: updateAvailable && waitingUpdateReady,
-            workerState: registration?.waiting
-              ? "waiting"
-              : registration?.active
-                ? "active"
-                : "unregistered",
+            workerState: registration?.installing
+              ? registration.installing.state
+              : registration?.waiting
+                ? "waiting"
+                : registration?.active
+                  ? "active"
+                  : "unregistered",
             error: null,
           });
           if (!registration?.waiting && !registration?.installing) {
@@ -1209,14 +1216,28 @@
       return snapshot();
     };
 
-    const updateNow = async () => {
-      // A background check must not consume the user's explicit reload request.
-      if (checkPromise) await checkPromise.catch(() => {});
-      return checkForUpdates({
-        applyAutomatically: true,
-        bypassDelay: true,
-        reload: true,
+    let manualUpdatePromise = null;
+    const updateNow = () => {
+      if (manualUpdatePromise) return manualUpdatePromise;
+      if (
+        reloadWhenControlled ||
+        (reloadTargetVersion && registration?.installing)
+      )
+        return Promise.resolve(snapshot());
+      const pendingCheck = checkPromise;
+      setState({ phase: "checking", error: null });
+      manualUpdatePromise = (async () => {
+        // A background check must not consume the user's explicit reload request.
+        if (pendingCheck) await pendingCheck.catch(() => {});
+        return checkForUpdates({
+          applyAutomatically: true,
+          bypassDelay: true,
+          reload: true,
+        });
+      })().finally(() => {
+        manualUpdatePromise = null;
       });
+      return manualUpdatePromise;
     };
 
     const automaticCheck = () => {

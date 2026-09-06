@@ -1591,3 +1591,52 @@ test("a Welcome gesture retries startup audio blocked by autoplay", async () => 
   ]);
   expect(shell.document.getElementById("desktop").hidden).toBeFalse();
 });
+
+test.each(["checking", "updating", "applying"])(
+  "Settings shows the active %s stage with automatic downloads disabled",
+  async (phase) => {
+    const shell = await login(
+      await loadShell({
+        offlineSettings: { phase, automaticUpdatesEnabled: false },
+      }),
+    );
+    shell.document
+      .querySelector('[data-desktop-id="__astro-settings"]')
+      ?.dispatchEvent(
+        new shell.window.MouseEvent("dblclick", { bubbles: true }),
+      );
+    const settings = shell.document.querySelector(".project-settings-content");
+    expect(settings).not.toBeNull();
+    expect(
+      settings.querySelector("[data-project-update-progress]").hidden,
+    ).toBeFalse();
+    expect(
+      settings.querySelector('[data-project-action="update-now"]').disabled,
+    ).toBeTrue();
+    expect(
+      settings.querySelector('[data-project-status="updates"]').textContent,
+    ).toContain(
+      phase === "checking"
+        ? "Checking"
+        : phase === "updating"
+          ? "Downloading"
+          : "reloading",
+    );
+  },
+);
+
+test("repeated startup gestures cannot restart boot or replay the sound", async () => {
+  const shell = await loadShell();
+  const sounds = [];
+  shell.window.Audio = function Audio(path) {
+    sounds.push(path);
+    return { volume: 1, play: () => Promise.resolve() };
+  };
+  for (let i = 0; i < 8; i++) {
+    shell.document.getElementById("boot-screen").click();
+    shell.document.getElementById("welcome-screen").click();
+    await flushShell();
+  }
+  expect(sounds).toEqual(["assets/xp/sounds/startup.wav"]);
+  expect(shell.document.getElementById("desktop").hidden).toBeFalse();
+});
