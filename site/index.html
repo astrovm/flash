@@ -237,6 +237,7 @@
         <button id="taskbar-clock" type="button"></button>
       </div>
       <div id="tray-volume-popup" role="dialog" aria-label="Volume" hidden>
+        <span>Volume</span>
         <input
           type="range"
           id="tray-volume-slider"
@@ -253,6 +254,9 @@
       </div>
     </div>
 
+    <div id="tray-volume-menu" class="xp-context-menu" role="menu" hidden>
+      <button type="button" role="menuitem">Open Volume Control</button>
+    </div>
     <div id="taskbar-context-menu" class="xp-context-menu" role="menu" hidden>
       <div id="taskbar-toolbar-parent" class="context-parent">
         <button
@@ -271,11 +275,21 @@
           class="xp-context-menu context-submenu"
           role="menu"
         >
-          <button type="button" role="menuitem" data-taskbar-toolbar="links">
+          <button
+            type="button"
+            role="menuitem"
+            data-taskbar-toolbar="links"
+            disabled
+          >
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">Links</span>
           </button>
-          <button type="button" role="menuitem" data-taskbar-toolbar="desktop">
+          <button
+            type="button"
+            role="menuitem"
+            data-taskbar-toolbar="desktop"
+            disabled
+          >
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">Desktop</span>
           </button>
@@ -283,12 +297,18 @@
             type="button"
             role="menuitem"
             data-taskbar-toolbar="quick-launch"
+            disabled
           >
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">Quick Launch</span>
           </button>
           <span class="context-separator" aria-hidden="true"></span>
-          <button type="button" role="menuitem" data-taskbar-toolbar="new">
+          <button
+            type="button"
+            role="menuitem"
+            data-taskbar-toolbar="new"
+            disabled
+          >
             <span class="context-check" aria-hidden="true"></span>
             <span class="context-label">New Toolbar...</span>
           </button>
@@ -326,6 +346,7 @@
         role="menuitemcheckbox"
         aria-checked="true"
         data-taskbar-action="lock"
+        disabled
       >
         <span class="context-check" aria-hidden="true">✓</span>
         <span class="context-label">Lock the Taskbar</span>

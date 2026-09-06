@@ -27,6 +27,7 @@ type ResourceIcon = DirectAsset & {
   bitDepth: number;
 };
 type ResourceBitmap = DirectAsset & {
+  crop?: { left: number; top: number; width: number; height: number };
   expandedName: string;
   resourceType: number;
   resourceId: number | string;
@@ -484,16 +485,16 @@ async function extractBitmap(
       rgba[target++] = transparent ? 0 : sourceAlpha;
     }
   }
-  const png = await sharp(rgba, {
+  let bitmapImage = sharp(rgba, {
     raw: { width: decoded.width, height: decoded.height, channels: 4 },
-  })
-    .png()
-    .toBuffer();
+  });
+  if (bitmap.crop) bitmapImage = bitmapImage.extract(bitmap.crop);
+  const png = await bitmapImage.png().toBuffer();
   return {
     png,
     parentSha256: sha256(parent),
-    pixelSha256: sha256(rgba),
-    frame: `${decoded.width}x${decoded.height}x32`,
+    pixelSha256: sha256(await sharp(png).ensureAlpha().raw().toBuffer()),
+    frame: `${bitmap.crop?.width ?? decoded.width}x${bitmap.crop?.height ?? decoded.height}x32`,
   };
 }
 
@@ -677,6 +678,7 @@ try {
         parentSha256: extracted.parentSha256,
         type: bitmap.resourceType,
         id: bitmap.resourceId,
+        ...(bitmap.crop ? { crop: bitmap.crop } : {}),
         language: manifest.source.language,
         frame: extracted.frame,
         pixelSha256: extracted.pixelSha256,

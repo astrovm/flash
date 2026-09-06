@@ -37,6 +37,7 @@ const closeTrayVolumePopup = () => {
   if (!popup || !button) return;
   popup.hidden = true;
   button.classList.remove("pressed");
+  button.setAttribute("aria-expanded", "false");
 };
 
 const openTrayVolumePopup = () => {
@@ -45,6 +46,7 @@ const openTrayVolumePopup = () => {
   syncTrayVolumeUI();
   popup.hidden = false;
   button.classList.add("pressed");
+  button.setAttribute("aria-expanded", "true");
   const rect = button.getBoundingClientRect();
   const left = Math.max(
     4,
@@ -65,8 +67,6 @@ const toggleTrayVolumePopup = () => {
     closeTrayVolumePopup();
   }
 };
-
-// Connection "duration" counts from logon, like an XP dial-up/LAN session.
 
 let offlineManagerInitialized = false;
 
@@ -1142,21 +1142,49 @@ const openDateTimeProperties = () => {
 };
 
 const setupSystemTray = () => {
+  const volumeMenu = document.getElementById("tray-volume-menu");
+  wireTaskbarMenuKeyboard(volumeMenu);
+  document
+    .getElementById("tray-volume-button")
+    .addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeTaskbarMenus();
+      closeTrayVolumePopup();
+      positionTaskbarMenu(volumeMenu, event.clientX, event.clientY);
+    });
+  volumeMenu.querySelector("button").addEventListener("click", () => {
+    closeTaskbarMenus();
+    openXPProgram("__volume-control");
+  });
   document
     .getElementById("tray-volume-button")
     .addEventListener("click", toggleTrayVolumePopup);
 
   document
     .getElementById("taskbar-clock")
-    .addEventListener("click", openDateTimeProperties);
+    .addEventListener("dblclick", openDateTimeProperties);
+  document
+    .getElementById("taskbar-clock")
+    .addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDateTimeProperties();
+      }
+    });
+  document
+    .getElementById("tray-volume-button")
+    .addEventListener("dblclick", () => {
+      closeTrayVolumePopup();
+      openXPProgram("__volume-control");
+    });
 
   document
     .getElementById("tray-volume-slider")
     .addEventListener("input", (event) => {
       const volume = parseInt(event.target.value, 10);
       if (Number.isFinite(volume)) {
-        // Moving the XP volume slider clears the mute flag.
-        setSystemVolume(volume, false);
+        setSystemVolume(volume, getSystemVolume().isMuted);
       }
     });
   document

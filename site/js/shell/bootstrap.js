@@ -230,6 +230,7 @@ document.addEventListener("pointerdown", (e) => {
   if (
     !e.target.closest("#taskbar-context-menu") &&
     !e.target.closest("#taskbar-overflow-menu") &&
+    !e.target.closest("#tray-volume-menu") &&
     !e.target.closest(".task-button")
   ) {
     closeTaskbarMenus();

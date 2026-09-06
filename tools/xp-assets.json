@@ -3058,6 +3058,504 @@
       "resourceType": 2,
       "resourceId": 430,
       "output": "site/assets/xp/minesweeper/Faces.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBARBACKGROUND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/blue-background.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/blue-buttons.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBARTRAY_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/blue-tray.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/blue-start.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDFLASHBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/blue-flash.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBARBACKGROUND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/olive-background.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/olive-buttons.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBARTRAY_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/olive-tray.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/olive-start.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDFLASHBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/olive-flash.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBARBACKGROUND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/silver-background.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/silver-buttons.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBARTRAY_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/silver-tray.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/silver-start.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDFLASHBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/taskbar/silver-flash.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/blue-button-normal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 28,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/blue-button-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 56,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/blue-button-pressed.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 84,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/blue-button-disabled.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 112,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/blue-button-checked.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 140,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/blue-button-checked-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/blue-start-normal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 33,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/blue-start-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 66,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/blue-start-pressed.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/olive-button-normal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 28,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/olive-button-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 56,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/olive-button-pressed.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 84,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/olive-button-disabled.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 112,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/olive-button-checked.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 140,
+        "width": 26,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/olive-button-checked-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/olive-start-normal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 33,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/olive-start-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 66,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/olive-start-pressed.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 27,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/silver-button-normal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 28,
+        "width": 27,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/silver-button-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 56,
+        "width": 27,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/silver-button-pressed.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 84,
+        "width": 27,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/silver-button-disabled.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 112,
+        "width": 27,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/silver-button-checked.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TASKBANDBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 140,
+        "width": 27,
+        "height": 28
+      },
+      "output": "site/assets/xp/taskbar/silver-button-checked-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/silver-start-normal.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 33,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/silver-start-hot.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_STARTBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 66,
+        "width": 99,
+        "height": 33
+      },
+      "output": "site/assets/xp/taskbar/silver-start-pressed.png"
     }
   ],
   "resourcePngs": [
@@ -3160,22 +3658,6 @@
       "resourceType": "WAVE",
       "resourceId": 434,
       "output": "site/assets/xp/minesweeper/Win.wav"
-    }
-  ],
-  "renderedAssets": [
-    {
-      "member": "LUNA.MS_",
-      "output": "site/assets/xp/StartButtonRendered.png",
-      "frame": "99x90x32",
-      "sha256": "959ad525483f765357ec7fc08344a77ccfd9bd954eb7678f9235d2d93aa779fe",
-      "pixelSha256": "855d5ed3ca725ca415d852b0965bcf4f9b0eb0eaa7712bf87055fe13cb6e8493",
-      "inputs": [
-        "I386/LUNA.MS_!BLUE_STARTBUTTON_BMP",
-        "I386/EXPLORER.EX_!BITMAP/143",
-        "I386/TAHOMA.TT_",
-        "I386/TAHOMABD.TT_"
-      ],
-      "capture": "Windows XP Explorer at 1024x768, 96 DPI, Luna Blue; normal, hot, and pressed states"
     }
   ],
   "auditFiles": [

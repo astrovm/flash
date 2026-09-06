@@ -681,6 +681,10 @@ test("system tray volume controls persist volume and mute state", async () => {
   expect(document.getElementById("tray-volume-button")!.title).toBe(
     "Volume (muted)",
   );
+  slider.value = "60";
+  slider.dispatchEvent(new window.Event("input", { bubbles: true }));
+  expect(window.localStorage.getItem("volume")).toBe("60");
+  expect(window.localStorage.getItem("isMuted")).toBe("true");
 });
 
 test("game volume changes remain scaled by the system volume", async () => {
@@ -737,7 +741,10 @@ test("game volume changes remain scaled by the system volume", async () => {
 
 test("clock opens its dialog and the fabricated network status is absent", async () => {
   const shell = await login(await loadShell());
-  shell.document.getElementById("taskbar-clock")!.click();
+  const clock = shell.document.getElementById("taskbar-clock")!;
+  clock.click();
+  expect(shell.document.querySelector(".datetime-dialog")).toBeNull();
+  clock.dispatchEvent(new shell.window.MouseEvent("dblclick"));
   expect(shell.document.querySelector(".datetime-dialog")).not.toBeNull();
 
   expect(shell.document.getElementById("tray-network-button")).toBeNull();

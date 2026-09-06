@@ -1166,8 +1166,9 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   const folder = fs.getNode(win.currentFolderId);
   if (!folder) return;
 
-  win.el.querySelector(".title-text").textContent =
-    folder.id === fs.MY_COMPUTER ? "My Computer" : folder.name;
+  win.title = folder.id === fs.MY_COMPUTER ? "My Computer" : folder.name;
+  win.el.querySelector(".title-text").textContent = win.title;
+  renderTaskButtons();
   const titleIcon = win.el.querySelector(".title-icon");
   if (titleIcon) {
     titleIcon.replaceChildren();

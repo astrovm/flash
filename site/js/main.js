@@ -51,6 +51,7 @@ const USER_STORAGE_KEYS = Object.freeze([
   DISPLAY_SETTINGS_KEY,
   START_MENU_STYLE_KEY,
   "clockOffsetMs",
+  "taskbarShowClock",
   "desktopIconPositions",
   "desktopLayoutSettings",
   DESKTOP_SYSTEM_ICONS_KEY,

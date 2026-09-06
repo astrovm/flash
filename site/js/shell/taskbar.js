@@ -7,6 +7,7 @@
 const closeTaskbarMenus = () => {
   document.getElementById("taskbar-context-menu").hidden = true;
   document.getElementById("taskbar-overflow-menu").hidden = true;
+  document.getElementById("tray-volume-menu").hidden = true;
 };
 
 // Public shell hook for windows that need to notify the user without stealing
@@ -31,6 +32,7 @@ const positionTaskbarMenu = (menu, clientX, clientY) => {
 
 const wireTaskbarMenuKeyboard = (menu) => {
   menu.addEventListener("keydown", (event) => {
+    if (event.target.closest('[role="menu"]') !== menu) return;
     const items = [...menu.children]
       .map((child) =>
         child.matches("button")
@@ -54,6 +56,7 @@ const wireTaskbarMenuKeyboard = (menu) => {
     } else if (event.key === "Escape") {
       event.preventDefault();
       closeTaskbarMenus();
+      document.getElementById("start-button").focus();
       return;
     } else if (
       (event.key === "Enter" || event.key === " ") &&
@@ -432,18 +435,18 @@ const openTaskbarProperties = () => {
     <div class="taskbar-properties-panel" data-taskbar-properties-panel="taskbar">
       <div class="taskbar-properties-group taskbar-appearance-group"><span class="taskbar-properties-legend">Taskbar appearance</span>
         <img class="taskbar-properties-preview" src="assets/xp/system/TaskbarPreview.png" alt="Taskbar preview">
-        <label><input type="checkbox" data-taskbar-setting="locked" ${taskbarLocked ? "checked" : ""}> Lock the taskbar</label>
-        <label><input type="checkbox" data-taskbar-setting="auto-hide"> Auto-hide the taskbar</label>
-        <label><input type="checkbox" data-taskbar-setting="keep-on-top" checked> Keep the taskbar on top of other windows</label>
-        <label><input type="checkbox" data-taskbar-setting="group" checked> Group similar taskbar buttons</label>
-        <label><input type="checkbox" data-taskbar-setting="quick-launch"> Show Quick Launch</label>
+        <label><input type="checkbox" data-taskbar-setting="locked" disabled ${taskbarLocked ? "checked" : ""}> Lock the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="auto-hide" disabled> Auto-hide the taskbar</label>
+        <label><input type="checkbox" data-taskbar-setting="keep-on-top" disabled checked> Keep the taskbar on top of other windows</label>
+        <label><input type="checkbox" data-taskbar-setting="group" disabled> Group similar taskbar buttons</label>
+        <label><input type="checkbox" data-taskbar-setting="quick-launch" disabled> Show Quick Launch</label>
       </div>
       <div class="taskbar-properties-group notification-area-group"><span class="taskbar-properties-legend">Notification area</span>
         <img class="taskbar-properties-preview" src="assets/xp/system/NotificationAreaPreview.png" alt="Notification area preview">
-        <label><input type="checkbox" data-taskbar-setting="show-clock" checked> Show the clock</label>
+        <label><input type="checkbox" data-taskbar-setting="show-clock" ${localStorage.getItem("taskbarShowClock") !== "false" ? "checked" : ""}> Show the clock</label>
         <p>You can keep the notification area uncluttered by hiding icons that you<br>have not clicked recently.</p>
-        <label><input type="checkbox" data-taskbar-setting="hide-inactive" checked> Hide inactive icons</label>
-        <button type="button" class="xp-btn">Customize...</button>
+        <label><input type="checkbox" data-taskbar-setting="hide-inactive" disabled> Hide inactive icons</label>
+        <button type="button" class="xp-btn" disabled>Customize...</button>
       </div>
     </div>
     <div class="taskbar-properties-panel taskbar-start-menu-panel" data-taskbar-properties-panel="start-menu" hidden>
@@ -495,6 +498,10 @@ const openTaskbarProperties = () => {
       document.getElementById("taskbar-clock").hidden =
         !dialog.body.querySelector('[data-taskbar-setting="show-clock"]')
           .checked;
+      localStorage.setItem(
+        "taskbarShowClock",
+        String(!document.getElementById("taskbar-clock").hidden),
+      );
       applyStartMenuStyle(
         dialog.body.querySelector('[name="taskbar-start-menu-style"]:checked')
           .value,
@@ -528,15 +535,6 @@ const openTaskbarProperties = () => {
         !classic;
     }
   });
-  dialog.body
-    .querySelector(".notification-area-group .xp-btn")
-    .addEventListener("click", () =>
-      XPDialogs.alert(
-        "Select which notification icons should be hidden when inactive.",
-        "Customize Notifications",
-        "info",
-      ),
-    );
   ok.focus();
 };
 
@@ -579,7 +577,7 @@ const setupTaskbarContextMenu = () => {
     toolbarSubmenu.querySelector("button")?.focus();
   });
   toolbarSubmenu.addEventListener("keydown", (event) => {
-    if (event.key !== "ArrowLeft") return;
+    if (event.key !== "ArrowLeft" && event.key !== "Escape") return;
     event.preventDefault();
     event.stopPropagation();
     closeToolbarSubmenu();
@@ -630,14 +628,15 @@ let updateClockDisplay = () => {};
 
 const startClock = () => {
   const clock = document.getElementById("taskbar-clock");
+  clock.hidden = localStorage.getItem("taskbarShowClock") === "false";
   const update = () => {
     const now = getShellTime();
-    clock.textContent = now.toLocaleTimeString([], {
+    clock.textContent = now.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
     });
     // XP tooltip: hovering the clock shows the full date.
-    clock.title = now.toLocaleDateString([], {
+    clock.title = now.toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
       day: "numeric",

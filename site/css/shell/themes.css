@@ -187,7 +187,7 @@ html[data-xp-appearance="classic"] #start-button > span {
 
 html[data-xp-appearance="classic"] #task-buttons {
   gap: 3px;
-  padding: 2px 3px;
+  padding: 2px 0;
 }
 
 html[data-xp-appearance="classic"] .task-button,
@@ -205,9 +205,10 @@ html[data-xp-appearance="classic"] .task-button.active {
 
 html[data-xp-appearance="classic"] .task-button.active,
 html[data-xp-appearance="classic"] .task-button[aria-pressed="true"] {
+  font-weight: bold;
   transform: none;
   background-color: #fff;
-  background-image: radial-gradient(#c0c0c0 0.6px, transparent 0.7px);
+  background-image: repeating-conic-gradient(#fff 0 25%, #d4d0c8 0 50%);
   background-size: 2px 2px;
   box-shadow:
     inset 1px 1px #808080,
