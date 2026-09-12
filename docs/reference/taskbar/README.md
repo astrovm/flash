@@ -32,6 +32,27 @@ screenshots use the browser's JPEG capture. The high-resolution VM captures use
 this is not a claim of identical pixels on every host display. The two systems
 also have different applications and notification icons installed.
 
+## Start artwork and background corrections
+
+A follow-up comparison of the running XP VM at 1024×768 and the existing
+1280×1024 captures found that the Start artwork is painted at 32 pixels high.
+The single-row taskbar clips its last two rows; shrinking the artwork to
+30 pixels instead exposed a blue line below Start. The 33-pixel source image
+keeps its original sizing margins and is painted into a 32-pixel surface, with
+the button clipped to the available taskbar height. Taller taskbars retain the
+complete button, as in `vm-blue-top-multirow1280.png`.
+
+The background uses the theme's `SizingType=Tile`, and its drawing bounds exclude
+the unlocked taskbar's four-pixel resize strip. In
+`completion/xp-blue-floating1280.png`, that strip occupies rows 990–993 and the
+background begins at row 994. Bitmap rendering preserves the artwork's pixels
+on high-density displays. The extracted source assets are unchanged.
+
+The in-app browser checks covered Blue at 1280×720 and all four schemes at
+1280×1024, including locked and unlocked Blue taskbars. These corrections address
+the artwork and geometry; they do not establish universal font rasterization
+parity with XP.
+
 ## Behavior checked
 
 - Clicking an active task minimizes it; clicking its minimized task restores it.
