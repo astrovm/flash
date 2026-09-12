@@ -16,6 +16,13 @@
   min-height: 0;
 }
 
+.xp-dialog-modeless {
+  pointer-events: none;
+}
+.xp-dialog-modeless > .xp-dialog {
+  pointer-events: auto;
+}
+
 .xp-dialog > .title-bar {
   cursor: move;
   touch-action: none;

@@ -719,6 +719,7 @@ const openStartMenu = () => {
   menu.style.top = `${Math.max(0, Math.min(edge === "bottom" ? rect.top - menu.offsetHeight : edge === "top" ? rect.bottom : rect.top, innerHeight - menu.offsetHeight))}px`;
 
   document.getElementById("start-button").classList.add("active");
+  document.getElementById("start-button").focus({ preventScroll: true });
 };
 
 const closeStartMenu = () => {
