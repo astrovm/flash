@@ -16,12 +16,6 @@
     padding-right: 4px;
   }
 
-  #taskbar-tray {
-    gap: 3px;
-    margin-left: 3px;
-    padding: 0 4px;
-  }
-
   .task-button {
     --task-button-min-width: 48px;
   }
@@ -70,13 +64,6 @@
 }
 
 @media (max-width: 360px) {
-  #tray-network-button {
-    display: none;
-  }
-  #taskbar-tray {
-    margin-left: 1px;
-    padding: 0 2px;
-  }
   #taskbar-clock {
     font-size: 10px;
     padding: 1px;

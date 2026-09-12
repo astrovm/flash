@@ -99,7 +99,7 @@ const renderTaskButtons = () => {
     explorerWindows.length >= 3 &&
     (document.getElementById("taskbar").classList.contains("vertical")
       ? windows.length * 28 > container.clientHeight
-      : windows.length * 160 >
+      : windows.length * 110 >
         container.clientWidth * getTaskbarSettings().rows);
   if (groupExplorer) {
     const first = windows.indexOf(explorerWindows[0]);
@@ -221,13 +221,17 @@ const renderTaskButtons = () => {
         closeTaskbarMenus();
         const menu = document.getElementById("taskbar-overflow-menu");
         menu.replaceChildren();
+        const members = win.groupedWindows.map(([, member]) => member);
+        const arrangeGroup = (mode) => {
+          win.groupedWindows.forEach(([id]) => restoreWindow(id));
+          arrangeTaskbarWindows(mode, members);
+        };
         for (const [label, action] of [
+          ["Cascade", () => arrangeGroup("cascade")],
+          ["Tile Horizontally", () => arrangeGroup("tile-horizontal")],
+          ["Tile Vertically", () => arrangeGroup("tile-vertical")],
           [
-            "Restore All",
-            () => win.groupedWindows.forEach(([id]) => restoreWindow(id)),
-          ],
-          [
-            "Minimize All",
+            "Minimize Group",
             () => win.groupedWindows.forEach(([id]) => minimizeWindow(id)),
           ],
           [
@@ -242,6 +246,9 @@ const renderTaskButtons = () => {
           const item = document.createElement("button");
           item.setAttribute("role", "menuitem");
           item.textContent = label;
+          item.disabled =
+            label === "Minimize Group" &&
+            members.every((member) => member.minimized);
           item.addEventListener("click", () => {
             closeTaskbarMenus();
             void action();
@@ -355,8 +362,8 @@ const renderTaskButtons = () => {
   }
 };
 
-const arrangeTaskbarWindows = (mode) => {
-  const windows = [...openWindows.values()].filter((win) => !win.minimized);
+const arrangeTaskbarWindows = (mode, members = [...openWindows.values()]) => {
+  const windows = members.filter((win) => !win.minimized);
   if (!windows.length) return;
   const { width, height } = getDesktopSize();
   windows.forEach((win, index) => {

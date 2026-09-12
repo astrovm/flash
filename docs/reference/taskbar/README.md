@@ -83,13 +83,19 @@ New Toolbar creates folders in that filesystem. Links is omitted because there
 is no implemented browser Favorites source. Network locations and host browser
 bookmarks are not presented as available folders.
 
-Folder toolbars use compact content menus. Independent floating toolbars,
-individual toolbar width adjustment, and toolbar reordering are not implemented.
-Quick Launch supports adding desktop shortcuts and removing its shortcuts;
-removal does not delete the original item. Only the working Volume notification
-is customizable. Hide when inactive uses ten minutes without interaction in the
-simulation; this is not a verified reproduction of XP's inactivity heuristic.
-The narrow-screen task overflow menu is a browser adaptation.
+Folder and Desktop toolbars now display inline items and overflow menus, with
+independent sizing, ordering, and detachable floating windows. Quick Launch
+supports adding, ordering, launching, and removing shortcuts; removal does not
+delete the original item. Floating windows use original Luna small-caption,
+frame, close-button, and toolbar resources, or Classic system colors.
+See the [completion evidence](completion/README.md) for the new comparisons,
+regressions, and remaining fidelity limits.
+
+Only the working Volume notification is customizable. Hide when inactive uses
+ten minutes without interaction; this is a simulation heuristic. Expanded icons
+collapse after leaving the tray, while keyboard focus and an open Volume popup
+keep them available. Narrow-screen task overflow and horizontally scrollable
+crowded toolbar bands are web adaptations.
 
 Start menu contents, application window frames, and the interiors of Date and
 Time Properties and Volume Control remain separate areas. Browser font
@@ -97,8 +103,7 @@ rasterization still prevents a universal pixel-identical XP match.
 
 ## Validation
 
-212 tests pass across 39 files, including taskbar setting persistence, docking,
-resizing, auto-hide, grouping, notification customization, folder toolbars, and
-Quick Launch shortcut ownership. Type checking, browser JavaScript/icon
-validation, formatting, lint, production build, and authenticated extraction
-verification cover the implementation and original assets.
+219 tests pass across 39 files. Formatting, lint, type checking, browser
+JavaScript/icon validation, production build, and authenticated verification of
+483 extracted assets cover the implementation. The completion notes record
+which interactions were checked directly in the browser and original VM.
