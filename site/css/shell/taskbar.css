@@ -487,7 +487,7 @@ html[data-xp-appearance="classic"] #start-button {
   background: var(--sizing-right);
 }
 #taskbar.unlocked:not(.vertical) {
-  padding-top: 3px;
+  padding-top: 4px;
 }
 #taskbar.unlocked #task-buttons {
   margin-left: 7px;
