@@ -560,6 +560,7 @@ const applyStartMenuStyle = (style, persist = true) => {
 const openTaskbarProperties = () => {
   const dialog = XPDialogs.createDialog({
     title: "Taskbar and Start Menu Properties",
+    modal: false,
   });
   dialog.el.classList.add("taskbar-properties-dialog");
 

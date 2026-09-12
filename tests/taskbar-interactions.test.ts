@@ -545,3 +545,44 @@ test("a floating toolbar at the top-left corner preserves zero coordinates", asy
   expect(toolbar.style.left).toBe("0px");
   expect(toolbar.style.top).toBe("0px");
 });
+
+test("Start menu remains usable while its style properties stay open", async () => {
+  const s = await login(await loadShell());
+  const dialog = properties(s);
+  dialog.querySelector('[data-taskbar-properties-tab="start-menu"]').click();
+  for (const style of ["classic", "start"]) {
+    dialog
+      .querySelector(`[name="taskbar-start-menu-style"][value="${style}"]`)
+      .click();
+    dialog.querySelector('[data-action="apply"]').click();
+    const choice = dialog.querySelector(
+      `[name="taskbar-start-menu-style"][value="${style}"]`,
+    );
+    choice.focus();
+    choice.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", {
+        key: "Escape",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(s.document.getElementById("start-menu").hidden).toBeFalse();
+    expect(dialog.isConnected).toBeTrue();
+    expect(s.document.documentElement.dataset.xpStartMenu).toBe(style);
+    s.document.activeElement.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(s.document.getElementById("start-menu").hidden).toBeTrue();
+    expect(dialog.isConnected).toBeTrue();
+    s.document.getElementById("start-button").click();
+    expect(s.document.getElementById("start-menu").hidden).toBeFalse();
+    s.document.getElementById("start-button").click();
+  }
+  dialog.querySelector('[data-action="cancel"]').click();
+  expect(dialog.isConnected).toBeFalse();
+});

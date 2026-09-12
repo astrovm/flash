@@ -109,18 +109,25 @@
   // Builds a modal dialog with XP window chrome. Options:
   //   title    - title bar text
   //   wide     - use the wider dialog variant (file dialogs)
+  //   modal    - block other UI and trap focus (default: true)
   //   onCancel - Escape/title-close behavior (default: close with null)
   // Returns { el, body, close, onResult }.
-  const createDialog = ({ title = "", wide = false, onCancel = null } = {}) => {
+  const createDialog = ({
+    title = "",
+    wide = false,
+    modal = true,
+    onCancel = null,
+  } = {}) => {
     const previouslyFocused = document.activeElement;
 
     const overlay = document.createElement("div");
     overlay.className = "xp-dialog-overlay";
+    overlay.classList.toggle("xp-dialog-modeless", !modal);
 
     const el = document.createElement("div");
     el.className = `xp-window active xp-dialog${wide ? " xp-dialog-wide" : ""}`;
     el.setAttribute("role", "dialog");
-    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-modal", String(modal));
     el.setAttribute("aria-label", title);
 
     const titleBar = document.createElement("div");
@@ -169,8 +176,15 @@
       },
       cancel: onCancel || (() => dialog.close(null)),
       onKeydown(e) {
+        if (
+          !modal &&
+          (!el.contains(e.target) ||
+            (e.ctrlKey && e.key === "Escape") ||
+            e.key === "Meta")
+        )
+          return;
         if (e.key === "Tab") {
-          trapFocus(e);
+          if (modal) trapFocus(e);
           return;
         }
         if (e.key === "Escape") {
@@ -234,7 +248,7 @@
       document.addEventListener("keydown", handleGlobalKeydown, true);
     }
     dialogStack.push(dialog);
-    overlay.style.zIndex = BASE_Z_INDEX + dialogStack.length;
+    overlay.style.zIndex = (modal ? BASE_Z_INDEX : 6900) + dialogStack.length;
     document.body.appendChild(overlay);
 
     // Dialogs start centered, then switch to explicit viewport-relative

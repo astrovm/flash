@@ -280,11 +280,18 @@ document.addEventListener("keydown", async (e) => {
     if (
       e.defaultPrevented ||
       document.querySelector(
-        ".xp-dialog-overlay, .system-dialog-overlay:not([hidden])",
-      ) ||
-      isEditableTarget(e.target)
+        ".xp-dialog-overlay:not(.xp-dialog-modeless), .system-dialog-overlay:not([hidden])",
+      )
     )
       return;
+
+    if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
+      e.preventDefault();
+      toggleStartMenu();
+      return;
+    }
+
+    if (isEditableTarget(e.target)) return;
 
     if (e.altKey && e.key === "Tab") {
       e.preventDefault();
@@ -531,12 +538,6 @@ document.addEventListener("keydown", async (e) => {
               ];
       e.preventDefault();
       target?.focus();
-      return;
-    }
-
-    if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
-      e.preventDefault();
-      toggleStartMenu();
       return;
     }
 
