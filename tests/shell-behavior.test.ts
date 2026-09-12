@@ -1530,7 +1530,7 @@ test("startup plays one sound and manual session transitions keep their XP sound
   const sounds = [];
   shell.window.Audio = function Audio(path) {
     sounds.push(path);
-    return { volume: 1, play: () => Promise.resolve() };
+    return { volume: 1, pause: () => {}, play: () => Promise.resolve() };
   };
   await login(shell);
   expect(sounds).toEqual(["assets/xp/sounds/startup.wav"]);
@@ -1571,15 +1571,20 @@ test("switched-session program count reflects the open windows", async () => {
 test("a Welcome gesture retries startup audio blocked by autoplay", async () => {
   const shell = await loadShell();
   const attempts = [];
+  const elements = [];
   shell.window.Audio = function Audio(path) {
-    attempts.push(path);
-    return {
+    const element = {
       volume: 1,
-      play: () =>
-        attempts.length === 1
+      pause: () => {},
+      play: () => {
+        attempts.push(path);
+        return attempts.length === 1
           ? Promise.reject(new Error("NotAllowedError"))
-          : Promise.resolve(),
+          : Promise.resolve();
+      },
     };
+    elements.push(element);
+    return element;
   };
   shell.completeBoot();
   await flushShell();
@@ -1589,6 +1594,7 @@ test("a Welcome gesture retries startup audio blocked by autoplay", async () => 
     "assets/xp/sounds/startup.wav",
     "assets/xp/sounds/startup.wav",
   ]);
+  expect(elements).toHaveLength(1);
   expect(shell.document.getElementById("desktop").hidden).toBeFalse();
 });
 
@@ -1630,7 +1636,7 @@ test("repeated startup gestures cannot restart boot or replay the sound", async 
   const sounds = [];
   shell.window.Audio = function Audio(path) {
     sounds.push(path);
-    return { volume: 1, play: () => Promise.resolve() };
+    return { volume: 1, pause: () => {}, play: () => Promise.resolve() };
   };
   for (let i = 0; i < 8; i++) {
     shell.document.getElementById("boot-screen").click();
@@ -1639,4 +1645,38 @@ test("repeated startup gestures cannot restart boot or replay the sound", async 
   }
   expect(sounds).toEqual(["assets/xp/sounds/startup.wav"]);
   expect(shell.document.getElementById("desktop").hidden).toBeFalse();
+});
+
+test("Restart stops the previous startup before a new boot can play", async () => {
+  const shell = await loadShell();
+  const playing = new Set();
+  let startupCount = 0;
+  shell.window.Audio = function Audio(path) {
+    const audio = {
+      volume: 1,
+      play: () => {
+        playing.add(audio);
+        if (path.endsWith("/startup.wav")) startupCount++;
+        return Promise.resolve();
+      },
+      pause: () => playing.delete(audio),
+      path,
+    };
+    return audio;
+  };
+  await login(shell);
+  expect(startupCount).toBe(1);
+  shell.document.getElementById("restart-confirm").click();
+  await flushShell();
+  expect(
+    [...playing].filter((audio) => audio.path.endsWith("/startup.wav")),
+  ).toHaveLength(0);
+  await new Promise((resolve) => setTimeout(resolve, 1900));
+  shell.completeBoot();
+  shell.document.getElementById("welcome-screen").click();
+  await flushShell();
+  expect(startupCount).toBe(2);
+  expect(
+    [...playing].filter((audio) => audio.path.endsWith("/startup.wav")),
+  ).toHaveLength(1);
 });

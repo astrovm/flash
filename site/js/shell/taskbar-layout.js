@@ -13,6 +13,8 @@ const taskbarDefaults = {
   quickLaunchItems: ["__show-desktop"],
   desktopToolbar: false,
   folders: [],
+  toolbarOrder: [],
+  toolbarLayouts: {},
   hideInactive: true,
   volumeBehavior: "auto",
 };
@@ -40,6 +42,15 @@ const getTaskbarSettings = () => {
   settings.folders = Array.isArray(settings.folders)
     ? settings.folders.filter((id) => typeof id === "string")
     : [];
+  settings.toolbarOrder = Array.isArray(settings.toolbarOrder)
+    ? [...new Set(settings.toolbarOrder.filter((id) => typeof id === "string"))]
+    : [];
+  if (
+    !settings.toolbarLayouts ||
+    typeof settings.toolbarLayouts !== "object" ||
+    Array.isArray(settings.toolbarLayouts)
+  )
+    settings.toolbarLayouts = {};
   return settings;
 };
 const saveTaskbarSettings = (changes) => {
@@ -52,6 +63,26 @@ const saveTaskbarSettings = (changes) => {
 let taskbarHideTimer;
 let taskbarVolumeLastUsed = Date.now();
 let taskbarTrayExpanded = false;
+let trayCollapseTimer;
+const scheduleTrayCollapse = () => {
+  clearTimeout(trayCollapseTimer);
+  if (!taskbarTrayExpanded) return;
+  trayCollapseTimer = setTimeout(() => {
+    const tray = document.getElementById("taskbar-tray");
+    if (
+      tray.matches(":hover") ||
+      (tray.contains(document.activeElement) &&
+        document.activeElement.matches(":focus-visible")) ||
+      !document.getElementById("tray-volume-popup").hidden ||
+      !document.getElementById("tray-volume-menu").hidden
+    ) {
+      scheduleTrayCollapse();
+      return;
+    }
+    taskbarTrayExpanded = false;
+    renderTrayVisibility();
+  }, 2000);
+};
 
 const revealTaskbar = () => {
   clearTimeout(taskbarHideTimer);
@@ -86,12 +117,25 @@ const layoutTaskbar = (monitor, left, top) => {
   const bar = document.getElementById("taskbar");
   const desktop = document.getElementById("desktop");
   const vertical = ["left", "right"].includes(settings.edge);
+  const largeToolbar = Object.entries(settings.toolbarLayouts).some(
+    ([id, layout]) =>
+      layout?.largeIcons &&
+      !layout.floating &&
+      (id === QUICK_LAUNCH
+        ? settings.quickLaunch
+        : id === fs.DESKTOP
+          ? settings.desktopToolbar
+          : settings.folders.includes(id)),
+  );
   const thickness = vertical
     ? Math.min(settings.width, monitor.width / 2)
     : Math.min(
-        getTaskbarHeight() +
-          (settings.locked ? 0 : 4) +
-          (settings.rows - 1) * 26,
+        Math.max(
+          getTaskbarHeight() +
+            (settings.locked ? 0 : 4) +
+            (settings.rows - 1) * 26,
+          largeToolbar ? 40 + (settings.locked ? 0 : 4) : 0,
+        ),
         monitor.height / 2,
       );
   const reserved = settings.autoHide ? 2 : settings.onTop ? thickness : 0;
@@ -148,147 +192,6 @@ const renderTrayVisibility = () => {
   expand.setAttribute("aria-expanded", String(taskbarTrayExpanded));
   document.getElementById("tray-volume-button").hidden =
     hidden && !taskbarTrayExpanded;
-};
-
-const openTaskbarFolderMenu = (folderId, anchor) => {
-  const menu = document.getElementById("taskbar-overflow-menu");
-  closeTaskbarMenus();
-  menu.replaceChildren();
-  const children =
-    folderId === fs.DESKTOP
-      ? [...document.querySelectorAll(".desktop-icon")].map((icon) => ({
-          id: icon.dataset.desktopId,
-          name: icon.getAttribute("aria-label") || icon.textContent.trim(),
-        }))
-      : fs.getChildren(folderId);
-  for (const node of children) {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.setAttribute("role", "menuitem");
-    item.textContent = node.name;
-    item.addEventListener("click", () => {
-      closeTaskbarMenus();
-      openDesktopItem(node.id);
-    });
-    menu.append(item);
-  }
-  if (!children.length) {
-    const empty = document.createElement("button");
-    empty.textContent = "(Empty)";
-    empty.disabled = true;
-    menu.append(empty);
-  }
-  const rect = anchor.getBoundingClientRect();
-  positionTaskbarMenu(menu, rect.left, rect.top);
-};
-
-const renderTaskbarToolbars = () => {
-  const settings = getTaskbarSettings();
-  const toolbars = document.getElementById("taskbar-toolbars");
-  toolbars.replaceChildren();
-  if (settings.quickLaunch) {
-    const quickLaunch = document.createElement("div");
-    quickLaunch.className = "quick-launch-toolbar";
-    quickLaunch.setAttribute("aria-label", "Quick Launch");
-    for (const id of settings.quickLaunchItems) {
-      const node = fs.getNode(id);
-      if (
-        id !== "__show-desktop" &&
-        !node &&
-        !systemShortcuts[id] &&
-        !gamesList[id]
-      )
-        continue;
-      const button = document.createElement("button");
-      button.className = "quick-launch-button";
-      button.title =
-        id === "__show-desktop"
-          ? "Show Desktop"
-          : node?.name || systemShortcuts[id]?.title || formatGameTitle(id);
-      button.setAttribute("aria-label", button.title);
-      const icon = document.createElement("img");
-      const desktopIcon = [...document.querySelectorAll(".desktop-icon")]
-        .find((entry) => entry.dataset.desktopId === id)
-        ?.querySelector("img");
-      icon.src =
-        id === "__show-desktop"
-          ? "assets/xp/icons/ShowDesktop.png"
-          : desktopIcon?.src ||
-            systemShortcuts[id]?.icon ||
-            "assets/xp/icons/NewFolder.png";
-      icon.alt = "";
-      button.append(icon);
-      button.addEventListener("click", () =>
-        id === "__show-desktop" ? toggleShowDesktop() : openDesktopItem(id),
-      );
-      button.addEventListener("contextmenu", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        closeTaskbarMenus();
-        const menu = document.getElementById("taskbar-overflow-menu");
-        menu.replaceChildren();
-        const remove = document.createElement("button");
-        remove.textContent = "Delete";
-        remove.setAttribute("role", "menuitem");
-        remove.addEventListener("click", () => {
-          closeTaskbarMenus();
-          saveTaskbarSettings({
-            quickLaunchItems: getTaskbarSettings().quickLaunchItems.filter(
-              (item) => item !== id,
-            ),
-          });
-        });
-        menu.append(remove);
-        positionTaskbarMenu(menu, event.clientX, event.clientY);
-      });
-      quickLaunch.append(button);
-    }
-    toolbars.append(quickLaunch);
-  }
-  const folders = [
-    ...(settings.desktopToolbar ? [fs.DESKTOP] : []),
-    ...settings.folders,
-  ];
-  for (const id of new Set(folders)) {
-    const node = fs.getNode(id);
-    if (!node || node.type !== "folder") continue;
-    const button = document.createElement("button");
-    button.className = "taskbar-folder-toolbar";
-    button.textContent = `${node.name} »`;
-    button.setAttribute("aria-haspopup", "menu");
-    button.addEventListener("click", () => openTaskbarFolderMenu(id, button));
-    button.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      const menu = document.getElementById("taskbar-overflow-menu");
-      closeTaskbarMenus();
-      menu.replaceChildren();
-      const close = document.createElement("button");
-      close.textContent = "Close Toolbar";
-      close.setAttribute("role", "menuitem");
-      close.addEventListener("click", () => {
-        closeTaskbarMenus();
-        saveTaskbarSettings(
-          id === fs.DESKTOP
-            ? { desktopToolbar: false }
-            : { folders: settings.folders.filter((entry) => entry !== id) },
-        );
-      });
-      menu.append(close);
-      positionTaskbarMenu(menu, event.clientX, event.clientY);
-    });
-    toolbars.append(button);
-  }
-  toolbars.hidden = !toolbars.children.length;
-  for (const [name, value] of [
-    ["quick-launch", settings.quickLaunch],
-    ["desktop", settings.desktopToolbar],
-  ]) {
-    const button = document.querySelector(`[data-taskbar-toolbar="${name}"]`);
-    button.setAttribute("role", "menuitemcheckbox");
-    button.setAttribute("aria-checked", String(value));
-    button.querySelector(".context-check").textContent = value ? "✓" : "";
-  }
 };
 
 const applyTaskbarSettings = () => {
@@ -466,6 +369,13 @@ const openNewTaskbarToolbar = () => {
 const setupTaskbarLayout = () => {
   const bar = document.getElementById("taskbar");
   const handle = document.getElementById("taskbar-resize");
+  document.addEventListener("pointerdown", (event) => {
+    document
+      .querySelectorAll(".taskbar-toolbar.floating.active")
+      .forEach((toolbar) => {
+        if (!toolbar.contains(event.target)) toolbar.classList.remove("active");
+      });
+  });
   bar.addEventListener("pointerenter", revealTaskbar);
   bar.addEventListener("pointerdown", () => {
     bar.style.zIndex = "8000";
@@ -489,7 +399,7 @@ const setupTaskbarLayout = () => {
     if (
       event.button !== 0 ||
       getTaskbarSettings().locked ||
-      event.target.closest("button, input")
+      event.target.closest("button, input, .taskbar-toolbar")
     )
       return;
     const settings = getTaskbarSettings();
@@ -551,12 +461,25 @@ const setupTaskbarLayout = () => {
   document.getElementById("tray-expand").addEventListener("click", () => {
     taskbarTrayExpanded = !taskbarTrayExpanded;
     renderTrayVisibility();
+    scheduleTrayCollapse();
   });
   document
     .getElementById("tray-volume-button")
     .addEventListener("pointerdown", () => {
       taskbarVolumeLastUsed = Date.now();
     });
+  const tray = document.getElementById("taskbar-tray");
+  tray.addEventListener("pointerenter", () => clearTimeout(trayCollapseTimer));
+  tray.addEventListener("pointerleave", scheduleTrayCollapse);
+  tray.addEventListener("focusout", scheduleTrayCollapse);
+  document.addEventListener("pointerdown", (event) => {
+    if (
+      !event.target.closest(
+        "#taskbar-tray, #tray-volume-popup, #tray-volume-menu",
+      )
+    )
+      scheduleTrayCollapse();
+  });
   setInterval(renderTrayVisibility, 30000);
   fs.subscribe(() => {
     renderTaskbarToolbars();

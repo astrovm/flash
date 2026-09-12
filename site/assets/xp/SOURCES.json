@@ -2398,6 +2398,957 @@
       "pixelSha256": "e4410f4aef380d6f5898d7e622e3c43b0aaf1a47a2fb5f63423001d9b80bea2c"
     }
   },
+  "assets/xp/taskbar/blue-toolbar-background-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a9bcd3fa7cc937cd8b0dbda12c6ce2b05654644eb48d9429944783c9714c92cd",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TOOLBARBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "320x13x32",
+      "pixelSha256": "52e85340d3100868ee000c6ceea67aa334f3cf18cbce3081a6096f862f174041"
+    }
+  },
+  "assets/xp/taskbar/blue-frame-left-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6ae1034e3900af4db891e0ae11c7bae146963adc6e9d52a9709d176462d2a409",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_FRAMELEFT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "2e655312efa866e58c1ec679e2f05a9237d228e653adf459cb82e9e9f1310250"
+    }
+  },
+  "assets/xp/taskbar/blue-frame-left-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "cc1814f78d0d7315ec42fc56bd51fb1f3e5b0590a1cd930c30c8d7367dce5e90",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_FRAMELEFT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "dbaf1c616a4dbca0336985c298c26ced7b4a827c00c1e23ff37019a3754edfde"
+    }
+  },
+  "assets/xp/taskbar/blue-frame-right-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "b06a0ef95df18c8cd23424d2223303deead4784474ab7cbe8170f7042b663ffa",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_FRAMERIGHT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "e26a42bf155fb7d90b639287f98e0f9670eeb0cdca18ab3ac70f7038f3a03e7d"
+    }
+  },
+  "assets/xp/taskbar/blue-frame-right-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "b8fc278dca4740ab7f67a43c1b628dd636adcd9b87288fbcbe4e2b45eb047b7b",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_FRAMERIGHT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "2c764357c7258b69a68fd9a74e42c9bd55a5ddb7943a02a6acce7a2cab962258"
+    }
+  },
+  "assets/xp/taskbar/blue-frame-bottom-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "26a8b3d2ee89a5e385d2d967e513f7a230d70c160b0a692de7de12522f02b391",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_FRAMEBOTTOM_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 49,
+        "height": 5
+      },
+      "language": 1033,
+      "frame": "49x5x32",
+      "pixelSha256": "db5a5366df89ee9d860a3d74593a3e535e54c13203a3bce580596deb06175a6b"
+    }
+  },
+  "assets/xp/taskbar/blue-frame-bottom-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4f83e10f1f27a06c052575b86e0e96a688f42d2152f32bd7028e0a469ba5416a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_FRAMEBOTTOM_BMP",
+      "crop": {
+        "left": 0,
+        "top": 5,
+        "width": 49,
+        "height": 5
+      },
+      "language": 1033,
+      "frame": "49x5x32",
+      "pixelSha256": "e0aeb66cafc9fa684cb0e69cbaf9ff43574630b9baa04566f6e3a9baea6d7749"
+    }
+  },
+  "assets/xp/taskbar/olive-toolbar-background-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a9bcd3fa7cc937cd8b0dbda12c6ce2b05654644eb48d9429944783c9714c92cd",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TOOLBARBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "320x13x32",
+      "pixelSha256": "52e85340d3100868ee000c6ceea67aa334f3cf18cbce3081a6096f862f174041"
+    }
+  },
+  "assets/xp/taskbar/olive-frame-left-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2ce1ba802295497746824fea1cceb5ff845174bd789527f3ef438a3d50135394",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_FRAMELEFT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "40e2530cfc52ed0b2d9f338db9d1c61e4b67ddf17fa07c80bac8ba249a089a2e"
+    }
+  },
+  "assets/xp/taskbar/olive-frame-left-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2565598774d327cd763a67d0856019a6ef67192d4fd7e062096f54275fb93d75",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_FRAMELEFT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "e81255f4480122ce756d5927e71cd932db403302d620254282a46104540ea0ba"
+    }
+  },
+  "assets/xp/taskbar/olive-frame-right-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2286d1a1fb9b0e5d1dc5ec4007ccd7db43deb8c1f6d330441968b7a5f893f02b",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_FRAMERIGHT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "527cf6cba48b641b93296bbfa8c9d9930a2b5868a87063469b7e58eda65ffd51"
+    }
+  },
+  "assets/xp/taskbar/olive-frame-right-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "5a27843b6bc4e1821aa6cb1369f9a1bc2a0d7998339ec124f4819a345c07b3cb",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_FRAMERIGHT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "3ae85cf5e69fffbb90a191199c115994c587112aaec8b942891aeb2feb4161ff"
+    }
+  },
+  "assets/xp/taskbar/olive-frame-bottom-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "64f740e61cd24f52cccd90150bdee3c54ce23a6ba6d01145d1d70a772a61212b",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_FRAMEBOTTOM_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 49,
+        "height": 5
+      },
+      "language": 1033,
+      "frame": "49x5x32",
+      "pixelSha256": "d9d35fa394675a8d3c74d5a5959f83c12b8a2ac42843e0edde5d5f7718494b9d"
+    }
+  },
+  "assets/xp/taskbar/olive-frame-bottom-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ac0e7836405e5d6f0321876ffa0833795a65de67ba67252b6542f0810f4ce293",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_FRAMEBOTTOM_BMP",
+      "crop": {
+        "left": 0,
+        "top": 5,
+        "width": 49,
+        "height": 5
+      },
+      "language": 1033,
+      "frame": "49x5x32",
+      "pixelSha256": "3cddd9a179ef922370a8cd00e62569d4e872aeed9afb25964d09bad81a9510af"
+    }
+  },
+  "assets/xp/taskbar/silver-toolbar-background-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "53a235bfb482b33fe2180f41a8f01f84b1ce64b13bcc691a1cf0c3bc69cf99b9",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TOOLBARBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "320x13x32",
+      "pixelSha256": "7fcf1a537e8d11a5352c8c07cf97c835084e46e283f635250168cba30cf071f8"
+    }
+  },
+  "assets/xp/taskbar/silver-frame-left-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "98adb593bc7e3781c2124e5d0c2ea9c61b946c0cea82ca79a9f6b058208b0d30",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_FRAMELEFT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "1801ea6d5e71a507c510c9e2a0cd22f9ca147d590d0ad89f3429cc6d5eb53903"
+    }
+  },
+  "assets/xp/taskbar/silver-frame-left-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6c2b4d72b2370df0e69f3dd7738de61e941e485a05f7c8db666cdebc5c340c41",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_FRAMELEFT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "2d8e09f8f46a9ad8c45fec66d1ab0514275d2c2dd586dd7b837ea2e94e235c1c"
+    }
+  },
+  "assets/xp/taskbar/silver-frame-right-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "5cad9864164737653c947f0d78d6dacdf4c9232a6dec85783161e6bb62d4e3a6",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_FRAMERIGHT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "b0b361ca9b8ef46f3446b17dfae752eef8742e5db6f7cfb22baa69a2a1b3ba0a"
+    }
+  },
+  "assets/xp/taskbar/silver-frame-right-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "b8809756bca03e957ef55b9f390ae0fe7195a87915bb4ffce41d73e0273a9720",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_FRAMERIGHT_BMP",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "language": 1033,
+      "frame": "5x31x32",
+      "pixelSha256": "d679e4775978a6dada188c25119d8594e031aba67e3f4b5f26b4c3f24d0f358c"
+    }
+  },
+  "assets/xp/taskbar/silver-frame-bottom-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "85d4441c0bd3053515d8684723be5631a34fdf06f7bfd27598fc4b7eafa15b54",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_FRAMEBOTTOM_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 49,
+        "height": 5
+      },
+      "language": 1033,
+      "frame": "49x5x32",
+      "pixelSha256": "0d61c15b65abae0f1d7a2c687940aae1ffc1c7978e92f47d3fc12f230c7cc134"
+    }
+  },
+  "assets/xp/taskbar/silver-frame-bottom-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "47b262e8a809776aaacffc78597eebfc43ea4725f5f16fa218e7edd450f02152",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_FRAMEBOTTOM_BMP",
+      "crop": {
+        "left": 0,
+        "top": 5,
+        "width": 49,
+        "height": 5
+      },
+      "language": 1033,
+      "frame": "49x5x32",
+      "pixelSha256": "fc54b4d5e58d83b03fd746478ede5b65089bc6a0e2a635abf8e4f02802a41dce"
+    }
+  },
+  "assets/xp/taskbar/blue-small-caption-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ba22b46e670b1c01494c00a3d140d92f26bc2aaed5cae94d8e9fceaec3808b06",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLFRAMECAPTION_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 66,
+        "height": 19
+      },
+      "language": 1033,
+      "frame": "66x19x32",
+      "pixelSha256": "6496425fb3454d5d842837dd2e8be86243e614a8bdde4db7c0d5a25651e3927b"
+    }
+  },
+  "assets/xp/taskbar/blue-small-caption-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "8cb123e726d701a53c06017fa480ff9e6a1039dd85ddb438d67bc41f9d8fcadb",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLFRAMECAPTION_BMP",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 66,
+        "height": 19
+      },
+      "language": 1033,
+      "frame": "66x19x32",
+      "pixelSha256": "ebbcd5fc61dbed9201fcbba596edb5c1d4bb725a1c4eb7e9850fd16a57d62817"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "610151aedb168ebb0915425273145160e2231522d7ab02d876f391f177b347de",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "eeab4f947fcdc4449fb5807fbafdf9679a6ae2e418bf1c8a8cc15775e9e449b3"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2512f03a5cbff057ba891bb061f5a653ece73eefcaf0d218e80b6601e713e4a8",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 13,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "9ad11de6b2f7c856a96fc20f629e27116efa32175b3e3aaccea1123bee814ae0"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "502f2331486ed4bf91d1f4696d662334d67079ff6ca6b3ef02204e09f8e5ae6e",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 26,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "f53299a9238b1e9ca8876b8bdd3a149419f8eeebf1031be4601b5f7abd1fb80a"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a71e5db7bd5306fc6054cf3d24c139ce067d3eea03af063cda2ac867e2f24973",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 39,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "1a698b5e0b7faf295ca2c9ade3d11cd004d080555c148195f0501719f080ef88"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-glyph-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-glyph-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 7,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-glyph-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "09d142142eef93d61e5bf439f29a75e5f336b674ebbbc4bb842729fc4443d807",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 14,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "f7672b20ac9de71dd71045c0b5e38f6c722a049b28bbc94a1ab2165575032653"
+    }
+  },
+  "assets/xp/taskbar/blue-small-close-glyph-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a998bfb201be240304e72e3a7b0ddf74212fc7b234a2abdd5f531a79ed287ad3",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 21,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "379b6e27883871de734deb6fe709f3e3a73317c576040d124ab63b5fc1a1e21e"
+    }
+  },
+  "assets/xp/taskbar/olive-small-caption-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "cc69f7ddb3bbea1a51689b29c80f43d579dc787ddf7196db0ffc02bae53fe6a5",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLFRAMECAPTION_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 66,
+        "height": 19
+      },
+      "language": 1033,
+      "frame": "66x19x32",
+      "pixelSha256": "05fef572c3fa76542114d2e603c53e8ac730823319c804808c03d47e1e6ab21d"
+    }
+  },
+  "assets/xp/taskbar/olive-small-caption-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d2635386fa439158e858d2a682c7ab4b20ca0d74457fb7bf18cf362b5cb2baff",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLFRAMECAPTION_BMP",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 66,
+        "height": 19
+      },
+      "language": 1033,
+      "frame": "66x19x32",
+      "pixelSha256": "d92fff472952c296e0391b4a08b5ffbcf6030cfadbc1580ba403dba76e86ca3a"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "610151aedb168ebb0915425273145160e2231522d7ab02d876f391f177b347de",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "eeab4f947fcdc4449fb5807fbafdf9679a6ae2e418bf1c8a8cc15775e9e449b3"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2512f03a5cbff057ba891bb061f5a653ece73eefcaf0d218e80b6601e713e4a8",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 13,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "9ad11de6b2f7c856a96fc20f629e27116efa32175b3e3aaccea1123bee814ae0"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "502f2331486ed4bf91d1f4696d662334d67079ff6ca6b3ef02204e09f8e5ae6e",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 26,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "f53299a9238b1e9ca8876b8bdd3a149419f8eeebf1031be4601b5f7abd1fb80a"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a71e5db7bd5306fc6054cf3d24c139ce067d3eea03af063cda2ac867e2f24973",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 39,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "1a698b5e0b7faf295ca2c9ade3d11cd004d080555c148195f0501719f080ef88"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-glyph-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-glyph-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 7,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-glyph-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "09d142142eef93d61e5bf439f29a75e5f336b674ebbbc4bb842729fc4443d807",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 14,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "f7672b20ac9de71dd71045c0b5e38f6c722a049b28bbc94a1ab2165575032653"
+    }
+  },
+  "assets/xp/taskbar/olive-small-close-glyph-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a998bfb201be240304e72e3a7b0ddf74212fc7b234a2abdd5f531a79ed287ad3",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 21,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "379b6e27883871de734deb6fe709f3e3a73317c576040d124ab63b5fc1a1e21e"
+    }
+  },
+  "assets/xp/taskbar/silver-small-caption-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "fd8a12829a0eb11841e6ddceaf3e5c597e3f061b76f3f4a96ec0870262618a5c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLFRAMECAPTION_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 66,
+        "height": 19
+      },
+      "language": 1033,
+      "frame": "66x19x32",
+      "pixelSha256": "c57259879c565720209874c08bbd98b7c6a962493a6fbfdcb47cd09e155ed59d"
+    }
+  },
+  "assets/xp/taskbar/silver-small-caption-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "31f156ddf22fe529de5057c04c377c58311503156f40d94fd04e5a5dd504b36a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLFRAMECAPTION_BMP",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 66,
+        "height": 19
+      },
+      "language": 1033,
+      "frame": "66x19x32",
+      "pixelSha256": "6ca7eae8488c6e7de794c840042d3d9e025788299f0de7ac5974eb2d669d8293"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "86644cf89ef1e4e480ac816a18d6d2efc388d7df81ac940245980b65a7392325",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "103b0844c926604eab83481206ad8f1b23b423c32d99cf58e46fc101d4ee87bd"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e7eb2611b242f835f733bbf4c068f79765f8bdd606f75115ce58369131619d48",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 13,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "4bc30e3821c49ff63599011c7c238361f516304f82664d8779d2d2788197838f"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "8049add49d6c7be8ee2d98b71d1f61afb2eb4d8d32d5b23ce79ae0ecb5b9f10d",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 26,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "61753e0eecb33430a66cd52747d40c1e940df561b0c7ceb7723a5c1a2180e274"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "aff9d8749df083e37a78e2a7c655b8f9c6b8cdce627e225f650fd06e2ca38105",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "crop": {
+        "left": 0,
+        "top": 39,
+        "width": 13,
+        "height": 13
+      },
+      "language": 1033,
+      "frame": "13x13x32",
+      "pixelSha256": "f8684bd906225e2a6aa84868782af1c7f546cef468bb573a6e00c6fd3f551410"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-glyph-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-glyph-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 7,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-glyph-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "d259bde8a32b493ba3366e9b5ecfd68c829f83d89a64cae9c1640b995075b8f1",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 14,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "dbdab5edcaa602c8dedace8606eafb78e22d427b3479039cc61893748d61a541"
+    }
+  },
+  "assets/xp/taskbar/silver-small-close-glyph-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "5f1ddc0f1fd746d38fc932ce0ace428abde2c5770fc8df823acd0d8ff3db9a3d",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "crop": {
+        "left": 0,
+        "top": 21,
+        "width": 7,
+        "height": 7
+      },
+      "language": 1033,
+      "frame": "7x7x32",
+      "pixelSha256": "e4a58b426faf937bdcd910a1a2df716c7337c04405c6950d94126e8adc69b41f"
+    }
+  },
   "assets/xp/solitaire/cards/1.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",

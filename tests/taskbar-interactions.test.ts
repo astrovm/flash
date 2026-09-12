@@ -181,14 +181,20 @@ test("New Toolbar creates a working folder toolbar and it can be removed", async
   dialog.querySelector('[data-action="ok"]').click();
   const toolbar = s.document.querySelector(".taskbar-folder-toolbar");
   expect(toolbar.textContent).toContain("My Documents");
-  toolbar.click();
-  expect(s.document.getElementById("taskbar-overflow-menu").hidden).toBeFalse();
+  const folderButton = toolbar.querySelector("[data-shortcut]");
+  expect(folderButton).not.toBeNull();
+  folderButton.click();
+  await flushShell();
+  expect(s.document.querySelector(".xp-window")).not.toBeNull();
   toolbar.dispatchEvent(
     new s.window.MouseEvent("contextmenu", { bubbles: true }),
   );
-  s.document
-    .getElementById("taskbar-overflow-menu")
-    .querySelector("button")
+  [
+    ...s.document
+      .getElementById("taskbar-overflow-menu")
+      .querySelectorAll("button"),
+  ]
+    .find((button) => button.textContent === "Close Toolbar")
     .click();
   expect(s.document.querySelector(".taskbar-folder-toolbar")).toBeNull();
   s.document.querySelector('[data-taskbar-toolbar="new"]').click();
@@ -308,4 +314,234 @@ test("dragging a desktop shortcut to Quick Launch adds a launch button without m
       .quickLaunchItems,
   ).not.toContain("__my-documents");
   expect(icon.isConnected).toBeTrue();
+});
+
+test("toolbar dragging detaches, resizing persists, cancellation rolls back, and redocking restores the band", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        taskbarSettings: JSON.stringify({ quickLaunch: true, locked: false }),
+      },
+    }),
+  );
+  const point = (target, type, x, y) =>
+    target.dispatchEvent(
+      new s.window.PointerEvent(type, {
+        bubbles: true,
+        pointerId: 2,
+        button: 0,
+        clientX: x,
+        clientY: y,
+      }),
+    );
+  const rect = (element, x, y, width, height) =>
+    (element.getBoundingClientRect = () => ({
+      left: x,
+      top: y,
+      right: x + width,
+      bottom: y + height,
+      width,
+      height,
+    }));
+  let toolbar = s.document.querySelector(".quick-launch-toolbar");
+  rect(toolbar, 110, 738, 90, 26);
+  let grip = toolbar.querySelector(".toolbar-grip");
+  point(grip, "pointerdown", 114, 750);
+  point(grip, "pointermove", 350, 300);
+  point(grip, "pointerup", 350, 300);
+  toolbar = s.document.querySelector(".quick-launch-toolbar");
+  expect(toolbar.classList.contains("floating")).toBeTrue();
+  rect(toolbar, 346, 288, 300, 300);
+  let size = toolbar.querySelector(".toolbar-size");
+  point(size, "pointerdown", 644, 586);
+  point(size, "pointermove", 694, 626);
+  point(size, "pointerup", 694, 626);
+  const saved = JSON.parse(s.window.localStorage.getItem("taskbarSettings"));
+  expect(saved.toolbarLayouts["__quick-launch"].width).toBe(350);
+  expect(saved.toolbarLayouts["__quick-launch"].height).toBe(340);
+  toolbar = s.document.querySelector(".quick-launch-toolbar");
+  rect(toolbar, 346, 288, 350, 340);
+  size = toolbar.querySelector(".toolbar-size");
+  point(size, "pointerdown", 694, 626);
+  point(size, "pointermove", 794, 726);
+  point(size, "pointercancel", 794, 726);
+  expect(JSON.parse(s.window.localStorage.getItem("taskbarSettings"))).toEqual(
+    saved,
+  );
+  rect(s.document.getElementById("taskbar"), 0, 734, 1024, 34);
+  grip = toolbar.querySelector(".toolbar-title");
+  point(grip, "pointerdown", 400, 297);
+  point(grip, "pointermove", 150, 750);
+  point(grip, "pointerup", 150, 750);
+  expect(
+    s.document
+      .querySelector(".quick-launch-toolbar")
+      .classList.contains("floating"),
+  ).toBeFalse();
+  expect(
+    JSON.parse(s.window.localStorage.getItem("taskbarSettings")).toolbarOrder,
+  ).toEqual(["__quick-launch"]);
+});
+
+test("Quick Launch dragging changes order without launching an application", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        taskbarSettings: JSON.stringify({
+          quickLaunch: true,
+          locked: false,
+          quickLaunchItems: [
+            "__show-desktop",
+            "__my-documents",
+            "__my-computer",
+          ],
+        }),
+      },
+    }),
+  );
+  const buttons = [...s.document.querySelectorAll(".quick-launch-button")];
+  buttons.forEach(
+    (button, i) =>
+      (button.getBoundingClientRect = () => ({
+        left: 100 + i * 24,
+        right: 124 + i * 24,
+        top: 740,
+        bottom: 764,
+        width: 24,
+        height: 24,
+      })),
+  );
+  const target = buttons[2];
+  for (const [type, x] of [
+    ["pointerdown", 160],
+    ["pointermove", 102],
+    ["pointerup", 102],
+  ])
+    target.dispatchEvent(
+      new s.window.PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        pointerId: 3,
+        clientX: x,
+        clientY: 752,
+      }),
+    );
+  expect(
+    [...s.document.querySelectorAll(".quick-launch-button")].map(
+      (button) => button.title,
+    ),
+  ).toEqual(["My Computer", "Show Desktop", "My Documents"]);
+  expect(s.document.querySelector(".xp-window")).toBeNull();
+});
+
+test("expanded notifications collapse after leaving the tray but stay open during volume interaction", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        taskbarSettings: JSON.stringify({
+          hideInactive: true,
+          volumeBehavior: "hide",
+        }),
+      },
+    }),
+  );
+  s.document.getElementById("tray-expand").click();
+  s.document.getElementById("tray-volume-button").click();
+  s.document
+    .getElementById("taskbar-tray")
+    .dispatchEvent(new s.window.PointerEvent("pointerleave"));
+  await new Promise((resolve) => setTimeout(resolve, 2100));
+  expect(s.document.getElementById("tray-volume-button").hidden).toBeFalse();
+  s.document.getElementById("tray-volume-button").click();
+  s.document
+    .getElementById("taskbar-tray")
+    .dispatchEvent(new s.window.PointerEvent("pointerleave"));
+  await new Promise((resolve) => setTimeout(resolve, 2100));
+  expect(s.document.getElementById("tray-volume-button").hidden).toBeTrue();
+});
+
+test("a persisted Desktop toolbar populates after startup builds the desktop", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        taskbarSettings: JSON.stringify({ desktopToolbar: true }),
+      },
+    }),
+  );
+  const toolbar = s.document.querySelector(".taskbar-folder-toolbar");
+  const desktopLabels = [
+    ...s.document.querySelectorAll(".desktop-icon .icon-label"),
+  ].map((label) => label.textContent);
+  expect(
+    [...toolbar.querySelectorAll(".toolbar-item")].map(
+      (button) => button.title,
+    ),
+  ).toEqual(desktopLabels);
+});
+
+test("Explorer grouping waits for crowding and group arrangements restore minimized members", async () => {
+  const s = await login(await loadShell());
+  Object.defineProperties(s.document.getElementById("desktop"), {
+    clientWidth: { value: 1024 },
+    clientHeight: { value: 738 },
+  });
+  let availableWidth = 360;
+  const container = s.document.getElementById("task-buttons");
+  Object.defineProperty(container, "clientWidth", {
+    get: () => availableWidth,
+  });
+  for (const id of ["__my-computer", "__my-documents", "__recycle-bin"]) {
+    s.document
+      .querySelector(`[data-desktop-id="${id}"]`)
+      .dispatchEvent(new s.window.MouseEvent("dblclick"));
+    await flushShell();
+  }
+  expect(container.querySelector(".task-button-grouped")).toBeNull();
+  availableWidth = 240;
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  await flushShell();
+  const context = () => {
+    container
+      .querySelector(".task-button-grouped")
+      .dispatchEvent(new s.window.MouseEvent("contextmenu", { bubbles: true }));
+    return [...s.document.querySelectorAll("#taskbar-overflow-menu button")];
+  };
+  context()
+    .find((button) => button.textContent === "Minimize Group")
+    .click();
+  expect(
+    context().find((button) => button.textContent === "Minimize Group")
+      .disabled,
+  ).toBeTrue();
+  context()
+    .find((button) => button.textContent === "Tile Vertically")
+    .click();
+  const windows = [...s.document.querySelectorAll(".xp-window")];
+  expect(windows).toHaveLength(3);
+  expect(windows.every((win) => win.style.display !== "none")).toBeTrue();
+  expect(new Set(windows.map((win) => win.style.left)).size).toBe(3);
+  context()
+    .find((button) => button.textContent === "Close Group")
+    .click();
+  await flushShell();
+  expect(s.document.querySelectorAll(".xp-window")).toHaveLength(0);
+});
+
+test("a floating toolbar at the top-left corner preserves zero coordinates", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        taskbarSettings: JSON.stringify({
+          quickLaunch: true,
+          toolbarLayouts: {
+            "__quick-launch": { floating: true, x: 0, y: 0 },
+          },
+        }),
+      },
+    }),
+  );
+  const toolbar = s.document.querySelector(".quick-launch-toolbar.floating");
+  expect(toolbar.style.left).toBe("0px");
+  expect(toolbar.style.top).toBe("0px");
 });

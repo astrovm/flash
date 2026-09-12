@@ -14,27 +14,46 @@ const xpSoundPaths = {
   startup: "assets/xp/sounds/startup.wav",
 };
 
-const playXPSound = (name) => {
+const createXPSound = (name) => {
   const { volume, isMuted } = getSystemVolume();
   const audio = new Audio(xpSoundPaths[name]);
   audio.volume = isMuted ? 0 : Math.min(Math.max(volume, 0), 100) / 100;
-  return audio.play().then(
-    () => true,
-    () => false,
-  );
+  return audio;
 };
 
+const playXPSound = (name) =>
+  createXPSound(name)
+    .play()
+    .then(
+      () => true,
+      () => false,
+    );
+
 // One successful startup playback per boot/logon, including overlapping gestures.
-let startupPlayback = { promise: null, played: false };
+let startupPlayback = { audio: null, promise: null, played: false };
+const stopStartupSound = () => startupPlayback.audio?.pause();
+const resetStartupSound = () => {
+  stopStartupSound();
+  startupPlayback = { audio: null, promise: null, played: false };
+};
 const playStartupSound = () => {
   const playback = startupPlayback;
   if (playback.played) return Promise.resolve(true);
   if (playback.promise) return playback.promise;
-  playback.promise = playXPSound("startup").then((played) => {
-    playback.played = played;
-    playback.promise = null;
-    return played;
-  });
+  // Retry the same media element after an autoplay rejection. Retaining its
+  // ownership also lets a later session stop audio that has not finished yet.
+  playback.audio ||= createXPSound("startup");
+  playback.promise = playback.audio
+    .play()
+    .then(
+      () => true,
+      () => false,
+    )
+    .then((played) => {
+      playback.played = played;
+      playback.promise = null;
+      return played;
+    });
   return playback.promise;
 };
 
@@ -109,7 +128,7 @@ const showBootScreen = () => {
   const bootScreen = document.getElementById("boot-screen");
   bootScreen.classList.remove("boot-running", "boot-handoff");
   bootScreen.focus({ preventScroll: true });
-  startupPlayback = { promise: null, played: false };
+  resetStartupSound();
   startupSoundPending = true;
   startupSoundBlocked = false;
   clearTimeout(bootTimeout);
@@ -209,6 +228,7 @@ const startShutdown = (restart = false) => {
   setSuspended(false);
   hideSystemDialogs();
   muteAllWindows();
+  stopStartupSound();
   playXPSound("shutdown");
   setScreen("shutdown-screen");
   clearTimeout(shutdownTimeout);
@@ -274,14 +294,16 @@ const closeCurrentSession = () => {
 const logOff = async () => {
   hideSystemDialogs();
   if (!(await closeCurrentSession())) return;
+  stopStartupSound();
   playXPSound("shutdown");
-  startupPlayback = { promise: null, played: false };
+  resetStartupSound();
   showWelcomeScreen(false);
 };
 
 const switchUser = () => {
   // Fast User Switching leaves this session intact. The desktop is simply
   // hidden behind the logon screen until this user signs in again.
+  stopStartupSound();
   playXPSound("logoff");
   showWelcomeScreen(false);
 };

@@ -187,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("resize", () => {
   closeTrayVolumePopup();
   applySimulatedMonitor(activeMonitorResolution);
+  renderTaskbarToolbars();
   if (iconsBuilt) {
     layoutDesktopIcons();
   }

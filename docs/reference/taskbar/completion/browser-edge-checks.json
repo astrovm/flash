@@ -1,0 +1,1154 @@
+[
+  {
+    "scheme": "Default (blue)",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 32,
+          "width": 98,
+          "x": 4,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 70,
+          "width": 98,
+          "x": 4,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 2,
+          "width": 180,
+          "x": 104,
+          "y": 2
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 2,
+          "width": 300,
+          "x": 284,
+          "y": 2
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 1182,
+          "right": 1276,
+          "top": 32,
+          "width": 94,
+          "x": 1182,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 1182,
+          "right": 1276,
+          "top": 70,
+          "width": 94,
+          "x": 1182,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 1011,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 985,
+          "width": 180,
+          "x": 104,
+          "y": 985
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 1023,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 985,
+          "width": 300,
+          "x": 284,
+          "y": 985
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 32,
+          "width": 98,
+          "x": 4,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 70,
+          "width": 98,
+          "x": 4,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 2,
+          "width": 180,
+          "x": 104,
+          "y": 2
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 2,
+          "width": 300,
+          "x": 284,
+          "y": 2
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 926,
+          "right": 1020,
+          "top": 32,
+          "width": 94,
+          "x": 926,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 926,
+          "right": 1020,
+          "top": 70,
+          "width": 94,
+          "x": 926,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Default (blue)",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 755,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 729,
+          "width": 180,
+          "x": 104,
+          "y": 729
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 767,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 729,
+          "width": 300,
+          "x": 284,
+          "y": 729
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 32,
+          "width": 98,
+          "x": 4,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 70,
+          "width": 98,
+          "x": 4,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 2,
+          "width": 180,
+          "x": 104,
+          "y": 2
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 2,
+          "width": 300,
+          "x": 284,
+          "y": 2
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 1182,
+          "right": 1276,
+          "top": 32,
+          "width": 94,
+          "x": 1182,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 1182,
+          "right": 1276,
+          "top": 70,
+          "width": 94,
+          "x": 1182,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 1011,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 985,
+          "width": 180,
+          "x": 104,
+          "y": 985
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 1023,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 985,
+          "width": 300,
+          "x": 284,
+          "y": 985
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 32,
+          "width": 98,
+          "x": 4,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 70,
+          "width": 98,
+          "x": 4,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 2,
+          "width": 180,
+          "x": 104,
+          "y": 2
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 2,
+          "width": 300,
+          "x": 284,
+          "y": 2
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 926,
+          "right": 1020,
+          "top": 32,
+          "width": 94,
+          "x": 926,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 926,
+          "right": 1020,
+          "top": 70,
+          "width": 94,
+          "x": 926,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Olive green",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 755,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 729,
+          "width": 180,
+          "x": 104,
+          "y": 729
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 767,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 729,
+          "width": 300,
+          "x": 284,
+          "y": 729
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 32,
+          "width": 98,
+          "x": 4,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 70,
+          "width": 98,
+          "x": 4,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 2,
+          "width": 180,
+          "x": 104,
+          "y": 2
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 2,
+          "width": 300,
+          "x": 284,
+          "y": 2
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 1182,
+          "right": 1276,
+          "top": 32,
+          "width": 94,
+          "x": 1182,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 1182,
+          "right": 1276,
+          "top": 70,
+          "width": 94,
+          "x": 1182,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 1011,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 985,
+          "width": 180,
+          "x": 104,
+          "y": 985
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 1023,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 985,
+          "width": 300,
+          "x": 284,
+          "y": 985
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 32,
+          "width": 98,
+          "x": 4,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 70,
+          "width": 98,
+          "x": 4,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 2,
+          "width": 180,
+          "x": 104,
+          "y": 2
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 2,
+          "width": 300,
+          "x": 284,
+          "y": 2
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 68,
+          "height": 36,
+          "left": 926,
+          "right": 1020,
+          "top": 32,
+          "width": 94,
+          "x": 926,
+          "y": 32
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 112,
+          "height": 42,
+          "left": 926,
+          "right": 1020,
+          "top": 70,
+          "width": 94,
+          "x": 926,
+          "y": 70
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Silver",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 755,
+          "height": 26,
+          "left": 104,
+          "right": 284,
+          "top": 729,
+          "width": 180,
+          "x": 104,
+          "y": 729
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 767,
+          "height": 38,
+          "left": 284,
+          "right": 584,
+          "top": 729,
+          "width": 300,
+          "x": 284,
+          "y": 729
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 66,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 30,
+          "width": 98,
+          "x": 4,
+          "y": 30
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 110,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 68,
+          "width": 98,
+          "x": 4,
+          "y": 68
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28.5,
+          "height": 26,
+          "left": 64,
+          "right": 244,
+          "top": 2.5,
+          "width": 180,
+          "x": 64,
+          "y": 2.5
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40.5,
+          "height": 38,
+          "left": 244,
+          "right": 544,
+          "top": 2.5,
+          "width": 300,
+          "x": 244,
+          "y": 2.5
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 66,
+          "height": 36,
+          "left": 926,
+          "right": 1020,
+          "top": 30,
+          "width": 94,
+          "x": 926,
+          "y": 30
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 110,
+          "height": 42,
+          "left": 926,
+          "right": 1020,
+          "top": 68,
+          "width": 94,
+          "x": 926,
+          "y": 68
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1024,
+    "height": 768,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 756,
+          "height": 26,
+          "left": 64,
+          "right": 244,
+          "top": 730,
+          "width": 180,
+          "x": 64,
+          "y": 730
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 768,
+          "height": 38,
+          "left": 244,
+          "right": 544,
+          "top": 730,
+          "width": 300,
+          "x": 244,
+          "y": 730
+        }
+      }
+    ],
+    "edge": "bottom"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 66,
+          "height": 36,
+          "left": 4,
+          "right": 102,
+          "top": 30,
+          "width": 98,
+          "x": 4,
+          "y": 30
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 110,
+          "height": 42,
+          "left": 4,
+          "right": 102,
+          "top": 68,
+          "width": 98,
+          "x": 4,
+          "y": 68
+        }
+      }
+    ],
+    "edge": "left"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 28.5,
+          "height": 26,
+          "left": 64,
+          "right": 244,
+          "top": 2.5,
+          "width": 180,
+          "x": 64,
+          "y": 2.5
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 40.5,
+          "height": 38,
+          "left": 244,
+          "right": 544,
+          "top": 2.5,
+          "width": 300,
+          "x": 244,
+          "y": 2.5
+        }
+      }
+    ],
+    "edge": "top"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 66,
+          "height": 36,
+          "left": 1182,
+          "right": 1276,
+          "top": 30,
+          "width": 94,
+          "x": 1182,
+          "y": 30
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": true,
+        "r": {
+          "bottom": 110,
+          "height": 42,
+          "left": 1182,
+          "right": 1276,
+          "top": 68,
+          "width": 94,
+          "x": 1182,
+          "y": 68
+        }
+      }
+    ],
+    "edge": "right"
+  },
+  {
+    "scheme": "Windows Standard",
+    "width": 1280,
+    "height": 1024,
+    "bands": [
+      {
+        "name": "Desktop",
+        "overflow": true,
+        "r": {
+          "bottom": 1012,
+          "height": 26,
+          "left": 64,
+          "right": 244,
+          "top": 986,
+          "width": 180,
+          "x": 64,
+          "y": 986
+        }
+      },
+      {
+        "name": "Quick Launch",
+        "overflow": false,
+        "r": {
+          "bottom": 1024,
+          "height": 38,
+          "left": 244,
+          "right": 544,
+          "top": 986,
+          "width": 300,
+          "x": 244,
+          "y": 986
+        }
+      }
+    ],
+    "edge": "bottom"
+  }
+]

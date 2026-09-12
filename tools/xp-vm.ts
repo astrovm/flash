@@ -292,9 +292,12 @@ for await (const input of commands) {
           ],
         });
       await move(x1, y1);
+      // Let the guest deliver the initial motion before pressing the button.
+      await Bun.sleep(100);
       await execute("input-send-event", {
         events: [{ type: "btn", data: { down: true, button: "left" } }],
       });
+      await Bun.sleep(100);
       try {
         for (let step = 1; step <= 20; step++) {
           await move(

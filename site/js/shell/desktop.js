@@ -561,6 +561,7 @@ const buildDesktopIcons = () => {
     container.appendChild(icon);
   });
 
+  renderTaskbarToolbars();
   if (!wasBuilt) wireDesktopSelectionRectangle();
   if (!wasBuilt) wireFolderDropTarget(container, fs.DESKTOP);
   requestAnimationFrame(() =>

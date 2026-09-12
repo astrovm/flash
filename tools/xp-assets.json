@@ -1826,6 +1826,681 @@
   ],
   "resourceBitmaps": [
     {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TOOLBARBACKGROUND_BMP",
+      "output": "site/assets/xp/taskbar/blue-toolbar-background-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMELEFT_BMP",
+      "output": "site/assets/xp/taskbar/blue-frame-left-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMELEFT_BMP",
+      "output": "site/assets/xp/taskbar/blue-frame-left-1.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/taskbar/blue-frame-right-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/taskbar/blue-frame-right-1.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMEBOTTOM_BMP",
+      "output": "site/assets/xp/taskbar/blue-frame-bottom-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 49,
+        "height": 5
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMEBOTTOM_BMP",
+      "output": "site/assets/xp/taskbar/blue-frame-bottom-1.png",
+      "crop": {
+        "left": 0,
+        "top": 5,
+        "width": 49,
+        "height": 5
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TOOLBARBACKGROUND_BMP",
+      "output": "site/assets/xp/taskbar/olive-toolbar-background-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMELEFT_BMP",
+      "output": "site/assets/xp/taskbar/olive-frame-left-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMELEFT_BMP",
+      "output": "site/assets/xp/taskbar/olive-frame-left-1.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/taskbar/olive-frame-right-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/taskbar/olive-frame-right-1.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMEBOTTOM_BMP",
+      "output": "site/assets/xp/taskbar/olive-frame-bottom-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 49,
+        "height": 5
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMEBOTTOM_BMP",
+      "output": "site/assets/xp/taskbar/olive-frame-bottom-1.png",
+      "crop": {
+        "left": 0,
+        "top": 5,
+        "width": 49,
+        "height": 5
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TOOLBARBACKGROUND_BMP",
+      "output": "site/assets/xp/taskbar/silver-toolbar-background-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMELEFT_BMP",
+      "output": "site/assets/xp/taskbar/silver-frame-left-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMELEFT_BMP",
+      "output": "site/assets/xp/taskbar/silver-frame-left-1.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/taskbar/silver-frame-right-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/taskbar/silver-frame-right-1.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMEBOTTOM_BMP",
+      "output": "site/assets/xp/taskbar/silver-frame-bottom-0.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 49,
+        "height": 5
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMEBOTTOM_BMP",
+      "output": "site/assets/xp/taskbar/silver-frame-bottom-1.png",
+      "crop": {
+        "left": 0,
+        "top": 5,
+        "width": 49,
+        "height": 5
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLFRAMECAPTION_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 66,
+        "height": 19
+      },
+      "output": "site/assets/xp/taskbar/blue-small-caption-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLFRAMECAPTION_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 66,
+        "height": 19
+      },
+      "output": "site/assets/xp/taskbar/blue-small-caption-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 13,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 26,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-2.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 39,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-3.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-glyph-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 7,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-glyph-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 14,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-glyph-2.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 21,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/blue-small-close-glyph-3.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLFRAMECAPTION_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 66,
+        "height": 19
+      },
+      "output": "site/assets/xp/taskbar/olive-small-caption-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLFRAMECAPTION_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 66,
+        "height": 19
+      },
+      "output": "site/assets/xp/taskbar/olive-small-caption-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 13,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 26,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-2.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 39,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-3.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-glyph-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 7,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-glyph-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 14,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-glyph-2.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 21,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/olive-small-close-glyph-3.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLFRAMECAPTION_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 66,
+        "height": 19
+      },
+      "output": "site/assets/xp/taskbar/silver-small-caption-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLFRAMECAPTION_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 66,
+        "height": 19
+      },
+      "output": "site/assets/xp/taskbar/silver-small-caption-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 13,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 26,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-2.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEBUTTON_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 39,
+        "width": 13,
+        "height": 13
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-3.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-glyph-0.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 7,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-glyph-1.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 14,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-glyph-2.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SMALLCLOSEGLYPH_BMP",
+      "transparentColor": [255, 0, 255],
+      "crop": {
+        "left": 0,
+        "top": 21,
+        "width": 7,
+        "height": 7
+      },
+      "output": "site/assets/xp/taskbar/silver-small-close-glyph-3.png"
+    },
+    {
       "member": "CARDS.DL_",
       "expandedName": "cards.dll",
       "resourceType": 2,

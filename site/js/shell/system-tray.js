@@ -234,7 +234,6 @@ const wireProjectSettings = (win) => {
         </dl>
         <p class="project-settings-status" data-project-status="updates" aria-live="polite"></p>
         <progress class="project-settings-progress" data-project-update-progress aria-label="System file download progress" hidden></progress>
-        <p class="project-settings-description">Update Now downloads the latest system files and reloads the desktop when ready. Automatic downloads apply on your next visit.</p>
         <div class="project-settings-actions">
           <button type="button" class="xp-btn" data-project-action="update-now">Update Now</button>
           <button type="button" class="xp-btn" data-project-action="check">Check for Updates</button>
