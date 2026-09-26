@@ -848,24 +848,32 @@ let updateClockDisplay = () => {};
 const startClock = () => {
   const clock = document.getElementById("taskbar-clock");
   clock.hidden = localStorage.getItem("taskbarShowClock") === "false";
+  // Reuse formatters: toLocale*String with options builds one per call.
+  const timeFormat = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const weekdayFormat = new Intl.DateTimeFormat("en-US", { weekday: "long" });
+  const dateFormat = new Intl.DateTimeFormat("en-US");
+  const titleFormat = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
   const update = () => {
     const now = getShellTime();
-    const clockTime = now.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    clock.textContent =
+    const clockTime = timeFormat.format(now);
+    const text =
       document.getElementById("taskbar").classList.contains("vertical") ||
       getTaskbarSettings().rows >= 3
-        ? `${clockTime}\n${now.toLocaleDateString("en-US", { weekday: "long" })}\n${now.toLocaleDateString("en-US")}`
+        ? `${clockTime}\n${weekdayFormat.format(now)}\n${dateFormat.format(now)}`
         : clockTime;
     // XP tooltip: hovering the clock shows the full date.
-    clock.title = now.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    const title = titleFormat.format(now);
+    // Skip unchanged writes so the 5-second tick does not dirty layout.
+    if (clock.textContent !== text) clock.textContent = text;
+    if (clock.title !== title) clock.title = title;
   };
   updateClockDisplay = update;
   update();

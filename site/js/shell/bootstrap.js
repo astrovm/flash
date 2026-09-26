@@ -186,7 +186,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.addEventListener("resize", () => {
   closeTrayVolumePopup();
-  applySimulatedMonitor(activeMonitorResolution);
+  // Reflow once below, after the toolbars have settled the work area.
+  applySimulatedMonitor(activeMonitorResolution, { reflow: false });
   renderTaskbarToolbars();
   if (iconsBuilt) {
     layoutDesktopIcons();

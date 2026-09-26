@@ -33,6 +33,8 @@ export default {
   globPatterns: [`**/*.{${PRECACHE_EXTENSIONS.join(",")}}`],
   globIgnores: [
     "version.json",
+    // Asset provenance manifests; nothing loads them at runtime.
+    "assets/*/SOURCES*.json",
     "swf/**",
     "iframe/**",
     "dos/**",

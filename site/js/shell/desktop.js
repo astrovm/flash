@@ -144,6 +144,9 @@ const layoutDesktopIcons = (force = false) => {
     "--desktop-icon-overflow-height",
     `${margin + requiredRows * (height + gap)}px`,
   );
+  // Read once: reading it after each icon's style write forces a layout per
+  // icon.
+  const containerWidth = container.clientWidth;
 
   icons.forEach((icon, index) => {
     const saved = positions[icon.dataset.desktopId];
@@ -159,13 +162,13 @@ const layoutDesktopIcons = (force = false) => {
       Number.isFinite(savedLeft) &&
       Number.isFinite(savedTop) &&
       savedLeft >= 0 &&
-      savedLeft <= container.clientWidth - width &&
+      savedLeft <= containerWidth - width &&
       savedTop >= 0 &&
       savedTop <= maxTop &&
       !overlapsPlaced(savedLeft, savedTop);
     let left = savedIsValid ? savedLeft : fallbackLeft;
     let top = savedIsValid ? savedTop : fallbackTop;
-    left = Math.max(0, Math.min(left, container.clientWidth - width));
+    left = Math.max(0, Math.min(left, containerWidth - width));
     top = Math.max(0, Math.min(top, maxTop));
     if (overlapsPlaced(left, top)) ({ left, top } = firstFreeGridSlot());
     placed.push({ left, top });
@@ -393,18 +396,25 @@ const wireDesktopSelectionRectangle = () => {
         height: `${height}px`,
       });
 
-      document.querySelectorAll(".desktop-icon").forEach((icon) => {
-        const intersects =
-          icon.offsetLeft - container.scrollLeft < left + width &&
-          icon.offsetLeft - container.scrollLeft + icon.offsetWidth > left &&
-          icon.offsetTop - container.scrollTop < top + height &&
-          icon.offsetTop - container.scrollTop + icon.offsetHeight > top;
+      // Measure every icon before toggling any class, so the loop does not
+      // force a style and layout pass per icon on each pointer move.
+      const { scrollLeft, scrollTop } = container;
+      const hits = [...document.querySelectorAll(".desktop-icon")].map(
+        (icon) => [
+          icon,
+          icon.offsetLeft - scrollLeft < left + width &&
+            icon.offsetLeft - scrollLeft + icon.offsetWidth > left &&
+            icon.offsetTop - scrollTop < top + height &&
+            icon.offsetTop - scrollTop + icon.offsetHeight > top,
+        ],
+      );
+      for (const [icon, intersects] of hits) {
         icon.classList.toggle(
           "selected",
           intersects ||
             (additive && initialSelection.has(icon.dataset.desktopId)),
         );
-      });
+      }
     };
 
     const onUp = () => {
@@ -453,11 +463,13 @@ const buildDesktopIcons = () => {
   const desktopSort = getDesktopLayoutSettings().sort;
   const desktopNodeSortName = (node) =>
     node.ext === ".game" ? node.name.slice(0, -node.ext.length) : node.name;
+  // localeCompare with options builds a new collator on every call.
+  const desktopNameCollator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
   const compareDesktopNodeNames = (a, b) =>
-    desktopNodeSortName(a).localeCompare(desktopNodeSortName(b), undefined, {
-      numeric: true,
-      sensitivity: "base",
-    });
+    desktopNameCollator.compare(desktopNodeSortName(a), desktopNodeSortName(b));
   const compareDesktopNodes = (a, b) => {
     if (desktopSort === "size")
       return a.size - b.size || compareDesktopNodeNames(a, b);

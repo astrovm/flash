@@ -200,10 +200,13 @@ const applyTaskbarSettings = () => {
   const lock = document.querySelector('[data-taskbar-action="lock"]');
   lock.setAttribute("aria-checked", String(settings.locked));
   lock.querySelector(".context-check").textContent = settings.locked ? "✓" : "";
-  applySimulatedMonitor(activeMonitorResolution);
+  // Reflow icons and windows once, after the toolbars settle the work area.
+  applySimulatedMonitor(activeMonitorResolution, { reflow: false });
   renderTaskbarToolbars();
   renderTrayVisibility();
   updateClockDisplay();
+  if (iconsBuilt) layoutDesktopIcons();
+  if (loggedIn) keepWindowsInWorkArea();
   renderTaskButtons();
   scheduleTaskbarHide();
 };
@@ -395,6 +398,25 @@ const setupTaskbarLayout = () => {
   bar.addEventListener("pointerleave", scheduleTaskbarHide);
   bar.addEventListener("focusout", scheduleTaskbarHide);
   let drag = null;
+  // Saving relays out the desktop, windows, toolbars and task buttons. Pointer
+  // moves can outpace frames and mostly repeat the current size, so apply at
+  // most one change per frame and only when a setting actually differs.
+  let dragChanges = null;
+  let dragFrame = 0;
+  const flushDragSave = () => {
+    cancelAnimationFrame(dragFrame);
+    dragFrame = 0;
+    const pending = dragChanges;
+    dragChanges = null;
+    if (!pending) return;
+    const current = getTaskbarSettings();
+    if (Object.entries(pending).some(([key, value]) => current[key] !== value))
+      saveTaskbarSettings(pending);
+  };
+  const queueDragSave = (changes) => {
+    dragChanges = { ...dragChanges, ...changes };
+    dragFrame ||= requestAnimationFrame(flushDragSave);
+  };
   bar.addEventListener("pointerdown", (event) => {
     if (
       event.button !== 0 ||
@@ -417,7 +439,7 @@ const setupTaskbarLayout = () => {
     if (drag.resize) {
       const edge = drag.settings.edge;
       if (["left", "right"].includes(edge)) {
-        saveTaskbarSettings({
+        queueDragSave({
           width: Math.max(
             99,
             Math.min(
@@ -428,7 +450,7 @@ const setupTaskbarLayout = () => {
         });
       } else {
         const size = edge === "top" ? y : monitor.height - y;
-        saveTaskbarSettings({
+        queueDragSave({
           rows: Math.max(
             1,
             Math.min(100, Math.round((size - getTaskbarHeight()) / 26) + 1),
@@ -449,11 +471,12 @@ const setupTaskbarLayout = () => {
         distances[edge] < Math.min(monitor.width, monitor.height) / 4 &&
         edge !== getTaskbarSettings().edge
       )
-        saveTaskbarSettings({ edge });
+        queueDragSave({ edge });
     }
   });
   const finish = () => {
     drag = null;
+    flushDragSave();
   };
   bar.addEventListener("pointerup", finish);
   bar.addEventListener("pointercancel", finish);

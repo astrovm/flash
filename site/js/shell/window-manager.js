@@ -676,7 +676,46 @@ const bundledGameRoot = (gameId, type) =>
     document.baseURI,
   ).href;
 
+// Ruffle is ~450 KB of script that only Flash games need, so it loads on the
+// first Flash launch instead of during boot. Players are created directly, so
+// the <embed>/<object> polyfill (a document-wide MutationObserver) stays off.
+let rufflePromise = null;
+const loadRuffle = () => {
+  if (typeof window.RufflePlayer?.newest === "function")
+    return Promise.resolve();
+  rufflePromise ??= new Promise((resolve, reject) => {
+    window.RufflePlayer = {
+      ...window.RufflePlayer,
+      config: { ...window.RufflePlayer?.config, polyfills: false },
+    };
+    const script = document.createElement("script");
+    script.src =
+      document.querySelector('meta[name="astro-ruffle-src"]')?.content ||
+      "js/ruffle.js";
+    const fail = () => {
+      rufflePromise = null;
+      script.remove();
+      reject(new Error("Flash player script unavailable"));
+    };
+    script.onload = () =>
+      typeof window.RufflePlayer?.newest === "function" ? resolve() : fail();
+    script.onerror = fail;
+    document.head.appendChild(script);
+  });
+  return rufflePromise;
+};
+
 const loadRuffleSWF = (gameId, win) => {
+  loadRuffle().then(
+    () => {
+      if (openWindows.get(gameId) !== win || win.player) return;
+      mountRuffleSWF(gameId, win);
+    },
+    (error) => console.error("Could not start %s:", gameId, error),
+  );
+};
+
+const mountRuffleSWF = (gameId, win) => {
   const ruffle = window.RufflePlayer.newest();
   const player = ruffle.createPlayer();
   player.id = `player-${gameId}`;
@@ -882,6 +921,22 @@ const focusWindow = (
 ) => {
   const win = openWindows.get(gameId);
   if (!win) return;
+
+  // Every pointerdown inside a window lands here. When it is already the
+  // active top window, the stacking, volumes and taskbar are current, so skip
+  // the restack and taskbar rebuild and only hand focus to the application.
+  if (
+    focusedGameId === gameId &&
+    !win.needsAttention &&
+    !win.minimized &&
+    win.zIndex === zIndexCounter &&
+    win.el.classList.contains("active")
+  ) {
+    win.lastUsed = Date.now();
+    if (notifyApplication) win.mountedApplication?.focus?.();
+    if (focusOwnedWindow) win.focusOwnedWindow?.();
+    return;
+  }
 
   focusedGameId = gameId;
   win.needsAttention = false;

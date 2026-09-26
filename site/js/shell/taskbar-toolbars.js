@@ -514,17 +514,20 @@ const fitToolbarItems = (toolbar) => {
     }
     return;
   }
-  const total = buttons.reduce(
-    (sum, button) => sum + button.getBoundingClientRect().width,
-    0,
-  );
+  // Measure before hiding anything; interleaving reads with the hidden writes
+  // forces a layout per button.
+  const measure = () =>
+    buttons.map((button) => button.getBoundingClientRect().width);
+  const total = measure().reduce((sum, width) => sum + width, 0);
   if (total > items.clientWidth) {
     overflow.hidden = false;
+    const available = items.clientWidth;
+    const widths = measure();
     let used = 0;
-    for (const button of buttons) {
-      used += button.getBoundingClientRect().width;
-      button.hidden = used > items.clientWidth;
-    }
+    buttons.forEach((button, index) => {
+      used += widths[index];
+      button.hidden = used > available;
+    });
   }
 };
 const renderTaskbarToolbars = () => {
