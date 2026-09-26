@@ -10,6 +10,19 @@ import {
 
 afterEach(cleanupShells);
 
+// The boot minimum starts once the boot bitmaps decode, which takes real
+// event-loop turns before the virtual clock can be advanced meaningfully.
+const waitForBootAnimation = async (shell) => {
+  const boot = shell.document.getElementById("boot-screen");
+  for (
+    let turn = 0;
+    turn < 100 && !boot.classList.contains("boot-running");
+    turn++
+  )
+    await flushShell();
+  expect(boot.classList.contains("boot-running")).toBeTrue();
+};
+
 describe("Windows XP shell", () => {
   test("waits for startup readiness and clears the boot framebuffer before Welcome", async () => {
     let releaseLibrary;
@@ -31,6 +44,7 @@ describe("Windows XP shell", () => {
       }
     });
     observer.observe(boot, { attributes: true });
+    await waitForBootAnimation(shell);
     await shell.advanceTime(2100);
     expect(boot.classList.contains("boot-running")).toBeTrue();
     expect(boot.hidden).toBeFalse();
@@ -75,6 +89,7 @@ describe("Windows XP shell", () => {
   test("shows the boot fade and a complete progress pass even when startup is fast", async () => {
     const shell = await loadShell();
     const boot = shell.document.getElementById("boot-screen")!;
+    await waitForBootAnimation(shell);
     await shell.advanceTime(2200);
     expect(boot.hidden).toBeFalse();
     await shell.advanceTime(1800);
