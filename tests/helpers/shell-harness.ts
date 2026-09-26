@@ -1,5 +1,7 @@
 // @ts-nocheck -- Happy DOM's element types intentionally replace lib.dom here.
 import { Window } from "happy-dom";
+import { fileURLToPath } from "node:url";
+import { coverageBuildPlugins, instrumentSource } from "./coverage";
 
 const projectDirectory = new URL("../..", import.meta.url);
 const scripts = [
@@ -33,6 +35,11 @@ const shellScripts = [
 
 const activeWindows = new Set<Window>();
 
+const readScript = async (path: string) => {
+  const url = new URL(path, projectDirectory);
+  return instrumentSource(await Bun.file(url).text(), fileURLToPath(url));
+};
+
 export const flushShell = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -61,6 +68,9 @@ export async function loadShell({
     },
   });
   window.ASTRO_FS_MEMORY_ONLY = true;
+  // Instrumented scripts evaluated in the window record into the same map as
+  // modules loaded by the test runner.
+  window.__coverage__ = globalThis.__coverage__;
   const advanceTime = installVirtualTimers(window);
   const { document } = window;
   activeWindows.add(window);
@@ -186,7 +196,7 @@ export async function loadShell({
 
   for (const path of scripts) {
     const script = document.createElement("script");
-    script.textContent = await Bun.file(new URL(path, projectDirectory)).text();
+    script.textContent = await readScript(path);
     document.body.appendChild(script);
   }
 
@@ -289,18 +299,14 @@ export async function loadShell({
   // the ordered shell modules before evaluation to preserve browser semantics.
   const script = document.createElement("script");
   script.textContent =
-    (
-      await Promise.all(
-        shellScripts.map((path) =>
-          Bun.file(new URL(path, projectDirectory)).text(),
-        ),
-      )
-    ).join("\n") + "\nwindow.__completeBootForTest = finishBootSequence;";
+    (await Promise.all(shellScripts.map(readScript))).join("\n") +
+    "\nwindow.__completeBootForTest = finishBootSequence;";
   document.body.appendChild(script);
 
   const applicationBundle = await Bun.build({
     entrypoints: [new URL("site/apps/index.js", projectDirectory).pathname],
     format: "iife",
+    plugins: coverageBuildPlugins,
     target: "browser",
   });
   if (!applicationBundle.success) {
