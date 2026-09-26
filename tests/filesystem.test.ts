@@ -1,12 +1,12 @@
 // @ts-nocheck
-import { test } from "bun:test";
-import assert from "node:assert/strict";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const fsPath = require.resolve("../site/js/filesystem.js");
 
-test("virtual filesystem", () => {
-  // localStorage shim so persistence can be exercised across module reloads.
+// localStorage shim so persistence can be exercised across module reloads.
+const installMemoryStorage = () => {
   const memoryStorage = new Map();
   global.localStorage = {
     getItem: (key) => (memoryStorage.has(key) ? memoryStorage.get(key) : null),
@@ -14,218 +14,244 @@ test("virtual filesystem", () => {
     removeItem: (key) => memoryStorage.delete(key),
     clear: () => memoryStorage.clear(),
   };
+};
 
-  const fsPath = require.resolve("../site/js/filesystem.js");
+const loadFilesystem = () => {
   delete require.cache[fsPath];
-  const fs = require(fsPath);
+  return require(fsPath);
+};
 
-  // ---- Seed structure and well-known locations ----
-  assert.ok(fs.getNode(fs.MY_COMPUTER), "My Computer exists");
-  assert.ok(fs.getNode(fs.DESKTOP), "Desktop exists");
-  assert.ok(fs.getNode(fs.MY_DOCUMENTS), "My Documents exists");
-  assert.ok(fs.getNode(fs.MY_PICTURES), "My Pictures exists");
-  assert.ok(fs.getNode(fs.MY_MUSIC), "My Music exists");
-  assert.ok(fs.getNode(fs.DRIVE_C), "Local Disk exists");
-  assert.ok(fs.getNode(fs.RECYCLE_BIN), "Recycle Bin exists");
-  assert.strictEqual(fs.getChildren(fs.MY_COMPUTER).length, 3);
-  assert.strictEqual(fs.getNode(fs.DRIVE_D).name, "Local Disk (D:)");
-  assert.strictEqual(fs.getNode(fs.DRIVE_F).name, "Removable Device (F:)");
+describe("virtual filesystem", () => {
+  let fs;
 
-  // ---- Paths ----
-  assert.strictEqual(fs.getPath(fs.DRIVE_C), "C:\\");
-  assert.strictEqual(
-    fs.getPath(fs.MY_PICTURES),
-    "C:\\Documents and Settings\\astro\\My Documents\\My Pictures",
-  );
-  assert.strictEqual(
-    fs.resolvePath("C:\\Documents and Settings\\astro\\My Documents"),
-    fs.MY_DOCUMENTS,
-  );
-  assert.strictEqual(
-    fs.resolvePath("c:\\documents and settings\\ASTRO\\desktop"),
-    fs.DESKTOP,
-  );
-  assert.strictEqual(fs.resolvePath("C:\\does\\not\\exist"), null);
-  assert.strictEqual(fs.resolvePath("My Computer"), fs.MY_COMPUTER);
-  assert.strictEqual(fs.resolvePath("F:\\"), fs.DRIVE_F);
+  beforeEach(() => {
+    installMemoryStorage();
+    fs = loadFilesystem();
+  });
 
-  // ---- Windows-compatible name validation ----
-  assert.strictEqual(fs.validateName("notes.txt"), "notes.txt");
-  assert.strictEqual(fs.validateName("  notes.txt"), "notes.txt");
-  [
-    "",
-    "   ",
-    ".",
-    "..",
-    "trailing.",
-    "trailing ",
-    "bad/name.txt",
-    "bad:name.txt",
-    "bad\u0000name.txt",
-    "CON",
-    "nul.txt",
-    "COM1.log",
-    "LPT9",
-  ].forEach((name) => {
-    assert.throws(
-      () => fs.validateName(name),
-      /VirtualFS:/,
-      `rejects ${JSON.stringify(name)}`,
+  const createTestFolder = () => {
+    const folder = fs.createFolder(fs.MY_DOCUMENTS, "Test Folder");
+    const file = fs.createFile(folder.id, "notes.txt", { content: "hello" });
+    return { folder, file };
+  };
+
+  test("seeds the well-known locations", () => {
+    expect(fs.getNode(fs.MY_COMPUTER), "My Computer exists").toBeTruthy();
+    expect(fs.getNode(fs.DESKTOP), "Desktop exists").toBeTruthy();
+    expect(fs.getNode(fs.MY_DOCUMENTS), "My Documents exists").toBeTruthy();
+    expect(fs.getNode(fs.MY_PICTURES), "My Pictures exists").toBeTruthy();
+    expect(fs.getNode(fs.MY_MUSIC), "My Music exists").toBeTruthy();
+    expect(fs.getNode(fs.DRIVE_C), "Local Disk exists").toBeTruthy();
+    expect(fs.getNode(fs.RECYCLE_BIN), "Recycle Bin exists").toBeTruthy();
+    expect(fs.getChildren(fs.MY_COMPUTER).length).toBe(3);
+    expect(fs.getNode(fs.DRIVE_D).name).toBe("Local Disk (D:)");
+    expect(fs.getNode(fs.DRIVE_F).name).toBe("Removable Device (F:)");
+  });
+
+  test("converts between Windows paths and nodes", () => {
+    expect(fs.getPath(fs.DRIVE_C)).toBe("C:\\");
+    expect(fs.getPath(fs.MY_PICTURES)).toBe(
+      "C:\\Documents and Settings\\astro\\My Documents\\My Pictures",
+    );
+    expect(
+      fs.resolvePath("C:\\Documents and Settings\\astro\\My Documents"),
+    ).toBe(fs.MY_DOCUMENTS);
+    expect(fs.resolvePath("c:\\documents and settings\\ASTRO\\desktop")).toBe(
+      fs.DESKTOP,
+    );
+    expect(fs.resolvePath("C:\\does\\not\\exist")).toBe(null);
+    expect(fs.resolvePath("My Computer")).toBe(fs.MY_COMPUTER);
+    expect(fs.resolvePath("F:\\")).toBe(fs.DRIVE_F);
+  });
+
+  test("rejects names that are invalid on Windows", () => {
+    expect(fs.validateName("notes.txt")).toBe("notes.txt");
+    expect(fs.validateName("  notes.txt")).toBe("notes.txt");
+    [
+      "",
+      "   ",
+      ".",
+      "..",
+      "trailing.",
+      "trailing ",
+      "bad/name.txt",
+      "bad:name.txt",
+      "bad\u0000name.txt",
+      "CON",
+      "nul.txt",
+      "COM1.log",
+      "LPT9",
+    ].forEach((name) => {
+      expect(
+        () => fs.validateName(name),
+        `rejects ${JSON.stringify(name)}`,
+      ).toThrow(/VirtualFS:/);
+    });
+
+    expect(() => fs.createFolder(fs.MY_DOCUMENTS, "invalid?folder")).toThrow(
+      /invalid characters/,
     );
   });
 
-  assert.throws(
-    () => fs.createFolder(fs.MY_DOCUMENTS, "invalid?folder"),
-    /invalid characters/,
-  );
+  test("creates folders and files with timestamps and sizes", () => {
+    const folder = fs.createFolder(fs.MY_DOCUMENTS, "Test Folder");
+    expect(folder.type).toBe("folder");
+    expect(folder.parent).toBe(fs.MY_DOCUMENTS);
+    expect(folder.created > 0 && folder.modified > 0).toBeTruthy();
 
-  // ---- Create, timestamps, sizes ----
-  const folder = fs.createFolder(fs.MY_DOCUMENTS, "Test Folder");
-  assert.strictEqual(folder.type, "folder");
-  assert.strictEqual(folder.parent, fs.MY_DOCUMENTS);
-  assert.ok(folder.created > 0 && folder.modified > 0);
-
-  const file = fs.createFile(folder.id, "notes.txt", { content: "hello" });
-  assert.strictEqual(file.ext, ".txt");
-  assert.strictEqual(fs.getSize(file.id), 5);
-  assert.strictEqual(fs.getContent(file.id), "hello");
-  fs.setContent(file.id, "hello world");
-  assert.strictEqual(fs.getSize(file.id), 11);
-  assert.strictEqual(fs.getSize(folder.id), 11);
-
-  // ---- Rename and name deduplication ----
-  fs.rename(file.id, "todo.txt");
-  assert.strictEqual(fs.getNode(file.id).name, "todo.txt");
-  assert.throws(() => fs.rename(file.id, "AUX.txt"), /reserved device name/);
-  assert.strictEqual(
-    fs.getNode(file.id).name,
-    "todo.txt",
-    "invalid rename leaves node unchanged",
-  );
-  const duplicate = fs.createFile(folder.id, "todo.txt");
-  assert.strictEqual(duplicate.name, "todo (2).txt");
-
-  // ---- Copy (recursive, "Copy of" in the same folder) ----
-  const folderCopy = fs.copy(folder.id, fs.MY_DOCUMENTS);
-  assert.strictEqual(folderCopy.name, "Copy of Test Folder");
-  assert.strictEqual(fs.getChildren(folderCopy.id).length, 2);
-  assert.notStrictEqual(fs.getChildren(folderCopy.id)[0].id, file.id);
-
-  // Copying into another folder keeps the name when there is no conflict.
-  const elsewhere = fs.copy(folder.id, fs.MY_PICTURES);
-  assert.strictEqual(elsewhere.name, "Test Folder");
-
-  // ---- Move with cycle protection ----
-  const subFolder = fs.createFolder(folder.id, "Sub");
-  assert.throws(() => fs.move(folder.id, subFolder.id), /into itself/);
-  assert.throws(() => fs.move(folder.id, folder.id), /into itself/);
-  assert.throws(() => fs.copy(folder.id, subFolder.id), /into itself/);
-  fs.move(subFolder.id, fs.MY_PICTURES);
-  assert.strictEqual(fs.getNode(subFolder.id).parent, fs.MY_PICTURES);
-
-  // ---- Protected system items ----
-  assert.throws(() => fs.remove(fs.MY_DOCUMENTS), /access is denied/);
-  assert.throws(() => fs.destroy(fs.DESKTOP), /access is denied/);
-  assert.throws(() => fs.rename(fs.DRIVE_C, "X"), /access is denied/);
-  assert.throws(() => fs.move(fs.MY_PICTURES, folder.id), /access is denied/);
-  assert.ok(fs.isProtected(fs.RECYCLE_BIN));
-
-  // ---- Delete to Recycle Bin, restore, permanent delete ----
-  fs.remove(folderCopy.id);
-  assert.ok(fs.isInRecycleBin(folderCopy.id));
-  assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 1);
-  // My Pictures, My Music (seeded) and Test Folder remain.
-  assert.strictEqual(fs.getChildren(fs.MY_DOCUMENTS).length, 3);
-
-  fs.restore(folderCopy.id);
-  assert.ok(!fs.isInRecycleBin(folderCopy.id));
-  assert.strictEqual(fs.getNode(folderCopy.id).parent, fs.MY_DOCUMENTS);
-
-  // Deleting twice destroys permanently (second delete happens in the bin).
-  fs.remove(folderCopy.id);
-  fs.remove(folderCopy.id);
-  assert.ok(!fs.getNode(folderCopy.id));
-  assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 0);
-
-  // ---- Empty Recycle Bin destroys recursively ----
-  fs.remove(folder.id);
-  assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 1);
-  fs.emptyRecycleBin();
-  assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 0);
-  assert.ok(!fs.getNode(folder.id), "folder destroyed");
-  assert.ok(!fs.getNode(file.id), "descendants destroyed too");
-
-  // ---- File associations ----
-  let openedWith = null;
-  fs.registerFileType(".game", (node) => {
-    openedWith = node;
+    const file = fs.createFile(folder.id, "notes.txt", { content: "hello" });
+    expect(file.ext).toBe(".txt");
+    expect(fs.getSize(file.id)).toBe(5);
+    expect(fs.getContent(file.id)).toBe("hello");
+    fs.setContent(file.id, "hello world");
+    expect(fs.getSize(file.id)).toBe(11);
+    expect(fs.getSize(folder.id)).toBe(11);
   });
-  const gameFile = fs.createFile(fs.DESKTOP, "Doom.game", { app: "doom" });
-  assert.strictEqual(fs.open(gameFile.id), true);
-  assert.strictEqual(openedWith.id, gameFile.id);
-  assert.deepStrictEqual(
-    fs.findByApp("doom").map((node) => node.id),
-    [gameFile.id],
-  );
-  fs.move(gameFile.id, fs.MY_DOCUMENTS);
-  fs.rename(gameFile.id, "My Doom Shortcut.game");
-  assert.deepStrictEqual(
-    fs.findByApp("doom").map((node) => node.id),
-    [gameFile.id],
-    "managed files remain discoverable after move and rename",
-  );
-  assert.deepStrictEqual(fs.findByApp("missing-game"), []);
-  const unknownFile = fs.createFile(fs.DESKTOP, "readme.xyz");
-  assert.strictEqual(fs.open(unknownFile.id), false);
 
-  // ---- Persistence across sessions ----
-  const persistent = fs.createFile(fs.MY_DOCUMENTS, "keep.txt", {
-    content: "saved",
-  });
-  delete require.cache[fsPath];
-  const reloaded = require(fsPath);
-  assert.strictEqual(reloaded.getContent(persistent.id), "saved");
-  assert.strictEqual(reloaded.getNode(persistent.id).parent, fs.MY_DOCUMENTS);
-  assert.ok(reloaded.getNode(fs.MY_PICTURES), "seed survives reload");
+  test("renames items and deduplicates conflicting names", () => {
+    const { folder, file } = createTestFolder();
 
-  // ---- Change notifications ----
-  let notified = 0;
-  const unsubscribe = reloaded.subscribe(() => {
-    notified += 1;
+    fs.rename(file.id, "todo.txt");
+    expect(fs.getNode(file.id).name).toBe("todo.txt");
+    expect(() => fs.rename(file.id, "AUX.txt")).toThrow(/reserved device name/);
+    expect(
+      fs.getNode(file.id).name,
+      "invalid rename leaves node unchanged",
+    ).toBe("todo.txt");
+    const duplicate = fs.createFile(folder.id, "todo.txt");
+    expect(duplicate.name).toBe("todo (2).txt");
   });
-  reloaded.createFile(fs.MY_DOCUMENTS, "ping.txt");
-  assert.ok(notified > 0, "listener fired");
-  unsubscribe();
 
-  // ---- Production reset preserves integrations and reseeds the filesystem ----
-  let resetNotified = 0;
-  reloaded.subscribe(() => {
-    resetNotified += 1;
+  test('copies folders recursively, naming same-folder copies "Copy of"', () => {
+    const { folder, file } = createTestFolder();
+    fs.createFile(folder.id, "second.txt");
+
+    const folderCopy = fs.copy(folder.id, fs.MY_DOCUMENTS);
+    expect(folderCopy.name).toBe("Copy of Test Folder");
+    expect(fs.getChildren(folderCopy.id).length).toBe(2);
+    expect(fs.getChildren(folderCopy.id)[0].id).not.toBe(file.id);
+
+    // Copying into another folder keeps the name when there is no conflict.
+    const elsewhere = fs.copy(folder.id, fs.MY_PICTURES);
+    expect(elsewhere.name).toBe("Test Folder");
   });
-  reloaded.registerFileType(".txt", () => {});
-  reloaded.createFile(reloaded.MY_DOCUMENTS, "delete-on-reset.txt");
-  reloaded.reset();
-  assert.strictEqual(
-    reloaded.findChild(reloaded.MY_DOCUMENTS, "delete-on-reset.txt"),
-    null,
-    "reset removes user-created files",
-  );
-  assert.ok(
-    reloaded.getNode(reloaded.DESKTOP),
-    "reset restores the seeded desktop",
-  );
-  assert.strictEqual(
-    resetNotified,
-    2,
-    "create and reset both notify subscribers",
-  );
-  const afterReset = reloaded.createFile(
-    reloaded.MY_DOCUMENTS,
-    "after-reset.txt",
-  );
-  assert.strictEqual(
-    reloaded.open(afterReset.id),
-    true,
-    "reset preserves file handlers",
-  );
+
+  test("prevents moving or copying a folder into itself", () => {
+    const { folder } = createTestFolder();
+    const subFolder = fs.createFolder(folder.id, "Sub");
+
+    expect(() => fs.move(folder.id, subFolder.id)).toThrow(/into itself/);
+    expect(() => fs.move(folder.id, folder.id)).toThrow(/into itself/);
+    expect(() => fs.copy(folder.id, subFolder.id)).toThrow(/into itself/);
+    fs.move(subFolder.id, fs.MY_PICTURES);
+    expect(fs.getNode(subFolder.id).parent).toBe(fs.MY_PICTURES);
+  });
+
+  test("denies changes to protected system items", () => {
+    const { folder } = createTestFolder();
+
+    expect(() => fs.remove(fs.MY_DOCUMENTS)).toThrow(/access is denied/);
+    expect(() => fs.destroy(fs.DESKTOP)).toThrow(/access is denied/);
+    expect(() => fs.rename(fs.DRIVE_C, "X")).toThrow(/access is denied/);
+    expect(() => fs.move(fs.MY_PICTURES, folder.id)).toThrow(
+      /access is denied/,
+    );
+    expect(fs.isProtected(fs.RECYCLE_BIN)).toBeTruthy();
+  });
+
+  test("restores deleted items from the Recycle Bin and destroys items deleted twice", () => {
+    const { folder } = createTestFolder();
+    const folderCopy = fs.copy(folder.id, fs.MY_DOCUMENTS);
+
+    fs.remove(folderCopy.id);
+    expect(fs.isInRecycleBin(folderCopy.id)).toBeTruthy();
+    expect(fs.getChildren(fs.RECYCLE_BIN).length).toBe(1);
+    // My Pictures, My Music (seeded) and Test Folder remain.
+    expect(fs.getChildren(fs.MY_DOCUMENTS).length).toBe(3);
+
+    fs.restore(folderCopy.id);
+    expect(fs.isInRecycleBin(folderCopy.id)).toBeFalsy();
+    expect(fs.getNode(folderCopy.id).parent).toBe(fs.MY_DOCUMENTS);
+
+    // The second delete happens in the bin and destroys permanently.
+    fs.remove(folderCopy.id);
+    fs.remove(folderCopy.id);
+    expect(fs.getNode(folderCopy.id)).toBeFalsy();
+    expect(fs.getChildren(fs.RECYCLE_BIN).length).toBe(0);
+  });
+
+  test("empties the Recycle Bin recursively", () => {
+    const { folder, file } = createTestFolder();
+
+    fs.remove(folder.id);
+    expect(fs.getChildren(fs.RECYCLE_BIN).length).toBe(1);
+    fs.emptyRecycleBin();
+    expect(fs.getChildren(fs.RECYCLE_BIN).length).toBe(0);
+    expect(fs.getNode(folder.id), "folder destroyed").toBeFalsy();
+    expect(fs.getNode(file.id), "descendants destroyed too").toBeFalsy();
+  });
+
+  test("opens files with registered handlers and finds them by app", () => {
+    let openedWith = null;
+    fs.registerFileType(".game", (node) => {
+      openedWith = node;
+    });
+    const gameFile = fs.createFile(fs.DESKTOP, "Doom.game", { app: "doom" });
+    expect(fs.open(gameFile.id)).toBe(true);
+    expect(openedWith.id).toBe(gameFile.id);
+    expect(fs.findByApp("doom").map((node) => node.id)).toEqual([gameFile.id]);
+    fs.move(gameFile.id, fs.MY_DOCUMENTS);
+    fs.rename(gameFile.id, "My Doom Shortcut.game");
+    expect(
+      fs.findByApp("doom").map((node) => node.id),
+      "managed files remain discoverable after move and rename",
+    ).toEqual([gameFile.id]);
+    expect(fs.findByApp("missing-game")).toEqual([]);
+    const unknownFile = fs.createFile(fs.DESKTOP, "readme.xyz");
+    expect(fs.open(unknownFile.id)).toBe(false);
+  });
+
+  test("persists content across sessions", () => {
+    const persistent = fs.createFile(fs.MY_DOCUMENTS, "keep.txt", {
+      content: "saved",
+    });
+    const reloaded = loadFilesystem();
+    expect(reloaded.getContent(persistent.id)).toBe("saved");
+    expect(reloaded.getNode(persistent.id).parent).toBe(fs.MY_DOCUMENTS);
+    expect(
+      reloaded.getNode(fs.MY_PICTURES),
+      "seed survives reload",
+    ).toBeTruthy();
+  });
+
+  test("notifies subscribers of changes", () => {
+    let notified = 0;
+    const unsubscribe = fs.subscribe(() => {
+      notified += 1;
+    });
+    fs.createFile(fs.MY_DOCUMENTS, "ping.txt");
+    expect(notified > 0, "listener fired").toBeTruthy();
+    unsubscribe();
+  });
+
+  test("reseeds on reset while preserving subscribers and file handlers", () => {
+    let resetNotified = 0;
+    fs.subscribe(() => {
+      resetNotified += 1;
+    });
+    fs.registerFileType(".txt", () => {});
+    fs.createFile(fs.MY_DOCUMENTS, "delete-on-reset.txt");
+    fs.reset();
+    expect(
+      fs.findChild(fs.MY_DOCUMENTS, "delete-on-reset.txt"),
+      "reset removes user-created files",
+    ).toBe(null);
+    expect(
+      fs.getNode(fs.DESKTOP),
+      "reset restores the seeded desktop",
+    ).toBeTruthy();
+    expect(resetNotified, "create and reset both notify subscribers").toBe(2);
+    const afterReset = fs.createFile(fs.MY_DOCUMENTS, "after-reset.txt");
+    expect(fs.open(afterReset.id), "reset preserves file handlers").toBe(true);
+  });
 });

@@ -61,6 +61,7 @@ export async function loadShell({
     },
   });
   window.ASTRO_FS_MEMORY_ONLY = true;
+  const advanceTime = installVirtualTimers(window);
   const { document } = window;
   activeWindows.add(window);
   for (const [key, value] of Object.entries(initialStorage)) {
@@ -335,7 +336,71 @@ export async function loadShell({
     window,
     document,
     offlineDownloads,
+    advanceTime,
     completeBoot: () => window.__completeBootForTest(),
+  };
+}
+
+// Shell timers with a positive delay (boot minimums, auto-hide, tray collapse)
+// wait on a virtual clock that tests advance explicitly, so a test covering a
+// two-second XP delay does not spend two real seconds. Zero-delay timers stay
+// real because they only order work within the current interaction.
+function installVirtualTimers(window: Window) {
+  const realSetTimeout = window.setTimeout.bind(window);
+  const realClearTimeout = window.clearTimeout.bind(window);
+  const realSetInterval = window.setInterval.bind(window);
+  const realClearInterval = window.clearInterval.bind(window);
+  const timers = new Map<
+    number,
+    { due: number; callback: () => void; interval?: number }
+  >();
+  let now = 0;
+  let nextId = 1_000_000_000;
+  const schedule = (callback, delay, args, interval) => {
+    const id = nextId++;
+    timers.set(id, {
+      due: now + Math.max(0, Number(delay) || 0),
+      callback: () => callback(...args),
+      interval,
+    });
+    return id;
+  };
+  const clear = (realClear) => (id) => {
+    if (!timers.delete(id)) realClear(id);
+  };
+  window.setTimeout = (callback, delay = 0, ...args) =>
+    Number(delay) > 0
+      ? schedule(callback, delay, args)
+      : realSetTimeout(callback, delay, ...args);
+  window.setInterval = (callback, delay = 0, ...args) =>
+    Number(delay) > 0
+      ? schedule(callback, delay, args, Number(delay))
+      : realSetInterval(callback, delay, ...args);
+  window.clearTimeout = clear(realClearTimeout);
+  window.clearInterval = clear(realClearInterval);
+
+  return async (milliseconds: number) => {
+    const target = now + milliseconds;
+    for (;;) {
+      let nextTimer;
+      for (const entry of timers)
+        if (
+          entry[1].due <= target &&
+          (!nextTimer || entry[1].due < nextTimer[1].due)
+        )
+          nextTimer = entry;
+      if (!nextTimer) break;
+      const [id, timer] = nextTimer;
+      now = timer.due;
+      if (timer.interval) timer.due += timer.interval;
+      else timers.delete(id);
+      timer.callback();
+      await flushShell();
+      await flushShell();
+    }
+    now = target;
+    await flushShell();
+    await flushShell();
   };
 }
 

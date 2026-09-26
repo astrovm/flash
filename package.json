@@ -1,7 +1,7 @@
 {
   "packageManager": "bun@1.4.2",
   "scripts": {
-    "test": "bun run typecheck && bun test && bun run validate:javascript && bun run validate:icons",
+    "test": "bun run typecheck && bun test --parallel && bun run validate:javascript && bun run validate:icons",
     "build": "bun tools/deploy.ts",
     "build:pinball-runtime": "bun tools/build-pinball-runtime.ts",
     "build:boxedwine-apps": "bun tools/build-boxedwine-app-packages.ts",
@@ -18,7 +18,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "quality": "bun run format:check && bun run lint",
+    "quality": "bun run --parallel format:check lint",
     "sync:icons": "bun tools/sync-game-icons.ts",
     "typecheck": "bun node_modules/@typescript/native/bin/tsc --noEmit",
     "validate:icons": "bun tools/validate-icons.ts --require-all",

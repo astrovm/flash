@@ -167,7 +167,7 @@ const showNativeCalculator = (
   return runtimeWindow;
 };
 
-describe("original Windows XP Calculator through BoxedWine", () => {
+describe("Windows XP Calculator through BoxedWine", () => {
   test("launches the authentic XP executable in its fixed Standard window", async () => {
     const { shell, calculator } = await launchCalculator();
     const frame = shell.document.querySelector(

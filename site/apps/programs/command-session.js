@@ -242,7 +242,9 @@ export class CommandSession {
     const redirect = body.match(/^(.*?)(>{1,2})([^>]+)$/);
     if (!redirect) return { output: body };
     const [, text, operator, path] = redirect;
-    const destination = this.resolve(path.trim(), { parent: true });
+    const destination = this.resolve(tokenize(path).join(" "), {
+      parent: true,
+    });
     if (!destination)
       return { output: "The system cannot find the path specified." };
     const content = `${text.trimEnd()}\n`;

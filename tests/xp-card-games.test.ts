@@ -91,7 +91,7 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(shell.offlineDownloads).toEqual([game.id]);
     });
 
-    test(`${game.title} stays within the phone work area`, async () => {
+    test(`keeps ${game.title} within the phone work area`, async () => {
       const shell = await login(await loadShell());
       const desktop = shell.document.getElementById("desktop");
       Object.defineProperties(desktop, {
@@ -117,7 +117,7 @@ describe("Windows XP card games through BoxedWine", () => {
       expect(gameWindow.style.minHeight).not.toBe("0px");
     });
 
-    test(`${game.title} package matches its provenance manifest`, async () => {
+    test(`matches the ${game.title} package to its provenance manifest`, async () => {
       const directory = join(projectDirectory, "site", "iframe", game.id);
       const manifest = JSON.parse(
         await readFile(join(directory, "SOURCES.json"), "utf8"),

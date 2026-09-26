@@ -32,6 +32,13 @@ bun run quality
 bun run test
 ```
 
+`bun run test` runs test files in parallel worker processes. Each test file
+groups its tests under a `describe` naming the subject under test, and each
+test name is a lowercase, present-tense behavior that reads as a sentence
+after that subject (`Flash URL router` › `rejects ambiguous and unsafe routes`).
+Shell tests advance XP delays with `shell.advanceTime(ms)` from
+`tests/helpers/shell-harness.ts` instead of waiting in real time.
+
 Build and serve the production site locally:
 
 ```bash
