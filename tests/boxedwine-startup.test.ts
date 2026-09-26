@@ -275,21 +275,31 @@ describe("BoxedWine startup", () => {
         "utf8",
       ),
     );
+    const entries = new Set<string>();
+    const registryPath = "home/username/.wine/user.reg";
+    // Read names from the ZIP directory, but inflate only the registry we inspect.
+    // Inflating every XP binary can exceed the timeout during parallel CI runs.
     const archive = unzipSync(
       new Uint8Array(
         await readFile(join(runtimeDirectory, "xp-accessories.zip")),
       ),
+      {
+        filter({ name }) {
+          entries.add(name);
+          return name === registryPath;
+        },
+      },
     );
 
     for (const absolutePath of trace) {
       const path = absolutePath.replace(/^\/+/, "");
       expect(
-        archive[path] || archive[`${path}/`] || archive[`${path}.link`],
-      ).toBeDefined();
+        entries.has(path) ||
+          entries.has(`${path}/`) ||
+          entries.has(`${path}.link`),
+      ).toBeTrue();
     }
-    const wineRegistry = new TextDecoder().decode(
-      archive["home/username/.wine/user.reg"],
-    );
+    const wineRegistry = new TextDecoder().decode(archive[registryPath]);
     expect(wineRegistry).toContain('"ThemeActive"="1"');
     expect(wineRegistry).toContain('"ColorName"="NormalColor"');
     expect(wineRegistry).toContain(
