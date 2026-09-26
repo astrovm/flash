@@ -1,6 +1,5 @@
 // @ts-nocheck
-import { test } from "bun:test";
-import assert from "node:assert/strict";
+import { describe, expect, test } from "bun:test";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -38,7 +37,7 @@ class FakeDirectory {
   }
 }
 
-test("lists and removes external game data without save databases", async () => {
+function createFixture() {
   const revcdos = new FakeDirectory({
     "manifest.json": new FakeFileHandle(100),
     "assets-current.bin": new FakeFileHandle(900),
@@ -62,39 +61,54 @@ test("lists and removes external game data without save databases", async () => 
       }),
     },
   });
+  return { root, scummvm, removedKeys, messages, manager };
+}
 
-  assert.deepEqual(await manager.list(), [
-    {
-      id: "revcdos",
-      title: "reVCDOS",
-      detail: "Game data",
-      bytes: 1000,
-    },
-    {
-      id: "scummvm:peril",
-      title: "The Pink Panther: Passport to Peril",
-      detail: "CD image",
-      bytes: 500,
-    },
-    {
-      id: "scummvm:pokus",
-      title: "The Pink Panther: Hokus Pokus Pink",
-      detail: "CD image",
-      bytes: 600,
-    },
-  ]);
+describe("game data", () => {
+  test("lists external game data without save databases", async () => {
+    const { manager } = createFixture();
+    expect(await manager.list()).toEqual([
+      {
+        id: "revcdos",
+        title: "reVCDOS",
+        detail: "Game data",
+        bytes: 1000,
+      },
+      {
+        id: "scummvm:peril",
+        title: "The Pink Panther: Passport to Peril",
+        detail: "CD image",
+        bytes: 500,
+      },
+      {
+        id: "scummvm:pokus",
+        title: "The Pink Panther: Hokus Pokus Pink",
+        detail: "CD image",
+        bytes: 600,
+      },
+    ]);
+  });
 
-  await manager.remove("scummvm:peril");
-  assert.equal(scummvm.values.has("peril-one.iso"), false);
-  assert(removedKeys.includes("astro-flash.scummvm.peril.iso.v1"));
+  test("removes a ScummVM CD image and its stored selection", async () => {
+    const { scummvm, removedKeys, manager } = createFixture();
+    await manager.remove("scummvm:peril");
+    expect(scummvm.values.has("peril-one.iso")).toBe(false);
+    expect(removedKeys).toContain("astro-flash.scummvm.peril.iso.v1");
+  });
 
-  scummvm.values.set("pokus-temp.iso", new FakeFileHandle(700));
-  scummvm.values.set("pokus-manifest.json", new FakeFileHandle(100));
-  await manager.removeTemporary("scummvm:pokus", "pokus-temp.iso");
-  assert.equal(scummvm.values.has("pokus-temp.iso"), false);
-  assert.equal(scummvm.values.has("pokus-manifest.json"), false);
+  test("removes temporary ScummVM files and their manifest", async () => {
+    const { scummvm, manager } = createFixture();
+    scummvm.values.set("pokus-temp.iso", new FakeFileHandle(700));
+    scummvm.values.set("pokus-manifest.json", new FakeFileHandle(100));
+    await manager.removeTemporary("scummvm:pokus", "pokus-temp.iso");
+    expect(scummvm.values.has("pokus-temp.iso")).toBe(false);
+    expect(scummvm.values.has("pokus-manifest.json")).toBe(false);
+  });
 
-  await manager.remove("revcdos");
-  assert.equal(root.values.has(gameData.REVCDOS_DIRECTORY), false);
-  assert.deepEqual(messages, [{ type: "REVCDOS_PACK_UPDATED" }]);
+  test("removes reVCDOS data and notifies the service worker", async () => {
+    const { root, messages, manager } = createFixture();
+    await manager.remove("revcdos");
+    expect(root.values.has(gameData.REVCDOS_DIRECTORY)).toBe(false);
+    expect(messages).toEqual([{ type: "REVCDOS_PACK_UPDATED" }]);
+  });
 });

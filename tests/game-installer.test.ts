@@ -1,86 +1,53 @@
 // @ts-nocheck
-import { test } from "bun:test";
-import assert from "node:assert/strict";
+import { describe, expect, test } from "bun:test";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const { unzipSync, zipSync } = require("fflate");
 
-test("game installer", async () => {
-  const { unzipSync, zipSync } = require("fflate");
+const uuid = "a2fb012a-b14c-4921-b688-403571e42bb0";
+const record = {
+  uuid,
+  library: "Games",
+  platform: "Flash",
+  status: "Playable",
+  applicationPath: "Flash Player",
+  downloadUrl: "https://download.unstable.life/gib-roms/Games/x.zip",
+  launchCommand: "http://localflash/game/main.swf",
+};
+
+class Cache {
+  constructor() {
+    this.data = new Map();
+  }
+  async put(k, v) {
+    if (k.includes("fail")) throw Error("put failed");
+    this.data.set(k, v);
+  }
+  async delete(k) {
+    return this.data.delete(k.url || k);
+  }
+  async keys() {
+    return [...this.data.keys()];
+  }
+}
+
+function loadInstaller() {
   const installerPath = require.resolve("../site/js/game-installer.js");
   delete require.cache[installerPath];
-  const installer = require(installerPath);
-  const uuid = "a2fb012a-b14c-4921-b688-403571e42bb0";
-  const record = {
-    uuid,
-    library: "Games",
-    platform: "Flash",
-    status: "Playable",
-    applicationPath: "Flash Player",
-    downloadUrl: "https://download.unstable.life/gib-roms/Games/x.zip",
-    launchCommand: "http://localflash/game/main.swf",
-  };
-  assert.strictEqual(
-    installer.archiveLaunchPath(record.launchCommand),
-    "content/localflash/game/main.swf",
-  );
-  assert.doesNotThrow(() =>
-    installer.validateCatalogRecord(
-      {
-        ...record,
-        applicationPath: "FPSoftware\\Flash\\flashplayer_32_sa.exe",
-        downloadUrl: "http://localhost:8000/api/games/example/download",
-      },
-      { origin: "http://localhost:8000" },
-    ),
-  );
-  assert.throws(
-    () => installer.validateCatalogRecord({ ...record, platform: "HTML5" }),
-    /Flash/,
-  );
-  assert.throws(() => installer.safeArchivePath("../evil.swf"), /Unsafe/);
-  assert.throws(
-    () => installer.safeArchivePath("%2e%2e/%2E./version.json"),
-    /Unsafe/,
-  );
-  assert.throws(
-    () =>
-      installer.validateZipEntries(
-        { "content/a": new Uint8Array(2) },
-        { maxTotalBytes: 1 },
-      ),
-    /too large/,
-  );
-  assert.throws(
-    () =>
-      installer.validateZipMetadata(
-        zipSync({ "content/a": new Uint8Array(2) }),
-        { maxTotalBytes: 1 },
-      ),
-    /too large/,
-  );
+  return require(installerPath);
+}
 
-  class Cache {
-    constructor() {
-      this.data = new Map();
-    }
-    async put(k, v) {
-      if (k.includes("fail")) throw Error("put failed");
-      this.data.set(k, v);
-    }
-    async delete(k) {
-      return this.data.delete(k.url || k);
-    }
-    async keys() {
-      return [...this.data.keys()];
-    }
-  }
-  const gameZip = zipSync({
+function createGameZip() {
+  return zipSync({
     "content/localflash/game/main.swf": new Uint8Array([1]),
     "content/localflash/game/data.txt": new Uint8Array([2]),
   });
-  const cache = new Cache(),
-    stored = new Map();
+}
+
+function createDeps() {
+  const cache = new Cache();
+  const stored = new Map();
   const deps = {
     origin: "https://flash.example",
     cache,
@@ -91,56 +58,130 @@ test("game installer", async () => {
     unzip: async (bytes) => unzipSync(bytes),
     responseFactory: (x) => x,
   };
-  const result = await installer.install(record, gameZip, deps);
-  assert.strictEqual(
-    result.launchPath,
-    "https://flash.example/__installed-games/" +
-      uuid +
-      "/content/localflash/game/main.swf",
-  );
-  assert.strictEqual(
-    result.basePath,
-    "https://flash.example/__installed-games/" +
-      uuid +
-      "/content/localflash/game/",
-  );
-  assert.strictEqual(cache.data.size, 2);
-  assert.strictEqual(stored.size, 1);
-  await installer.uninstall(uuid, deps);
-  assert.strictEqual(cache.data.size, 0);
-  const controller = new AbortController();
-  await assert.rejects(
-    installer.install(record, gameZip, {
-      ...deps,
-      signal: controller.signal,
-      unzip: async (bytes) => {
-        controller.abort();
-        return unzipSync(bytes);
-      },
-    }),
-    /abort/i,
-  );
-  assert.strictEqual(cache.data.size, 0);
-  assert.strictEqual(stored.size, 0);
+  return { cache, stored, deps };
+}
 
-  assert.strictEqual(stored.size, 0);
-  const legacy = await installer.installLegacy(
-    { ...record, packageType: "legacy", legacyFallback: true },
-    new Uint8Array([7, 8]),
-    deps,
-  );
-  assert.strictEqual(legacy.packageType, "legacy");
-  assert.strictEqual(cache.data.size, 1);
-  assert.deepStrictEqual([...cache.data.get(legacy.launchPath)], [7, 8]);
-  await installer.uninstall(uuid, deps);
-  const failing = new Cache();
-  const failingZip = zipSync({
-    "content/localflash/game/main.swf": new Uint8Array([1]),
-    "content/fail": new Uint8Array([2]),
+describe("game installer", () => {
+  test("maps launch commands to archive content paths", () => {
+    const installer = loadInstaller();
+    expect(installer.archiveLaunchPath(record.launchCommand)).toBe(
+      "content/localflash/game/main.swf",
+    );
   });
-  await assert.rejects(
-    installer.install(record, failingZip, { ...deps, cache: failing }),
-    /put failed/,
-  );
-  assert.strictEqual(failing.data.size, 0);
+
+  test("accepts Flash Player records downloaded from the configured origin", () => {
+    const installer = loadInstaller();
+    expect(() =>
+      installer.validateCatalogRecord(
+        {
+          ...record,
+          applicationPath: "FPSoftware\\Flash\\flashplayer_32_sa.exe",
+          downloadUrl: "http://localhost:8000/api/games/example/download",
+        },
+        { origin: "http://localhost:8000" },
+      ),
+    ).not.toThrow();
+  });
+
+  test("rejects catalog records for platforms other than Flash", () => {
+    const installer = loadInstaller();
+    expect(() =>
+      installer.validateCatalogRecord({ ...record, platform: "HTML5" }),
+    ).toThrow(/Flash/);
+  });
+
+  test("rejects plain and percent-encoded path traversal", () => {
+    const installer = loadInstaller();
+    expect(() => installer.safeArchivePath("../evil.swf")).toThrow(/Unsafe/);
+    expect(() => installer.safeArchivePath("%2e%2e/%2E./version.json")).toThrow(
+      /Unsafe/,
+    );
+  });
+
+  test("rejects archives whose entries exceed the size limit", () => {
+    const installer = loadInstaller();
+    expect(() =>
+      installer.validateZipEntries(
+        { "content/a": new Uint8Array(2) },
+        { maxTotalBytes: 1 },
+      ),
+    ).toThrow(/too large/);
+    expect(() =>
+      installer.validateZipMetadata(
+        zipSync({ "content/a": new Uint8Array(2) }),
+        { maxTotalBytes: 1 },
+      ),
+    ).toThrow(/too large/);
+  });
+
+  test("installs a game zip into the cache and metadata store", async () => {
+    const installer = loadInstaller();
+    const { cache, stored, deps } = createDeps();
+    const result = await installer.install(record, createGameZip(), deps);
+    expect(result.launchPath).toBe(
+      "https://flash.example/__installed-games/" +
+        uuid +
+        "/content/localflash/game/main.swf",
+    );
+    expect(result.basePath).toBe(
+      "https://flash.example/__installed-games/" +
+        uuid +
+        "/content/localflash/game/",
+    );
+    expect(cache.data.size).toBe(2);
+    expect(stored.size).toBe(1);
+  });
+
+  test("removes cached files on uninstall", async () => {
+    const installer = loadInstaller();
+    const { cache, deps } = createDeps();
+    await installer.install(record, createGameZip(), deps);
+    await installer.uninstall(uuid, deps);
+    expect(cache.data.size).toBe(0);
+  });
+
+  test("rolls back an install that is aborted mid-way", async () => {
+    const installer = loadInstaller();
+    const { cache, stored, deps } = createDeps();
+    const controller = new AbortController();
+    await expect(
+      installer.install(record, createGameZip(), {
+        ...deps,
+        signal: controller.signal,
+        unzip: async (bytes) => {
+          controller.abort();
+          return unzipSync(bytes);
+        },
+      }),
+    ).rejects.toThrow(/abort/i);
+    expect(cache.data.size).toBe(0);
+    expect(stored.size).toBe(0);
+  });
+
+  test("installs legacy packages as a single cached file", async () => {
+    const installer = loadInstaller();
+    const { cache, deps } = createDeps();
+    const legacy = await installer.installLegacy(
+      { ...record, packageType: "legacy", legacyFallback: true },
+      new Uint8Array([7, 8]),
+      deps,
+    );
+    expect(legacy.packageType).toBe("legacy");
+    expect(cache.data.size).toBe(1);
+    expect([...cache.data.get(legacy.launchPath)]).toEqual([7, 8]);
+  });
+
+  test("rolls back cached files when a cache write fails", async () => {
+    const installer = loadInstaller();
+    const { deps } = createDeps();
+    const failing = new Cache();
+    const failingZip = zipSync({
+      "content/localflash/game/main.swf": new Uint8Array([1]),
+      "content/fail": new Uint8Array([2]),
+    });
+    await expect(
+      installer.install(record, failingZip, { ...deps, cache: failing }),
+    ).rejects.toThrow(/put failed/);
+    expect(failing.data.size).toBe(0);
+  });
 });

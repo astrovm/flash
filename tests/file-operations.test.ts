@@ -1,345 +1,418 @@
 // @ts-nocheck
-import { test } from "bun:test";
-import assert from "node:assert/strict";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const fsPath = require.resolve("../site/js/filesystem.js");
+const operationsPath = require.resolve("../site/js/file-operations.js");
 
-test("file operations", async () => {
-  const memoryStorage = new Map();
-  global.localStorage = {
-    getItem: (key) => (memoryStorage.has(key) ? memoryStorage.get(key) : null),
-    setItem: (key, value) => memoryStorage.set(key, String(value)),
-    removeItem: (key) => memoryStorage.delete(key),
+describe("file operations", () => {
+  let fs;
+  let operations;
+
+  beforeEach(() => {
+    const memoryStorage = new Map();
+    global.localStorage = {
+      getItem: (key) =>
+        memoryStorage.has(key) ? memoryStorage.get(key) : null,
+      setItem: (key, value) => memoryStorage.set(key, String(value)),
+      removeItem: (key) => memoryStorage.delete(key),
+    };
+
+    delete require.cache[fsPath];
+    delete require.cache[operationsPath];
+    fs = require(fsPath);
+    fs.resetForTests();
+    operations = require(operationsPath);
+    operations.resetForTests();
+  });
+
+  const createClipboardFixture = () => {
+    const source = operations.createFolder(fs.MY_DOCUMENTS, "Source");
+    const nested = operations.createFolder(source.id, "Nested");
+    const note = operations.createFile(source.id, "note.txt", {
+      content: "hello",
+    });
+    const destination = operations.createFolder(fs.MY_DOCUMENTS, "Destination");
+    return { source, nested, note, destination };
   };
 
-  const fsPath = require.resolve("../site/js/filesystem.js");
-  const operationsPath = require.resolve("../site/js/file-operations.js");
-  delete require.cache[fsPath];
-  delete require.cache[operationsPath];
-  const fs = require(fsPath);
-  fs.resetForTests();
-  const operations = require(operationsPath);
-  operations.resetForTests();
+  const createConflictFixture = () => {
+    const conflictSource = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Conflict Source",
+    );
+    const conflictFile = operations.createFile(conflictSource.id, "same.txt", {
+      content: "new",
+    });
+    const conflictFolder = operations.createFolder(
+      conflictSource.id,
+      "same-folder",
+    );
+    const conflictTarget = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Conflict Target",
+    );
+    const existingFile = operations.createFile(conflictTarget.id, "same.txt", {
+      content: "old",
+    });
+    operations.createFolder(conflictTarget.id, "same-folder");
+    return {
+      conflictSource,
+      conflictFile,
+      conflictFolder,
+      conflictTarget,
+      existingFile,
+    };
+  };
 
-  const source = operations.createFolder(fs.MY_DOCUMENTS, "Source");
-  const nested = operations.createFolder(source.id, "Nested");
-  const note = operations.createFile(source.id, "note.txt", {
-    content: "hello",
-  });
-  const destination = operations.createFolder(fs.MY_DOCUMENTS, "Destination");
+  const createAtomicFixture = () => {
+    const atomicSource = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Atomic Source",
+    );
+    const atomicA = operations.createFile(atomicSource.id, "a.txt", {
+      content: "a",
+    });
+    const atomicB = operations.createFile(atomicSource.id, "b.txt", {
+      content: "b",
+    });
+    const atomicTarget = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Atomic Target",
+    );
+    const oldA = operations.createFile(atomicTarget.id, "a.txt", {
+      content: "old a",
+    });
+    const oldB = operations.createFile(atomicTarget.id, "b.txt", {
+      content: "old b",
+    });
+    return { atomicSource, atomicA, atomicB, atomicTarget, oldA, oldB };
+  };
 
-  // Clipboard state and deterministic same-folder copies.
-  assert.strictEqual(operations.canPaste(destination.id), false);
-  operations.copy([source.id, nested.id]);
-  assert.deepStrictEqual(operations.getClipboard(), {
-    mode: "copy",
-    ids: [source.id],
-  });
-  assert.strictEqual(operations.canPaste(destination.id), true);
-  const [copied] = operations.paste(destination.id);
-  assert.strictEqual(copied.name, "Source");
-  assert.strictEqual(fs.getChildren(copied.id).length, 2);
-  operations.copy([note.id]);
-  const [sameFolderCopy] = operations.paste(source.id);
-  assert.strictEqual(sameFolderCopy.name, "Copy of note.txt");
+  test("tracks clipboard state and names same-folder copies deterministically", () => {
+    const { source, nested, note, destination } = createClipboardFixture();
 
-  // Cut moves all requested top-level items and clears only after success.
-  operations.cut([note.id]);
-  assert.strictEqual(operations.canPaste(destination.id), true);
-  const [moved] = operations.paste(destination.id);
-  assert.strictEqual(moved.id, note.id);
-  assert.strictEqual(fs.getNode(note.id).parent, destination.id);
-  assert.strictEqual(operations.getClipboard(), null);
-  assert.throws(() => operations.paste(destination.id), /clipboard is empty/);
-
-  // Invalid destinations preserve a cut clipboard and the source node.
-  operations.cut([source.id]);
-  assert.strictEqual(operations.canPaste(nested.id), false);
-  assert.throws(() => operations.paste(nested.id), /into itself/);
-  assert.deepStrictEqual(operations.getClipboard(), {
-    mode: "cut",
-    ids: [source.id],
-  });
-  assert.strictEqual(fs.getNode(source.id).parent, fs.MY_DOCUMENTS);
-
-  // Shared validation is used by create and rename.
-  assert.throws(
-    () => operations.createFile(destination.id, "bad?.txt"),
-    /invalid characters/,
-  );
-  assert.throws(
-    () => operations.rename(note.id, "CON.txt"),
-    /reserved device name/,
-  );
-
-  // Recycle Bin lifecycle is explicit and rejects accidental permanent deletes.
-  operations.removeToBin([note.id]);
-  assert.ok(fs.isInRecycleBin(note.id));
-  assert.throws(() => operations.removeToBin([note.id]), /cannot delete/);
-  const [restored] = operations.restore([note.id]);
-  assert.strictEqual(restored.id, note.id);
-  assert.strictEqual(fs.getNode(note.id).parent, destination.id);
-  operations.removeToBin([note.id]);
-  operations.permanentlyDelete([note.id]);
-  assert.strictEqual(fs.getNode(note.id), null);
-  assert.throws(
-    () => operations.permanentlyDelete([source.id]),
-    /not deletable/,
-  );
-
-  // Subscribers receive both clipboard and underlying filesystem changes.
-  let notifications = 0;
-  const unsubscribe = operations.subscribe(() => {
-    notifications += 1;
-  });
-  operations.copy([source.id]);
-  operations.createFile(destination.id, "ping.txt");
-  assert.ok(notifications >= 2);
-  unsubscribe();
-
-  operations.removeToBin([source.id]);
-  operations.emptyRecycleBin();
-  assert.strictEqual(fs.getChildren(fs.RECYCLE_BIN).length, 0);
-
-  // ---- Conflict-aware paste decisions ----
-  const conflictSource = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Conflict Source",
-  );
-  const conflictFile = operations.createFile(conflictSource.id, "same.txt", {
-    content: "new",
-  });
-  const conflictFolder = operations.createFolder(
-    conflictSource.id,
-    "same-folder",
-  );
-  const conflictTarget = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Conflict Target",
-  );
-  const existingFile = operations.createFile(conflictTarget.id, "same.txt", {
-    content: "old",
-  });
-  operations.createFolder(conflictTarget.id, "same-folder");
-
-  operations.copy([conflictFile.id]);
-  const conflicts = operations.getConflicts(
-    [conflictFile.id],
-    conflictTarget.id,
-  );
-  assert.strictEqual(conflicts.length, 1);
-  assert.strictEqual(conflicts[0].existing.id, existingFile.id);
-
-  // Cancel is atomic and retains a cut clipboard for a later destination.
-  operations.cut([conflictFile.id]);
-  const cancelled = await operations.pasteWithConflicts(
-    conflictTarget.id,
-    () => "cancel",
-  );
-  assert.strictEqual(cancelled.cancelled, true);
-  assert.strictEqual(fs.getNode(conflictFile.id).parent, conflictSource.id);
-  assert.deepStrictEqual(operations.getClipboard(), {
-    mode: "cut",
-    ids: [conflictFile.id],
+    expect(operations.canPaste(destination.id)).toBe(false);
+    operations.copy([source.id, nested.id]);
+    expect(operations.getClipboard()).toEqual({
+      mode: "copy",
+      ids: [source.id],
+    });
+    expect(operations.canPaste(destination.id)).toBe(true);
+    const [copied] = operations.paste(destination.id);
+    expect(copied.name).toBe("Source");
+    expect(fs.getChildren(copied.id).length).toBe(2);
+    operations.copy([note.id]);
+    const [sameFolderCopy] = operations.paste(source.id);
+    expect(sameFolderCopy.name).toBe("Copy of note.txt");
   });
 
-  // Replace overwrites only a conflicting file and completes the move.
-  const replaced = await operations.pasteWithConflicts(
-    conflictTarget.id,
-    () => "replace",
-  );
-  assert.strictEqual(replaced.cancelled, false);
-  assert.strictEqual(fs.getNode(existingFile.id), null);
-  assert.strictEqual(fs.getNode(conflictFile.id).parent, conflictTarget.id);
-  assert.strictEqual(operations.getClipboard(), null);
+  test("moves cut items on paste and clears the clipboard only after success", () => {
+    const { note, destination } = createClipboardFixture();
 
-  // Auto-rename leaves the original intact and uses VFS deterministic naming.
-  const renameSource = operations.createFile(conflictSource.id, "same.txt", {
-    content: "copy",
-  });
-  operations.copy([renameSource.id]);
-  const renamed = await operations.pasteWithConflicts(
-    conflictTarget.id,
-    () => "rename",
-  );
-  assert.strictEqual(renamed.results[0].name, "same (2).txt");
-  assert.ok(fs.getNode(conflictFile.id));
-
-  // Folder conflicts cannot replace an existing folder; auto-name remains safe.
-  operations.copy([conflictFolder.id]);
-  const folderResult = await operations.pasteWithConflicts(
-    conflictTarget.id,
-    () => "replace",
-  );
-  assert.strictEqual(folderResult.results[0].name, "same-folder (2)");
-
-  // Invalid decisions conservatively auto-rename rather than mutating the existing file.
-  const invalidSource = operations.createFile(conflictSource.id, "same.txt", {
-    content: "invalid",
-  });
-  operations.copy([invalidSource.id]);
-  const invalidResult = await operations.pasteWithConflicts(
-    conflictTarget.id,
-    () => "unexpected",
-  );
-  assert.ok(invalidResult.results[0].name.startsWith("same"));
-  assert.ok(fs.getNode(conflictFile.id));
-
-  // Protected/system destinations are rejected before resolver execution.
-  let called = false;
-  await assert.rejects(
-    operations.pasteWithConflicts(fs.MY_COMPUTER, () => {
-      called = true;
-      return "rename";
-    }),
-    /cannot accept new items/,
-  );
-  assert.strictEqual(called, false);
-
-  // Two conflict decisions are fully preflighted: a later cancel leaves
-  // both existing files and both sources untouched.
-  const atomicSource = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Atomic Source",
-  );
-  const atomicA = operations.createFile(atomicSource.id, "a.txt", {
-    content: "a",
-  });
-  const atomicB = operations.createFile(atomicSource.id, "b.txt", {
-    content: "b",
-  });
-  const atomicTarget = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Atomic Target",
-  );
-  const oldA = operations.createFile(atomicTarget.id, "a.txt", {
-    content: "old a",
-  });
-  const oldB = operations.createFile(atomicTarget.id, "b.txt", {
-    content: "old b",
-  });
-  operations.cut([atomicA.id, atomicB.id]);
-  let decisions = 0;
-  const atomicCancelled = await operations.pasteWithConflicts(
-    atomicTarget.id,
-    () => (++decisions === 1 ? "replace" : "cancel"),
-  );
-  assert.strictEqual(atomicCancelled.cancelled, true);
-  assert.ok(fs.getNode(oldA.id) && fs.getNode(oldB.id));
-  assert.strictEqual(fs.getNode(atomicA.id).parent, atomicSource.id);
-  assert.strictEqual(fs.getNode(atomicB.id).parent, atomicSource.id);
-  assert.deepStrictEqual(operations.getClipboard(), {
-    mode: "cut",
-    ids: [atomicA.id, atomicB.id],
+    operations.cut([note.id]);
+    expect(operations.canPaste(destination.id)).toBe(true);
+    const [moved] = operations.paste(destination.id);
+    expect(moved.id).toBe(note.id);
+    expect(fs.getNode(note.id).parent).toBe(destination.id);
+    expect(operations.getClipboard()).toBe(null);
+    expect(() => operations.paste(destination.id)).toThrow(
+      /clipboard is empty/,
+    );
   });
 
-  // Same-folder copy gets the normal deterministic Copy of name.
-  operations.copy([atomicA.id]);
-  const sameCopy = await operations.pasteWithConflicts(
-    atomicSource.id,
-    () => "rename",
-  );
-  assert.strictEqual(sameCopy.results[0].name, "Copy of a.txt");
+  test("keeps a cut clipboard and its source when the destination is invalid", () => {
+    const { source, nested } = createClipboardFixture();
 
-  // Same-folder cut is an explicit no-op and retains the clipboard.
-  operations.cut([atomicB.id]);
-  const sameCut = await operations.pasteWithConflicts(
-    atomicSource.id,
-    () => "replace",
-  );
-  assert.strictEqual(sameCut.cancelled, false);
-  assert.strictEqual(sameCut.results[0].id, atomicB.id);
-  assert.deepStrictEqual(operations.getClipboard(), {
-    mode: "cut",
-    ids: [atomicB.id],
+    operations.cut([source.id]);
+    expect(operations.canPaste(nested.id)).toBe(false);
+    expect(() => operations.paste(nested.id)).toThrow(/into itself/);
+    expect(operations.getClipboard()).toEqual({
+      mode: "cut",
+      ids: [source.id],
+    });
+    expect(fs.getNode(source.id).parent).toBe(fs.MY_DOCUMENTS);
   });
 
-  // Restore preflights every selection and accepts only items directly in
-  // the Recycle Bin. A nested item cannot cause a partial mixed restore.
-  const recycledFolder = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Recycled Folder",
-  );
-  const recycledChild = operations.createFile(recycledFolder.id, "nested.txt");
-  const recycledDirect = operations.createFile(fs.MY_DOCUMENTS, "direct.txt");
-  operations.removeToBin([recycledFolder.id, recycledDirect.id]);
-  assert.throws(
-    () => operations.restore([recycledDirect.id, recycledChild.id]),
-    /top-level Recycle Bin items/,
-  );
-  assert.strictEqual(fs.getNode(recycledDirect.id).parent, fs.RECYCLE_BIN);
-  assert.strictEqual(fs.getNode(recycledChild.id).parent, recycledFolder.id);
+  test("validates names on create and rename", () => {
+    const { note, destination } = createClipboardFixture();
 
-  // If an item's original parent is still recycled, restoring only the item
-  // uses Desktop rather than leaving it hidden inside the Recycle Bin.
-  const fallbackFolder = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Fallback Folder",
-  );
-  const fallbackChild = operations.createFile(
-    fallbackFolder.id,
-    "fallback.txt",
-  );
-  operations.removeToBin([fallbackChild.id]);
-  operations.removeToBin([fallbackFolder.id]);
-  operations.restore([fallbackChild.id]);
-  assert.strictEqual(fs.getNode(fallbackChild.id).parent, fs.DESKTOP);
-  assert.strictEqual(fs.isInRecycleBin(fallbackChild.id), false);
+    expect(() => operations.createFile(destination.id, "bad?.txt")).toThrow(
+      /invalid characters/,
+    );
+    expect(() => operations.rename(note.id, "CON.txt")).toThrow(
+      /reserved device name/,
+    );
+  });
 
-  // When both are selected, restore the ancestor first so the child can
-  // return to its original folder in the same operation.
-  const selectedFolder = operations.createFolder(
-    fs.MY_DOCUMENTS,
-    "Selected Folder",
-  );
-  const selectedChild = operations.createFile(
-    selectedFolder.id,
-    "selected.txt",
-  );
-  operations.removeToBin([selectedChild.id]);
-  operations.removeToBin([selectedFolder.id]);
-  operations.restore([selectedChild.id, selectedFolder.id]);
-  assert.strictEqual(fs.getNode(selectedFolder.id).parent, fs.MY_DOCUMENTS);
-  assert.strictEqual(fs.getNode(selectedChild.id).parent, selectedFolder.id);
+  test("moves items through the Recycle Bin explicitly and rejects accidental permanent deletes", () => {
+    const { source, destination } = createClipboardFixture();
+    const note = operations.createFile(destination.id, "note.txt");
 
-  // Bin-level conflict names are temporary. Files with the same name from
-  // different folders recover their original names on restore.
-  const nameFolderA = operations.createFolder(fs.MY_DOCUMENTS, "Name A");
-  const nameFolderB = operations.createFolder(fs.MY_DOCUMENTS, "Name B");
-  const sameNameA = operations.createFile(nameFolderA.id, "same-name.txt");
-  const sameNameB = operations.createFile(nameFolderB.id, "same-name.txt");
-  operations.removeToBin([sameNameA.id, sameNameB.id]);
-  assert.notStrictEqual(
-    fs.getNode(sameNameA.id).name,
-    fs.getNode(sameNameB.id).name,
-  );
-  operations.restore([sameNameA.id, sameNameB.id]);
-  assert.strictEqual(fs.getNode(sameNameA.id).name, "same-name.txt");
-  assert.strictEqual(fs.getNode(sameNameB.id).name, "same-name.txt");
-  assert.strictEqual(fs.getNode(sameNameA.id).originalName, null);
-  assert.strictEqual(fs.getNode(sameNameB.id).originalName, null);
+    operations.removeToBin([note.id]);
+    expect(fs.isInRecycleBin(note.id)).toBeTruthy();
+    expect(() => operations.removeToBin([note.id])).toThrow(/cannot delete/);
+    const [restored] = operations.restore([note.id]);
+    expect(restored.id).toBe(note.id);
+    expect(fs.getNode(note.id).parent).toBe(destination.id);
+    operations.removeToBin([note.id]);
+    operations.permanentlyDelete([note.id]);
+    expect(fs.getNode(note.id)).toBe(null);
+    expect(() => operations.permanentlyDelete([source.id])).toThrow(
+      /not deletable/,
+    );
 
-  // Progress cancellation after one item documents partial move behavior;
-  // the cut clipboard remains available for the unprocessed source.
-  operations.cut([atomicA.id, atomicB.id]);
-  let stop = false;
-  const partial = await operations.pasteWithConflicts(
-    destination.id,
-    () => "rename",
-    {
-      onProgress: () => {
-        stop = true;
+    operations.removeToBin([source.id]);
+    operations.emptyRecycleBin();
+    expect(fs.getChildren(fs.RECYCLE_BIN).length).toBe(0);
+  });
+
+  test("notifies subscribers of clipboard and filesystem changes", () => {
+    const { source, destination } = createClipboardFixture();
+
+    let notifications = 0;
+    const unsubscribe = operations.subscribe(() => {
+      notifications += 1;
+    });
+    operations.copy([source.id]);
+    operations.createFile(destination.id, "ping.txt");
+    expect(notifications >= 2).toBeTruthy();
+    unsubscribe();
+  });
+
+  test("reports paste conflicts with existing items", () => {
+    const { conflictFile, conflictTarget, existingFile } =
+      createConflictFixture();
+
+    operations.copy([conflictFile.id]);
+    const conflicts = operations.getConflicts(
+      [conflictFile.id],
+      conflictTarget.id,
+    );
+    expect(conflicts.length).toBe(1);
+    expect(conflicts[0].existing.id).toBe(existingFile.id);
+  });
+
+  test("cancels a conflicting paste atomically and keeps the cut clipboard", async () => {
+    const { conflictSource, conflictFile, conflictTarget } =
+      createConflictFixture();
+
+    operations.cut([conflictFile.id]);
+    const cancelled = await operations.pasteWithConflicts(
+      conflictTarget.id,
+      () => "cancel",
+    );
+    expect(cancelled.cancelled).toBe(true);
+    expect(fs.getNode(conflictFile.id).parent).toBe(conflictSource.id);
+    expect(operations.getClipboard()).toEqual({
+      mode: "cut",
+      ids: [conflictFile.id],
+    });
+  });
+
+  test("replaces only a conflicting file and completes the move", async () => {
+    const { conflictFile, conflictTarget, existingFile } =
+      createConflictFixture();
+
+    operations.cut([conflictFile.id]);
+    const replaced = await operations.pasteWithConflicts(
+      conflictTarget.id,
+      () => "replace",
+    );
+    expect(replaced.cancelled).toBe(false);
+    expect(fs.getNode(existingFile.id)).toBe(null);
+    expect(fs.getNode(conflictFile.id).parent).toBe(conflictTarget.id);
+    expect(operations.getClipboard()).toBe(null);
+  });
+
+  test("auto-renames a conflicting copy and leaves the existing file intact", async () => {
+    const { conflictFile, conflictTarget, existingFile } =
+      createConflictFixture();
+
+    operations.copy([conflictFile.id]);
+    const renamed = await operations.pasteWithConflicts(
+      conflictTarget.id,
+      () => "rename",
+    );
+    expect(renamed.results[0].name).toBe("same (2).txt");
+    expect(fs.getNode(existingFile.id)).toBeTruthy();
+  });
+
+  test("auto-names folder conflicts instead of replacing the existing folder", async () => {
+    const { conflictFolder, conflictTarget } = createConflictFixture();
+
+    operations.copy([conflictFolder.id]);
+    const folderResult = await operations.pasteWithConflicts(
+      conflictTarget.id,
+      () => "replace",
+    );
+    expect(folderResult.results[0].name).toBe("same-folder (2)");
+  });
+
+  test("auto-renames on invalid decisions rather than mutating the existing file", async () => {
+    const { conflictFile, conflictTarget, existingFile } =
+      createConflictFixture();
+
+    operations.copy([conflictFile.id]);
+    const invalidResult = await operations.pasteWithConflicts(
+      conflictTarget.id,
+      () => "unexpected",
+    );
+    expect(invalidResult.results[0].name.startsWith("same")).toBeTruthy();
+    expect(fs.getNode(existingFile.id)).toBeTruthy();
+  });
+
+  test("rejects protected destinations before running the resolver", async () => {
+    const { conflictFile } = createConflictFixture();
+    operations.copy([conflictFile.id]);
+
+    let called = false;
+    await expect(
+      operations.pasteWithConflicts(fs.MY_COMPUTER, () => {
+        called = true;
+        return "rename";
+      }),
+    ).rejects.toThrow(/cannot accept new items/);
+    expect(called).toBe(false);
+  });
+
+  test("preflights every conflict decision so a later cancel leaves everything untouched", async () => {
+    const { atomicSource, atomicA, atomicB, atomicTarget, oldA, oldB } =
+      createAtomicFixture();
+
+    operations.cut([atomicA.id, atomicB.id]);
+    let decisions = 0;
+    const atomicCancelled = await operations.pasteWithConflicts(
+      atomicTarget.id,
+      () => (++decisions === 1 ? "replace" : "cancel"),
+    );
+    expect(atomicCancelled.cancelled).toBe(true);
+    expect(fs.getNode(oldA.id) && fs.getNode(oldB.id)).toBeTruthy();
+    expect(fs.getNode(atomicA.id).parent).toBe(atomicSource.id);
+    expect(fs.getNode(atomicB.id).parent).toBe(atomicSource.id);
+    expect(operations.getClipboard()).toEqual({
+      mode: "cut",
+      ids: [atomicA.id, atomicB.id],
+    });
+  });
+
+  test('names a same-folder conflict-aware copy "Copy of"', async () => {
+    const { atomicSource, atomicA } = createAtomicFixture();
+
+    operations.copy([atomicA.id]);
+    const sameCopy = await operations.pasteWithConflicts(
+      atomicSource.id,
+      () => "rename",
+    );
+    expect(sameCopy.results[0].name).toBe("Copy of a.txt");
+  });
+
+  test("treats a same-folder cut as a no-op and retains the clipboard", async () => {
+    const { atomicSource, atomicB } = createAtomicFixture();
+
+    operations.cut([atomicB.id]);
+    const sameCut = await operations.pasteWithConflicts(
+      atomicSource.id,
+      () => "replace",
+    );
+    expect(sameCut.cancelled).toBe(false);
+    expect(sameCut.results[0].id).toBe(atomicB.id);
+    expect(operations.getClipboard()).toEqual({
+      mode: "cut",
+      ids: [atomicB.id],
+    });
+  });
+
+  test("restores only top-level Recycle Bin items without partial restores", () => {
+    const recycledFolder = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Recycled Folder",
+    );
+    const recycledChild = operations.createFile(
+      recycledFolder.id,
+      "nested.txt",
+    );
+    const recycledDirect = operations.createFile(fs.MY_DOCUMENTS, "direct.txt");
+    operations.removeToBin([recycledFolder.id, recycledDirect.id]);
+    expect(() =>
+      operations.restore([recycledDirect.id, recycledChild.id]),
+    ).toThrow(/top-level Recycle Bin items/);
+    expect(fs.getNode(recycledDirect.id).parent).toBe(fs.RECYCLE_BIN);
+    expect(fs.getNode(recycledChild.id).parent).toBe(recycledFolder.id);
+  });
+
+  test("restores an item to the Desktop when its original folder is still recycled", () => {
+    const fallbackFolder = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Fallback Folder",
+    );
+    const fallbackChild = operations.createFile(
+      fallbackFolder.id,
+      "fallback.txt",
+    );
+    operations.removeToBin([fallbackChild.id]);
+    operations.removeToBin([fallbackFolder.id]);
+    operations.restore([fallbackChild.id]);
+    expect(fs.getNode(fallbackChild.id).parent).toBe(fs.DESKTOP);
+    expect(fs.isInRecycleBin(fallbackChild.id)).toBe(false);
+  });
+
+  test("restores a selected ancestor first so its child returns to its original folder", () => {
+    const selectedFolder = operations.createFolder(
+      fs.MY_DOCUMENTS,
+      "Selected Folder",
+    );
+    const selectedChild = operations.createFile(
+      selectedFolder.id,
+      "selected.txt",
+    );
+    operations.removeToBin([selectedChild.id]);
+    operations.removeToBin([selectedFolder.id]);
+    operations.restore([selectedChild.id, selectedFolder.id]);
+    expect(fs.getNode(selectedFolder.id).parent).toBe(fs.MY_DOCUMENTS);
+    expect(fs.getNode(selectedChild.id).parent).toBe(selectedFolder.id);
+  });
+
+  test("restores original names after temporary Recycle Bin conflict names", () => {
+    const nameFolderA = operations.createFolder(fs.MY_DOCUMENTS, "Name A");
+    const nameFolderB = operations.createFolder(fs.MY_DOCUMENTS, "Name B");
+    const sameNameA = operations.createFile(nameFolderA.id, "same-name.txt");
+    const sameNameB = operations.createFile(nameFolderB.id, "same-name.txt");
+    operations.removeToBin([sameNameA.id, sameNameB.id]);
+    expect(fs.getNode(sameNameA.id).name).not.toBe(
+      fs.getNode(sameNameB.id).name,
+    );
+    operations.restore([sameNameA.id, sameNameB.id]);
+    expect(fs.getNode(sameNameA.id).name).toBe("same-name.txt");
+    expect(fs.getNode(sameNameB.id).name).toBe("same-name.txt");
+    expect(fs.getNode(sameNameA.id).originalName).toBe(null);
+    expect(fs.getNode(sameNameB.id).originalName).toBe(null);
+  });
+
+  test("moves only processed items when progress is cancelled and keeps the rest on the clipboard", async () => {
+    const { destination } = createClipboardFixture();
+    const { atomicSource, atomicA, atomicB } = createAtomicFixture();
+
+    operations.cut([atomicA.id, atomicB.id]);
+    let stop = false;
+    const partial = await operations.pasteWithConflicts(
+      destination.id,
+      () => "rename",
+      {
+        onProgress: () => {
+          stop = true;
+        },
+        isCancelled: () => stop,
       },
-      isCancelled: () => stop,
-    },
-  );
-  assert.strictEqual(partial.cancelled, true);
-  assert.strictEqual(partial.results.length, 1);
-  assert.strictEqual(fs.getNode(atomicA.id).parent, destination.id);
-  assert.strictEqual(fs.getNode(atomicB.id).parent, atomicSource.id);
-  assert.deepStrictEqual(operations.getClipboard(), {
-    mode: "cut",
-    ids: [atomicB.id],
+    );
+    expect(partial.cancelled).toBe(true);
+    expect(partial.results.length).toBe(1);
+    expect(fs.getNode(atomicA.id).parent).toBe(destination.id);
+    expect(fs.getNode(atomicB.id).parent).toBe(atomicSource.id);
+    expect(operations.getClipboard()).toEqual({
+      mode: "cut",
+      ids: [atomicB.id],
+    });
   });
 });

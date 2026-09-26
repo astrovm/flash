@@ -1,5 +1,5 @@
 // @ts-nocheck -- Happy DOM's element types intentionally replace lib.dom here.
-import { expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { Window } from "happy-dom";
@@ -120,98 +120,105 @@ const wrapperConfiguration = async (relativePath: string) => {
   return configuration;
 };
 
-test("Pink Panther wrappers execute their game configuration", async () => {
-  const passport = await wrapperConfiguration(
-    "iframe/pink-panther-passport-to-peril/index.html",
-  );
-  const pokus = await wrapperConfiguration(
-    "iframe/pink-panther-hokus-pokus/index.html",
-  );
-
-  expect(passport.id).toBe("peril");
-  expect(passport.orbFile).toBe("PPTP.ORB");
-  expect(passport.fileSets).toContainEqual([
-    "PPTP.ORB",
-    "PPTP.EXE",
-    "PPTP.BRO",
-  ]);
-  expect(passport.releases[618203600]).toBe("English");
-  expect(passport.releases[633626567]).toBe("Spanish");
-
-  expect(pokus.id).toBe("pokus");
-  expect(pokus.orbFile).toBe("HPP.ORB");
-  expect(pokus.fileSets).toContainEqual(["HPP.ORB", "HPP.EXE"]);
-  expect(pokus.releases[503443586]).toBe("English");
-  expect(pokus.releases[508716126]).toBe("Spanish");
-});
-
-test("maps ScummVM's fixed data path to the active release", async () => {
-  const requests: string[] = [];
-  const window = new Window({
-    url: "http://127.0.0.1/releases/test/iframe/passport.hash/",
-    settings: {
-      disableCSSFileLoading: true,
-      disableJavaScriptFileLoading: true,
-      enableJavaScriptEvaluation: true,
-      handleDisabledFileLoadingAsSuccess: true,
-      suppressInsecureJavaScriptEnvironmentWarning: true,
-    },
-  });
-  Object.assign(window, {
-    Array,
-    Object,
-    PINK_GAME: {
-      id: "peril",
-      shellId: "pink-panther-passport-to-peril",
-      title: "The Pink Panther: Passport to Peril",
-    },
-    AstroStoragePolicy: {
-      errorMessage: (error: Error) => error.message,
-      requestPersistence: () => Promise.resolve(),
-    },
-    AstroIso9660: {},
-    fetch: (input: string | URL | Request) => {
-      requests.push(String(input));
-      return Promise.resolve(new Response("{}"));
-    },
-  });
-  const launcher = await Bun.file(
-    new URL("../site/iframe/scummvm/launcher.js", import.meta.url),
-  ).text();
-  const script = window.document.createElement("script");
-  script.textContent = launcher;
-  window.document.body.appendChild(script);
-
-  await window.fetch(
-    "/vendor/scummvm/2026.3.0/data/index.json?runtime=scummvm",
-  );
-
-  expect(requests).toEqual([
-    "http://127.0.0.1/releases/test/vendor/scummvm/2026.3.0/data/index.json?runtime=scummvm",
-  ]);
-  window.close();
-});
-
-test("mounts supported English and Spanish CD images", async () => {
-  if (!authorizedCopiesAvailable) return;
-  for (const game of games) {
-    const { gameFiles, language } = await gameBlobsFromIso(
-      Bun.file(`${sourceRoot}/${game.iso}`),
-      game.game,
+describe("ScummVM", () => {
+  test("executes the Pink Panther wrappers' game configuration", async () => {
+    const passport = await wrapperConfiguration(
+      "iframe/pink-panther-passport-to-peril/index.html",
     );
-    expect(language).toBe(game.language);
-    expect(
-      Object.fromEntries(gameFiles.map(({ data, name }) => [name, data.size])),
-    ).toEqual(game.files);
-    expect(gameFiles.every(({ offset }) => Number.isSafeInteger(offset))).toBe(
-      true,
+    const pokus = await wrapperConfiguration(
+      "iframe/pink-panther-hokus-pokus/index.html",
     );
-  }
-});
 
-test("rejects a CD image for the other Pink Panther game", async () => {
-  if (!authorizedCopiesAvailable) return;
-  await expect(
-    gameBlobsFromIso(Bun.file(`${sourceRoot}/${games[2].iso}`), games[0].game),
-  ).rejects.toThrow("PPTP.ORB was not recognized");
+    expect(passport.id).toBe("peril");
+    expect(passport.orbFile).toBe("PPTP.ORB");
+    expect(passport.fileSets).toContainEqual([
+      "PPTP.ORB",
+      "PPTP.EXE",
+      "PPTP.BRO",
+    ]);
+    expect(passport.releases[618203600]).toBe("English");
+    expect(passport.releases[633626567]).toBe("Spanish");
+
+    expect(pokus.id).toBe("pokus");
+    expect(pokus.orbFile).toBe("HPP.ORB");
+    expect(pokus.fileSets).toContainEqual(["HPP.ORB", "HPP.EXE"]);
+    expect(pokus.releases[503443586]).toBe("English");
+    expect(pokus.releases[508716126]).toBe("Spanish");
+  });
+
+  test("maps ScummVM's fixed data path to the active release", async () => {
+    const requests: string[] = [];
+    const window = new Window({
+      url: "http://127.0.0.1/releases/test/iframe/passport.hash/",
+      settings: {
+        disableCSSFileLoading: true,
+        disableJavaScriptFileLoading: true,
+        enableJavaScriptEvaluation: true,
+        handleDisabledFileLoadingAsSuccess: true,
+        suppressInsecureJavaScriptEnvironmentWarning: true,
+      },
+    });
+    Object.assign(window, {
+      Array,
+      Object,
+      PINK_GAME: {
+        id: "peril",
+        shellId: "pink-panther-passport-to-peril",
+        title: "The Pink Panther: Passport to Peril",
+      },
+      AstroStoragePolicy: {
+        errorMessage: (error: Error) => error.message,
+        requestPersistence: () => Promise.resolve(),
+      },
+      AstroIso9660: {},
+      fetch: (input: string | URL | Request) => {
+        requests.push(String(input));
+        return Promise.resolve(new Response("{}"));
+      },
+    });
+    const launcher = await Bun.file(
+      new URL("../site/iframe/scummvm/launcher.js", import.meta.url),
+    ).text();
+    const script = window.document.createElement("script");
+    script.textContent = launcher;
+    window.document.body.appendChild(script);
+
+    await window.fetch(
+      "/vendor/scummvm/2026.3.0/data/index.json?runtime=scummvm",
+    );
+
+    expect(requests).toEqual([
+      "http://127.0.0.1/releases/test/vendor/scummvm/2026.3.0/data/index.json?runtime=scummvm",
+    ]);
+    window.close();
+  });
+
+  test("mounts supported English and Spanish CD images", async () => {
+    if (!authorizedCopiesAvailable) return;
+    for (const game of games) {
+      const { gameFiles, language } = await gameBlobsFromIso(
+        Bun.file(`${sourceRoot}/${game.iso}`),
+        game.game,
+      );
+      expect(language).toBe(game.language);
+      expect(
+        Object.fromEntries(
+          gameFiles.map(({ data, name }) => [name, data.size]),
+        ),
+      ).toEqual(game.files);
+      expect(
+        gameFiles.every(({ offset }) => Number.isSafeInteger(offset)),
+      ).toBe(true);
+    }
+  });
+
+  test("rejects a CD image for the other Pink Panther game", async () => {
+    if (!authorizedCopiesAvailable) return;
+    await expect(
+      gameBlobsFromIso(
+        Bun.file(`${sourceRoot}/${games[2].iso}`),
+        games[0].game,
+      ),
+    ).rejects.toThrow("PPTP.ORB was not recognized");
+  });
 });

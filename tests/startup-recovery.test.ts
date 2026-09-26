@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { Window } from "happy-dom";
 import { createRequire } from "node:module";
 
@@ -95,44 +95,48 @@ const makeEnvironment = ({ htmlVersion = "26.08.12-abcdef1" } = {}) => {
   };
 };
 
-test("silently reloads a verified release and preserves user game caches", async () => {
-  const recovery = makeEnvironment();
-  createStartupRecovery(recovery.environment);
+describe("startup recovery", () => {
+  test("silently reloads a verified release and preserves user game caches", async () => {
+    const recovery = makeEnvironment();
+    createStartupRecovery(recovery.environment);
 
-  expect(recovery.timers[0].delay).toBe(12_000);
-  await recovery.timers[0].callback();
+    expect(recovery.timers[0].delay).toBe(12_000);
+    await recovery.timers[0].callback();
 
-  expect(recovery.getUnregisters()).toBe(1);
-  expect(recovery.deletedCaches).toEqual(["astro-flash-precache-v2"]);
-  expect(recovery.getReplacement()).toContain(
-    "__astro_recovery=26.08.12-abcdef1-1800000000000",
-  );
-  expect(recovery.values.has("astroFlashStartupRecovery")).toBeTrue();
-  expect(recovery.errors).toEqual([]);
-});
+    expect(recovery.getUnregisters()).toBe(1);
+    expect(recovery.deletedCaches).toEqual(["astro-flash-precache-v2"]);
+    expect(recovery.getReplacement()).toContain(
+      "__astro_recovery=26.08.12-abcdef1-1800000000000",
+    );
+    expect(recovery.values.has("astroFlashStartupRecovery")).toBeTrue();
+    expect(recovery.errors).toEqual([]);
+  });
 
-test("does not clear caches when the recovery page version is inconsistent", async () => {
-  const recovery = makeEnvironment({ htmlVersion: "stale" });
-  createStartupRecovery(recovery.environment);
+  test("does not clear caches when the recovery page version is inconsistent", async () => {
+    const recovery = makeEnvironment({ htmlVersion: "stale" });
+    createStartupRecovery(recovery.environment);
 
-  await recovery.timers[0].callback();
+    await recovery.timers[0].callback();
 
-  expect(recovery.getUnregisters()).toBe(0);
-  expect(recovery.deletedCaches).toEqual([]);
-  expect(recovery.getReplacement()).toBeNull();
-  expect(recovery.timers[1].delay).toBe(30_000);
-  expect(recovery.errors).toHaveLength(1);
-});
+    expect(recovery.getUnregisters()).toBe(0);
+    expect(recovery.deletedCaches).toEqual([]);
+    expect(recovery.getReplacement()).toBeNull();
+    expect(recovery.timers[1].delay).toBe(30_000);
+    expect(recovery.errors).toHaveLength(1);
+  });
 
-test("a successful startup cancels recovery and cleans its URL", () => {
-  const recovery = makeEnvironment();
-  recovery.environment.location.href =
-    "https://flash.example/?__astro_recovery=old#game";
-  recovery.values.set("astroFlashStartupRecovery", "previous");
-  const manager = createStartupRecovery(recovery.environment);
+  test("cancels recovery and cleans its URL after a successful startup", () => {
+    const recovery = makeEnvironment();
+    recovery.environment.location.href =
+      "https://flash.example/?__astro_recovery=old#game";
+    recovery.values.set("astroFlashStartupRecovery", "previous");
+    const manager = createStartupRecovery(recovery.environment);
 
-  manager.markReady();
+    manager.markReady();
 
-  expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
-  expect(recovery.getHistoryReplacement()).toBe("https://flash.example/#game");
+    expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
+    expect(recovery.getHistoryReplacement()).toBe(
+      "https://flash.example/#game",
+    );
+  });
 });

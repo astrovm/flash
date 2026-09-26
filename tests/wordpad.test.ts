@@ -53,7 +53,7 @@ describe("Windows XP WordPad through BoxedWine", () => {
     expect(shell.offlineDownloads).toEqual(["wordpad"]);
   });
 
-  test("package matches its XP source manifest", async () => {
+  test("matches its package to the XP source manifest", async () => {
     const manifest = JSON.parse(
       await readFile(join(wordPadDirectory, "SOURCES.json"), "utf8"),
     );
