@@ -88,6 +88,10 @@ const activateTaskButton = (gameId) => {
   }
 };
 
+// Task buttons for single windows are reused across renders so a focus change
+// only updates their state instead of rebuilding every button and listener.
+const taskButtonCache = new Map();
+
 const renderTaskButtons = () => {
   const container = document.getElementById("task-buttons");
   let windows = [...openWindows.entries()];
@@ -172,7 +176,7 @@ const renderTaskButtons = () => {
     : `repeat(${Math.max(1, Math.ceil((visible.length + (hidden.length ? 1 : 0)) / rows))}, minmax(0, 160px))`;
   container.style.gridAutoRows = "26px";
   container.style.rowGap = vertical ? "2px" : "0px";
-  container.innerHTML = "";
+  const nodes = [];
 
   const appendTaskButton = ([gameId, win]) => {
     if (win.groupedWindows) {
@@ -257,43 +261,50 @@ const renderTaskButtons = () => {
         }
         positionTaskbarMenu(menu, event.clientX, event.clientY);
       });
-      container.append(button);
+      nodes.push(button);
       return;
     }
     const taskTitle = win.title || formatGameTitle(gameId);
-    const btn = document.createElement("button");
-    btn.type = "button";
+    let cached = taskButtonCache.get(gameId);
+    if (cached?.win !== win) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.game = gameId;
+      const label = document.createElement("span");
+      label.className = "task-label";
+      btn.append(label);
+      btn.addEventListener("click", () => activateTaskButton(gameId));
+      btn.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        closeTaskbarMenus();
+        openWindowSystemMenu(win, event.clientX, event.clientY);
+      });
+      cached = { win, btn, label, icon: null, iconSource: undefined };
+      taskButtonCache.set(gameId, cached);
+    }
+    const { btn, label } = cached;
+    const active = gameId === focusedGameId && !win.minimized;
     btn.className =
       "task-button" +
-      (gameId === focusedGameId && !win.minimized ? " active" : "") +
+      (active ? " active" : "") +
       (win.needsAttention ? " needs-attention" : "");
-    btn.dataset.game = gameId;
-    btn.title = taskTitle;
+    if (btn.title !== taskTitle) btn.title = taskTitle;
     btn.setAttribute(
       "aria-label",
       `${taskTitle}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
     );
-    btn.setAttribute(
-      "aria-pressed",
-      String(gameId === focusedGameId && !win.minimized),
-    );
-
-    const icon = createGameIconElement(gameId, "task-icon");
-    const taskImage = icon.querySelector("img");
-    if (taskImage && win.icon) taskImage.src = win.icon;
-
-    const label = document.createElement("span");
-    label.className = "task-label";
-    label.textContent = taskTitle;
-
-    btn.append(icon, label);
-    btn.addEventListener("click", () => activateTaskButton(gameId));
-    btn.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
-      closeTaskbarMenus();
-      openWindowSystemMenu(win, event.clientX, event.clientY);
-    });
-    container.appendChild(btn);
+    btn.setAttribute("aria-pressed", String(active));
+    if (!cached.icon || cached.iconSource !== win.icon) {
+      const icon = createGameIconElement(gameId, "task-icon");
+      const taskImage = icon.querySelector("img");
+      if (taskImage && win.icon) taskImage.src = win.icon;
+      if (cached.icon) cached.icon.replaceWith(icon);
+      else btn.prepend(icon);
+      cached.icon = icon;
+      cached.iconSource = win.icon;
+    }
+    if (label.textContent !== taskTitle) label.textContent = taskTitle;
+    nodes.push(btn);
   };
   visible.forEach(appendTaskButton);
 
@@ -358,7 +369,18 @@ const renderTaskButtons = () => {
       const rect = overflow.getBoundingClientRect();
       positionTaskbarMenu(menu, rect.left, rect.top);
     });
-    container.appendChild(overflow);
+    nodes.push(overflow);
+  }
+  // Touch the DOM only when the button set or order changed, which keeps
+  // hover and keyboard focus on reused buttons.
+  const current = container.children;
+  if (
+    current.length !== nodes.length ||
+    nodes.some((node, index) => current[index] !== node)
+  )
+    container.replaceChildren(...nodes);
+  for (const [gameId, cached] of taskButtonCache) {
+    if (openWindows.get(gameId) !== cached.win) taskButtonCache.delete(gameId);
   }
 };
 

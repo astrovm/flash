@@ -1,25 +1,42 @@
 import { defineApplication } from "../core/application.js";
-import { createSystemRuntime } from "../system/runtime.js";
+import { defineLazyApplication } from "../core/lazy-application.js";
 
-const system = (id, title, icon, window = {}, activation = null) =>
-  defineApplication({
+// The system window runtime is only needed once a system window opens, so it
+// stays out of the startup module graph.
+let systemRuntimeModule = null;
+const loadSystemRuntime = () =>
+  (systemRuntimeModule ??= import("../system/runtime.js").catch((error) => {
+    systemRuntimeModule = null;
+    throw error;
+  }));
+
+const system = (id, title, icon, window = {}, activation = null) => {
+  const metadata = {
     id,
     title,
     icon,
     kind: "system",
     window: { width: 800, height: 600, ...window },
-    mount(context, instance) {
-      const runtime = createSystemRuntime(context);
-      return {
-        element: runtime.render(id, instance.window),
-        activate: () => runtime.activate(activation, instance.window),
-        unmount() {},
-      };
-    },
-    activate(_context, _instance, mounted) {
-      mounted.activate();
-    },
-  });
+  };
+  return defineLazyApplication(metadata, () =>
+    loadSystemRuntime().then(({ createSystemRuntime }) =>
+      defineApplication({
+        ...metadata,
+        mount(context, instance) {
+          const runtime = createSystemRuntime(context);
+          return {
+            element: runtime.render(id, instance.window),
+            activate: () => runtime.activate(activation, instance.window),
+            unmount() {},
+          };
+        },
+        activate(_context, _instance, mounted) {
+          mounted.activate();
+        },
+      }),
+    ),
+  );
+};
 
 export const systemApplications = [
   system("__my-computer", "My Computer", "MyComputer.png"),

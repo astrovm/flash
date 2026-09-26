@@ -184,7 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
   window.__ASTRO_STARTUP_READY__?.();
 });
 
+let windowResizeHandledAt = -Infinity;
 window.addEventListener("resize", () => {
+  windowResizeHandledAt = performance.now();
   closeTrayVolumePopup();
   // Reflow once below, after the toolbars have settled the work area.
   applySimulatedMonitor(activeMonitorResolution, { reflow: false });
@@ -198,8 +200,13 @@ window.addEventListener("resize", () => {
   }
 });
 
+// Pinch zoom and on-screen keyboards resize only the visual viewport. A
+// normal window resize fires both events, so skip the relayout it already ran.
 window.visualViewport?.addEventListener("resize", () => {
-  window.dispatchEvent(new Event("resize"));
+  requestAnimationFrame(() => {
+    if (performance.now() - windowResizeHandledAt > 100)
+      window.dispatchEvent(new Event("resize"));
+  });
 });
 
 window.addEventListener("hashchange", () => {

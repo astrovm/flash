@@ -21,6 +21,7 @@ import {
 } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { compress as compressWoff2 } from "wawoff2";
 import { generateSW, type ManifestTransform } from "workbox-build";
 import workboxConfig, { PRECACHE_EXTENSIONS } from "../workbox-config";
 import { boxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
@@ -374,6 +375,61 @@ export function getDeploymentVersion(
   }
   const [year, month, day] = commitDate.split("-");
   return `${year.slice(2)}.${month}.${day}-${shortRevision.slice(0, 7)}`;
+}
+
+const isTrueTypeFont = (bytes: Uint8Array): boolean => {
+  const tag = String.fromCharCode(...bytes.subarray(0, 4));
+  return tag === "\0\x01\0\0" || tag === "true";
+};
+
+// Serve the original XP fonts as WOFF2. The source tree keeps the verified
+// TrueType files; WOFF2 is a lossless container about 55% smaller.
+export async function compressFonts(
+  paths: BuildPaths,
+  compress: (input: Uint8Array) => Promise<Uint8Array> = compressWoff2,
+): Promise<string[]> {
+  const fontsDirectory = join(paths.css, "fonts");
+  if (!(await isDirectory(fontsDirectory))) return [];
+  const converted: string[] = [];
+  for (const path of await walkFiles(fontsDirectory)) {
+    if (extname(path).toLowerCase() !== ".ttf") continue;
+    const source = new Uint8Array(await readFile(path));
+    if (!isTrueTypeFont(source)) continue;
+    await writeFile(`${path.slice(0, -4)}.woff2`, await compress(source));
+    await rm(path);
+    converted.push(relative(fontsDirectory, path).split(sep).join("/"));
+  }
+  if (!converted.length) return converted;
+
+  const escape = (value: string) =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const cssPath of (await walkFiles(paths.css)).filter(
+    (path) => extname(path) === ".css",
+  )) {
+    let css = await readFile(cssPath, "utf8");
+    for (const name of converted) {
+      css = css.replace(
+        new RegExp(
+          `(fonts/${escape(name.slice(0, -4))})\\.ttf("\\)\\s*)format\\("truetype"\\)`,
+          "g",
+        ),
+        '$1.woff2$2format("woff2")',
+      );
+    }
+    await writeFile(cssPath, css);
+  }
+  let html = await readFile(paths.html, "utf8");
+  for (const name of converted) {
+    html = html.replace(
+      new RegExp(`<link\\b[^>]*href="css/fonts/${escape(name)}"[^>]*>`, "g"),
+      (tag) =>
+        tag
+          .replace(/\.ttf"/, '.woff2"')
+          .replace('type="font/ttf"', 'type="font/woff2"'),
+    );
+  }
+  await writeFile(paths.html, html);
+  return converted;
 }
 
 export async function updateHtml(
@@ -1554,6 +1610,7 @@ export async function build({
     await installJsDos(stagingDir);
     await installWebtorrent(stagingDir);
     await installRuffleRuntime(paths.js);
+    await compressFonts(paths);
     await updateHtml(paths, deploymentVersion);
     await writeOfflineGameManifest(paths, deploymentVersion);
     await writeVersionMetadata(paths, deploymentVersion, {

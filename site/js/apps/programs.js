@@ -646,8 +646,27 @@ const openSystemWindow = (shortcutId) => {
     return;
   }
 
-  const application = window.XPApplicationRegistry.get(shortcutId);
-  if (!application || application.kind !== "system") return;
+  const registered = window.XPApplicationRegistry.get(shortcutId);
+  if (!registered || registered.kind !== "system") return;
+  if (registered.load && !registered.loaded) {
+    const launchSession = sessionGeneration;
+    return registered
+      .load()
+      .then(() => {
+        if (loggedIn && launchSession === sessionGeneration)
+          openSystemWindow(shortcutId);
+      })
+      .catch((error) => {
+        if (!loggedIn || launchSession !== sessionGeneration) return;
+        void XPDialogs.alert(
+          error.message ||
+            "The window could not be loaded. Try opening it again.",
+          registered.title,
+          "error",
+        );
+      });
+  }
+  const application = registered.loaded || registered;
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   const el = createWindowElement(shortcutId);
   el.classList.add("explorer-window");

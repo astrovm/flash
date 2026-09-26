@@ -40,6 +40,7 @@
     "prettier": "3.9.6",
     "typescript": "6.0.3",
     "typescript-eslint": "8.69.0",
+    "wawoff2": "2.0.1",
     "workbox-build": "^7.4.1",
     "wrangler": "4.129.0"
   },

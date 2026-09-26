@@ -4,7 +4,7 @@
 // Start Menu
 // ============================================
 
-const createMenuGameItem = (gameId) => {
+const createMenuGameItem = (gameId, gameStats = getGameStats()) => {
   const item = document.createElement("button");
   item.type = "button";
   item.className = "sm-game";
@@ -17,7 +17,7 @@ const createMenuGameItem = (gameId) => {
 
   item.append(icon, title);
 
-  const stats = getGameStats()[gameId];
+  const stats = gameStats[gameId];
   if (stats) {
     const playCount = document.createElement("span");
     playCount.className = "play-count";
@@ -371,8 +371,44 @@ const buildPlaces = () => {
   );
 };
 
+// The pinned list only changes when favorites, play history or the menu style
+// change, so opening the Start menu reuses it otherwise.
+let renderedPinnedKey = null;
+const startMenuTitleCollator = new Intl.Collator();
 const buildPinnedPrograms = () => {
   const container = document.getElementById("start-menu-pinned");
+  const style = getStartMenuStyle();
+  const gameStats = getGameStats();
+  const recentGames = Object.entries(gameStats)
+    .filter(([gameId]) => gamesList[gameId])
+    .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
+    .map(([gameId]) => gameId);
+  const pinned =
+    style === "classic"
+      ? []
+      : [
+          ...getFavorites().filter((gameId) => gamesList[gameId]),
+          ...recentGames,
+          ...Object.keys(gamesList).sort((a, b) =>
+            startMenuTitleCollator.compare(
+              formatGameTitle(a),
+              formatGameTitle(b),
+            ),
+          ),
+        ]
+          .filter((gameId, index, all) => all.indexOf(gameId) === index)
+          .slice(0, 6);
+  const pinnedKey = JSON.stringify([
+    style,
+    pinned.map((gameId) => [
+      gameId,
+      formatGameTitle(gameId),
+      gamesList[gameId]?.icon,
+      gameStats[gameId]?.plays,
+    ]),
+  ]);
+  if (pinnedKey === renderedPinnedKey && container.isConnected) return;
+  renderedPinnedKey = pinnedKey;
   container.innerHTML = "";
 
   const allProgramsLabel = document.querySelector(
@@ -410,23 +446,9 @@ const buildPinnedPrograms = () => {
   });
   container.appendChild(internetGames);
 
-  const gameStats = getGameStats();
-  const recentGames = Object.entries(gameStats)
-    .filter(([gameId]) => gamesList[gameId])
-    .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
-    .map(([gameId]) => gameId);
-
-  const pinned = [
-    ...getFavorites().filter((gameId) => gamesList[gameId]),
-    ...recentGames,
-    ...Object.keys(gamesList).sort((a, b) =>
-      formatGameTitle(a).localeCompare(formatGameTitle(b)),
-    ),
-  ]
-    .filter((gameId, index, all) => all.indexOf(gameId) === index)
-    .slice(0, 6);
-
-  pinned.forEach((gameId) => container.appendChild(createMenuGameItem(gameId)));
+  pinned.forEach((gameId) =>
+    container.appendChild(createMenuGameItem(gameId, gameStats)),
+  );
 };
 
 let startFlyoutTimer = null;
@@ -572,9 +594,9 @@ const getAllProgramsTree = () => {
   ];
 };
 
-const createProgramMenuItem = (definition, depth) => {
+const createProgramMenuItem = (definition, depth, gameStats) => {
   if (definition.gameId) {
-    const item = createMenuGameItem(definition.gameId);
+    const item = createMenuGameItem(definition.gameId, gameStats);
     item.setAttribute("role", "menuitem");
     return item;
   }
@@ -656,6 +678,7 @@ const openProgramSubmenu = (definitions, anchor, depth = 0) => {
   panel.className = "start-program-flyout";
   panel.setAttribute("role", "menu");
   panel.dataset.depth = String(depth);
+  const gameStats = getGameStats();
   definitions.forEach((definition) => {
     if (definition.separator) {
       const separator = document.createElement("span");
@@ -663,7 +686,7 @@ const openProgramSubmenu = (definitions, anchor, depth = 0) => {
       separator.setAttribute("role", "separator");
       panel.appendChild(separator);
     } else {
-      panel.appendChild(createProgramMenuItem(definition, depth));
+      panel.appendChild(createProgramMenuItem(definition, depth, gameStats));
     }
   });
   host.appendChild(panel);
