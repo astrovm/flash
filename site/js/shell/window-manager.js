@@ -711,7 +711,7 @@ const loadRuffleSWF = (gameId, win) => {
       if (openWindows.get(gameId) !== win || win.player) return;
       mountRuffleSWF(gameId, win);
     },
-    (error) => console.error(`Could not start ${gameId}:`, error),
+    (error) => console.error("Could not start %s:", gameId, error),
   );
 };
 
