@@ -189,6 +189,11 @@ const wireProjectSettings = (win) => {
         </dl>
       </fieldset>
       <fieldset>
+        <legend>Startup</legend>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="full-startup"> Show the full startup sequence every time</label>
+        <p class="project-settings-description">After your first visit, Astro Flash shortens the boot and Welcome screens so the desktop opens sooner.</p>
+      </fieldset>
+      <fieldset>
         <legend>Storage</legend>
         <p>Astro Flash uses <strong data-project-value="storage"></strong> of browser storage. This includes system files, games, and personal data.</p>
       </fieldset>
@@ -298,6 +303,13 @@ const wireProjectSettings = (win) => {
   const savePlayedGamesCheckbox = content.querySelector(
     '[data-project-setting="save-played-games"]',
   );
+  const fullStartupCheckbox = content.querySelector(
+    '[data-project-setting="full-startup"]',
+  );
+  fullStartupCheckbox.checked = readStartupFlag(FULL_STARTUP_KEY);
+  fullStartupCheckbox.addEventListener("change", () => {
+    setStartupFlag(FULL_STARTUP_KEY, fullStartupCheckbox.checked);
+  });
   const automaticUpdatesCheckbox = content.querySelector(
     '[data-project-setting="automatic-updates"]',
   );

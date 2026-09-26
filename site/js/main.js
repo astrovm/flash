@@ -10,6 +10,29 @@ const MOVE_SIZE_STEP = 8;
 // Show the palette fade and one complete progress pass unless the user skips.
 const BOOT_MINIMUM_DURATION_MS = 2000 + 1800;
 const WELCOME_DURATION_MS = 1200;
+// After the first complete startup, later visits play a short version unless
+// the user asks for the full sequence in Astro Flash Settings.
+const QUICK_BOOT_MINIMUM_DURATION_MS = 900;
+const QUICK_WELCOME_DURATION_MS = 400;
+const STARTUP_SEEN_KEY = "startupSeen";
+const FULL_STARTUP_KEY = "fullStartup";
+const readStartupFlag = (key) => {
+  try {
+    return localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+};
+const useQuickStartup = () =>
+  readStartupFlag(STARTUP_SEEN_KEY) && !readStartupFlag(FULL_STARTUP_KEY);
+const setStartupFlag = (key, value) => {
+  try {
+    if (value) localStorage.setItem(key, "true");
+    else localStorage.removeItem(key);
+  } catch {
+    // Storage can be unavailable; startup simply stays at full length.
+  }
+};
 const APP_VERSION = "26.07.28-2";
 const offlineManager = window.AstroOffline.createManager({
   currentVersion: APP_VERSION,

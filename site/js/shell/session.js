@@ -143,7 +143,12 @@ const showBootScreen = () => {
     if (!isCurrentBoot()) return;
     bootScreen.classList.add("boot-running");
     return new Promise((resolve) => {
-      bootTimeout = setTimeout(resolve, BOOT_MINIMUM_DURATION_MS);
+      bootTimeout = setTimeout(
+        resolve,
+        useQuickStartup()
+          ? QUICK_BOOT_MINIMUM_DURATION_MS
+          : BOOT_MINIMUM_DURATION_MS,
+      );
     });
   });
   // XP advances when startup finishes; a browser's storage/runtime startup
@@ -210,7 +215,10 @@ const showWelcomeScreen = (autoLogin = false) => {
     });
   }
   if (autoLogin) {
-    bootTimeout = setTimeout(() => login(), WELCOME_DURATION_MS);
+    bootTimeout = setTimeout(
+      () => login(),
+      useQuickStartup() ? QUICK_WELCOME_DURATION_MS : WELCOME_DURATION_MS,
+    );
   }
 };
 
@@ -347,6 +355,7 @@ const login = (playSound = true) => {
     if (!shellInitialized) await syncGameFiles();
     clearTimeout(bootTimeout);
     loggedIn = true;
+    setStartupFlag(STARTUP_SEEN_KEY, true);
     showDesktop();
     applyDisplaySettings(getDisplaySettings());
     applyStartMenuStyle(getStartMenuStyle(), false);
@@ -363,6 +372,16 @@ const login = (playSound = true) => {
       setupSearch();
       setupScreenSaver();
       startClock();
+      // System windows and XP programs load their modules on first use; warm
+      // them once the desktop is idle so the first open does not wait.
+      const warmApplications = () =>
+        window.XPApplicationRegistry?.values().forEach((application) => {
+          if (["system", "native-game"].includes(application.kind))
+            application.load?.().catch(() => {});
+        });
+      if (typeof requestIdleCallback === "function")
+        requestIdleCallback(warmApplications, { timeout: 5000 });
+      else setTimeout(warmApplications, 2000);
 
       // Deep link: #game-id opens that game's window
       const gameId = getHashGameId();

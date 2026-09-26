@@ -16,6 +16,7 @@ import {
   BuildPaths,
   PRECACHE_FILE_SUFFIXES,
   build,
+  compressFonts,
   generateServiceWorker,
   getDeploymentVersion,
   installJsDos,
@@ -264,6 +265,43 @@ describe("npm runtime installation", () => {
 });
 
 describe("build metadata", () => {
+  test("serves TrueType fonts as WOFF2 and rewrites their references", async () => {
+    const root = await makeTemporaryDirectory();
+    const trueType = new Uint8Array([0, 1, 0, 0, 7, 7]);
+    await mkdir(join(root, "css", "fonts"), { recursive: true });
+    await writeFile(join(root, "css", "fonts", "tahoma.ttf"), trueType);
+    await writeFile(join(root, "css", "fonts", "note.ttf"), "not a font");
+    await writeFile(
+      join(root, "css", "fonts.css"),
+      '@font-face { src: url("fonts/tahoma.ttf") format("truetype"); }',
+    );
+    await writeFile(
+      join(root, "index.html"),
+      '<link rel="preload" href="css/fonts/tahoma.ttf" as="font" type="font/ttf" crossorigin />',
+    );
+
+    const converted = await compressFonts(new BuildPaths(root), async (input) =>
+      input.slice(4),
+    );
+
+    expect(converted).toEqual(["tahoma.ttf"]);
+    expect(await readFile(join(root, "css", "fonts", "tahoma.woff2"))).toEqual(
+      Buffer.from([7, 7]),
+    );
+    expect(
+      await Bun.file(join(root, "css", "fonts", "tahoma.ttf")).exists(),
+    ).toBeFalse();
+    expect(
+      await Bun.file(join(root, "css", "fonts", "note.ttf")).exists(),
+    ).toBeTrue();
+    expect(await readFile(join(root, "css", "fonts.css"), "utf8")).toBe(
+      '@font-face { src: url("fonts/tahoma.woff2") format("woff2"); }',
+    );
+    expect(await readFile(join(root, "index.html"), "utf8")).toBe(
+      '<link rel="preload" href="css/fonts/tahoma.woff2" as="font" type="font/woff2" crossorigin />',
+    );
+  });
+
   test("uses the commit date and short revision", () => {
     const outputs = ["2026-07-28", "abcdef123456"];
     const git = () => outputs.shift() ?? "";
