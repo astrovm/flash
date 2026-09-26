@@ -635,7 +635,16 @@ const setupScreenSaver = () => {
   // an element is placed and stacked, not whether an ancestor's overflow
   // clips it out of view.
   document.body.appendChild(overlay);
-  const wake = () => scheduleScreenSaver();
+  // Rescheduling reads display settings from storage and pointer moves arrive
+  // every frame, so while the saver is hidden restart the idle timer at most
+  // once a second. Any input still dismisses a visible saver immediately.
+  let lastWake = -Infinity;
+  const wake = () => {
+    const now = performance.now();
+    if (overlay.hidden && now - lastWake < 1000) return;
+    lastWake = now;
+    scheduleScreenSaver();
+  };
   ["pointerdown", "keydown", "mousemove", "touchstart"].forEach((eventName) => {
     document.addEventListener(eventName, wake, { passive: true });
   });
