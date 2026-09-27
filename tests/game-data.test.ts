@@ -112,3 +112,128 @@ describe("game data", () => {
     expect(messages).toEqual([{ type: "REVCDOS_PACK_UPDATED" }]);
   });
 });
+
+describe("game data edge cases", () => {
+  const notFound = () =>
+    Object.assign(new Error("Missing"), { name: "NotFoundError" });
+  const locked = () => Object.assign(new Error("Locked"), { name: "Locked" });
+
+  test("reports nothing without a storage manager and counts nested folders", async () => {
+    expect(await gameData.createManager({ storage: null }).list()).toEqual([]);
+    const nested = new FakeDirectory({
+      "saves/": new FakeDirectory({ "save.bin": new FakeFileHandle(5) }),
+      "manifest.json": new FakeFileHandle(1),
+    });
+    const scummvm = new FakeDirectory({
+      "peril-empty.iso": new FakeFileHandle(0),
+      "readme.txt": new FakeFileHandle(3),
+    });
+    const manager = gameData.createManager({
+      storage: {
+        getDirectory: async () =>
+          new FakeDirectory({
+            [gameData.REVCDOS_DIRECTORY]: nested,
+            [gameData.SCUMMVM_DIRECTORY]: scummvm,
+          }),
+      },
+    });
+    expect(await manager.list()).toEqual([
+      { id: "revcdos", title: "reVCDOS", detail: "Game data", bytes: 6 },
+    ]);
+  });
+
+  test("removes reVCDOS data without storage or a ready service worker", async () => {
+    const messages = [];
+    await gameData
+      .createManager({
+        storage: null,
+        localStorageObject: null,
+        serviceWorker: {
+          ready: Promise.reject(new Error("no worker")),
+          controller: { postMessage: (message) => messages.push(message) },
+        },
+      })
+      .remove("revcdos");
+    expect(messages).toEqual([{ type: "REVCDOS_PACK_UPDATED" }]);
+    await gameData
+      .createManager({
+        storage: {
+          getDirectory: async () => ({
+            removeEntry: async () => {
+              throw notFound();
+            },
+          }),
+        },
+        serviceWorker: null,
+      })
+      .removeTemporary("revcdos");
+    await expect(
+      gameData
+        .createManager({
+          storage: {
+            getDirectory: async () => ({
+              removeEntry: async () => {
+                throw locked();
+              },
+            }),
+          },
+        })
+        .remove("revcdos"),
+    ).rejects.toThrow("Locked");
+  });
+
+  test("rejects unknown data and tolerates missing ScummVM folders", async () => {
+    const empty = gameData.createManager({
+      storage: { getDirectory: async () => new FakeDirectory() },
+      localStorageObject: null,
+    });
+    await expect(empty.remove("unknown")).rejects.toThrow(
+      "Unknown installed game data.",
+    );
+    await empty.remove("scummvm:peril");
+    for (const [id, file] of [
+      ["unknown", "peril-a.iso"],
+      ["scummvm:peril", 42],
+      ["scummvm:peril", "pokus-a.iso"],
+      ["scummvm:peril", "peril-a/../x"],
+    ])
+      await expect(empty.removeTemporary(id, file)).rejects.toThrow(
+        "Unknown temporary game data.",
+      );
+    await empty.removeTemporary("scummvm:peril", "peril-a.iso");
+    await gameData
+      .createManager({
+        storage: {
+          getDirectory: async () =>
+            new FakeDirectory({
+              [gameData.SCUMMVM_DIRECTORY]: new FakeDirectory(),
+            }),
+        },
+      })
+      .removeTemporary("scummvm:peril", "peril-a.iso");
+    expect(await gameData.createManager().list()).toEqual([]);
+  });
+
+  test("keeps temporary files that cannot be removed", async () => {
+    for (const failing of ["peril-a.iso", "peril-manifest.json"]) {
+      const scummvm = new FakeDirectory({
+        "peril-a.iso": new FakeFileHandle(1),
+        "peril-manifest.json": new FakeFileHandle(1),
+      });
+      const remove = scummvm.removeEntry.bind(scummvm);
+      scummvm.removeEntry = async (name) => {
+        if (name === failing) throw locked();
+        return remove(name);
+      };
+      const manager = gameData.createManager({
+        storage: {
+          getDirectory: async () =>
+            new FakeDirectory({ [gameData.SCUMMVM_DIRECTORY]: scummvm }),
+        },
+      });
+      await expect(
+        manager.removeTemporary("scummvm:peril", "peril-a.iso"),
+      ).rejects.toThrow("Locked");
+    }
+  });
+});
