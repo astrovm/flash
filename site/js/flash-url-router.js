@@ -2,7 +2,7 @@
   const api = factory(root);
   if (typeof module === "object" && module.exports) module.exports = api;
   root.AstroFlashUrlRouter = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
+})(globalThis, function (root) {
   "use strict";
 
   const routeKey = (value, baseUrl) => {

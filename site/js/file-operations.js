@@ -16,10 +16,8 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
-  if (root) {
-    root.FileOperations = api;
-  }
-})(typeof self !== "undefined" ? self : globalThis, function (fs) {
+  root.FileOperations = api;
+})(globalThis, function (fs) {
   if (!fs) throw new Error("FileOperations requires VirtualFS");
 
   let clipboard = null;

@@ -11,7 +11,7 @@
   } else {
     root.AstroOffline = api;
   }
-})(typeof globalThis !== "undefined" ? globalThis : this, (storagePolicy) => {
+})(globalThis, (storagePolicy) => {
   const LAST_CHECKED_KEY = "astroFlashLastUpdateCheck";
   const DOWNLOAD_VERSION_KEY = "astroFlashDownloadVersion";
   const DOWNLOAD_BYTES_KEY = "astroFlashDownloadBytes";

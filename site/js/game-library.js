@@ -6,8 +6,8 @@
   }
   const api = factory(root);
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (root) root.AstroGameLibrary = api;
-})(typeof window !== "undefined" ? window : globalThis, function (root) {
+  root.AstroGameLibrary = api;
+})(globalThis, function (root) {
   const storagePolicy = root.AstroStoragePolicy;
   const DB_NAME = "astro-installed-games";
   const DB_VERSION = 1;

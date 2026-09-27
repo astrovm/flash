@@ -14,10 +14,8 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
-  if (root) {
-    root.VirtualFS = api;
-  }
-})(typeof self !== "undefined" ? self : globalThis, function (root) {
+  root.VirtualFS = api;
+})(globalThis, function (root) {
   const STORAGE_KEY = "virtualFileSystem";
   const FS_VERSION = 1;
 

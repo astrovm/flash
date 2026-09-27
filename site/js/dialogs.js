@@ -15,10 +15,8 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
-  if (root) {
-    root.XPDialogs = api;
-  }
-})(typeof self !== "undefined" ? self : globalThis, function () {
+  root.XPDialogs = api;
+})(globalThis, function () {
   // ---- Pure definitions (no DOM, unit tested) ----
 
   const ICONS = ["info", "warning", "error", "question"];
@@ -72,8 +70,7 @@
   };
 
   const hasDOM = typeof document !== "undefined";
-  const getFS = () =>
-    (typeof self !== "undefined" ? self : globalThis).VirtualFS;
+  const getFS = () => globalThis.VirtualFS;
 
   if (!hasDOM) {
     // Node: expose only the pure definitions for tests.

@@ -5,8 +5,8 @@
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (root) root.AstroGameInstaller = api;
-})(typeof window !== "undefined" ? window : globalThis, function () {
+  root.AstroGameInstaller = api;
+})(globalThis, function () {
   // Flashpoint UUIDs are not necessarily RFC 4122 version 1-5 UUIDs.
   const UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

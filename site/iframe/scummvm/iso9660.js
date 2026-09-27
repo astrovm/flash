@@ -7,7 +7,7 @@
   } else {
     root.AstroIso9660 = api;
   }
-})(typeof globalThis !== "undefined" ? globalThis : this, () => {
+})(globalThis, () => {
   const ISO_SECTOR_SIZE = 2048;
   const PRIMARY_VOLUME_SECTOR = 16;
   const textDecoder = new TextDecoder("ascii");

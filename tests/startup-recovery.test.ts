@@ -140,3 +140,74 @@ describe("startup recovery", () => {
     );
   });
 });
+
+describe("startup recovery edge cases", () => {
+  const { readFileSync } = require("node:fs");
+  const { createContext, runInContext } = require("node:vm");
+  const { instrumentSource } = require("./helpers/coverage");
+
+  test("installs itself on the page when loaded as a classic script", () => {
+    const timers = [];
+    const context = createContext({
+      __coverage__: globalThis.__coverage__,
+      clearTimeout() {},
+      setTimeout: (callback, delay) => timers.push(delay),
+    });
+    runInContext(
+      instrumentSource(readFileSync(recoveryPath, "utf8"), recoveryPath),
+      context,
+    );
+    expect(typeof context.__ASTRO_STARTUP_READY__).toBe("function");
+    expect(timers).toEqual([12_000]);
+  });
+
+  test("skips recovery after startup or an earlier attempt and waits while offline", async () => {
+    const ready = makeEnvironment();
+    const manager = createStartupRecovery(ready.environment);
+    manager.markReady();
+    await manager.recover();
+    expect(ready.getReplacement()).toBeNull();
+    expect(ready.getHistoryReplacement()).toBeNull();
+
+    const attempted = makeEnvironment();
+    attempted.values.set("astroFlashStartupRecovery", "1");
+    await createStartupRecovery(attempted.environment).recover();
+    expect(attempted.getReplacement()).toBeNull();
+
+    const offline = makeEnvironment();
+    offline.environment.navigator.onLine = false;
+    await createStartupRecovery(offline.environment, {
+      retryTimeout: 5,
+    }).recover();
+    expect(offline.timers.at(-1).delay).toBe(5);
+  });
+
+  test("retries after failed or invalid version checks and recovery pages", async () => {
+    for (const [respond, message] of [
+      [() => new Response("down", { status: 503 }), "Version check failed"],
+      [() => Response.json({ version: 1 }), "Version metadata is invalid"],
+      [
+        (url) =>
+          String(url).startsWith("/version.json")
+            ? Response.json({ version: "26.08.12-abcdef1" })
+            : new Response("down", { status: 503 }),
+        "Recovery page failed",
+      ],
+    ]) {
+      const recovery = makeEnvironment();
+      recovery.environment.fetch = async (url) => respond(url);
+      await createStartupRecovery(recovery.environment).recover();
+      expect(recovery.errors[0][1].message).toBe(message);
+      expect(recovery.timers.at(-1).delay).toBe(30_000);
+    }
+  });
+
+  test("recovers without service workers or Cache Storage", async () => {
+    const recovery = makeEnvironment();
+    delete recovery.environment.navigator.serviceWorker;
+    delete recovery.environment.caches;
+    await createStartupRecovery(recovery.environment).recover();
+    expect(recovery.getReplacement()).toContain("__astro_recovery=");
+    expect(recovery.deletedCaches).toEqual([]);
+  });
+});
