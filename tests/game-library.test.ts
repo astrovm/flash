@@ -613,3 +613,357 @@ test.each(["success", "callback-error", "throw", "abort", "already-aborted"])(
     }
   },
 );
+
+describe("game library browser integration", () => {
+  const { IDBFactory } = require("fake-indexeddb");
+  const fflate = require("fflate");
+
+  const withGlobals = async (globals, callback) => {
+    const previous = Object.fromEntries(
+      Object.keys(globals).map((key) => [key, globalThis[key]]),
+    );
+    Object.assign(globalThis, globals);
+    try {
+      return await callback();
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete globalThis[key];
+        else globalThis[key] = value;
+      }
+    }
+  };
+
+  test("stores metadata in IndexedDB and reports unavailable or blocked storage", async () => {
+    const { library } = loadModules();
+    const indexedDB = new IDBFactory();
+    const store = await library.createMetadataStore(indexedDB);
+    await store.put({ id: "flashpoint:1", title: "One" });
+    expect(await store.get("flashpoint:1")).toEqual({
+      id: "flashpoint:1",
+      title: "One",
+    });
+    expect(await store.list()).toHaveLength(1);
+    await store.delete("flashpoint:1");
+    expect(await store.list()).toEqual([]);
+    store.close();
+    await expect(library.createMetadataStore()).rejects.toThrow(
+      "Persistent game storage is not supported",
+    );
+    const newer = indexedDB.open(library.DB_NAME, 5);
+    await new Promise((resolve) => (newer.onsuccess = resolve));
+    newer.result.close();
+    await expect(library.createMetadataStore(indexedDB)).rejects.toThrow();
+  });
+
+  test("describes records without tags or titles as downloaded games", () => {
+    const { library } = loadModules();
+    expect(
+      library.asGameConfig({ tags: "Racing", launchPath: "/game.swf" }),
+    ).toMatchObject({
+      title: "Installed Flash Game",
+      category: "Downloaded Games",
+      icon: null,
+    });
+  });
+
+  test("uses browser globals when no dependencies are injected", async () => {
+    const { installer, library } = loadModules();
+    const indexedDB = new IDBFactory();
+    const seeded = await library.createMetadataStore(indexedDB);
+    await seeded.put({
+      ...details,
+      id: `flashpoint:${uuid}`,
+      launchPath: "/x",
+    });
+    seeded.close();
+    await withGlobals(
+      {
+        fflate,
+        indexedDB,
+        document: {},
+        location: { origin: "https://flash.example" },
+        caches: { open: async () => new FakeCache() },
+      },
+      async () => {
+        const manager = library.createManager();
+        expect(Object.keys(await manager.initialize())).toEqual([
+          `flashpoint:${uuid}`,
+        ]);
+      },
+    );
+    const local = library.createManager({
+      installer,
+      unzipSync,
+      cacheObject: new FakeCache(),
+      metadataStore: new FakeStore(),
+    });
+    await local.initialize();
+    expect(await local.match("https://astro.local/other.js")).toBeNull();
+  });
+
+  test("extracts archives in the background and honors cancellation", async () => {
+    const { installer, library } = loadModules();
+    const gameZip = zipSync({
+      "content/localflash/bikemaniaarena1/bike-mania-arena-1.swf":
+        new Uint8Array([4, 5]),
+    });
+    const base = createFixture();
+    await withGlobals({ fflate }, async () => {
+      const manager = library.createManager({
+        installer,
+        fetchObject: base.fetchObject,
+        cacheObject: new FakeCache(),
+        metadataStore: new FakeStore(),
+        origin: "https://flash.example",
+      });
+      await manager.initialize();
+      const game = await manager.install({ ...details, logoUrl: undefined });
+      expect(await bytesOf(await manager.match(game.url))).toEqual([4, 5]);
+      await manager.uninstall(uuid);
+
+      const controller = new AbortController();
+      const unzip = fflate.unzip;
+      fflate.unzip = (_bytes, callback) => {
+        controller.abort();
+        return () => callback(new Error("terminated"));
+      };
+      try {
+        await expect(
+          manager.install(details, { signal: controller.signal }),
+        ).rejects.toThrow();
+      } finally {
+        fflate.unzip = unzip;
+      }
+      fflate.unzip = () => {
+        throw new Error("worker unavailable");
+      };
+      try {
+        await expect(manager.install(details)).rejects.toThrow(
+          "worker unavailable",
+        );
+      } finally {
+        fflate.unzip = unzip;
+      }
+      fflate.unzip = (_bytes, callback) => callback(new Error("bad deflate"));
+      try {
+        await expect(manager.install(details)).rejects.toThrow("bad deflate");
+      } finally {
+        fflate.unzip = unzip;
+      }
+      expect(gameZip.byteLength).toBeGreaterThan(0);
+    });
+  });
+
+  test("cleans up temporary archives when a stream fails or is cancelled", async () => {
+    const { library } = loadModules();
+    const removed = [];
+    const storageManager = {
+      async getDirectory() {
+        return {
+          async getFileHandle(name) {
+            return {
+              async createWritable() {
+                return {
+                  async write() {},
+                  async close() {},
+                  async abort() {
+                    throw new Error("already closed");
+                  },
+                };
+              },
+            };
+          },
+          async removeEntry(name) {
+            removed.push(name);
+            throw new Error("entry locked");
+          },
+        };
+      },
+    };
+    let resolveRead;
+    const reader = {
+      read: () => new Promise((resolve) => (resolveRead = resolve)),
+      cancel: async () => {
+        throw new Error("stream closed");
+      },
+      releaseLock() {},
+    };
+    const response = {
+      ok: true,
+      headers: new Headers(),
+      body: { getReader: () => reader },
+    };
+    const controller = new AbortController();
+    const pending = library.createTemporaryArchive(response, {
+      storageManager,
+      signal: controller.signal,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    controller.abort();
+    resolveRead({ done: false, value: new Uint8Array([1]) });
+    await expect(pending).rejects.toThrow();
+    expect(removed).toHaveLength(1);
+    await expect(
+      library.createTemporaryArchive(
+        { ok: true, headers: new Headers(), body: null },
+        { storageManager },
+      ),
+    ).rejects.toThrow("Game download has no body.");
+  });
+
+  test("reports temporary archive cleanup failures after installing", async () => {
+    const errors = [];
+    const originalError = console.error;
+    console.error = (...args) => errors.push(args);
+    try {
+      const f = createFixture({
+        overrides: {
+          temporaryArchive: async (response) => ({
+            blob: await response.blob(),
+            cleanup: async () => {
+              throw new Error("archive locked");
+            },
+          }),
+          Inflate: fflate.AsyncInflate,
+        },
+      });
+      await f.manager.initialize();
+      await f.manager.install({ ...legacyDetails, logoUrl: undefined });
+    } finally {
+      console.error = originalError;
+    }
+    expect(errors[0][0]).toBe("Could not remove temporary game archive:");
+  });
+
+  test("skips artwork that is missing or cannot be downloaded", async () => {
+    for (const logo of [
+      async () => new Response("missing", { status: 404 }),
+      async () => {
+        throw new Error("offline");
+      },
+    ]) {
+      const base = createFixture();
+      const f = createFixture({
+        overrides: {
+          fetchObject: async (url, options) =>
+            url.endsWith("/logo") ? logo() : base.fetchObject(url, options),
+        },
+      });
+      await f.manager.initialize();
+      const installed = await f.manager.install(details);
+      expect(installed.iconPath).toBeUndefined();
+    }
+  });
+
+  test("reports installed sizes from headers, bodies, or nothing cached", async () => {
+    const f = await createInitializedFixture();
+    const installed = await f.manager.install(details);
+    await f.manager.install(legacyDetails);
+    const prefix = `https://flash.example/__installed-games/${uuid}/`;
+    await f.cache.put(
+      `${prefix}sized.bin`,
+      new Response(new Uint8Array(3), { headers: { "Content-Length": "5" } }),
+    );
+    f.cache.values.set(`${prefix}unsized.bin`, new Response(new Uint8Array(2)));
+    f.cache.values.set(`${prefix}gone.bin`, null);
+    f.cache.values.set(
+      "https://flash.example/unrelated.bin",
+      new Response("x"),
+    );
+    for (const key of [...f.cache.values.keys()])
+      if (key.includes(legacyUuid)) f.cache.values.delete(key);
+    const installations = await f.manager.getInstallations();
+    expect(installations.find(({ uuid: id }) => id === legacyUuid).bytes).toBe(
+      0,
+    );
+    expect(
+      installations.find(({ id }) => id === installed.id).bytes,
+    ).toBeGreaterThanOrEqual(7);
+  });
+
+  test("searches for nothing when the query is missing", async () => {
+    const f = createFixture();
+    expect(await f.manager.search(null)).toEqual([]);
+  });
+
+  test("serves legacy assets from cache and forgets old missing paths", async () => {
+    let assetRequests = 0;
+    const base = createFixture();
+    const f = createFixture({
+      overrides: {
+        fetchObject: async (url, options) => {
+          if (url.includes("/asset?")) {
+            assetRequests++;
+            return url.includes("missing")
+              ? new Response("missing", { status: 404 })
+              : new Response(new Uint8Array([6]));
+          }
+          return base.fetchObject(url, options);
+        },
+      },
+    });
+    await f.manager.initialize();
+    await f.manager.install(legacyDetails);
+    const asset = `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/a.bin`;
+    expect(await bytesOf(await f.manager.match(asset))).toEqual([6]);
+    expect(
+      await bytesOf(await f.manager.match(new Request(`${asset}?v=2`))),
+    ).toEqual([6]);
+    expect(assetRequests).toBe(1);
+    for (let index = 0; index < 258; index++)
+      await f.manager.match(
+        `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/missing-${index}.bin`,
+      );
+    expect(
+      await f.manager.match(
+        `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/missing-0.bin`,
+      ),
+    ).toBeNull();
+    expect(assetRequests).toBe(260);
+  });
+
+  test("does not fetch legacy assets for complete archives", async () => {
+    const f = await createInitializedFixture();
+    await f.manager.install({ ...details, legacyFallback: false });
+    expect(
+      await f.manager.match(
+        `https://flash.example/__installed-games/${uuid}/content/remote.example/a.bin`,
+      ),
+    ).toBeNull();
+    expect(f.assetRequests()).toBe(0);
+  });
+
+  test("propagates cache failures other than a full quota", async () => {
+    const cache = new FakeCache();
+    const f = await createInitializedFixture({ cache });
+    await f.manager.install(legacyDetails);
+    cache.put = async () => {
+      throw new Error("cache corrupted");
+    };
+    await expect(
+      f.manager.match(
+        `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/new.bin`,
+      ),
+    ).rejects.toThrow("cache corrupted");
+  });
+
+  test("resolves remote asset requests from cache and skips malformed records", async () => {
+    const f = await createInitializedFixture();
+    const installed = await f.manager.install(details);
+    await f.store.put({
+      ...f.store.values.get(installed.id),
+      id: "flashpoint:broken",
+      uuid: "broken",
+      launchCommand: "not a url",
+    });
+    const reloaded = createFixture({
+      cache: f.cache,
+      overrides: { metadataStore: f.store },
+    });
+    await reloaded.manager.initialize();
+    const cached = await reloaded.manager.match(
+      "http://localflash/bikemaniaarena1/bike-mania-arena-1.swf?cache=1",
+    );
+    expect(await bytesOf(cached)).toEqual([4, 5]);
+  });
+});
