@@ -27,7 +27,6 @@ export const createSystemRuntime = (context) => {
     renderTaskButtons,
     selectedExplorerNodes,
     setAccessKeyText,
-    toggleTrayVolumePopup,
     wireProjectSettings,
   } = context;
 
@@ -261,8 +260,6 @@ export const createSystemRuntime = (context) => {
         openDisplayTab("settings");
       } else if (action === "taskbar-properties") {
         openTaskbarProperties();
-      } else if (action === "advanced-volume") {
-        toggleTrayVolumePopup();
       } else if (action === "date-time") {
         openDateTimeProperties();
       }

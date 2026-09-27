@@ -631,7 +631,6 @@ const systemApplicationContext = () => ({
   renderTaskButtons,
   selectedExplorerNodes,
   setAccessKeyText,
-  toggleTrayVolumePopup,
   wireDisplayProperties,
   wireSearchCompanion,
   wireInternetGames,

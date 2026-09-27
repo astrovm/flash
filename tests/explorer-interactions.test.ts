@@ -288,6 +288,10 @@ test("Control Panel navigates categories, classic view and settings destinations
       .querySelector(".explorer-section-toggle")
       .getAttribute("aria-expanded"),
   ).toBe("false");
+  content().querySelector(".explorer-section-toggle").click();
+  expect(
+    content().querySelector(".explorer-section-toggle b").textContent,
+  ).toBe("⌃");
   action("classic");
   expect(content().classList.contains("classic-view")).toBeTrue();
   action("classic");
