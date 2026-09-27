@@ -732,15 +732,14 @@ const importDroppedFiles = async (destinationId, dataTransfer) => {
     );
     return;
   }
-  const progress = XPDialogs.progress({
+  const state = { cancelled: false, completed: 0 };
+  state.progress = XPDialogs.progress({
     title: "Importing...",
     text: "Preparing dropped files...",
     cancellable: true,
-  });
-  const state = { cancelled: false, completed: 0, progress };
-  const cancelButton = progress.el.querySelector("button");
-  cancelButton?.addEventListener("click", () => {
-    state.cancelled = true;
+    onCancel: () => {
+      state.cancelled = true;
+    },
   });
   try {
     const entries = [...(dataTransfer.items || [])]
@@ -761,7 +760,7 @@ const importDroppedFiles = async (destinationId, dataTransfer) => {
       await importFileEntry({ file: (ok) => ok(file) }, destinationId, state);
     }
   } finally {
-    progress.close();
+    state.progress.close();
   }
 };
 const wireFolderDropTarget = (element, destinationId) => {
