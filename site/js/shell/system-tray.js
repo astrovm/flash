@@ -39,7 +39,6 @@ const setSystemVolume = (volume, isMuted) => {
 const closeTrayVolumePopup = () => {
   const popup = document.getElementById("tray-volume-popup");
   const button = document.getElementById("tray-volume-button");
-  if (!popup || !button) return;
   popup.hidden = true;
   button.classList.remove("pressed");
   button.setAttribute("aria-expanded", "false");

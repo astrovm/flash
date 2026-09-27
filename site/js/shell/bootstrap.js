@@ -172,7 +172,8 @@ gameLibraryInitialization = Promise.race([
 
 document.addEventListener("DOMContentLoaded", () => {
   setupExplorerFilesystemSync();
-  initializeOfflineMode();
+  // Failures are logged; played-game downloads await the same promise.
+  initializeOfflineMode().catch(() => {});
   setupScreenFlow();
   setupDesktopContextMenu();
   setupWindowSystemMenu();
