@@ -380,3 +380,16 @@ test("iframe games apply volume on load and have no playback properties", async 
   properties?.click();
   expect(!!s.document.querySelector(".xp-dialog")).toBeFalse();
 });
+
+test("F11 toggles fullscreen for the focused game", async () => {
+  const { s, players, open } = await flashGame();
+  await open("big-truck-adventures");
+  s.document.body.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", {
+      key: "F11",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  expect(players.at(-1).fullscreenRequested).toBeTrue();
+});

@@ -123,3 +123,34 @@ test("the automatic Welcome screen continues only from Enter or Space on itself"
   await settle();
   expect(visible(s, "desktop")).toBeTrue();
 });
+
+test("muted sessions start silently and failed sounds do not block logging off", async () => {
+  const s = await loadShell({ initialStorage: { isMuted: "true" } });
+  const volumes = [];
+  const play = s.window.HTMLMediaElement.prototype.play;
+  s.window.HTMLMediaElement.prototype.play = function () {
+    volumes.push(this.volume);
+    return Promise.reject(new Error("blocked"));
+  };
+  try {
+    await login(s);
+    click(s, "log-off-button");
+    click(s, "logoff-confirm");
+    await settle();
+  } finally {
+    s.window.HTMLMediaElement.prototype.play = play;
+  }
+  expect(volumes.every((volume) => volume === 0)).toBeTrue();
+  expect(visible(s, "welcome-screen")).toBeTrue();
+});
+
+test("standby resumes from a pointer press on its screen", async () => {
+  const s = await login(await loadShell());
+  click(s, "turn-off-button");
+  click(s, "standby-confirm");
+  expect(visible(s, "standby-screen")).toBeTrue();
+  s.document
+    .getElementById("standby-screen")
+    .dispatchEvent(new s.window.PointerEvent("pointerdown", { bubbles: true }));
+  expect(visible(s, "standby-screen")).toBeFalse();
+});

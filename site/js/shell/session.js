@@ -266,8 +266,7 @@ const closeCurrentSession = () => {
         return false;
     }
     clearTimeout(screenSaverTimeout);
-    const saver = document.getElementById("screen-saver-overlay");
-    if (saver) hideScreenSaver(saver);
+    hideScreenSaver(document.getElementById("screen-saver-overlay"));
     showDesktopSnapshot = null;
     closeStartMenu();
     closeDesktopContextMenu();
