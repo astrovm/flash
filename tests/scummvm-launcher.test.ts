@@ -55,6 +55,7 @@ async function launch(options = {}) {
             },
             async abort() {
               aborted++;
+              if (options.failAbort) throw Error("abort failed");
             },
           };
         },
@@ -62,6 +63,7 @@ async function launch(options = {}) {
     },
     async removeEntry(name) {
       removed.push(name);
+      if (options.failRemove) throw Error("remove failed");
       files.delete(name);
     },
   };
@@ -94,16 +96,20 @@ async function launch(options = {}) {
     URL,
     Uint8Array,
     __coverage__: globalThis.__coverage__,
-    PINK_GAME: {
-      id: "peril",
-      shellId: "pink-panther-passport-to-peril",
-      title: "Passport",
-      scummvmId: "pink:peril",
-    },
-    AstroStoragePolicy: {
-      errorMessage: (e) => e.message,
-      async requestPersistence() {},
-    },
+    PINK_GAME: options.noGame
+      ? undefined
+      : {
+          id: "peril",
+          shellId: "pink-panther-passport-to-peril",
+          title: "Passport",
+          scummvmId: "pink:peril",
+        },
+    AstroStoragePolicy: options.noPolicy
+      ? undefined
+      : {
+          errorMessage: (e) => e.message,
+          async requestPersistence() {},
+        },
     AstroIso9660: {
       async gameFilesFromIso() {
         if (options.invalidIso) throw Error("Wrong CD image");
@@ -135,6 +141,10 @@ async function launch(options = {}) {
         ? options.metadata
         : JSON.stringify(options.metadata),
     );
+  const scriptErrors = [];
+  w.addEventListener("error", (event) =>
+    scriptErrors.push(event.error?.message || event.message),
+  );
   const path = new URL("../site/iframe/scummvm/launcher.js", import.meta.url);
   const script = w.document.createElement("script");
   script.textContent = instrumentSource(
@@ -170,6 +180,7 @@ async function launch(options = {}) {
     select,
     download,
     aborted: () => aborted,
+    scriptErrors,
     interval: () => interval?.(),
   };
 }
@@ -373,4 +384,94 @@ test("download validation reports URL, network, streaming and size errors", asyn
     expect(h.q("#message").textContent).toContain(error);
     expect(h.q("#download-disc").disabled).toBeFalse();
   }
+});
+
+test("the launcher requires its game configuration and storage policy", async () => {
+  for (const [options, message] of [
+    [{ noGame: true }, "Missing Pink Panther game configuration."],
+    [{ noPolicy: true }, "Missing browser storage policy."],
+  ]) {
+    const h = await launch(options);
+    expect(h.scriptErrors.join("\n")).toContain(message);
+  }
+});
+
+test("runtime logging, temporary copies, and cleanup failures are handled", async () => {
+  const h = await launch({
+    metadata: { fileName: "old.iso", language: "Spanish" },
+    files: [["old.iso", new Blob(["old"])]],
+  });
+  await h.select(new Blob(["ABCDE"]), false);
+  expect(JSON.parse(h.w.localStorage.getItem(key)).fileName).toBe("old.iso");
+  const logs = [];
+  const originalLog = h.w.console.log;
+  const originalError = h.w.console.error;
+  h.w.console.log = (...values) => logs.push(["log", ...values]);
+  h.w.console.error = (...values) => logs.push(["error", ...values]);
+  try {
+    h.w.Module.print("hello");
+    h.w.Module.printErr("oops");
+  } finally {
+    h.w.console.log = originalLog;
+    h.w.console.error = originalError;
+  }
+  expect(logs).toEqual([
+    ["log", "hello"],
+    ["error", "oops"],
+  ]);
+
+  const failing = await launch({
+    failRemove: true,
+    metadata: { fileName: "old.iso" },
+    files: [["old.iso", new Blob(["old"])]],
+  });
+  await failing.select(new Blob(["ABCDE"]), true);
+  expect(failing.q("#disc-panel").hidden).toBeTrue();
+
+  for (const options of [
+    { failWrite: true, failAbort: true, failRemove: true },
+  ]) {
+    const partial = await launch(options);
+    await partial.select(new Blob(["ABCDE"]), true);
+    expect(partial.q("#message").textContent).toContain("disk full");
+    const download = await launch(options);
+    await download.download("https://cdn.test/disc.iso", true);
+    expect(download.q("#message").textContent).toContain("disk full");
+  }
+});
+
+test("saved copies that disappear and downloads without a length are handled", async () => {
+  const h = await launch({
+    metadata: { fileName: "old.iso" },
+    files: [["old.iso", new Blob(["old"])]],
+  });
+  h.w.localStorage.removeItem(key);
+  h.q("#saved-copy").click();
+  await tick();
+  expect(h.q("#disc-input").disabled).toBeFalse();
+  expect(h.q("#message").textContent).not.toBe("");
+  const none = await launch();
+  none.q("#saved-copy").click();
+  await tick();
+  expect(none.q("#disc-panel").hidden).toBeFalse();
+  const unsized = await launch({
+    response: () =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("ABCD"));
+            controller.close();
+          },
+        }),
+      ),
+  });
+  await unsized.download("https://cdn.test/disc.iso");
+  expect(unsized.q("#disc-panel").hidden).toBeTrue();
+  const large = await launch({
+    response: () =>
+      new Response("ABCD", {
+        headers: { "Content-Length": String(150 * 1024 * 1024) },
+      }),
+  });
+  await large.download("https://cdn.test/disc.iso");
 });

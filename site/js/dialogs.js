@@ -15,10 +15,8 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
-  if (root) {
-    root.XPDialogs = api;
-  }
-})(typeof self !== "undefined" ? self : globalThis, function () {
+  root.XPDialogs = api;
+})(globalThis, function () {
   // ---- Pure definitions (no DOM, unit tested) ----
 
   const ICONS = ["info", "warning", "error", "question"];
@@ -72,8 +70,7 @@
   };
 
   const hasDOM = typeof document !== "undefined";
-  const getFS = () =>
-    (typeof self !== "undefined" ? self : globalThis).VirtualFS;
+  const getFS = () => globalThis.VirtualFS;
 
   if (!hasDOM) {
     // Node: expose only the pure definitions for tests.
@@ -576,10 +573,10 @@
   // dialog and resolve with that value. Cancel resolves with null.
   const browseFiles = ({
     title,
-    startFolder = null,
-    filter = null,
+    startFolder,
+    filter,
     initialName = "",
-    acceptLabel = "&Open",
+    acceptLabel,
     onAccept,
   }) =>
     new Promise((resolve) => {
@@ -635,7 +632,7 @@
           name: nameInput.value.trim(),
         };
         Promise.resolve(onAccept(context)).then((result) => {
-          if (result !== false) dialog.close(result ?? null);
+          if (result !== false) dialog.close(result);
         });
       };
 

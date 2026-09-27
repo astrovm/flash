@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -14,6 +22,7 @@ import {
   watchDevelopmentBuild,
   parseServerArguments,
 } from "../tools/dev-server";
+import { bunCommand } from "./helpers/coverage";
 
 const temporaryDirectories: string[] = [];
 
@@ -69,6 +78,10 @@ describe("development build synchronization", () => {
     const initial = await computeSourceFingerprint(project);
     await writeFile(join(project, "README.md"), "ignored");
     expect(await computeSourceFingerprint(project)).toBe(initial);
+    await writeFile(join(project, "site", "new.js"), "untracked");
+    const untracked = await computeSourceFingerprint(project);
+    expect(untracked).not.toBe(initial);
+    await rm(join(project, "site", "new.js"));
     await writeFile(join(project, "site", "index.html"), "two");
     expect(await computeSourceFingerprint(project)).not.toBe(initial);
   });
@@ -317,4 +330,218 @@ test("server CLI parses build controls and validates ports and unknown arguments
   for (const flag of ["--port", "--hostname", "--directory"])
     expect(() => parseServerArguments([flag])).toThrow("requires a value");
   expect(() => parseServerArguments(["--unknown"])).toThrow("Unknown argument");
+});
+
+describe("development server edge cases", () => {
+  test("fingerprints build inputs from the filesystem outside Git", async () => {
+    const project = await makeTemporaryDirectory();
+    await mkdir(join(project, "site", "js"), { recursive: true });
+    await writeFile(join(project, "site", "index.html"), "one");
+    await writeFile(join(project, "site", "js", "main.js"), "main");
+    await writeFile(join(project, "package.json"), "{}");
+    await symlink(
+      join(project, "site", "index.html"),
+      join(project, "site", "link.html"),
+    );
+    const initial = await computeSourceFingerprint(project);
+    expect(await computeSourceFingerprint(project)).toBe(initial);
+    await writeFile(join(project, "site", "js", "main.js"), "changed");
+    expect(await computeSourceFingerprint(project)).not.toBe(initial);
+
+    await chmod(join(project, "package.json"), 0);
+    try {
+      await expect(computeSourceFingerprint(project)).rejects.toThrow();
+    } finally {
+      await chmod(join(project, "package.json"), 0o644);
+    }
+  });
+
+  test("rebuilds when the recorded build state is from another schema", async () => {
+    const output = await makeTemporaryDirectory();
+    await writeFile(join(output, "index.html"), "built");
+    await writeFile(
+      join(output, DEV_BUILD_STATE),
+      JSON.stringify({ schema: 1, fingerprint: "same" }),
+    );
+    let builds = 0;
+    const result = await ensureDevelopmentBuild({
+      outputDir: output,
+      fingerprint: async () => "same",
+      builder: async () => {
+        builds += 1;
+      },
+    });
+    expect(result).toEqual({ rebuilt: true });
+    expect(builds).toBe(1);
+  });
+
+  test("uses today's date for preview versions by default", () => {
+    const today = new Date().toISOString().slice(2, 10).replaceAll("-", ".");
+    expect(createPreviewVersion("abcdef0123")).toBe(`${today}-abcdef0`);
+  });
+
+  test("rejects unsupported methods, malformed paths, and missing files", async () => {
+    const root = await makeTemporaryDirectory();
+    await mkdir(join(root, "empty"));
+    await writeFile(join(root, "index.html"), "<h1>site</h1>");
+    const handler = createRequestHandler(root);
+    const request = (path: string, method = "GET") =>
+      handler(new Request(`http://localhost${path}`, { method }));
+    expect((await request("/", "POST")).status).toBe(405);
+    expect((await request("/%E0%A4%A")).status).toBe(400);
+    expect((await request("/missing.js")).status).toBe(404);
+    expect((await request("/empty/")).status).toBe(404);
+    const head = await request("/", "HEAD");
+    expect(head.status).toBe(200);
+    expect(head.headers.get("content-length")).toBe("13");
+    expect(await head.text()).toBe("");
+  });
+
+  test("uses default watch settings until closed", async () => {
+    const watcher = await watchDevelopmentBuild({
+      fingerprint: async () => "unchanged",
+      onReload: () => {},
+    });
+    watcher.close();
+  });
+
+  test("queues changes during a rebuild and reports failures", async () => {
+    const errors: unknown[][] = [];
+    const originalError = console.error;
+    console.error = (...arguments_: unknown[]) => errors.push(arguments_);
+    let version = 0;
+    let finishFirstBuild!: () => void;
+    const results: (() => Promise<{ rebuilt: boolean }>)[] = [
+      () =>
+        new Promise((resolve) => {
+          finishFirstBuild = () => resolve({ rebuilt: false });
+        }),
+      async () => {
+        throw new Error("build failed");
+      },
+      async () => {
+        throw "plain failure";
+      },
+    ];
+    let builds = 0;
+    const watcher = await watchDevelopmentBuild({
+      debounceMs: 5,
+      fingerprint: async () => {
+        if (version === 99) throw new Error("git unavailable");
+        if (version === 98) throw "fingerprint unavailable";
+        return String(version);
+      },
+      onReload: () => {},
+      rebuild: () => results[builds++]!(),
+    });
+    try {
+      const waitFor = async (condition: () => boolean) => {
+        for (let attempt = 0; attempt < 200 && !condition(); attempt += 1)
+          await Bun.sleep(5);
+        expect(condition()).toBeTrue();
+      };
+      version = 1;
+      await waitFor(() => builds === 1);
+      version = 2;
+      await Bun.sleep(30);
+      finishFirstBuild();
+      await waitFor(() => builds === 2);
+      version = 3;
+      await waitFor(() => builds === 3);
+      version = 99;
+      await waitFor(() =>
+        errors.some(([, message]) => message === "git unavailable"),
+      );
+      version = 98;
+      await waitFor(() =>
+        errors.some(([, message]) => message === "fingerprint unavailable"),
+      );
+    } finally {
+      watcher.close();
+      console.error = originalError;
+    }
+    expect(errors.map(([, message]) => message)).toEqual(
+      expect.arrayContaining(["build failed", "plain failure"]),
+    );
+  });
+
+  const serverScript = join(import.meta.dir, "..", "tools", "dev-server.ts");
+
+  // Starts the dev server CLI, waits for it to listen, and returns its URL.
+  async function startServer(...arguments_: string[]) {
+    const server = Bun.spawn(bunCommand(serverScript, ...arguments_), {
+      stderr: "pipe",
+      stdout: "pipe",
+    });
+    const reader = server.stdout.getReader();
+    const decoder = new TextDecoder();
+    let output = "";
+    while (!output.includes("Server running on")) {
+      const { done, value } = await reader.read();
+      if (done) throw new Error(`Server exited early:\n${output}`);
+      output += decoder.decode(value);
+    }
+    const url = output.match(/Server running on (\S+)/)![1];
+    return {
+      url,
+      async stop() {
+        reader.releaseLock();
+        server.kill("SIGTERM");
+        await server.exited;
+      },
+    };
+  }
+
+  test("refuses to serve an unbuilt directory without synchronization", async () => {
+    const directory = await makeTemporaryDirectory();
+    const result = Bun.spawnSync(
+      bunCommand(serverScript, "--no-sync", "--directory", directory),
+      { stderr: "pipe", stdout: "pipe" },
+    );
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr.toString()).toContain("is not built");
+  });
+
+  test("serves an existing preview build from the command line", async () => {
+    const directory = await makeTemporaryDirectory();
+    await writeFile(join(directory, "index.html"), "<body>preview</body>");
+    const server = await startServer(
+      "--no-sync",
+      "--production",
+      "--port",
+      "0",
+      "--directory",
+      directory,
+    );
+    try {
+      expect(await (await fetch(server.url)).text()).toBe(
+        "<body>preview</body>",
+      );
+    } finally {
+      await server.stop();
+    }
+  });
+
+  test("watches an in-sync development build from the command line", async () => {
+    const directory = await makeTemporaryDirectory();
+    await writeFile(join(directory, "index.html"), "<body>dev</body>");
+    await writeFile(
+      join(directory, DEV_BUILD_STATE),
+      JSON.stringify({
+        schema: 2,
+        fingerprint: await computeSourceFingerprint(),
+        generatedAt: new Date().toISOString(),
+      }),
+    );
+    const server = await startServer("--port", "0", "--directory", directory);
+    try {
+      expect(await (await fetch(server.url)).text()).toContain(
+        "window.ASTRO_DEV = true",
+      );
+    } finally {
+      await server.stop();
+    }
+    // The server fingerprints the real source tree and rebuilds into the
+    // temporary directory if a parallel test changed it in the meantime.
+  }, 60_000);
 });

@@ -415,4 +415,82 @@ describe("file operations", () => {
       ids: [atomicB.id],
     });
   });
+
+  test("isolates listener failures and rejects invalid listeners", () => {
+    const errors = [];
+    const original = console.error;
+    console.error = (...args) => errors.push(args);
+    let calls = 0;
+    operations.subscribe(() => {
+      throw new Error("listener failed");
+    });
+    operations.subscribe(() => calls++);
+    try {
+      operations.copy([fs.MY_DOCUMENTS]);
+    } finally {
+      console.error = original;
+    }
+    expect(errors[0][0]).toBe("FileOperations listener error:");
+    expect(calls).toBe(1);
+    expect(() => operations.subscribe(null)).toThrow("must be a function");
+  });
+
+  test("rejects invalid selections and destinations", async () => {
+    const { note, source, nested } = createClipboardFixture();
+    expect(() => operations.copy("not-an-array")).toThrow("must be an array");
+    expect(() => operations.copy([])).toThrow("select at least one item");
+    expect(() => operations.copy(["missing"])).toThrow(
+      '"missing" was not found',
+    );
+    operations.copy([note.id]);
+    expect(() => operations.paste(note.id)).toThrow("must be a folder");
+    operations.cut([source.id]);
+    expect(() => operations.paste(nested.id)).toThrow("into itself");
+    fs.getNode(source.id).protected = true;
+    expect(() => operations.paste(fs.DESKTOP)).toThrow("access is denied");
+    expect(() => operations.cut([fs.MY_DOCUMENTS])).toThrow("access is denied");
+    operations.resetForTests();
+    await expect(operations.pasteWithConflicts(fs.DESKTOP)).rejects.toThrow(
+      "clipboard is empty",
+    );
+  });
+
+  test("renames conflicts without a resolver and stops a cancelled copy", async () => {
+    const { note, destination } = createClipboardFixture();
+    operations.createFile(destination.id, "note.txt");
+    operations.copy([note.id]);
+    const renamed = await operations.pasteWithConflicts(destination.id);
+    expect(renamed.results[0].name).toBe("note (2).txt");
+    const stopped = await operations.pasteWithConflicts(destination.id, null, {
+      isCancelled: () => true,
+    });
+    expect(stopped).toEqual({ cancelled: true, results: [] });
+    expect(operations.getClipboard().mode).toBe("copy");
+  });
+
+  test("clears a cut clipboard when every remaining item disappears during a cancelled paste", async () => {
+    const { note, destination } = createClipboardFixture();
+    operations.createFile(destination.id, "note.txt");
+    operations.cut([note.id]);
+    const result = await operations.pasteWithConflicts(
+      destination.id,
+      async () => {
+        await fs.destroy(note.id);
+        return "rename";
+      },
+      { isCancelled: () => true },
+    );
+    expect(result.cancelled).toBeTrue();
+    expect(operations.getClipboard()).toBeNull();
+  });
+
+  test("restores items whose original folders refer to each other", () => {
+    const first = operations.createFolder(fs.DESKTOP, "First");
+    const second = operations.createFolder(fs.DESKTOP, "Second");
+    operations.removeToBin([first.id, second.id]);
+    fs.getNode(first.id).originalParent = second.id;
+    fs.getNode(second.id).originalParent = first.id;
+    const restored = operations.restore([first.id, second.id]);
+    expect(restored.map((node) => node.parent)).toEqual([fs.DESKTOP, first.id]);
+  });
 });

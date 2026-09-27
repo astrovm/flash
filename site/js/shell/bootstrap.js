@@ -47,7 +47,7 @@ let altTabOrder = null;
 let altTabIndex = 0;
 const getMruWindows = () =>
   [...openWindows.values()].sort((a, b) => b.zIndex - a.zIndex);
-const cycleShellWindow = (direction = 1, showSwitcher = false) => {
+const cycleShellWindow = (direction, showSwitcher) => {
   const windows = showSwitcher && altTabOrder ? altTabOrder : getMruWindows();
   if (!windows.length) return;
   if (showSwitcher && !altTabOrder) {
@@ -172,7 +172,8 @@ gameLibraryInitialization = Promise.race([
 
 document.addEventListener("DOMContentLoaded", () => {
   setupExplorerFilesystemSync();
-  initializeOfflineMode();
+  // Failures are logged; played-game downloads await the same promise.
+  initializeOfflineMode().catch(() => {});
   setupScreenFlow();
   setupDesktopContextMenu();
   setupWindowSystemMenu();

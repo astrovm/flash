@@ -41,3 +41,18 @@ describe("storage policy", () => {
     );
   });
 });
+
+describe("storage policy normalization", () => {
+  test("wraps thrown values that are not errors", () => {
+    expect(policy.normalizeError("disk offline").message).toBe("disk offline");
+    expect(policy.errorMessage(42)).toBe("42");
+  });
+
+  test("reports non-numeric storage estimates as unknown", async () => {
+    expect(
+      await policy.estimate({
+        estimate: async () => ({ usage: "lots", quota: Infinity }),
+      }),
+    ).toEqual({ usage: null, quota: null, usageDetails: null });
+  });
+});

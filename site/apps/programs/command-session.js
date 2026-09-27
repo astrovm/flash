@@ -100,7 +100,9 @@ export class CommandSession {
     for (const segment of segments) {
       if (segment === ".") continue;
       if (segment === "..") {
-        current = this.fs.getParent(current)?.id || current;
+        // Like cmd.exe, ".." stops at the drive root.
+        const parent = this.fs.getParent(current);
+        if (parent && parent.id !== this.fs.MY_COMPUTER) current = parent.id;
         continue;
       }
       const child = this.fs.findChild(current, segment);
@@ -154,11 +156,10 @@ export class CommandSession {
   }
 
   changeDrive(drive) {
-    const root = { c: this.fs.DRIVE_C, d: this.fs.DRIVE_D, f: this.fs.DRIVE_F }[
+    // executeInTransaction only routes c:, d:, and f: here.
+    this.cwd = { c: this.fs.DRIVE_C, d: this.fs.DRIVE_D, f: this.fs.DRIVE_F }[
       drive[0].toLowerCase()
     ];
-    if (!root) return { output: "The system cannot find the drive specified." };
-    this.cwd = root;
     return { output: "" };
   }
 
@@ -388,7 +389,8 @@ export class CommandSession {
   }
 
   command_start(args) {
-    const values = args[0] === "" ? args.slice(1) : args;
+    // The tokenizer drops empty quoted titles such as `start "" notepad`.
+    const values = args;
     if (!values.length)
       return { output: "The system cannot find the file specified." };
     const pathId = this.resolve(values.join(" "));

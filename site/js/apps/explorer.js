@@ -107,10 +107,7 @@ const SHELL_COMMANDS = [
   { id: "run", title: "Run", aliases: ["run"], run: () => openRunDialog() },
 ];
 
-const normalizeShellCommand = (value) =>
-  String(value || "")
-    .trim()
-    .toLowerCase();
+const normalizeShellCommand = (value) => value.trim().toLowerCase();
 const resolveShellCommand = (value) => {
   const command = normalizeShellCommand(value);
   if (!command) return null;
@@ -156,11 +153,7 @@ const rememberRunCommand = (value) => {
   writeJsonStorage(RUN_HISTORY_KEY, [text, ...history].slice(0, 10));
 };
 
-const searchVirtualNodes = ({
-  query = "",
-  locationId = fs.MY_COMPUTER,
-  type = "all",
-} = {}) => {
+const searchVirtualNodes = ({ query, locationId, type }) => {
   const wanted = normalizeShellCommand(query);
   const matches = (name) => !wanted || name.toLowerCase().includes(wanted);
   const results = [];
@@ -216,7 +209,7 @@ const wireSearchCompanion = (win) => {
   const type = content.querySelector("#search-type");
   const status = content.querySelector(".search-results-status");
   const list = content.querySelector(".search-results-list");
-  const showForm = (kind = "all") => {
+  const showForm = (kind) => {
     startPanel.hidden = true;
     formPanel.hidden = false;
     type.value = ["media", "documents"].includes(kind) ? "files" : "all";
@@ -664,7 +657,7 @@ const readAllDirectoryEntries = (reader) =>
       }, reject);
     read();
   });
-const importFileEntry = (entry, destinationId, state = {}) =>
+const importFileEntry = (entry, destinationId, state) =>
   new Promise((resolve, reject) =>
     entry.file(async (file) => {
       try {
@@ -696,7 +689,7 @@ const importFileEntry = (entry, destinationId, state = {}) =>
       }
     }, reject),
   );
-const importDirectoryEntry = async (entry, destinationId, state = {}) => {
+const importDirectoryEntry = async (entry, destinationId, state) => {
   if (state.cancelled) return;
   const created = [];
   try {
@@ -727,24 +720,16 @@ const importDirectoryEntry = async (entry, destinationId, state = {}) => {
     throw error;
   }
 };
+// Only writable folders are wired as drop targets (see wireFolderDropTarget).
 const importDroppedFiles = async (destinationId, dataTransfer) => {
-  if ([fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(destinationId)) {
-    XPDialogs.alert(
-      "This location cannot accept dropped files.",
-      "File Operation Error",
-      "error",
-    );
-    return;
-  }
-  const progress = XPDialogs.progress({
+  const state = { cancelled: false, completed: 0 };
+  state.progress = XPDialogs.progress({
     title: "Importing...",
     text: "Preparing dropped files...",
     cancellable: true,
-  });
-  const state = { cancelled: false, completed: 0, progress };
-  const cancelButton = progress.el.querySelector("button");
-  cancelButton?.addEventListener("click", () => {
-    state.cancelled = true;
+    onCancel: () => {
+      state.cancelled = true;
+    },
   });
   try {
     const entries = [...(dataTransfer.items || [])]
@@ -765,7 +750,7 @@ const importDroppedFiles = async (destinationId, dataTransfer) => {
       await importFileEntry({ file: (ok) => ok(file) }, destinationId, state);
     }
   } finally {
-    progress.close();
+    state.progress.close();
   }
 };
 const wireFolderDropTarget = (element, destinationId) => {
@@ -836,7 +821,7 @@ const navigateExplorer = (win, folderId, { history = true } = {}) => {
   const folder = fs.getNode(folderId);
   if (!folder || folder.type !== "folder") return false;
   if (history) {
-    const entries = (win.history || []).slice(0, (win.historyIndex ?? -1) + 1);
+    const entries = win.history.slice(0, win.historyIndex + 1);
     if (entries.at(-1) !== folderId) entries.push(folderId);
     win.history = entries;
     win.historyIndex = entries.length - 1;
@@ -847,13 +832,13 @@ const navigateExplorer = (win, folderId, { history = true } = {}) => {
 };
 
 const explorerBack = (win) => {
-  if ((win.historyIndex ?? 0) <= 0) return;
+  if (win.historyIndex <= 0) return;
   win.historyIndex -= 1;
   navigateExplorer(win, win.history[win.historyIndex], { history: false });
 };
 
 const explorerForward = (win) => {
-  if ((win.historyIndex ?? -1) >= (win.history?.length ?? 0) - 1) return;
+  if (win.historyIndex >= win.history.length - 1) return;
   win.historyIndex += 1;
   navigateExplorer(win, win.history[win.historyIndex], { history: false });
 };
@@ -994,7 +979,7 @@ const openExplorerContextMenu = (win, clientX, clientY) => {
   menu.className = "xp-context-menu explorer-context-menu";
   menu.setAttribute("role", "menu");
   const close = () => menu.remove();
-  const add = (label, command, disabled = false) => {
+  const add = (label, command, disabled) => {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = label;
@@ -1104,7 +1089,6 @@ const createExplorerIcon = (node) => {
   if (node.id === fs.DRIVE_F) return addImage("RemovableMedia.png");
   if (node.id === fs.MY_MUSIC) return addImage("MyMusic.png");
   if (node.id === fs.MY_PICTURES) return addImage("MyPictures.png");
-  if (node.id === fs.MY_COMPUTER) return addImage("MyComputer.png");
   if (node.app && systemShortcuts[node.app]) {
     const shortcut = createGameIconElement(node.app, "explorer-item-icon");
     shortcut.classList.remove("system-icon");
@@ -1202,9 +1186,9 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
                 : XP_ICON_PATHS["MyDocuments.png"];
     }
     chrome.querySelector('[data-explorer-action="back"]').disabled =
-      (win.historyIndex ?? 0) <= 0;
+      win.historyIndex <= 0;
     chrome.querySelector('[data-explorer-action="forward"]').disabled =
-      (win.historyIndex ?? -1) >= (win.history?.length ?? 0) - 1;
+      win.historyIndex >= win.history.length - 1;
     chrome.querySelector('[data-explorer-action="up"]').disabled =
       !folder.parent &&
       ![fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId);
@@ -1224,7 +1208,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   heading.hidden = !heading.textContent || folder.id === fs.MY_COMPUTER;
 
   const items = main.querySelector(".explorer-items");
-  items.dataset.view = win.explorerView || "tiles";
+  items.dataset.view = win.explorerView;
   items.innerHTML = "";
 
   const myComputerGroup = (node) =>

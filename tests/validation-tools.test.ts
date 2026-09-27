@@ -7,6 +7,7 @@ import { zipSync, unzipSync } from "fflate";
 import { validateIcons } from "../tools/validate-icons";
 import { validateJavaScript } from "../tools/validate-javascript";
 import { buildBoxedWineXpFilesystem } from "../tools/build-boxedwine-xp-filesystem";
+import { bunCommand } from "./helpers/coverage";
 const roots: string[] = [];
 afterEach(async () => {
   await Promise.all(
@@ -136,4 +137,27 @@ test("XP filesystem builder follows symlinks, installs the theme and creates a r
   await expect(buildBoxedWineXpFilesystem(options)).rejects.toThrow(
     "Blue color scheme was not found",
   );
+});
+
+test("icon validation treats a catalog without games as empty", async () => {
+  const dir = await root();
+  await mkdir(join(dir, "js"));
+  await mkdir(join(dir, "assets/icons"), { recursive: true });
+  await writeFile(join(dir, "js/games.js"), "window.OTHER = {};");
+  await writeFile(join(dir, "assets/icons/SOURCES.json"), "{}");
+  expect(validateIcons(dir)).toEqual({ errors: [], missing: [], validated: 0 });
+});
+test("validation command lines check the real site", () => {
+  for (const [tool, output] of [
+    ["validate-icons.ts", "sourced icons"],
+    ["validate-javascript.ts", "browser JavaScript files"],
+  ]) {
+    const result = Bun.spawnSync(
+      bunCommand(join(import.meta.dir, "..", "tools", tool)),
+      { stderr: "pipe", stdout: "pipe" },
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.toString()).toContain(output);
+  }
+  expect(validateIcons().errors).toEqual([]);
 });

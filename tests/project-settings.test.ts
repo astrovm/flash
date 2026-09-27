@@ -348,3 +348,215 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
   button("OK").click();
   expect(dialog.isConnected).toBeFalse();
 });
+
+test("restoring the desktop and resetting reload the page or report failures", async () => {
+  const h = await setup();
+  let reloads = 0;
+  Object.defineProperty(h.s.window.location, "reload", {
+    configurable: true,
+    value: () => reloads++,
+  });
+  for (const id of ["restore-desktop", "reset"]) {
+    h.action(id).click();
+    await h.answer("Yes");
+    await flushShell();
+  }
+  expect(reloads).toBe(2);
+  const transaction = h.s.window.VirtualFS.transaction;
+  const reset = h.s.window.VirtualFS.reset;
+  h.s.window.VirtualFS.transaction = async () => {
+    throw new Error("");
+  };
+  h.s.window.VirtualFS.reset = async () => {
+    throw new Error("");
+  };
+  try {
+    for (const id of ["restore-desktop", "reset"]) {
+      h.action(id).click();
+      await h.answer("Yes");
+      await flushShell();
+      expect(
+        [...h.s.document.querySelectorAll(".xp-dialog")].at(-1).textContent,
+      ).toContain("The file operation failed.");
+      await h.answer("OK");
+    }
+  } finally {
+    h.s.window.VirtualFS.transaction = transaction;
+    h.s.window.VirtualFS.reset = reset;
+  }
+});
+
+test("settings report failed offline changes and skip update checks when automatic updates are off", async () => {
+  const calls = [];
+  let gamesChanged;
+  const h = await setup({
+    offlineSettings: { automaticUpdatesEnabled: false },
+    gameLibraryManager: {
+      subscribe: (listener) => {
+        gamesChanged = listener;
+        return () => {};
+      },
+      initialize: async () => ({}),
+      getInstallations: async () => [],
+    },
+    offlineMethods: {
+      setOfflineEnabled: async () => {
+        throw new Error("worker unavailable");
+      },
+      downloadGame: async () => {
+        throw new Error("quota exceeded");
+      },
+      checkForUpdates: async (options) => {
+        calls.push(options);
+        throw new Error("offline");
+      },
+      updateNow: async () => {
+        throw new Error("offline");
+      },
+      refreshStorageEstimate: async () => {},
+    },
+  });
+  h.setting("update-delay", 2);
+  expect(calls).toEqual([]);
+  h.action("check").click();
+  h.action("update-now").click();
+  await flushShell();
+  h.setting("offline-enabled", false);
+  await h.answer("Yes");
+  await flushShell();
+  expect(
+    h.content.querySelector('[data-project-status="offline"]').textContent,
+  ).toBe("worker unavailable");
+  const checkbox = h.content.querySelector('[data-offline-game="freecell"]');
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new h.s.window.Event("change", { bubbles: true }));
+  await flushShell();
+  expect(
+    h.content.querySelector('[data-project-status="offline-games"]')
+      .textContent,
+  ).toBe("quota exceeded");
+  h.content
+    .querySelector("[data-project-offline-games], .project-offline-games")
+    ?.dispatchEvent(new h.s.window.Event("change", { bubbles: true }));
+  gamesChanged({});
+  await flushShell();
+});
+
+test("game data removal ignores stray clicks and declined confirmations", async () => {
+  const external = [{ id: "iso", title: "CD data", detail: "ISO", bytes: 1 }];
+  const removed = [];
+  const h = await setup({
+    gameDataManager: {
+      list: async () => external,
+      remove: async (id) => removed.push(id),
+    },
+  });
+  h.content.querySelector("#project-tab-games").click();
+  await flushShell();
+  const list = h.content.querySelector("[data-project-game-data]");
+  list.dispatchEvent(new h.s.window.MouseEvent("click", { bubbles: true }));
+  h.content.querySelector('[data-game-data-id="iso"]').click();
+  await h.answer("No");
+  expect(removed).toEqual([]);
+});
+
+test("settings describe unusual offline states", async () => {
+  const h = await setup();
+  const value = (id) =>
+    h.content.querySelector(`[data-project-value="${id}"]`)?.textContent;
+  h.state({
+    phase: "mystery",
+    workerState: "",
+    downloadBytes: null,
+    downloadMetadataError: false,
+    updateReady: true,
+    availableVersion: null,
+    automaticUpdateDelayMs: null,
+    releaseUpdateDelayMs: 2 * 60 * 60 * 1000,
+  });
+  expect(value("offlineFiles")).toBe("Unavailable");
+  expect(value("downloadSize")).toBe("Checking...");
+  expect(
+    h.content.querySelector('[data-project-status="offline"]').textContent,
+  ).toContain("Offline status is unavailable.");
+  expect(h.content.textContent).toContain("Astro Flash update is ready");
+  expect(
+    h.content.querySelector('[data-project-setting="update-delay"]').value,
+  ).toBe("2");
+  h.s.window.dispatchEvent(
+    new h.s.window.MessageEvent("message", {
+      origin: "https://elsewhere.example",
+      data: { event: "astro.game-data-changed" },
+    }),
+  );
+  h.s.window.dispatchEvent(
+    new h.s.window.MessageEvent("message", {
+      origin: h.s.window.location.origin,
+      data: { event: "other" },
+    }),
+  );
+});
+
+test("the tray volume menu opens Volume Control and ignores invalid levels", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: { taskbarSettings: JSON.stringify({ edge: "top" }) },
+    }),
+  );
+  const button = s.document.getElementById("tray-volume-button");
+  button.click();
+  expect(s.document.getElementById("tray-volume-popup").hidden).toBeFalse();
+  const slider = s.document.getElementById("tray-volume-slider");
+  slider.value = "abc";
+  slider.dispatchEvent(new s.window.Event("input"));
+  button.dispatchEvent(
+    new s.window.MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
+  );
+  const menu = s.document.getElementById("tray-volume-menu");
+  expect(menu.hidden).toBeFalse();
+  menu.querySelector("button").click();
+  await flushShell();
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="__volume-control"]'),
+  ).toBeTrue();
+  const clock = s.document.getElementById("taskbar-clock");
+  clock.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
+  );
+  clock.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: " ", bubbles: true }),
+  );
+  expect(!!s.document.querySelector(".xp-dialog")).toBeTrue();
+});
+
+test("offline initialization failures and played-game downloads are reported", async () => {
+  const errors = [];
+  const warnings = [];
+  const s = await loadShell({
+    offlineSettings: { savePlayedGamesOffline: true, enabled: true },
+    offlineMethods: {
+      initialize: async () => {
+        throw new Error("worker blocked");
+      },
+      downloadGame: async () => {
+        throw new Error("quota");
+      },
+    },
+  });
+  s.window.console.error = (...args) => errors.push(args);
+  s.window.console.warn = (...args) => warnings.push(args);
+  await login(s);
+  await flushShell();
+  s.window.history.replaceState(null, "", "#freecell");
+  s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
+  await flushShell();
+  await flushShell();
+  Object.defineProperty(s.window.navigator, "onLine", {
+    configurable: true,
+    value: false,
+  });
+  s.window.history.replaceState(null, "", "#hearts");
+  s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
+  await flushShell();
+  expect(warnings.length + errors.length).toBeGreaterThan(0);
+});

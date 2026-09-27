@@ -11,6 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import {
+  basename,
   dirname,
   extname,
   isAbsolute,
@@ -208,10 +209,8 @@ function releaseRelativePath(version: string): string {
   return `${RELEASES_PATH}/${version}`;
 }
 
+// Callers validate the version through releaseRelativePath first.
 function versionedServiceWorkerName(version: string): string {
-  if (!/^[a-zA-Z0-9._-]+$/.test(version)) {
-    throw new Error(`Invalid service worker version: ${version}`);
-  }
   return `sw.${version}.js`;
 }
 
@@ -1092,7 +1091,7 @@ export async function generateServiceWorker(
     await writeFile(serviceWorker, workerSource);
   }
   for (const path of await getWorkboxFiles(outputDir)) {
-    const name = path.split(sep).at(-1) ?? "";
+    const name = basename(path);
     if (name.startsWith("workbox-")) await rm(path);
   }
   if (version) {
@@ -1192,7 +1191,7 @@ export async function validateOutput(outputDir: string): Promise<void> {
     throw new Error("Build output has no uniquely hashed favicon");
   }
   for (const path of [...staticFiles, ...favicons]) {
-    const filename = path.split(sep).at(-1) ?? "";
+    const filename = basename(path);
     const match = filename.match(/\.([a-f0-9]{8})\.[^./]+$/);
     if (!match || (await getShortHash(path)) !== match[1]) {
       throw new Error(

@@ -210,3 +210,46 @@ describe("Flash URL router", () => {
     expect(xml).toContain("Play%20Game%20With%20BREAD");
   });
 });
+
+describe("Flash URL router validation", () => {
+  const route = (gameId: string, localPath: string) => ({
+    [gameId]: {
+      archive: { routes: { "https://media.example/main.swf": localPath } },
+    },
+  });
+
+  test("requires a page URL and accepts an empty catalog", () => {
+    expect(() => routerApi.create({})).toThrow("requires a page URL");
+    expect(
+      routerApi.create(null, "https://astro.example/").resolve("/x.swf"),
+    ).toBeNull();
+  });
+
+  test("rejects routes outside their package and invalid versioned roots", () => {
+    expect(() =>
+      routerApi.create(
+        route("first", "swf/second/main.swf"),
+        "https://astro.example/",
+      ),
+    ).toThrow("escapes its game package");
+    for (const gameRoot of ["iframe/first/", "swf/first", 42])
+      expect(() =>
+        routerApi.create(
+          route("first", "swf/first/main.swf"),
+          "https://astro.example/",
+          { first: gameRoot },
+        ),
+      ).toThrow("Invalid versioned Flash root");
+  });
+
+  test("keeps HEAD requests as HEAD", () => {
+    const router = routerApi.create(
+      route("first", "swf/first/main.swf"),
+      "https://astro.example/",
+    );
+    expect(
+      router.rewrite("https://media.example/main.swf", { method: "HEAD" })
+        .request.method,
+    ).toBe("HEAD");
+  });
+});

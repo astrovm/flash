@@ -27,7 +27,6 @@ export const createSystemRuntime = (context) => {
     renderTaskButtons,
     selectedExplorerNodes,
     setAccessKeyText,
-    toggleTrayVolumePopup,
     wireProjectSettings,
   } = context;
 
@@ -261,8 +260,6 @@ export const createSystemRuntime = (context) => {
         openDisplayTab("settings");
       } else if (action === "taskbar-properties") {
         openTaskbarProperties();
-      } else if (action === "advanced-volume") {
-        toggleTrayVolumePopup();
       } else if (action === "date-time") {
         openDateTimeProperties();
       }
@@ -850,7 +847,6 @@ export const createSystemRuntime = (context) => {
             item.dataset[commandAttribute] = entry.action;
             item.disabled = !!entry.disabled;
             item.setAttribute("role", "menuitem");
-            if (entry.default) item.classList.add("explorer-menu-default");
             if (entry.checked) item.classList.add("checked");
             if (entry.radio || entry.checked) {
               const check = document.createElement("span");
@@ -882,7 +878,7 @@ export const createSystemRuntime = (context) => {
             menu.appendChild(item);
           });
       };
-      const showExplorerSubmenu = (name, parentItem, focusFirst = false) => {
+      const showExplorerSubmenu = (name, parentItem, focusFirst) => {
         const entries = explorerSubmenus[name];
         if (!entries) return false;
         renderExplorerMenuEntries(
@@ -899,7 +895,7 @@ export const createSystemRuntime = (context) => {
           explorerSubmenu.querySelector("button:not(:disabled)")?.focus();
         return true;
       };
-      const showExplorerMenu = (name, button, focusFirst = false) => {
+      const showExplorerMenu = (name, button, focusFirst) => {
         const selected = selectedExplorerNodes(win);
         const protectedSelection = selected.some((id) => fs.isProtected(id));
         const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
@@ -973,7 +969,7 @@ export const createSystemRuntime = (context) => {
               label: "Tiles",
               action: "tiles",
               radio: true,
-              checked: (win.explorerView || "tiles") === "tiles",
+              checked: win.explorerView === "tiles",
             },
             {
               label: "Icons",
@@ -1035,11 +1031,6 @@ export const createSystemRuntime = (context) => {
               return;
             }
             const selected = selectedExplorerNodes(win);
-            if (
-              command === "new" &&
-              ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(win.currentFolderId)
-            )
-              await fileOps.createFolder(win.currentFolderId, "New Folder");
             if (command === "close") closeGameWindow(win.gameId);
             if (command === "cut") fileOps.cut(selected);
             if (command === "copy") fileOps.copy(selected);
@@ -1070,7 +1061,6 @@ export const createSystemRuntime = (context) => {
               win.explorerView = command;
               renderExplorerItems(win);
             }
-            if (command === "documents") openSystemWindow("__my-documents");
             if (command === "properties-current")
               openShellProperties(selected[0] || win.currentFolderId);
             if (command === "select-all")
@@ -1140,9 +1130,7 @@ export const createSystemRuntime = (context) => {
           if (action === "view") {
             const views = ["tiles", "thumbnails", "icons", "list", "details"];
             win.explorerView =
-              views[
-                (views.indexOf(win.explorerView || "tiles") + 1) % views.length
-              ];
+              views[(views.indexOf(win.explorerView) + 1) % views.length];
             renderExplorerItems(win);
           }
           if (action === "search") openSearchDialog();

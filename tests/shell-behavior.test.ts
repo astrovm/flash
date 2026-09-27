@@ -52,7 +52,10 @@ describe("Windows XP shell", () => {
     await shell.advanceTime(1800);
     expect(boot.hidden).toBeFalse();
     releaseLibrary({});
-    await shell.advanceTime(150);
+    // The handoff waits on storage promises and then several animation
+    // frames; advance in small steps so a slow run cannot outpace it.
+    for (let step = 0; step < 20 && !boot.hidden; step++)
+      await shell.advanceTime(50);
     expect(clearedBeforeWelcome).toBeTrue();
     expect(boot.hidden).toBeTrue();
     expect(shell.document.getElementById("welcome-screen")!.hidden).toBeFalse();

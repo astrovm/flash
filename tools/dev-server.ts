@@ -284,7 +284,7 @@ function noCacheHeaders(extra: HeadersInit = {}): Headers {
 async function staticResponse(
   request: Request,
   directory: string,
-  development = false,
+  development: boolean,
 ): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed.", {

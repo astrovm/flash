@@ -3,8 +3,8 @@
 (function exposeStoragePolicy(root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (root) root.AstroStoragePolicy = api;
-})(typeof window !== "undefined" ? window : globalThis, function () {
+  root.AstroStoragePolicy = api;
+})(globalThis, function () {
   const QUOTA_MESSAGE =
     "The browser refused the storage write because its actual storage quota was reached.";
 

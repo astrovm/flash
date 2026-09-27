@@ -255,3 +255,216 @@ describe("virtual filesystem", () => {
     expect(fs.open(afterReset.id), "reset preserves file handlers").toBe(true);
   });
 });
+
+describe("virtual filesystem edge cases", () => {
+  const storedNodes = (nodes) =>
+    JSON.stringify({ version: 1, nodes: { ...nodes } });
+  const node = (id, overrides = {}) => ({
+    id,
+    name: id,
+    type: "file",
+    parent: null,
+    children: [],
+    created: 0,
+    modified: 0,
+    size: 0,
+    protected: false,
+    ext: "",
+    content: "",
+    app: null,
+    originalParent: null,
+    originalName: null,
+    ...overrides,
+  });
+
+  const withConsoleErrors = (callback) => {
+    const errors = [];
+    const original = console.error;
+    console.error = (...args) => errors.push(args);
+    try {
+      callback();
+    } finally {
+      console.error = original;
+    }
+    return errors;
+  };
+
+  test("keeps files in memory when browser storage is missing or blocked", () => {
+    for (const storage of [
+      undefined,
+      {
+        getItem() {
+          throw new Error("blocked");
+        },
+      },
+    ]) {
+      global.localStorage = storage;
+      const fs = loadFilesystem();
+      const file = fs.createFile(fs.DESKTOP, "memo.txt", { content: "kept" });
+      expect(fs.getContent(file.id)).toBe("kept");
+      fs.resetForTests();
+      expect(fs.getNode(file.id)).toBeNull();
+    }
+    delete global.localStorage;
+  });
+
+  test("repairs missing and malformed system folders from stored data", () => {
+    installMemoryStorage();
+    const seed = loadFilesystem();
+    const nodes = Object.fromEntries(
+      Object.keys(seed.WELL_KNOWN).map((key) => [
+        seed.WELL_KNOWN[key],
+        { ...seed.getNode(seed.WELL_KNOWN[key]) },
+      ]),
+    );
+    delete nodes[seed.MY_MUSIC];
+    nodes[seed.MY_DOCUMENTS].children = nodes[
+      seed.MY_DOCUMENTS
+    ].children.filter((id) => id !== seed.MY_MUSIC);
+    nodes[seed.MY_PICTURES].children = "corrupt";
+    localStorage.setItem("virtualFileSystem", storedNodes(nodes));
+    const fs = loadFilesystem();
+    expect(fs.getParent(fs.MY_MUSIC).id).toBe(fs.MY_DOCUMENTS);
+    expect(fs.getChildren(fs.MY_DOCUMENTS).map(({ id }) => id)).toContain(
+      fs.MY_MUSIC,
+    );
+    expect(fs.getChildren(fs.MY_PICTURES)).toEqual([]);
+  });
+
+  test("reports unreadable stored data and starts from the seed", () => {
+    installMemoryStorage();
+    localStorage.setItem("virtualFileSystem", "{broken");
+    let fs;
+    const errors = withConsoleErrors(() => {
+      fs = loadFilesystem();
+    });
+    expect(errors[0][0]).toContain("failed to read stored filesystem");
+    expect(fs.getNode(fs.DESKTOP)).toBeTruthy();
+  });
+
+  test("rolls back an edit when storage rejects the write", () => {
+    for (const [error, message] of [
+      [
+        Object.assign(new Error("full"), { name: "QuotaExceededError" }),
+        "full",
+      ],
+      [Object.assign(new Error("full"), { code: 22 }), "full"],
+      [new Error("disk failure"), "disk failure"],
+    ]) {
+      installMemoryStorage();
+      const fs = loadFilesystem();
+      const setItem = localStorage.setItem;
+      localStorage.setItem = () => {
+        throw error;
+      };
+      expect(() => fs.createFile(fs.DESKTOP, "new.txt")).toThrow(message);
+      localStorage.setItem = setItem;
+      expect(fs.findChild(fs.DESKTOP, "new.txt")).toBeNull();
+    }
+  });
+
+  test("keeps notifying after a listener throws", () => {
+    installMemoryStorage();
+    const fs = loadFilesystem();
+    let notified = 0;
+    fs.subscribe(() => {
+      throw new Error("listener failed");
+    });
+    fs.subscribe(() => {
+      notified += 1;
+    });
+    const errors = withConsoleErrors(() => fs.createFolder(fs.DESKTOP, "New"));
+    expect(errors[0][0]).toBe("VirtualFS listener error:");
+    expect(notified).toBe(1);
+  });
+
+  test("answers lookups for missing items and unusual paths", () => {
+    installMemoryStorage();
+    const fs = loadFilesystem();
+    expect(fs.getParent("missing")).toBeNull();
+    expect(fs.getParent(fs.MY_COMPUTER)).toBeNull();
+    expect(fs.getChildren("missing")).toEqual([]);
+    expect(fs.getPath("missing")).toBeNull();
+    expect(fs.getSize("missing")).toBe(0);
+    expect(fs.resolvePath(null)).toBeNull();
+    expect(fs.resolvePath("   ")).toBeNull();
+    expect(fs.resolvePath("\\\\")).toBeNull();
+    expect(fs.resolvePath("Recycle Bin")).toBe(fs.RECYCLE_BIN);
+    expect(() => fs.createFolder(fs.DESKTOP, null)).toThrow(
+      "a name is required",
+    );
+    expect(fs.createFolder(fs.DESKTOP, 2026).name).toBe("2026");
+    expect(fs.createFile(fs.DESKTOP, "README").ext).toBe("");
+    expect(fs.createFile(fs.DESKTOP, ".profile").ext).toBe("");
+  });
+
+  test("renames folders, sizes files, and renames files while saving", () => {
+    installMemoryStorage();
+    const fs = loadFilesystem();
+    const folder = fs.createFolder(fs.DESKTOP, "Folder");
+    expect(fs.createFolder(fs.DESKTOP, "Folder").name).toBe("Folder (2)");
+    expect(fs.rename(folder.id, "Projects").ext).toBe("");
+    expect(fs.createFile(fs.DESKTOP, "big.bin", { size: 4096 }).size).toBe(
+      4096,
+    );
+    const note = fs.createFile(fs.DESKTOP, "draft.txt", { content: "a" });
+    const saved = fs.setContent(note.id, "b", { name: "final.md" });
+    expect(saved).toMatchObject({ name: "final.md", ext: ".md", content: "b" });
+  });
+
+  test("numbers repeated copies and duplicate names", () => {
+    installMemoryStorage();
+    const fs = loadFilesystem();
+    const original = fs.createFile(fs.DESKTOP, "note.txt");
+    expect(fs.copy(original.id, fs.DESKTOP).name).toBe("Copy of note.txt");
+    expect(fs.copy(original.id, fs.DESKTOP).name).toBe("Copy (2) of note.txt");
+    expect(fs.createFile(fs.DESKTOP, "note.txt").name).toBe("note (2).txt");
+    expect(fs.createFile(fs.DESKTOP, "note.txt").name).toBe("note (3).txt");
+  });
+
+  test("handles detached and inconsistent stored items", () => {
+    installMemoryStorage();
+    const seed = loadFilesystem();
+    const nodes = {};
+    for (const id of Object.values(seed.WELL_KNOWN))
+      nodes[id] = { ...seed.getNode(id) };
+    nodes.orphan = node("orphan", { name: "orphan.txt", size: Infinity });
+    nodes.ghost = node("ghost", { name: "ghost.txt", parent: "missing" });
+    nodes.binned = node("binned", {
+      name: "binned.txt",
+      parent: seed.RECYCLE_BIN,
+    });
+    nodes[seed.RECYCLE_BIN].children = ["binned"];
+    localStorage.setItem("virtualFileSystem", storedNodes(nodes));
+    const fs = loadFilesystem();
+
+    expect(fs.getSize("orphan")).toBe(0);
+    expect(fs.rename("orphan", "renamed.txt").name).toBe("renamed.txt");
+    expect(fs.setContent("orphan", null).content).toBe("");
+    expect(fs.rename("ghost", "ghostly.txt").name).toBe("ghostly.txt");
+    expect(fs.move("orphan", fs.DESKTOP).parent).toBe(fs.DESKTOP);
+    expect(fs.restore("binned").name).toBe("binned.txt");
+  });
+
+  test("rejects operations on missing items and the wrong item types", () => {
+    installMemoryStorage();
+    const fs = loadFilesystem();
+    const file = fs.createFile(fs.DESKTOP, "note.txt");
+    expect(() => fs.rename("missing", "x")).toThrow('item "missing" not found');
+    expect(() => fs.createFile(file.id, "child.txt")).toThrow(
+      "is not a folder",
+    );
+    expect(() => fs.restore(file.id)).toThrow("Only items in the Recycle Bin");
+    expect(() => fs.setContent(fs.DESKTOP, "text")).toThrow("is not a file");
+    expect(fs.getContent(fs.DESKTOP)).toBeNull();
+    expect(fs.move(file.id, fs.DESKTOP)).toBe(fs.getNode(file.id));
+    expect(fs.destroy("missing")).toBeUndefined();
+    expect(fs.open(fs.DESKTOP)).toBeFalse();
+    fs.registerFolderHandler(() => {});
+    expect(fs.open(fs.DESKTOP)).toBeTrue();
+    fs.registerFileType("*", () => {});
+    const extensionless = fs.createFile(fs.DESKTOP, "README");
+    fs.getNode(extensionless.id).ext = undefined;
+    expect(fs.open(extensionless.id)).toBeTrue();
+  });
+});

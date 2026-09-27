@@ -14,10 +14,8 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
   }
-  if (root) {
-    root.VirtualFS = api;
-  }
-})(typeof self !== "undefined" ? self : globalThis, function (root) {
+  root.VirtualFS = api;
+})(globalThis, function (root) {
   const STORAGE_KEY = "virtualFileSystem";
   const FS_VERSION = 1;
 
@@ -105,10 +103,6 @@
         `VirtualFS: "${rawName}" cannot end with a period or space`,
       );
     }
-    if (normalizedName === "." || normalizedName === "..") {
-      throw new Error(`VirtualFS: "${rawName}" is a reserved name`);
-    }
-
     const baseName = normalizedName.split(".")[0].trimEnd();
     if (RESERVED_DEVICE_NAMES.test(baseName)) {
       throw new Error(`VirtualFS: "${rawName}" is a reserved device name`);
@@ -191,8 +185,9 @@
   // ---- Persistence ----
 
   const save = () => {
+    // Only memory-only filesystems save here; IndexedDB writes go through
+    // transaction(), which batches changes so emitChange never saves.
     try {
-      if (!writable) throw new Error(readOnlyMessage);
       storage.setItem(
         STORAGE_KEY,
         JSON.stringify({ version: FS_VERSION, nodes }),
@@ -281,7 +276,6 @@
     if (id === WELL_KNOWN.DRIVE_F) return "F:\\";
     if (!node.parent || !nodes[node.parent]) return node.name;
     const parentPath = getPath(node.parent);
-    if (parentPath === null) return node.name;
     const separator = parentPath.endsWith("\\") ? "" : "\\";
     return `${parentPath}${separator}${node.name}`;
   };

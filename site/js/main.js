@@ -386,12 +386,7 @@ const createGameIconElement = (gameId, className) => {
     }
     icon.appendChild(image);
   } else {
-    const systemGlyph = systemShortcuts[gameId]?.glyph;
-    if (systemGlyph) {
-      icon.classList.add("system-glyph", `system-glyph-${systemGlyph}`);
-    } else {
-      icon.textContent = getGameIcon(gameId);
-    }
+    icon.textContent = getGameIcon(gameId);
   }
 
   return icon;
@@ -493,6 +488,9 @@ const getDisplaySettings = () => {
     : { ...DEFAULT_DISPLAY_SETTINGS };
 };
 
+const isPlainObject = (value) =>
+  !!value && typeof value === "object" && !Array.isArray(value);
+
 const DEFAULT_DESKTOP_SYSTEM_ICONS = Object.freeze({
   "__my-computer": true,
   "__my-documents": true,
@@ -500,8 +498,12 @@ const DEFAULT_DESKTOP_SYSTEM_ICONS = Object.freeze({
 
 const getDesktopSystemIcons = () => ({
   ...DEFAULT_DESKTOP_SYSTEM_ICONS,
-  ...readJsonStorage(DESKTOP_SYSTEM_ICONS_KEY, {}, (value) =>
-    Object.values(value || {}).every((visible) => typeof visible === "boolean"),
+  ...readJsonStorage(
+    DESKTOP_SYSTEM_ICONS_KEY,
+    {},
+    (value) =>
+      isPlainObject(value) &&
+      Object.values(value).every((visible) => typeof visible === "boolean"),
   ),
 });
 
@@ -509,10 +511,14 @@ const saveDesktopSystemIcons = (settings) =>
   writeJsonStorage(DESKTOP_SYSTEM_ICONS_KEY, settings);
 
 const getDesktopSystemNames = () =>
-  readJsonStorage(DESKTOP_SYSTEM_NAMES_KEY, {}, (value) =>
-    Object.values(value || {}).every(
-      (name) => typeof name === "string" && name.trim().length > 0,
-    ),
+  readJsonStorage(
+    DESKTOP_SYSTEM_NAMES_KEY,
+    {},
+    (value) =>
+      isPlainObject(value) &&
+      Object.values(value).every(
+        (name) => typeof name === "string" && name.trim().length > 0,
+      ),
   );
 
 const saveDesktopSystemNames = (settings) =>
@@ -675,10 +681,7 @@ const setupScreenSaver = () => {
 
 const getFavorites = () => readJsonStorage("favorites", [], Array.isArray);
 
-const setFavorites = (favorites) => {
-  const normalizedFavorites = Array.isArray(favorites) ? favorites : [];
-  writeJsonStorage("favorites", normalizedFavorites);
-};
+const setFavorites = (favorites) => writeJsonStorage("favorites", favorites);
 
 const getGameStats = () =>
   readJsonStorage(
@@ -762,10 +765,6 @@ const resolveGameFrameRate = (gameId) => {
 };
 
 const normalizeGameVolume = (gameId) => {
-  if (!gameId) {
-    return 0;
-  }
-
   const { volume, isMuted } = getGameVolume(gameId);
   const numericVolume = parseInt(volume, 10);
   const clampedVolume = Number.isFinite(numericVolume)
@@ -776,14 +775,10 @@ const normalizeGameVolume = (gameId) => {
   // audio source on top of that source's own level, like a hardware
   // mixer - so the system volume slider still attenuates games, in
   // addition to (not instead of) each game's own volume.
-  const systemVolume = parseInt(localStorage.getItem("volume") || "100", 10);
-  const systemMuted = localStorage.getItem("isMuted") === "true";
-  const clampedSystemVolume = Number.isFinite(systemVolume)
-    ? Math.min(Math.max(systemVolume, 0), 100)
-    : 100;
+  const { volume: systemVolume, isMuted: systemMuted } = getSystemVolume();
 
   if (isMuted || systemMuted) return 0;
-  return (clampedVolume / 100) * (clampedSystemVolume / 100);
+  return (clampedVolume / 100) * (systemVolume / 100);
 };
 
 const setPlayerVolume = (player, type, normalizedVolume) => {
@@ -791,23 +786,17 @@ const setPlayerVolume = (player, type, normalizedVolume) => {
     return;
   }
 
-  const resolvedVolume = Number.isFinite(normalizedVolume)
-    ? normalizedVolume
-    : 0;
-  const resolvedType =
-    type || (player instanceof HTMLIFrameElement ? "iframe" : "swf");
-
-  if (resolvedType === "iframe") {
+  if (type === "iframe") {
     player.contentWindow?.postMessage(
       {
         type: "setVolume",
-        volume: resolvedVolume,
+        volume: normalizedVolume,
       },
       window.location.origin,
     );
   } else {
     try {
-      player.volume = resolvedVolume;
+      player.volume = normalizedVolume;
     } catch (error) {
       console.error("Error setting SWF volume:", error);
     }

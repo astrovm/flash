@@ -52,9 +52,10 @@ export async function loadShell({
   fetchObject,
   preloadApplications = true,
   stubBoxedWineReadiness = true,
+  url = "http://127.0.0.1/",
 } = {}) {
   const window = new Window({
-    url: "http://127.0.0.1/",
+    url,
     width: 1024,
     height: 768,
     settings: {
@@ -180,6 +181,7 @@ export async function loadShell({
     return {
       canvas: this,
       beginPath() {},
+      clearRect() {},
       closePath() {},
       drawImage() {},
       ellipse() {},

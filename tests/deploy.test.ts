@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
+  cp,
   mkdir,
   mkdtemp,
   readFile,
   readdir,
   rm,
+  symlink,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -17,10 +19,13 @@ import {
   PRECACHE_FILE_SUFFIXES,
   build,
   compressFonts,
+  createIntegrityManifestTransform,
   generateServiceWorker,
   getDeploymentVersion,
   parseBuildArguments,
+  replaceOutput,
   runGit,
+  scopeReleaseReferences,
   DEFAULT_OUTPUT_DIR,
   DEFAULT_UPDATE_STABILITY_DELAY_MS,
   installJsDos,
@@ -34,6 +39,7 @@ import {
   writeOfflineGameManifest,
   writeVersionMetadata,
 } from "../tools/deploy";
+import { bunCommand } from "./helpers/coverage";
 
 const temporaryDirectories: string[] = [];
 
@@ -878,4 +884,622 @@ describe("build inputs and release metadata validation", () => {
       expect(await Bun.file(join(root, "version.json")).exists()).toBeFalse();
     });
   }
+});
+
+const sri = (content: string | Uint8Array) =>
+  `sha384-${createHash("sha384").update(content).digest("base64")}`;
+const shortHash = (content: string | Uint8Array) =>
+  createHash("sha384").update(content).digest("hex").slice(0, 8);
+
+async function makeValidArtifact() {
+  const root = await makeTemporaryDirectory();
+  await makeSource(root);
+  await addGeneratedRuntime(root);
+  const paths = new BuildPaths(root);
+  await updateHtml(paths, "26.07.28-abcdef1");
+  await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
+  await writeVersionMetadata(paths, "26.07.28-abcdef1");
+  const manifestName = await versionOfflineGameManifest(paths);
+  await validateOutput(root);
+  return { root, manifestName, paths };
+}
+
+type Artifact = Awaited<ReturnType<typeof makeValidArtifact>>;
+
+const editFile = async (path: string, change: (content: string) => string) =>
+  writeFile(path, change(await readFile(path, "utf8")));
+
+// Rewrites the offline manifest under its new content hash so validation
+// reaches the checks after the hash comparison.
+async function rewriteManifest(
+  { root, manifestName, paths }: Artifact,
+  change: (manifest: any) => void,
+) {
+  const manifest = JSON.parse(await readFile(join(root, manifestName), "utf8"));
+  change(manifest);
+  const content = JSON.stringify(manifest);
+  const nextName = `offline-games.${shortHash(content)}.json`;
+  await unlink(join(root, manifestName));
+  await writeFile(join(root, nextName), content);
+  await editFile(paths.html, (html) => html.replace(manifestName, nextName));
+}
+
+const jsFile = async (root: string, pattern: RegExp) =>
+  join(
+    root,
+    "js",
+    (await readdir(join(root, "js"))).find((name) => pattern.test(name))!,
+  );
+
+describe("build output validation failures", () => {
+  const cases: [string, (artifact: Artifact) => Promise<unknown>, string][] = [
+    [
+      "a missing version file",
+      ({ paths }) => unlink(paths.versionJson),
+      "missing required files: version.json",
+    ],
+    [
+      "an unversioned offline manifest reference",
+      ({ paths }) =>
+        editFile(paths.html, (html) =>
+          html.replace("ASTRO_OFFLINE_MANIFEST_URL", "ASTRO_MANIFEST"),
+        ),
+      "no versioned offline game manifest",
+    ],
+    [
+      "a tampered offline manifest",
+      ({ root, manifestName }) => writeFile(join(root, manifestName), "{}"),
+      "invalid offline manifest hash",
+    ],
+    [
+      "an unhashed script reference",
+      ({ paths }) =>
+        editFile(paths.html, (html) =>
+          html.replace(/js\/dialogs\.[a-f0-9]{8}\.js/, "js/dialogs.js"),
+        ),
+      "no hashed reference for js/dialogs.js",
+    ],
+    [
+      "a missing hashed script",
+      async ({ paths, root }) =>
+        unlink(
+          join(
+            root,
+            (await readFile(paths.html, "utf8")).match(
+              /js\/dialogs\.[a-f0-9]{8}\.js/,
+            )![0],
+          ),
+        ),
+      "invalid content hash for js/dialogs.js",
+    ],
+    [
+      "an unversioned fflate reference",
+      ({ paths }) =>
+        editFile(paths.html, (html) =>
+          html.replace(/index\.js\?v=[a-f0-9]{8}/, "index.js"),
+        ),
+      "no versioned fflate reference",
+    ],
+    [
+      "a missing favicon",
+      async ({ root }) =>
+        unlink(
+          join(
+            root,
+            (await readdir(root)).find((name) => name.startsWith("favicon."))!,
+          ),
+        ),
+      "no uniquely hashed favicon",
+    ],
+    [
+      "an unhashed static asset",
+      ({ root }) => writeFiles(root, { "assets/xp/extra.png": "extra" }),
+      "invalid static asset hash for assets/xp/extra.png",
+    ],
+    [
+      "an unhashed static reference",
+      ({ paths }) =>
+        editFile(paths.html, (html) => `${html}\n"assets/xp/raw.png"`),
+      "unhashed static reference in index.html: assets/xp/raw.png",
+    ],
+    [
+      "a missing hashed static asset",
+      ({ paths }) =>
+        editFile(
+          paths.html,
+          (html) => `${html}\n"assets/xp/missing.12345678.png"`,
+        ),
+      "references a missing static asset: assets/xp/missing.12345678.png",
+    ],
+    [
+      "a missing offline worker",
+      async ({ root }) => unlink(await jsFile(root, /^offline-worker\./)),
+      "no uniquely hashed offline worker",
+    ],
+    [
+      "a missing Ruffle core",
+      async ({ root }) => unlink(await jsFile(root, /^core\.ruffle\./)),
+      "no Ruffle core JavaScript",
+    ],
+    [
+      "a missing Ruffle WebAssembly module",
+      async ({ root }) => unlink(await jsFile(root, /\.wasm$/)),
+      "no Ruffle WebAssembly",
+    ],
+    [
+      "unreadable version metadata",
+      ({ paths }) => writeFile(paths.versionJson, "{"),
+      "invalid version metadata",
+    ],
+    [
+      "unexpected version metadata fields",
+      ({ paths }) =>
+        editFile(paths.versionJson, (json) =>
+          JSON.stringify({ ...JSON.parse(json), extra: true }),
+        ),
+      "invalid version metadata",
+    ],
+    [
+      "an empty offline download",
+      ({ paths }) =>
+        editFile(paths.versionJson, (json) =>
+          JSON.stringify({ ...JSON.parse(json), offlineBytes: 0 }),
+        ),
+      "invalid offline download size",
+    ],
+    [
+      "inconsistent version metadata",
+      ({ paths }) =>
+        editFile(paths.versionJson, (json) =>
+          JSON.stringify({ ...JSON.parse(json), revision: "fedcba9" }),
+        ),
+      "inconsistent version metadata",
+    ],
+    [
+      "an unreadable offline manifest",
+      async (artifact) => {
+        const nextName = `offline-games.${shortHash("{")}.json`;
+        await unlink(join(artifact.root, artifact.manifestName));
+        await writeFile(join(artifact.root, nextName), "{");
+        await editFile(artifact.paths.html, (html) =>
+          html.replace(artifact.manifestName, nextName),
+        );
+      },
+      "invalid offline game manifest",
+    ],
+    [
+      "an offline manifest for another version",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          manifest.version = "26.07.27-0000000";
+        }),
+      "invalid offline game manifest",
+    ],
+    [
+      "an offline manifest without games",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          delete manifest.games;
+        }),
+      "invalid offline game manifest",
+    ],
+    [
+      "unreadable game roots",
+      ({ paths }) =>
+        editFile(paths.html, (html) =>
+          html.replace(
+            "ASTRO_GAME_ROOTS=Object.freeze({",
+            "ASTRO_GAME_ROOTS=Object.freeze({,",
+          ),
+        ),
+      "no matching versioned game roots",
+    ],
+    [
+      "missing game roots",
+      ({ paths }) =>
+        editFile(paths.html, (html) =>
+          html.replace("ASTRO_GAME_ROOTS", "ASTRO_ROOTS"),
+        ),
+      "no matching versioned game roots",
+    ],
+    [
+      "a game package without files",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          manifest.games.doom.files = [];
+        }),
+      "invalid game package for doom",
+    ],
+    [
+      "a game file with the wrong integrity",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          manifest.games.doom.files[0].integrity = sri("other");
+        }),
+      "invalid game file integrity",
+    ],
+    [
+      "an unrevisioned runtime file",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          manifest.runtime.files[0].url = "js/ruffle.js";
+        }),
+      "invalid runtime file: js/ruffle.js",
+    ],
+    [
+      "a runtime file with the wrong integrity",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          manifest.runtime.files[0].integrity = sri("other");
+        }),
+      "invalid runtime file integrity",
+    ],
+    [
+      "a shared runtime without files",
+      (artifact) =>
+        rewriteManifest(artifact, (manifest) => {
+          delete manifest.runtimes;
+          manifest.runtime.files = [];
+        }),
+      "invalid offline game manifest",
+    ],
+  ];
+  test("accepts catalogs without shared runtimes", async () => {
+    const artifact = await makeValidArtifact();
+    await rewriteManifest(artifact, (manifest) => {
+      delete manifest.runtimes;
+    });
+    await validateOutput(artifact.root);
+  });
+
+  for (const [label, mutate, message] of cases)
+    test(`rejects ${label}`, async () => {
+      const artifact = await makeValidArtifact();
+      await mutate(artifact);
+      await expect(validateOutput(artifact.root)).rejects.toThrow(message);
+    });
+});
+
+const releaseVersion = "26.07.28-abcdef1";
+
+// A minimal immutable release that passes validateReleaseOutput; options
+// replace one part at a time.
+async function makeRelease({
+  html = [
+    "<head>",
+    `<base href="/releases/${releaseVersion}/" />`,
+    '<script>window.ASTRO_OFFLINE_MANIFEST_URL="offline-games.12345678.json";</script>',
+  ].join("\n"),
+  worker,
+  versionedWorker,
+  files = {},
+}: {
+  html?: string;
+  worker?: string;
+  versionedWorker?: string;
+  files?: Record<string, string>;
+} = {}) {
+  const root = await makeTemporaryDirectory();
+  const release = `releases/${releaseVersion}`;
+  const rootWorker =
+    worker ?? `[{integrity:"${sri(html)}",url:"index.html",revision:null}]`;
+  await writeFiles(root, {
+    "index.html": html,
+    "version.json": "{}",
+    "sw.js": rootWorker,
+    [`sw.${releaseVersion}.js`]:
+      versionedWorker ??
+      `${rootWorker}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
+    [`${release}/offline-games.12345678.json`]: "{}",
+    [`${release}/apps/index.js`]: "apps",
+    [`${release}/assets/xp/bliss.jpg`]: "wallpaper",
+    [`${release}/capture.html`]: "capture",
+    [`${release}/css/main.css`]: "body {}",
+    [`${release}/iframe/doom/index.html`]: "doom",
+    [`${release}/js/main.js`]: "main",
+    [`${release}/js/offline-worker.12345678.js`]: 'fetch("/assets/x")',
+    [`${release}/vendor/v.js`]: "vendor",
+    ...files,
+  });
+  return root;
+}
+
+describe("release output validation failures", () => {
+  test("accepts a minimal scoped release", async () => {
+    await validateReleaseOutput(await makeRelease(), releaseVersion);
+  });
+
+  const cases: [string, () => Promise<string>, string][] = [
+    [
+      "files outside the release directory",
+      () => makeRelease({ files: { "stray.txt": "stray" } }),
+      "files outside the release directory: stray.txt",
+    ],
+    [
+      "more than one release directory",
+      () => makeRelease({ files: { "releases/other/index.html": "other" } }),
+      "invalid release directory",
+    ],
+    [
+      "an HTML document without the release base URL",
+      () => makeRelease({ html: "<head></head>" }),
+      "no matching immutable release base URL",
+    ],
+    [
+      "a versioned worker that differs from the root worker",
+      () => makeRelease({ versionedWorker: "changed" }),
+      "inconsistent versioned service worker",
+    ],
+    [
+      "an unversioned offline manifest",
+      () =>
+        makeRelease({
+          files: { [`releases/${releaseVersion}/offline-games.json`]: "{}" },
+        }),
+      "contains an unversioned offline manifest",
+    ],
+    [
+      "a missing release-scoped offline manifest",
+      () =>
+        makeRelease({
+          html: `<head>\n<base href="/releases/${releaseVersion}/" />`,
+        }),
+      "no release-scoped offline manifest",
+    ],
+    [
+      "a missing release path",
+      async () => {
+        const root = await makeRelease();
+        await rm(join(root, "releases", releaseVersion, "vendor"), {
+          recursive: true,
+        });
+        return root;
+      },
+      "missing release path: vendor",
+    ],
+    [
+      "a missing root worker",
+      async () => {
+        const root = await makeRelease();
+        await unlink(join(root, "sw.js"));
+        return root;
+      },
+      "missing required file: sw.js",
+    ],
+    [
+      "a worker without integrity-protected entries",
+      () => makeRelease({ worker: "self.skipWaiting();" }),
+      "no integrity-protected precache entries",
+    ],
+    [
+      "a precache entry outside the output",
+      () =>
+        makeRelease({
+          worker: `[{integrity:"${sri("x")}",url:"../outside.js"}]`,
+        }),
+      "escapes the build output: ../outside.js",
+    ],
+    [
+      "a precache entry for a missing file",
+      () =>
+        makeRelease({
+          worker: `[{integrity:"${sri("x")}",url:"missing.js"}]`,
+        }),
+      "references a missing file: missing.js",
+    ],
+    [
+      "a worker that does not precache the index",
+      () =>
+        makeRelease({
+          worker: `[{integrity:"${sri("{}")}",url:"version.json"}]`,
+        }),
+      "must precache index.html exactly once",
+    ],
+  ];
+  for (const [label, create, message] of cases)
+    test(`rejects ${label}`, async () => {
+      await expect(
+        validateReleaseOutput(await create(), releaseVersion),
+      ).rejects.toThrow(message);
+    });
+});
+
+describe("build helpers", () => {
+  test("integrity transforms keep the index unprefixed and reject escaping entries", async () => {
+    const root = await makeTemporaryDirectory();
+    await writeFiles(root, { "index.html": "index", "a.js": "a" });
+    const entries = [
+      { url: "index.html", revision: null, size: 5 },
+      { url: "a.js", revision: null, size: 1 },
+    ];
+    expect(
+      (
+        await createIntegrityManifestTransform(root)(entries as any)
+      ).manifest.map(({ url }) => url),
+    ).toEqual(["index.html", "a.js"]);
+    expect(
+      (
+        await createIntegrityManifestTransform(
+          root,
+          "releases/v/",
+        )(entries as any)
+      ).manifest.map(({ url }) => url),
+    ).toEqual(["index.html", "releases/v/a.js"]);
+    await expect(
+      createIntegrityManifestTransform(root)([
+        { url: "../escape.js", revision: null, size: 1 },
+      ] as any),
+    ).rejects.toThrow("escapes the build output: ../escape.js");
+  });
+
+  test("rejects unsafe release versions", async () => {
+    const root = await makeTemporaryDirectory();
+    await expect(scopeReleaseReferences(root, "../escape")).rejects.toThrow(
+      "Invalid release version: ../escape",
+    );
+  });
+
+  test("installs Ruffle from the dependency by default and reports a missing package", async () => {
+    const root = await makeTemporaryDirectory();
+    await installRuffle(join(root, "js"));
+    expect(await readdir(join(root, "js"))).toContain("ruffle.js");
+    await expect(
+      installRuffle(join(root, "other"), join(root, "missing")),
+    ).rejects.toThrow("is not installed");
+  });
+
+  test("derives the deployment version from the current commit", () => {
+    expect(getDeploymentVersion()).toMatch(/^\d{2}\.\d{2}\.\d{2}-[a-f0-9]{7}$/);
+    const git = (arguments_: string[]) =>
+      arguments_[0] === "show" ? "2026-07-28" : "not-a-sha";
+    expect(() => getDeploymentVersion("HEAD", ".", git)).toThrow(
+      "invalid revision: not-a-sha",
+    );
+  });
+
+  test("leaves sources without TrueType fonts unchanged", async () => {
+    const root = await makeTemporaryDirectory();
+    expect(await compressFonts(new BuildPaths(root))).toEqual([]);
+    await writeFiles(root, {
+      "css/fonts/readme.txt": "fonts",
+      "css/fonts/fake.ttf": "not a font",
+    });
+    await symlink(
+      join(root, "css/fonts/readme.txt"),
+      join(root, "css/fonts/link.txt"),
+    );
+    expect(await compressFonts(new BuildPaths(root))).toEqual([]);
+    expect(await readdir(join(root, "css/fonts"))).toContain("fake.ttf");
+  });
+
+  test("versions a minimal site without optional packages", async () => {
+    const root = await makeTemporaryDirectory();
+    await makeSource(root);
+    await addGeneratedRuntime(root);
+    for (const path of [
+      "apps",
+      "capture.html",
+      "vendor/boxedwine",
+      "swf",
+      "dos",
+      "iframe/pink-panther-hokus-pokus",
+      "iframe/pink-panther-passport-to-peril",
+      "iframe/revcdos",
+    ])
+      await rm(join(root, path), { recursive: true });
+    await editFile(join(root, "index.html"), (html) =>
+      html.replace('<script type="module" src="apps/index.js"></script>', ""),
+    );
+    await writeFiles(root, { "iframe/notes.txt": "not a game" });
+    const paths = new BuildPaths(root);
+    await updateHtml(paths, "26.07.28-abcdef1");
+    await writeOfflineGameManifest(paths, "26.07.28-abcdef1");
+    const manifest = JSON.parse(await readFile(paths.offlineGamesJson, "utf8"));
+    await writeVersionMetadata(paths, "26.07.28-abcdef1");
+    await versionOfflineGameManifest(paths);
+    await validateOutput(root);
+    expect(Object.keys(manifest.games).sort()).toEqual([
+      "doom",
+      "inside-the-firewall",
+    ]);
+    expect(
+      await readFile(
+        join(root, manifest.games.doom.root, "index.html"),
+        "utf8",
+      ),
+    ).toBe("doom ../../dos/doom/doom.jsdos");
+  });
+
+  test("versions BoxedWine without a preload list", async () => {
+    const root = await makeTemporaryDirectory();
+    await makeSource(root);
+    await addGeneratedRuntime(root);
+    await unlink(join(root, "vendor/boxedwine/26R1/preload.json"));
+    await updateHtml(new BuildPaths(root), "26.07.28-abcdef1");
+    expect(
+      await Bun.file(join(root, "vendor/boxedwine/26R1/preload.json")).exists(),
+    ).toBeFalse();
+  });
+
+  test("totals bundled bytes for catalogs without shared runtimes", async () => {
+    const root = await makeTemporaryDirectory();
+    const paths = new BuildPaths(root);
+    await writeFiles(root, {
+      "offline-games.json": JSON.stringify({
+        games: { doom: { bytes: 5 } },
+        runtime: { bytes: 7 },
+      }),
+    });
+    await writeVersionMetadata(paths, "26.07.28-abcdef1");
+    expect(
+      JSON.parse(await readFile(paths.versionJson, "utf8")).bundledGameBytes,
+    ).toBe(12);
+  });
+
+  test("requires exactly one offline worker and a generated service worker", async () => {
+    const root = await makeTemporaryDirectory();
+    await writeFiles(root, { "js/main.js": "main" });
+    await expect(generateServiceWorker(root)).rejects.toThrow(
+      "exactly one hashed offline worker",
+    );
+    await writeFiles(root, { "js/offline-worker.12345678.js": "worker" });
+    await expect(
+      generateServiceWorker(root, (async () => ({})) as any),
+    ).rejects.toThrow("Workbox did not generate output sw.js");
+  });
+
+  test("restores the previous output when replacing it fails", async () => {
+    const root = await makeTemporaryDirectory();
+    const output = join(root, "dist");
+    await writeFiles(output, { "index.html": "previous" });
+    await mkdir(join(root, "build"));
+    await expect(
+      replaceOutput(join(root, "build", "missing"), output),
+    ).rejects.toThrow();
+    expect(await readFile(join(output, "index.html"), "utf8")).toBe("previous");
+    await rm(output, { recursive: true });
+    await expect(
+      replaceOutput(join(root, "build", "missing"), output),
+    ).rejects.toThrow();
+  });
+
+  test("builds the version from the requested Git revision", async () => {
+    const project = await makeTemporaryDirectory();
+    const source = join(project, "site");
+    await makeSource(source);
+    await build({
+      sourceDir: source,
+      outputDir: join(project, "dist"),
+      installRuffle: async (jsDir) =>
+        writeFiles(jsDir, {
+          "ruffle.js": "ruffle",
+          "core.ruffle.abc123.js": "core",
+          "abc123.wasm": "wasm",
+        }),
+      generate: async (directory, version) => {
+        await writeFiles(directory, {
+          "sw.js": `[{integrity:"${sri(await readFile(join(directory, "index.html")))}",url:"index.html"}]`,
+        });
+        await cp(join(directory, "sw.js"), join(directory, `sw.${version}.js`));
+        await editFile(
+          join(directory, `sw.${version}.js`),
+          (worker) =>
+            `${worker}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
+        );
+      },
+    });
+    const metadata = JSON.parse(
+      await readFile(join(project, "dist", "version.json"), "utf8"),
+    );
+    expect(metadata.version).toBe(getDeploymentVersion("HEAD"));
+  });
+
+  test("reports command-line build failures", () => {
+    const result = Bun.spawnSync(
+      bunCommand(join(import.meta.dir, "..", "tools", "deploy.ts"), "--bogus"),
+      { stderr: "pipe", stdout: "pipe" },
+    );
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr.toString()).toContain("Unknown argument: --bogus");
+  });
 });

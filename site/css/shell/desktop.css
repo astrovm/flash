@@ -240,40 +240,6 @@ html[data-xp-appearance="classic"] {
   object-fit: contain;
 }
 
-.system-glyph-notepad {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #334f72;
-  background:
-    repeating-linear-gradient(to bottom, transparent 0 5px, #7999b8 5px 6px),
-    #f7f3dc;
-  box-shadow:
-    inset 3px 0 #fff,
-    1px 1px 1px rgba(0, 0, 0, 0.35);
-}
-
-.system-glyph-notepad::before {
-  content: "";
-  position: absolute;
-  inset: -3px 3px auto;
-  height: 5px;
-  border: 1px solid #555;
-  background: repeating-linear-gradient(90deg, #777 0 2px, #ddd 2px 4px);
-}
-
-.title-icon.system-glyph-notepad,
-.task-icon.system-glyph-notepad {
-  width: 14px;
-  height: 14px;
-}
-
-.title-icon.system-glyph-notepad::before,
-.task-icon.system-glyph-notepad::before {
-  inset: -2px 1px auto;
-  height: 3px;
-}
-
 .desktop-icon .icon-label {
   color: #fff;
   font-size: 11px;

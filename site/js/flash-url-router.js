@@ -2,7 +2,7 @@
   const api = factory(root);
   if (typeof module === "object" && module.exports) module.exports = api;
   root.AstroFlashUrlRouter = api;
-})(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
+})(globalThis, function (root) {
   "use strict";
 
   const routeKey = (value, baseUrl) => {
@@ -104,7 +104,7 @@
     const spoofResponseUrl = (response, originalUrl) => {
       Object.defineProperty(response, "url", {
         configurable: true,
-        value: originalUrl.href || String(originalUrl),
+        value: originalUrl.href,
       });
       return response;
     };

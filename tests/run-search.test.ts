@@ -116,3 +116,85 @@ test("Search filters by type and location and opens selected results with Enter"
   win.querySelector('[data-search-action="back"]').click();
   expect(win.querySelector(".search-form-panel").hidden).toBeTrue();
 });
+
+test("Run opens games, Notepad, and Run itself, and ignores empty commands", async () => {
+  const s = await login(await loadShell());
+  const gameId = Object.keys(s.window.FLASH_GAMES)[0];
+  await run(s, gameId);
+  expect(
+    !!s.document.querySelector(`.xp-window[data-game="${gameId}"]`),
+  ).toBeTrue();
+  await run(s, "notepad");
+  expect(
+    [...s.document.querySelectorAll(".xp-window")].some((win) =>
+      /Notepad/.test(win.textContent),
+    ),
+  ).toBeTrue();
+  await run(s, "run");
+  expect(s.document.querySelectorAll(".run-dialog").length).toBeGreaterThan(0);
+  s.document.querySelector('.run-dialog [data-action="cancel"]').click();
+  await run(s, "   ");
+  expect(s.window.localStorage.getItem("runHistory")).not.toContain('"   "');
+});
+
+test("Search lists games and applications and opens them", async () => {
+  const s = await login(await loadShell());
+  const fs = s.window.VirtualFS;
+  const title = "Bike Mania";
+  clickStartAction(s, "search");
+  const win = s.document.querySelector('.xp-window[data-game="__search"]');
+  const kinds = [...win.querySelectorAll("[data-search-kind]")];
+  kinds.at(-1).click();
+  const query = win.querySelector("#search-filename");
+  const type = win.querySelector("#search-type");
+  const results = () => [...win.querySelector(".search-results-list").children];
+  const search = async (text, kind) => {
+    query.value = text;
+    type.value = kind;
+    type.dispatchEvent(new s.window.Event("change"));
+    await flushShell();
+    return results();
+  };
+  query.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
+  );
+  const games = await search(title, "games");
+  expect(games.some((item) => item.textContent.includes("Game"))).toBeTrue();
+  expect(win.querySelector(".search-results-status").textContent).toMatch(
+    /result/,
+  );
+  const folder = fs.createFolder(fs.MY_DOCUMENTS, "Unique Search Folder");
+  expect(await search("Unique Search Folder", "folders")).toHaveLength(1);
+  expect(win.querySelector(".search-results-status").textContent).toBe(
+    "1 result found.",
+  );
+  expect(await search("Unique Search Folder", "files")).toHaveLength(0);
+  fs.createFile(folder.id, "Unique Search File.txt");
+  const mixed = await search("Unique Search", "all");
+  expect(mixed.map((item) => item.querySelector("b").textContent)).toEqual([
+    "Unique Search File.txt",
+    "Unique Search Folder",
+  ]);
+  mixed[0].click();
+  mixed[1].click();
+  expect(win.querySelectorAll(".search-results-list .selected")).toHaveLength(
+    1,
+  );
+  mixed[1].dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+  );
+  const [game] = (await search(title, "games")).filter((item) =>
+    item.textContent.includes("Game"),
+  );
+  game.dispatchEvent(new s.window.MouseEvent("dblclick"));
+  await flushShell();
+  expect(
+    !!s.document.querySelector('.xp-window[data-game^="bike-mania"]'),
+  ).toBeTrue();
+  const [application] = await search("Control Panel", "applications");
+  application.dispatchEvent(new s.window.MouseEvent("dblclick"));
+  await flushShell();
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="__control-panel"]'),
+  ).toBeTrue();
+});

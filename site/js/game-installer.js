@@ -5,8 +5,8 @@
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (root) root.AstroGameInstaller = api;
-})(typeof window !== "undefined" ? window : globalThis, function () {
+  root.AstroGameInstaller = api;
+})(globalThis, function () {
   // Flashpoint UUIDs are not necessarily RFC 4122 version 1-5 UUIDs.
   const UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -242,10 +242,10 @@
       return store.set(metadata.id, metadata);
     fail("Metadata store dependency is required");
   }
+  // uninstall validates the store before calling this.
   async function deleteMetadata(store, id) {
     if (typeof store.delete === "function") return store.delete(id);
-    if (typeof store.remove === "function") return store.remove(id);
-    fail("Metadata store dependency is required");
+    return store.remove(id);
   }
 
   async function install(record, zipBytes, dependencies = {}) {

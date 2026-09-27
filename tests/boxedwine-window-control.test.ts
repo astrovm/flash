@@ -338,3 +338,132 @@ describe("generic BoxedWine Win32 window control", () => {
     });
   });
 });
+
+describe("BoxedWine window control edge cases", () => {
+  const record = (id) => ({
+    id,
+    outerX: 0,
+    outerY: 0,
+    outerWidth: 10,
+    outerHeight: 10,
+    clientX: 0,
+    clientY: 0,
+    clientWidth: 10,
+    clientHeight: 10,
+    frameLeft: 0,
+    frameTop: 0,
+    frameRight: 0,
+    frameBottom: 0,
+    capabilities: 0,
+  });
+
+  const setup = () => {
+    const harness = createHarness();
+    const received = [];
+    harness.hostWindow.addEventListener("boxedwine-native-window", (event) =>
+      received.push(event.detail),
+    );
+    const dispose = installBoxedWineWindowControlBridge(
+      harness.hostWindow,
+      harness.module,
+    );
+    const command = () =>
+      harness.files.get("/d_drive/boxedwine-window-control.in");
+    return { ...harness, received, dispose, command };
+  };
+
+  test("ignores frames, invalid ids, and destroyed windows", () => {
+    const harness = setup();
+    harness.module.onRuntimeInitialized();
+    harness.emit("boxedwine-native-window", { type: "mapped" });
+    harness.emit("boxedwine-native-window", { type: "frame", id: 5 });
+    harness.emit("boxedwine-native-window", { type: "mapped", id: 6 });
+    harness.emit("boxedwine-native-window", { type: "destroyed", id: 6 });
+    harness.files.set(
+      "/d_drive/boxedwine-window-control.out",
+      stateBytes(1, [record(5), record(6)]),
+    );
+    const before = harness.received.length;
+    harness.tick();
+    expect(harness.received).toHaveLength(before);
+  });
+
+  test("rejects invalid commands and clamps missing geometry", () => {
+    const harness = setup();
+    harness.module.onRuntimeInitialized();
+    const initial = harness.command();
+    harness.message(undefined);
+    harness.message({
+      type: "boxedwine-native-command",
+      action: "fly",
+      windowId: 1,
+    });
+    harness.message({
+      type: "boxedwine-native-command",
+      action: "close",
+      windowId: 0,
+    });
+    expect(harness.command()).toBe(initial);
+    harness.message({
+      type: "boxedwine-native-command",
+      action: "bounds",
+      windowId: 2,
+      x: Number.NaN,
+      y: Infinity,
+      width: -5,
+    });
+    const view = new DataView(harness.command().buffer);
+    expect(
+      Array.from({ length: 4 }, (_, index) =>
+        view.getInt32(16 + index * 4, true),
+      ),
+    ).toEqual([0, 0, 0, 0]);
+    harness.message({
+      type: "boxedwine-native-command",
+      action: "activate",
+      windowId: 3,
+    });
+    expect(new DataView(harness.command().buffer).getUint32(16, true)).toBe(0);
+  });
+
+  test("skips unreadable, foreign, stale, and oversized state files", () => {
+    const harness = setup();
+    harness.module.onRuntimeInitialized();
+    harness.emit("boxedwine-native-window", { type: "mapped", id: 9 });
+    const path = "/d_drive/boxedwine-window-control.out";
+    const before = harness.received.length;
+    for (const bytes of [
+      null,
+      new Uint8Array(4),
+      new Uint8Array(12),
+      stateBytes(0, [record(9)]),
+      (() => {
+        const bytes = stateBytes(2, [record(9)]);
+        new DataView(bytes.buffer).setUint32(8, 300, true);
+        return bytes;
+      })(),
+      stateBytes(3, [record(9)]).subarray(0, 40),
+    ]) {
+      if (bytes === null) harness.files.delete(path);
+      else harness.files.set(path, bytes);
+      harness.tick();
+    }
+    expect(harness.received).toHaveLength(before);
+    harness.files.set(path, stateBytes(4, [record(9)]));
+    harness.tick();
+    harness.files.set(path, stateBytes(5, [record(9)]));
+    harness.tick();
+    expect(harness.received).toHaveLength(before + 1);
+  });
+
+  test("disposes before the runtime starts", () => {
+    const harness = setup();
+    harness.dispose();
+    harness.message({
+      type: "boxedwine-native-command",
+      action: "close",
+      windowId: 1,
+    });
+    expect(harness.command()).toBeUndefined();
+  });
+});

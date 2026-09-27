@@ -355,3 +355,65 @@ describe("catalog proxy and upstream failures", () => {
       expect(() => legacyAssetUrl(path)).toThrow();
   });
 });
+
+describe("catalog parsing edge cases", () => {
+  test("ignores pages without results and incomplete result blocks", () => {
+    expect(parseSearchResults("<main>No games</main>")).toEqual([]);
+    expect(
+      parseSearchResults(`
+<div class="fp-search-result"><a class="fp-search-result-title" href="/view?id=${uuid}">No info</a></div>
+<div class="fp-search-result"><a class="fp-search-result-title">No link</a></div>
+<div class="fp-search-result"><a href="/view?id=${"z".repeat(36)}"></a></div>`),
+    ).toEqual([
+      {
+        uuid,
+        title: "No info",
+        developer: "",
+        platform: "",
+        tags: [],
+        logoUrl: `/api/games/${uuid}/logo`,
+        potentiallyCompatible: false,
+      },
+    ]);
+  });
+
+  test("describes pages without metadata as incompatible and keeps the first row", () => {
+    const details = parseGameDetails(
+      '<div class="row"><div class="field">Platform:</div><div class="value">Flash</div></div><div class="row"><div class="field">Platform:</div><div class="value">HTML5</div></div>',
+      "https://flash.example",
+      uuid.toUpperCase(),
+    );
+    expect(details).toMatchObject({
+      uuid,
+      title: "",
+      developer: "",
+      library: "",
+      platform: "Flash",
+      status: "",
+      applicationPath: "",
+      tags: [],
+      packageType: null,
+      compatible: false,
+    });
+    expect(parseGameDetails("", "https://flash.example", uuid).platform).toBe(
+      "",
+    );
+    expect(() =>
+      parseGameDetails(detailsHtml, "https://flash.example", "bad"),
+    ).toThrow("Invalid game UUID");
+  });
+
+  test("routes the root path and missing queries", async () => {
+    expect(
+      (await handleCatalogRequest(new Request("https://flash.example/")))
+        .status,
+    ).toBe(404);
+    expect(
+      (
+        await handleCatalogRequest(
+          new Request("https://flash.example/api/games/"),
+        )
+      ).status,
+    ).toBe(400);
+  });
+});
