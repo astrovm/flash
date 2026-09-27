@@ -4,10 +4,15 @@
 // System Tray
 // ============================================
 
-const getSystemVolume = () => ({
-  volume: parseInt(localStorage.getItem("volume") || "100", 10),
-  isMuted: localStorage.getItem("isMuted") === "true",
-});
+const getSystemVolume = () => {
+  // A corrupted stored level must not reach HTMLMediaElement.volume, which
+  // throws for non-finite values and would stop the startup sound and boot.
+  const volume = parseInt(localStorage.getItem("volume") || "100", 10);
+  return {
+    volume: Number.isFinite(volume) ? Math.min(Math.max(volume, 0), 100) : 100,
+    isMuted: localStorage.getItem("isMuted") === "true",
+  };
+};
 
 const syncTrayVolumeUI = () => {
   const { volume, isMuted } = getSystemVolume();
