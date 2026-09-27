@@ -369,7 +369,6 @@
       Date.parse(metadata.releasedAt) + automaticUpdateDelay(metadata);
 
     const markWaitingUpdate = async (worker, knownMetadata = null) => {
-      if (!worker) return;
       if (
         applyTargetVersion === currentVersion &&
         !state.automaticUpdatesEnabled
@@ -433,10 +432,10 @@
         phase: "update-ready",
         updateReady: true,
         workerState: "waiting",
-        availableVersion: metadata?.version || state.availableVersion,
-        availableRevision: metadata?.revision || state.availableRevision,
+        availableVersion: metadata.version,
+        availableRevision: metadata.revision,
         updateEligibleAt: eligibleAt,
-        downloadBytes: metadata?.offlineBytes || state.downloadBytes,
+        downloadBytes: metadata.offlineBytes,
         error: null,
       });
       if (applyTargetVersion === metadata.version) {

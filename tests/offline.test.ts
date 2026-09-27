@@ -1281,3 +1281,957 @@ describe("offline failure and lifecycle boundaries", () => {
     }
   });
 });
+
+describe("offline manager edge cases", () => {
+  const withoutSharedRuntimes = () => {
+    const catalog = structuredClone(manifest);
+    delete catalog.runtimes;
+    catalog.games = {
+      "bike-mania": catalog.games["bike-mania"],
+      doom: catalog.games.doom,
+    };
+    return catalog;
+  };
+  const uninitializedManager = (environment, options = {}) =>
+    createManager({
+      currentVersion: manifest.version,
+      environment,
+      ...options,
+    });
+  const versionFetch = (h, respond) => {
+    const fetch = h.environment.fetch;
+    h.environment.fetch = async (url, options) =>
+      String(url).startsWith("/version.json")
+        ? respond(url, options, fetch)
+        : fetch(url, options);
+  };
+
+  test("waits through intermediate worker states before activating", async () => {
+    const worker = new Worker("installing");
+    const activation = waitForWorker(worker);
+    worker.transition("installed");
+    worker.transition("activating");
+    worker.transition("activated");
+    await activation;
+    expect(worker.listeners.get("statechange").size).toBe(0);
+  });
+
+  test("accepts catalogs without shared runtimes", async () => {
+    const catalog = withoutSharedRuntimes();
+    expect(validateGameManifest(catalog)).toBe(catalog);
+    const h = makeEnvironment(),
+      fetch = h.environment.fetch;
+    h.environment.fetch = async (url, options) =>
+      url === "offline-games.json"
+        ? Response.json(catalog)
+        : fetch(url, options);
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot().bundledGameBytes).toBe(20);
+  });
+
+  test("uses the global environment when none is provided", () => {
+    globalThis.localStorage = new MemoryStorage({
+      astroFlashOfflineEnabled: "false",
+    });
+    try {
+      const manager = createManager({ currentVersion: manifest.version });
+      expect(manager.getSnapshot()).toMatchObject({
+        enabled: false,
+        phase: "disabled",
+      });
+    } finally {
+      delete globalThis.localStorage;
+    }
+  });
+
+  test("restores cached download metadata and ignores malformed stored numbers", () => {
+    const cached = makeEnvironment({
+      storageValues: {
+        astroFlashDownloadVersion: manifest.version,
+        astroFlashDownloadBytes: "1234",
+        astroFlashLastUpdateCheck: "",
+        astroFlashOfflineGameRecords: JSON.stringify({
+          doom: { bytes: "many", files: [], revision: "doom-1" },
+        }),
+      },
+    });
+    expect(
+      uninitializedManager(cached.environment).getSnapshot(),
+    ).toMatchObject({
+      downloadBytes: 1234,
+      downloadedGameBytes: 0,
+      lastChecked: null,
+    });
+    const malformed = makeEnvironment({
+      storageValues: {
+        astroFlashDownloadVersion: manifest.version,
+        astroFlashDownloadBytes: "junk",
+      },
+    });
+    expect(
+      uninitializedManager(malformed.environment).getSnapshot().downloadBytes,
+    ).toBeNull();
+  });
+
+  test("synchronizes stored games with the catalog on startup", async () => {
+    const h = makeEnvironment({
+      storageValues: {
+        astroFlashOfflineGameRecords: JSON.stringify({
+          "bike-mania": {
+            bytes: "many",
+            files: ["swf/bike-mania.old/main.swf"],
+            revision: "old",
+            type: "swf",
+          },
+          "retired-game": { bytes: "many", revision: "r1", type: "iframe" },
+          doom: {
+            bytes: 6,
+            files: manifest.games.doom.files.map(({ url }) => url),
+            revision: "doom-1",
+            type: "iframe",
+          },
+          "pink-panther-hokus-pokus": {
+            bytes: 2,
+            files: manifest.games["pink-panther-hokus-pokus"].files.map(
+              ({ url }) => url,
+            ),
+            revision: "pokus-1",
+            runtime: "scummvm",
+            type: "iframe",
+          },
+          "__runtime__:scummvm": { bytes: 8, files: [], revision: "stale" },
+        }),
+      },
+    });
+    const staleUrl = "https://flash.example/swf/bike-mania.old/main.swf";
+    await h.bundledCache.put(staleUrl, new Response("old"));
+    const manager = await createInitializedManager(h.environment);
+    const records = () =>
+      JSON.parse(h.storage.getItem("astroFlashOfflineGameRecords"));
+    await flushUntil(
+      () =>
+        records()["__runtime__:scummvm"]?.revision === "scummvm-1" &&
+        records()["bike-mania"]?.revision === "bike-1",
+    );
+    expect(Object.keys(records()).sort()).toEqual([
+      "__runtime__",
+      "__runtime__:scummvm",
+      "bike-mania",
+      "doom",
+      "pink-panther-hokus-pokus",
+    ]);
+    expect(h.bundledCache.values.has(staleUrl)).toBeFalse();
+    expect(manager.getSnapshot().downloadedGameIds.sort()).toEqual([
+      "bike-mania",
+      "doom",
+      "pink-panther-hokus-pokus",
+    ]);
+    expect(h.fetches.some(({ url }) => url.includes("doom"))).toBeFalse();
+  });
+
+  test("skips storage estimates when the browser has no storage manager", async () => {
+    const h = makeEnvironment();
+    delete h.environment.navigator.storage;
+    const manager = uninitializedManager(h.environment);
+    expect((await manager.refreshStorageEstimate()).usage).toBeNull();
+  });
+
+  test("treats unreadable worker versions as unknown", async () => {
+    class DetachedWorker extends Worker {
+      postMessage(message, ports) {
+        if (message.type === "GET_VERSION") throw new Error("detached");
+        super.postMessage(message, ports);
+      }
+    }
+    for (const active of [
+      new DetachedWorker("activated", manifest.version),
+      new Worker("activated", 42),
+    ]) {
+      const h = makeEnvironment({
+        registration: new Registration({ active }),
+      });
+      const manager = await createInitializedManager(h.environment);
+      expect(manager.getSnapshot().phase).toBe("ready");
+      h.timers
+        .filter(({ delay }) => delay === 250)
+        .forEach(({ callback }) => callback());
+      expect(manager.getSnapshot().availableVersion).toBeNull();
+    }
+  });
+
+  test("falls back to global timers, message channels, and session storage", async () => {
+    const worker = new Worker("installing", "26.07.30-bbbbbbb");
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+      remoteReleasedAt: new Date(now).toISOString(),
+    });
+    for (const key of [
+      "sessionStorage",
+      "setTimeout",
+      "clearTimeout",
+      "MessageChannel",
+      "document",
+    ])
+      delete h.environment[key];
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot().phase).toBe("update-pending");
+    await manager.checkForUpdates();
+    registration.waiting = new Worker("installed", "26.07.29-intermediate");
+    await expect(manager.applyUpdate()).rejects.toThrow("not ready to install");
+    registration.waiting = null;
+    registration.installing = worker;
+    registration.dispatch("updatefound");
+    worker.transition("installed");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    manager.setAutomaticUpdatesEnabled(false);
+    await manager.downloadGame("doom");
+    expect([...h.bundledCache.values.keys()]).toContain(
+      "https://flash.example/iframe/doom.doom-1/index.html",
+    );
+    await manager.setOfflineEnabled(false);
+  });
+
+  test("resolves game files against the location when no document base exists", async () => {
+    for (const [location, prefix] of [
+      [{ origin: "https://origin.example" }, "https://origin.example/"],
+      [undefined, "https://astro.local/"],
+    ]) {
+      const h = makeEnvironment();
+      delete h.environment.document;
+      h.environment.location = location;
+      const manager = uninitializedManager(h.environment);
+      await manager.downloadGame("doom");
+      expect([...h.bundledCache.values.keys()][0].startsWith(prefix)).toBe(
+        true,
+      );
+    }
+  });
+
+  test("does not schedule update retries when automatic updates are disabled", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    const manager = await createInitializedManager(h.environment);
+    await manager.checkForUpdates();
+    registration.waiting = new Worker("installed", "26.07.29-intermediate");
+    await expect(manager.applyUpdate()).rejects.toThrow("not ready to install");
+    expect(h.timers.some(({ delay }) => delay === 30_000)).toBeFalse();
+  });
+
+  test("reports pending updates as available when automatic updates are disabled", async () => {
+    const h = makeEnvironment({
+      remoteVersion: "26.07.30-bbbbbbb",
+      remoteReleasedAt: new Date(now).toISOString(),
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    const manager = await createInitializedManager(h.environment);
+    const snapshot = await manager.checkForUpdates();
+    expect(snapshot.phase).toBe("update-available");
+    expect(h.timers.some(({ delay }) => delay === sixHours)).toBeFalse();
+  });
+
+  test("reschedules automatic updates that fire early or fail", async () => {
+    const h = makeEnvironment({
+      remoteVersion: "26.07.30-bbbbbbb",
+      remoteReleasedAt: new Date(now).toISOString(),
+    });
+    const manager = await createInitializedManager(h.environment);
+    const scheduled = () => h.timers.filter(({ delay }) => delay === sixHours);
+    expect(scheduled().length).toBe(1);
+    scheduled()[0].callback();
+    expect(scheduled().length).toBe(2);
+
+    h.setNow(now + sixHours);
+    versionFetch(h, () => new Response("down", { status: 503 }));
+    scheduled()[1].callback();
+    await flushUntil(() => h.timers.some(({ delay }) => delay === 30_000));
+    const retry = h.timers.find(({ delay }) => delay === 30_000);
+    expect(retry).toBeTruthy();
+
+    h.environment.navigator.onLine = false;
+    h.setNow(now + sixHours + 30_000);
+    const timerCount = h.timers.length;
+    retry.callback();
+    await flush();
+    await flush();
+    expect(h.timers.length).toBe(timerCount);
+    expect(manager.getSnapshot().error).toContain("Connect to the internet");
+  });
+
+  test("cancels scheduled automatic updates and retries when automatic updates are turned off", async () => {
+    const cleared = [];
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+      remoteReleasedAt: new Date(now).toISOString(),
+    });
+    h.environment.clearTimeout = (id) => cleared.push(id);
+    const manager = await createInitializedManager(h.environment);
+    registration.waiting = new Worker("installed", "26.07.29-intermediate");
+    await expect(manager.applyUpdate()).rejects.toThrow("not ready to install");
+    manager.setAutomaticUpdatesEnabled(false);
+    expect(cleared.length).toBe(2);
+    manager.setAutomaticUpdatesEnabled(false);
+    expect(cleared.length).toBe(2);
+  });
+
+  test("rejects a migrated worker whose version does not match the running site", async () => {
+    const registration = new Registration({
+      active: new Worker(
+        "activated",
+        manifest.version,
+        `/sw.js?v=${manifest.version}`,
+      ),
+    });
+    const h = makeEnvironment({
+      registration,
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    h.serviceWorker.register = async (...args) => {
+      h.serviceWorker.registerCalls.push(args);
+      registration.waiting = new Worker("installed", "26.07.30-other");
+      return registration;
+    };
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot().phase).toBe("error");
+    expect(manager.getSnapshot().error).toContain("version is inconsistent");
+  });
+
+  test("tracks an installing worker during a manual worker migration", async () => {
+    const installing = new Worker("installing", manifest.version);
+    const registration = new Registration({
+      active: new Worker(
+        "activated",
+        manifest.version,
+        `/sw.js?v=${manifest.version}`,
+      ),
+    });
+    const h = makeEnvironment({
+      registration,
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    h.serviceWorker.register = async (...args) => {
+      h.serviceWorker.registerCalls.push(args);
+      registration.installing = installing;
+      return registration;
+    };
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "updating",
+      workerState: "active",
+    });
+    expect(installing.listeners.get("statechange").size).toBe(1);
+  });
+
+  test("registers the current worker on first visit when automatic updates are disabled", async () => {
+    const waiting = new Worker("installed", "26.07.30-other");
+    const h = makeEnvironment({
+      registration: new Registration({
+        active: new Worker("activated", manifest.version),
+        waiting,
+      }),
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    h.serviceWorker.getRegistration = async () => null;
+    const manager = await createInitializedManager(h.environment);
+    expect(h.serviceWorker.registerCalls[0][0]).toBe(
+      `/sw.${manifest.version}.js`,
+    );
+    expect(manager.getSnapshot().workerState).toBe("waiting");
+    expect(waiting.messages).toEqual([]);
+  });
+
+  test("keeps an existing worker ready when its waiting update cannot be verified", async () => {
+    const h = makeEnvironment({
+      registration: new Registration({
+        active: new Worker("activated", manifest.version),
+        waiting: new Worker("installed", "26.07.30-bbbbbbb"),
+      }),
+    });
+    versionFetch(h, () => new Response("down", { status: 503 }));
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "ready",
+      workerState: "active",
+    });
+    expect(h.timers.some(({ delay }) => delay === 30_000)).toBeTrue();
+  });
+
+  test("explains when neither an active nor a waiting update can be applied", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", "26.07.30-bbbbbbb"),
+    });
+    const h = makeEnvironment({
+      registration,
+      sessionValues: { astroFlashActiveVersionReload: manifest.version },
+    });
+    const manager = await createInitializedManager(h.environment);
+    const snapshot = await manager.checkForUpdates();
+    expect(snapshot).toMatchObject({
+      phase: "update-available",
+      availableVersion: manifest.version,
+    });
+    await expect(manager.applyUpdate()).rejects.toThrow(
+      "No update is ready to install.",
+    );
+    expect(h.sessionStorage.getItem("astroFlashActiveVersionReload")).toBe(
+      null,
+    );
+    registration.installing = new Worker("installing");
+    registration.active = null;
+    await expect(manager.applyUpdate()).rejects.toThrow(
+      "The update is still downloading.",
+    );
+  });
+
+  test("ignores worker lifecycle events after offline access is disabled", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({ registration });
+    const manager = await createInitializedManager(h.environment);
+    const worker = new Worker("installing", "26.07.30-bbbbbbb");
+    registration.installing = worker;
+    registration.dispatch("updatefound");
+    worker.transition("activating");
+    expect(manager.getSnapshot().workerState).toBe("activating");
+    await manager.setOfflineEnabled(false);
+    worker.transition("installed");
+    registration.installing = new Worker("installing");
+    registration.dispatch("updatefound");
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "disabled",
+      workerState: "unregistered",
+    });
+    expect(h.timers.some(({ delay }) => delay === 0)).toBeFalse();
+  });
+
+  test("checks a newly installed update only while a waiting worker remains", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+    });
+    const manager = await createInitializedManager(h.environment);
+    for (const waiting of [null, new Worker("installed", "26.07.30-bbbbbbb")]) {
+      const worker = new Worker("installing", "26.07.30-bbbbbbb");
+      registration.installing = worker;
+      registration.dispatch("updatefound");
+      worker.transition("installed");
+      registration.installing = null;
+      registration.waiting = waiting;
+      h.timers
+        .filter(({ delay }) => delay === 0)
+        .forEach(({ callback }) => callback());
+      h.timers.length = 0;
+    }
+    await flushUntil(() => manager.getSnapshot().updateReady);
+    expect(manager.getSnapshot().phase).toBe("update-ready");
+  });
+
+  test("treats a controlled page without an active worker as an update", async () => {
+    const registration = new Registration();
+    const h = makeEnvironment({ registration });
+    const manager = await createInitializedManager(h.environment);
+    registration.active = null;
+    h.serviceWorker.controller = new Worker("activated", manifest.version);
+    registration.installing = new Worker("installing");
+    registration.dispatch("updatefound");
+    expect(manager.getSnapshot().phase).toBe("updating");
+  });
+
+  test("completes a first installation from a waiting worker", async () => {
+    const worker = new Worker("installed", manifest.version);
+    const registration = new Registration({ waiting: worker });
+    const h = makeEnvironment({ registration });
+    h.serviceWorker.getRegistration = async () => null;
+    const manager = uninitializedManager(h.environment);
+    const ready = manager.initialize();
+    await flushUntil(() => worker.listeners.get("statechange")?.size === 1);
+    registration.waiting = null;
+    registration.active = worker;
+    worker.transition("activated");
+    await ready;
+    expect(manager.getSnapshot().phase).toBe("ready");
+  });
+
+  test("reports an inconsistent first installation when no worker becomes active", async () => {
+    const h = makeEnvironment({ registration: new Registration() });
+    h.serviceWorker.getRegistration = async () => null;
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "error",
+      error: "The downloaded system version is inconsistent.",
+    });
+    expect(h.timers.some(({ delay }) => delay === 30_000)).toBeTrue();
+  });
+
+  test("reports unsupported browsers and still downloads games on demand", async () => {
+    const h = makeEnvironment();
+    delete h.environment.navigator.serviceWorker;
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "error",
+      error: "Offline system files are not supported by this browser.",
+    });
+    await manager.downloadGame("doom");
+    expect(manager.getSnapshot().downloadedGameIds).toEqual(["doom"]);
+    await expect(manager.downloadGame("missing")).rejects.toThrow(
+      "This bundled game is unavailable.",
+    );
+  });
+
+  test("appends cache busters to version URLs with query strings", async () => {
+    const h = makeEnvironment();
+    await uninitializedManager(h.environment, {
+      versionUrl: "/version.json?channel=beta",
+    }).initialize();
+    expect(
+      h.fetches.some(({ url }) =>
+        /^\/version\.json\?channel=beta&t=\d+$/.test(url),
+      ),
+    ).toBeTrue();
+  });
+
+  test("bypasses the worker CDN on retries for query-string worker URLs", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+      waiting: new Worker("installed", "26.07.29-intermediate"),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+    });
+    const manager = uninitializedManager(h.environment, {
+      serviceWorkerUrl: "/sw.js",
+    });
+    await manager.initialize();
+    await manager
+      .checkForUpdates({ applyAutomatically: true, bypassDelay: true })
+      .catch(() => {});
+    expect(h.serviceWorker.registerCalls.at(-1)[0]).toMatch(
+      /^\/sw\.js\?v=26\.07\.30-bbbbbbb&retry=\d+$/,
+    );
+  });
+
+  describe("disabling offline access during a download", () => {
+    const disableWhen = (h, manager, hook) => {
+      let disabled = false;
+      return (...args) => {
+        if (!disabled && hook(...args)) {
+          disabled = true;
+          void manager.setOfflineEnabled(false);
+        }
+      };
+    };
+
+    test("stops before opening the cache", async () => {
+      const h = makeEnvironment();
+      const manager = uninitializedManager(h.environment);
+      const open = h.environment.caches.open;
+      const disable = disableWhen(h, manager, () => true);
+      h.environment.caches.open = async (name) => {
+        disable();
+        return open(name);
+      };
+      await expect(manager.downloadGame("doom")).rejects.toThrow(
+        "Offline access was disabled.",
+      );
+      expect(manager.getSnapshot().gamePhase).toBe("idle");
+    });
+
+    test("stops after a file is fetched", async () => {
+      const h = makeEnvironment();
+      const manager = uninitializedManager(h.environment);
+      const fetch = h.environment.fetch;
+      const disable = disableWhen(h, manager, (url) =>
+        String(url).endsWith("doom.jsdos"),
+      );
+      h.environment.fetch = async (url, options) => {
+        disable(url);
+        return fetch(url, options);
+      };
+      await expect(manager.downloadGame("doom")).rejects.toThrow(
+        "Offline access was disabled.",
+      );
+      expect(h.bundledCache.values.size).toBe(0);
+    });
+
+    test("removes written files even when cache deletion fails", async () => {
+      const h = makeEnvironment();
+      const manager = uninitializedManager(h.environment);
+      const put = h.bundledCache.put.bind(h.bundledCache);
+      const disable = disableWhen(h, manager, (url) =>
+        String(url).endsWith("doom.jsdos"),
+      );
+      h.bundledCache.put = async (url, response) => {
+        await put(url, response);
+        disable(url);
+      };
+      h.bundledCache.delete = async () => {
+        throw new Error("cache locked");
+      };
+      await expect(manager.downloadGame("doom")).rejects.toThrow(
+        "Offline access was disabled.",
+      );
+    });
+
+    test("discards an upgrade while old files are being removed", async () => {
+      const h = makeEnvironment({
+        storageValues: {
+          astroFlashOfflineGameRecords: JSON.stringify({
+            doom: {
+              bytes: 6,
+              files: ["iframe/doom.old/index.html"],
+              revision: "old",
+              type: "iframe",
+            },
+          }),
+        },
+      });
+      const manager = uninitializedManager(h.environment);
+      const remove = h.bundledCache.delete.bind(h.bundledCache);
+      const disable = disableWhen(h, manager, (url) =>
+        String(url).includes("doom.old"),
+      );
+      let failDeletes = false;
+      h.bundledCache.delete = async (url) => {
+        disable(url);
+        if (failDeletes) throw new Error("cache locked");
+        return remove(url);
+      };
+      await expect(manager.downloadGame("doom")).rejects.toThrow(
+        "Offline access was disabled.",
+      );
+      expect(
+        [...h.bundledCache.values.keys()].some((url) =>
+          url.includes("doom.doom-1"),
+        ),
+      ).toBeFalse();
+
+      await manager.setOfflineEnabled(true);
+      failDeletes = true;
+      h.storage.setItem(
+        "astroFlashOfflineGameRecords",
+        JSON.stringify({
+          doom: {
+            bytes: 6,
+            files: ["iframe/doom.old/index.html"],
+            revision: "old",
+            type: "iframe",
+          },
+        }),
+      );
+      const retry = uninitializedManager(h.environment);
+      const retryDisable = disableWhen(h, retry, (url) =>
+        String(url).includes("doom.old"),
+      );
+      h.bundledCache.delete = async (url) => {
+        retryDisable(url);
+        throw new Error("cache locked");
+      };
+      await expect(retry.downloadGame("doom")).rejects.toThrow(
+        "Offline access was disabled.",
+      );
+    });
+  });
+
+  test("upgrades a game even when an old file cannot be deleted", async () => {
+    const h = makeEnvironment({
+      storageValues: {
+        astroFlashOfflineGameRecords: JSON.stringify({
+          doom: {
+            bytes: 6,
+            files: ["iframe/doom.old/index.html"],
+            revision: "old",
+            type: "iframe",
+          },
+        }),
+      },
+    });
+    const manager = uninitializedManager(h.environment);
+    h.bundledCache.delete = async () => {
+      throw new Error("cache locked");
+    };
+    await manager.downloadGame("doom");
+    expect(manager.getSnapshot().downloadedGameIds).toEqual(["doom"]);
+  });
+
+  test("keeps the shared Flash runtime while another Flash game is installed", async () => {
+    const h = makeEnvironment({
+      storageValues: {
+        astroFlashOfflineGameRecords: JSON.stringify({
+          "other-flash-game": {
+            bytes: 1,
+            files: [],
+            revision: "1",
+            type: "swf",
+          },
+        }),
+      },
+    });
+    const manager = uninitializedManager(h.environment);
+    await manager.downloadGame("bike-mania");
+    await manager.removeGame("bike-mania");
+    expect(
+      JSON.parse(h.storage.getItem("astroFlashOfflineGameRecords")).__runtime__,
+    ).toBeTruthy();
+  });
+
+  test("reports cache failures while removing a game", async () => {
+    const h = makeEnvironment();
+    const manager = uninitializedManager(h.environment);
+    await manager.downloadGame("doom");
+    h.environment.caches.open = async () => {
+      throw new Error("cache unavailable");
+    };
+    await expect(manager.removeGame("doom")).rejects.toThrow(
+      "cache unavailable",
+    );
+    expect(manager.getSnapshot()).toMatchObject({
+      gamePhase: "error",
+      gameError: "cache unavailable",
+    });
+  });
+
+  test("shares a running update check and stops it when offline access is disabled", async () => {
+    const h = makeEnvironment();
+    const manager = await createInitializedManager(h.environment);
+    let release,
+      requests = 0;
+    versionFetch(h, async (url, options, fetch) => {
+      requests += 1;
+      await new Promise((resolve) => (release = resolve));
+      return fetch(url, options);
+    });
+    const first = manager.checkForUpdates();
+    const second = manager.checkForUpdates();
+    await flush();
+    expect(requests).toBe(1);
+    const disabling = manager.setOfflineEnabled(false);
+    release();
+    const results = await Promise.allSettled([first, second, disabling]);
+    expect(results.map(({ reason }) => reason?.message)).toEqual([
+      "Offline access was disabled.",
+      "Offline access was disabled.",
+      undefined,
+    ]);
+    expect(manager.getSnapshot().phase).toBe("disabled");
+  });
+
+  test("forgets pending reload and apply targets when a newer release appears", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-first111",
+    });
+    const manager = await createInitializedManager(h.environment);
+    registration.installing = new Worker("installing", "26.07.30-first111");
+    await manager.updateNow();
+    expect(manager.getSnapshot().phase).toBe("updating");
+    registration.installing = null;
+    registration.waiting = new Worker("installed", "26.07.30-second22");
+    h.setRemote({
+      version: "26.07.30-second22",
+      releasedAt: new Date(now).toISOString(),
+    });
+    await manager.checkForUpdates();
+    expect(manager.getSnapshot().availableVersion).toBe("26.07.30-second22");
+    expect(registration.waiting.messages).toEqual([]);
+    expect(h.getReloads()).toBe(0);
+  });
+
+  test("marks an update ready once its worker activates during registration", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+    });
+    const manager = await createInitializedManager(h.environment);
+    h.serviceWorker.register = async (...args) => {
+      h.serviceWorker.registerCalls.push(args);
+      registration.active = new Worker("activated", "26.07.30-bbbbbbb");
+      return registration;
+    };
+    const result = await manager.checkForUpdates({
+      applyAutomatically: true,
+      bypassDelay: true,
+    });
+    expect(result).toBeUndefined();
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "update-ready",
+      updateReady: true,
+    });
+  });
+
+  test("repairs and disables without a tracked registration", async () => {
+    for (const existing of [null, new Registration()]) {
+      const h = makeEnvironment();
+      h.serviceWorker.getRegistration = async () => existing;
+      const manager = uninitializedManager(h.environment);
+      await manager.repair();
+      expect(manager.getSnapshot().phase).toBe("ready");
+      if (existing) expect(existing.unregisterCalls).toBe(1);
+    }
+    for (const existing of [null, new Registration()]) {
+      const h = makeEnvironment();
+      h.serviceWorker.getRegistration = async () => existing;
+      const manager = uninitializedManager(h.environment);
+      expect((await manager.setOfflineEnabled(true)).enabled).toBeTrue();
+      await manager.setOfflineEnabled(false);
+      expect(manager.getSnapshot().phase).toBe("disabled");
+      if (existing) expect(existing.unregisterCalls).toBe(1);
+    }
+  });
+
+  test("skips shell cache cleanup when Cache Storage is unavailable", async () => {
+    const h = makeEnvironment();
+    const manager = await createInitializedManager(h.environment);
+    delete h.environment.caches;
+    await manager.setOfflineEnabled(false);
+    expect(h.deletedCaches).toEqual([]);
+  });
+
+  test("keeps automatic updates off while offline access is disabled", async () => {
+    const h = makeDisabledEnvironment();
+    h.serviceWorker.getRegistration = async () => null;
+    const manager = await createInitializedManager(h.environment);
+    const before = h.fetches.length;
+    manager.setAutomaticUpdatesEnabled(true);
+    await flush();
+    expect(h.fetches.length).toBe(before);
+  });
+
+  test("waits for a background check before a manual update", async () => {
+    const h = makeEnvironment();
+    const manager = await createInitializedManager(h.environment);
+    const background = manager.checkForUpdates();
+    const manual = manager.updateNow();
+    await background;
+    expect((await manual).phase).toBe("ready");
+    expect(countVersionFetches(h)).toBe(3);
+  });
+
+  test("checks due updates when the page becomes visible again", async () => {
+    const h = makeEnvironment({
+      remoteVersion: "26.07.30-bbbbbbb",
+      remoteReleasedAt: new Date(now).toISOString(),
+    });
+    const manager = await createInitializedManager(h.environment);
+    expect(manager.getSnapshot().updateEligibleAt).toBe(now + sixHours);
+    const before = countVersionFetches(h);
+    h.environment.document.visibilityState = "hidden";
+    h.environment.document.dispatch("visibilitychange");
+    expect(countVersionFetches(h)).toBe(before);
+    h.setNow(now + sixHours);
+    h.environment.document.visibilityState = "visible";
+    h.environment.document.dispatch("visibilitychange");
+    expect(countVersionFetches(h)).toBe(before + 1);
+  });
+
+  test("retries failed update checks without surfacing unhandled errors", async () => {
+    const registration = new Registration({
+      active: new Worker("activated", manifest.version),
+      waiting: new Worker("installed", "26.07.29-intermediate"),
+    });
+    const h = makeEnvironment({
+      registration,
+      remoteVersion: "26.07.30-bbbbbbb",
+    });
+    const manager = await createInitializedManager(h.environment);
+    const retry = h.timers.find(({ delay }) => delay === 30_000);
+    expect(retry).toBeTruthy();
+    versionFetch(h, () => new Response("down", { status: 503 }));
+    retry.callback();
+    await flushUntil(() => manager.getSnapshot().error !== null);
+    expect(manager.getSnapshot().error).toBe("Update check failed (503).");
+
+    manager.setAutomaticUpdatesEnabled(false);
+    manager.setAutomaticUpdatesEnabled(true);
+    h.environment.dispatch("online");
+    const background = manager.checkForUpdates().catch(() => {});
+    await expect(manager.updateNow()).rejects.toThrow(
+      "Update check failed (503).",
+    );
+    await background;
+  });
+
+  test("stops rescheduling when automatic updates are turned off during a failed check", async () => {
+    const h = makeEnvironment({
+      remoteVersion: "26.07.30-bbbbbbb",
+      remoteReleasedAt: new Date(now).toISOString(),
+    });
+    const manager = await createInitializedManager(h.environment);
+    const scheduled = h.timers.find(({ delay }) => delay === sixHours);
+    h.setNow(now + sixHours);
+    let fail;
+    versionFetch(
+      h,
+      () =>
+        new Promise((resolve) => {
+          fail = () => resolve(new Response("down", { status: 503 }));
+        }),
+    );
+    scheduled.callback();
+    await flush();
+    manager.setAutomaticUpdatesEnabled(false);
+    const timerCount = h.timers.length;
+    fail();
+    await flushUntil(() => manager.getSnapshot().error !== null);
+    await flush();
+    expect(h.timers.length).toBe(timerCount);
+  });
+
+  test("marks an already-active update ready without reloading", async () => {
+    const h = makeEnvironment({
+      registration: new Registration({
+        active: new Worker("activated", "26.07.30-bbbbbbb"),
+      }),
+      remoteVersion: "26.07.30-bbbbbbb",
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    const manager = await createInitializedManager(h.environment);
+    await manager.checkForUpdates();
+    expect(await manager.applyUpdate({ reload: false })).toBeUndefined();
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "update-ready",
+      updateReady: true,
+    });
+    expect(h.getReloads()).toBe(0);
+  });
+
+  test("finishes a manual worker migration that activates immediately", async () => {
+    const registration = new Registration({
+      active: new Worker(
+        "activated",
+        manifest.version,
+        `/sw.js?v=${manifest.version}`,
+      ),
+    });
+    const h = makeEnvironment({
+      registration,
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    const manager = await createInitializedManager(h.environment);
+    expect(h.serviceWorker.registerCalls.length).toBe(1);
+    expect(manager.getSnapshot().phase).toBe("ready");
+  });
+});
