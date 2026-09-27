@@ -175,7 +175,7 @@ const showBootScreen = () => {
   });
 };
 
-const showWelcomeScreen = (autoLogin = false) => {
+const showWelcomeScreen = (autoLogin) => {
   setSuspended(false);
   hideSystemDialogs();
   clearTimeout(bootTimeout);
@@ -232,7 +232,7 @@ const showTurnOffScreen = () => {
   setScreen("turn-off-screen");
 };
 
-const startShutdown = (restart = false) => {
+const startShutdown = (restart) => {
   setSuspended(false);
   hideSystemDialogs();
   muteAllWindows();
