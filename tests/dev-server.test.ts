@@ -541,5 +541,7 @@ describe("development server edge cases", () => {
     } finally {
       await server.stop();
     }
-  });
+    // The server fingerprints the real source tree and rebuilds into the
+    // temporary directory if a parallel test changed it in the meantime.
+  }, 60_000);
 });
