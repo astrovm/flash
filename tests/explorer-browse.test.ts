@@ -358,3 +358,80 @@ test("Explorer shows game icons, descriptions, and survives failing file handler
   }
   expect(errors[0].message).toBe("handler failed");
 });
+
+test("Explorer returns to My Computer when its folder is deleted and opens Recycle Bin shortcuts", async () => {
+  const h = await openDocuments(),
+    { s, fs } = h;
+  await fs.destroy(h.folder.id);
+  await settle();
+  expect(h.address().value).toBe("My Computer");
+  const shortcut = fs.createFile(fs.DESKTOP, "Shortcut to Recycle Bin.game", {
+    app: "__recycle-bin",
+  });
+  fs.open(shortcut.id);
+  await settle();
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="__recycle-bin"]'),
+  ).toBeTrue();
+  const unknown = fs.createFile(fs.DESKTOP, "Unknown.game", {
+    app: "missing-game",
+  });
+  fs.open(unknown.id);
+});
+
+test("Explorer rename shortcuts keep names on cancel and report failures", async () => {
+  const h = await openDocuments(),
+    { s, fs } = h;
+  const item = h.item(h.note.id);
+  s.window.prompt = () => null;
+  item.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "F2", bubbles: true }),
+  );
+  await settle();
+  expect(fs.getNode(h.note.id).name).toBe("note.txt");
+  const rename = s.window.FileOperations.rename;
+  s.window.FileOperations.rename = async () => {
+    throw new Error("");
+  };
+  s.window.prompt = () => "other.txt";
+  try {
+    h.item(h.note.id).dispatchEvent(
+      new s.window.KeyboardEvent("keydown", { key: "F2", bubbles: true }),
+    );
+    await settle();
+  } finally {
+    s.window.FileOperations.rename = rename;
+  }
+  expect(dialogText(s)).toContain("The file operation failed.");
+});
+
+test("Search lists games without desktop shortcuts and opens them", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS;
+  fs.findByApp("bike-mania").forEach((node) => fs.destroy(node.id));
+  s.document.getElementById("start-button").click();
+  s.document.querySelector('[data-start-action="search"]').click();
+  const win = s.document.querySelector('.xp-window[data-game="__search"]');
+  win.querySelector("[data-search-kind]").click();
+  win.querySelector("#search-filename").value = "Bike Mania";
+  win.querySelector("#search-type").value = "games";
+  win.querySelector("#search-type").dispatchEvent(new s.window.Event("change"));
+  const result = [...win.querySelector(".search-results-list").children].find(
+    (item) => item.textContent === "Bike ManiaGame",
+  );
+  expect(result).toBeTruthy();
+  s.window.RufflePlayer = {
+    newest: () => ({
+      createPlayer: () => {
+        const player = s.document.createElement("ruffle-player");
+        player.load = () => {};
+        return player;
+      },
+    }),
+  };
+  result.dispatchEvent(new s.window.MouseEvent("dblclick"));
+  await settle();
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="bike-mania"]'),
+  ).toBeTrue();
+});

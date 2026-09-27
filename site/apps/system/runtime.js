@@ -969,7 +969,7 @@ export const createSystemRuntime = (context) => {
               label: "Tiles",
               action: "tiles",
               radio: true,
-              checked: (win.explorerView || "tiles") === "tiles",
+              checked: win.explorerView === "tiles",
             },
             {
               label: "Icons",
@@ -1130,9 +1130,7 @@ export const createSystemRuntime = (context) => {
           if (action === "view") {
             const views = ["tiles", "thumbnails", "icons", "list", "details"];
             win.explorerView =
-              views[
-                (views.indexOf(win.explorerView || "tiles") + 1) % views.length
-              ];
+              views[(views.indexOf(win.explorerView) + 1) % views.length];
             renderExplorerItems(win);
           }
           if (action === "search") openSearchDialog();
