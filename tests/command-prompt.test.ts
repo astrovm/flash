@@ -204,4 +204,57 @@ describe("Command Prompt session", () => {
     expect(run("ren Work Other")).not.toMatch(/^(VirtualFS|FileOperations):/);
     expect(run("ren Work Other")).not.toBe("");
   });
+
+  test("navigates drive-qualified, dotted, and above-root paths", () => {
+    run("cd c:\\Documents and Settings");
+    expect(session.prompt).toBe("C:\\Documents and Settings>");
+    run("cd .\\astro");
+    expect(session.prompt).toBe("C:\\Documents and Settings\\Administrator>");
+    run("c:");
+    run("cd ..");
+    expect(session.cwd).toBe(fs.DRIVE_C);
+    expect(session.prompt).toBe("C:\\>");
+  });
+
+  test("falls back to the C: drive when the current folder disappears", () => {
+    const folder = fs.createFolder(fs.MY_DOCUMENTS, "Temporary");
+    run(`cd "${fs.getPath(folder.id)}"`);
+    fs.destroy(folder.id);
+    expect(session.prompt).toBe("C:\\>");
+    run("cd \\");
+    expect(session.cwd).toBe(fs.DRIVE_C);
+  });
+
+  test("lists drive roots and formats morning, afternoon, and unknown sizes", () => {
+    const morning = fs.createFile(fs.DRIVE_C, "morning.txt");
+    const afternoon = fs.createFile(fs.DRIVE_C, "afternoon.txt");
+    fs.getNode(morning.id).modified = new Date(2026, 0, 2, 0, 5).getTime();
+    fs.getNode(afternoon.id).modified = new Date(2026, 0, 2, 13, 5).getTime();
+    fs.getNode(afternoon.id).size = undefined;
+    const listing = run("dir c:\\");
+    expect(listing).toContain("12:05 AM");
+    expect(listing).toContain("01:05 PM");
+    expect(listing).not.toContain("<DIR>          ..");
+    expect(listing).toMatch(/\s0 afternoon\.txt/);
+  });
+
+  test("renames with the long command name and reports non-error failures", () => {
+    fs.createFile(session.cwd, "old.txt");
+    expect(run("rename old.txt new.txt")).toBe("");
+    expect(fs.findChild(session.cwd, "new.txt")).toBeTruthy();
+    context.fileOps = {
+      rename() {
+        throw "rename refused";
+      },
+    };
+    expect(run("ren new.txt other.txt")).toBe("rename refused");
+  });
+
+  test("start reports folders that nothing can open", () => {
+    fs.createFolder(session.cwd, "Folder");
+    context.launchApplication = () => false;
+    expect(run("start Folder")).toBe(
+      "The system cannot find the file specified.",
+    );
+  });
 });
