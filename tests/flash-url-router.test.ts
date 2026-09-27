@@ -212,7 +212,7 @@ describe("Flash URL router", () => {
 });
 
 describe("Flash URL router validation", () => {
-  const route = (gameId, localPath) => ({
+  const route = (gameId: string, localPath: string) => ({
     [gameId]: {
       archive: { routes: { "https://media.example/main.swf": localPath } },
     },
