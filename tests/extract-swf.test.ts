@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 import { extractSwf } from "../tools/extract-swf";
+import { bunCommand } from "./helpers/coverage";
 
 const TOOL = join(import.meta.dir, "..", "tools", "extract-swf.ts");
 const temporaryDirectories: string[] = [];
@@ -62,7 +63,7 @@ describe("SWF projector extraction", () => {
 
 test("keeps the CLI entry point working", async () => {
   const input = await fixture("windows", Buffer.from("FWS"));
-  expect(Bun.spawnSync(["bun", TOOL, input]).exitCode).toBe(0);
+  expect(Bun.spawnSync(bunCommand(TOOL, input)).exitCode).toBe(0);
 });
 test("rejects missing, short, non-projector and malformed inputs", async () => {
   await expect(extractSwf()).rejects.toThrow("Usage:");

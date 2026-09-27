@@ -137,7 +137,7 @@ if (coverageEnabled) {
       : loadJavaScript(module, path);
   // Test files may run in separate processes and isolated globals, so each
   // writes its own counters and the report merges them.
-  afterAll(() => {
+  const writeCoverage = () => {
     mkdirSync(rawCoverageDirectory, { recursive: true });
     writeFileSync(
       resolve(
@@ -146,5 +146,20 @@ if (coverageEnabled) {
       ),
       JSON.stringify(coverage),
     );
-  });
+  };
+  // Tool CLIs started by tests load this file with `--preload` outside the
+  // test runner, where `afterAll` is unavailable.
+  try {
+    afterAll(writeCoverage);
+  } catch {
+    process.on("exit", writeCoverage);
+  }
 }
+
+// Runs a Bun entry point in a child process, recording its coverage when
+// coverage is enabled.
+export const bunCommand = (...arguments_: string[]) => [
+  process.execPath,
+  ...(coverageEnabled ? ["--preload", import.meta.path] : []),
+  ...arguments_,
+];
