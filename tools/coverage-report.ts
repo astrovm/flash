@@ -15,13 +15,12 @@ import {
   rawCoverageDirectory,
 } from "../tests/helpers/coverage";
 
-// Per-metric floors sit just below current coverage so CI catches
-// regressions; raise them as tests land until every metric reaches 95%.
+// Every metric must stay at or above 95%; CI fails the build otherwise.
 const THRESHOLDS = {
-  lines: 92,
-  statements: 90,
-  functions: 88,
-  branches: 77,
+  lines: 95,
+  statements: 95,
+  functions: 95,
+  branches: 95,
 } as const;
 const METRICS = Object.keys(THRESHOLDS) as (keyof typeof THRESHOLDS)[];
 

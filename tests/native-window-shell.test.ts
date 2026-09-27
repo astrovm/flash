@@ -185,3 +185,49 @@ test("native window metadata respects capability flags and ignores placeholder g
     "center",
   );
 });
+test("native metadata waits for pending shell resizes and derives client size from the outer frame", async () => {
+  const { s, win, context } = await setup();
+  context.applyNativeWindowMetadata({
+    outerWidth: 408,
+    outerHeight: 348,
+    frameLeft: 4,
+    frameRight: 4,
+    frameTop: 48,
+    menuHeight: 20,
+    frameBottom: 4,
+  });
+  const width = win.style.width;
+  const height = win.style.height;
+  expect(context.nativeBoundsSyncRequired).toBeTrue();
+  context.applyNativeWindowMetadata({ clientWidth: 300, clientHeight: 200 });
+  expect([win.style.width, win.style.height]).toEqual([width, height]);
+  const target = {
+    width: parseFloat(width),
+    height: parseFloat(height) - 28,
+  };
+  context.applyNativeWindowMetadata({
+    clientWidth: target.width,
+    clientHeight: target.height,
+  });
+  expect(context.nativeBoundsSyncRequired).toBeFalse();
+  context.applyNativeWindowMetadata({ clientWidth: 300, clientHeight: 200 });
+  expect(win.style.width).toBe("300px");
+  const now = s.window.performance.now;
+  s.window.performance.now = () => now.call(s.window.performance) + 10_000;
+  try {
+    context.applyNativeWindowMetadata({ clientWidth: 320, clientHeight: 220 });
+  } finally {
+    s.window.performance.now = now;
+  }
+  expect(win.style.width).toBe("320px");
+  win.querySelector(".maximize-btn").click();
+  context.applyNativeClientSize(100, 100);
+  expect(win.style.width).not.toBe("100px");
+  win.querySelector(".maximize-btn").click();
+  win.querySelector(".boxedwine-shared-app-host").remove();
+  context.applyNativeClientSize(100, 100);
+  expect(win.style.width).not.toBe("100px");
+  context.minimize();
+  await flushShell();
+  expect(win.style.display).toBe("none");
+});
