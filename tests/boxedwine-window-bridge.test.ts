@@ -794,3 +794,229 @@ describe("BoxedWine window bridge", () => {
     }
   });
 });
+
+describe("BoxedWine window bridge input routing", () => {
+  const createHost = (module = {}) => {
+    const listeners = new Map();
+    const messages = [];
+    const dispatched = [];
+    class InputEvent {
+      constructor(type, options) {
+        this.type = type;
+        Object.assign(this, options);
+      }
+    }
+    let canvas = { dispatchEvent: (event) => dispatched.push(event) };
+    const parent = { postMessage: (message) => messages.push(message) };
+    const hostWindow = {
+      parent,
+      location: { origin: "https://flash.example" },
+      document: {
+        documentElement: { dataset: {} },
+        getElementById: () => canvas,
+      },
+      KeyboardEvent: InputEvent,
+      MouseEvent: InputEvent,
+      WheelEvent: InputEvent,
+      dispatchEvent: (event) => dispatched.push(event),
+      addEventListener: (type, listener) => listeners.set(type, listener),
+      removeEventListener: (type) => listeners.delete(type),
+    };
+    const dispose = installBoxedWineWindowBridge(hostWindow, module);
+    const send = (data, overrides = {}) =>
+      listeners.get("message")({
+        source: parent,
+        origin: "https://flash.example",
+        data,
+        ...overrides,
+      });
+    return {
+      dispatched,
+      dispose,
+      hostWindow,
+      listeners,
+      messages,
+      module,
+      send,
+      removeCanvas: () => (canvas = null),
+    };
+  };
+
+  test("maps browser keys to Windows key codes when no native key handler exists", () => {
+    const host = createHost();
+    const keyCodes = [
+      ["KeyA", "a", 65],
+      ["Digit5", "5", 53],
+      ["Numpad3", "3", 99],
+      ["F5", "F5", 116],
+      ["Enter", "Enter", 13],
+      ["IntlBackslash", "<", 60],
+      ["Lang1", "HangulMode", 0],
+    ];
+    for (const [code, key] of keyCodes)
+      host.send({
+        type: "boxedwine-native-key",
+        eventType: "keydown",
+        code,
+        key,
+      });
+    host.send({ type: "boxedwine-native-key", eventType: "keyup", keyCode: 7 });
+    host.send({ type: "boxedwine-native-key", eventType: "keyup" });
+    expect(host.dispatched.map((event) => event.keyCode)).toEqual([
+      ...keyCodes.map(([, , keyCode]) => keyCode),
+      7,
+      0,
+    ]);
+    expect(host.dispatched[0]).toMatchObject({
+      altKey: false,
+      location: 0,
+      repeat: false,
+    });
+  });
+
+  test("sends native scan codes for every key group", () => {
+    const keys = [];
+    const host = createHost({
+      _boxedwine_key_event: (...args) => keys.push(args),
+    });
+    for (const code of [
+      "KeyZ",
+      "Digit1",
+      "Digit0",
+      "F12",
+      "Numpad9",
+      "Numpad0",
+      "ArrowUp",
+    ])
+      host.send({
+        type: "boxedwine-native-key",
+        eventType: "keydown",
+        windowId: 3,
+        code,
+      });
+    host.send({
+      type: "boxedwine-native-key",
+      eventType: "keyup",
+      windowId: 3,
+      code: "Unknown",
+      key: "x",
+    });
+    host.send({
+      type: "boxedwine-native-key",
+      eventType: "keyup",
+      windowId: 3,
+      code: "KeyZ",
+    });
+    expect(keys.map(([, scanCode]) => scanCode)).toEqual([
+      29, 30, 39, 69, 97, 98, 82, 29,
+    ]);
+    expect(keys.at(-1)[2]).toBe(0);
+    expect(host.dispatched.at(-1).keyCode).toBe(88);
+  });
+
+  test("ignores foreign messages, bad coordinates, and missing canvases", () => {
+    const activated = [];
+    const host = createHost({
+      _boxedwine_activate_window: (id) => activated.push(id),
+    });
+    host.send({ type: "boxedwine-native-pointer" }, { source: {} });
+    host.send({ type: "boxedwine-native-pointer" }, { origin: "https://evil" });
+    host.send({ type: "other" });
+    host.send(undefined);
+    host.send({
+      type: "boxedwine-native-pointer",
+      eventType: "mousedown",
+      windowId: "7",
+      x: Number.NaN,
+      y: 1,
+    });
+    expect(host.dispatched).toEqual([]);
+    expect(activated).toEqual([]);
+    host.send({
+      type: "boxedwine-native-wheel",
+      x: 4,
+      y: 5,
+    });
+    host.send({
+      type: "boxedwine-native-pointer",
+      eventType: "mousemove",
+      x: 1,
+      y: 2,
+    });
+    expect(
+      host.dispatched.map((event) => [
+        event.type,
+        event.deltaY ?? event.button,
+      ]),
+    ).toEqual([
+      ["wheel", 0],
+      ["mousemove", 0],
+    ]);
+    host.removeCanvas();
+    host.send({
+      type: "boxedwine-native-pointer",
+      eventType: "mousemove",
+      x: 1,
+      y: 2,
+    });
+    expect(host.dispatched).toHaveLength(2);
+  });
+
+  test("routes window commands with defaults and without a native command handler", () => {
+    const commands = [];
+    const activated = [];
+    const host = createHost({
+      _boxedwine_window_command: (...args) => commands.push(args),
+      _boxedwine_activate_window: (id) => activated.push(id),
+    });
+    host.send({
+      type: "boxedwine-native-command",
+      windowId: 1,
+      action: "activate",
+    });
+    host.send({
+      type: "boxedwine-native-command",
+      windowId: 1,
+      action: "unknown",
+    });
+    expect(activated).toEqual([1]);
+    expect(commands).toEqual([
+      [1, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0],
+    ]);
+    createHost().send({ type: "boxedwine-native-command", action: "close" });
+  });
+
+  test("forwards process events and validates window events and runtime setup", () => {
+    const tokens = [];
+    const previous = [];
+    const host = createHost({
+      onRuntimeInitialized: () => previous.push("previous"),
+      boxedwineSetInitialLaunchToken: (token) => tokens.push(token),
+      boxedwineFrames: new Map(),
+    });
+    host.listeners.get("boxedwine-native-window")({});
+    host.listeners.get("boxedwine-native-window")({ detail: { type: 1 } });
+    host.listeners.get("boxedwine-native-process")({
+      detail: { processId: "1" },
+    });
+    host.listeners.get("boxedwine-native-process")({});
+    host.listeners.get("boxedwine-native-process")({
+      detail: { processId: 9 },
+    });
+    expect(host.messages).toEqual([
+      { type: "boxedwine-native-process", process: { processId: 9 } },
+    ]);
+    host.hostWindow.BoxedWineInitialLaunchToken = "token";
+    host.module.onRuntimeInitialized();
+    expect(previous).toEqual(["previous"]);
+    expect(tokens).toEqual(["token"]);
+    expect(host.hostWindow.BoxedWineFrames).toBe(host.module.boxedwineFrames);
+    host.dispose();
+    expect(host.hostWindow.BoxedWineFrames).toBeUndefined();
+    const missing = createHost();
+    expect(() => missing.module.onRuntimeInitialized()).toThrow(
+      "frame registry is unavailable",
+    );
+  });
+});

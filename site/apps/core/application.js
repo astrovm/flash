@@ -18,11 +18,13 @@ export const defineApplication = (definition) => {
     title: requiredText(definition.title, "title"),
     icon: requiredText(definition.icon, "icon"),
     kind: requiredText(definition.kind, "kind"),
-    fileTypes: Object.freeze(
-      [...new Set(definition.fileTypes || [])].map((extension) =>
-        extension.toLowerCase(),
+    fileTypes: Object.freeze([
+      ...new Set(
+        (definition.fileTypes || []).map((extension) =>
+          extension.toLowerCase(),
+        ),
       ),
-    ),
+    ]),
     window: Object.freeze({
       width: 640,
       height: 470,

@@ -219,3 +219,103 @@ describe("persistent BoxedWine process host", () => {
     expect(host.messages).toHaveLength(count);
   });
 });
+
+describe("BoxedWine process host failures", () => {
+  const launch = (host, overrides = {}) =>
+    host.send({
+      type: "boxedwine-launch-process",
+      appId: "calculator",
+      launchToken: "1011",
+      requestId: "launch",
+      ...overrides,
+    });
+  const lastMessage = (host) => host.messages.at(-1).message;
+
+  test("queues requests until the runtime starts and ignores invalid messages", () => {
+    const host = createHost();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    host.send(undefined);
+    launch(host, { launchToken: "not-a-number" });
+    launch(host, { appId: "unknown" });
+    host.send({
+      type: "boxedwine-terminate-process",
+      appId: "calculator",
+      launchToken: "1011",
+      requestId: "close",
+      processId: 0,
+    });
+    launch(host);
+    expect(host.messages).toEqual([]);
+    processHost.module.onRuntimeInitialized();
+    expect(lastMessage(host).type).toBe("boxedwine-process-accepted");
+  });
+
+  test("reports launches that are refused or fail inside BoxedWine", () => {
+    const host = createHost();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
+    processHost.module.boxedwineLaunchProcess = () => false;
+    launch(host);
+    expect(lastMessage(host)).toMatchObject({ processId: 0, error: 87 });
+    processHost.module.boxedwineLaunchProcess = () => true;
+    for (const failure of [-1, 0xffffffff]) {
+      launch(host, { requestId: `failed-${failure}` });
+      processHost.setLaunchResult(failure);
+      host.tick();
+      expect(lastMessage(host)).toMatchObject({
+        type: "boxedwine-process-launched",
+        processId: 0,
+        error: 87,
+      });
+    }
+  });
+
+  test("reports processes that cannot be terminated", () => {
+    const host = createHost();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
+    host.send({
+      type: "boxedwine-terminate-process",
+      appId: "calculator",
+      launchToken: "1011",
+      requestId: "close",
+      processId: 404,
+    });
+    expect(lastMessage(host)).toMatchObject({
+      type: "boxedwine-process-terminated",
+      processId: 404,
+      error: 87,
+    });
+  });
+
+  test("requires a process launcher and stops polling when disposed", () => {
+    const host = createHost();
+    const previous = [];
+    const module = {
+      onRuntimeInitialized: () => previous.push("previous"),
+      _boxedwine_install_bridge_api() {},
+    };
+    const dispose = installBoxedWineProcessHostBridge(host.hostWindow, module);
+    expect(() => module.onRuntimeInitialized()).toThrow(
+      "process launcher is unavailable",
+    );
+    expect(previous).toEqual(["previous"]);
+    dispose();
+
+    const running = createHost();
+    const processHost = createModule();
+    const stop = installBoxedWineProcessHostBridge(
+      running.hostWindow,
+      processHost.module,
+    );
+    processHost.module.onRuntimeInitialized();
+    launch(running);
+    stop();
+    processHost.setLaunchResult(101);
+    running.tick();
+    expect(lastMessage(running).type).toBe("boxedwine-process-accepted");
+  });
+});
