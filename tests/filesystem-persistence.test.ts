@@ -18,13 +18,14 @@ const storage = () => {
     removeItem: (key) => values.delete(key),
   };
 };
-const tab = (indexedDB, localStorage) => {
+const tab = (indexedDB, localStorage, globals = {}) => {
   const context = createContext({
     __coverage__: globalThis.__coverage__,
     indexedDB,
     localStorage,
     document: {},
     console,
+    ...globals,
   });
   runInContext(source, context);
   return context.VirtualFS;
@@ -136,5 +137,124 @@ describe("filesystem persistence", () => {
     await fs.rename(file.id, "NOTES.txt");
     expect(fs.getNode(file.id).name).toBe("NOTES.txt");
     fs.close();
+  });
+});
+
+describe("filesystem persistence failures", () => {
+  test("becomes read-only without IndexedDB", async () => {
+    const fs = tab(undefined, storage());
+    await fs.ready;
+    expect(fs.canWrite).toBeFalse();
+    await expect(fs.createFile(fs.DESKTOP, "a.txt")).rejects.toThrow(
+      "Document storage is unavailable",
+    );
+    fs.close();
+  });
+
+  test("reports a database that cannot be opened", async () => {
+    const indexedDB = new IDBFactory();
+    (await request(indexedDB.open("astro-documents", 2))).close();
+    const fs = tab(indexedDB, storage());
+    await fs.ready;
+    await expect(fs.createFile(fs.DESKTOP, "a.txt")).rejects.toThrow(
+      /version/i,
+    );
+  });
+
+  test("stops writing after another tab upgrades the database", async () => {
+    const indexedDB = new IDBFactory();
+    let pageshow;
+    const fs = tab(indexedDB, storage(), {
+      BroadcastChannel,
+      addEventListener: (type, listener) => {
+        if (type === "pageshow") pageshow = listener;
+      },
+    });
+    await fs.ready;
+    (await request(indexedDB.open("astro-documents", 2))).close();
+    expect(fs.canWrite).toBeFalse();
+    const notified = [];
+    fs.subscribe(() => notified.push("refresh"));
+    pageshow();
+    const other = new BroadcastChannel("astro-documents");
+    other.postMessage("changed");
+    other.close();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(notified).toEqual([]);
+    await expect(fs.createFile(fs.DESKTOP, "a.txt")).rejects.toThrow(
+      "Document storage is unavailable",
+    );
+  });
+
+  test("refreshes from other tabs and when the page is shown again", async () => {
+    const indexedDB = new IDBFactory(),
+      localStorage = storage();
+    let pageshow;
+    const a = tab(indexedDB, localStorage, { BroadcastChannel });
+    const b = tab(indexedDB, localStorage, {
+      BroadcastChannel,
+      addEventListener: (type, listener) => {
+        if (type === "pageshow") pageshow = listener;
+      },
+    });
+    await Promise.all([a.ready, b.ready]);
+    const changed = new Promise((resolve) => b.subscribe(resolve));
+    const file = await a.createFile(a.DESKTOP, "shared.txt", {
+      content: "from A",
+    });
+    await changed;
+    expect(b.getContent(file.id)).toBe("from A");
+    await a.destroy(file.id);
+    const shown = new Promise((resolve) => b.subscribe(resolve));
+    pageshow();
+    await shown;
+    expect(b.getNode(file.id)).toBeNull();
+    a.close();
+    b.close();
+  });
+
+  test("retries a conflicting transaction against the latest files", async () => {
+    const indexedDB = new IDBFactory(),
+      localStorage = storage();
+    const a = tab(indexedDB, localStorage),
+      b = tab(indexedDB, localStorage);
+    await Promise.all([a.ready, b.ready]);
+    await a.createFile(a.DESKTOP, "first.txt");
+    const created = await b.transaction(
+      () => b.createFile(b.DESKTOP, "second.txt"),
+      { retry: 1 },
+    );
+    expect(created.name).toBe("second.txt");
+    expect(b.findChild(b.DESKTOP, "first.txt")).not.toBeNull();
+    a.close();
+    b.close();
+  });
+
+  test("explains a full browser storage quota", async () => {
+    const indexedDB = new IDBFactory();
+    const fs = tab(indexedDB, storage());
+    await fs.ready;
+    const db = await request(indexedDB.open("astro-documents", 1));
+    const prototype = Object.getPrototypeOf(
+      db.transaction("nodes").objectStore("nodes"),
+    );
+    const put = prototype.put;
+    prototype.put = function (value, ...args) {
+      const result = put.call(this, value, ...args);
+      Object.defineProperty(this.transaction, "error", {
+        value: new DOMException("Quota exceeded", "QuotaExceededError"),
+      });
+      this.transaction.abort();
+      return result;
+    };
+    try {
+      await expect(fs.createFile(fs.DESKTOP, "big.txt")).rejects.toThrow(
+        "Browser storage is full",
+      );
+    } finally {
+      prototype.put = put;
+    }
+    fs.close();
+    db.close();
   });
 });
