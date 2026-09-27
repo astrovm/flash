@@ -287,3 +287,96 @@ test("game volume controls handle unfocused windows, invalid values, and silent 
   bike.querySelector(".favorite-btn").click();
   expect(s.window.localStorage.getItem("favorites")).toContain("bike-mania");
 });
+
+test("Flash games load Ruffle on demand and report a missing player", async () => {
+  const s = await login(await loadShell());
+  const held = [];
+  const appendChild = s.document.head.appendChild.bind(s.document.head);
+  s.document.head.appendChild = (node) => {
+    if (node.tagName === "SCRIPT") {
+      held.push(node);
+      return node;
+    }
+    return appendChild(node);
+  };
+  const errors = [];
+  const originalError = s.window.console.error;
+  s.window.console.error = (...args) => errors.push(args);
+  const open = async (gameId) => {
+    s.window.history.replaceState(null, "", `#${gameId}`);
+    s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
+    await settle();
+    return s.document.querySelector(`.xp-window[data-game="${gameId}"]`);
+  };
+  try {
+    await open("big-truck-adventures");
+    expect(held).toHaveLength(1);
+    held[0].onerror();
+    await settle();
+    expect(errors[0][0]).toBe("Could not start %s:");
+    const win = await open("bike-mania");
+    held[1].onload();
+    await settle();
+    expect(errors).toHaveLength(2);
+    win.querySelector(".close-btn").click();
+    await open("bike-mania");
+    const players = [];
+    s.window.RufflePlayer.newest = () => ({
+      createPlayer: () => {
+        const player = s.document.createElement("ruffle-player");
+        player.load = (config) => (player.config = config);
+        players.push(player);
+        return player;
+      },
+    });
+    held[2].onload();
+    await settle();
+    expect(players).toHaveLength(1);
+    players[0].dispatchEvent(new s.window.Event("loadedmetadata"));
+  } finally {
+    s.window.console.error = originalError;
+  }
+});
+
+test("installed Flash games rewrite asset URLs and use native frame rates by default", async () => {
+  const uuid = "a2fb012a-b14c-6921-b688-403571e42bb0";
+  const installed = {
+    [`flashpoint:${uuid}`]: {
+      uuid,
+      title: "Installed",
+      type: "swf",
+      installed: true,
+      url: "https://flash.example/__installed-games/game.swf",
+      base: "https://flash.example/__installed-games/",
+    },
+  };
+  const { s, players, open } = await flashGame({
+    gameLibraryManager: {
+      subscribe: () => () => {},
+      initialize: async () => installed,
+      getRecord: () => null,
+    },
+  });
+  const win = await open(`flashpoint:${uuid}`);
+  expect(players[0].config.urlRewriteRules.length).toBeGreaterThan(0);
+  players[0].metadata = {};
+  win.querySelector('[data-game-action="properties"]').click();
+  const dialog = s.document.querySelector(".xp-dialog");
+  expect(dialog.textContent).toContain("Default (native)");
+  expect(dialog.textContent).toContain("Native uses the frame rate");
+  [...dialog.querySelectorAll("button")]
+    .find((button) => button.textContent === "OK")
+    .click();
+  expect(players).toHaveLength(1);
+  await open("big-truck-adventures");
+  expect(players.at(-1).config.volume).toBeGreaterThan(0);
+});
+
+test("iframe games apply volume on load and have no playback properties", async () => {
+  const { s, open } = await flashGame();
+  const win = await open("revcdos");
+  win.querySelector("iframe").dispatchEvent(new s.window.Event("load"));
+  const properties = win.querySelector('[data-game-action="properties"]');
+  properties?.click();
+  expect(!!s.document.querySelector(".xp-dialog")).toBeFalse();
+});
