@@ -7,7 +7,10 @@ import {
   flushShell,
 } from "./helpers/shell-harness";
 afterEach(cleanupShells);
-async function setup({ broken = false } = {}) {
+async function setup({
+  broken = false,
+  brokenMessage = "library unavailable",
+} = {}) {
   let notify,
     results = [],
     searchFailure,
@@ -22,19 +25,19 @@ async function setup({ broken = false } = {}) {
       return () => {};
     },
     initialize: async () => {
-      if (broken) throw new Error("library unavailable");
+      if (broken) throw new Error(brokenMessage);
       return installed;
     },
     search: async (term) => {
       calls.push(["search", term]);
-      if (searchFailure) throw new Error(searchFailure);
+      if (searchFailure != null) throw new Error(searchFailure);
       return results;
     },
     details: async (uuid) => results.find((g) => g.uuid === uuid),
     install: async (details, { onProgress }) => {
       onProgress({ loaded: 30, total: 100 });
       onProgress({ loaded: 30, total: 0 });
-      if (installFailure) throw new Error(installFailure);
+      if (installFailure != null) throw new Error(installFailure);
       const id = `flashpoint:${details.uuid}`;
       records.set(id, details);
       installed[id] = {
@@ -47,7 +50,7 @@ async function setup({ broken = false } = {}) {
     },
     getRecord: (id) => records.get(id),
     uninstall: async (uuid) => {
-      if (uninstallFailure) throw new Error(uninstallFailure);
+      if (uninstallFailure != null) throw new Error(uninstallFailure);
       delete installed[`flashpoint:${uuid}`];
       records.delete(`flashpoint:${uuid}`);
       notify({ ...installed });
@@ -94,6 +97,9 @@ async function setup({ broken = false } = {}) {
     failUninstall: (v) => {
       uninstallFailure = v;
     },
+    installed,
+    records,
+    emit: () => notify({ ...installed }),
   };
 }
 test("Internet Games search handles empty results, service errors, compatibility and missing artwork", async () => {
@@ -211,4 +217,125 @@ test("Internet Games reports initialization failures without submitting a search
     "library unavailable",
   );
   expect(h.calls).toEqual([]);
+});
+
+test("Internet Games describes sparse results and failures without messages", async () => {
+  const h = await setup(),
+    status = h.win.querySelector(".internet-games-status");
+  h.failSearch("");
+  await h.search("game");
+  expect(status.textContent).toBe(
+    "The Flashpoint catalog could not be searched.",
+  );
+  h.failSearch(null);
+  h.setResults([{ uuid: "sparse", tags: "Flash only", compatible: false }]);
+  await h.search("sparse");
+  expect(status.textContent).toBe("1 result found.");
+  const card = h.win.querySelector(
+    ".internet-games-results .internet-game-card",
+  );
+  expect(card.textContent).toContain("Untitled game");
+  expect(card.textContent).toContain("Unknown developer");
+  card.querySelector("button").click();
+  await flushShell();
+  expect(status.textContent).toBe("This game is not compatible.");
+  h.setResults([{ uuid: "quiet", title: "Quiet", compatible: true }]);
+  await h.search("quiet");
+  h.failInstall("");
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  expect(status.textContent).toBe("The game could not be installed.");
+
+  h.setResults([{ uuid: "included", title: "Big Truck Adventures" }]);
+  await h.search("big truck");
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  expect(
+    !!h.s.document.querySelector(
+      '.xp-window[data-game="big-truck-adventures"]',
+    ),
+  ).toBeTrue();
+  h.win
+    .querySelector('[data-internet-tab="browse"]')
+    .dispatchEvent(new h.s.window.KeyboardEvent("keydown", { key: "Enter" }));
+});
+
+test("Internet Games lists several installed games, reinstalled results, and quiet uninstall failures", async () => {
+  const h = await setup(),
+    status = h.win.querySelector(".internet-games-status");
+  h.setResults([
+    { uuid: "b", title: "Beta", compatible: true },
+    { uuid: "a", compatible: true },
+  ]);
+  await h.search("games");
+  for (const button of [
+    ...h.win.querySelectorAll(".internet-games-results button"),
+  ]) {
+    button.click();
+    await flushShell();
+    await flushShell();
+  }
+  await h.search("games");
+  expect(
+    [...h.win.querySelectorAll(".internet-games-results button")].map(
+      (button) => button.textContent,
+    ),
+  ).toEqual(["Play", "Play"]);
+  h.win.querySelector('[data-internet-tab="installed"]').click();
+  expect(
+    h.win.querySelector(".internet-games-installed-status").textContent,
+  ).toBe("2 installed games.");
+  h.failUninstall("");
+  const untitled = [
+    ...h.win.querySelectorAll(".internet-games-installed .internet-game-card"),
+  ].find((card) => card.textContent.includes("Untitled game"));
+  [...untitled.querySelectorAll("button")].at(-1).click();
+  await flushShell();
+  expect(h.s.document.querySelector(".xp-dialog").textContent).toContain(
+    "Remove this game from this computer?",
+  );
+  await h.answer("Yes");
+  expect(h.s.document.querySelector(".xp-dialog").textContent).toContain(
+    "The game could not be uninstalled.",
+  );
+  await h.answer("OK");
+  expect(status).toBeDefined();
+});
+
+test("removing an installed game closes it, drops it from favorites, and refreshes an open Start menu", async () => {
+  const h = await setup();
+  h.setResults([{ uuid: "fav", title: "Favorite", compatible: true }]);
+  await h.search("fav");
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  await flushShell();
+  h.s.window.localStorage.setItem(
+    "favorites",
+    JSON.stringify(["flashpoint:fav"]),
+  );
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  expect(
+    !!h.s.document.querySelector('.xp-window[data-game="flashpoint:fav"]'),
+  ).toBeTrue();
+  h.s.document.getElementById("start-button").click();
+  delete h.installed["flashpoint:fav"];
+  h.records.delete("flashpoint:fav");
+  h.emit();
+  await flushShell();
+  await flushShell();
+  expect(
+    !!h.s.document.querySelector('.xp-window[data-game="flashpoint:fav"]'),
+  ).toBeFalse();
+  expect(h.s.window.localStorage.getItem("favorites")).not.toContain(
+    "flashpoint:fav",
+  );
+});
+
+test("Internet Games reports an unavailable service without a message", async () => {
+  const h = await setup({ broken: true, brokenMessage: "" });
+  await h.search("anything");
+  expect(h.win.querySelector(".internet-games-status").textContent).toBe(
+    "The Internet Games service is unavailable.",
+  );
 });

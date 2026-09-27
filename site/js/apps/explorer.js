@@ -156,11 +156,7 @@ const rememberRunCommand = (value) => {
   writeJsonStorage(RUN_HISTORY_KEY, [text, ...history].slice(0, 10));
 };
 
-const searchVirtualNodes = ({
-  query = "",
-  locationId = fs.MY_COMPUTER,
-  type = "all",
-} = {}) => {
+const searchVirtualNodes = ({ query, locationId, type }) => {
   const wanted = normalizeShellCommand(query);
   const matches = (name) => !wanted || name.toLowerCase().includes(wanted);
   const results = [];
@@ -216,7 +212,7 @@ const wireSearchCompanion = (win) => {
   const type = content.querySelector("#search-type");
   const status = content.querySelector(".search-results-status");
   const list = content.querySelector(".search-results-list");
-  const showForm = (kind = "all") => {
+  const showForm = (kind) => {
     startPanel.hidden = true;
     formPanel.hidden = false;
     type.value = ["media", "documents"].includes(kind) ? "files" : "all";
