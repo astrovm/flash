@@ -205,3 +205,46 @@ test("taskbar menus activate items from the keyboard and ignore nested menus", a
   toolbars.focus();
   press(s, toolbars, " ");
 });
+
+test("taskbar properties switch Start menu styles and customize notifications", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        taskbarSettings: JSON.stringify({ group: true, locked: false }),
+        startMenuStyle: "classic",
+      },
+    }),
+  );
+  const open = () => {
+    context(s, s.document.getElementById("taskbar"));
+    s.document.querySelector('[data-taskbar-action="properties"]').click();
+    return [...s.document.querySelectorAll(".taskbar-properties-dialog")].at(
+      -1,
+    );
+  };
+  let dialog = open();
+  const preview = () =>
+    dialog.querySelector(".taskbar-start-menu-preview").getAttribute("src");
+  const style = (value) => {
+    const radio = dialog.querySelector(
+      `[name="taskbar-start-menu-style"][value="${value}"]`,
+    );
+    radio.checked = true;
+    radio.dispatchEvent(new s.window.Event("change", { bubbles: true }));
+  };
+  dialog.querySelector('[data-taskbar-properties-tab="start-menu"]').click();
+  style("start");
+  expect(preview()).toContain("StartMenuPreview");
+  style("classic");
+  expect(preview()).toContain("ClassicStartMenuPreview");
+  dialog.querySelector("[data-customize-tray]").click();
+  const customize = () =>
+    s.document.querySelector(".taskbar-customize-notifications");
+  customize().querySelector("select").value = "show";
+  customize().querySelector('[data-action="defaults"]').click();
+  expect(customize().querySelector("select").value).toBe("auto");
+  customize().querySelector('[data-action="cancel"]').click();
+  expect(customize()).toBeNull();
+  dialog.querySelector('[data-action="cancel"]').click();
+  expect(dialog.isConnected).toBeFalse();
+});
