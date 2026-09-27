@@ -104,7 +104,7 @@
     const spoofResponseUrl = (response, originalUrl) => {
       Object.defineProperty(response, "url", {
         configurable: true,
-        value: originalUrl.href || String(originalUrl),
+        value: originalUrl.href,
       });
       return response;
     };

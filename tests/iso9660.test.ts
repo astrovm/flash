@@ -82,6 +82,11 @@ test("ISO parsing rejects unsupported images, malformed directory entries and in
   await expect(indexIsoFiles(new Blob([corrupt]))).rejects.toThrow(
     "invalid ISO directory",
   );
+  const blankRoot = image();
+  blankRoot.fill(0, 16 * sector + 156, 16 * sector + 190);
+  await expect(indexIsoFiles(new Blob([blankRoot]))).rejects.toThrow(
+    "invalid ISO directory",
+  );
   await expect(
     gameFilesFromIso(new Blob([image()]), {
       ...game,

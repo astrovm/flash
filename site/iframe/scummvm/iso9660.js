@@ -20,7 +20,6 @@
 
   const parseDirectoryRecord = (bytes, offset) => {
     const length = bytes[offset];
-    if (!length) return null;
     if (offset + length > bytes.length || length < 34)
       throw new Error("The CD image has an invalid ISO directory.");
     const nameLength = bytes[offset + 32];
@@ -55,7 +54,6 @@
         continue;
       }
       const record = parseDirectoryRecord(bytes, offset);
-      if (!record) break;
       records.push(record);
       offset += record.length;
     }
