@@ -190,3 +190,217 @@ test("save dialog confirms replacement and returns new filenames", async () => {
     existingId: null,
   });
 });
+
+test("modeless dialogs ignore keys from elsewhere and shortcuts reserved by the shell", async () => {
+  const s = await login(await loadShell()),
+    d = s.window.XPDialogs;
+  const dialog = d.createDialog({ title: "Find", modal: false });
+  let closed = null;
+  dialog.onResult((result) => (closed = result));
+  const send = (target, key, options = {}) =>
+    target.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", { key, bubbles: true, ...options }),
+    );
+  send(s.document.body, "Escape");
+  send(dialog.el, "Escape", { ctrlKey: true });
+  send(dialog.el, "Meta");
+  send(dialog.el, "Tab");
+  expect(closed).toBeNull();
+  expect(dialog.el.isConnected).toBeTrue();
+  send(dialog.el, "Escape");
+  expect(dialog.el.isConnected).toBeFalse();
+});
+
+test("keyboard handling respects text fields, missing defaults and disabled buttons", async () => {
+  const s = await login(await loadShell()),
+    d = s.window.XPDialogs;
+  const empty = d.createDialog();
+  key(s, "Tab");
+  const area = s.document.createElement("textarea");
+  empty.body.append(area);
+  area.focus();
+  key(s, "Enter");
+  expect(empty.el.isConnected).toBeTrue();
+  empty.close();
+
+  const choice = d.message({
+    text: "Choose",
+    buttons: [
+      { id: "first", label: "&First" },
+      { id: "second", label: "&Second" },
+    ],
+  });
+  expect(s.document.activeElement.dataset.action).toBe("first");
+  const input = s.document.createElement("input");
+  current(s).querySelector(".dlg-body").append(input);
+  input.focus();
+  key(s, "s");
+  key(s, "s", { ctrlKey: true });
+  key(s, "F1");
+  expect(current(s)).toBeDefined();
+  current(s).querySelector('[data-action="second"]').disabled = true;
+  key(s, "s", { altKey: true });
+  expect(current(s)).toBeDefined();
+  key(s, "Enter");
+  key(s, "f", { altKey: true });
+  expect(await choice).toBe("first");
+
+  const unanswered = d.message({ buttons: [{ id: "only", label: "Only" }] });
+  key(s, "Escape");
+  expect(await unanswered).toBeNull();
+  const preferred = d.message({
+    text: "Pick",
+    buttons: d.BUTTON_SETS.yesNo,
+    defaultButton: "no",
+  });
+  key(s, "Enter");
+  expect(await preferred).toBe("no");
+});
+
+test("focus trapping wraps from outside the dialog in both directions", async () => {
+  const s = await login(await loadShell()),
+    d = s.window.XPDialogs.createDialog({ title: "Fields" });
+  const input = s.document.createElement("input");
+  d.body.append(input);
+  const items = [...d.el.querySelectorAll("button,input")];
+  for (const el of items)
+    Object.defineProperty(el, "offsetParent", { get: () => d.el });
+  const outside = s.document.createElement("button");
+  s.document.body.append(outside);
+  outside.focus();
+  d.el.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", {
+      key: "Tab",
+      shiftKey: true,
+      bubbles: true,
+    }),
+  );
+  expect(s.document.activeElement).toBe(items.at(-1));
+  outside.focus();
+  d.el.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true }),
+  );
+  expect(s.document.activeElement).toBe(items[0]);
+  items[0].focus();
+  d.el.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", {
+      key: "Tab",
+      shiftKey: true,
+      bubbles: true,
+    }),
+  );
+  expect(s.document.activeElement).toBe(items.at(-1));
+  d.close();
+});
+
+test("title bar drags ignore secondary buttons and title buttons", async () => {
+  const s = await login(await loadShell()),
+    d = s.window.XPDialogs.createDialog();
+  const bar = d.el.querySelector(".title-bar");
+  bar.dispatchEvent(
+    new s.window.PointerEvent("pointerdown", { button: 2, bubbles: true }),
+  );
+  d.el
+    .querySelector(".close-btn")
+    .dispatchEvent(
+      new s.window.PointerEvent("pointerdown", { button: 0, bubbles: true }),
+    );
+  expect(d.el.style.position).toBe("");
+  d.close();
+});
+
+test("progress dialogs use defaults and cancel only when allowed", async () => {
+  const s = await login(await loadShell()),
+    d = s.window.XPDialogs;
+  const plain = d.progress();
+  expect(current(s).textContent).toContain("Progress");
+  key(s, "Escape");
+  expect(plain.el.isConnected).toBeTrue();
+  plain.close();
+  let cancelled = 0;
+  const escapable = d.progress({
+    cancellable: true,
+    onCancel: () => cancelled++,
+  });
+  key(s, "Escape");
+  expect(cancelled).toBe(1);
+  escapable.close();
+  const quiet = d.progress({ cancellable: true });
+  quiet.el.querySelector(".dlg-buttons button").click();
+  key(s, "Escape");
+  expect(quiet.el.isConnected).toBeTrue();
+  quiet.close();
+  const defaulted = d.message();
+  key(s, "Enter");
+  expect(await defaulted).toBe("ok");
+});
+
+test("properties describe a full Recycle Bin, extensionless files and detached items", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS,
+    d = s.window.XPDialogs;
+  const trash = fs.createFile(fs.DESKTOP, "old.txt");
+  fs.remove(trash.id);
+  const bin = d.properties(fs.RECYCLE_BIN);
+  expect(current(s).querySelector("img").getAttribute("src")).toContain(
+    "RecyclerFull",
+  );
+  key(s, "Escape");
+  expect(await bin).toBe("ok");
+  const readme = fs.createFile(fs.DESKTOP, "README");
+  const file = d.properties(readme.id);
+  expect(current(s).textContent).toContain("File");
+  key(s, "Enter");
+  await file;
+  fs.getNode(readme.id).parent = "missing-folder";
+  const detached = d.properties(readme.id);
+  expect(current(s).textContent).toContain("Location:");
+  key(s, "Enter");
+  await detached;
+});
+
+test("file dialogs go up, sort folders first and keep typed names for folders", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS,
+    d = s.window.XPDialogs;
+  const folder = fs.createFolder(fs.MY_DOCUMENTS, "Letters");
+  fs.createFile(fs.MY_DOCUMENTS, "a.txt");
+  fs.createFolder(fs.MY_DOCUMENTS, "Zed");
+  const open = d.openFile({ startFolder: folder.id });
+  current(s).querySelector('[data-action="up"]').click();
+  const names = [...current(s).querySelectorAll(".dlg-file-item")].map(
+    (item) => item.textContent,
+  );
+  expect(names.slice(0, 4)).toEqual([
+    "Letters",
+    "My Music",
+    "My Pictures",
+    "Zed",
+  ]);
+  expect(names.at(-1)).toEndWith("a.txt");
+  s.document.getElementById("dlg-file-name").value = "typed.txt";
+  for (const item of [...current(s).querySelectorAll(".dlg-file-item")].slice(
+    0,
+    2,
+  ))
+    item.dispatchEvent(new s.window.MouseEvent("click"));
+  expect(current(s).querySelectorAll(".dlg-file-item.selected")).toHaveLength(
+    1,
+  );
+  expect(s.document.getElementById("dlg-file-name").value).toBe("typed.txt");
+  s.document.getElementById("dlg-file-name").value = "";
+  key(s, "Enter");
+  expect(current(s).textContent).toContain("Cannot find");
+  key(s, "Enter");
+  await flushShell();
+  for (let depth = 0; depth < 6; depth++)
+    current(s).querySelector('[data-action="up"]').click();
+  expect(current(s).querySelector(".dlg-file-path").textContent).toBe(
+    "My Computer",
+  );
+  key(s, "Escape");
+  expect(await open).toBeNull();
+  const save = d.saveFile();
+  current(s).querySelector('[data-action="cancel"]').click();
+  expect(await save).toBeNull();
+});

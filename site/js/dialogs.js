@@ -576,10 +576,10 @@
   // dialog and resolve with that value. Cancel resolves with null.
   const browseFiles = ({
     title,
-    startFolder = null,
-    filter = null,
+    startFolder,
+    filter,
     initialName = "",
-    acceptLabel = "&Open",
+    acceptLabel,
     onAccept,
   }) =>
     new Promise((resolve) => {
@@ -635,7 +635,7 @@
           name: nameInput.value.trim(),
         };
         Promise.resolve(onAccept(context)).then((result) => {
-          if (result !== false) dialog.close(result ?? null);
+          if (result !== false) dialog.close(result);
         });
       };
 
