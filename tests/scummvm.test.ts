@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { Window } from "happy-dom";
+import { instrumentSource } from "./helpers/coverage";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { gameBlobsFromIso } = require("../site/iframe/scummvm/iso9660.js") as {
@@ -180,7 +182,13 @@ describe("ScummVM", () => {
       new URL("../site/iframe/scummvm/launcher.js", import.meta.url),
     ).text();
     const script = window.document.createElement("script");
-    script.textContent = launcher;
+    window.__coverage__ = globalThis.__coverage__;
+    script.textContent = instrumentSource(
+      launcher,
+      fileURLToPath(
+        new URL("../site/iframe/scummvm/launcher.js", import.meta.url),
+      ),
+    );
     window.document.body.appendChild(script);
 
     await window.fetch(

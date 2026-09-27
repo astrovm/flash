@@ -46,6 +46,9 @@ jobs:
       - name: Run tests
         run: bun run test
 
+      - name: Enforce first-party coverage
+        run: bun run test:coverage
+
       - name: Build production site
         run: bun run build --revision "${{ github.sha }}"
 

@@ -35,7 +35,12 @@ const sharedDeclarationPattern = `^(?:${[...sharedDeclarations]
 
 export default defineConfig(
   {
-    ignores: ["dist/", "site/iframe/inside-the-firewall/", "site/vendor/"],
+    ignores: [
+      "coverage/",
+      "dist/",
+      "site/iframe/inside-the-firewall/",
+      "site/vendor/",
+    ],
   },
   {
     files: ["eslint.config.mjs"],

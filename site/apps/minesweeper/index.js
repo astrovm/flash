@@ -394,29 +394,28 @@ const mountMinesweeper = (context, instance) => {
       row.appendChild(input);
       dialog.body.appendChild(row);
     }
+    dialog.onResult((result) => {
+      if (result !== "ok") return;
+      const values = Object.fromEntries(
+        [...dialog.body.querySelectorAll("input")].map((input) => [
+          input.name,
+          Number(input.value),
+        ]),
+      );
+      const rows = Math.max(9, Math.min(24, Math.trunc(values.rows)));
+      const columns = Math.max(9, Math.min(30, Math.trunc(values.columns)));
+      customLevel = {
+        rows,
+        columns,
+        mines: Math.max(
+          10,
+          Math.min(Math.trunc(values.mines), rows * columns - 9),
+        ),
+      };
+      initialize("custom");
+    });
     context.dialogs.addButtonRow(dialog, [
-      {
-        id: "ok",
-        label: "OK",
-        isDefault: true,
-        onClick: () => {
-          const values = Object.fromEntries(
-            [...dialog.body.querySelectorAll("input")].map((input) => [
-              input.name,
-              Number(input.value),
-            ]),
-          );
-          customLevel = {
-            rows: Math.max(9, Math.min(24, values.rows)),
-            columns: Math.max(9, Math.min(30, values.columns)),
-            mines: Math.max(
-              10,
-              Math.min(values.mines, values.rows * values.columns - 9),
-            ),
-          };
-          initialize("custom");
-        },
-      },
+      { id: "ok", label: "OK", isDefault: true },
       { id: "cancel", label: "Cancel", isCancel: true },
     ]);
   };

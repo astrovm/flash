@@ -1033,20 +1033,15 @@ const openExplorerContextMenu = (win, clientX, clientY) => {
         const name = window.prompt("Rename", fs.getNode(selected[0]).name);
         if (name !== null) await fileOps.rename(selected[0], name);
       }
-      if (command === "delete" || command === "permanent")
-        XPDialogs.confirm(
-          command === "permanent"
-            ? "Are you sure you want to permanently delete the selected items?"
-            : "Are you sure you want to send the selected items to the Recycle Bin?",
+      if (command === "delete") await confirmRecycleDelete(selected);
+      if (command === "permanent") {
+        const yes = await XPDialogs.confirm(
+          "Are you sure you want to permanently delete the selected items?",
           "Confirm File Delete",
           "warning",
-        ).then(
-          async (yes) =>
-            yes &&
-            (command === "permanent"
-              ? await fileOps.permanentlyDelete(selected)
-              : confirmRecycleDelete(selected)),
         );
+        if (yes) await fileOps.permanentlyDelete(selected);
+      }
       close();
     } catch (error) {
       await XPDialogs.alert(

@@ -1,14 +1,13 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
 
-async function main() {
-  const inputPath = Bun.argv[2];
+export async function extractSwf(inputPath?: string) {
   if (!inputPath) throw new Error("Usage: bun tools/extract-swf.ts <file>");
   const input = Buffer.from(await readFile(inputPath));
   if (input.length < 8) throw new Error("Probably not a Flash application");
   const header = input.subarray(0, 4).toString("binary");
   if (header !== "Joy!" && input.subarray(0, 2).toString("binary") !== "MZ")
-    process.exit(1);
+    throw new Error("Probably not a Flash application");
   const trailer = input.subarray(-8);
   const fileSize =
     header === "Joy!" ? trailer.readUInt32BE(0) : trailer.readUInt32LE(4);
@@ -25,4 +24,4 @@ async function main() {
   await writeFile(outputPath, input.subarray(-(fileSize + 8), -8));
 }
 
-if (import.meta.main) await main();
+if (import.meta.main) await extractSwf(Bun.argv[2]);

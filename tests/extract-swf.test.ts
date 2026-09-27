@@ -3,6 +3,8 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
+import { extractSwf } from "../tools/extract-swf";
+
 const TOOL = join(import.meta.dir, "..", "tools", "extract-swf.ts");
 const temporaryDirectories: string[] = [];
 
@@ -42,8 +44,7 @@ describe("SWF projector extraction", () => {
     test(`extracts a ${platform} projector`, async () => {
       const swf = Buffer.from("FWS embedded game");
       const input = await fixture(platform, swf);
-      const process = Bun.spawnSync(["bun", TOOL, input]);
-      expect(process.exitCode).toBe(0);
+      await extractSwf(input);
       expect(await readFile(input.replace(/\.[^.]+$/, ".swf"))).toEqual(swf);
     });
   }
@@ -53,7 +54,27 @@ describe("SWF projector extraction", () => {
     const content = await readFile(input);
     content.writeUInt32LE(content.length, content.length - 4);
     await writeFile(input, content);
-    const process = Bun.spawnSync(["bun", TOOL, input]);
-    expect(process.exitCode).not.toBe(0);
+    await expect(extractSwf(input)).rejects.toThrow(
+      "invalid embedded file size",
+    );
   });
+});
+
+test("keeps the CLI entry point working", async () => {
+  const input = await fixture("windows", Buffer.from("FWS"));
+  expect(Bun.spawnSync(["bun", TOOL, input]).exitCode).toBe(0);
+});
+test("rejects missing, short, non-projector and malformed inputs", async () => {
+  await expect(extractSwf()).rejects.toThrow("Usage:");
+  const input = await fixture("windows", Buffer.from("FWS"));
+  for (const contents of [
+    Buffer.from("MZ"),
+    Buffer.alloc(12),
+    Buffer.from("MZinvalid trailer"),
+  ]) {
+    await writeFile(input, contents);
+    await expect(extractSwf(input)).rejects.toThrow(
+      "Probably not a Flash application",
+    );
+  }
 });

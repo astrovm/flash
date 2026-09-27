@@ -3,11 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 import { IDBFactory } from "fake-indexeddb";
+import { fileURLToPath } from "node:url";
+import { instrumentSource } from "./helpers/coverage";
 
-const source = readFileSync(
+const sourcePath = fileURLToPath(
   new URL("../site/js/filesystem.js", import.meta.url),
-  "utf8",
 );
+const source = instrumentSource(readFileSync(sourcePath, "utf8"), sourcePath);
 const storage = () => {
   const values = new Map();
   return {
@@ -18,6 +20,7 @@ const storage = () => {
 };
 const tab = (indexedDB, localStorage) => {
   const context = createContext({
+    __coverage__: globalThis.__coverage__,
     indexedDB,
     localStorage,
     document: {},
@@ -35,7 +38,11 @@ const request = (req) =>
 describe("filesystem persistence", () => {
   test("migrates existing documents once and saves individual records without writing localStorage", async () => {
     const localStorage = storage();
-    const oldContext = createContext({ localStorage, console });
+    const oldContext = createContext({
+      localStorage,
+      console,
+      __coverage__: globalThis.__coverage__,
+    });
     runInContext(source, oldContext);
     const old = oldContext.VirtualFS;
     const legacy = old.createFile(old.MY_DOCUMENTS, "existing.txt", {

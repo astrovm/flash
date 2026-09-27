@@ -47,7 +47,11 @@ export async function loadShell({
   gameLibraryManager,
   initialStorage = {},
   offlineSettings = {},
+  offlineMethods = {},
+  gameDataManager,
+  fetchObject,
   preloadApplications = true,
+  stubBoxedWineReadiness = true,
 } = {}) {
   const window = new Window({
     url: "http://127.0.0.1/",
@@ -68,6 +72,7 @@ export async function loadShell({
     },
   });
   window.ASTRO_FS_MEMORY_ONLY = true;
+  if (fetchObject) window.fetch = fetchObject;
   // Instrumented scripts evaluated in the window record into the same map as
   // modules loaded by the test runner.
   window.__coverage__ = globalThis.__coverage__;
@@ -262,7 +267,7 @@ export async function loadShell({
   const offlineListeners = new Set();
   const notifyOfflineListeners = () =>
     offlineListeners.forEach((listener) => listener({ ...offlineSnapshot }));
-  window.AstroOffline.createManager = () => ({
+  const offlineManagerMock = {
     subscribe(listener) {
       offlineListeners.add(listener);
       listener({ ...offlineSnapshot });
@@ -292,7 +297,11 @@ export async function loadShell({
     setAutomaticUpdateDelay() {},
     async checkForUpdates() {},
     async updateNow() {},
-  });
+    ...offlineMethods,
+  };
+  window.AstroOffline.createManager = () => offlineManagerMock;
+  if (gameDataManager)
+    window.AstroGameData.createManager = () => gameDataManager;
 
   // Happy DOM evaluates separately injected classic scripts in isolated lexical
   // environments. Real browsers share one global lexical environment, so join
@@ -326,7 +335,7 @@ export async function loadShell({
   // is visible. Happy DOM cannot execute an iframe guest, so resolve only the
   // boot readiness boundaries and keep the real runtime DOM for shell tests.
   const boxedWineRuntime = window.XPBoxedWineRuntime;
-  if (boxedWineRuntime) {
+  if (boxedWineRuntime && stubBoxedWineReadiness) {
     window.XPBoxedWineRuntime = Object.freeze({
       ...boxedWineRuntime,
       ready: async () => {},
@@ -342,6 +351,8 @@ export async function loadShell({
     window,
     document,
     offlineDownloads,
+    offlineSnapshot,
+    notifyOfflineListeners,
     advanceTime,
     completeBoot: () => window.__completeBootForTest(),
   };

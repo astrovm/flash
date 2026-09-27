@@ -1629,7 +1629,7 @@ export async function build({
   console.log(`Build completed successfully: ${resolvedOutput}`);
 }
 
-function parseArguments(arguments_: string[]): {
+export function parseBuildArguments(arguments_: string[]): {
   outputDir: string;
   revision: string;
   stabilityDelayMs: number;
@@ -1666,7 +1666,7 @@ function parseArguments(arguments_: string[]): {
 
 if (import.meta.main) {
   try {
-    await build(parseArguments(Bun.argv.slice(2)));
+    await build(parseBuildArguments(Bun.argv.slice(2)));
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;

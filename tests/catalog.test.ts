@@ -158,3 +158,200 @@ describe("shared catalog request handler", () => {
     ).toBe(404);
   });
 });
+
+describe("catalog proxy and upstream failures", () => {
+  const request = (path: string, method = "GET") =>
+    new Request(`https://flash.example${path}`, { method });
+  const legacyHtml = detailsHtml.replace(
+    /data-game-zip="[^"]+"/,
+    'data-game-zip=""',
+  );
+  test("OPTIONS advertises only supported methods without contacting upstream", async () => {
+    const result = await handleCatalogRequest(
+      request("/api/games", "OPTIONS"),
+      async () => {
+        throw new Error("unexpected fetch");
+      },
+    );
+    expect(result.status).toBe(204);
+    expect(result.headers.get("access-control-allow-methods")).toBe(
+      "GET, OPTIONS",
+    );
+  });
+  test("details hide private upstream URLs and normalize UUID case", async () => {
+    const seen: string[] = [];
+    const result = await handleCatalogRequest(
+      request(`/api/games/${uuid.toUpperCase()}`),
+      async (url) => {
+        seen.push(String(url));
+        return new Response(detailsHtml);
+      },
+    );
+    const body = await result.json();
+    expect(body.uuid).toBe(uuid);
+    expect(body.downloadUrl).toBe(
+      `https://flash.example/api/games/${uuid}/download`,
+    );
+    expect(body.gameZipUrl).toBeUndefined();
+    expect(body.legacyServerUrl).toBeUndefined();
+    expect(seen[0]).toContain(uuid);
+  });
+  for (const kind of ["logo", "download", "asset"] as const) {
+    test(`${kind} forwards bytes and permitted headers with its cache policy`, async () => {
+      const seen: string[] = [];
+      const result = await handleCatalogRequest(
+        request(
+          `/api/games/${uuid}/${kind}?path=content/localflash/assets/a.bin`,
+        ),
+        async (url) => {
+          seen.push(String(url));
+          if (String(url).includes("?id=")) return new Response(detailsHtml);
+          return new Response(Uint8Array.of(1, 2, 3), {
+            headers: {
+              "content-type": "application/octet-stream",
+              "content-length": "3",
+              "content-disposition": "inline",
+              etag: "synthetic-etag",
+              "last-modified": "Mon, 01 Jan 2024 00:00:00 GMT",
+              "set-cookie": "do-not-proxy=this",
+            },
+          });
+        },
+      );
+      expect(result.status).toBe(200);
+      expect([...new Uint8Array(await result.arrayBuffer())]).toEqual([
+        1, 2, 3,
+      ]);
+      expect(result.headers.get("etag")).toBe("synthetic-etag");
+      expect(result.headers.get("content-length")).toBe("3");
+      expect(result.headers.get("set-cookie")).toBeNull();
+      expect(result.headers.get("access-control-allow-origin")).toBe("*");
+      expect(result.headers.get("cache-control")).toBe(
+        `public, max-age=${kind === "download" ? 3600 : 86400}`,
+      );
+      if (kind === "logo")
+        expect(seen[0]).toContain(`/Logos/a2/fb/${uuid}.png`);
+      if (kind === "asset")
+        expect(seen.at(-1)).toEndWith("/localflash/assets/a.bin");
+    });
+    test(`${kind} reports unavailable upstream content`, async () => {
+      const result = await handleCatalogRequest(
+        request(`/api/games/${uuid}/${kind}?path=content/localflash/a.swf`),
+        async (url) =>
+          new Response(String(url).includes("?id=") ? detailsHtml : "missing", {
+            status: String(url).includes("?id=") ? 200 : 404,
+          }),
+      );
+      expect(result.status).toBe(kind === "download" ? 502 : 404);
+      expect(result.headers.get("cache-control")).toBe("no-store");
+      expect((await result.json()).error).toBeTruthy();
+    });
+  }
+  for (const action of ["download", "asset"]) {
+    test(`${action} enforces legacy size limits`, async () => {
+      const seen: string[] = [];
+      const result = await handleCatalogRequest(
+        request(`/api/games/${uuid}/${action}?path=content/localflash/a.swf`),
+        async (url) => {
+          seen.push(String(url));
+          return String(url).includes("?id=")
+            ? new Response(legacyHtml)
+            : new Response("oversized", {
+                headers: { "content-length": String(1024 ** 3) },
+              });
+        },
+      );
+      expect(result.status).toBe(413);
+      expect(seen.at(-1)).toStartWith("https://infinity.unstable.life/");
+      expect((await result.json()).error).toContain("size limit");
+    });
+    test(`${action} rejects incompatible games before fetching assets`, async () => {
+      let calls = 0;
+      const result = await handleCatalogRequest(
+        request(`/api/games/${uuid}/${action}`),
+        async () => {
+          calls++;
+          return new Response(detailsHtml.replace(">Flash<", ">Java<"));
+        },
+      );
+      expect(result.status).toBe(422);
+      expect(calls).toBe(1);
+    });
+  }
+  test("legacy downloads without length metadata still stream bytes", async () => {
+    const result = await handleCatalogRequest(
+      request(`/api/games/${uuid}/download`),
+      async (url) =>
+        String(url).includes("?id=")
+          ? new Response(legacyHtml)
+          : new Response(Uint8Array.of(70, 87, 83)),
+    );
+    expect(result.status).toBe(200);
+    expect(result.headers.get("content-type")).toBe("application/octet-stream");
+    expect(await result.text()).toBe("FWS");
+  });
+  for (const path of ["/api/games?q=test", `/api/games/${uuid}`]) {
+    for (const failure of [
+      new Error("synthetic network failure"),
+      "opaque failure",
+      null,
+    ]) {
+      test(`${path} reports ${String(failure)} as a noncacheable upstream failure`, async () => {
+        const result = await handleCatalogRequest(request(path), async () => {
+          throw failure;
+        });
+        expect(result.status).toBe(502);
+        expect(result.headers.get("cache-control")).toBe("no-store");
+        expect((await result.json()).error).toContain(
+          failure instanceof Error
+            ? failure.message
+            : path.includes("?q=")
+              ? "Catalog search failed"
+              : "Game lookup failed",
+        );
+      });
+    }
+  }
+  test("upstream HTTP failures are reported before parsing", async () => {
+    const result = await handleCatalogRequest(
+      request(`/api/games/${uuid}`),
+      async () => new Response("", { status: 503 }),
+    );
+    expect(result.status).toBe(502);
+    expect((await result.json()).error).toContain("503");
+  });
+  test("untrusted ZIP URLs never become download targets", () => {
+    for (const url of [
+      "not a url",
+      "https://untrusted.example/archive.zip",
+      "https://download.unstable.life/other.zip",
+    ]) {
+      const details = parseGameDetails(
+        detailsHtml.replace(/data-game-zip="[^"]+"/, `data-game-zip="${url}"`),
+        "https://flash.example",
+        uuid,
+      );
+      expect(details.packageType).toBe("legacy");
+    }
+    expect(
+      parseSearchResults(
+        searchHtml.replace("Bike Mania Arena", "&#x41;&#66;"),
+      )[0].title,
+    ).toBe("AB");
+  });
+  test("legacy asset path validation rejects empty, long, encoded and malformed paths", () => {
+    for (const path of [
+      undefined,
+      "a".repeat(2049),
+      "content/host",
+      "content/host/./file",
+      "content//file",
+      "content/host/a\\b",
+      "content/host/a\0b",
+      "content/ho@st/file",
+      "content/host/%2e%2e/secret",
+      "%invalid",
+    ])
+      expect(() => legacyAssetUrl(path)).toThrow();
+  });
+});
