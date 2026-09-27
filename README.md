@@ -1,139 +1,153 @@
 # Astro Flash Collection
 
-Use a Windows XP-style desktop in your browser to play classic games and run
-selected original Windows XP applications.
+A Windows XP-style desktop that runs in your browser. Play classic games and use
+selected original Windows XP applications without installing anything.
 
 [Open Astro Flash Collection](https://flash.4st.li/)
 
-## Highlights
+## Features
 
-- Windows XP-style shell, Explorer, Paint, Notepad, original XP applications, Pinball, themes, and settings
-- Draggable game windows, task switching, fullscreen, and volume controls
+- A Windows XP shell with Explorer, Paint, Notepad, Pinball, themes, and settings
+- Original XP applications such as Calculator, WordPad, and the card games
+- Draggable game windows with task switching, fullscreen, and volume controls
 - Favorites, recently played games, categories, search, and deep links
-- Automatic offline support with optional per-game downloads
-- Internet Games catalog backed by Flashpoint Archive
+- Offline play, with optional downloads for individual games
+- An Internet Games catalog backed by Flashpoint Archive
 
-## XP fidelity work
+## Getting started
 
-See the [fidelity roadmap and resume checklist](docs/XP-FIDELITY-ROADMAP.md) for
-known taskbar gaps, completed reference passes, and the remaining areas in order.
-
-## Development
-
-Use the Bun version pinned in `package.json` (CI reads the same pin).
-Typechecking uses the native TypeScript 7 compiler through `@typescript/native`;
-TypeScript 6 remains installed for TypeScript ESLint compatibility.
-
-Install dependencies and run the checks:
+Install the Bun version pinned in `package.json`. CI reads the same pin.
 
 ```bash
 bun install --frozen-lockfile
-bun run quality
-bun run test
-```
-
-`bun run test` runs test files in parallel worker processes. Each test file
-groups its tests under a `describe` naming the subject under test, and each
-test name is a lowercase, present-tense behavior that reads as a sentence
-after that subject (`Flash URL router` › `rejects ambiguous and unsafe routes`).
-Shell tests advance XP delays with `shell.advanceTime(ms)` from
-`tests/helpers/shell-harness.ts` instead of waiting in real time.
-
-Build and serve the production site locally:
-
-```bash
 bun run dev
 ```
 
-Open <http://127.0.0.1:8000>. The development server watches build inputs,
-rebuilds automatically, and reloads open browser tabs after a successful build.
-It also provides the local `/api/games` proxy used by Internet Games and starts
-immediately when `dist/` is already current. Use
-`bun run dev -- --rebuild` to force a rebuild or `--no-sync` to serve the
-existing output unchanged.
+Then open <http://127.0.0.1:8000>.
 
-To test production service-worker and offline-update behavior with automatic
-rebuilds, run:
+The development server builds the site into `dist/`, watches the build inputs,
+rebuilds on change, and reloads open tabs after each successful build. It also
+serves the local `/api/games` proxy that Internet Games uses. When `dist/` is
+already current it starts immediately. Pass `--rebuild` to force a fresh build
+or `--no-sync` to serve the existing output as is:
+
+```bash
+bun run dev -- --rebuild
+```
+
+### Testing offline updates
 
 ```bash
 bun run preview
 ```
 
-Preview serves the real production worker and gives each changed build a new
-local version. It intentionally does not reload the page after rebuilding; use
-**Settings > Updates > Check for Updates** to exercise the update flow.
+Preview serves the real production service worker and gives every rebuild a new
+local version. It does not reload the page for you. Use
+**Settings > Updates > Check for Updates** to walk through the update flow.
 
 ### XP reference VM
-
-Start an isolated XP reference VM:
 
 ```bash
 bun run xp:vm --instance <name>
 ```
 
-VM changes are temporary by default, so multiple sessions can share the base
-disk. Use `--write-base` only when changes must be saved to that disk.
+This starts an isolated Windows XP VM to compare against. Changes are discarded
+when it stops, so several sessions can share one base disk. Pass `--write-base`
+only when a change must be saved to that disk.
+
+The [fidelity roadmap](docs/XP-FIDELITY-ROADMAP.md) lists known taskbar gaps,
+finished reference passes, and the remaining areas in priority order.
+
+## Checks
+
+Run these before pushing:
+
+```bash
+bun run quality        # Prettier and ESLint
+bun run test           # typecheck, tests, and asset validation
+bun run test:coverage  # tests with first-party coverage
+```
+
+Typechecking uses the native TypeScript 7 compiler from `@typescript/native`.
+TypeScript 6 stays installed because TypeScript ESLint still needs it.
+
+Tests run in parallel worker processes. Each test file groups its tests under a
+`describe` that names the subject, and each test name is a lowercase,
+present-tense behavior that reads as a sentence after it, for example
+`Flash URL router` › `rejects ambiguous and unsafe routes`. Shell tests move XP
+timers forward with `shell.advanceTime(ms)` from `tests/helpers/shell-harness.ts`
+instead of waiting in real time.
+
+`bun run test:coverage` instruments first-party code with Istanbul, including
+the classic scripts the shell harness loads into Happy DOM. It writes an HTML
+report to `coverage/index.html` and fails if lines, statements, functions, or
+branches fall below 95%. CI enforces the same threshold on every pull request.
 
 ## Project layout
 
-- `site/apps/` — first-party applications, manifests, and lifecycle modules
-- `native/pinball/` — MIT Space Cadet source used to build the first-party WebAssembly runtime
-- `native/boxedwine/` and `site/vendor/boxedwine/` — native window control and the patched BoxedWine runtime
-- `site/js/shell/` — desktop, windows, taskbar, Start menu, and shell services
-- `site/js/apps/` — temporary shell adapters used by application modules
-- `site/css/shell/` and `site/css/apps/` — shell and application presentation
-- `site/assets/xp/` — assets extracted from the configured Windows XP source media
-- `worker/` — Cloudflare Worker for the Internet Games catalog
-- `tools/` — build, validation, and asset maintenance scripts
-- `tests/` — Bun/TypeScript tests
-- `dist/` — generated production build; ignored by Git
+| Path                                          | Contents                                                   |
+| --------------------------------------------- | ---------------------------------------------------------- |
+| `site/apps/`                                  | First-party applications, manifests, and lifecycle modules |
+| `site/js/shell/`                              | Desktop, windows, taskbar, Start menu, and shell services  |
+| `site/js/apps/`                               | Temporary shell adapters used by application modules       |
+| `site/css/shell/`, `site/css/apps/`           | Shell and application styles                               |
+| `site/assets/xp/`                             | Assets extracted from the configured Windows XP media      |
+| `native/pinball/`                             | MIT Space Cadet source for the Pinball WebAssembly build   |
+| `native/boxedwine/`, `site/vendor/boxedwine/` | Native window control and the patched BoxedWine runtime    |
+| `worker/`                                     | Cloudflare Worker for the Internet Games catalog           |
+| `tools/`                                      | Build, validation, and asset maintenance scripts           |
+| `tests/`                                      | Bun and TypeScript tests                                   |
+| `dist/`                                       | Generated production build, ignored by Git                 |
 
-## Games and offline support
+## Games and applications
 
-Catalog games are defined in `site/js/games.js`. Ruffle games use `type: "swf"`;
-embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
-Original XP applications such as Calculator, WordPad, and the card games are
-registered in `site/apps/core/boxedwine-applications.js` and share a BoxedWine
-runtime. Windows XP Pinball is mounted directly from `site/apps/pinball/`.
+Catalog games live in `site/js/games.js`. Ruffle games use `type: "swf"`.
+Embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
 
-The Windows XP shell is cached automatically. Opening an included game queues a
-complete background download for offline play. Games can also be downloaded or
-removed individually, or all at once, from **Settings > Games**. Shared Ruffle,
-ScummVM, and BoxedWine runtimes are downloaded only when needed.
+Original XP applications are registered in
+`site/apps/core/boxedwine-applications.js` and share one BoxedWine runtime.
+Windows XP Pinball is mounted directly from `site/apps/pinball/`.
 
-Games installed through **Internet Games** are stored separately in IndexedDB
-and Cache Storage. GameZIP titles are installed fully; Legacy titles cache
-additional files as they are requested.
+## Offline support and storage
 
-Automatic updates prepare the new version in the background and leave the current
-page open. Reopen the site to use it, or press **Update Now** to reload immediately.
+The XP shell is cached automatically. Opening an included game starts a
+background download so it works offline next time. **Settings > Games** can
+download or remove games one at a time or all together. The shared Ruffle,
+ScummVM, and BoxedWine runtimes download only when a game needs them.
 
-Documents are stored as individual records in IndexedDB. Existing localStorage
-files migrate automatically in one transaction; the old snapshot remains as a
-recovery backup. Saves wait for the database commit, and conflicting changes from
-another tab are rejected so the editor can keep its draft. All tabs can write.
+Updates install in the background and leave the current page alone. Reopen the
+site to switch to the new version, or press **Update Now** to reload right away.
 
-Game installation streams the download to a temporary file in the browser's
+Games installed from **Internet Games** are kept separately in IndexedDB and
+Cache Storage. GameZIP titles install completely. Legacy titles cache extra
+files as the game requests them.
+
+Installing a game streams the download into a temporary file in the browser's
 private filesystem (OPFS), validates the ZIP index, and extracts one file at a
-time into Cache Storage. Extraction uses bounded reads and checks sizes and CRCs.
-Cancellation or failure removes partial cache entries and the temporary archive.
-This requires a browser supporting IndexedDB, OPFS, and streaming responses.
+time into Cache Storage. Reads are bounded, and sizes and CRCs are checked. If
+the install is cancelled or fails, partial cache entries and the temporary
+archive are removed. This needs a browser with IndexedDB, OPFS, and streaming
+responses.
+
+Documents are stored as separate IndexedDB records. Older localStorage files
+migrate automatically in a single transaction, and the old snapshot is kept as a
+recovery backup. A save finishes only after the database commits it. Any tab can
+write, but if another tab changed the same file first, the save is rejected so
+the editor keeps its draft.
 
 ## Deployment
 
-Pushes to `main` run tests, build the site, deploy and smoke-test the Cloudflare
-Worker, and then publish to GitHub Pages. Pull requests run the same validation
-without deploying.
+Pull requests run formatting, lint, tests, the coverage check, and a production
+build. Pushes to `main` run the same checks, deploy and smoke-test the Cloudflare
+Worker, and then publish the site to GitHub Pages.
 
-The repository requires these GitHub Actions secrets:
+CI needs these GitHub Actions secrets:
 
 - `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_API_TOKEN`, with **Workers Scripts: Edit** on the account and
+  **Workers Routes: Edit** on the `4st.li` zone
 
-The API token needs **Workers Scripts: Edit** for the account and **Workers
-Routes: Edit** for the `4st.li` zone.
-
-Deploy the Worker manually with:
+To deploy the Worker by hand:
 
 ```bash
 bun run deploy:worker
@@ -141,5 +155,6 @@ bun run deploy:worker
 
 ## Contributing
 
-Test game compatibility, controls, frame rate, and categorization before
-submitting a pull request. Run `bun run quality && bun run test` before pushing.
+Before opening a pull request, check game compatibility, controls, frame rate,
+and category, and make sure `bun run quality`, `bun run test`, and
+`bun run test:coverage` all pass.
