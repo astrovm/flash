@@ -169,7 +169,7 @@ test("desktop keyboard navigation extends selections and supports typeahead", as
   expect(icons().at(-1).classList.contains("selected")).toBeTrue();
   press(s, surface, "Home", { ctrlKey: true });
   expect(s.document.activeElement).toBe(icons()[0]);
-  press(s, s.document.activeElement, "ArrowRight", { shiftKey: true });
+  press(s, s.document.activeElement, "ArrowDown", { shiftKey: true });
   press(s, s.document.activeElement, "ArrowDown", { ctrlKey: true });
   expect(icons().some((icon) => icon.classList.contains("selected"))).toBe(
     true,
@@ -195,6 +195,11 @@ test("desktop keyboard navigation extends selections and supports typeahead", as
       .classList.add("selected");
   const selected = s.document.querySelector(`[data-desktop-id="${notes.id}"]`);
   selected.focus();
+  press(s, selected, "Delete");
+  expect(s.document.querySelector(".xp-dialog").textContent).toContain(
+    "Recycle Bin",
+  );
+  await answer(s, "no");
   press(s, selected, "Delete", { shiftKey: true });
   expect(s.document.querySelector(".xp-dialog").textContent).toContain(
     "these items",
@@ -294,10 +299,27 @@ test("clicking elsewhere closes open application menus but not the menu being us
   }
   pointerDown(s, s.document.body);
   expect(s.document.getElementById("start-menu").hidden).toBeTrue();
+
+  clickStartAction(s, "documents");
+  await settle();
+  const chrome = s.document.querySelector(".explorer-chrome");
+  if (chrome) pointerDown(s, chrome);
+  s.document.getElementById("start-button").click();
+  s.document.getElementById("turn-off-button").click();
+  s.document.getElementById("standby-confirm").click();
+  expect(s.document.getElementById("standby-screen").hidden).toBeFalse();
+  pointerDown(s, s.document.body);
+  expect(s.document.getElementById("standby-screen").hidden).toBeFalse();
+  press(s, s.document.body, "a");
+  expect(s.document.getElementById("standby-screen").hidden).toBeTrue();
 });
 
-test("links are ignored before login", async () => {
+test("links and resizes are ignored before login", async () => {
   const s = await loadShell();
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  s.document.dispatchEvent(
+    new s.window.KeyboardEvent("keyup", { key: "a", bubbles: true }),
+  );
   s.window.location.hash = "#minesweeper";
   s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
   await settle();
