@@ -242,10 +242,10 @@
       return store.set(metadata.id, metadata);
     fail("Metadata store dependency is required");
   }
+  // uninstall validates the store before calling this.
   async function deleteMetadata(store, id) {
     if (typeof store.delete === "function") return store.delete(id);
-    if (typeof store.remove === "function") return store.remove(id);
-    fail("Metadata store dependency is required");
+    return store.remove(id);
   }
 
   async function install(record, zipBytes, dependencies = {}) {
