@@ -4,7 +4,7 @@
 // Start Menu
 // ============================================
 
-const createMenuGameItem = (gameId, gameStats = getGameStats()) => {
+const createMenuGameItem = (gameId, gameStats) => {
   const item = document.createElement("button");
   item.type = "button";
   item.className = "sm-game";
@@ -665,7 +665,7 @@ const createProgramMenuItem = (definition, depth, gameStats) => {
   return item;
 };
 
-const openProgramSubmenu = (definitions, anchor, depth = 0) => {
+const openProgramSubmenu = (definitions, anchor, depth) => {
   // A detached anchor (e.g. a stale hover-timer firing after the menu
   // already closed/rebuilt) has an all-zero getBoundingClientRect(), which
   // positionStartFlyout would otherwise clamp to the top-left corner.
