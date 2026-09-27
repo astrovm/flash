@@ -178,3 +178,174 @@ test("resolution preview rolls back on cancel and saver settings stay usable", a
   expect(h.d.isConnected).toBeFalse();
   expect(h.saved()).toBeNull();
 });
+
+test("secondary display dialogs cancel with Escape and ignore clicks between controls", async () => {
+  const h = await open();
+  const { s, q } = h;
+  const escape = (dialog) =>
+    dialog.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+  q(".display-customize").click();
+  const items = s.document.querySelector(".desktop-items-dialog");
+  items
+    .querySelector(".desktop-items-tabs")
+    .dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
+  items
+    .querySelector(".desktop-icon-choices")
+    .dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
+  escape(items);
+  expect(items.isConnected).toBeFalse();
+  q(".display-effects").click();
+  escape(s.document.querySelector(".display-effects-dialog"));
+  q(".display-advanced-appearance").click();
+  escape(s.document.querySelector(".advanced-appearance-dialog"));
+  q(".display-browse").click();
+  const browse = s.document.querySelector(".wallpaper-browse-dialog");
+  let picked = 0;
+  q("#display-image").click = () => picked++;
+  h.dialogButton(browse, "Open");
+  expect(picked).toBe(1);
+  escape(browse);
+  expect(s.document.querySelector(".xp-dialog")).toBeNull();
+});
+
+test("effects restore scroll transitions and ClearType and can turn both off", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        displaySettings: JSON.stringify({
+          transitionEffect: "scroll",
+          fontSmoothing: "cleartype",
+        }),
+      },
+    }),
+  );
+  clickStartAction(s, "controlPanel");
+  s.document
+    .querySelector('[data-control-panel-category="appearance"]')
+    .click();
+  s.document.querySelector('[data-control-panel-action="display"]').click();
+  const content = s.document.querySelector(".display-properties-content");
+  content.querySelector(".display-effects").click();
+  const dialog = s.document.querySelector(".display-effects-dialog");
+  expect(dialog.querySelector('[data-effect="transitionEffect"]').value).toBe(
+    "scroll",
+  );
+  expect(dialog.querySelector('[data-effect="fontSmoothing"]').value).toBe(
+    "cleartype",
+  );
+  dialog.querySelector('[data-effect-enabled="transition"]').click();
+  dialog.querySelector('[data-effect-enabled="smoothing"]').click();
+  [...dialog.querySelectorAll(".dlg-buttons button")]
+    .find((button) => button.textContent === "OK")
+    .click();
+  content.querySelector('[data-display-action="apply"]').click();
+  expect(
+    JSON.parse(s.window.localStorage.getItem("displaySettings")),
+  ).toMatchObject({ transitionEffect: "none", fontSmoothing: "none" });
+});
+
+test("the wallpaper list scrolls with its arrows, track, and thumb", async () => {
+  const h = await open();
+  const { s, q } = h;
+  q('[role="tab"][aria-controls="display-panel-desktop"]').click();
+  const scroller = q(".display-wallpaper-items");
+  const track = q(".display-scrollbar .scroll-track");
+  const thumb = q(".display-scrollbar .scroll-thumb");
+  const scrolls = [];
+  scroller.scrollBy = ({ top }) => scrolls.push(top);
+  Object.defineProperties(scroller, {
+    scrollHeight: { configurable: true, value: 400 },
+    clientHeight: { configurable: true, value: 100 },
+  });
+  Object.defineProperty(track, "clientHeight", {
+    configurable: true,
+    value: 80,
+  });
+  scroller.dispatchEvent(new s.window.Event("scroll"));
+  expect(thumb.style.height).toBe("22px");
+  const pointer = (target, type, clientY, bubbles = true) =>
+    target.dispatchEvent(
+      new s.window.PointerEvent(type, {
+        bubbles,
+        cancelable: true,
+        clientY,
+        pointerId: 1,
+      }),
+    );
+  pointer(q(".display-scrollbar .scroll-arrow.up"), "pointerdown", 0);
+  pointer(q(".display-scrollbar .scroll-arrow.down"), "pointerdown", 0);
+  thumb.getBoundingClientRect = () => ({ top: 50 });
+  pointer(track, "pointerdown", 10);
+  pointer(track, "pointerdown", 90);
+  expect(scrolls).toEqual([-18, 18, -100, 100]);
+  thumb.setPointerCapture = () => {};
+  Object.defineProperty(thumb, "offsetHeight", {
+    configurable: true,
+    value: 22,
+  });
+  pointer(thumb, "pointerdown", 0);
+  pointer(thumb, "pointermove", 29, false);
+  expect(scroller.scrollTop).toBe(150);
+  pointer(thumb, "pointerup", 29, false);
+  Object.defineProperty(thumb, "offsetHeight", {
+    configurable: true,
+    value: 80,
+  });
+  pointer(thumb, "pointerdown", 0);
+  pointer(thumb, "pointermove", 40, false);
+  pointer(thumb, "pointercancel", 40, false);
+  expect(scroller.scrollTop).toBe(150);
+  const list = q(".display-wallpaper-list");
+  list.dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
+  list.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
+  );
+  q('[role="tab"]').dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
+  );
+});
+
+test("display settings reject empty choices and report save failures", async () => {
+  const h = await open();
+  const { s, q, change } = h;
+  change("#display-saver-wait", "abc");
+  change("#display-saver", "none");
+  q(".display-saver-preview-button").click();
+  expect(
+    s.document.getElementById("screen-saver-overlay")?.hidden ?? true,
+  ).toBeTrue();
+  q("#display-image").dispatchEvent(new s.window.Event("change"));
+  change("#display-position", "tile");
+  const realStorage = s.window.localStorage;
+  const errors = [];
+  const originalError = s.window.console.error;
+  s.window.console.error = (...args) => errors.push(args);
+  Object.defineProperty(s.window, "localStorage", {
+    configurable: true,
+    value: {
+      getItem: (key) => realStorage.getItem(key),
+      removeItem: (key) => realStorage.removeItem(key),
+      setItem(key, value) {
+        if (key === "displaySettings") throw new Error("quota");
+        realStorage.setItem(key, value);
+      },
+    },
+  });
+  try {
+    q('[data-display-action="ok"]').click();
+    expect(q(".display-status").textContent).toContain("could not save");
+    expect(h.d.isConnected).toBeTrue();
+    expect(errors).toHaveLength(1);
+  } finally {
+    Object.defineProperty(s.window, "localStorage", {
+      configurable: true,
+      value: realStorage,
+    });
+    s.window.console.error = originalError;
+  }
+  q('[data-display-action="apply"]').click();
+  q('[data-display-action="ok"]').click();
+  expect(h.d.isConnected).toBeFalse();
+});
