@@ -760,7 +760,7 @@ describe("game library browser integration", () => {
     const storageManager = {
       async getDirectory() {
         return {
-          async getFileHandle(name) {
+          async getFileHandle() {
             return {
               async createWritable() {
                 return {

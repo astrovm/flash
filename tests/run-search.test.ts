@@ -140,7 +140,6 @@ test("Run opens games, Notepad, and Run itself, and ignores empty commands", asy
 test("Search lists games and applications and opens them", async () => {
   const s = await login(await loadShell());
   const fs = s.window.VirtualFS;
-  const gameId = "bike-mania";
   const title = "Bike Mania";
   clickStartAction(s, "search");
   const win = s.document.querySelector('.xp-window[data-game="__search"]');

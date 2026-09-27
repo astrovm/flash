@@ -249,7 +249,7 @@ describe("ZIP metadata validation", () => {
   });
 
   test("rejects catalog records without a status", () => {
-    const { status, ...unknownStatus } = record;
+    const { status: _status, ...unknownStatus } = record;
     expect(() => installer.validateCatalogRecord(unknownStatus)).toThrow(
       "Only playable games",
     );
@@ -618,7 +618,7 @@ describe("buffered and legacy installation failures", () => {
 
   test("falls back to the page or local origin and raw bytes without Response", async () => {
     const { dependencies, cached } = makeDependencies();
-    const { origin, ...withoutOrigin } = dependencies;
+    const { origin: _origin, ...withoutOrigin } = dependencies;
     const Response_ = globalThis.Response;
     delete globalThis.Response;
     try {
