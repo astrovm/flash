@@ -553,9 +553,9 @@ describe("BoxedWine window surface", () => {
     expect(canvas.dataset).toMatchObject({
       boxedwineParent: "1",
       boxedwineProcess: "0",
-      boxedwineLaunchToken: "0",
+      boxedwineLaunchToken: "",
     });
-    expect(h.firstFrames[0]).toMatchObject({ processId: 0, launchToken: "0" });
+    expect(h.firstFrames[0]).toMatchObject({ processId: 0, launchToken: "" });
     h.surface.hide(10);
     h.surface.show(10);
     h.flush();
