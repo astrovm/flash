@@ -222,7 +222,7 @@ test("taskbar properties switch Start menu styles and customize notifications", 
       -1,
     );
   };
-  let dialog = open();
+  const dialog = open();
   const preview = () =>
     dialog.querySelector(".taskbar-start-menu-preview").getAttribute("src");
   const style = (value) => {
