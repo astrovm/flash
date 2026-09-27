@@ -255,3 +255,35 @@ test("unsaved Notepad windows ask before closing", async () => {
   await settle();
   expect(win.isConnected).toBeFalse();
 });
+
+test("game volume controls handle unfocused windows, invalid values, and silent restores", async () => {
+  const { s, players, open } = await flashGame({
+    initialStorage: {
+      gameVolumes: JSON.stringify({
+        "big-truck-adventures": { volume: "loud", isMuted: false },
+        "bike-mania": { volume: 0, isMuted: true },
+      }),
+    },
+  });
+  const truck = await open("big-truck-adventures");
+  expect(truck.querySelector(".game-volume-slider").value).toBe("100");
+  const bike = await open("bike-mania");
+  const truckPlayer = players[0];
+  const slider = truck.querySelector(".game-volume-slider");
+  slider.value = "";
+  slider.dispatchEvent(new s.window.Event("input"));
+  slider.value = "40";
+  slider.dispatchEvent(new s.window.Event("input"));
+  truck.querySelector(".volume-btn").click();
+  truck.querySelector(".volume-btn").click();
+  expect(truckPlayer.volume ?? 0).toBe(0);
+  bike.querySelector(".volume-btn").click();
+  expect(
+    JSON.parse(s.window.localStorage.getItem("gameVolumes"))["bike-mania"],
+  ).toMatchObject({ volume: 100, isMuted: false });
+
+  s.document.getElementById("start-button").click();
+  s.document.getElementById("all-programs-button").click();
+  bike.querySelector(".favorite-btn").click();
+  expect(s.window.localStorage.getItem("favorites")).toContain("bike-mania");
+});
