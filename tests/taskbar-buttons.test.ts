@@ -248,3 +248,89 @@ test("taskbar properties switch Start menu styles and customize notifications", 
   dialog.querySelector('[data-action="cancel"]').click();
   expect(dialog.isConnected).toBeFalse();
 });
+
+test("the taskbar Toolbars submenu toggles toolbars and arranges windows from the menu", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        clockOffsetMs: "soon",
+        taskbarSettings: JSON.stringify({ edge: "top", locked: false }),
+      },
+    }),
+  );
+  const menu = () => {
+    context(s, s.document.getElementById("taskbar"));
+    return s.document.getElementById("taskbar-context-menu");
+  };
+  Object.defineProperty(s.window, "innerWidth", {
+    configurable: true,
+    value: -1,
+  });
+  const toolbars = s.document.querySelector(
+    '#taskbar-context-menu [data-taskbar-action="toolbars"]',
+  );
+  menu();
+  toolbars.click();
+  const submenu = s.document.getElementById("taskbar-toolbar-submenu");
+  expect(submenu.style.left).not.toBe("calc(100% - 2px)");
+  press(s, toolbars, "a");
+  press(s, toolbars, "ArrowRight");
+  press(s, submenu, "a");
+  press(s, submenu, "ArrowLeft");
+  expect(toolbars.getAttribute("aria-expanded")).toBe("false");
+  press(s, toolbars, "ArrowRight");
+  press(s, submenu, "Escape");
+  submenu.dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
+  for (const toolbar of ["desktop", "quick-launch"]) {
+    menu();
+    s.document
+      .querySelector(
+        `#taskbar-toolbar-submenu [data-taskbar-toolbar="${toolbar}"]`,
+      )
+      .click();
+  }
+  const settings = JSON.parse(s.window.localStorage.getItem("taskbarSettings"));
+  expect(settings.desktopToolbar).toBeTrue();
+  menu().dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
+  clickStartAction(s, "documents");
+  clickStartAction(s, "pictures");
+  await settle();
+  s.document
+    .querySelector('.xp-window[data-game="__my-documents"] .maximize-btn')
+    .click();
+  for (const action of ["cascade", "tile-horizontal", "properties"]) {
+    menu().querySelector(`[data-taskbar-action="${action}"]`).click();
+    await settle();
+  }
+  expect(!!s.document.querySelector(".taskbar-properties-dialog")).toBeTrue();
+  expect(s.document.getElementById("taskbar-clock").textContent).not.toBe("");
+});
+
+test("vertical taskbars group Explorer windows and overflow by height", async () => {
+  const s = await openWindows({
+    initialStorage: {
+      taskbarSettings: JSON.stringify({
+        edge: "left",
+        group: true,
+        locked: false,
+      }),
+    },
+  });
+  const container = s.document.getElementById("task-buttons");
+  Object.defineProperty(container, "clientHeight", {
+    configurable: true,
+    value: 60,
+  });
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  await settle();
+  expect(
+    s.document.querySelector("#task-buttons .task-button-grouped").textContent,
+  ).toMatch(/Windows Explorer|windows/);
+  Object.defineProperty(container, "clientHeight", {
+    configurable: true,
+    value: 400,
+  });
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  await settle();
+  expect(container.style.gridTemplateColumns).toBe("minmax(0, 1fr)");
+});
