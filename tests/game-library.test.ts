@@ -10,7 +10,14 @@ class FakeCache {
     this.values = new Map();
   }
   async put(key, response) {
-    this.values.set(String(key), response);
+    // CacheStorage consumes the response stream before put resolves.
+    this.values.set(
+      String(key),
+      new Response(await response.arrayBuffer(), {
+        status: response.status,
+        headers: response.headers,
+      }),
+    );
   }
   async match(key) {
     const value = this.values.get(String(key.url || key));
@@ -83,6 +90,7 @@ function loadModules() {
 function createFixture({
   storageManager = { persist: async () => true },
   cache = new FakeCache(),
+  overrides = {},
 } = {}) {
   const { installer, library } = loadModules();
   const gameZipBytes = zipSync({
@@ -129,9 +137,12 @@ function createFixture({
     metadataStore: store,
     storageManager,
     origin: "https://flash.example",
+    ...overrides,
   });
   return {
     library,
+    installer,
+    fetchObject,
     cache,
     store,
     manager,
@@ -386,3 +397,219 @@ describe("game library", () => {
     ).rejects.toThrow(/larger/);
   });
 });
+
+describe("game library recovery", () => {
+  test.each([
+    [{ installer: null }, "installer"],
+    [{ unzipSync: null, unzip: null }, "ZIP reader"],
+    [{ fetchObject: null }, "Network access"],
+    [{ cacheObject: null, cachesObject: null }, "cache storage"],
+  ])("reports missing browser capabilities %#", (overrides, error) => {
+    expect(() => createFixture({ overrides })).toThrow(error);
+  });
+  test("rejects writes before initialization and notifies subscribers only while subscribed", async () => {
+    const f = createFixture(),
+      snapshots = [];
+    await expect(f.manager.install(details)).rejects.toThrow("still starting");
+    await expect(f.manager.getInstallations()).rejects.toThrow(
+      "still starting",
+    );
+    await expect(f.manager.match("/asset")).rejects.toThrow("still starting");
+    await expect(f.manager.uninstall(uuid)).rejects.toThrow("still starting");
+    expect(f.manager.getRecord("absent")).toBeNull();
+    await f.manager.initialize();
+    const unsubscribe = f.manager.subscribe((games) => snapshots.push(games));
+    const installed = await f.manager.install(details);
+    expect(snapshots).toHaveLength(1);
+    expect(f.manager.getRecord(installed.id).uuid).toBe(uuid);
+    expect(await f.manager.install(details)).toEqual(installed);
+    expect(snapshots).toHaveLength(1);
+    expect(await f.manager.initialize()).toEqual(f.manager.getGames());
+    unsubscribe();
+    await f.manager.uninstall(uuid);
+    expect(snapshots).toHaveLength(1);
+  });
+  test.each([
+    [
+      () =>
+        new Response(JSON.stringify({ error: "catalog unavailable" }), {
+          status: 503,
+        }),
+      "catalog unavailable",
+    ],
+    [
+      () => new Response("<html>bad gateway</html>", { status: 502 }),
+      "returned 502",
+    ],
+    [() => new Response(JSON.stringify({}), { status: 403 }), "returned 403"],
+  ])(
+    "catalog HTTP errors reach both search and details %#",
+    async (response, error) => {
+      const { manager } = createFixture({
+        overrides: { fetchObject: async () => response() },
+      });
+      await expect(manager.search("game")).rejects.toThrow(error);
+      await expect(manager.details(uuid)).rejects.toThrow(error);
+    },
+  );
+  test("normalizes empty search results, forwards cancellation and estimates browser storage", async () => {
+    const calls = [],
+      controller = new AbortController();
+    const { manager } = createFixture({
+      storageManager: { estimate: async () => ({ usage: 12, quota: 100 }) },
+      overrides: {
+        fetchObject: async (url, options) => {
+          calls.push({ url, options });
+          return new Response(JSON.stringify({ games: null }));
+        },
+      },
+    });
+    expect(await manager.search("   ")).toEqual([]);
+    expect(calls).toHaveLength(0);
+    expect(
+      await manager.search("  Bike & Race ", { signal: controller.signal }),
+    ).toEqual([]);
+    expect(calls[0].url).toBe("/api/games?q=Bike%20%26%20Race");
+    expect(calls[0].options.signal).toBe(controller.signal);
+    expect(calls[0].options.headers.Accept).toBe("application/json");
+    await manager.details("id/with space", { signal: controller.signal });
+    expect(calls[1].url).toBe("/api/games/id%2Fwith%20space");
+    expect(await manager.storageEstimate()).toMatchObject({
+      usage: 12,
+      quota: 100,
+    });
+  });
+  test.each(["legacy", "gamezip"])(
+    "streamed %s installs clean up their temporary archive",
+    async (packageType) => {
+      let cleaned = 0;
+      const { AsyncInflate } = require("fflate");
+      const f = createFixture({
+        overrides: {
+          Inflate: AsyncInflate,
+          temporaryArchive: async (response) => ({
+            blob: await response.blob(),
+            cleanup: async () => {
+              cleaned++;
+            },
+          }),
+        },
+      });
+      await f.manager.initialize();
+      const installed = await f.manager.install(
+        packageType === "legacy" ? legacyDetails : details,
+      );
+      expect(cleaned).toBe(1);
+      expect(await bytesOf(await f.manager.match(installed.url))).toEqual(
+        packageType === "legacy" ? [7, 8] : [4, 5],
+      );
+    },
+  );
+  test("a failed logo metadata update removes only artwork and preserves a playable installation", async () => {
+    const store = new FakeStore();
+    store.put = async (record) => {
+      if (record.iconPath) throw new Error("logo metadata unavailable");
+      store.values.set(record.id, record);
+    };
+    const f = createFixture({ overrides: { metadataStore: store } });
+    await f.manager.initialize();
+    const installed = await f.manager.install(details);
+    expect(installed.iconPath).toBeUndefined();
+    expect(
+      await f.cache.match(
+        `https://flash.example/__installed-games/${uuid}/logo.jpg`,
+      ),
+    ).toBeNull();
+    expect(await bytesOf(await f.manager.match(installed.url))).toEqual([4, 5]);
+    expect(store.values.size).toBe(1);
+  });
+  test("missing legacy assets are negatively cached but server errors remain retryable", async () => {
+    let status = 404,
+      requests = 0;
+    const base = createFixture();
+    const f = createFixture({
+      overrides: {
+        fetchObject: async (url) => {
+          if (url.includes("/asset?")) {
+            requests++;
+            return new Response("missing", { status });
+          }
+          return base.fetchObject(url);
+        },
+      },
+    });
+    await f.manager.initialize();
+    await f.manager.install(legacyDetails);
+    const path = `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/missing.txt`;
+    expect(await f.manager.match(path)).toBeNull();
+    expect(await f.manager.match(path)).toBeNull();
+    expect(requests).toBe(1);
+    status = 500;
+    for (let i = 0; i < 2; i++)
+      expect(await f.manager.match(`${path}?retry=${i}`)).toBeNull();
+    // Query strings do not change the archive path or bypass its negative cache.
+    expect(requests).toBe(1);
+    const different = path.replace("missing.txt", "retry.txt");
+    expect(await f.manager.match(different)).toBeNull();
+    expect(await f.manager.match(different)).toBeNull();
+    expect(requests).toBe(3);
+  });
+  test("synthetic asset URLs reject malformed encoding, unknown games and unsafe archive paths", async () => {
+    const { manager, assetRequests } = await createLegacyFixture();
+    for (const path of [
+      "http://[",
+      "data:text/plain,test",
+      "/__installed-games/no-slash",
+      "/__installed-games/unknown/content/a",
+      `/__installed-games/${legacyUuid}/content/%ZZ`,
+      `/__installed-games/${legacyUuid}/content/a%2F..%2Fsecret`,
+      `/__installed-games/${legacyUuid}/metadata.json`,
+    ])
+      expect(await manager.match(path)).toBeNull();
+    expect(assetRequests()).toBe(0);
+  });
+});
+
+test.each(["success", "callback-error", "throw", "abort", "already-aborted"])(
+  "background ZIP decoding handles %s",
+  async (outcome) => {
+    const previous = globalThis.fflate,
+      controller = new AbortController();
+    let terminated = 0;
+    globalThis.fflate = {
+      unzip(bytes, callback) {
+        if (outcome === "throw") throw new Error("decoder failed");
+        queueMicrotask(() => {
+          if (outcome === "abort")
+            controller.abort(new Error("cancelled unzip"));
+          else if (outcome === "callback-error")
+            callback(new Error("decoder failed"));
+          else callback(null, unzipSync(bytes));
+        });
+        return () => {
+          terminated++;
+        };
+      },
+    };
+    try {
+      const f = createFixture({ overrides: { unzipSync: null } });
+      await f.manager.initialize();
+      if (outcome === "already-aborted")
+        controller.abort(new Error("cancelled unzip"));
+      const install = f.manager.install(details, { signal: controller.signal });
+      if (outcome === "success") {
+        const game = await install;
+        expect(await bytesOf(await f.manager.match(game.url))).toEqual([4, 5]);
+      } else {
+        await expect(install).rejects.toThrow(
+          outcome.includes("abort") ? "cancelled unzip" : "decoder failed",
+        );
+        expect(f.cache.values.size).toBe(0);
+        expect(f.store.values.size).toBe(0);
+      }
+      expect(terminated).toBe(outcome === "abort" ? 1 : 0);
+    } finally {
+      globalThis.fflate = previous;
+    }
+  },
+);

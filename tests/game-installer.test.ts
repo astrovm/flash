@@ -185,3 +185,161 @@ describe("game installer", () => {
     expect(failing.data.size).toBe(0);
   });
 });
+
+describe("installer validation and storage failures", () => {
+  test.each([
+    [null, "record is required"],
+    [{ ...record, uuid: "invalid" }, "Invalid game UUID"],
+    [{ ...record, library: "Animations" }, "Games library"],
+    [{ ...record, status: "Broken" }, "playable"],
+    [{ ...record, applicationPath: "java" }, "Flash player"],
+    [{ ...record, packageType: "exe" }, "package type"],
+    [{ ...record, downloadUrl: "https://[" }, "Invalid download"],
+    [{ ...record, launchCommand: "broken" }, "Invalid launch"],
+    [
+      { ...record, downloadUrl: "https://evil.example/game.zip" },
+      "not allowed",
+    ],
+    [
+      { ...record, downloadUrl: "http://download.unstable.life/file.zip" },
+      "not allowed",
+    ],
+    [{ ...record, launchCommand: "file:///game.swf" }, "point to an SWF"],
+    [
+      { ...record, launchCommand: "https://games.example/game.exe" },
+      "point to an SWF",
+    ],
+  ])("rejects an unsupported catalog record %#", (input, error) => {
+    expect(() => loadInstaller().validateCatalogRecord(input)).toThrow(error);
+  });
+  test.each([
+    null,
+    "",
+    "a\0b",
+    "a\\b",
+    "/etc/passwd",
+    "C:game.swf",
+    "content//main.swf",
+    "./main.swf",
+    "content/%ZZ",
+    "content/%2Fgame",
+    "content/%5cgame",
+    "content/%3Fgame",
+    "content/%23game",
+  ])("rejects unsafe archive path %#", (path) => {
+    expect(() => loadInstaller().safeArchivePath(path)).toThrow(
+      "Unsafe ZIP entry",
+    );
+  });
+  test("accepts legacy catalog aliases and normalizes IDs without changing encoded safe names", () => {
+    const installer = loadInstaller();
+    expect(
+      installer.validateCatalogRecord({
+        id: uuid.toUpperCase(),
+        libraryName: "Games",
+        platformName: "Flash",
+        status: "Playable",
+        applicationPaths: ["Flash", "Player"],
+        gameZIP: "/api/game/download",
+        command: record.launchCommand,
+      }),
+    ).toMatchObject({
+      uuid,
+      packageType: "gamezip",
+      applicationPath: "Flash Player",
+      downloadUrl: "https://astro.local/api/game/download",
+    });
+    expect(installer.safeArchivePath("content/game%20name/")).toBe(
+      "content/game%20name/",
+    );
+    expect(
+      installer
+        .validateZipEntries({
+          "content/a": { data: new Uint8Array([1]) },
+          "content/b": { buffer: new Uint8Array([2]) },
+        })
+        .map((entry) => [...entry.bytes]),
+    ).toEqual([[1], [2]]);
+    expect(() => installer.validateZipEntries({ "content/a": {} })).toThrow(
+      "does not contain bytes",
+    );
+  });
+  test("validates installer dependencies before writing any files", async () => {
+    const installer = loadInstaller(),
+      { cache, deps } = createDeps(),
+      zip = createGameZip();
+    await expect(installer.install(record, null, deps)).rejects.toThrow(
+      "Uint8Array",
+    );
+    await expect(
+      installer.install(record, zip, { ...deps, unzip: null }),
+    ).rejects.toThrow("ZIP reader");
+    await expect(
+      installer.install(record, zip, { ...deps, cache: { put() {} } }),
+    ).rejects.toThrow("Cache dependency");
+    await expect(
+      installer.install(record, zip, { ...deps, store: {} }),
+    ).rejects.toThrow("Metadata store");
+    await expect(
+      installer.install({ ...record, packageType: "legacy" }, zip, deps),
+    ).rejects.toThrow("Legacy games");
+    await expect(installer.installLegacy(record, null, deps)).rejects.toThrow(
+      "Uint8Array",
+    );
+    await expect(
+      installer.installLegacy(record, new Uint8Array([1]), {
+        ...deps,
+        cache: null,
+      }),
+    ).rejects.toThrow("Cache dependency");
+    await expect(
+      installer.installLegacy(record, new Uint8Array([1]), {
+        ...deps,
+        store: null,
+      }),
+    ).rejects.toThrow("Metadata store");
+    await expect(
+      installer.installLegacy(record, new Uint8Array([1]), deps),
+    ).rejects.toThrow("Only Legacy");
+    await expect(
+      installer.uninstall(uuid, { ...deps, cache: null }),
+    ).rejects.toThrow("Cache dependency");
+    await expect(
+      installer.uninstall(uuid, { ...deps, store: null }),
+    ).rejects.toThrow("Metadata store");
+    expect(cache.data.size).toBe(0);
+  });
+  test("supports set/remove metadata adapters and legacy Blob downloads, rolling back a failed metadata save", async () => {
+    const installer = loadInstaller(),
+      { cache, deps, stored } = createDeps();
+    const store = {
+      set: async (id, value) => stored.set(id, value),
+      remove: async (id) => stored.delete(id),
+    };
+    const installed = await installer.installLegacy(
+      { ...record, packageType: "legacy" },
+      new Blob(["SWF bytes"]),
+      { ...deps, store, responseFactory: undefined },
+    );
+    expect(await cache.data.get(installed.launchPath).text()).toBe("SWF bytes");
+    expect(stored.get(installed.id).id).toBe(installed.id);
+    await installer.uninstall(uuid, { ...deps, store });
+    expect(cache.data.size).toBe(0);
+    expect(stored.size).toBe(0);
+    await expect(
+      installer.installLegacy(
+        { ...record, packageType: "legacy" },
+        new Uint8Array([1]),
+        {
+          ...deps,
+          store: {
+            put: async () => {
+              throw new Error("metadata unavailable");
+            },
+          },
+        },
+      ),
+    ).rejects.toThrow("metadata unavailable");
+    expect(cache.data.size).toBe(0);
+  });
+});
