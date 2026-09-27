@@ -181,6 +181,7 @@ export async function loadShell({
     return {
       canvas: this,
       beginPath() {},
+      clearRect() {},
       closePath() {},
       drawImage() {},
       ellipse() {},
