@@ -12,6 +12,7 @@ import {
   createRequestHandler,
   ensureDevelopmentBuild,
   watchDevelopmentBuild,
+  parseServerArguments,
 } from "../tools/dev-server";
 
 const temporaryDirectories: string[] = [];
@@ -279,4 +280,41 @@ describe("development source watching", () => {
       watcher.close();
     }
   });
+});
+
+test("server CLI parses build controls and validates ports and unknown arguments", () => {
+  expect(parseServerArguments([])).toMatchObject({
+    force: false,
+    hostname: "127.0.0.1",
+    port: 8000,
+    production: false,
+    sync: true,
+  });
+  expect(
+    parseServerArguments([
+      "--rebuild",
+      "--no-sync",
+      "--production",
+      "--hostname",
+      "localhost",
+      "--port",
+      "0",
+      "--directory",
+      "/tmp/preview",
+    ]),
+  ).toEqual({
+    force: true,
+    hostname: "localhost",
+    port: 0,
+    production: true,
+    sync: false,
+    directory: "/tmp/preview",
+  });
+  for (const port of ["-1", "65536", "1.5", "bad"])
+    expect(() => parseServerArguments(["--port", port])).toThrow(
+      "must be an integer",
+    );
+  for (const flag of ["--port", "--hostname", "--directory"])
+    expect(() => parseServerArguments([flag])).toThrow("requires a value");
+  expect(() => parseServerArguments(["--unknown"])).toThrow("Unknown argument");
 });

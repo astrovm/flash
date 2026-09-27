@@ -19,6 +19,10 @@ import {
   compressFonts,
   generateServiceWorker,
   getDeploymentVersion,
+  parseBuildArguments,
+  runGit,
+  DEFAULT_OUTPUT_DIR,
+  DEFAULT_UPDATE_STABILITY_DELAY_MS,
   installJsDos,
   installRuffle,
   installWebtorrent,
@@ -680,7 +684,7 @@ describe("Workbox and artifact validation", () => {
       await readFile(join(root, offlineManifestName), "utf8"),
     );
     await unlink(join(root, manifest.games["bike-mania"].root, "main.swf"));
-    expect(validateOutput(root)).rejects.toThrow("missing game file");
+    await expect(validateOutput(root)).rejects.toThrow("missing game file");
   });
 });
 
@@ -800,7 +804,7 @@ describe("atomic build", () => {
     const project = await makeTemporaryDirectory();
     const source = join(project, "site");
     await makeSource(source);
-    expect(
+    await expect(
       build({
         sourceDir: source,
         outputDir: join(source, "dist"),
@@ -808,4 +812,70 @@ describe("atomic build", () => {
       }),
     ).rejects.toThrow("outside");
   });
+});
+
+describe("build inputs and release metadata validation", () => {
+  test("CLI defaults and explicit paths, revision and delay are parsed consistently", () => {
+    expect(parseBuildArguments([])).toEqual({
+      outputDir: DEFAULT_OUTPUT_DIR,
+      revision: "HEAD",
+      stabilityDelayMs: DEFAULT_UPDATE_STABILITY_DELAY_MS,
+    });
+    expect(
+      parseBuildArguments([
+        "--output",
+        "/tmp/synthetic-build",
+        "--revision",
+        "deadbee",
+        "--update-delay-hours",
+        "1.5",
+      ]),
+    ).toEqual({
+      outputDir: "/tmp/synthetic-build",
+      revision: "deadbee",
+      stabilityDelayMs: 5400000,
+    });
+    expect(
+      parseBuildArguments([
+        "--output",
+        "relative-dist",
+        "--update-delay-hours",
+        "0",
+      ]).outputDir,
+    ).toEndWith("/relative-dist");
+  });
+  for (const args of [
+    ["--output"],
+    ["--revision"],
+    ["--update-delay-hours"],
+    ["--unknown"],
+    ["--update-delay-hours", "-1"],
+    ["--update-delay-hours", "NaN"],
+    ["--update-delay-hours", "Infinity"],
+  ]) {
+    test(`CLI rejects invalid arguments ${args.join(" ")}`, () => {
+      expect(() => parseBuildArguments(args)).toThrow();
+    });
+  }
+  test("Git helper reports a real repository revision and rejects invalid repositories", async () => {
+    expect(runGit(["rev-parse", "--short=7", "HEAD"])).toMatch(
+      /^[a-f0-9]{7,}$/,
+    );
+    const empty = await makeTemporaryDirectory();
+    expect(() => runGit(["rev-parse", "HEAD"], empty)).toThrow();
+  });
+  for (const options of [
+    { releasedAt: "invalid" },
+    { stabilityDelayMs: -1 },
+    { stabilityDelayMs: 0.5 },
+    { stabilityDelayMs: Infinity },
+  ]) {
+    test(`version metadata rejects ${JSON.stringify(options)}`, async () => {
+      const root = await makeTemporaryDirectory();
+      await expect(
+        writeVersionMetadata(new BuildPaths(root), "26.07.28-abcdef1", options),
+      ).rejects.toThrow();
+      expect(await Bun.file(join(root, "version.json")).exists()).toBeFalse();
+    });
+  }
 });

@@ -1041,3 +1041,243 @@ describe("offline manager", () => {
     expect(failedManager.getSnapshot().error).toMatch(/Repair System Files/);
   });
 });
+
+describe("offline failure and lifecycle boundaries", () => {
+  test("workers already finished or missing resolve; redundant workers reject and detach listeners", async () => {
+    await waitForWorker(null);
+    await waitForWorker(new Worker());
+    await expect(waitForWorker(new Worker("redundant"))).rejects.toThrow(
+      "interrupted",
+    );
+    const worker = new Worker("installing"),
+      waiting = waitForWorker(worker);
+    worker.transition("redundant");
+    await expect(waiting).rejects.toThrow("interrupted");
+    expect(worker.listeners.get("statechange").size).toBe(0);
+  });
+  for (const [label, change] of [
+    ["null", () => null],
+    ["runtime array", (m) => ({ ...m, runtimes: [] })],
+    ["null runtimes", (m) => ({ ...m, runtimes: null })],
+    [
+      "invalid runtime name",
+      (m) => ({ ...m, runtimes: { "../bad": m.runtime } }),
+    ],
+    ["invalid runtime entry", (m) => ({ ...m, runtimes: { bad: {} } })],
+    ["invalid game id", (m) => ({ ...m, games: { "Bad!": m.games.doom } })],
+    [
+      "invalid game type",
+      (m) => ({ ...m, games: { doom: { ...m.games.doom, type: "exe" } } }),
+    ],
+    [
+      "unversioned root",
+      (m) => ({
+        ...m,
+        games: { doom: { ...m.games.doom, root: "iframe/doom/" } },
+      }),
+    ],
+    [
+      "missing runtime",
+      (m) => ({
+        ...m,
+        games: { doom: { ...m.games.doom, runtime: "absent" } },
+      }),
+    ],
+    ["negative bytes", (m) => ({ ...m, runtime: { ...m.runtime, bytes: -1 } })],
+    [
+      "missing integrity",
+      (m) => ({
+        ...m,
+        runtime: { ...m.runtime, files: [{ url: "runtime.wasm", bytes: 1 }] },
+      }),
+    ],
+  ])
+    test(`rejects ${label} manifests before downloading files`, () => {
+      expect(() =>
+        validateGameManifest(change(structuredClone(manifest))),
+      ).toThrow("catalog is invalid");
+    });
+  test("invalid stored records are ignored and subscriptions receive isolated snapshots", async () => {
+    for (const records of ["broken-json", "[]", "null"]) {
+      const h = makeEnvironment({
+        storageValues: { astroFlashOfflineGameRecords: records },
+      });
+      const manager = await createInitializedManager(h.environment),
+        snapshots = [];
+      const unsubscribe = manager.subscribe((value) => snapshots.push(value));
+      expect(snapshots[0].downloadedGameIds).toEqual([]);
+      snapshots[0].bundledGames[0].id = "changed";
+      snapshots[0].downloadedGameIds.push("changed");
+      expect(manager.getSnapshot().bundledGames[0].id).toBe("bike-mania");
+      expect(manager.getSnapshot().downloadedGameIds).toEqual([]);
+      manager.setSavePlayedGamesOffline(false);
+      expect(snapshots.length).toBe(2);
+      unsubscribe();
+      manager.setSavePlayedGamesOffline(true);
+      expect(snapshots.length).toBe(2);
+    }
+  });
+  test("rejects malformed preferences and unavailable offline actions without changing storage", async () => {
+    const h = makeEnvironment(),
+      manager = await createInitializedManager(h.environment);
+    await expect(manager.setOfflineEnabled("false")).rejects.toThrow(
+      "setting is invalid",
+    );
+    expect(() => manager.setSavePlayedGamesOffline(0)).toThrow(
+      "setting is invalid",
+    );
+    expect(() => manager.setAutomaticUpdatesEnabled(null)).toThrow(
+      "setting is invalid",
+    );
+    for (const delay of [-1, 1.5, NaN, "0"])
+      expect(() => manager.setAutomaticUpdateDelay(delay)).toThrow(
+        "delay is invalid",
+      );
+    h.environment.navigator.onLine = false;
+    await expect(manager.repair()).rejects.toThrow("Connect to the internet");
+    await expect(manager.checkForUpdates()).rejects.toThrow(
+      "Connect to the internet",
+    );
+    await manager.setOfflineEnabled(false);
+    await expect(manager.repair()).rejects.toThrow("Enable offline access");
+    await expect(manager.checkForUpdates()).rejects.toThrow(
+      "Enable offline access",
+    );
+    await expect(manager.downloadAllGames()).rejects.toThrow(
+      "Enable offline access",
+    );
+  });
+  test("downloads all built-in games once and retains shared runtimes", async () => {
+    const h = makeEnvironment(),
+      manager = await createInitializedManager(h.environment);
+    await manager.downloadAllGames();
+    expect(manager.getSnapshot().downloadedGameIds.sort()).toEqual(
+      Object.keys(manifest.games).sort(),
+    );
+    const downloaded = h.fetches.length;
+    await manager.downloadAllGames();
+    expect(h.fetches.length).toBe(downloaded);
+    await manager.removeAllGames();
+    expect(manager.getSnapshot().downloadedGameIds).toEqual([]);
+    expect(h.bundledCache.values.size).toBe(0);
+  });
+  for (const [label, response, error] of [
+    [
+      "HTTP failure",
+      () => new Response("offline", { status: 503 }),
+      "Update check failed (503)",
+    ],
+    [
+      "invalid metadata",
+      () => Response.json({ version: "bad" }),
+      "invalid version metadata",
+    ],
+  ])
+    test(`reports ${label} during update checks`, async () => {
+      const h = makeEnvironment(),
+        manager = await createInitializedManager(h.environment);
+      h.environment.fetch = async () => response();
+      await expect(manager.checkForUpdates()).rejects.toThrow(error);
+      expect(manager.getSnapshot().error).toContain(error);
+    });
+  for (const [label, response, error] of [
+    [
+      "HTTP failure",
+      () => new Response("offline", { status: 503 }),
+      "catalog failed (503)",
+    ],
+    [
+      "wrong version",
+      () => Response.json({ ...manifest, version: "different" }),
+      "catalog version is inconsistent",
+    ],
+  ])
+    test(`reports catalog ${label} during initialization`, async () => {
+      const h = makeEnvironment(),
+        fetch = h.environment.fetch;
+      h.environment.fetch = async (url, options) =>
+        url === "offline-games.json" ? response() : fetch(url, options);
+      const manager = await createInitializedManager(h.environment);
+      expect(manager.getSnapshot().phase).toBe("error");
+      expect(manager.getSnapshot().error).toContain(error);
+    });
+  test("rolls back runtime downloads when an asset server fails", async () => {
+    const h = makeEnvironment(),
+      manager = await createInitializedManager(h.environment),
+      fetch = h.environment.fetch;
+    h.environment.fetch = async (url, options) =>
+      String(url).endsWith("main.swf")
+        ? new Response("offline", { status: 502 })
+        : fetch(url, options);
+    await expect(manager.downloadGame("bike-mania")).rejects.toThrow(
+      "Offline download failed (502)",
+    );
+    expect(manager.getSnapshot().downloadedGameIds).toEqual([]);
+    expect(manager.getSnapshot().gamePhase).toBe("error");
+  });
+  test("persists disabled state even when service-worker removal fails", async () => {
+    const h = makeEnvironment(),
+      manager = await createInitializedManager(h.environment);
+    h.registration.unregister = async () => {
+      throw new Error("worker removal failed");
+    };
+    await expect(manager.setOfflineEnabled(false)).rejects.toThrow(
+      "worker removal failed",
+    );
+    expect(manager.getSnapshot().enabled).toBeFalse();
+    expect(manager.getSnapshot().phase).toBe("disabled");
+    expect(manager.getSnapshot().error).toBe("worker removal failed");
+  });
+  test("tracks online and offline transitions and resumes automatic checks", async () => {
+    const h = makeEnvironment(),
+      manager = await createInitializedManager(h.environment);
+    h.environment.navigator.onLine = false;
+    h.environment.dispatch("offline");
+    expect(manager.getSnapshot().online).toBeFalse();
+    h.environment.navigator.onLine = true;
+    h.environment.dispatch("online");
+    expect(manager.getSnapshot().online).toBeTrue();
+    manager.setAutomaticUpdatesEnabled(false);
+    const before = h.fetches.length;
+    manager.setAutomaticUpdatesEnabled(true);
+    await flushUntil(() => h.fetches.length > before);
+    expect(h.fetches.length).toBeGreaterThan(before);
+  });
+  for (const workerUrl of ["/sw.js", "/sw.js?channel=test"])
+    test(`supports custom worker URL ${workerUrl}`, async () => {
+      const h = makeEnvironment(),
+        manager = createManager({
+          currentVersion: manifest.version,
+          environment: h.environment,
+          serviceWorkerUrl: workerUrl,
+        });
+      await manager.initialize();
+      expect(h.serviceWorker.registerCalls[0][0]).toBe(
+        `${workerUrl}${workerUrl.includes("?") ? "&" : "?"}v=${manifest.version}`,
+      );
+    });
+  test("waits for a first installation and reports activation failures", async () => {
+    for (const finalState of ["activated", "redundant"]) {
+      const worker = new Worker("installing", manifest.version),
+        registration = new Registration({ installing: worker });
+      const h = makeEnvironment({ registration });
+      h.serviceWorker.getRegistration = async () => null;
+      const manager = createManager({
+        currentVersion: manifest.version,
+        environment: h.environment,
+      });
+      const ready = manager.initialize();
+      await flushUntil(() => worker.listeners.get("statechange")?.size === 2);
+      registration.installing = null;
+      if (finalState === "activated") registration.active = worker;
+      worker.transition(finalState);
+      await ready;
+      expect(manager.getSnapshot().phase).toBe(
+        finalState === "activated" ? "ready" : "error",
+      );
+      if (finalState === "activated")
+        expect(manager.getSnapshot().usage).toBe(100);
+      else expect(manager.getSnapshot().error).toContain("interrupted");
+    }
+  });
+});

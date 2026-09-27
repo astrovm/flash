@@ -455,7 +455,7 @@ interface ServerArguments {
   sync: boolean;
 }
 
-function parseArguments(arguments_: string[]): ServerArguments {
+export function parseServerArguments(arguments_: string[]): ServerArguments {
   const parsed: ServerArguments = {
     directory: DEFAULT_OUTPUT_DIR,
     force: false,
@@ -507,7 +507,7 @@ function parseArguments(arguments_: string[]): ServerArguments {
 
 if (import.meta.main) {
   try {
-    const arguments_ = parseArguments(Bun.argv.slice(2));
+    const arguments_ = parseServerArguments(Bun.argv.slice(2));
     const version = arguments_.production ? createPreviewVersion : undefined;
     if (arguments_.sync) {
       await ensureDevelopmentBuild({
