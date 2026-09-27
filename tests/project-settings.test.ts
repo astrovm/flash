@@ -348,3 +348,114 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
   button("OK").click();
   expect(dialog.isConnected).toBeFalse();
 });
+
+test("restoring the desktop and resetting reload the page or report failures", async () => {
+  const h = await setup();
+  let reloads = 0;
+  Object.defineProperty(h.s.window.location, "reload", {
+    configurable: true,
+    value: () => reloads++,
+  });
+  for (const id of ["restore-desktop", "reset"]) {
+    h.action(id).click();
+    await h.answer("Yes");
+    await flushShell();
+  }
+  expect(reloads).toBe(2);
+  const transaction = h.s.window.VirtualFS.transaction;
+  const reset = h.s.window.VirtualFS.reset;
+  h.s.window.VirtualFS.transaction = async () => {
+    throw new Error("");
+  };
+  h.s.window.VirtualFS.reset = async () => {
+    throw new Error("");
+  };
+  try {
+    for (const id of ["restore-desktop", "reset"]) {
+      h.action(id).click();
+      await h.answer("Yes");
+      await flushShell();
+      expect(
+        [...h.s.document.querySelectorAll(".xp-dialog")].at(-1).textContent,
+      ).toContain("The file operation failed.");
+      await h.answer("OK");
+    }
+  } finally {
+    h.s.window.VirtualFS.transaction = transaction;
+    h.s.window.VirtualFS.reset = reset;
+  }
+});
+
+test("settings report failed offline changes and skip update checks when automatic updates are off", async () => {
+  const calls = [];
+  let gamesChanged;
+  const h = await setup({
+    offlineSettings: { automaticUpdatesEnabled: false },
+    gameLibraryManager: {
+      subscribe: (listener) => {
+        gamesChanged = listener;
+        return () => {};
+      },
+      initialize: async () => ({}),
+      getInstallations: async () => [],
+    },
+    offlineMethods: {
+      setOfflineEnabled: async () => {
+        throw new Error("worker unavailable");
+      },
+      downloadGame: async () => {
+        throw new Error("quota exceeded");
+      },
+      checkForUpdates: async (options) => {
+        calls.push(options);
+        throw new Error("offline");
+      },
+      updateNow: async () => {
+        throw new Error("offline");
+      },
+      refreshStorageEstimate: async () => {},
+    },
+  });
+  h.setting("update-delay", 2);
+  expect(calls).toEqual([]);
+  h.action("check").click();
+  h.action("update-now").click();
+  await flushShell();
+  h.setting("offline-enabled", false);
+  await h.answer("Yes");
+  await flushShell();
+  expect(
+    h.content.querySelector('[data-project-status="offline"]').textContent,
+  ).toBe("worker unavailable");
+  const checkbox = h.content.querySelector('[data-offline-game="freecell"]');
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new h.s.window.Event("change", { bubbles: true }));
+  await flushShell();
+  expect(
+    h.content.querySelector('[data-project-status="offline-games"]')
+      .textContent,
+  ).toBe("quota exceeded");
+  h.content
+    .querySelector("[data-project-offline-games], .project-offline-games")
+    ?.dispatchEvent(new h.s.window.Event("change", { bubbles: true }));
+  gamesChanged({});
+  await flushShell();
+});
+
+test("game data removal ignores stray clicks and declined confirmations", async () => {
+  const external = [{ id: "iso", title: "CD data", detail: "ISO", bytes: 1 }];
+  const removed = [];
+  const h = await setup({
+    gameDataManager: {
+      list: async () => external,
+      remove: async (id) => removed.push(id),
+    },
+  });
+  h.content.querySelector("#project-tab-games").click();
+  await flushShell();
+  const list = h.content.querySelector("[data-project-game-data]");
+  list.dispatchEvent(new h.s.window.MouseEvent("click", { bubbles: true }));
+  h.content.querySelector('[data-game-data-id="iso"]').click();
+  await h.answer("No");
+  expect(removed).toEqual([]);
+});
