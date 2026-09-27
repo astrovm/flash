@@ -153,6 +153,8 @@ if (coverageEnabled) {
     afterAll(writeCoverage);
   } catch {
     process.on("exit", writeCoverage);
+    // Long-running tools such as the dev server are stopped with SIGTERM.
+    process.on("SIGTERM", () => process.exit(143));
   }
 }
 
