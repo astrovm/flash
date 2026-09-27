@@ -65,3 +65,32 @@ describe("RTC server proxy", () => {
     }
   });
 });
+
+describe("RTC server proxy edge cases", () => {
+  const request = (method = "GET") =>
+    new Request("https://flash.example/api/rtc", { method });
+
+  test("filters malformed regions and servers and answers HEAD without a body", async () => {
+    const response = await handleRtcRequest(request("HEAD"), async () =>
+      Response.json([
+        null,
+        "region",
+        { iceservers: "none" },
+        { iceservers: [null, { urls: 42 }, { urls: "stun:ok.example" }] },
+      ]),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("");
+  });
+
+  test("reports unavailable upstreams, invalid payloads, and network failures", async () => {
+    for (const fetcher of [
+      async () => new Response("down", { status: 503 }),
+      async () => Response.json({ iceservers: [] }),
+      async () => {
+        throw new Error("offline");
+      },
+    ])
+      expect((await handleRtcRequest(request(), fetcher)).status).toBe(502);
+  });
+});

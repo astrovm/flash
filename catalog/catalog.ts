@@ -55,7 +55,7 @@ export interface CatalogGameDetails {
 const errorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback;
 
-const decodeHtml = (value = ""): string =>
+const decodeHtml = (value: string): string =>
   value.replace(
     /&(?:#(\d+)|#x([0-9a-f]+)|(amp|apos|gt|lt|quot));/gi,
     (_entity, decimal: string, hexadecimal: string, named: string) => {
@@ -67,7 +67,7 @@ const decodeHtml = (value = ""): string =>
     },
   );
 
-const plainText = (value = ""): string =>
+const plainText = (value: string): string =>
   decodeHtml(value)
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
@@ -92,7 +92,7 @@ export function parseSearchResults(html: string): CatalogSearchResult[] {
         /class="fp-search-result-info"[^>]*>([\s\S]*?)<\/div>/i,
       )?.[1] ?? "",
     );
-    const [platformPart = "", tagPart = ""] = info.split(/\s+game\s+-\s+/i);
+    const [platformPart, tagPart = ""] = info.split(/\s+game\s+-\s+/i);
     const tags = tagPart
       .split(/\s+-\s+/)
       .map((tag) => tag.trim())
