@@ -163,3 +163,60 @@ test("Notepad switching files preserves a canceled draft and saves on confirmati
   }
   expect(h.editor.value).toBe("");
 });
+
+test("Notepad reports invalid and failed saves and ignores empty clipboard actions", async () => {
+  const h = await setup();
+  const dialogText = () =>
+    [...h.s.document.querySelectorAll(".xp-dialog")].at(-1)?.textContent || "";
+  h.fs.createFolder(h.fs.MY_DOCUMENTS, "Folder.txt");
+  await h.command("save-as");
+  await h.choose("Folder.txt");
+  await h.answer("yes");
+  expect(dialogText()).toContain('"Folder.txt" is not a text file.');
+  await h.answer("ok");
+
+  const createFile = h.s.window.FileOperations.createFile;
+  h.s.window.FileOperations.createFile = async () => {
+    throw new Error("");
+  };
+  try {
+    await h.command("save-as");
+    await h.choose("fresh.txt");
+    expect(dialogText()).toContain("The file could not be saved.");
+    await h.answer("ok");
+  } finally {
+    h.s.window.FileOperations.createFile = createFile;
+  }
+  const setContent = h.fs.setContent;
+  h.fs.setContent = async () => {
+    throw new Error("");
+  };
+  try {
+    h.edit("changed");
+    await h.command("save");
+    expect(dialogText()).toContain("The file could not be saved.");
+    await h.answer("ok");
+  } finally {
+    h.fs.setContent = setContent;
+  }
+
+  Object.defineProperty(h.s.window.navigator, "clipboard", {
+    configurable: true,
+    value: undefined,
+  });
+  h.editor.setSelectionRange(0, 0);
+  await h.command("cut");
+  await h.command("paste");
+  expect(h.editor.value).toBe("changed");
+  await h.command("open");
+  await h.answer("cancel");
+  expect(h.s.document.querySelectorAll(".xp-dialog")).toHaveLength(0);
+  h.win
+    .querySelector(".notepad-menu-group")
+    .dispatchEvent(
+      new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+    );
+  h.editor.dispatchEvent(
+    new h.s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
+  );
+});

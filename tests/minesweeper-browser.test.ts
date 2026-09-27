@@ -140,3 +140,94 @@ test("Minesweeper wins a deterministic field, reveals a loss, and resets its tim
     "0",
   );
 });
+
+test("Minesweeper wins without flags, marks wrong flags on loss, and plays sounds", async () => {
+  const h = await setup();
+  h.s.window.Audio.prototype.play = () => Promise.reject(new Error("muted"));
+  const random = Math.random;
+  const firstClick = () => {
+    Math.random = () => 0.5;
+    try {
+      h.cells()[40].click();
+    } finally {
+      Math.random = random;
+    }
+  };
+  Math.random = () => 0.5;
+  const mines = createMinefield(MINESWEEPER_LEVELS.beginner, 40);
+  Math.random = random;
+  firstClick();
+  h.cells().forEach((cell, index) => {
+    if (!mines.has(index)) cell.click();
+  });
+  expect(h.win.querySelector(".minesweeper-face").dataset.face).toBe("won");
+  expect(h.cells()[[...mines][0]].dataset.mark).toBe("flag");
+
+  h.command("new");
+  firstClick();
+  const safe = h
+    .cells()
+    .findIndex(
+      (cell, index) => !mines.has(index) && cell.dataset.open !== "true",
+    );
+  h.mark(h.cells()[safe]);
+  h.cells()[[...mines][0]].click();
+  expect(h.cells()[safe].dataset.tile).toBe("wrong");
+});
+
+test("Minesweeper shows negative mine counts and ignores unrelated input", async () => {
+  const h = await setup({ minesweeperSettings: "{broken" });
+  h.cells()
+    .slice(0, 11)
+    .forEach((cell) => h.mark(cell));
+  expect(
+    h.win.querySelector('[aria-label="Mines remaining"]').dataset.value,
+  ).toBe("-1");
+  h.cells()[20].dispatchEvent(
+    new h.s.window.MouseEvent("dblclick", { bubbles: true }),
+  );
+  h.cells()[20].dispatchEvent(
+    new h.s.window.MouseEvent("mousedown", { button: 2, bubbles: true }),
+  );
+  const popup = h.win.querySelector(".minesweeper-popup");
+  popup.dispatchEvent(new h.s.window.MouseEvent("click", { bubbles: true }));
+  const [game, help] = h.win.querySelectorAll(".minesweeper-menu-trigger");
+  game.click();
+  help.click();
+  expect(popup.hidden).toBeTrue();
+  help.nextElementSibling.dispatchEvent(
+    new h.s.window.MouseEvent("click", { bubbles: true }),
+  );
+  h.root.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+  );
+  h.root.dispatchEvent(
+    new h.s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
+  );
+  h.command("marks");
+  h.command("marks");
+  h.command("custom");
+  h.s.document
+    .querySelector('.minesweeper-custom-dialog [data-action="cancel"]')
+    .click();
+  expect(h.cells()).toHaveLength(81);
+});
+
+test("Minesweeper restores a custom field, chords only with matching flags, and stops its timer once detached", async () => {
+  const h = await setup({
+    minesweeperSettings: JSON.stringify({
+      difficulty: "custom",
+      customLevel: { rows: 10, columns: 10, mines: 10 },
+    }),
+  });
+  expect(h.cells()).toHaveLength(100);
+  h.cells()[0].click();
+  const numbered = h
+    .cells()
+    .find((cell) => cell.dataset.tile?.startsWith("number-"));
+  numbered?.dispatchEvent(
+    new h.s.window.MouseEvent("dblclick", { bubbles: true }),
+  );
+  h.root.remove();
+  await h.s.advanceTime(1000);
+});
