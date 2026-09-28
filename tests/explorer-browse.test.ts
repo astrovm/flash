@@ -239,7 +239,17 @@ test("Recycle Bin tasks restore and delete selected items", async () => {
     await answer(s, "ok");
     task("Restore all items").click();
     await settle();
+    expect(dialogText(s)).toContain("The file operation failed.");
     await answer(s, "ok");
+    s.window.FileOperations.restore = async () => {
+      throw new Error("The Desktop is full.");
+    };
+    task("Restore all items").click();
+    await settle();
+    expect(dialogText(s)).toContain("Restore files");
+    expect(dialogText(s)).toContain("The Desktop is full.");
+    await answer(s, "ok");
+    expect(fs.getNode(files[2].id).parent).toBe(fs.RECYCLE_BIN);
   } finally {
     s.window.FileOperations.restore = restore;
   }
@@ -434,4 +444,176 @@ test("Search lists games without desktop shortcuts and opens them", async () => 
   expect(
     !!s.document.querySelector('.xp-window[data-game="bike-mania"]'),
   ).toBeTrue();
+});
+
+test("Explorer shows current folder properties and goes up from My Computer to the Desktop", async () => {
+  const h = await openDocuments(),
+    { s, fs } = h;
+  h.menu("file");
+  await h.command("properties-current");
+  expect(dialogText(s)).toContain("Browse Properties");
+  await answer(s, "ok");
+
+  h.win.querySelector('.explorer-sidebar [data-place="computer"]').click();
+  h.menu("view");
+  await h.command("go-to");
+  await h.subcommand("up-one-level");
+  expect(h.address().value).toBe(fs.getPath(fs.DESKTOP));
+  await h.action("up");
+  expect(h.address().value).toBe(fs.getPath(fs.USER_PROFILE));
+});
+
+test("Explorer reports failing menu commands with their message or a default", async () => {
+  const h = await openDocuments(),
+    { s } = h;
+  const copy = s.window.FileOperations.copy;
+  try {
+    for (const [message, expected] of [
+      ["Clipboard is locked.", "Clipboard is locked."],
+      ["", "The file operation failed."],
+    ]) {
+      s.window.FileOperations.copy = () => {
+        throw new Error(message);
+      };
+      h.item(h.note.id).click();
+      h.menu("edit");
+      await h.command("copy");
+      expect(dialogText(s)).toContain(expected);
+      await answer(s, "ok");
+    }
+  } finally {
+    s.window.FileOperations.copy = copy;
+  }
+});
+
+test("Explorer menus keep submenus open over separators and ignore unknown access keys", async () => {
+  const h = await openDocuments(),
+    { s } = h;
+  h.menu("view");
+  h.win
+    .querySelector('[data-explorer-command="go-to"]')
+    .dispatchEvent(new s.window.Event("pointerover", { bubbles: true }));
+  const submenu = h.win.querySelector("[data-explorer-submenu-name]");
+  expect(submenu.hidden).toBeFalse();
+  const menu = h.win.querySelector("[data-explorer-menu-name]");
+  menu
+    .querySelector(":scope > :not(button)")
+    .dispatchEvent(new s.window.Event("pointerover", { bubbles: true }));
+  expect(submenu.hidden).toBeFalse();
+  menu
+    .querySelector(
+      '[data-explorer-command="refresh"], .game-menu-item:not(.has-submenu)',
+    )
+    .dispatchEvent(new s.window.Event("pointerover", { bubbles: true }));
+  expect(submenu.hidden).toBeTrue();
+
+  menu.hidden = true;
+  h.win.querySelector(".explorer-address input").dispatchEvent(
+    new s.window.KeyboardEvent("keydown", {
+      key: "q",
+      altKey: true,
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  expect(menu.hidden).toBeTrue();
+});
+
+test("pressing an Explorer item keeps focus off the item list", async () => {
+  const h = await openDocuments(),
+    { s } = h;
+  const items = h.win.querySelector(".explorer-items");
+  const item = h.item(h.note.id);
+  item.focus();
+  item.dispatchEvent(
+    new s.window.PointerEvent("pointerdown", { bubbles: true }),
+  );
+  expect(s.document.activeElement).not.toBe(items);
+});
+
+test("Explorer Back and Forward keep the current folder when a history entry was deleted", async () => {
+  const h = await openDocuments(),
+    { fs } = h;
+  const other = fs.createFolder(fs.MY_DOCUMENTS, "Other");
+  h.item(h.nested.id).dispatchEvent(new h.s.window.MouseEvent("dblclick"));
+  await h.action("back");
+  expect(h.address().value).toBe(fs.getPath(h.folder.id));
+  fs.destroy(h.nested.id);
+  await settle();
+  await h.action("forward");
+  expect(h.address().value).toBe(fs.getPath(h.folder.id));
+  await h.action("forward");
+  expect(h.address().value).toBe(fs.getPath(h.folder.id));
+
+  h.address().value = fs.getPath(other.id);
+  await h.action("go");
+  fs.destroy(h.folder.id);
+  await settle();
+  expect(h.address().value).toBe(fs.getPath(other.id));
+  await h.action("back");
+  await h.action("back");
+  expect(h.address().value).toBe(fs.getPath(other.id));
+  await h.action("back");
+  expect(h.address().value).toBe(fs.getPath(fs.MY_DOCUMENTS));
+  expect(
+    h.win.querySelector('[data-explorer-action="back"]').disabled,
+  ).toBeTrue();
+});
+
+test("Explorer items support Ctrl multi-select and drag only what is selected", async () => {
+  const h = await openDocuments(),
+    { s } = h;
+  h.item(h.note.id).click();
+  h.item(h.nested.id).dispatchEvent(
+    new s.window.MouseEvent("click", { bubbles: true, ctrlKey: true }),
+  );
+  const selected = () =>
+    [...h.win.querySelectorAll(".explorer-item.selected")].map(
+      (item) => item.dataset.nodeId,
+    );
+  expect(selected().sort()).toEqual([h.note.id, h.nested.id].sort());
+  const drag = (item) => {
+    const data = new Map();
+    const event = new s.window.Event("dragstart", { bubbles: true });
+    Object.defineProperty(event, "dataTransfer", {
+      value: { setData: (type, value) => data.set(type, value) },
+    });
+    item.dispatchEvent(event);
+    return JSON.parse(data.get("application/x-astro-vfs-ids"));
+  };
+  expect(drag(h.item(h.note.id)).sort()).toEqual(
+    [h.note.id, h.nested.id].sort(),
+  );
+  h.item(h.note.id).click();
+  expect(drag(h.item(h.nested.id))).toEqual([h.nested.id]);
+});
+
+test("Explorer lists folders before files and closes menus when clicking elsewhere", async () => {
+  const h = await openDocuments(),
+    { s, fs } = h;
+  fs.createFile(h.folder.id, "a-first.txt");
+  fs.createFolder(h.folder.id, "Zeta");
+  await settle();
+  expect(
+    [...h.win.querySelectorAll(".explorer-item")].map(
+      (item) => item.dataset.nodeId && fs.getNode(item.dataset.nodeId).name,
+    ),
+  ).toEqual(["Nested", "Zeta", "a-first.txt", "note.txt"]);
+
+  h.item(h.note.id).dispatchEvent(
+    new s.window.MouseEvent("contextmenu", { bubbles: true }),
+  );
+  const context = h.win.querySelector(".explorer-context-menu");
+  context.click();
+  await settle();
+  expect(context.isConnected).toBeTrue();
+
+  h.menu("file");
+  const button = h.win.querySelector('[data-explorer-menu="file"]');
+  expect(button.getAttribute("aria-expanded")).toBe("true");
+  s.document
+    .getElementById("desktop")
+    .dispatchEvent(new s.window.PointerEvent("pointerdown", { bubbles: true }));
+  expect(button.getAttribute("aria-expanded")).toBe("false");
+  expect(h.win.querySelector(".explorer-menu").hidden).toBeTrue();
 });

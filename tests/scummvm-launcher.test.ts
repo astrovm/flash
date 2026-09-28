@@ -311,6 +311,7 @@ test("storage and image failures restore controls and clean partial writes", asy
       metadata: { fileName: "old.iso" },
       files: [["old.iso", new Blob(["old"])]],
     },
+    { failManifest: true, failRemove: true },
   ]) {
     const h = await launch(options);
     await h.select(new Blob(["ABCDE"]), true);
@@ -322,6 +323,8 @@ test("storage and image failures restore controls and clean partial writes", asy
       expect(h.aborted()).toBe(1);
       expect(h.removed.length).toBe(1);
     }
+    if (options.failRemove)
+      expect(h.removed).toEqual([expect.stringMatching(/^peril-.+\.iso$/)]);
     if (options.failManifest)
       expect(h.w.localStorage.getItem(key)).toBe(
         options.metadata ? JSON.stringify(options.metadata) : null,
@@ -474,4 +477,56 @@ test("saved copies that disappear and downloads without a length are handled", a
       }),
   });
   await large.download("https://cdn.test/disc.iso");
+  expect(large.q("#disc-panel").hidden).toBeTrue();
+});
+
+test("downloads that grow past the size limit are cancelled and discarded", async () => {
+  let cancelled = 0;
+  const oversized = () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers(),
+    body: {
+      getReader: () => ({
+        read: async () => ({
+          done: false,
+          value: { byteLength: 801 * 1024 * 1024 },
+        }),
+        cancel: async () => {
+          cancelled += 1;
+        },
+      }),
+    },
+  });
+  for (const keep of [false, true]) {
+    const h = await launch({ response: oversized });
+    await h.download("https://cdn.test/disc.iso", keep);
+    expect(h.q("#message").textContent).toContain("exceeds the 800 MiB limit");
+    expect(h.q("#download-disc").disabled).toBeFalse();
+    expect(h.aborted()).toBe(keep ? 1 : 0);
+    expect(h.removed).toHaveLength(keep ? 1 : 0);
+    expect(h.w.localStorage.getItem(key)).toBeNull();
+  }
+  expect(cancelled).toBe(2);
+});
+
+test("a volume chosen before audio starts applies when the output connects", async () => {
+  const h = await launch({ noStorage: true });
+  await h.select(new Blob(["ABCDE"]));
+  h.w.dispatchEvent(
+    new h.w.MessageEvent("message", {
+      origin: h.w.location.origin,
+      data: { type: "setVolume", volume: 0.4 },
+    }),
+  );
+  const gain = { gain: { value: 1 }, connect() {} };
+  h.w.Module.SDL3 = {
+    audioContext: { createGain: () => gain, destination: {} },
+    audio_playback: {
+      scriptProcessorNode: { disconnect() {}, connect() {} },
+    },
+  };
+  h.w.Module.onRuntimeInitialized();
+  h.interval();
+  expect(gain.gain.value).toBe(0.4);
 });

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -70,8 +70,24 @@ describe("3D Pinball application", () => {
       click(flyouts.querySelector('[data-program-id="pinball"]'));
     };
     Object.assign(shell.window, {
-      AstroPinballModule: async (module: { onRuntimeInitialized(): void }) => {
+      AstroPinballModule: async (module: {
+        onRuntimeInitialized(): void;
+        print(...values: unknown[]): void;
+        printErr(...values: unknown[]): void;
+      }) => {
         runtimeModule = module;
+        const log = spyOn(shell.window.console, "log").mockImplementation(
+          () => {},
+        );
+        const error = spyOn(shell.window.console, "error").mockImplementation(
+          () => {},
+        );
+        module.print("table", 1);
+        module.printErr("sound", 2);
+        expect(log).toHaveBeenCalledWith("table", 1);
+        expect(error).toHaveBeenCalledWith("sound", 2);
+        log.mockRestore();
+        error.mockRestore();
         Object.assign(module, {
           SDL2: {
             audioContext: {

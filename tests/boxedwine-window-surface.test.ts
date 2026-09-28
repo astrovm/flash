@@ -562,4 +562,70 @@ describe("BoxedWine window surface", () => {
     h.surface.dispose();
     expect(h.cancelled).toEqual([]);
   });
+  test("shows an owned dialog before its own pixels arrive", () => {
+    const h = setup();
+    h.send({ type: "created", id: 1, parentId: 0 });
+    h.send(topWindow(10));
+    mapWithFrame(h, 10);
+    h.send({
+      type: "created",
+      id: 20,
+      ownerId: 10,
+      processId: 5,
+      dialog: true,
+      title: "Save As",
+      x: 80,
+      y: 70,
+      width: 200,
+      height: 120,
+      win32Metrics: true,
+    });
+    h.send({ type: "mapped", id: 20 });
+    expect(h.surface.attach(10, { appendChild() {} })).toBeTrue();
+    const shown = h.owned.find((entry) => entry.type === "shown");
+    expect(shown).toMatchObject({ id: 20, title: "Save As" });
+    expect(shown.canvas.draws).toEqual([]);
+  });
+
+  test("records owner-only top-level windows as having no parent", () => {
+    const h = setup();
+    h.send({ type: "created", id: 1, parentId: 0 });
+    h.send(topWindow(10, { parentId: undefined, ownerId: 1 }));
+    mapWithFrame(h, 10);
+    expect(h.surface.getCanvas(10).dataset.boxedwineParent).toBe("0");
+  });
+
+  test("draws a window reachable through its parent and its owner once", () => {
+    const h = setup();
+    h.send({ type: "created", id: 1, parentId: 0 });
+    h.send(topWindow(10));
+    mapWithFrame(h, 10);
+    h.send({ type: "created", id: 11, parentId: 10, x: 5, y: 5 });
+    mapWithFrame(h, 11, { width: 20, height: 20 });
+    h.send({ type: "created", id: 12, parentId: 10, ownerId: 11, x: 9 });
+    mapWithFrame(h, 12, { width: 10, height: 10 });
+    const canvas = h.surface.getCanvas(10);
+    canvas.draws.length = 0;
+    h.send({ type: "raised", id: 10 });
+    h.flush();
+    expect(canvas.draws).toHaveLength(3);
+    expect(new Set(canvas.draws.map(([surface]) => surface)).size).toBe(3);
+  });
+
+  test("uploads root window frames without giving them a canvas", () => {
+    const h = setup();
+    h.send({ type: "created", id: 1, parentId: 0, win32Metrics: true });
+    h.send({ type: "mapped", id: 1 });
+    h.send({ type: "frame", id: 1, width: 8, height: 8 });
+    h.flush();
+    expect(h.canvases).toEqual([]);
+    h.send(topWindow(10));
+    mapWithFrame(h, 10);
+    expect(h.surface.getCanvas(1)).toBeNull();
+    expect(h.firstFrames.map(({ id }) => id)).toEqual([10]);
+    expect(h.host.children).toEqual([h.surface.getCanvas(10)]);
+    expect(
+      h.canvases.filter(({ width, height }) => width === 8 && height === 8),
+    ).toHaveLength(1);
+  });
 });

@@ -37,10 +37,6 @@ const runtimeResolution = () => {
 
 const runnerUrl = (initialApplicationId, launchToken) => {
   const application = getBoxedWineApplication(initialApplicationId);
-  if (!application)
-    throw new TypeError(
-      `Unknown BoxedWine application: ${initialApplicationId}`,
-    );
   const url = new URL(`${RUNTIME_ROOT}index.html`, document.baseURI);
   const { width, height } = runtimeResolution();
   url.search = new URLSearchParams({
@@ -128,9 +124,6 @@ const createRuntime = (initialApplicationId) => {
   const attachMount = (appId) => {
     const mounted = mounts.get(appId);
     const windowId = runningWindows.get(appId);
-    if (!mounted || !windowId) return false;
-    const canvas = surfaces.getCanvas(windowId);
-    if (!canvas) return false;
     mounted.element.replaceChildren();
     surfaces.attach(windowId, mounted.element);
     surfaces.show(windowId);
@@ -139,8 +132,7 @@ const createRuntime = (initialApplicationId) => {
     mounted.element.dataset.boxedwineOpenElapsed = String(
       Math.round(performance.now() - mounted.startedAt),
     );
-    mounted.scheduleNativeWindow?.();
-    return true;
+    mounted.scheduleNativeWindow();
   };
 
   const cancelWindowDestruction = (appId) => {
@@ -213,23 +205,16 @@ const createRuntime = (initialApplicationId) => {
       );
     }
     if (launchingApplications.size > 0) return;
-    for (const appId of missingApplications) {
-      if (
-        runningWindows.has(appId) ||
-        launchingApplications.has(appId) ||
-        processes.has(appId)
-      )
-        continue;
+    const [appId] = missingApplications;
+    if (appId) {
       launchingApplications.add(appId);
       launchTokenFor(appId, true);
       postProcessRequest("boxedwine-launch-process", appId);
-      break;
     }
     updateMountedReadiness();
   };
 
-  const bindFirstFrame = (appId, windowId, processId = 0) => {
-    if (!appId || runningWindows.get(appId) === windowId) return;
+  const bindFirstFrame = (appId, windowId, processId) => {
     if (!mounts.has(appId)) {
       launchingApplications.delete(appId);
       surfaces.remove(windowId);
@@ -238,16 +223,12 @@ const createRuntime = (initialApplicationId) => {
       ensureMountedApplications();
       return;
     }
+    // Windows of one process draw into the bound canvas, so a first frame from
+    // another top-level window comes from a different process and must not
+    // take over the shell window.
+    if (runningWindows.has(appId)) return;
     const replacesDestroyedWindow = pendingWindowDestructions.has(appId);
     cancelNativeMinimize(appId);
-    const currentWindowId = runningWindows.get(appId);
-    if (currentWindowId) {
-      const currentProcessId = Number(
-        surfaces.getCanvas(currentWindowId)?.dataset.boxedwineProcess || 0,
-      );
-      if (!processId || processId !== currentProcessId) return;
-      surfaces.hide(currentWindowId);
-    }
     cancelWindowDestruction(appId);
     runningWindows.set(appId, windowId);
     windowApplications.set(windowId, appId);
@@ -261,11 +242,11 @@ const createRuntime = (initialApplicationId) => {
     attachMount(appId);
     const mounted = mounts.get(appId);
     if (
-      mounted?.context.nativeBoundsSyncRequired &&
-      mounted.scheduleNativeWindow?.()
+      mounted.context.nativeBoundsSyncRequired &&
+      mounted.scheduleNativeWindow()
     )
       mounted.context.nativeBoundsSyncRequired = false;
-    if (replacesDestroyedWindow) mounted?.context.applyNativeRestore();
+    if (replacesDestroyedWindow) mounted.context.applyNativeRestore();
     updateMountedReadiness();
     ensureMountedApplications();
   };
@@ -322,7 +303,7 @@ const createRuntime = (initialApplicationId) => {
           mounted?.context.nativeWindowReady &&
           mounted.context.nativeBoundsSyncRequired
         ) {
-          if (mounted.scheduleNativeWindow?.())
+          if (mounted.scheduleNativeWindow())
             mounted.context.nativeBoundsSyncRequired = false;
         }
       }
@@ -523,17 +504,15 @@ const createRuntime = (initialApplicationId) => {
       document.documentElement.dataset.boxedwineLastExit = `${appId}:${event.data.processId}`;
       if (windowId) surfaces.remove(windowId);
       delete document.documentElement.dataset.boxedwineMountedApplicationsReady;
-      if (launchFailed && mounted) {
+      if (launchFailed) {
         const failures = (launchFailures.get(appId) || 0) + 1;
         launchFailures.set(appId, failures);
         document.documentElement.dataset.boxedwineRuntimeError = `launch:${appId}:process-exited`;
         if (failures < 3) window.setTimeout(ensureMountedApplications, 250);
         else recoverRuntime(`launch:${appId}:process-exited`);
       } else {
-        if (mounted) {
-          mounts.delete(appId);
-          mounted.context.applyNativeClose();
-        }
+        mounts.delete(appId);
+        mounted.context.applyNativeClose();
         ensureMountedApplications();
       }
     } else if (
@@ -553,8 +532,6 @@ const createRuntime = (initialApplicationId) => {
 
   return {
     mount(appId, context) {
-      if (!getBoxedWineApplication(appId))
-        throw new TypeError(`Unknown BoxedWine application: ${appId}`);
       const element = document.createElement("div");
       element.className = "window-content boxedwine-shared-app-host";
       const status = document.createElement("span");
@@ -572,7 +549,7 @@ const createRuntime = (initialApplicationId) => {
         const width = element.clientWidth;
         const height = element.clientHeight;
         if (!windowId || width <= 0 || height <= 0) return false;
-        if (!mounts.get(appId)?.context.nativeWindowReady) {
+        if (!context.nativeWindowReady) {
           // Retry explicit state changes until the native window reports its
           // metadata; plain bounds updates are re-sent by the resize observer.
           if (pendingWindowAction !== "bounds")
@@ -581,10 +558,7 @@ const createRuntime = (initialApplicationId) => {
         }
         const action = pendingWindowAction;
         pendingWindowAction = "bounds";
-        const nativeSize = context.nativeCommandSize?.(width, height) || {
-          width,
-          height,
-        };
+        const nativeSize = context.nativeCommandSize(width, height);
         return surfaces.command(windowId, action, {
           x: context.windowElement.offsetLeft,
           y: context.windowElement.offsetTop,
@@ -605,12 +579,8 @@ const createRuntime = (initialApplicationId) => {
       });
       resizeObserver.observe(element);
       this.start();
-      attachMount(appId);
-      if (!runningWindows.has(appId)) {
-        delete document.documentElement.dataset
-          .boxedwineMountedApplicationsReady;
-        ensureMountedApplications();
-      }
+      delete document.documentElement.dataset.boxedwineMountedApplicationsReady;
+      ensureMountedApplications();
       return {
         element,
         focus() {
@@ -619,19 +589,16 @@ const createRuntime = (initialApplicationId) => {
         },
         minimize() {
           const windowId = runningWindows.get(appId);
-          if (!windowId) return false;
           const minimized = surfaces.command(windowId, "minimize");
           if (minimized) surfaces.hide(windowId);
           return minimized;
         },
         maximize() {
-          if (mounts.get(appId)?.context.nativeCanMaximize === false)
-            return false;
+          if (context.nativeCanMaximize === false) return false;
           return scheduleNativeWindow("maximize");
         },
         restore() {
-          const windowId = runningWindows.get(appId);
-          if (windowId) surfaces.show(windowId);
+          surfaces.show(runningWindows.get(appId));
           return scheduleNativeWindow("restore");
         },
         bounds() {
@@ -694,8 +661,13 @@ const createRuntime = (initialApplicationId) => {
 const getRuntime = (initialApplicationId = "calculator") =>
   (runtime ||= createRuntime(initialApplicationId));
 
-export const mountSharedBoxedWineApplication = (appId, context) =>
-  getRuntime(appId).mount(appId, context);
+export const mountSharedBoxedWineApplication = (appId, context) => {
+  // Validate before the first mount creates the runtime, so an unknown id can
+  // never become the application the runtime starts with.
+  if (!getBoxedWineApplication(appId))
+    throw new TypeError(`Unknown BoxedWine application: ${appId}`);
+  return getRuntime(appId).mount(appId, context);
+};
 
 window.XPBoxedWineRuntime = Object.freeze({
   ready: () => getRuntime().ready(),

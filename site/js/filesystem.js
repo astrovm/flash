@@ -46,7 +46,7 @@
     }
     const memory = new Map();
     return {
-      getItem: (key) => (memory.has(key) ? memory.get(key) : null),
+      getItem: (key) => memory.get(key) ?? null,
       setItem: (key, value) => memory.set(key, String(value)),
       removeItem: (key) => memory.delete(key),
     };

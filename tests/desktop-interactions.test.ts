@@ -45,6 +45,47 @@ describe("desktop", () => {
     expect(binary.size).toBe(4);
   });
 
+  test("reports an uploaded file that the browser cannot read", async () => {
+    const s = await login(await loadShell());
+    const pickers = [];
+    const pickerClick = spyOn(
+      s.window.HTMLInputElement.prototype,
+      "click",
+    ).mockImplementation(function () {
+      pickers.push(this);
+    });
+    try {
+      openMenu(s).querySelector('[data-action="upload"]').click();
+    } finally {
+      pickerClick.mockRestore();
+    }
+    s.window.FileReader = class extends s.window.EventTarget {
+      readAsDataURL() {
+        this.error = new Error("");
+        queueMicrotask(() => this.dispatchEvent(new s.window.Event("error")));
+      }
+    };
+    Object.defineProperty(pickers[0], "files", {
+      value: [
+        new s.window.File([new Uint8Array([1])], "locked.bin", {
+          type: "application/octet-stream",
+        }),
+      ],
+    });
+    pickers[0].dispatchEvent(new s.window.Event("change"));
+    for (
+      let attempt = 0;
+      attempt < 50 && !s.document.querySelector(".xp-dialog");
+      attempt++
+    )
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(s.document.querySelector(".xp-dialog").textContent).toContain(
+      "The file operation failed.",
+    );
+    const fs = s.window.VirtualFS;
+    expect(fs.findChild(fs.DESKTOP, "locked.bin")).toBeNull();
+  });
+
   const openMenu = (shell) => {
     shell.document.getElementById("desktop-icons").dispatchEvent(
       new shell.window.MouseEvent("contextmenu", {

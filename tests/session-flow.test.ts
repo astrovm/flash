@@ -154,3 +154,178 @@ test("standby resumes from a pointer press on its screen", async () => {
     .dispatchEvent(new s.window.PointerEvent("pointerdown", { bubbles: true }));
   expect(visible(s, "standby-screen")).toBeFalse();
 });
+
+test("the automatic Welcome screen logs on by itself after a moment", async () => {
+  const s = await loadShell();
+  s.completeBoot();
+  await settle();
+  expect(visible(s, "welcome-screen")).toBeTrue();
+  await s.advanceTime(1200);
+  await settle();
+  expect(visible(s, "desktop")).toBeTrue();
+});
+
+test("a skipped boot ignores the palette, storage, and frame steps it left behind", async () => {
+  let decoded;
+  const decoding = new Promise((resolve) => (decoded = resolve));
+  const s = await loadShell({
+    beforeScripts: (window) => {
+      window.HTMLImageElement.prototype.decode = () => decoding;
+    },
+  });
+  const boot = s.document.getElementById("boot-screen");
+  boot.click();
+  await settle();
+  expect(visible(s, "welcome-screen")).toBeTrue();
+  decoded();
+  await settle();
+  expect(boot.classList.contains("boot-running")).toBeFalse();
+});
+
+test("a boot skipped while storage loads never hands off to Welcome twice", async () => {
+  let releaseLibrary;
+  const s = await loadShell({
+    gameLibraryManager: {
+      subscribe: () => () => {},
+      initialize: () => new Promise((resolve) => (releaseLibrary = resolve)),
+    },
+  });
+  const boot = s.document.getElementById("boot-screen");
+  for (let i = 0; i < 100 && !boot.classList.contains("boot-running"); i++)
+    await flushShell();
+  await s.advanceTime(3800);
+  boot.click();
+  await settle();
+  releaseLibrary({});
+  await s.advanceTime(200);
+  expect(boot.classList.contains("boot-handoff")).toBeFalse();
+  expect(visible(s, "welcome-screen")).toBeTrue();
+});
+
+test.each([1, 3])(
+  "a boot skipped after %i handoff frames leaves Welcome alone",
+  async (framesBeforeSkip) => {
+    const s = await loadShell();
+    const frames = [];
+    s.window.requestAnimationFrame = (callback) => frames.push(callback);
+    const boot = s.document.getElementById("boot-screen");
+    for (let i = 0; i < 100 && !boot.classList.contains("boot-running"); i++)
+      await flushShell();
+    await s.advanceTime(3800);
+    for (let i = 0; i < 20 && !frames.length; i++) await flushShell();
+    for (let frame = 0; frame < framesBeforeSkip; frame++) frames.shift()();
+    boot.click();
+    await settle();
+    const welcome = s.document.getElementById("welcome-screen");
+    const focusedAfterSkip = welcome.classList.contains("auto-login");
+    while (frames.length) frames.shift()();
+    expect(boot.classList.contains("boot-handoff")).toBe(framesBeforeSkip > 1);
+    expect(focusedAfterSkip).toBeTrue();
+    expect(visible(s, "welcome-screen")).toBeTrue();
+  },
+);
+
+test("Restart from the Welcome screen before the first logon boots again", async () => {
+  const s = await loadShell();
+  s.completeBoot();
+  await settle();
+  click(s, "welcome-turn-off");
+  click(s, "restart-confirm");
+  await settle();
+  expect(s.document.querySelector(".xp-dialog")).toBeNull();
+  expect(visible(s, "shutdown-screen")).toBeTrue();
+  await s.advanceTime(1900);
+  expect(visible(s, "boot-screen")).toBeTrue();
+});
+
+test("a startup sound that fails after a restart does not block the next Welcome", async () => {
+  const s = await loadShell();
+  const plays = [];
+  s.window.Audio = function Audio(path) {
+    return {
+      volume: 1,
+      pause() {},
+      play: () =>
+        new Promise((resolve, reject) => plays.push({ path, resolve, reject })),
+    };
+  };
+  const startups = () =>
+    plays.filter(({ path }) => path.endsWith("/startup.wav"));
+  s.completeBoot();
+  await settle();
+  expect(startups()).toHaveLength(1);
+  click(s, "welcome-turn-off");
+  click(s, "restart-confirm");
+  await settle();
+  await s.advanceTime(1900);
+  s.completeBoot();
+  await settle();
+  expect(startups()).toHaveLength(2);
+  startups()[1].resolve();
+  startups()[0].reject(new Error("blocked"));
+  await settle();
+  press(s, s.document.getElementById("welcome-screen"), "Enter");
+  await settle();
+  expect(visible(s, "desktop")).toBeTrue();
+  expect(startups()).toHaveLength(2);
+});
+
+test("logging off waits for a closing window and closes windows without close checks", async () => {
+  const s = await login(await loadShell());
+  const win = await openDraft(s);
+  const fs = s.window.VirtualFS;
+  fs.open(fs.MY_DOCUMENTS);
+  await settle();
+  win.querySelector(".close-btn").click();
+  await settle();
+  click(s, "log-off-button");
+  click(s, "logoff-confirm");
+  await settle();
+  await answer(s, "no");
+  expect(visible(s, "welcome-screen")).toBeTrue();
+  expect(s.document.querySelectorAll(".xp-window")).toHaveLength(0);
+});
+
+test("the automatic logon waits for a manual logon still loading documents", async () => {
+  const s = await loadShell({
+    documentStorage: "unavailable",
+    beforeScripts: (window) => {
+      window.indexedDB = { open: () => ({}) };
+    },
+  });
+  s.completeBoot();
+  await settle();
+  const welcome = s.document.getElementById("welcome-screen");
+  welcome.click();
+  await settle();
+  await s.advanceTime(1200);
+  await settle();
+  expect(visible(s, "desktop")).toBeFalse();
+  expect(visible(s, "welcome-screen")).toBeTrue();
+});
+
+test("warming applications after logon ignores applications that fail to load", async () => {
+  const idle = [];
+  const shell = await loadShell();
+  shell.window.requestIdleCallback = (callback) => idle.push(callback);
+  const registry = shell.window.XPApplicationRegistry;
+  let attempts = 0;
+  shell.window.XPApplicationRegistry = {
+    ...registry,
+    values: () => [
+      {
+        kind: "system",
+        load: () => {
+          attempts += 1;
+          return Promise.reject(new Error("offline"));
+        },
+      },
+      { kind: "program", load: () => (attempts += 100) },
+    ],
+  };
+  await login(shell);
+  idle[0]();
+  await settle();
+  expect(attempts).toBe(1);
+  expect(visible(shell, "desktop")).toBeTrue();
+});

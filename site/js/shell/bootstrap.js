@@ -82,7 +82,7 @@ const isEditableTarget = (target) =>
   target?.isContentEditable;
 const typeaheadState = new WeakMap();
 const normalizeTypeaheadText = (value) =>
-  String(value || "")
+  value
     .trim()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -333,14 +333,13 @@ document.addEventListener("keydown", async (e) => {
         (!desktopIcon &&
           ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key))
       ) {
+        // The Recycle Bin is always on the desktop.
         const target = e.key === "End" ? desktopIcons.at(-1) : desktopIcons[0];
-        if (target) {
-          e.preventDefault();
-          if (!e.ctrlKey && !e.metaKey && !e.shiftKey)
-            selectDesktopIcon(target.dataset.desktopId);
-          if (e.shiftKey) target.classList.add("selected");
-          target.focus();
-        }
+        e.preventDefault();
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey)
+          selectDesktopIcon(target.dataset.desktopId);
+        if (e.shiftKey) target.classList.add("selected");
+        target.focus();
         return;
       }
       const typeaheadTarget = cycleTypeaheadItem(
@@ -564,11 +563,10 @@ document.addEventListener("keydown", async (e) => {
 
     if (e.altKey && (e.key === " " || e.code === "Space") && focusedGameId) {
       e.preventDefault();
+      // Minimizing a window moves focus away, so the focused one is visible.
       const win = openWindows.get(focusedGameId);
-      if (win && !win.minimized) {
-        const rect = win.el.getBoundingClientRect();
-        openWindowSystemMenu(win, rect.left + 6, rect.top + 28);
-      }
+      const rect = win.el.getBoundingClientRect();
+      openWindowSystemMenu(win, rect.left + 6, rect.top + 28);
       return;
     }
 

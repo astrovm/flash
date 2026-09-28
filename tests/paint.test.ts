@@ -101,7 +101,7 @@ describe("Paint", () => {
     });
 
     test("keeps the three undo levels supported by XP Paint", () => {
-      const history = createPaintHistory(3);
+      const history = createPaintHistory();
       for (const state of [1, 2, 3, 4]) history.capture(state);
       expect(history.undo(5)).toBe(4);
       expect(history.undo(4)).toBe(3);

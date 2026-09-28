@@ -2235,3 +2235,23 @@ describe("offline manager edge cases", () => {
     expect(manager.getSnapshot().phase).toBe("ready");
   });
 });
+
+describe("offline manager version reporting", () => {
+  test("leaves the revision unknown for an active version without one", async () => {
+    const version = "26.07.30-";
+    const h = makeEnvironment({
+      registration: new Registration({
+        active: new Worker("activated", version),
+      }),
+      remoteVersion: version,
+      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+    });
+    const manager = await createInitializedManager(h.environment);
+    await manager.checkForUpdates();
+    expect(manager.getSnapshot()).toMatchObject({
+      phase: "update-ready",
+      availableVersion: version,
+      availableRevision: null,
+    });
+  });
+});

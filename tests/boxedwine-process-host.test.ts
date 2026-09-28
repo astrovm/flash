@@ -272,6 +272,31 @@ describe("BoxedWine process host failures", () => {
     }
   });
 
+  test("holds queued requests while a launch is still pending", () => {
+    const host = createHost();
+    const processHost = createModule();
+    installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
+    processHost.module.onRuntimeInitialized();
+    launch(host);
+    launch(host, { appId: "solitaire", requestId: "queued" });
+    host.tick();
+    host.tick();
+    const types = () => host.messages.map(({ message }) => message.type);
+    expect(types()).not.toContain("boxedwine-process-launched");
+    expect(processHost.launchedExecutables).toHaveLength(1);
+
+    processHost.setLaunchResult(101);
+    host.tick();
+    expect(
+      host.messages
+        .map(({ message }) => message)
+        .find(({ type }) => type === "boxedwine-process-launched"),
+    ).toMatchObject({ requestId: "launch", processId: 101, error: 0 });
+    expect(processHost.launchedExecutables.at(-1).executable).toBe(
+      "solitaire/sol.exe",
+    );
+  });
+
   test("reports processes that cannot be terminated", () => {
     const host = createHost();
     const processHost = createModule();

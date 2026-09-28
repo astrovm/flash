@@ -50,6 +50,35 @@ describe("BoxedWine preloading", () => {
     ).toBeFalse();
   });
 
+  test("swallows automatic preload failures so a later preload retries", async () => {
+    let started;
+    let attempts = 0;
+    expect(
+      preload.scheduleBoxedWinePreload(
+        desktop({
+          fetch: async () => {
+            attempts += 1;
+            throw new Error("offline");
+          },
+          requestIdleCallback: (callback) => (started = callback()),
+        }),
+      ),
+    ).toBeTrue();
+    expect(await started).toBeUndefined();
+    expect(attempts).toBe(1);
+    await expect(
+      preload.preloadBoxedWineRuntime({
+        hostWindow: desktop({
+          fetch: async () => {
+            attempts += 1;
+            return new Response("missing", { status: 404 });
+          },
+        }),
+      }),
+    ).rejects.toThrow("preload manifest unavailable");
+    expect(attempts).toBe(2);
+  });
+
   test("downloads the runtime once and retries after failures", async () => {
     const requests = [];
     let manifest = () => new Response("missing", { status: 404 });
@@ -120,16 +149,6 @@ describe("BoxedWine preloading", () => {
       ["idle", 3000],
       ["timeout", 1500],
     ]);
-    scheduled[0][2]();
-    const failing = desktop({
-      fetch: async () => {
-        throw new Error("offline");
-      },
-    });
-    preload.scheduleBoxedWinePreload({
-      ...failing,
-      requestIdleCallback: (callback) => callback(),
-    });
   });
 
   test("exposes preload controls on the page", async () => {

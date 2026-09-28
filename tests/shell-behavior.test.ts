@@ -593,6 +593,21 @@ describe("Windows XP shell", () => {
     ).toContain("ascent.jpg");
   });
 
+  test("ignores Control Panel clicks outside its actions", async () => {
+    const shell = await login(await loadShell());
+    clickStartAction(shell, "controlPanel");
+    const controlPanel = shell.document.querySelector<HTMLElement>(
+      '.xp-window[data-game="__control-panel"]',
+    )!;
+    const windows = () => shell.document.querySelectorAll(".xp-window").length;
+    const before = windows();
+    const html = controlPanel.innerHTML;
+    controlPanel.querySelector<HTMLElement>(".control-panel-main h1")!.click();
+    await flushShell();
+    expect(windows()).toBe(before);
+    expect(controlPanel.innerHTML).toBe(html);
+  });
+
   test("applies the native Windows Classic appearance and solid desktop", async () => {
     const shell = await login(await loadShell());
     clickStartAction(shell, "controlPanel");
@@ -1396,6 +1411,33 @@ describe("Windows XP shell", () => {
     volume.value = "35";
     volume.dispatchEvent(new shell.window.Event("input", { bubbles: true }));
     expect(shell.window.localStorage.getItem("volume")).toBe("35");
+  });
+
+  test("opens Volume Control muted when the system is muted and unmutes it", async () => {
+    const shell = await login(
+      await loadShell({ initialStorage: { volume: "40", isMuted: "true" } }),
+    );
+    shell.document.getElementById("start-button")!.click();
+    shell.document.getElementById("all-programs-button")!.click();
+    const flyouts = shell.document.getElementById("start-menu-flyouts")!;
+    for (const id of ["accessories", "entertainment", "volume-control"])
+      flyouts
+        .querySelector<HTMLButtonElement>(`[data-program-id="${id}"]`)!
+        .click();
+    const win = shell.document.querySelector(
+      '.xp-window[data-game="__volume-control"]',
+    )!;
+    const mute = win.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+    expect(mute.checked).toBeTrue();
+    expect(
+      win.querySelector<HTMLInputElement>('input[type="range"]')!.value,
+    ).toBe("40");
+    mute.checked = false;
+    mute.dispatchEvent(new shell.window.Event("change", { bubbles: true }));
+    expect(shell.window.localStorage.getItem("isMuted")).toBe("false");
+    expect(shell.document.getElementById("tray-volume-button")!.title).toBe(
+      "Volume",
+    );
   });
 
   test("applies the Classic Start menu from Taskbar Properties independently and switches previews", async () => {

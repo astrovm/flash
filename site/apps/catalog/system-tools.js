@@ -1,6 +1,6 @@
 import { defineProgram } from "../programs/define-program.js";
 
-const program = (id, title, icon, kind, extra = {}) =>
+const program = (id, title, icon, kind, extra) =>
   defineProgram({ id, title, icon, kind, ...extra });
 
 export const systemToolApplications = [

@@ -325,3 +325,99 @@ test("links and resizes are ignored before login", async () => {
   await settle();
   expect(!!s.document.querySelector(".xp-window")).toBeFalse();
 });
+
+test("desktop arrow keys extend the selection with Shift and only move focus with Ctrl", async () => {
+  const s = await login(await loadShell());
+  const icons = [...s.document.querySelectorAll(".desktop-icon")];
+  icons.forEach((icon, index) => {
+    icon.getBoundingClientRect = () => ({
+      left: 0,
+      top: index * 80,
+      width: 70,
+      height: 70,
+    });
+  });
+  icons[0].click();
+  icons[0].focus();
+  press(s, icons[0], "ArrowDown", { shiftKey: true });
+  expect(s.document.activeElement).toBe(icons[1]);
+  expect(
+    icons.slice(0, 2).every((icon) => icon.classList.contains("selected")),
+  ).toBeTrue();
+  press(s, icons[1], "ArrowDown", { ctrlKey: true });
+  expect(s.document.activeElement).toBe(icons[2]);
+  expect(icons[2].classList.contains("selected")).toBeFalse();
+  expect(icons[1].classList.contains("selected")).toBeTrue();
+});
+
+test("Alt+Tab does nothing without open windows", async () => {
+  const s = await login(await loadShell());
+  const event = new s.window.KeyboardEvent("keydown", {
+    key: "Tab",
+    altKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  s.document.body.dispatchEvent(event);
+  expect(event.defaultPrevented).toBeTrue();
+  expect(s.document.querySelector(".xp-window")).toBeNull();
+  expect(
+    s.document.querySelector(".alt-tab-switcher:not([hidden])"),
+  ).toBeNull();
+});
+
+test("menu typeahead skips items that are not rendered", async () => {
+  const s = await login(await loadShell());
+  s.document.getElementById("start-button").click();
+  const menu = s.document.getElementById("start-menu");
+  const items = [...menu.querySelectorAll("button:not(:disabled)")];
+  const [hidden, ...rest] = items.filter((item) =>
+    /^m/i.test(
+      (
+        item.getAttribute("aria-label") ||
+        item.querySelector(".menu-item-label, b")?.textContent ||
+        item.textContent
+      ).trim(),
+    ),
+  );
+  expect(rest.length).toBeGreaterThan(0);
+  hidden.getClientRects = () => [];
+  press(s, menu, "m");
+  expect(s.document.activeElement).not.toBe(hidden);
+  expect(rest).toContain(s.document.activeElement);
+});
+
+test("visual viewport resizes relayout the shell unless a window resize just did", async () => {
+  let viewport;
+  const s = await login(
+    await loadShell({
+      beforeScripts: (window) => {
+        viewport = new window.EventTarget();
+        Object.defineProperty(window, "visualViewport", {
+          configurable: true,
+          value: viewport,
+        });
+      },
+    }),
+  );
+  const resizes = [];
+  s.window.addEventListener("resize", (event) => resizes.push(event));
+  const frame = () => new Promise((resolve) => s.window.setTimeout(resolve, 0));
+  const performance = s.window.performance;
+  const now = performance.now.bind(performance);
+  let offset = 1000;
+  performance.now = () => now() + offset;
+  try {
+    viewport.dispatchEvent(new s.window.Event("resize"));
+    for (let i = 0; i < 5 && !resizes.length; i++) await frame();
+    await s.advanceTime(50);
+    expect(resizes).toHaveLength(1);
+    offset += 10;
+    viewport.dispatchEvent(new s.window.Event("resize"));
+    await s.advanceTime(50);
+    await frame();
+    expect(resizes).toHaveLength(1);
+  } finally {
+    performance.now = now;
+  }
+});

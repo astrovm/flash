@@ -281,3 +281,38 @@ test("resize, transforms and replacement maintain image dimensions and history",
   expect(e.undo()).toBeFalse();
   expect([...e.image.data]).toEqual([1, 2, 3, 255, 4, 5, 6, 255]);
 });
+test("ignores extra mouse buttons, stray releases and double-clicks outside a polygon", () => {
+  const h = setup();
+  h.engine.reset(8, 6);
+  h.engine.setTool("pencil");
+  const before = h.changes.length;
+  h.calls.length = 0;
+  h.pointer("pointerdown", 1, 1, 3);
+  h.pointer("pointermove", 4, 4, 3);
+  h.pointer("pointerup", 4, 4, 3);
+  h.pointer("pointerup", 2, 2);
+  h.canvas.dispatchEvent(new w.MouseEvent("dblclick"));
+  h.engine.setTool("polygon");
+  h.pointer("pointerdown", 1, 1);
+  h.canvas.dispatchEvent(new w.MouseEvent("dblclick"));
+  expect(h.changes.length).toBe(before);
+  expect(h.calls.filter((c) => c[0] === "lineTo")).toEqual([]);
+});
+test("stretching skews only along the axes that are given an angle", () => {
+  const h = setup(),
+    e = h.engine;
+  e.reset(8, 6);
+  const transforms = () => h.calls.filter((c) => c[0] === "transform");
+  e.transform({ horizontalStretch: 100, verticalStretch: 100 });
+  expect(transforms()).toEqual([]);
+  e.transform({
+    horizontalStretch: 100,
+    verticalStretch: 100,
+    horizontalSkew: 0,
+    verticalSkew: 45,
+  });
+  expect(transforms()).toHaveLength(1);
+  const [, a, b, c, d] = transforms()[0];
+  expect([a, c, d]).toEqual([1, 0, 1]);
+  expect(b).toBeCloseTo(1);
+});

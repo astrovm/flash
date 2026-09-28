@@ -228,6 +228,16 @@ test("Paint tools, palette, menu checks and keyboard controls stay synchronized"
   const current = h.root.querySelector(".paint-current-colors");
   expect(current.style.getPropertyValue("--paint-primary")).toBe("#ff0000");
   expect(current.style.getPropertyValue("--paint-secondary")).toBe("#ff0000");
+  h.root.querySelector('.paint-tool[data-tool="picker"]').click();
+  h.canvas.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", {
+      button: 0,
+      clientX: 1,
+      clientY: 1,
+    }),
+  );
+  expect(current.style.getPropertyValue("--paint-primary")).toBe("#000000");
+  expect(current.style.getPropertyValue("--paint-secondary")).toBe("#ff0000");
   h.canvas.dispatchEvent(
     new h.s.window.PointerEvent("pointermove", { clientX: 2, clientY: 3 }),
   );
@@ -273,6 +283,10 @@ test("Paint tools, palette, menu checks and keyboard controls stay synchronized"
   expect(await h.key("Delete")).toBeTrue();
   const menu = h.root.querySelector(".paint-menu-group > button");
   menu.click();
+  expect(h.root.querySelector(".paint-menu").hidden).toBeFalse();
+  menu.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+  );
   expect(h.root.querySelector(".paint-menu").hidden).toBeFalse();
   menu.click();
   expect(h.root.querySelector(".paint-menu").hidden).toBeTrue();

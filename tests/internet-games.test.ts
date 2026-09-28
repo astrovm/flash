@@ -10,6 +10,7 @@ afterEach(cleanupShells);
 async function setup({
   broken = false,
   brokenMessage = "library unavailable",
+  documentStorage = "memory",
 } = {}) {
   let notify,
     results = [],
@@ -56,7 +57,9 @@ async function setup({
       notify({ ...installed });
     },
   };
-  const s = await login(await loadShell({ gameLibraryManager: manager }));
+  const s = await login(
+    await loadShell({ gameLibraryManager: manager, documentStorage }),
+  );
   s.document
     .querySelector('[data-desktop-id="__internet-games"]')
     .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
@@ -338,4 +341,142 @@ test("Internet Games reports an unavailable service without a message", async ()
   expect(h.win.querySelector(".internet-games-status").textContent).toBe(
     "The Internet Games service is unavailable.",
   );
+});
+
+test("installed games open and uninstall without desktop shortcuts when documents are read-only", async () => {
+  const h = await setup({ documentStorage: "unavailable" });
+  const fs = h.s.window.VirtualFS;
+  await fs.ready;
+  expect(fs.canWrite).toBeFalse();
+  h.setResults([{ uuid: "ro", title: "Read Only", compatible: true }]);
+  await h.search("read");
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  await flushShell();
+  expect(fs.findByApp("flashpoint:ro")).toEqual([]);
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  expect(
+    !!h.s.document.querySelector('.xp-window[data-game="flashpoint:ro"]'),
+  ).toBeTrue();
+  delete h.installed["flashpoint:ro"];
+  h.records.delete("flashpoint:ro");
+  h.emit();
+  await flushShell();
+  await flushShell();
+  expect(
+    !!h.s.document.querySelector('.xp-window[data-game="flashpoint:ro"]'),
+  ).toBeFalse();
+});
+
+test("Internet Games shows no installed games when the library cannot be created", async () => {
+  const s = await login(
+    await loadShell({ gameLibraryManager: new Error("no storage") }),
+  );
+  s.document
+    .querySelector('[data-desktop-id="__internet-games"]')
+    .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  const win = s.document.querySelector(
+    '.xp-window[data-game="__internet-games"]',
+  );
+  win.querySelector('[data-internet-tab="installed"]').click();
+  expect(
+    win.querySelector(".internet-games-installed-status").textContent,
+  ).toBe("No internet games are installed yet.");
+  win.querySelector("#internet-games-query").value = "anything";
+  win
+    .querySelector("form")
+    .dispatchEvent(
+      new s.window.Event("submit", { bubbles: true, cancelable: true }),
+    );
+  await flushShell();
+  expect(win.querySelector(".internet-games-status").textContent).toBe(
+    "no storage",
+  );
+});
+
+test("Internet Games sorts untitled installed games first and logs failed refreshes", async () => {
+  const h = await setup();
+  h.setResults([
+    { uuid: "b", title: "Beta", compatible: true },
+    { uuid: "x", compatible: true },
+    { uuid: "a", title: "Alpha", compatible: true },
+    { uuid: "y", compatible: true },
+  ]);
+  await h.search("games");
+  for (const button of [
+    ...h.win.querySelectorAll(".internet-games-results button"),
+  ]) {
+    button.click();
+    await flushShell();
+    await flushShell();
+  }
+  h.win.querySelector('[data-internet-tab="installed"]').click();
+  const titles = () =>
+    [
+      ...h.win.querySelectorAll(
+        ".internet-games-installed .internet-game-card h2",
+      ),
+    ].map((title) => title.textContent);
+  expect(titles()).toEqual(["Untitled game", "Untitled game", "Alpha", "Beta"]);
+
+  const errors = [];
+  const originalError = h.s.window.console.error;
+  h.s.window.console.error = (...args) => errors.push(args);
+  const get = h.records.get;
+  h.records.get = () => {
+    throw new Error("corrupt record");
+  };
+  try {
+    h.emit();
+    await flushShell();
+    await flushShell();
+  } finally {
+    h.records.get = get;
+    h.s.window.console.error = originalError;
+  }
+  expect(errors.map(([error]) => error.message)).toEqual(["corrupt record"]);
+});
+
+test("page requests skip installed games while the game library is unavailable", async () => {
+  const matched = [];
+  const s = await login(
+    await loadShell({
+      fetchObject: async () => new Response("network"),
+      gameLibraryManager: {
+        subscribe: () => () => {},
+        initialize: async () => {
+          throw new Error("library unavailable");
+        },
+        match: async (request) => {
+          matched.push(request);
+          return new Response("installed");
+        },
+      },
+    }),
+  );
+  const response = await s.window.fetch("https://game.example/asset.swf");
+  expect(await response.text()).toBe("network");
+  expect(matched).toEqual([]);
+});
+
+test("uninstalling a game that is not open only removes it from the library", async () => {
+  const h = await setup();
+  h.setResults([{ uuid: "closed", title: "Closed Game", compatible: true }]);
+  await h.search("closed");
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  await flushShell();
+  expect(
+    h.s.document.querySelector('.xp-window[data-game="flashpoint:closed"]'),
+  ).toBeNull();
+  delete h.installed["flashpoint:closed"];
+  h.records.delete("flashpoint:closed");
+  h.emit();
+  await flushShell();
+  await flushShell();
+  h.win.querySelector('[data-internet-tab="installed"]').click();
+  expect(
+    h.win.querySelector(".internet-games-installed-status").textContent,
+  ).toBe("No internet games are installed yet.");
 });

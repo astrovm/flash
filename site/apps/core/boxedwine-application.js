@@ -1,14 +1,14 @@
 import { defineApplication } from "./application.js";
 import { boxedWineApplications } from "./boxedwine-applications.js";
-import { defineLazyApplication } from "./lazy-application.js";
+import {
+  createRetryingLoader,
+  defineLazyApplication,
+} from "./lazy-application.js";
 
 // The BoxedWine runtime and window surface load with the first XP program.
-let runtimeModule = null;
-const loadBoxedWineRuntime = () =>
-  (runtimeModule ??= import("./boxedwine-runtime.js").catch((error) => {
-    runtimeModule = null;
-    throw error;
-  }));
+const loadBoxedWineRuntime = createRetryingLoader(
+  () => import("./boxedwine-runtime.js"),
+);
 
 const defineBoxedWineApplication = (application) => {
   const metadata = {

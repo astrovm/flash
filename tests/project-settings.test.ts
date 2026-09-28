@@ -345,6 +345,9 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
     .click();
   button("Date & Time").click();
   change('[aria-label="Time"]', "invalid");
+  dialog.querySelector('[aria-label="Increase time"]').click();
+  expect(time.value).toBe("12:00:01 AM");
+  change('[aria-label="Time"]', "invalid");
   button("OK").click();
   expect(dialog.isConnected).toBeFalse();
 });
@@ -497,7 +500,7 @@ test("settings describe unusual offline states", async () => {
   );
 });
 
-test("the tray volume menu opens Volume Control and ignores invalid levels", async () => {
+test("the tray volume menu opens Volume Control and invalid levels fall back to the midpoint", async () => {
   const s = await login(
     await loadShell({
       initialStorage: { taskbarSettings: JSON.stringify({ edge: "top" }) },
@@ -509,6 +512,7 @@ test("the tray volume menu opens Volume Control and ignores invalid levels", asy
   const slider = s.document.getElementById("tray-volume-slider");
   slider.value = "abc";
   slider.dispatchEvent(new s.window.Event("input"));
+  expect(s.window.localStorage.getItem("volume")).toBe("50");
   button.dispatchEvent(
     new s.window.MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
   );
@@ -559,4 +563,108 @@ test("offline initialization failures and played-game downloads are reported", a
   s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
   await flushShell();
   expect(warnings.length + errors.length).toBeGreaterThan(0);
+});
+
+test("the full startup preference reads as off when storage is unreadable", async () => {
+  const s = await login(
+    await loadShell({ initialStorage: { fullStartup: "true" } }),
+  );
+  const storage = s.window.localStorage;
+  Object.defineProperty(s.window, "localStorage", {
+    configurable: true,
+    value: {
+      getItem(key) {
+        if (key === "fullStartup") throw new Error("storage blocked");
+        return storage.getItem(key);
+      },
+      setItem: (key, value) => storage.setItem(key, value),
+      removeItem: (key) => storage.removeItem(key),
+    },
+  });
+  s.document
+    .querySelector('[data-desktop-id="__astro-settings"]')
+    .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  await flushShell();
+  expect(
+    s.document.querySelector('[data-project-setting="full-startup"]').checked,
+  ).toBeFalse();
+});
+
+test("the development server skips offline mode and settings describe download errors", async () => {
+  let initialized = 0;
+  const h = await setup({
+    beforeScripts: (window) => {
+      window.ASTRO_DEV = true;
+    },
+    offlineSettings: {
+      gameError: "The disk is full.",
+      automaticUpdateDelayMs: null,
+      releaseUpdateDelayMs: null,
+    },
+    offlineMethods: {
+      initialize: async () => {
+        initialized += 1;
+      },
+    },
+  });
+  expect(initialized).toBe(0);
+  expect(
+    h.content.querySelector('[data-project-status="offline-games"]')
+      .textContent,
+  ).toBe("The disk is full.");
+  expect(
+    h.content.querySelector('[data-project-setting="update-delay"]').value,
+  ).toBe("6");
+});
+
+test("settings tabs ignore unrelated keys and failed update checks after a delay change", async () => {
+  const checks = [];
+  const h = await setup({
+    offlineMethods: {
+      checkForUpdates: async (options) => {
+        checks.push(options);
+        throw new Error("offline");
+      },
+    },
+  });
+  const tabs = [...h.content.querySelectorAll('[role="tab"]')];
+  const selected = () => h.content.querySelector('[aria-selected="true"]').id;
+  const before = selected();
+  const event = new h.s.window.KeyboardEvent("keydown", {
+    key: "a",
+    bubbles: true,
+    cancelable: true,
+  });
+  tabs[0].dispatchEvent(event);
+  expect(event.defaultPrevented).toBeFalse();
+  expect(selected()).toBe(before);
+  h.setting("update-delay", 4);
+  await flushShell();
+  expect(checks).toEqual([{ applyAutomatically: true }]);
+});
+
+test("installed game data reports listing failures but ignores failures of stale refreshes", async () => {
+  let failFirst;
+  let listings = 0;
+  const h = await setup({
+    gameDataManager: {
+      list: () => {
+        listings += 1;
+        return listings === 1
+          ? new Promise((_resolve, reject) => (failFirst = reject))
+          : Promise.reject(new Error("Storage is locked."));
+      },
+      remove: async () => {},
+    },
+  });
+  const status = () =>
+    h.content.querySelector('[data-project-status="game-data"]').textContent;
+  h.content.querySelector("#project-tab-games").click();
+  await flushShell();
+  h.s.window.dispatchEvent(new h.s.window.StorageEvent("storage"));
+  await flushShell();
+  expect(status()).toBe("Storage is locked.");
+  failFirst(new Error("stale failure"));
+  await flushShell();
+  expect(status()).toBe("Storage is locked.");
 });

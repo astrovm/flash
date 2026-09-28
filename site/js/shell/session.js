@@ -29,32 +29,23 @@ const playXPSound = (name) =>
       () => false,
     );
 
-// One successful startup playback per boot/logon, including overlapping gestures.
-let startupPlayback = { audio: null, promise: null, played: false };
-const stopStartupSound = () => startupPlayback.audio?.pause();
+// One startup playback per boot/logon. Welcome plays it once, and a later
+// gesture retries only after the browser blocked that attempt, so calls never
+// overlap or follow a successful playback.
+let startupAudio = null;
+const stopStartupSound = () => startupAudio?.pause();
 const resetStartupSound = () => {
   stopStartupSound();
-  startupPlayback = { audio: null, promise: null, played: false };
+  startupAudio = null;
 };
+// Retry the same media element after an autoplay rejection. Retaining its
+// ownership also lets a later session stop audio that has not finished yet.
 const playStartupSound = () => {
-  const playback = startupPlayback;
-  if (playback.played) return Promise.resolve(true);
-  if (playback.promise) return playback.promise;
-  // Retry the same media element after an autoplay rejection. Retaining its
-  // ownership also lets a later session stop audio that has not finished yet.
-  playback.audio ||= createXPSound("startup");
-  playback.promise = playback.audio
-    .play()
-    .then(
-      () => true,
-      () => false,
-    )
-    .then((played) => {
-      playback.played = played;
-      playback.promise = null;
-      return played;
-    });
-  return playback.promise;
+  startupAudio ||= createXPSound("startup");
+  return startupAudio.play().then(
+    () => true,
+    () => false,
+  );
 };
 
 let startupSoundPending = true;
@@ -115,7 +106,7 @@ const finishBootSequence = () => {
   if (document.getElementById("boot-screen").hidden) return;
   bootGeneration++;
   clearTimeout(bootTimeout);
-  if (!document.getElementById("boot-screen").hidden) showWelcomeScreen(true);
+  showWelcomeScreen(true);
 };
 
 const showBootScreen = () => {
@@ -259,14 +250,14 @@ const closeCurrentSession = () => {
         return false;
       }
     }
-    for (const win of windows) {
-      if (
-        (await closeGameWindow(win.gameId, { skipBeforeClose: true })) === false
-      )
-        return false;
-    }
+    // Skipping beforeClose, closing a window always succeeds.
+    for (const win of windows)
+      await closeGameWindow(win.gameId, { skipBeforeClose: true });
     clearTimeout(screenSaverTimeout);
-    hideScreenSaver(document.getElementById("screen-saver-overlay"));
+    // The screen saver overlay is created at the first logon, so a restart
+    // from the Welcome screen before then has none to hide.
+    const screenSaver = document.getElementById("screen-saver-overlay");
+    if (screenSaver) hideScreenSaver(screenSaver);
     showDesktopSnapshot = null;
     closeStartMenu();
     closeDesktopContextMenu();
@@ -329,9 +320,9 @@ const turnOff = async () => {
 
 let loginPromise = null;
 const login = (playSound = true) => {
+  // Every caller shows the Welcome screen first; the automatic logon timer can
+  // still fire while a logon waits for document storage.
   if (loginPromise) return loginPromise;
-  if (loggedIn && document.getElementById("welcome-screen").hidden)
-    return Promise.resolve();
   startupSoundBlocked = false;
   const welcomeScreen = document.getElementById("welcome-screen");
   const loginUser = document.getElementById("login-user");

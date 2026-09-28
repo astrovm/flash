@@ -187,6 +187,9 @@ describe("Command Prompt session", () => {
     expect(context.title).toBe("Build Window");
     expect(run("title")).toBe("");
     expect(context.title).toBe("C:\\WINDOWS\\system32\\cmd.exe");
+    run("title Other");
+    expect(run('title ""')).toBe("");
+    expect(context.title).toBe("C:\\WINDOWS\\system32\\cmd.exe");
     expect(session.execute("cls")).toEqual({ clear: true, output: "" });
     expect(run("ver")).toBe("\nMicrosoft Windows XP [Version 5.1.2600]");
     expect(run("help")).toContain("TYPE     Displays the contents");
@@ -200,9 +203,8 @@ describe("Command Prompt session", () => {
 
   test("reports filesystem errors without the internal module prefix", () => {
     run("md Work");
-    run("md Other");
-    expect(run("ren Work Other")).not.toMatch(/^(VirtualFS|FileOperations):/);
-    expect(run("ren Work Other")).not.toBe("");
+    expect(run("ren Work CON")).toBe('"CON" is a reserved device name');
+    expect(fs.findChild(session.cwd, "Work")).toBeTruthy();
   });
 
   test("navigates drive-qualified, dotted, and above-root paths", () => {
@@ -248,6 +250,18 @@ describe("Command Prompt session", () => {
       },
     };
     expect(run("ren new.txt other.txt")).toBe("rename refused");
+  });
+
+  test("start opens folders and files through their registered handlers", () => {
+    const opened = [];
+    fs.registerFolderHandler((node) => opened.push(node.name));
+    fs.registerFileType(".txt", (node) => opened.push(node.name));
+    fs.createFolder(session.cwd, "Projects");
+    fs.createFile(session.cwd, "readme.txt");
+    expect(run("start Projects")).toBe("");
+    expect(run("start readme.txt")).toBe("");
+    expect(opened).toEqual(["Projects", "readme.txt"]);
+    expect(context.launched).toEqual([]);
   });
 
   test("start reports folders that nothing can open", () => {

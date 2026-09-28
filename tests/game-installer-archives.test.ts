@@ -711,3 +711,110 @@ describe("buffered and legacy installation failures", () => {
     await expect(installer.uninstall(uuid)).rejects.toThrow("Cache dependency");
   });
 });
+
+describe("streamed installation edge cases", () => {
+  test("rejects entries that only escape the game folder after URL parsing", async () => {
+    const { cached, metadata, dependencies } = makeDependencies();
+    await expect(
+      installer.installStream(
+        record,
+        new Blob([gameZip({ ".\t./.\t./escape.swf": new Uint8Array([1]) })]),
+        dependencies,
+      ),
+    ).rejects.toThrow("Unsafe ZIP entry name");
+    expect(cached.size).toBe(0);
+    expect(metadata.size).toBe(0);
+  });
+
+  test("rolls back when the cache fails after receiving a whole file", async () => {
+    const { cached, metadata, dependencies } = makeDependencies();
+    dependencies.cache.put = async (_key, response) => {
+      await response.arrayBuffer();
+      throw new Error("Storage quota exceeded");
+    };
+    await expect(
+      installer.installStream(record, new Blob([gameZip()]), dependencies),
+    ).rejects.toThrow("Storage quota exceeded");
+    expect(cached.size).toBe(0);
+    expect(metadata.size).toBe(0);
+  });
+
+  test("keeps the original failure when aborting a file stream also fails", async () => {
+    const NativeTransformStream = globalThis.TransformStream;
+    const aborts = [];
+    globalThis.TransformStream = class extends NativeTransformStream {
+      constructor(...args) {
+        super(...args);
+        const getWriter = this.writable.getWriter.bind(this.writable);
+        Object.defineProperty(this.writable, "getWriter", {
+          value: () => {
+            const writer = getWriter();
+            const abort = writer.abort.bind(writer);
+            writer.abort = async (reason) => {
+              aborts.push(reason);
+              await abort(reason);
+              throw new Error("abort failed");
+            };
+            return writer;
+          },
+        });
+      }
+    };
+    try {
+      const corrupt = patched(gameZip(), ({ view, directory }) =>
+        view.setUint32(directory + 16, 0, true),
+      );
+      const failures = [
+        [corrupt, {}, "ZIP file is corrupt"],
+        [
+          gameZip(),
+          {
+            cache: {
+              ...makeDependencies().dependencies.cache,
+              put: async () => {
+                throw new Error("cache full");
+              },
+            },
+          },
+          "cache full",
+        ],
+      ];
+      for (const [archive, overrides, message] of failures) {
+        const { dependencies } = makeDependencies();
+        await expect(
+          installer.installStream(record, new Blob([archive]), {
+            ...dependencies,
+            ...overrides,
+          }),
+        ).rejects.toThrow(message);
+      }
+
+      const listeners = new Set();
+      const signal = {
+        reason: new DOMException("Stopped by user", "AbortError"),
+        throwIfAborted() {},
+        addEventListener: (_type, listener) => listeners.add(listener),
+        removeEventListener: (_type, listener) => listeners.delete(listener),
+      };
+      const { dependencies } = makeDependencies();
+      dependencies.cache.put = async (_key, response) => {
+        const reader = response.body.getReader();
+        await reader.read();
+        listeners.forEach((listener) => listener());
+        await reader.read();
+      };
+      await expect(
+        installer.installStream(
+          record,
+          new Blob([
+            zipSync({ [launchPath]: new Uint8Array(20_000) }, { level: 0 }),
+          ]),
+          { ...dependencies, signal },
+        ),
+      ).rejects.toThrow("Stopped by user");
+      expect(aborts.length).toBeGreaterThanOrEqual(4);
+    } finally {
+      globalThis.TransformStream = NativeTransformStream;
+    }
+  });
+});

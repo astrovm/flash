@@ -49,7 +49,6 @@ let suspended = false;
 let iconsBuilt = false;
 let renderedPlacesStyle = null;
 let screenSaverTimeout = null;
-let screenSaverWired = false;
 let screenSaverPreviewCleanup = null;
 
 const PIPES_SCREEN_SAVER_URL =
@@ -332,9 +331,7 @@ window.AstroShellApplications = Object.freeze({
       const existing = systemShortcuts[id];
       systemShortcuts[id] = {
         title: application.title,
-        icon: application.icon.includes("/")
-          ? application.icon
-          : XP_ICON_PATHS[application.icon],
+        icon: XP_ICON_PATHS[application.icon],
         ...(existing && Object.hasOwn(existing, "desktop")
           ? { desktop: existing.desktop }
           : {}),
@@ -565,8 +562,6 @@ const getTaskbarHeight = () =>
 const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
   activeMonitorResolution = resolution;
   const desktop = document.getElementById("desktop");
-  const taskbar = document.getElementById("taskbar");
-  if (!desktop || !taskbar) return;
   const monitor = getSimulatedMonitorSize(resolution);
   const left = Math.max(0, Math.round((window.innerWidth - monitor.width) / 2));
   const top = Math.max(
@@ -586,7 +581,6 @@ const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
 
 const applyDisplaySettings = (settings) => {
   const desktop = document.getElementById("desktop");
-  if (!desktop) return;
   desktop.style.setProperty(
     "--desktop-background",
     displayBackground(settings),
@@ -651,8 +645,6 @@ const scheduleScreenSaver = (settings = getDisplaySettings()) => {
 };
 
 const setupScreenSaver = () => {
-  if (screenSaverWired) return;
-  screenSaverWired = true;
   const overlay = document.createElement("div");
   overlay.id = "screen-saver-overlay";
   overlay.hidden = true;

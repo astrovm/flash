@@ -61,12 +61,23 @@ test("Notepad edits selections and clipboard, toggles wrap/status and runs menu 
   expect(h.editor.selectionEnd).toBe(h.editor.value.length);
   await h.command("delete");
   expect(h.editor.value).toBe("");
+  const toggle = (command) =>
+    h.win.querySelector(`[data-command="${command}"]`);
+  for (const command of ["word-wrap", "status-bar"]) {
+    expect(toggle(command).getAttribute("role")).toBe("menuitemcheckbox");
+    expect(toggle(command).getAttribute("aria-checked")).toBe("false");
+  }
+  expect(toggle("cut").getAttribute("role")).toBe("menuitem");
+  expect(toggle("cut").hasAttribute("aria-checked")).toBeFalse();
   await h.command("word-wrap");
   expect(h.editor.wrap).toBe("soft");
+  expect(toggle("word-wrap").getAttribute("aria-checked")).toBe("true");
   await h.command("word-wrap");
   expect(h.editor.wrap).toBe("off");
+  expect(toggle("word-wrap").getAttribute("aria-checked")).toBe("false");
   await h.command("status-bar");
   expect(h.win.querySelector(".notepad-status").hidden).toBeFalse();
+  expect(toggle("status-bar").getAttribute("aria-checked")).toBe("true");
   h.edit("one\ntwo");
   h.editor.setSelectionRange(5, 5);
   h.editor.dispatchEvent(new h.s.window.Event("select"));

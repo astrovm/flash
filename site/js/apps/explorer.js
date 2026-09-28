@@ -144,9 +144,9 @@ const getRunHistory = () =>
       Array.isArray(history) &&
       history.every((entry) => typeof entry === "string"),
   ).slice(0, 10);
+// Run only remembers commands that resolved, so the text is never empty.
 const rememberRunCommand = (value) => {
-  const text = String(value).trim();
-  if (!text) return;
+  const text = value.trim();
   const history = getRunHistory().filter(
     (entry) => entry.toLowerCase() !== text.toLowerCase(),
   );
@@ -158,14 +158,12 @@ const searchVirtualNodes = ({ query, locationId, type }) => {
   const matches = (name) => !wanted || name.toLowerCase().includes(wanted);
   const results = [];
   const representedGameIds = new Set();
+  // Search starts from a protected folder and walks VirtualFS's tree, which
+  // has no cycles or dangling children.
   const pending = [locationId];
-  const seen = new Set();
   while (pending.length) {
     const id = pending.pop();
-    if (seen.has(id)) continue;
-    seen.add(id);
     const node = fs.getNode(id);
-    if (!node) continue;
     if (
       id !== locationId &&
       matches(node.name) &&
@@ -201,7 +199,6 @@ const searchVirtualNodes = ({ query, locationId, type }) => {
 
 const wireSearchCompanion = (win) => {
   const content = win.el.querySelector(".search-companion-content");
-  if (!content) return;
   const startPanel = content.querySelector(".search-start-panel");
   const formPanel = content.querySelector(".search-form-panel");
   const query = content.querySelector("#search-filename");
@@ -442,10 +439,8 @@ const createInternetGameCard = (game, win, { installed = false } = {}) => {
 };
 
 const renderInstalledInternetGames = (win) => {
-  if (!win?.el) return;
   const container = win.el.querySelector(".internet-games-installed");
   const status = win.el.querySelector(".internet-games-installed-status");
-  if (!container || !status) return;
   container.replaceChildren();
   const records = gameLibrary
     ? [...installedGameIds]
@@ -465,7 +460,6 @@ const renderInstalledInternetGames = (win) => {
 
 const wireInternetGames = (win) => {
   const content = win.el.querySelector(".internet-games-content");
-  if (!content) return;
   const tabs = [...content.querySelectorAll("[data-internet-tab]")];
   const panels = [...content.querySelectorAll("[data-internet-panel]")];
   const query = content.querySelector("#internet-games-query");
@@ -543,9 +537,9 @@ const confirmRecycleDelete = (ids) =>
     "warning",
   ).then(async (yes) => yes && (await fileOps.removeToBin(ids)));
 
+// Empty Recycle Bin is only enabled while the bin has items.
 const confirmEmptyRecycleBin = () => {
   const count = fs.getChildren(fs.RECYCLE_BIN).length;
-  if (!count) return Promise.resolve(false);
   const single = count === 1;
   return XPDialogs.confirm(
     single
@@ -595,12 +589,10 @@ const choosePasteConflict = ({ existing }) =>
     dialog.defaultButton = row.firstChild;
     row.firstChild.focus();
   });
-let pasteBusy = false;
+// Every caller checks canPaste or fills the clipboard first. Pastes cannot
+// overlap: the conflict and progress dialogs are modal.
 const pasteIntoFolder = async (destinationId) => {
-  if (pasteBusy) return null;
   const clipboard = fileOps.getClipboard();
-  if (!clipboard) return;
-  pasteBusy = true;
   let cancelled = false;
   const progress =
     clipboard.ids.length > 1
@@ -637,8 +629,6 @@ const pasteIntoFolder = async (destinationId) => {
       "error",
     );
     return null;
-  } finally {
-    pasteBusy = false;
   }
 };
 // Browser DataTransfer exposes file bytes, but directory traversal is only
@@ -689,9 +679,9 @@ const importFileEntry = (entry, destinationId, state) =>
       }
     }, reject),
   );
+// Callers check state.cancelled before importing each entry.
 const importDirectoryEntry = async (entry, destinationId, state) => {
-  if (state.cancelled) return;
-  const created = [];
+  let folder = null;
   try {
     const existing = fs.findChild(destinationId, entry.name);
     if (existing) {
@@ -703,8 +693,7 @@ const importDirectoryEntry = async (entry, destinationId, state) => {
       if (choice === "replace" && existing.type === "folder")
         await fs.destroy(existing.id);
     }
-    const folder = await fileOps.createFolder(destinationId, entry.name);
-    created.push(folder.id);
+    folder = await fileOps.createFolder(destinationId, entry.name);
     const entries = await readAllDirectoryEntries(entry.createReader());
     for (const child of entries) {
       if (state.cancelled) throw new Error("Directory import cancelled");
@@ -713,9 +702,9 @@ const importDirectoryEntry = async (entry, destinationId, state) => {
       else if (child.isFile) await importFileEntry(child, folder.id, state);
     }
   } catch (error) {
-    for (const id of created.reverse()) {
-      if (fs.getNode(id)) await fs.destroy(id);
-    }
+    // A failed child has already removed its own folder, so this folder is
+    // still present.
+    if (folder) await fs.destroy(folder.id);
     if (error.message === "Directory import cancelled") return;
     throw error;
   }
@@ -831,8 +820,9 @@ const navigateExplorer = (win, folderId, { history = true } = {}) => {
   return true;
 };
 
+// Back is disabled at the first entry, which is always an existing protected
+// folder. Forward can stay enabled after a failed step into a deleted folder.
 const explorerBack = (win) => {
-  if (win.historyIndex <= 0) return;
   win.historyIndex -= 1;
   navigateExplorer(win, win.history[win.historyIndex], { history: false });
 };
@@ -939,9 +929,9 @@ const renderExplorerTree = (win) => {
       fs.USER_PROFILE,
     ]);
   win.expandedFolders = expanded;
+  // Only protected roots and their folder children are added.
   const addNode = (id, depth = 0) => {
     const node = fs.getNode(id);
-    if (!node || node.type !== "folder") return;
     const row = document.createElement("button");
     row.type = "button";
     row.className = "explorer-tree-item";
@@ -1139,60 +1129,53 @@ const openExplorerNode = (win, node) => {
   }
 };
 
+// Explorer windows always show an existing folder; a deleted one is replaced
+// by My Computer before this renders.
 const renderExplorerItems = (win, contentRoot = win.el) => {
   const main = contentRoot.querySelector(".explorer-main");
-  if (!main || !win.currentFolderId) return;
   const folder = fs.getNode(win.currentFolderId);
-  if (!folder) return;
 
   win.title = folder.id === fs.MY_COMPUTER ? "My Computer" : folder.name;
   win.el.querySelector(".title-text").textContent = win.title;
   renderTaskButtons();
   const titleIcon = win.el.querySelector(".title-icon");
-  if (titleIcon) {
-    titleIcon.replaceChildren();
-    const image = document.createElement("img");
-    image.src =
-      folder.id === fs.RECYCLE_BIN
-        ? getRecycleBinIconPath()
-        : folder.id === fs.MY_COMPUTER
-          ? "assets/xp/icons/MyComputer.png"
-          : folder.id === fs.MY_MUSIC
-            ? "assets/xp/icons/MyMusic.png"
-            : folder.id === fs.MY_PICTURES
-              ? "assets/xp/icons/MyPictures.png"
-              : "assets/xp/icons/MyDocuments.png";
-    image.alt = "";
-    titleIcon.appendChild(image);
-  }
+  titleIcon.replaceChildren();
+  const image = document.createElement("img");
+  image.src =
+    folder.id === fs.RECYCLE_BIN
+      ? getRecycleBinIconPath()
+      : folder.id === fs.MY_COMPUTER
+        ? "assets/xp/icons/MyComputer.png"
+        : folder.id === fs.MY_MUSIC
+          ? "assets/xp/icons/MyMusic.png"
+          : folder.id === fs.MY_PICTURES
+            ? "assets/xp/icons/MyPictures.png"
+            : "assets/xp/icons/MyDocuments.png";
+  image.alt = "";
+  titleIcon.appendChild(image);
   renderExplorerTree(win);
   renderExplorerTaskPane(win);
 
   const explorerContent = main.closest(".explorer-content");
-  const chrome = explorerContent?.querySelector(".explorer-chrome");
-  if (chrome) {
-    chrome.querySelector("input").value = fs.getPath(folder.id);
-    const addressIcon = chrome.querySelector(".explorer-address-field img");
-    if (addressIcon) {
-      addressIcon.src =
-        folder.id === fs.RECYCLE_BIN
-          ? getRecycleBinIconPath()
-          : folder.id === fs.MY_COMPUTER
-            ? XP_ICON_PATHS["MyComputer.png"]
-            : folder.id === fs.MY_MUSIC
-              ? XP_ICON_PATHS["MyMusic.png"]
-              : folder.id === fs.MY_PICTURES
-                ? XP_ICON_PATHS["MyPictures.png"]
-                : XP_ICON_PATHS["MyDocuments.png"];
-    }
-    chrome.querySelector('[data-explorer-action="back"]').disabled =
-      win.historyIndex <= 0;
-    chrome.querySelector('[data-explorer-action="forward"]').disabled =
-      win.historyIndex >= win.history.length - 1;
-    chrome.querySelector('[data-explorer-action="up"]').disabled =
-      !folder.parent &&
-      ![fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId);
-  }
+  const chrome = explorerContent.querySelector(".explorer-chrome");
+  chrome.querySelector("input").value = fs.getPath(folder.id);
+  chrome.querySelector(".explorer-address-field img").src =
+    folder.id === fs.RECYCLE_BIN
+      ? getRecycleBinIconPath()
+      : folder.id === fs.MY_COMPUTER
+        ? XP_ICON_PATHS["MyComputer.png"]
+        : folder.id === fs.MY_MUSIC
+          ? XP_ICON_PATHS["MyMusic.png"]
+          : folder.id === fs.MY_PICTURES
+            ? XP_ICON_PATHS["MyPictures.png"]
+            : XP_ICON_PATHS["MyDocuments.png"];
+  chrome.querySelector('[data-explorer-action="back"]').disabled =
+    win.historyIndex <= 0;
+  chrome.querySelector('[data-explorer-action="forward"]').disabled =
+    win.historyIndex >= win.history.length - 1;
+  chrome.querySelector('[data-explorer-action="up"]').disabled =
+    !folder.parent &&
+    ![fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId);
 
   const heading = main.querySelector("h2");
   if (win.currentFolderId === fs.RECYCLE_BIN) {
@@ -1241,11 +1224,8 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
         ? myComputerGroupOrder.indexOf(myComputerGroup(a)) -
             myComputerGroupOrder.indexOf(myComputerGroup(b)) ||
           myComputerOrder.indexOf(a.id) - myComputerOrder.indexOf(b.id)
-        : a.type === b.type
-          ? a.name.localeCompare(b.name)
-          : a.type === "folder"
-            ? -1
-            : 1,
+        : (a.type === "folder" ? 0 : 1) - (b.type === "folder" ? 0 : 1) ||
+          a.name.localeCompare(b.name),
     );
 
   if (!children.length) {
@@ -1256,8 +1236,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
         ? "The Recycle Bin is empty."
         : "There are no items to show in this view.";
     items.appendChild(empty);
-    const status = explorerContent?.querySelector(".explorer-status");
-    if (status) status.textContent = "0 objects";
+    explorerContent.querySelector(".explorer-status").textContent = "0 objects";
     if (win.currentFolderId === fs.RECYCLE_BIN) {
       win.el.querySelectorAll(".recycle-task").forEach((button) => {
         button.disabled = true;
@@ -1377,9 +1356,8 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     if (node.type === "folder") wireFolderDropTarget(item, node.id);
     items.appendChild(item);
   });
-  const status = explorerContent?.querySelector(".explorer-status");
-  if (status)
-    status.textContent = `${children.length} ${children.length === 1 ? "object" : "objects"}`;
+  explorerContent.querySelector(".explorer-status").textContent =
+    `${children.length} ${children.length === 1 ? "object" : "objects"}`;
   if (win.currentFolderId === fs.RECYCLE_BIN) {
     win.el.querySelectorAll(".recycle-task").forEach((button) => {
       button.disabled = false;
@@ -1469,8 +1447,7 @@ const resetAstroFlash = async () => {
 
 fs.registerFolderHandler((folder) => {
   openSystemWindow("__my-documents");
-  const win = openWindows.get("__my-documents");
-  if (win) navigateExplorer(win, folder.id);
+  navigateExplorer(openWindows.get("__my-documents"), folder.id);
 });
 
 // Keep open explorer windows and desktop shortcuts in sync with filesystem changes.

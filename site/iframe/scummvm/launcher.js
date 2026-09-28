@@ -266,13 +266,13 @@
     });
   };
 
-  const notifyGameDataReady = (keep, fileName) => {
+  const notifyGameDataReady = (fileName) => {
     window.parent.postMessage(
       {
         event: "astro.game-data-retention",
         gameId: game.shellId,
         storageId: `scummvm:${game.id}`,
-        keep,
+        keep: true,
         fileName,
       },
       location.origin,
@@ -399,36 +399,30 @@
     fileName,
     iso,
     gameFiles,
-    { keep, language, url = "" },
+    { language, url = "" },
   ) => {
-    const previous = keep ? readMetadata() : null;
-    if (keep) {
-      localStorage.setItem(
-        metadataKey,
-        JSON.stringify({ fileName, language, url }),
-      );
-    }
+    const previous = readMetadata();
+    localStorage.setItem(
+      metadataKey,
+      JSON.stringify({ fileName, language, url }),
+    );
     try {
       await writeRuntimeManifest(directory, fileName, iso, gameFiles);
     } catch (error) {
-      if (keep) {
-        if (previous) {
-          localStorage.setItem(metadataKey, JSON.stringify(previous));
-        } else {
-          localStorage.removeItem(metadataKey);
-        }
+      if (previous) {
+        localStorage.setItem(metadataKey, JSON.stringify(previous));
+      } else {
+        localStorage.removeItem(metadataKey);
       }
       throw error;
     }
-    if (keep) {
-      savedIso = iso;
-      savedCopyButton.hidden = false;
-      savedCopyButton.textContent = `Play ${language} browser copy (${formatBytes(iso.size)})`;
-      if (previous?.fileName && previous.fileName !== fileName) {
-        await directory.removeEntry(previous.fileName).catch(() => {});
-      }
+    savedIso = iso;
+    savedCopyButton.hidden = false;
+    savedCopyButton.textContent = `Play ${language} browser copy (${formatBytes(iso.size)})`;
+    if (previous?.fileName && previous.fileName !== fileName) {
+      await directory.removeEntry(previous.fileName).catch(() => {});
     }
-    notifyGameDataReady(keep, fileName);
+    notifyGameDataReady(fileName);
   };
 
   const activateTemporaryIso = (iso, gameFiles) => {
@@ -530,7 +524,7 @@
         metadata.fileName,
         savedIso,
         gameFiles,
-        { keep: true, language, url: metadata.url || "" },
+        { language, url: metadata.url || "" },
       );
       await startScummVm();
     } catch (error) {
@@ -630,7 +624,6 @@
         await window.AstroIso9660.gameFilesFromIso(iso, game);
       if (keepCopy.checked) {
         await activateStoredIso(directory, fileName, iso, gameFiles, {
-          keep: true,
           language,
           url: url.href,
         });

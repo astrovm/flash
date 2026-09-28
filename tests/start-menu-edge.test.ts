@@ -128,3 +128,79 @@ test("the classic Start menu opens folders and runs access keys", async () => {
   expect(s.document.activeElement.id).toBe("run-command");
   clickStartAction(s, "run");
 });
+
+test("a flyout without room on the right opens to the left of its item", async () => {
+  const s = await login(await loadShell());
+  s.document.getElementById("start-button").click();
+  const all = s.document.getElementById("all-programs-button");
+  all.getBoundingClientRect = () => ({
+    left: 700,
+    right: 900,
+    top: 100,
+    bottom: 120,
+    width: 200,
+    height: 20,
+  });
+  const offsetWidth = Object.getOwnPropertyDescriptor(
+    s.window.HTMLElement.prototype,
+    "offsetWidth",
+  );
+  Object.defineProperty(s.window.HTMLElement.prototype, "offsetWidth", {
+    configurable: true,
+    get() {
+      return this.classList.contains("start-program-flyout") ? 250 : 0;
+    },
+  });
+  try {
+    press(s, all, "ArrowRight");
+    const flyout = s.document.querySelector(".start-program-flyout");
+    expect(flyout.style.left).toBe("450px");
+  } finally {
+    Object.defineProperty(
+      s.window.HTMLElement.prototype,
+      "offsetWidth",
+      offsetWidth,
+    );
+  }
+});
+
+test("folder hovers left behind by a rebuilt All Programs menu open nothing", async () => {
+  const s = await login(await loadShell());
+  s.document.getElementById("start-button").click();
+  const all = s.document.getElementById("all-programs-button");
+  press(s, all, "ArrowRight");
+  const accessories = s.document.querySelector(
+    '[data-program-id="accessories"]',
+  );
+  accessories.dispatchEvent(new s.window.PointerEvent("pointerenter"));
+  accessories
+    .closest(".start-program-flyout")
+    .dispatchEvent(new s.window.PointerEvent("pointerleave"));
+  press(s, all, "ArrowDown");
+  expect(accessories.isConnected).toBeFalse();
+  await s.advanceTime(250);
+  expect(
+    s.document.querySelectorAll('.start-program-flyout[data-depth="1"]'),
+  ).toHaveLength(0);
+  expect(s.document.getElementById("start-menu-flyouts").hidden).toBeFalse();
+});
+
+test("Start menu folders ignore keys other than Right and Enter", async () => {
+  const s = await login(await loadShell());
+  s.document.getElementById("start-button").click();
+  const all = s.document.getElementById("all-programs-button");
+  press(s, all, "ArrowLeft");
+  expect(s.document.getElementById("start-menu-flyouts").hidden).toBeTrue();
+  press(s, all, "ArrowRight");
+  const accessories = s.document.querySelector(
+    '[data-program-id="accessories"]',
+  );
+  press(s, accessories, "ArrowLeft");
+  expect(
+    s.document.querySelectorAll('.start-program-flyout[data-depth="1"]'),
+  ).toHaveLength(0);
+  press(s, accessories, "Enter");
+  expect(
+    s.document.querySelectorAll('.start-program-flyout[data-depth="1"]'),
+  ).toHaveLength(1);
+});

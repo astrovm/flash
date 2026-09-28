@@ -176,13 +176,11 @@ test("native window metadata respects capability flags and ignores placeholder g
     file = context.createFile(fs.MY_DOCUMENTS, "saved.txt", "old");
   context.setFileContent(file.id, "new");
   expect(fs.getContent(file.id)).toBe("new");
-  const data = await context.dataUrlFromBlob(
-    new s.window.Blob(["test"], { type: "text/plain" }),
-  );
-  expect(data).toStartWith("data:text/plain;base64,");
-  context.setWallpaper(data);
-  expect(s.document.getElementById("desktop").dataset.wallpaperPosition).toBe(
-    "center",
+  context.setWallpaper("data:image/png;base64,AAAA");
+  const desktop = s.document.getElementById("desktop");
+  expect(desktop.dataset.wallpaperPosition).toBe("center");
+  expect(desktop.style.getPropertyValue("--desktop-background")).toBe(
+    'url("data:image/png;base64,AAAA")',
   );
 });
 test("native metadata waits for pending shell resizes and derives client size from the outer frame", async () => {

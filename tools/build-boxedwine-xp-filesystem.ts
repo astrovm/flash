@@ -23,11 +23,11 @@ const wineThemePath =
   "home/username/.wine/drive_c/windows/resources/themes/light/light.msstyles";
 const wineUserRegistryPath = "home/username/.wine/user.reg";
 
-export const buildBoxedWineXpFilesystem = async ({
-  sourcePath = join(runtimeRoot, "boxedwine.zip"),
-  tracePath = join(runtimeRoot, "xp-accessories-files.json"),
-  outputPath = join(runtimeRoot, "xp-accessories.zip"),
-  themePath = join(
+const defaultPaths = {
+  sourcePath: join(runtimeRoot, "boxedwine.zip"),
+  tracePath: join(runtimeRoot, "xp-accessories-files.json"),
+  outputPath: join(runtimeRoot, "xp-accessories.zip"),
+  themePath: join(
     projectRoot,
     "source-media",
     "xp-sp3",
@@ -35,7 +35,27 @@ export const buildBoxedWineXpFilesystem = async ({
     "themes",
     "Luna.msstyles",
   ),
-} = {}) => {
+};
+type BuildPaths = typeof defaultPaths;
+
+// `--source=`, `--trace=`, `--theme=` and `--output=` replace the default
+// runtime and XP media paths.
+export const parseBuildArguments = (args: string[]): Partial<BuildPaths> =>
+  Object.fromEntries(
+    args.map((argument) => {
+      const match = /^--(source|trace|theme|output)=(.+)$/.exec(argument);
+      if (!match) throw new Error(`Unknown argument: ${argument}`);
+      return [`${match[1]}Path`, match[2]];
+    }),
+  );
+
+export const buildBoxedWineXpFilesystem = async (
+  paths: Partial<BuildPaths>,
+) => {
+  const { sourcePath, tracePath, outputPath, themePath } = {
+    ...defaultPaths,
+    ...paths,
+  };
   const source = new Uint8Array(await readFile(sourcePath));
   const sourceFiles = unzipSync(source);
   const tracedPaths = JSON.parse(await readFile(tracePath, "utf8")) as string[];
@@ -137,5 +157,11 @@ export const buildBoxedWineXpFilesystem = async ({
 };
 
 if (import.meta.main) {
-  console.log(JSON.stringify(await buildBoxedWineXpFilesystem(), null, 2));
+  console.log(
+    JSON.stringify(
+      await buildBoxedWineXpFilesystem(parseBuildArguments(Bun.argv.slice(2))),
+      null,
+      2,
+    ),
+  );
 }
