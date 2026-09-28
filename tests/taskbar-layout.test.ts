@@ -355,3 +355,12 @@ test("the New Toolbar dialog adds the folder chosen in its tree", async () => {
   dialog.querySelector('[data-action="ok"]').click();
   expect(settings(s).folders).toEqual([fs.MY_DOCUMENTS]);
 });
+
+test("a bottom taskbar grows rows when its handle is dragged up", async () => {
+  const s = await shell({ locked: false });
+  const handle = s.document.getElementById("taskbar-resize");
+  pointer(s, handle, "pointerdown", 500, 740);
+  pointer(s, handle, "pointermove", 500, 690);
+  pointer(s, handle, "pointerup", 500, 690);
+  expect(settings(s)).toMatchObject({ edge: "bottom", rows: 3 });
+});

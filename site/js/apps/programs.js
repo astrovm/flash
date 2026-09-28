@@ -510,8 +510,7 @@ const openXPProgram = (programId, options = {}) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
-  const usesNativeDefaults =
-    program.window.fitToWorkArea || program.window.nativeMetadata;
+  const usesNativeDefaults = program.window.nativeMetadata;
   const windowWidth = usesNativeDefaults
     ? preferredWidth
     : desktopWidth > 16

@@ -80,8 +80,9 @@ export function validateIcons(
 }
 
 if (import.meta.main) {
+  // `--site=<directory>` validates another site tree instead of site/.
   const { errors, missing, validated } = validateIcons(
-    undefined,
+    Bun.argv.find((argument) => argument.startsWith("--site="))?.slice(7),
     Bun.argv.includes("--require-all"),
   );
   if (errors.length) {

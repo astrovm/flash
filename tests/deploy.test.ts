@@ -28,6 +28,7 @@ import {
   scopeReleaseReferences,
   DEFAULT_OUTPUT_DIR,
   DEFAULT_UPDATE_STABILITY_DELAY_MS,
+  installFflate,
   installJsDos,
   installRuffle,
   installWebtorrent,
@@ -825,6 +826,7 @@ describe("build inputs and release metadata validation", () => {
     expect(parseBuildArguments([])).toEqual({
       outputDir: DEFAULT_OUTPUT_DIR,
       revision: "HEAD",
+      sourceDir: join(import.meta.dir, "..", "site"),
       stabilityDelayMs: DEFAULT_UPDATE_STABILITY_DELAY_MS,
     });
     expect(
@@ -836,7 +838,7 @@ describe("build inputs and release metadata validation", () => {
         "--update-delay-hours",
         "1.5",
       ]),
-    ).toEqual({
+    ).toMatchObject({
       outputDir: "/tmp/synthetic-build",
       revision: "deadbee",
       stabilityDelayMs: 5400000,
@@ -1346,6 +1348,19 @@ describe("build helpers", () => {
     await expect(
       installRuffle(join(root, "other"), join(root, "missing")),
     ).rejects.toThrow("is not installed");
+  });
+
+  test("reports browser packages that are not installed", async () => {
+    const root = await makeTemporaryDirectory();
+    const missing = join(root, "missing");
+    for (const [install, name] of [
+      [installFflate, "fflate"],
+      [installJsDos, "js-dos"],
+      [installWebtorrent, "webtorrent"],
+    ] as const)
+      await expect(install(join(root, "out"), missing)).rejects.toThrow(
+        `${name} is not installed; run \`bun install --frozen-lockfile\``,
+      );
   });
 
   test("derives the deployment version from the current commit", () => {

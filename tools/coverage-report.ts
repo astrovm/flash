@@ -15,12 +15,12 @@ import {
   rawCoverageDirectory,
 } from "../tests/helpers/coverage";
 
-// Every metric must stay at or above 95%; CI fails the build otherwise.
+// Every metric must stay at 100%; CI fails the build otherwise.
 const THRESHOLDS = {
-  lines: 95,
-  statements: 95,
-  functions: 95,
-  branches: 95,
+  lines: 100,
+  statements: 100,
+  functions: 100,
+  branches: 100,
 } as const;
 const METRICS = Object.keys(THRESHOLDS) as (keyof typeof THRESHOLDS)[];
 

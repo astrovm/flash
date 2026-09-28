@@ -459,3 +459,24 @@ test("page requests skip installed games while the game library is unavailable",
   expect(await response.text()).toBe("network");
   expect(matched).toEqual([]);
 });
+
+test("uninstalling a game that is not open only removes it from the library", async () => {
+  const h = await setup();
+  h.setResults([{ uuid: "closed", title: "Closed Game", compatible: true }]);
+  await h.search("closed");
+  h.win.querySelector(".internet-games-results button").click();
+  await flushShell();
+  await flushShell();
+  expect(
+    h.s.document.querySelector('.xp-window[data-game="flashpoint:closed"]'),
+  ).toBeNull();
+  delete h.installed["flashpoint:closed"];
+  h.records.delete("flashpoint:closed");
+  h.emit();
+  await flushShell();
+  await flushShell();
+  h.win.querySelector('[data-internet-tab="installed"]').click();
+  expect(
+    h.win.querySelector(".internet-games-installed-status").textContent,
+  ).toBe("No internet games are installed yet.");
+});

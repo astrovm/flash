@@ -389,14 +389,12 @@ test("Empty Recycle Bin is unavailable while the bin is already empty", async ()
     (button) => button.textContent === "Empty Recycle Bin",
   );
   expect(task.disabled).toBeTrue();
-  s.document
-    .querySelector('[data-desktop-id="__recycle-bin"]')
-    .dispatchEvent(
-      new s.window.MouseEvent("contextmenu", {
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
+  s.document.querySelector('[data-desktop-id="__recycle-bin"]').dispatchEvent(
+    new s.window.MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
   expect(
     s.document.querySelector(
       '#desktop-context-menu [data-action="empty-recycle-bin"]',

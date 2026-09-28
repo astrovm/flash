@@ -1559,10 +1559,10 @@ export async function validatePrecacheIntegrity(
 }
 
 export interface BuildOptions {
-  outputDir?: string;
+  outputDir: string;
   releasedAt?: string;
   revision?: string;
-  sourceDir?: string;
+  sourceDir: string;
   stabilityDelayMs?: number;
   version?: string;
   installRuffle?: (jsDir: string) => Promise<void>;
@@ -1570,16 +1570,16 @@ export interface BuildOptions {
 }
 
 export async function build({
-  outputDir = DEFAULT_OUTPUT_DIR,
+  outputDir,
   releasedAt,
   revision = "HEAD",
-  sourceDir = SOURCE_DIR,
+  sourceDir,
   stabilityDelayMs = DEFAULT_UPDATE_STABILITY_DELAY_MS,
   version,
   installRuffle: installRuffleRuntime = installRuffle,
   generate = (directory, buildVersion) =>
     generateServiceWorker(directory, generateSW, buildVersion),
-}: BuildOptions = {}): Promise<void> {
+}: BuildOptions): Promise<void> {
   const resolvedOutput = resolve(outputDir);
   const resolvedSource = resolve(sourceDir);
   if (
@@ -1631,6 +1631,7 @@ export async function build({
 export function parseBuildArguments(arguments_: string[]): {
   outputDir: string;
   revision: string;
+  sourceDir: string;
   stabilityDelayMs: number;
 } {
   let outputDir = DEFAULT_OUTPUT_DIR;
@@ -1660,14 +1661,14 @@ export function parseBuildArguments(arguments_: string[]): {
       throw new Error(`Unknown argument: ${argument}`);
     }
   }
-  return { outputDir, revision, stabilityDelayMs };
+  return { outputDir, revision, sourceDir: SOURCE_DIR, stabilityDelayMs };
 }
 
 if (import.meta.main) {
   try {
     await build(parseBuildArguments(Bun.argv.slice(2)));
   } catch (error) {
-    console.error(error instanceof Error ? error.message : error);
+    console.error((error as Error).message);
     process.exitCode = 1;
   }
 }

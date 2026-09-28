@@ -6,7 +6,10 @@ import { createHash } from "node:crypto";
 import { zipSync, unzipSync } from "fflate";
 import { validateIcons } from "../tools/validate-icons";
 import { validateJavaScript } from "../tools/validate-javascript";
-import { buildBoxedWineXpFilesystem } from "../tools/build-boxedwine-xp-filesystem";
+import {
+  buildBoxedWineXpFilesystem,
+  parseBuildArguments,
+} from "../tools/build-boxedwine-xp-filesystem";
 import { bunCommand } from "./helpers/coverage";
 const roots: string[] = [];
 afterEach(async () => {
@@ -139,6 +142,43 @@ test("XP filesystem builder follows symlinks, installs the theme and creates a r
   );
 });
 
+test("XP filesystem builder takes its paths from the command line", async () => {
+  const dir = await root(),
+    sourcePath = join(dir, "source.zip"),
+    tracePath = join(dir, "trace.json"),
+    themePath = join(dir, "luna"),
+    outputPath = join(dir, "output.zip");
+  const text = (s: string) => new TextEncoder().encode(s);
+  await writeFile(
+    sourcePath,
+    zipSync({
+      "bin/app": text("app"),
+      "home/username/.wine/user.reg": text('"ColorName"="Blue"'),
+    }),
+  );
+  await writeFile(tracePath, JSON.stringify(["/bin/app"]));
+  await writeFile(themePath, "LUNA");
+  expect(() => parseBuildArguments(["--source"])).toThrow(
+    "Unknown argument: --source",
+  );
+  const run = Bun.spawnSync(
+    bunCommand(
+      "tools/build-boxedwine-xp-filesystem.ts",
+      `--source=${sourcePath}`,
+      `--trace=${tracePath}`,
+      `--theme=${themePath}`,
+      `--output=${outputPath}`,
+    ),
+    { cwd: join(import.meta.dir, "..") },
+  );
+  expect(run.exitCode).toBe(0);
+  const result = JSON.parse(run.stdout.toString());
+  expect(result).toMatchObject({ tracedPaths: 1, missing: [] });
+  expect(Object.keys(unzipSync(await readFile(outputPath)))).toContain(
+    "bin/app",
+  );
+});
+
 test("icon validation treats a catalog without games as empty", async () => {
   const dir = await root();
   await mkdir(join(dir, "js"));
@@ -160,4 +200,25 @@ test("validation command lines check the real site", () => {
     expect(result.stdout.toString()).toContain(output);
   }
   expect(validateIcons().errors).toEqual([]);
+});
+test("the icon validation command fails with each error it finds", async () => {
+  const dir = await root();
+  await mkdir(join(dir, "js"));
+  await mkdir(join(dir, "assets/icons"), { recursive: true });
+  await writeFile(
+    join(dir, "js/games.js"),
+    'window.FLASH_GAMES = { broken: {icon:"assets/icons/absent.png"} };',
+  );
+  await writeFile(join(dir, "assets/icons/SOURCES.json"), "{}");
+  const result = Bun.spawnSync(
+    bunCommand(
+      join(import.meta.dir, "..", "tools", "validate-icons.ts"),
+      `--site=${dir}`,
+    ),
+    { stderr: "pipe", stdout: "pipe" },
+  );
+  expect(result.exitCode).toBe(1);
+  expect(result.stderr.toString()).toContain(
+    "ERROR: broken: missing assets/icons/absent.png",
+  );
 });

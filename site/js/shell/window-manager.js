@@ -165,29 +165,26 @@ const clampWindowPosition = (win, left, top, { fullyVisible = false } = {}) => {
   };
 };
 
+// Native windows take the size their application reports, which may not fit
+// the visible work area.
 const fitNativeProgramToWorkArea = (win) => {
-  const preferred = win.application?.window;
-  if (!(preferred?.fitToWorkArea || preferred?.nativeMetadata) || win.maximized)
-    return false;
+  if (!win.application?.window.nativeMetadata || win.maximized) return false;
 
   const { width: visibleWidth, height: visibleHeight } = getVisibleWorkArea();
   if (visibleWidth <= 0 || visibleHeight <= 0) return false;
-  const actualWidth = parseWindowLength(
-    win.el.style.width,
-    win.el.offsetWidth || preferred.width,
-  );
+  const actualWidth = parseWindowLength(win.el.style.width, win.el.offsetWidth);
   const actualHeight = parseWindowLength(
     win.el.style.height,
-    win.el.offsetHeight || preferred.height,
+    win.el.offsetHeight,
   );
   if (win.workAreaFitRect) {
     const originalWidth = parseWindowLength(
       win.workAreaFitRect.width,
-      preferred.width,
+      actualWidth,
     );
     const originalHeight = parseWindowLength(
       win.workAreaFitRect.height,
-      preferred.height,
+      actualHeight,
     );
     if (originalWidth <= visibleWidth && originalHeight <= visibleHeight) {
       Object.assign(win.el.style, win.workAreaFitRect);
@@ -209,8 +206,8 @@ const fitNativeProgramToWorkArea = (win) => {
   win.workAreaFitRect ||= {
     left: win.el.style.left,
     top: win.el.style.top,
-    width: `${win.nativePreferredShellSize?.width || preferred.width || actualWidth}px`,
-    height: `${win.nativePreferredShellSize?.height || preferred.height || actualHeight}px`,
+    width: `${win.nativePreferredShellSize?.width || actualWidth}px`,
+    height: `${win.nativePreferredShellSize?.height || actualHeight}px`,
     minWidth: win.el.style.minWidth,
     minHeight: win.el.style.minHeight,
   };
@@ -1711,8 +1708,7 @@ const wireWindowControls = (win) => {
         ...menu.querySelectorAll("button:not(:disabled), input:not(:disabled)"),
       ];
       const index = items.indexOf(document.activeElement);
-      if (event.target.matches("input") && event.key.startsWith("Arrow"))
-        return;
+      // Letters are handled by the shell's menu typeahead.
       if (event.key === "Escape") {
         event.preventDefault();
         const button = menuButtons.find(
@@ -1732,14 +1728,6 @@ const wireWindowControls = (win) => {
           menu.dataset.gameMenu,
           event.key === "ArrowRight" ? 1 : -1,
         );
-      } else {
-        const item = menu.querySelector(
-          `[data-access-key="${event.key.toLowerCase()}"]:not(:disabled)`,
-        );
-        if (item) {
-          event.preventDefault();
-          item.click();
-        }
       }
     });
     menu.addEventListener("click", (event) => {

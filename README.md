@@ -80,8 +80,10 @@ instead of waiting in real time.
 
 `bun run test:coverage` instruments first-party code with Istanbul, including
 the classic scripts the shell harness loads into Happy DOM. It writes an HTML
-report to `coverage/index.html` and fails if lines, statements, functions, or
-branches fall below 95%. CI enforces the same threshold on every pull request.
+report to `coverage/index.html` and fails unless lines, statements, functions,
+and branches are all at 100%. Instrumentation slows the suite, so this run
+allows each test 30 seconds. CI enforces the same threshold on every pull
+request.
 
 ## Project layout
 

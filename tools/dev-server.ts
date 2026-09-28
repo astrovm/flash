@@ -61,7 +61,9 @@ export interface DevelopmentLiveReload {
   response(): Response;
 }
 
-export function createDevelopmentLiveReload(): DevelopmentLiveReload {
+export function createDevelopmentLiveReload({
+  heartbeatMs = 5_000,
+} = {}): DevelopmentLiveReload {
   const encoder = new TextEncoder();
   const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
   const send = (message: string) => {
@@ -73,7 +75,7 @@ export function createDevelopmentLiveReload(): DevelopmentLiveReload {
       }
     }
   };
-  const heartbeat = setInterval(() => send(": heartbeat\n\n"), 5_000);
+  const heartbeat = setInterval(() => send(": heartbeat\n\n"), heartbeatMs);
   heartbeat.unref?.();
 
   return {
@@ -114,7 +116,7 @@ interface DevBuildState {
 }
 
 interface EnsureDevelopmentBuildOptions {
-  outputDir?: string;
+  outputDir: string;
   force?: boolean;
   projectDir?: string;
   fingerprint?: () => Promise<string>;
@@ -218,13 +220,13 @@ async function readBuildState(
 }
 
 export async function ensureDevelopmentBuild({
-  outputDir = DEFAULT_OUTPUT_DIR,
+  outputDir,
   force = false,
   projectDir = PROJECT_DIR,
   fingerprint = () => computeSourceFingerprint(projectDir),
   builder,
   version,
-}: EnsureDevelopmentBuildOptions = {}): Promise<EnsureDevelopmentBuildResult> {
+}: EnsureDevelopmentBuildOptions): Promise<EnsureDevelopmentBuildResult> {
   const resolvedOutput = resolve(outputDir);
   const [sourceFingerprint, previousState] = await Promise.all([
     fingerprint(),
@@ -245,6 +247,7 @@ export async function ensureDevelopmentBuild({
   const selectedBuilder = builder ?? (await import("./deploy")).build;
   await selectedBuilder({
     outputDir: resolvedOutput,
+    sourceDir: join(projectDir, "site"),
     ...(version ? { version: version(sourceFingerprint) } : {}),
   });
   const state: DevBuildState = {
@@ -335,7 +338,8 @@ async function staticResponse(
   return new Response(request.method === "HEAD" ? null : body, {
     headers: noCacheHeaders({
       "Content-Length": String(size),
-      "Content-Type": file.type || "application/octet-stream",
+      // Bun reports application/octet-stream for unknown files.
+      "Content-Type": file.type,
     }),
   });
 }
@@ -374,9 +378,8 @@ interface WatchDevelopmentBuildOptions {
   debounceMs?: number;
   fingerprint?: () => Promise<string>;
   onReload: () => void;
-  outputDir?: string;
   projectDir?: string;
-  rebuild?: () => Promise<EnsureDevelopmentBuildResult>;
+  rebuild: () => Promise<EnsureDevelopmentBuildResult>;
 }
 
 export interface DevelopmentBuildWatcher {
@@ -387,9 +390,8 @@ export async function watchDevelopmentBuild({
   debounceMs = 350,
   fingerprint = () => computeSourceFingerprint(projectDir),
   onReload,
-  outputDir = DEFAULT_OUTPUT_DIR,
   projectDir = PROJECT_DIR,
-  rebuild = () => ensureDevelopmentBuild({ outputDir, projectDir }),
+  rebuild,
 }: WatchDevelopmentBuildOptions): Promise<DevelopmentBuildWatcher> {
   let building = false;
   let pending = false;
@@ -505,57 +507,70 @@ export function parseServerArguments(arguments_: string[]): ServerArguments {
   return parsed;
 }
 
-if (import.meta.main) {
-  try {
-    const arguments_ = parseServerArguments(Bun.argv.slice(2));
-    const version = arguments_.production ? createPreviewVersion : undefined;
-    if (arguments_.sync) {
-      await ensureDevelopmentBuild({
-        outputDir: arguments_.directory,
-        force: arguments_.force,
-        version,
+export async function startDevelopmentServer(
+  arguments_: ServerArguments,
+  {
+    serve = Bun.serve,
+    ensureBuild = ensureDevelopmentBuild,
+    watch = watchDevelopmentBuild,
+  }: {
+    serve?: (options: Parameters<typeof Bun.serve>[0]) => { url: URL };
+    ensureBuild?: typeof ensureDevelopmentBuild;
+    watch?: typeof watchDevelopmentBuild;
+  } = {},
+) {
+  const version = arguments_.production ? createPreviewVersion : undefined;
+  if (arguments_.sync) {
+    await ensureBuild({
+      outputDir: arguments_.directory,
+      force: arguments_.force,
+      version,
+    });
+  } else if (
+    !(await Bun.file(join(arguments_.directory, "index.html")).exists())
+  ) {
+    throw new Error(
+      `${arguments_.directory} is not built; omit --no-sync or run \`bun run build\``,
+    );
+  }
+  const liveReload = arguments_.production
+    ? undefined
+    : createDevelopmentLiveReload();
+  const server = serve({
+    hostname: arguments_.hostname,
+    port: arguments_.port,
+    fetch: createRequestHandler(arguments_.directory, fetch, liveReload),
+    error(error) {
+      console.error(error);
+      return new Response("Internal server error.", {
+        status: 500,
+        headers: noCacheHeaders(),
       });
-    } else if (
-      !(await Bun.file(join(arguments_.directory, "index.html")).exists())
-    ) {
-      throw new Error(
-        `${arguments_.directory} is not built; omit --no-sync or run \`bun run build\``,
-      );
-    }
-    const liveReload = arguments_.production
-      ? undefined
-      : createDevelopmentLiveReload();
-    const server = Bun.serve({
-      hostname: arguments_.hostname,
-      port: arguments_.port,
-      fetch: createRequestHandler(arguments_.directory, fetch, liveReload),
-      error(error) {
-        console.error(error);
-        return new Response("Internal server error.", {
-          status: 500,
-          headers: noCacheHeaders(),
-        });
+    },
+  });
+  console.log(`Server running on ${server.url}`);
+  if (arguments_.sync) {
+    await watch({
+      rebuild: () =>
+        ensureBuild({
+          outputDir: arguments_.directory,
+          version,
+        }),
+      onReload: () => {
+        if (liveReload) liveReload.reload();
+        else console.log("Preview update built; check for updates in the app.");
       },
     });
-    console.log(`Server running on ${server.url}`);
-    if (arguments_.sync) {
-      await watchDevelopmentBuild({
-        outputDir: arguments_.directory,
-        rebuild: () =>
-          ensureDevelopmentBuild({
-            outputDir: arguments_.directory,
-            version,
-          }),
-        onReload: () => {
-          if (liveReload) liveReload.reload();
-          else
-            console.log("Preview update built; check for updates in the app.");
-        },
-      });
-      console.log("Watching source files for changes.");
-    }
+    console.log("Watching source files for changes.");
+  }
+  return { server, liveReload };
+}
+
+if (import.meta.main) {
+  try {
+    await startDevelopmentServer(parseServerArguments(Bun.argv.slice(2)));
   } catch (error) {
-    console.error(error instanceof Error ? error.message : error);
+    console.error((error as Error).message);
     process.exitCode = 1;
   }
 }

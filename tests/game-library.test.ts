@@ -686,6 +686,14 @@ describe("game library browser integration", () => {
           throw new Error("the existing store must be reused");
         },
         transaction() {
+          // Each outcome fires once transactionDone listens for it.
+          const fire = (event, callback) => {
+            if ((transaction.event ?? "complete") !== event) return;
+            setTimeout(() => {
+              tx.error = transaction.error;
+              callback();
+            });
+          };
           const tx = {
             objectStore: () => ({
               getAll() {
@@ -698,13 +706,16 @@ describe("game library browser integration", () => {
                 return req;
               },
             }),
+            set oncomplete(callback) {
+              fire("complete", callback);
+            },
+            set onabort(callback) {
+              fire("abort", callback);
+            },
+            set onerror(callback) {
+              fire("error", callback);
+            },
           };
-          setTimeout(() => {
-            // A failed request rejects before transactionDone listens.
-            if (!transaction.event) return tx.oncomplete?.();
-            tx.error = transaction.error;
-            tx[`on${transaction.event}`]();
-          }, 5);
           return tx;
         },
         close() {},

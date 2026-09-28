@@ -14,8 +14,14 @@ const settle = async (s, time = 20) => {
   await flushShell();
 };
 
-async function setup({ beforeOpen = (_s) => {}, open = true } = {}) {
-  const s = await login(await loadShell({ stubBoxedWineReadiness: false }));
+async function setup({
+  beforeOpen = (_s) => {},
+  open = true,
+  initialStorage = {},
+} = {}) {
+  const s = await login(
+    await loadShell({ stubBoxedWineReadiness: false, initialStorage }),
+  );
   s.window.addEventListener(
     "error",
     (event) => {
@@ -818,4 +824,98 @@ test("native windows larger than the work area keep asking for their preferred s
   await settle(h.s);
   const bounds = commandsFor(h, "bounds").at(-1);
   expect(bounds.width).toBe(1500);
+});
+
+test("a minimized native window that disappears stays minimized until it returns", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  const win = h.app();
+  win.querySelector(".minimize-btn").click();
+  await settle(h.s, 200);
+  expect(win.style.display).toBe("none");
+  h.native({ type: "unmapped", id: 10 });
+  await settle(h.s, 150);
+  expect(win.style.display).toBe("none");
+
+  h.native({ type: "destroyed", id: 10 });
+  await settle(h.s);
+  Object.defineProperty(
+    h.s.document.getElementById("task-buttons"),
+    "clientWidth",
+    { value: 330 },
+  );
+  h.s.window.dispatchEvent(new h.s.window.Event("resize"));
+  await settle(h.s);
+  h.s.document.querySelector('.task-button[data-game="__calculator"]').click();
+  await settle(h.s, 200);
+  expect(win.style.display).toBe("none");
+
+  await openWindow(h, 11, launchToken);
+  await settle(h.s, 200);
+  expect(win.style.display).not.toBe("none");
+});
+
+const setViewport = (s, width, height) => {
+  for (const [name, value] of [
+    ["innerWidth", width],
+    ["innerHeight", height],
+  ])
+    Object.defineProperty(s.window, name, { configurable: true, value });
+  const desktop = s.document.getElementById("desktop");
+  Object.defineProperties(desktop, {
+    clientWidth: { configurable: true, value: width },
+    clientHeight: { configurable: true, value: height },
+  });
+};
+
+test("native windows too large for the screen shrink to fit and regain their size when room returns", async () => {
+  const { h, win } = await openMeasuredWindow();
+  setViewport(h.s, 1024, 768);
+  metadata(h, { width: 1500, height: 1000 });
+  await settle(h.s);
+  const fitted = parseFloat(win.style.width);
+  expect(fitted).toBeLessThan(1500);
+  setViewport(h.s, 1200, 900);
+  h.s.window.dispatchEvent(new h.s.window.Event("resize"));
+  await settle(h.s);
+  expect(parseFloat(win.style.width)).toBeGreaterThan(fitted);
+  expect(parseFloat(win.style.width)).toBeLessThan(1500);
+  setViewport(h.s, 2400, 1800);
+  h.s.window.dispatchEvent(new h.s.window.Event("resize"));
+  await settle(h.s);
+  expect(win.style.width).toBe("1500px");
+});
+
+test("native windows opened on a tiny screen fit before their metadata arrives", async () => {
+  const h = await setup({ beforeOpen: (s) => setViewport(s, 320, 240) });
+  const width = parseFloat(h.app().style.width);
+  expect(width).toBeLessThanOrEqual(320);
+  expect(width).toBeGreaterThan(0);
+});
+
+test("native windows are left alone while the browser has no visible area", async () => {
+  const h = await setup({ beforeOpen: (s) => setViewport(s, 0, 0) });
+  expect(h.app().style.width).toBe("640px");
+});
+
+test("a remembered native window position is kept while an unusable remembered size is not", async () => {
+  const h = await setup({
+    initialStorage: {
+      windowPlacements: JSON.stringify({
+        __calculator: { left: 40, top: 30, width: 50, height: 40 },
+      }),
+    },
+  });
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  metadata(h, { width: 300, height: 200 }, { canResize: false });
+  await settle(h.s);
+  const win = h.app();
+  expect([win.style.left, win.style.top]).toEqual(["40px", "30px"]);
+  expect(win.style.width).toBe("300px");
 });

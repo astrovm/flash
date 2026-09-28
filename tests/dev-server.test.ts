@@ -401,6 +401,7 @@ describe("development server edge cases", () => {
     const watcher = await watchDevelopmentBuild({
       fingerprint: async () => "unchanged",
       onReload: () => {},
+      rebuild: async () => ({ rebuilt: false }),
     });
     watcher.close();
   });

@@ -2,7 +2,7 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "test": "bun run typecheck && bun test --parallel && bun run validate:javascript && bun run validate:icons",
-    "test:coverage": "COVERAGE=1 bun test --parallel && bun tools/coverage-report.ts --skip-full",
+    "test:coverage": "COVERAGE=1 bun test --parallel --timeout 30000 && bun tools/coverage-report.ts --skip-full",
     "build": "bun tools/deploy.ts",
     "build:pinball-runtime": "bun tools/build-pinball-runtime.ts",
     "build:boxedwine-apps": "bun tools/build-boxedwine-app-packages.ts",
