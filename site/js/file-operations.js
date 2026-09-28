@@ -8,7 +8,7 @@
 
 (function (root, factory) {
   const filesystem =
-    (root && root.VirtualFS) ||
+    root.VirtualFS ||
     (typeof module !== "undefined" && module.exports
       ? require("./filesystem.js")
       : null);

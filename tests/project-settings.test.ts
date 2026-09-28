@@ -560,3 +560,28 @@ test("offline initialization failures and played-game downloads are reported", a
   await flushShell();
   expect(warnings.length + errors.length).toBeGreaterThan(0);
 });
+
+test("the full startup preference reads as off when storage is unreadable", async () => {
+  const s = await login(
+    await loadShell({ initialStorage: { fullStartup: "true" } }),
+  );
+  const storage = s.window.localStorage;
+  Object.defineProperty(s.window, "localStorage", {
+    configurable: true,
+    value: {
+      getItem(key) {
+        if (key === "fullStartup") throw new Error("storage blocked");
+        return storage.getItem(key);
+      },
+      setItem: (key, value) => storage.setItem(key, value),
+      removeItem: (key) => storage.removeItem(key),
+    },
+  });
+  s.document
+    .querySelector('[data-desktop-id="__astro-settings"]')
+    .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  await flushShell();
+  expect(
+    s.document.querySelector('[data-project-setting="full-startup"]').checked,
+  ).toBeFalse();
+});

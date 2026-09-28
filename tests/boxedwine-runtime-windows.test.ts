@@ -647,3 +647,175 @@ test("unknown applications are rejected before the shared runtime is created", a
     await page.happyDOM.close();
   }
 });
+
+const openDialog = (h, id, extra = {}) => {
+  h.native({
+    type: "created",
+    id,
+    ownerId: 10,
+    processId: 77,
+    dialog: true,
+    title: `Dialog ${id}`,
+    x: 20,
+    y: 20,
+    width: 200,
+    height: 120,
+    frameTop: 25,
+    win32Metrics: true,
+    ...extra,
+  });
+  h.native({ type: "mapped", id });
+  h.native({ type: "frame", id, width: 200, height: 120 });
+};
+
+test("native dialogs keep the focused dialog when another closes and only drag with the primary button", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  openDialog(h, 20, { x: 0, y: 0 });
+  await settle(h.s);
+  openDialog(h, 21);
+  await settle(h.s);
+  const dialog = (id) =>
+    h.s.document.querySelector(`[data-native-window-id="${id}"]`);
+  const first = dialog(20);
+  expect(dialog(21).classList.contains("active")).toBeTrue();
+  first.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+  );
+  expect(first.classList.contains("active")).toBeTrue();
+
+  h.native({ type: "destroyed", id: 21 });
+  await settle(h.s);
+  expect(dialog(21)).toBeNull();
+  expect(first.classList.contains("active")).toBeTrue();
+
+  h.native({ type: "title", id: 20, title: "Renamed" });
+  h.native({ type: "frame", id: 20, width: 200, height: 120 });
+  await settle(h.s);
+  expect(dialog(20)).toBe(first);
+  expect(first.querySelector(".title-text").textContent).toBe("Renamed");
+
+  const bar = first.querySelector(".title-bar");
+  const { left, top } = first.style;
+  const pointer = (type, init) =>
+    bar.dispatchEvent(
+      new h.s.window.PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      }),
+    );
+  pointer("pointerdown", { button: 2, clientX: 10, clientY: 10 });
+  pointer("pointermove", { clientX: 80, clientY: 60 });
+  expect([first.style.left, first.style.top]).toEqual([left, top]);
+  first.querySelector(".close-btn").dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", {
+      bubbles: true,
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+    }),
+  );
+  pointer("pointermove", { clientX: 80, clientY: 60 });
+  expect([first.style.left, first.style.top]).toEqual([left, top]);
+});
+
+const metadata = (h, client, extra = {}) =>
+  h.native({
+    type: "metadata",
+    id: 10,
+    win32Metrics: true,
+    frameTop: 30,
+    canMaximize: true,
+    clientWidth: client.width,
+    clientHeight: client.height,
+    ...extra,
+  });
+
+const openMeasuredWindow = async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  const win = h.app();
+  const host = win.querySelector(".boxedwine-shared-app-host");
+  Object.defineProperties(host, {
+    clientWidth: { configurable: true, value: 300 },
+    clientHeight: { configurable: true, value: 200 },
+  });
+  return { h, win, size: () => [win.style.width, win.style.height] };
+};
+
+test("native metadata without usable bounds leaves the shell frame alone", async () => {
+  const { h, size } = await openMeasuredWindow();
+  const before = size();
+  metadata(h, { width: 0, height: 0 }, { width: 0, height: 0 });
+  await settle(h.s);
+  expect(size()).toEqual(before);
+});
+
+test("stale native size echoes are ignored until the pending resize expires", async () => {
+  const { h, size } = await openMeasuredWindow();
+  metadata(h, { width: 900, height: 600 });
+  await settle(h.s);
+  const requested = size();
+  metadata(h, { width: 640, height: 480 });
+  await settle(h.s);
+  expect(size()).toEqual(requested);
+
+  const performance = h.s.window.performance;
+  const now = performance.now.bind(performance);
+  performance.now = () => now() + 5000;
+  try {
+    metadata(h, { width: 640, height: 480 });
+    await settle(h.s);
+  } finally {
+    performance.now = now;
+  }
+  expect(size()[0]).toBe("640px");
+});
+
+test("native size echoes during a frame resize drag do not resize the frame", async () => {
+  const { h, win, size } = await openMeasuredWindow();
+  metadata(h, { width: 900, height: 600 });
+  await settle(h.s);
+  const [width, height] = size().map((value) => parseFloat(value));
+  metadata(h, { width, height: height - 28 });
+  await settle(h.s);
+  const handle = win.querySelector(".resize-handle");
+  handle.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", {
+      bubbles: true,
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+    }),
+  );
+  const during = size();
+  metadata(h, { width: 500, height: 400 });
+  await settle(h.s);
+  expect(size()).toEqual(during);
+  handle.dispatchEvent(
+    new h.s.window.PointerEvent("pointerup", {
+      bubbles: true,
+      clientX: 10,
+      clientY: 10,
+    }),
+  );
+});
+
+test("native windows larger than the work area keep asking for their preferred size", async () => {
+  const { h, win } = await openMeasuredWindow();
+  metadata(h, { width: 1500, height: 1000 });
+  await settle(h.s);
+  expect(parseFloat(win.style.width)).toBeLessThan(1500);
+  h.requests.length = 0;
+  h.resizeObservers.at(-1).callback();
+  await settle(h.s);
+  const bounds = commandsFor(h, "bounds").at(-1);
+  expect(bounds.width).toBe(1500);
+});

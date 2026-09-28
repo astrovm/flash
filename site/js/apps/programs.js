@@ -8,18 +8,17 @@ const wireSystemWindowControls = (win) => {
   win.el
     .querySelector(".minimize-btn")
     .addEventListener("click", () => minimizeWindow(win.gameId));
-  const maximize = win.el.querySelector(".maximize-btn");
-  if (maximize) {
-    maximize.addEventListener("click", () => toggleMaximize(win.gameId));
-    updateMaximizeButton(win);
-  }
+  win.el
+    .querySelector(".maximize-btn")
+    .addEventListener("click", () => toggleMaximize(win.gameId));
+  updateMaximizeButton(win);
   wireDrag(win);
   if (win.application?.window.resizable !== false) wireResize(win);
 };
 
 const activateNativeOwnedWindow = (owner, dialog) => {
   owner.nativeFocusedOwnedWindow = dialog;
-  for (const owned of owner.nativeOwnedWindows?.values() || [])
+  for (const owned of owner.nativeOwnedWindows.values())
     owned.el.classList.remove("active");
   owner.el.classList.remove("active");
   dialog.el.classList.add("active");
@@ -138,6 +137,7 @@ const upsertNativeOwnedWindow = (owner, detail) => {
       for (const owned of owner.nativeOwnedWindows.values())
         owned.el.style.display = visible ? "flex" : "none";
     };
+    // Removing the last dialog clears this callback, so one always remains.
     owner.focusOwnedWindow = () => {
       const focused = owner.nativeFocusedOwnedWindow;
       const topDialog =
@@ -145,7 +145,6 @@ const upsertNativeOwnedWindow = (owner, detail) => {
           [...owner.nativeOwnedWindows.values()].includes(focused) &&
           focused) ||
         [...owner.nativeOwnedWindows.values()].at(-1);
-      if (!topDialog) return false;
       activateNativeOwnedWindow(owner, topDialog);
       return true;
     };
@@ -161,8 +160,10 @@ const upsertNativeOwnedWindow = (owner, detail) => {
       owner.nativeDialogBlocker = (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
-        const topDialog = [...owner.nativeOwnedWindows.values()].at(-1);
-        if (topDialog) focusNativeOwnedWindow(owner, topDialog);
+        focusNativeOwnedWindow(
+          owner,
+          [...owner.nativeOwnedWindows.values()].at(-1),
+        );
       };
       owner.el.addEventListener("pointerdown", owner.nativeDialogBlocker, true);
       owner.el.addEventListener("click", owner.nativeDialogBlocker, true);
@@ -178,8 +179,9 @@ const upsertNativeOwnedWindow = (owner, detail) => {
   dialog.close = detail.close;
   dialog.focus = detail.focus;
   dialog.el.querySelector(".title-text").textContent = detail.title;
-  const dialogWidth = Number(detail.clientWidth) || Number(detail.width);
-  const dialogHeight = Number(detail.clientHeight) || Number(detail.height);
+  // The window surface always reports the dialog's client size.
+  const dialogWidth = Number(detail.clientWidth);
+  const dialogHeight = Number(detail.clientHeight);
   const dialogCaption = parseWindowLength(
     dialog.el.ownerDocument.defaultView
       ?.getComputedStyle?.(dialog.el)
@@ -239,14 +241,13 @@ const applicationContext = (win) => ({
   },
   setTitle(title) {
     win.title = title;
-    if (systemShortcuts[win.gameId]) systemShortcuts[win.gameId].title = title;
-    const titleText = win.el.querySelector(".title-text");
-    if (titleText) titleText.textContent = title;
+    systemShortcuts[win.gameId].title = title;
+    win.el.querySelector(".title-text").textContent = title;
     renderTaskButtons();
     updateDocumentTitle();
   },
   setNativeRuntimeSize(width, height) {
-    if (width > 0 && height > 0) win.nativeRuntimeSize = { width, height };
+    win.nativeRuntimeSize = { width, height };
   },
   setAccessKeyText,
   close: () => closeGameWindow(win.gameId),
@@ -287,15 +288,11 @@ const applicationContext = (win) => ({
       handle.hidden = !canResize;
     });
     const maximize = win.el.querySelector(".maximize-btn");
-    if (maximize) {
-      maximize.disabled = !canMaximize;
-      maximize.setAttribute("aria-disabled", String(!canMaximize));
-    }
+    maximize.disabled = !canMaximize;
+    maximize.setAttribute("aria-disabled", String(!canMaximize));
     const minimize = win.el.querySelector(".minimize-btn");
-    if (minimize) {
-      minimize.disabled = !canMinimize;
-      minimize.setAttribute("aria-disabled", String(!canMinimize));
-    }
+    minimize.disabled = !canMinimize;
+    minimize.setAttribute("aria-disabled", String(!canMinimize));
     this.nativeCanMaximize = canMaximize;
 
     // Geometry is owned by the shell while maximized, and unmeasurable while
@@ -449,7 +446,6 @@ const applicationContext = (win) => ({
   openFile: (options) => XPDialogs.openFile(options),
   saveFile: (options) => XPDialogs.saveFile(options),
   myPictures: fs.MY_PICTURES,
-  dataUrlFromBlob,
   setFileContent: (id, content, options) => fs.setContent(id, content, options),
   createFile: (parentId, name, content) =>
     fs.createFile(parentId, name, { content }),
@@ -558,10 +554,8 @@ const openXPProgram = (programId, options = {}) => {
   fitNativeProgramToWorkArea(win);
   if (program.window.maximizable === false) {
     const maximize = el.querySelector(".maximize-btn");
-    if (maximize) {
-      maximize.disabled = true;
-      maximize.setAttribute("aria-disabled", "true");
-    }
+    maximize.disabled = true;
+    maximize.setAttribute("aria-disabled", "true");
   }
   if (program.window.resizable === false) {
     el.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());

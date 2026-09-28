@@ -444,6 +444,12 @@ describe("file operations", () => {
     );
     operations.copy([note.id]);
     expect(() => operations.paste(note.id)).toThrow("must be a folder");
+    operations.copy([source.id]);
+    expect(() => operations.paste(nested.id)).toThrow(
+      'cannot copy "Source" into itself',
+    );
+    expect(() => operations.paste(source.id)).toThrow("into itself");
+    expect(operations.canPaste(nested.id)).toBeFalse();
     operations.cut([source.id]);
     expect(() => operations.paste(nested.id)).toThrow("into itself");
     fs.getNode(source.id).protected = true;
@@ -492,5 +498,41 @@ describe("file operations", () => {
     fs.getNode(second.id).originalParent = first.id;
     const restored = operations.restore([first.id, second.id]);
     expect(restored.map((node) => node.parent)).toEqual([fs.DESKTOP, first.id]);
+  });
+});
+
+describe("file operations loading", () => {
+  const scope = globalThis as { VirtualFS?: unknown };
+
+  test("loads the filesystem module itself under CommonJS", () => {
+    const loaded = scope.VirtualFS;
+    delete scope.VirtualFS;
+    try {
+      delete require.cache[operationsPath];
+      const operations = require(operationsPath);
+      const fs = require(fsPath);
+      const folder = operations.createFolder(fs.MY_DOCUMENTS, "Loaded");
+      expect(fs.getNode(folder.id).name).toBe("Loaded");
+    } finally {
+      scope.VirtualFS = loaded;
+      delete require.cache[operationsPath];
+    }
+  });
+
+  test("refuses to start in a browser without VirtualFS", async () => {
+    const { instrumentSource } = await import("./helpers/coverage");
+    const source = instrumentSource(
+      await Bun.file(operationsPath).text(),
+      operationsPath,
+    );
+    const loaded = scope.VirtualFS;
+    delete scope.VirtualFS;
+    try {
+      expect(() => new Function("module", source)(undefined)).toThrow(
+        "FileOperations requires VirtualFS",
+      );
+    } finally {
+      scope.VirtualFS = loaded;
+    }
   });
 });

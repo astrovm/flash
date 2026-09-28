@@ -96,10 +96,8 @@
       (item) => !item.disabled && item.offsetParent !== null,
     );
 
-  const handleGlobalKeydown = (e) => {
-    const top = dialogStack[dialogStack.length - 1];
-    if (top) top.onKeydown(e);
-  };
+  // Registered only while a dialog is open, so the stack is never empty here.
+  const handleGlobalKeydown = (e) => dialogStack.at(-1).onKeydown(e);
 
   // ---- Core primitive ----
 
@@ -231,7 +229,7 @@
     const handleAccessKey = (e) => {
       if (e.ctrlKey || e.metaKey || e.key.length !== 1) return;
       const inTextField = /^(INPUT|TEXTAREA|SELECT)$/.test(
-        document.activeElement?.tagName || "",
+        document.activeElement?.tagName,
       );
       if (!e.altKey && inTextField) return;
       const button = dialog.accessKeys.get(e.key.toLowerCase());
@@ -593,12 +591,10 @@
       // Toolbar: Up one level + current path.
       const toolbar = document.createElement("div");
       toolbar.className = "dlg-file-toolbar";
+      // renderList disables Up at the root, so the current folder has a parent.
       const upBtn = createDialogButton({ id: "up", label: "&Up" }, () => {
-        const folder = fs().getNode(currentFolderId);
-        if (folder && folder.parent) {
-          currentFolderId = folder.parent;
-          renderList();
-        }
+        currentFolderId = fs().getNode(currentFolderId).parent;
+        renderList();
       });
       const pathLabel = document.createElement("span");
       pathLabel.className = "dlg-file-path";

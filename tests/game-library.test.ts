@@ -523,6 +523,28 @@ describe("game library recovery", () => {
     expect(await bytesOf(await f.manager.match(installed.url))).toEqual([4, 5]);
     expect(store.values.size).toBe(1);
   });
+  test("a failed logo update still installs when its artwork cannot be removed", async () => {
+    const store = new FakeStore();
+    store.put = async (record) => {
+      if (record.iconPath) throw new Error("logo metadata unavailable");
+      store.values.set(record.id, record);
+    };
+    const cache = new FakeCache();
+    const deleted = [];
+    cache.delete = async (key) => {
+      deleted.push(String(key));
+      throw new Error("cache locked");
+    };
+    const f = createFixture({ cache, overrides: { metadataStore: store } });
+    await f.manager.initialize();
+    const installed = await f.manager.install(details);
+    expect(deleted).toEqual([
+      `https://flash.example/__installed-games/${uuid}/logo.jpg`,
+    ]);
+    expect(installed.iconPath).toBeUndefined();
+    expect(await bytesOf(await f.manager.match(installed.url))).toEqual([4, 5]);
+  });
+
   test("missing legacy assets are negatively cached but server errors remain retryable", async () => {
     let status = 404,
       requests = 0;
@@ -655,6 +677,67 @@ describe("game library browser integration", () => {
     await expect(library.createMetadataStore(indexedDB)).rejects.toThrow();
   });
 
+  test("reports failed storage requests and transactions with their error or a default", async () => {
+    const { library } = loadModules();
+    const scriptedIndexedDB = ({ request = {}, transaction = {} }) => {
+      const database = {
+        objectStoreNames: { contains: () => true },
+        createObjectStore() {
+          throw new Error("the existing store must be reused");
+        },
+        transaction() {
+          const tx = {
+            objectStore: () => ({
+              getAll() {
+                const req = { result: [] };
+                setTimeout(() =>
+                  request.event
+                    ? ((req.error = request.error), req.onerror())
+                    : req.onsuccess(),
+                );
+                return req;
+              },
+            }),
+          };
+          setTimeout(() => {
+            // A failed request rejects before transactionDone listens.
+            if (!transaction.event) return tx.oncomplete?.();
+            tx.error = transaction.error;
+            tx[`on${transaction.event}`]();
+          }, 5);
+          return tx;
+        },
+        close() {},
+      };
+      return {
+        open() {
+          const req = { result: database };
+          setTimeout(() => {
+            req.onupgradeneeded();
+            req.onsuccess();
+          });
+          return req;
+        },
+      };
+    };
+    const quota = new Error("Quota exceeded");
+    for (const [options, expected] of [
+      [{ request: { event: true } }, "Browser storage request failed."],
+      [{ request: { event: true, error: quota } }, "Quota exceeded"],
+      [{ transaction: { event: "abort" } }, "Browser storage was aborted."],
+      [{ transaction: { event: "abort", error: quota } }, "Quota exceeded"],
+      [{ transaction: { event: "error" } }, "Browser storage failed."],
+      [{ transaction: { event: "error", error: quota } }, "Quota exceeded"],
+    ]) {
+      const store = await library.createMetadataStore(
+        scriptedIndexedDB(options),
+      );
+      await expect(store.list()).rejects.toThrow(expected);
+    }
+    const healthy = await library.createMetadataStore(scriptedIndexedDB({}));
+    expect(await healthy.list()).toEqual([]);
+  });
+
   test("describes records without tags or titles as downloaded games", () => {
     const { library } = loadModules();
     expect(
@@ -731,6 +814,26 @@ describe("game library browser integration", () => {
         await expect(
           manager.install(details, { signal: controller.signal }),
         ).rejects.toThrow();
+      } finally {
+        fflate.unzip = unzip;
+      }
+      let cancel;
+      const reasonless = {
+        reason: undefined,
+        throwIfAborted() {},
+        addEventListener: (_type, listener) => (cancel = listener),
+        removeEventListener() {},
+      };
+      let terminations = 0;
+      fflate.unzip = () => {
+        setTimeout(cancel);
+        return () => terminations++;
+      };
+      try {
+        await expect(
+          manager.install(details, { signal: reasonless }),
+        ).rejects.toThrow("Download cancelled");
+        expect(terminations).toBe(1);
       } finally {
         fflate.unzip = unzip;
       }

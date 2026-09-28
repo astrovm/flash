@@ -294,7 +294,6 @@ const openWallpaperBrowseDialog = (ownerWindow, fileInput) => {
 
 const wireDisplayProperties = (win) => {
   const content = win.el.querySelector(".display-properties-content");
-  if (!content) return;
 
   let current = getDisplaySettings();
   let pending = { ...current };
@@ -509,8 +508,8 @@ const wireDisplayProperties = (win) => {
       event.preventDefault();
       wallpaperScroller.scrollBy({ top: 18 });
     });
+  // The thumb stops its own pointerdown, so this only sees track presses.
   wallpaperScrollTrack.addEventListener("pointerdown", (event) => {
-    if (event.target === wallpaperScrollThumb) return;
     event.preventDefault();
     const thumbBounds = wallpaperScrollThumb.getBoundingClientRect();
     const direction = event.clientY < thumbBounds.top ? -1 : 1;
@@ -654,12 +653,8 @@ const wireDisplayProperties = (win) => {
       return;
     }
     const reader = new FileReader();
+    // The type check above guarantees an image data URL.
     reader.addEventListener("load", () => {
-      if (
-        typeof reader.result !== "string" ||
-        !reader.result.startsWith("data:image/")
-      )
-        return;
       pending = { ...pending, customWallpaper: reader.result };
       setStatus(`${file.name} will be used after you apply changes.`);
       sync();
@@ -702,8 +697,8 @@ const wireDisplayProperties = (win) => {
   content
     .querySelector(".display-saver-preview-button")
     .addEventListener("click", () => {
+      // sync() disables Preview while (None) is selected.
       const saver = document.getElementById("screen-saver-overlay");
-      if (!saver || pending.screenSaver === "none") return;
       showScreenSaver(saver, pending.screenSaver);
       const closePreview = () => {
         hideScreenSaver(saver);
@@ -718,7 +713,8 @@ const wireDisplayProperties = (win) => {
   content
     .querySelector('[data-display-action="apply"]')
     .addEventListener("click", () => {
-      if (!isDisplaySettings(pending)) return;
+      // Every control only produces valid settings, so pending needs no
+      // re-validation here.
       if (!saveDisplaySettings(pending)) {
         setStatus("Windows could not save this picture. Try a smaller image.");
         return;

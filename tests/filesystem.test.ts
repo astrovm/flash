@@ -331,6 +331,22 @@ describe("virtual filesystem edge cases", () => {
     expect(fs.getChildren(fs.MY_PICTURES)).toEqual([]);
   });
 
+  test("restores a missing system folder together with its missing parent", () => {
+    installMemoryStorage();
+    const seed = loadFilesystem();
+    const nodes = Object.fromEntries(
+      Object.values(seed.WELL_KNOWN).map((id) => [id, { ...seed.getNode(id) }]),
+    );
+    delete nodes[seed.MY_DOCUMENTS];
+    delete nodes[seed.MY_MUSIC];
+    localStorage.setItem("virtualFileSystem", storedNodes(nodes));
+    const fs = loadFilesystem();
+    expect(fs.getParent(fs.MY_MUSIC).id).toBe(fs.MY_DOCUMENTS);
+    expect(fs.getParent(fs.MY_DOCUMENTS).id).toBe(fs.USER_PROFILE);
+    const children = fs.getChildren(fs.MY_DOCUMENTS).map(({ id }) => id);
+    expect(children.filter((id) => id === fs.MY_MUSIC)).toHaveLength(1);
+  });
+
   test("reports unreadable stored data and starts from the seed", () => {
     installMemoryStorage();
     localStorage.setItem("virtualFileSystem", "{broken");

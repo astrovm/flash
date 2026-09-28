@@ -530,3 +530,90 @@ test("pressing an Explorer item keeps focus off the item list", async () => {
   );
   expect(s.document.activeElement).not.toBe(items);
 });
+
+test("Explorer Back and Forward keep the current folder when a history entry was deleted", async () => {
+  const h = await openDocuments(),
+    { fs } = h;
+  const other = fs.createFolder(fs.MY_DOCUMENTS, "Other");
+  h.item(h.nested.id).dispatchEvent(new h.s.window.MouseEvent("dblclick"));
+  await h.action("back");
+  expect(h.address().value).toBe(fs.getPath(h.folder.id));
+  fs.destroy(h.nested.id);
+  await settle();
+  await h.action("forward");
+  expect(h.address().value).toBe(fs.getPath(h.folder.id));
+  await h.action("forward");
+  expect(h.address().value).toBe(fs.getPath(h.folder.id));
+
+  h.address().value = fs.getPath(other.id);
+  await h.action("go");
+  fs.destroy(h.folder.id);
+  await settle();
+  expect(h.address().value).toBe(fs.getPath(other.id));
+  await h.action("back");
+  await h.action("back");
+  expect(h.address().value).toBe(fs.getPath(other.id));
+  await h.action("back");
+  expect(h.address().value).toBe(fs.getPath(fs.MY_DOCUMENTS));
+  expect(
+    h.win.querySelector('[data-explorer-action="back"]').disabled,
+  ).toBeTrue();
+});
+
+test("Explorer items support Ctrl multi-select and drag only what is selected", async () => {
+  const h = await openDocuments(),
+    { s } = h;
+  h.item(h.note.id).click();
+  h.item(h.nested.id).dispatchEvent(
+    new s.window.MouseEvent("click", { bubbles: true, ctrlKey: true }),
+  );
+  const selected = () =>
+    [...h.win.querySelectorAll(".explorer-item.selected")].map(
+      (item) => item.dataset.nodeId,
+    );
+  expect(selected().sort()).toEqual([h.note.id, h.nested.id].sort());
+  const drag = (item) => {
+    const data = new Map();
+    const event = new s.window.Event("dragstart", { bubbles: true });
+    Object.defineProperty(event, "dataTransfer", {
+      value: { setData: (type, value) => data.set(type, value) },
+    });
+    item.dispatchEvent(event);
+    return JSON.parse(data.get("application/x-astro-vfs-ids"));
+  };
+  expect(drag(h.item(h.note.id)).sort()).toEqual(
+    [h.note.id, h.nested.id].sort(),
+  );
+  h.item(h.note.id).click();
+  expect(drag(h.item(h.nested.id))).toEqual([h.nested.id]);
+});
+
+test("Explorer lists folders before files and closes menus when clicking elsewhere", async () => {
+  const h = await openDocuments(),
+    { s, fs } = h;
+  fs.createFile(h.folder.id, "a-first.txt");
+  fs.createFolder(h.folder.id, "Zeta");
+  await settle();
+  expect(
+    [...h.win.querySelectorAll(".explorer-item")].map(
+      (item) => item.dataset.nodeId && fs.getNode(item.dataset.nodeId).name,
+    ),
+  ).toEqual(["Nested", "Zeta", "a-first.txt", "note.txt"]);
+
+  h.item(h.note.id).dispatchEvent(
+    new s.window.MouseEvent("contextmenu", { bubbles: true }),
+  );
+  const context = h.win.querySelector(".explorer-context-menu");
+  context.click();
+  await settle();
+  expect(context.isConnected).toBeTrue();
+
+  h.menu("file");
+  const button = h.win.querySelector('[data-explorer-menu="file"]');
+  expect(button.getAttribute("aria-expanded")).toBe("true");
+  s.document
+    .getElementById("desktop")
+    .dispatchEvent(new s.window.PointerEvent("pointerdown", { bubbles: true }));
+  expect(button.getAttribute("aria-expanded")).toBe("false");
+  expect(h.win.querySelector(".explorer-menu").hidden).toBeTrue();
+});

@@ -167,3 +167,151 @@ test("desktop items open games, system windows, and survive failing files", asyn
   }
   expect(errors[0].message).toBe("handler failed");
 });
+
+test("games opened from Run are linked in the address hash", async () => {
+  const s = await login(await loadShell());
+  s.window.RufflePlayer = {
+    newest: () => ({
+      createPlayer: () => {
+        const player = s.document.createElement("ruffle-player");
+        player.load = () => {};
+        return player;
+      },
+    }),
+  };
+  expect(s.window.location.hash).toBe("");
+  await runCommand(s, "bike-mania");
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="bike-mania"]'),
+  ).toBeTrue();
+  expect(s.window.location.hash).toBe("#bike-mania");
+});
+
+test("programs open no larger than the desktop leaves room for", async () => {
+  const s = await login(await loadShell());
+  const desktop = s.document.getElementById("desktop");
+  Object.defineProperties(desktop, {
+    clientWidth: { configurable: true, value: 500 },
+    clientHeight: { configurable: true, value: 300 },
+  });
+  await runCommand(s, "notepad");
+  const win = s.document.querySelector('.xp-window[data-game="__notepad"]');
+  expect(win.style.width).toBe("484px");
+  expect(win.style.height).toBe("284px");
+});
+
+test("system windows that finish loading after log off stay closed and silent", async () => {
+  const s = await login(await loadShell({ preloadApplications: false }));
+  let finishMusic, failPictures;
+  const mount = () => ({
+    element: s.document.createElement("div"),
+    unmount() {},
+  });
+  overrideRegistry(s, {
+    "__my-music": {
+      kind: "system",
+      title: "My Music",
+      loaded: null,
+      load: () => new Promise((resolve) => (finishMusic = resolve)),
+    },
+    "__my-pictures": {
+      kind: "system",
+      title: "My Pictures",
+      loaded: null,
+      load: () => new Promise((_resolve, reject) => (failPictures = reject)),
+    },
+  });
+  clickStartAction(s, "music");
+  clickStartAction(s, "pictures");
+  s.document.getElementById("logoff-confirm").click();
+  await settle();
+  expect(s.document.getElementById("desktop").hidden).toBeTrue();
+  finishMusic({ mount });
+  failPictures(new Error("offline"));
+  await settle();
+  expect(s.document.querySelector(".xp-window")).toBeNull();
+  expect(s.document.querySelector(".xp-dialog")).toBeNull();
+});
+
+test("system applications without lazy loading open directly", async () => {
+  const s = await login(await loadShell());
+  const element = s.document.createElement("div");
+  element.className = "window-content direct-system-window";
+  overrideRegistry(s, {
+    "__control-panel": {
+      id: "__control-panel",
+      kind: "system",
+      title: "Direct",
+      icon: "ControlPanel.png",
+      window: { width: 300, height: 200 },
+      mount: () => ({ element, unmount() {} }),
+    },
+  });
+  clickStartAction(s, "controlPanel");
+  await settle();
+  const win = s.document.querySelector(
+    '.xp-window[data-game="__control-panel"]',
+  );
+  expect(win.querySelector(".direct-system-window")).toBe(element);
+});
+
+test("Paint saves through the shell's Save As dialog into My Pictures", async () => {
+  const s = await login(await loadShell());
+  const fs = s.window.VirtualFS;
+  s.document.getElementById("start-button").click();
+  s.document.getElementById("all-programs-button").click();
+  const flyouts = s.document.getElementById("start-menu-flyouts");
+  flyouts.querySelector('[data-program-id="accessories"]').click();
+  flyouts.querySelector('[data-program-id="paint"]').click();
+  await settle();
+  const win = s.document.querySelector('.xp-window[data-game="__paint"]');
+  win.querySelector('[data-paint-command="save-as"]').click();
+  await settle();
+  const dialog = [...s.document.querySelectorAll(".xp-dialog")].at(-1);
+  expect(dialog.textContent).toContain("Save As");
+  expect(dialog.querySelector(".dlg-file-path").textContent).toContain(
+    "My Pictures",
+  );
+  dialog.querySelector("#dlg-file-name").value = "sketch";
+  dialog
+    .querySelector("#dlg-file-name")
+    .dispatchEvent(
+      new s.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+  for (let i = 0; i < 20 && !fs.findChild(fs.MY_PICTURES, "sketch.bmp"); i++)
+    await flushShell();
+  expect(fs.findChild(fs.MY_PICTURES, "sketch.bmp")).toBeTruthy();
+  expect(win.querySelector(".title-text").textContent).toBe(
+    "sketch.bmp - Paint",
+  );
+});
+
+test("game shortcuts open at full width on roomy desktops and ignore uninstalled games", async () => {
+  const s = await login(await loadShell());
+  const fs = s.window.VirtualFS;
+  s.window.RufflePlayer = {
+    newest: () => ({
+      createPlayer: () => {
+        const player = s.document.createElement("ruffle-player");
+        player.load = () => {};
+        return player;
+      },
+    }),
+  };
+  const desktop = s.document.getElementById("desktop");
+  Object.defineProperties(desktop, {
+    clientWidth: { configurable: true, value: 1600 },
+    clientHeight: { configurable: true, value: 1200 },
+  });
+  const missing = fs.createFile(fs.DESKTOP, "Missing.game", {
+    app: "uninstalled-game",
+  });
+  fs.open(missing.id);
+  await settle();
+  expect(s.document.querySelector(".xp-window")).toBeNull();
+
+  await runCommand(s, "bike-mania");
+  const game = s.document.querySelector('.xp-window[data-game="bike-mania"]');
+  expect(game.style.width).toBe("720px");
+  expect(parseFloat(game.style.height)).toBeLessThan(1200 * 0.92);
+});

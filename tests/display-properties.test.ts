@@ -312,10 +312,8 @@ test("display settings reject empty choices and report save failures", async () 
   const { s, q, change } = h;
   change("#display-saver-wait", "abc");
   change("#display-saver", "none");
-  q(".display-saver-preview-button").click();
-  expect(
-    s.document.getElementById("screen-saver-overlay")?.hidden ?? true,
-  ).toBeTrue();
+  expect(q(".display-saver-preview-button").disabled).toBeTrue();
+  expect(q(".display-saver-settings").disabled).toBeTrue();
   q("#display-image").dispatchEvent(new s.window.Event("change"));
   change("#display-position", "tile");
   const realStorage = s.window.localStorage;
@@ -348,4 +346,76 @@ test("display settings reject empty choices and report save failures", async () 
   q('[data-display-action="apply"]').click();
   q('[data-display-action="ok"]').click();
   expect(h.d.isConnected).toBeFalse();
+});
+
+test("the 3D Pipes preview keeps running while other saver settings change", async () => {
+  const h = await open();
+  const { q, change } = h;
+  h.d.querySelector('[aria-controls="display-panel-saver"]').click();
+  change("#display-saver", "pipes");
+  const preview = q(".pipes-screen-saver");
+  expect(preview).not.toBeNull();
+  change("#display-saver-wait", "5");
+  expect(q(".pipes-screen-saver")).toBe(preview);
+  h.d.querySelector('[aria-controls="display-panel-desktop"]').click();
+  expect(q(".pipes-screen-saver")).toBeNull();
+});
+
+test("effects save the chosen transition and font smoothing when enabled", async () => {
+  const h = await open();
+  const { s, q } = h;
+  q(".display-effects").click();
+  const dialog = s.document.querySelector(".display-effects-dialog");
+  for (const [effect, enabled, value] of [
+    ["transitionEffect", "transition", "scroll"],
+    ["fontSmoothing", "smoothing", "cleartype"],
+  ]) {
+    const toggle = dialog.querySelector(`[data-effect-enabled="${enabled}"]`);
+    if (!toggle.checked) toggle.click();
+    const select = dialog.querySelector(`[data-effect="${effect}"]`);
+    expect(select.disabled).toBeFalse();
+    select.value = value;
+  }
+  h.dialogButton(dialog, "OK");
+  q('[data-display-action="apply"]').click();
+  expect(h.saved()).toMatchObject({
+    transitionEffect: "scroll",
+    fontSmoothing: "cleartype",
+  });
+});
+
+test("a picture chosen after its browse dialog closed still becomes the wallpaper", async () => {
+  const h = await open();
+  const { s, q } = h;
+  q(".display-browse").click();
+  h.dialogButton(
+    s.document.querySelector(".wallpaper-browse-dialog"),
+    "Cancel",
+  );
+  const input = q("#display-image");
+  Object.defineProperty(input, "files", {
+    configurable: true,
+    value: [new s.window.File(["image"], "late.png", { type: "image/png" })],
+  });
+  input.dispatchEvent(new s.window.Event("change"));
+  for (let i = 0; i < 20 && q(".display-clear-image").hidden; i++)
+    await flushShell();
+  expect(q(".display-status").textContent).toContain("late.png");
+  expect(s.document.querySelector(".wallpaper-browse-dialog")).toBeNull();
+});
+
+test("a stored custom wallpaper is restored on the desktop", async () => {
+  const wallpaper = "data:image/png;base64,iVBORw0KGgo=";
+  const s = await login(
+    await loadShell({
+      initialStorage: {
+        displaySettings: JSON.stringify({ customWallpaper: wallpaper }),
+      },
+    }),
+  );
+  expect(
+    s.document
+      .getElementById("desktop")
+      .style.getPropertyValue("--desktop-background"),
+  ).toBe(`url("${wallpaper}")`);
 });

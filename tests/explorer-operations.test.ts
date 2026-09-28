@@ -278,3 +278,146 @@ test("import failures report their error and default messages", async () => {
     dialogText(h.s).includes("The dropped files could not be imported."),
   );
 });
+
+test("folder drops skip entries that are neither files nor folders", async () => {
+  const h = await dropSetup();
+  let read = false;
+  h.drag("drop", {
+    getData: () => "",
+    items: [
+      {
+        webkitGetAsEntry: () => ({
+          isDirectory: true,
+          name: "Mixed",
+          createReader: () => ({
+            readEntries: (ok) => {
+              const first = !read;
+              read = true;
+              ok(
+                first
+                  ? [
+                      { isFile: false, isDirectory: false, name: "odd" },
+                      {
+                        isFile: true,
+                        file: (done) => done(h.file("kept.txt")),
+                      },
+                    ]
+                  : [],
+              );
+            },
+          }),
+        }),
+      },
+    ],
+  });
+  await settle(() => !h.s.document.querySelector(".xp-dialog"));
+  const folder = h.fs.findChild(h.target.id, "Mixed");
+  expect(h.fs.getChildren(folder.id).map(({ name }) => name)).toEqual([
+    "kept.txt",
+  ]);
+});
+
+test("cancelling a plain file drop stops before the remaining files", async () => {
+  const h = await dropSetup();
+  const createFile = h.s.window.FileOperations.createFile;
+  h.s.window.FileOperations.createFile = async (...args) => {
+    const created = await createFile(...args);
+    h.s.document.querySelector(".xp-dialog .dlg-buttons button").click();
+    return created;
+  };
+  try {
+    h.drag("drop", {
+      getData: () => "",
+      files: [h.file("first.txt"), h.file("second.txt")],
+    });
+    await settle(() => !h.s.document.querySelector(".xp-dialog"));
+  } finally {
+    h.s.window.FileOperations.createFile = createFile;
+  }
+  expect(h.fs.getChildren(h.target.id).map(({ name }) => name)).toEqual([
+    "first.txt",
+  ]);
+});
+
+test("shell shortcuts wait while a replace question is open, and Escape cancels the paste", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS,
+    ops = s.window.FileOperations;
+  const source = fs.createFolder(fs.MY_DOCUMENTS, "Source");
+  const destination = fs.createFolder(fs.MY_DOCUMENTS, "Destination");
+  const file = fs.createFile(source.id, "same.txt", { content: "new" });
+  fs.createFile(destination.id, "same.txt", { content: "old" });
+  fs.open(destination.id);
+  await flushShell();
+  const surface = s.document.querySelector(
+    '.xp-window[data-game="__my-documents"] .explorer-items',
+  );
+  const paste = () => {
+    surface.focus();
+    surface.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", {
+        key: "v",
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  };
+  ops.copy([file.id]);
+  paste();
+  await settle(() => dialogText(s).includes("already exists"));
+  paste();
+  await flushShell();
+  expect(s.document.querySelectorAll(".xp-dialog")).toHaveLength(1);
+  s.document.activeElement.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+  await settle(() => !s.document.querySelector(".xp-dialog"));
+  expect(fs.getChildren(destination.id).map(({ content }) => content)).toEqual([
+    "old",
+  ]);
+});
+
+test("Empty Recycle Bin is unavailable while the bin is already empty", async () => {
+  const s = await login(await loadShell());
+  s.document
+    .querySelector('[data-desktop-id="__recycle-bin"]')
+    .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  await flushShell();
+  const win = s.document.querySelector('.xp-window[data-game="__recycle-bin"]');
+  const task = [...win.querySelectorAll(".recycle-task")].find(
+    (button) => button.textContent === "Empty Recycle Bin",
+  );
+  expect(task.disabled).toBeTrue();
+  s.document
+    .querySelector('[data-desktop-id="__recycle-bin"]')
+    .dispatchEvent(
+      new s.window.MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  expect(
+    s.document.querySelector(
+      '#desktop-context-menu [data-action="empty-recycle-bin"]',
+    ).disabled,
+  ).toBeTrue();
+});
+
+test("folder drops with invalid names report the error without creating anything", async () => {
+  const h = await dropSetup();
+  h.drag("drop", {
+    getData: () => "",
+    items: [
+      {
+        webkitGetAsEntry: () => ({
+          isDirectory: true,
+          name: "bad?folder",
+          createReader: () => ({ readEntries: (ok) => ok([]) }),
+        }),
+      },
+    ],
+  });
+  await settle(() => dialogText(h.s).includes("invalid characters"));
+  expect(h.fs.getChildren(h.target.id)).toEqual([]);
+});

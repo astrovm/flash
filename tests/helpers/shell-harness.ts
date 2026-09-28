@@ -52,6 +52,9 @@ export async function loadShell({
   fetchObject,
   preloadApplications = true,
   stubBoxedWineReadiness = true,
+  // Without memory-only documents and without IndexedDB, VirtualFS starts
+  // read-only, as it does when browser site storage is blocked.
+  documentStorage = "memory",
   url = "http://127.0.0.1/",
 } = {}) {
   const window = new Window({
@@ -72,7 +75,8 @@ export async function loadShell({
         Promise.resolve(callback({ name: "astro-flash-files" })),
     },
   });
-  window.ASTRO_FS_MEMORY_ONLY = true;
+  if (documentStorage === "memory") window.ASTRO_FS_MEMORY_ONLY = true;
+  else delete window.indexedDB;
   if (fetchObject) window.fetch = fetchObject;
   // Instrumented scripts evaluated in the window record into the same map as
   // modules loaded by the test runner.
@@ -229,8 +233,11 @@ export async function loadShell({
       return null;
     },
   };
-  window.AstroGameLibrary.createManager = () =>
-    gameLibraryManager || emptyLibrary;
+  // An Error stands for a browser where the game library cannot be created.
+  window.AstroGameLibrary.createManager = () => {
+    if (gameLibraryManager instanceof Error) throw gameLibraryManager;
+    return gameLibraryManager || emptyLibrary;
+  };
 
   const offlineSnapshot = {
     activeGameId: null,

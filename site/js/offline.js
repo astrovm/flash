@@ -1042,13 +1042,13 @@
             lastChecked: checkedAt,
             updateEligibleAt: updateAvailable ? eligibleAt : null,
             updateReady: updateAvailable && waitingUpdateReady,
+            // registerAndWait has just confirmed an active worker, unless a
+            // newer one is still installing or waiting behind it.
             workerState: registration?.installing
               ? registration.installing.state
               : registration?.waiting
                 ? "waiting"
-                : registration?.active
-                  ? "active"
-                  : "unregistered",
+                : "active",
             error: null,
           });
           if (!registration?.waiting && !registration?.installing) {

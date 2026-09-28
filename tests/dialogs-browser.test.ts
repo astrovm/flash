@@ -404,3 +404,39 @@ test("file dialogs go up, sort folders first and keep typed names for folders", 
   current(s).querySelector('[data-action="cancel"]').click();
   expect(await save).toBeNull();
 });
+
+test("focus trapping leaves middle stops to the browser and holds focus when nothing is focusable", async () => {
+  const s = await login(await loadShell());
+  const tab = (target, shiftKey = false) => {
+    const event = new s.window.KeyboardEvent("keydown", {
+      key: "Tab",
+      shiftKey,
+      bubbles: true,
+      cancelable: true,
+    });
+    target.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+  const empty = s.window.XPDialogs.createDialog({ title: "Empty" });
+  for (const button of empty.el.querySelectorAll("button"))
+    button.disabled = true;
+  const before = s.document.activeElement;
+  expect(tab(empty.el)).toBeTrue();
+  expect(s.document.activeElement).toBe(before);
+  empty.close();
+
+  const d = s.window.XPDialogs.createDialog({ title: "Fields" });
+  const fields = ["first", "middle", "last"].map((name) => {
+    const input = s.document.createElement("input");
+    input.name = name;
+    d.body.append(input);
+    return input;
+  });
+  for (const el of d.el.querySelectorAll("button,input"))
+    Object.defineProperty(el, "offsetParent", { get: () => d.el });
+  fields[1].focus();
+  expect(tab(fields[1])).toBeFalse();
+  expect(tab(fields[1], true)).toBeFalse();
+  expect(s.document.activeElement).toBe(fields[1]);
+  d.close();
+});

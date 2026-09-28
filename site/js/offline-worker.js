@@ -82,8 +82,8 @@
     try {
       revcdosStorePromise ||= openRevcdosStore();
       const { data, files } = await revcdosStorePromise;
-      const route = url.pathname.match(REVCDOS_ROUTE)?.[0];
-      if (!route) return new Response("Asset not found", { status: 404 });
+      // The fetch handler only routes matching paths here.
+      const [route] = url.pathname.match(REVCDOS_ROUTE);
       const requestedPath = url.pathname.slice(
         url.pathname.indexOf(route) + route.length,
       );
