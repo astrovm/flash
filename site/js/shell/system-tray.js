@@ -72,8 +72,6 @@ const toggleTrayVolumePopup = () => {
   }
 };
 
-let offlineManagerInitialized = false;
-
 const offlineStatusText = (state) => {
   const messages = {
     starting: "Preparing Astro Flash system files...",
@@ -125,11 +123,9 @@ const projectStorageText = (state) => {
 const formatProjectState = (value) =>
   value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Unavailable";
 
+// Runs once at startup. The development server serves no service worker.
 const initializeOfflineMode = () => {
-  if (offlineManagerInitialized || window.ASTRO_DEV) {
-    return offlineManagerInitialization;
-  }
-  offlineManagerInitialized = true;
+  if (window.ASTRO_DEV) return offlineManagerInitialization;
   offlineManagerInitialization = offlineManager.initialize().catch((error) => {
     console.error("Offline mode initialization failed:", error);
     throw error;
@@ -142,8 +138,8 @@ const saveBundledGameForOffline = (gameId) => {
     return;
   }
 
+  // Each queued download handles its own failure, so the queue never rejects.
   automaticOfflineDownloadQueue = automaticOfflineDownloadQueue
-    .catch(() => {})
     .then(async () => {
       await offlineManagerInitialization;
       const snapshot = offlineManager.getSnapshot();
@@ -1209,10 +1205,11 @@ const setupSystemTray = () => {
   document
     .getElementById("tray-volume-slider")
     .addEventListener("input", (event) => {
-      const volume = parseInt(event.target.value, 10);
-      if (Number.isFinite(volume)) {
-        setSystemVolume(volume, getSystemVolume().isMuted);
-      }
+      // Range inputs sanitize their value to a number.
+      setSystemVolume(
+        parseInt(event.target.value, 10),
+        getSystemVolume().isMuted,
+      );
     });
   document
     .getElementById("tray-mute-checkbox")

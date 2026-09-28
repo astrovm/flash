@@ -742,9 +742,8 @@ const openDesktopItem = (itemId) => {
   }
 };
 
+// Callers only open games listed in gamesList.
 const openGameWindow = (gameId) => {
-  if (!gamesList[gameId]) return;
-
   const existing = openWindows.get(gameId);
   if (existing) {
     restoreWindow(gameId);
@@ -833,9 +832,6 @@ const openGameWindow = (gameId) => {
   saveBundledGameForOffline(gameId);
 
   wireWindowControls(win);
+  // Focusing the window also links it in the address hash.
   focusWindow(gameId);
-
-  if (window.location.hash !== `#${gameId}`) {
-    window.location.hash = gameId;
-  }
 };

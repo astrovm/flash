@@ -437,3 +437,25 @@ test("Internet Games sorts untitled installed games first and logs failed refres
   }
   expect(errors.map(([error]) => error.message)).toEqual(["corrupt record"]);
 });
+
+test("page requests skip installed games while the game library is unavailable", async () => {
+  const matched = [];
+  const s = await login(
+    await loadShell({
+      fetchObject: async () => new Response("network"),
+      gameLibraryManager: {
+        subscribe: () => () => {},
+        initialize: async () => {
+          throw new Error("library unavailable");
+        },
+        match: async (request) => {
+          matched.push(request);
+          return new Response("installed");
+        },
+      },
+    }),
+  );
+  const response = await s.window.fetch("https://game.example/asset.swf");
+  expect(await response.text()).toBe("network");
+  expect(matched).toEqual([]);
+});

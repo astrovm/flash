@@ -54,14 +54,13 @@ const getProgramGroups = () => {
     addToGroup(game.category || "Other", gameId),
   );
 
+  const groupRank = (name) =>
+    name === "Recently Played" ? 0 : name === "Favorites" ? 1 : 2;
   return Object.keys(groups)
-    .sort((left, right) => {
-      if (left === "Recently Played") return -1;
-      if (right === "Recently Played") return 1;
-      if (left === "Favorites") return -1;
-      if (right === "Favorites") return 1;
-      return left.localeCompare(right);
-    })
+    .sort(
+      (left, right) =>
+        groupRank(left) - groupRank(right) || left.localeCompare(right),
+    )
     .map((category) => [
       category,
       groups[category]
@@ -240,14 +239,10 @@ const buildPlaces = () => {
 
     const glyph = document.createElement("span");
     glyph.className = "sm-place-icon";
-    if (icon.endsWith(".png")) {
-      const image = document.createElement("img");
-      image.src = XP_ICON_PATHS[icon];
-      image.alt = "";
-      glyph.appendChild(image);
-    } else {
-      glyph.textContent = icon;
-    }
+    const image = document.createElement("img");
+    image.src = XP_ICON_PATHS[icon];
+    image.alt = "";
+    glyph.appendChild(image);
 
     const text = document.createElement("span");
     setAccessKeyText(text, label);
@@ -462,9 +457,9 @@ const closeAllPrograms = () => {
 
 const positionStartFlyout = (panel, anchor) => {
   const rect = anchor.getBoundingClientRect();
-  const taskbarTop =
-    document.getElementById("taskbar")?.getBoundingClientRect().top ??
-    innerHeight;
+  const taskbarTop = document
+    .getElementById("taskbar")
+    .getBoundingClientRect().top;
   panel.style.visibility = "hidden";
   panel.style.left = "0px";
   panel.style.top = "0px";
@@ -609,14 +604,10 @@ const createProgramMenuItem = (definition, depth, gameStats) => {
   if (definition.id) item.dataset.programId = definition.id;
   const icon = document.createElement("span");
   icon.className = "start-program-icon";
-  if (definition.icon) {
-    const image = document.createElement("img");
-    image.src = definition.icon.includes("/")
-      ? definition.icon
-      : XP_ICON_PATHS[definition.icon];
-    image.alt = "";
-    icon.appendChild(image);
-  }
+  const image = document.createElement("img");
+  image.src = XP_ICON_PATHS[definition.icon];
+  image.alt = "";
+  icon.appendChild(image);
   const label = document.createElement("span");
   const { key } = setAccessKeyText(label, definition.label);
   item.dataset.accessKey = key;

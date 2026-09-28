@@ -102,8 +102,6 @@ const getDesktopSelectionEligibility = () => {
 
 const layoutDesktopIcons = (force = false) => {
   const container = document.getElementById("desktop-icons");
-  if (!container) return;
-
   const positions = force ? {} : getDesktopIconPositions();
   const metrics = getDesktopIconMetrics(container);
   const { width, height, gap, margin } = metrics;
@@ -470,12 +468,13 @@ const buildDesktopIcons = () => {
   });
   const compareDesktopNodeNames = (a, b) =>
     desktopNameCollator.compare(desktopNodeSortName(a), desktopNodeSortName(b));
+  const desktopNodeType = (node) => node.ext || node.type;
   const compareDesktopNodes = (a, b) => {
     if (desktopSort === "size")
       return a.size - b.size || compareDesktopNodeNames(a, b);
     if (desktopSort === "type")
       return (
-        (a.ext || a.type).localeCompare(b.ext || b.type) ||
+        desktopNodeType(a).localeCompare(desktopNodeType(b)) ||
         compareDesktopNodeNames(a, b)
       );
     if (desktopSort === "modified")
@@ -582,8 +581,7 @@ const buildDesktopIcons = () => {
 };
 
 const closeDesktopContextMenu = () => {
-  const menu = document.getElementById("desktop-context-menu");
-  if (menu) menu.hidden = true;
+  document.getElementById("desktop-context-menu").hidden = true;
 };
 
 const getDesktopLayoutSettings = () =>
@@ -608,8 +606,8 @@ const beginDesktopRename = (id) => {
   const icon = document.querySelector(
     `.desktop-icon[data-desktop-id="${CSS.escape(id)}"]`,
   );
+  // Callers only rename unprotected files that have a desktop icon.
   const node = fs.getNode(id);
-  if (!icon || !node || node.protected) return;
   const label = icon.querySelector(".icon-label");
   const input = document.createElement("input");
   input.className = "desktop-rename";
@@ -649,8 +647,7 @@ const beginSystemDesktopRename = (id) => {
   const icon = document.querySelector(
     `.desktop-icon[data-desktop-id="${CSS.escape(id)}"]`,
   );
-  const label = icon?.querySelector(".icon-label");
-  if (!icon || !label) return;
+  const label = icon.querySelector(".icon-label");
   const input = document.createElement("input");
   input.className = "desktop-rename";
   input.value = label.textContent;
@@ -771,7 +768,7 @@ const addDesktopSeparator = (menu) => {
   menu.appendChild(separator);
 };
 
-const renderDesktopContextMenu = (menu, itemId = null) => {
+const renderDesktopContextMenu = (menu, itemId) => {
   const {
     filesystemIds: selectedFsIds,
     allFilesystem,
@@ -862,7 +859,7 @@ const renderDesktopContextMenu = (menu, itemId = null) => {
   }
 };
 
-const openDesktopContextMenu = (clientX, clientY, itemId = null) => {
+const openDesktopContextMenu = (clientX, clientY, itemId) => {
   const desktop = document.getElementById("desktop");
   const menu = document.getElementById("desktop-context-menu");
   const bounds = desktop.getBoundingClientRect();
@@ -991,7 +988,7 @@ const setupDesktopContextMenu = () => {
         input.click();
       } else if (action === "paste") {
         pasteIntoFolder(fs.DESKTOP);
-      } else if (action === "open" && itemId) {
+      } else if (action === "open") {
         openDesktopItem(itemId);
       } else if (action === "explore-my-computer") {
         openDesktopItem("__my-computer");
@@ -1015,7 +1012,7 @@ const setupDesktopContextMenu = () => {
         beginSystemDesktopRename("__my-computer");
       } else if (action === "computer-properties") {
         openShellProperties(fs.MY_COMPUTER);
-      } else if (action === "explore" && itemId === "__recycle-bin") {
+      } else if (action === "explore") {
         openDesktopItem(itemId);
       } else if (action === "empty-recycle-bin") {
         confirmEmptyRecycleBin();
@@ -1034,11 +1031,14 @@ const setupDesktopContextMenu = () => {
         fileOps.copy(selectedFsIds);
       } else if (action === "delete") {
         confirmRecycleDelete(selectedFsIds);
-      } else if (action === "rename" && selectedFsIds[0]) {
+      } else if (action === "rename") {
         beginDesktopRename(selectedFsIds[0]);
-      } else if (action === "item-properties" && selectedFsIds[0]) {
+      } else if (action === "item-properties") {
         openShellProperties(selectedFsIds[0]);
-      } else if (action === "properties") {
+      } else {
+        // Menus disable Rename and Properties unless exactly one file is
+        // selected, and Paste Shortcut is never enabled, so only the
+        // desktop's own Properties reaches here.
         openSystemWindow("__display-properties");
       }
       closeDesktopContextMenu();

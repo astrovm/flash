@@ -73,9 +73,9 @@ const wireTaskbarMenuKeyboard = (menu) => {
   });
 };
 
+// Task buttons and menu entries exist only for open windows.
 const activateTaskButton = (gameId) => {
   const win = openWindows.get(gameId);
-  if (!win) return;
   if (
     gameId === focusedGameId &&
     !win.minimized &&
@@ -143,7 +143,7 @@ const renderTaskButtons = () => {
               getTaskbarHeight() -
               (getTaskbarSettings().locked ? 0 : 4)) /
               26,
-          ) + 1 || 1,
+          ) + 1,
         ),
       );
   const allTasksWidth =
@@ -198,7 +198,8 @@ const renderTaskButtons = () => {
         menu.replaceChildren();
         for (const [id, member] of win.groupedWindows) {
           const item = document.createElement("button");
-          item.textContent = member.title || formatGameTitle(id);
+          // Grouped windows are Explorer windows, which are always titled.
+          item.textContent = member.title;
           item.setAttribute("role", "menuitem");
           item.addEventListener("click", () => {
             closeTaskbarMenus();
@@ -241,9 +242,8 @@ const renderTaskButtons = () => {
           [
             "Close Group",
             async () => {
-              for (const [id] of win.groupedWindows) {
-                if ((await closeGameWindow(id)) === false) break;
-              }
+              // Explorer windows have no close confirmation to refuse.
+              for (const [id] of win.groupedWindows) await closeGameWindow(id);
             },
           ],
         ]) {
@@ -294,14 +294,9 @@ const renderTaskButtons = () => {
       `${taskTitle}${win.minimized ? ", minimized" : ""}${win.needsAttention ? ", needs attention" : ""}`,
     );
     btn.setAttribute("aria-pressed", String(active));
-    if (!cached.icon || cached.iconSource !== win.icon) {
-      const icon = createGameIconElement(gameId, "task-icon");
-      const taskImage = icon.querySelector("img");
-      if (taskImage && win.icon) taskImage.src = win.icon;
-      if (cached.icon) cached.icon.replaceWith(icon);
-      else btn.prepend(icon);
-      cached.icon = icon;
-      cached.iconSource = win.icon;
+    if (!cached.icon) {
+      cached.icon = createGameIconElement(gameId, "task-icon");
+      btn.prepend(cached.icon);
     }
     if (label.textContent !== taskTitle) label.textContent = taskTitle;
     nodes.push(btn);
@@ -457,7 +452,7 @@ const openTaskManager = () => {
     ? applications
         .map(
           (application, index) =>
-            `<button type="button" class="task-manager-row${index ? "" : " selected"}" data-task-manager-window="${application.id}" role="option" aria-selected="${index ? "false" : "true"}"><span><img src="${openWindows.get(application.id)?.icon || systemShortcuts[application.id]?.icon || "assets/xp/icons/FolderOptions.png"}" alt="">${escapeTaskManagerText(application.title)}</span><span>${application.minimized ? "Minimized" : "Running"}</span></button>`,
+            `<button type="button" class="task-manager-row${index ? "" : " selected"}" data-task-manager-window="${application.id}" role="option" aria-selected="${index ? "false" : "true"}"><span><img src="${systemShortcuts[application.id]?.icon || "assets/xp/icons/FolderOptions.png"}" alt="">${escapeTaskManagerText(application.title)}</span><span>${application.minimized ? "Minimized" : "Running"}</span></button>`,
         )
         .join("")
     : '<p class="task-manager-empty">No applications are running.</p>';
@@ -485,26 +480,10 @@ const openTaskManager = () => {
     </div>
 `;
 
-  const tabs = [...dialog.body.querySelectorAll("[data-task-manager-tab]")];
-  const panels = [...dialog.body.querySelectorAll("[data-task-manager-panel]")];
   const closeMenus = () =>
     dialog.body
       .querySelectorAll("[data-task-manager-popup]")
       .forEach((popup) => (popup.hidden = true));
-  tabs.forEach((tab) =>
-    tab.addEventListener("click", () => {
-      tabs.forEach((entry) => {
-        const selected =
-          entry.dataset.taskManagerTab === tab.dataset.taskManagerTab;
-        entry.setAttribute("aria-selected", String(selected));
-        entry.tabIndex = selected ? 0 : -1;
-      });
-      panels.forEach((panel) => {
-        panel.hidden =
-          panel.dataset.taskManagerPanel !== tab.dataset.taskManagerTab;
-      });
-    }),
-  );
   dialog.body.querySelectorAll("[data-task-manager-menu]").forEach((button) =>
     button.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -852,7 +831,7 @@ const setupTaskbarContextMenu = () => {
       arrangeTaskbarWindows(action);
     else if (action === "task-manager") openTaskManager();
     else if (action === "lock") setTaskbarLocked(!taskbarLocked);
-    else if (action === "properties") openTaskbarProperties();
+    else openTaskbarProperties();
   });
 };
 

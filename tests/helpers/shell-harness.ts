@@ -55,6 +55,8 @@ export async function loadShell({
   // Without memory-only documents and without IndexedDB, VirtualFS starts
   // read-only, as it does when browser site storage is blocked.
   documentStorage = "memory",
+  // Runs before any shell script so tests can provide optional browser APIs.
+  beforeScripts = (_window) => {},
   url = "http://127.0.0.1/",
 } = {}) {
   const window = new Window({
@@ -205,6 +207,7 @@ export async function loadShell({
     callback(new window.Blob([], { type: "image/png" }));
   };
 
+  beforeScripts(window);
   for (const path of scripts) {
     const script = document.createElement("script");
     script.textContent = await readScript(path);

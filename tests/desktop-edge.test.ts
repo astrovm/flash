@@ -221,3 +221,68 @@ test("uploading desktop files reports invalid names", async () => {
     [...s.document.querySelectorAll(".xp-dialog")].at(-1).textContent,
   ).toContain("invalid characters");
 });
+
+test("legacy icon positions yield to a position the desktop file already has", async () => {
+  const s = await login(await loadShell());
+  const fs = s.window.VirtualFS;
+  const [file] = fs.findByApp("bike-mania");
+  s.window.localStorage.setItem(
+    "desktopIconPositions",
+    JSON.stringify({
+      "bike-mania": { left: 300, top: 200 },
+      [file.id]: { left: 75, top: 150 },
+    }),
+  );
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  await settle();
+  const positions = JSON.parse(
+    s.window.localStorage.getItem("desktopIconPositions"),
+  );
+  expect(positions["bike-mania"]).toBeUndefined();
+  expect(positions[file.id]).toEqual({ left: 75, top: 150 });
+});
+
+test("desktop renames finish once even when focus leaves after committing", async () => {
+  const s = await login(await loadShell());
+  const fs = s.window.VirtualFS;
+  const file = fs.createFile(fs.DESKTOP, "once.txt");
+  await settle();
+  const renames = [];
+  const rename = s.window.FileOperations.rename;
+  s.window.FileOperations.rename = async (...args) => {
+    renames.push(args[1]);
+    return rename(...args);
+  };
+  try {
+    icon(s, file.id).click();
+    contextMenu(s, icon(s, file.id));
+    await choose(s, "rename");
+    const input = s.document.querySelector(".desktop-rename");
+    input.value = "done.txt";
+    press(s, input, "Enter");
+    input.dispatchEvent(new s.window.FocusEvent("blur"));
+    await settle();
+  } finally {
+    s.window.FileOperations.rename = rename;
+  }
+  expect(renames).toEqual(["done.txt"]);
+
+  contextMenu(s, icon(s, "__my-computer"));
+  await choose(s, "rename-my-computer");
+  const input = s.document.querySelector(".desktop-rename");
+  input.value = "First";
+  press(s, input, "Enter");
+  input.value = "Second";
+  input.dispatchEvent(new s.window.FocusEvent("blur"));
+  await settle();
+  expect(icon(s, "__my-computer").textContent).toContain("First");
+});
+
+test("Explore on the Recycle Bin menu opens the Recycle Bin", async () => {
+  const s = await login(await loadShell());
+  contextMenu(s, icon(s, "__recycle-bin"));
+  await choose(s, "explore");
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="__recycle-bin"]'),
+  ).toBeTrue();
+});

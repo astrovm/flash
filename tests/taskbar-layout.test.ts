@@ -261,3 +261,97 @@ test("floating toolbars lose their active state when clicking elsewhere", async 
   pointer(s, s.document.getElementById("desktop"), "pointerdown");
   expect(toolbar.classList.contains("active")).toBeFalse();
 });
+
+test("taskbar settings drop duplicate and invalid toolbar order entries", async () => {
+  const s = await shell({ toolbarOrder: ["a", 5, "a", "b"], locked: true });
+  openTaskbarMenu(s);
+  s.document.querySelector('[data-taskbar-action="lock"]').click();
+  expect(settings(s).toolbarOrder).toEqual(["a", "b"]);
+});
+
+test("locked horizontal taskbars with large toolbar icons grow without a resize grip", async () => {
+  for (const [extra, height] of [
+    [{ quickLaunch: true }, "40px"],
+    [{ quickLaunch: false }, "30px"],
+  ]) {
+    const s = await shell({
+      locked: true,
+      ...extra,
+      toolbarLayouts: { "__quick-launch": { largeIcons: true } },
+    });
+    expect(s.document.getElementById("taskbar").style.height).toBe(height);
+  }
+});
+
+test("expanded tray icons stay while a tray control has keyboard focus", async () => {
+  const s = await shell({
+    hideInactive: true,
+    volumeBehavior: "hide",
+    locked: false,
+  });
+  const expand = s.document.getElementById("tray-expand");
+  const volume = s.document.getElementById("tray-volume-button");
+  expand.click();
+  const matches = s.window.Element.prototype.matches;
+  s.window.Element.prototype.matches = function (selector) {
+    return selector === ":focus-visible"
+      ? this === expand
+      : matches.call(this, selector);
+  };
+  try {
+    expand.focus();
+    await s.advanceTime(2100);
+    expect(volume.hidden).toBeFalse();
+    expand.blur();
+    await s.advanceTime(2100);
+    expect(volume.hidden).toBeTrue();
+  } finally {
+    s.window.Element.prototype.matches = matches;
+  }
+});
+
+test("taskbar drags save only real changes and ignore releases away from an edge", async () => {
+  const s = await shell({ locked: false, edge: "top" });
+  const bar = s.document.getElementById("taskbar");
+  const handle = s.document.getElementById("taskbar-resize");
+  const writes = [];
+  const storage = s.window.localStorage;
+  Object.defineProperty(s.window, "localStorage", {
+    configurable: true,
+    value: {
+      getItem: (key) => storage.getItem(key),
+      removeItem: (key) => storage.removeItem(key),
+      setItem(key, value) {
+        if (key === "taskbarSettings") writes.push(JSON.parse(value));
+        storage.setItem(key, value);
+      },
+    },
+  });
+  pointer(s, bar, "pointerdown", 500, 10);
+  pointer(s, bar, "pointerup", 500, 10);
+  expect(writes).toEqual([]);
+  pointer(s, bar, "pointerdown", 500, 10);
+  pointer(s, bar, "pointermove", 500, 380);
+  pointer(s, bar, "pointerup", 500, 380);
+  expect(writes).toEqual([]);
+  pointer(s, handle, "pointerdown", 500, 30);
+  pointer(s, handle, "pointermove", 500, 40);
+  pointer(s, handle, "pointerup", 500, 40);
+  expect(writes).toEqual([]);
+  pointer(s, handle, "pointerdown", 500, 30);
+  pointer(s, handle, "pointermove", 500, 90);
+  pointer(s, handle, "pointerup", 500, 90);
+  expect(writes.at(-1)).toMatchObject({ edge: "top", rows: 3 });
+});
+
+test("the New Toolbar dialog adds the folder chosen in its tree", async () => {
+  const s = await shell({ locked: false });
+  openTaskbarMenu(s);
+  s.document.querySelector('[data-taskbar-toolbar="new"]').click();
+  const dialog = s.document.querySelector(".taskbar-new-toolbar-dialog");
+  const fs = s.window.VirtualFS;
+  dialog.querySelector(`[data-folder="${fs.MY_DOCUMENTS}"]`).click();
+  expect(dialog.querySelector("input").value).toBe("My Documents");
+  dialog.querySelector('[data-action="ok"]').click();
+  expect(settings(s).folders).toEqual([fs.MY_DOCUMENTS]);
+});

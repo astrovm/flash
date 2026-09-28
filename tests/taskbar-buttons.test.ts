@@ -334,3 +334,110 @@ test("vertical taskbars group Explorer windows and overflow by height", async ()
   await settle();
   expect(container.style.gridTemplateColumns).toBe("minmax(0, 1fr)");
 });
+
+const withRuffle = (s) => {
+  s.window.RufflePlayer = {
+    newest: () => ({
+      createPlayer: () => {
+        const player = s.document.createElement("ruffle-player");
+        player.load = () => {};
+        return player;
+      },
+    }),
+  };
+};
+const runCommand = async (s, command) => {
+  clickStartAction(s, "run");
+  const dialog = s.document.querySelector(".run-dialog");
+  dialog.querySelector("#run-command").value = command;
+  dialog.querySelector('[data-action="run"]').click();
+  await settle();
+};
+const openDirtyNotepad = async (s) => {
+  const fs = s.window.VirtualFS;
+  fs.open(fs.createFile(fs.MY_DOCUMENTS, "draft.txt").id);
+  await settle();
+  const editor = s.document.querySelector(".notepad-window textarea");
+  editor.value = "unsaved";
+  editor.dispatchEvent(new s.window.Event("input", { bubbles: true }));
+};
+
+test("the overflow menu names untitled game windows and marks minimized ones", async () => {
+  const s = await login(await loadShell());
+  withRuffle(s);
+  await runCommand(s, "bike-mania");
+  await openDirtyNotepad(s);
+  clickStartAction(s, "documents");
+  await settle();
+  s.document
+    .querySelector('.xp-window[data-game="__notepad"] .minimize-btn')
+    .click();
+  await settle();
+  s.document.querySelector("#task-buttons .task-button-grouped").click();
+  const menu = overflowMenu(s);
+  expect(menu.querySelector(".taskbar-group-heading")).toBeNull();
+  const labels = [...menu.querySelectorAll(".taskbar-overflow-item")].map(
+    (item) => [item.textContent, item.getAttribute("aria-label")],
+  );
+  expect(labels).toContainEqual(["Bike Mania", "Bike Mania"]);
+  expect(labels.some(([, label]) => label.endsWith(", minimized"))).toBeTrue();
+});
+
+test("Task Manager selects only the first task and keeps windows that refuse to end", async () => {
+  const s = await login(await loadShell());
+  withRuffle(s);
+  await runCommand(s, "bike-mania");
+  await openDirtyNotepad(s);
+  context(s, s.document.getElementById("taskbar"));
+  s.document.querySelector('[data-taskbar-action="task-manager"]').click();
+  const manager = s.document.querySelector(".task-manager-dialog");
+  const rows = () => [...manager.querySelectorAll(".task-manager-row")];
+  expect(rows().map((row) => row.getAttribute("aria-selected"))).toEqual([
+    "true",
+    "false",
+  ]);
+  expect(rows()[0].textContent).toContain("Bike Mania");
+  rows()[1].click();
+  manager.querySelector('[data-task-manager-action="end-task"]').click();
+  await settle();
+  [...s.document.querySelectorAll(".xp-dialog")]
+    .at(-1)
+    .querySelector('[data-action="cancel"]')
+    .click();
+  await settle();
+  expect(rows()).toHaveLength(2);
+  expect(windowOf(s, "__notepad")).not.toBeNull();
+});
+
+test("arranging windows does nothing while every window is minimized", async () => {
+  const s = await login(await loadShell());
+  clickStartAction(s, "documents");
+  await settle();
+  const win = windowOf(s, "__my-documents");
+  const before = [win.style.left, win.style.top];
+  win.querySelector(".minimize-btn").click();
+  await settle();
+  context(s, s.document.getElementById("taskbar"));
+  const cascade = s.document.querySelector('[data-taskbar-action="cascade"]');
+  expect(cascade.disabled).toBeTrue();
+  context(s, s.document.getElementById("taskbar"));
+  s.document.querySelector('[data-taskbar-action="task-manager"]').click();
+  const manager = s.document.querySelector(".task-manager-dialog");
+  manager.querySelector('[data-task-manager-action="cascade"]').click();
+  await settle();
+  expect([win.style.left, win.style.top]).toEqual(before);
+  expect(win.style.display).toBe("none");
+});
+
+test("Taskbar Properties leaves Group similar buttons unchecked when grouping is off", async () => {
+  const s = await login(
+    await loadShell({
+      initialStorage: { taskbarSettings: JSON.stringify({ group: false }) },
+    }),
+  );
+  context(s, s.document.getElementById("taskbar"));
+  s.document.querySelector('[data-taskbar-action="properties"]').click();
+  expect(
+    s.document.querySelector('[data-taskbar-setting="group"]').checked,
+  ).toBeFalse();
+});

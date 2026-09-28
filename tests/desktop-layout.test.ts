@@ -245,3 +245,120 @@ test("desktop restores valid saved positions, relocates collisions and rejects o
       .classList.contains("desktop-icons-overflow"),
   ).toBeTrue();
 });
+
+test("an icon with no free grid slot left is placed below the grid", async () => {
+  const s = await login(await loadShell());
+  geometry(s, 100, 100);
+  const ids = [...s.document.querySelectorAll(".desktop-icon")].map(
+    (icon) => icon.dataset.desktopId,
+  );
+  const positions = Object.fromEntries(
+    ids
+      .slice(0, -1)
+      .map((id, index) => [id, { left: 4, top: 35 + 62 * index }]),
+  );
+  s.window.localStorage.setItem(
+    "desktopIconPositions",
+    JSON.stringify(positions),
+  );
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  await flushShell();
+  const last = s.document.querySelector(`[data-desktop-id="${ids.at(-1)}"]`);
+  expect(last.style.top).toBe(`${4 + 62 * ids.length}px`);
+});
+
+test("desktop drags over the desktop, files, or the dragged folder move nothing", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS;
+  const folder = fs.createFolder(fs.DESKTOP, "Keep");
+  const file = fs.createFile(fs.DESKTOP, "stay.txt");
+  const other = fs.createFile(fs.DESKTOP, "other.txt");
+  await flushShell();
+  const icon = (id) => s.document.querySelector(`[data-desktop-id="${id}"]`);
+  await drag(s, icon(file.id), icon(other.id));
+  await drag(s, icon(folder.id), icon(folder.id));
+  expect(fs.getNode(file.id).parent).toBe(fs.DESKTOP);
+  expect(fs.getNode(folder.id).parent).toBe(fs.DESKTOP);
+  expect(fs.getChildren(folder.id)).toEqual([]);
+});
+
+test("desktop icons ignore secondary-button presses, tiny movements, and clicks that end a drag", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS;
+  const file = fs.createFile(fs.DESKTOP, "drag.txt");
+  await flushShell();
+  geometry(s);
+  s.document.elementsFromPoint = () => [];
+  const icon = s.document.querySelector(`[data-desktop-id="${file.id}"]`);
+  const pointer = (type, clientX, clientY, button = 0) =>
+    icon.dispatchEvent(
+      new s.window.PointerEvent(type, {
+        button,
+        pointerId: 1,
+        clientX,
+        clientY,
+        bubbles: true,
+      }),
+    );
+  pointer("pointerdown", 10, 10, 2);
+  expect(icon.classList.contains("selected")).toBeFalse();
+
+  const before = [icon.style.left, icon.style.top];
+  pointer("pointerdown", 10, 10);
+  pointer("pointermove", 12, 11);
+  pointer("pointerup", 12, 11);
+  expect([icon.style.left, icon.style.top]).toEqual(before);
+  expect(icon.classList.contains("selected")).toBeTrue();
+
+  const computer = s.document.querySelector(
+    '[data-desktop-id="__my-computer"]',
+  );
+  computer.click();
+  pointer("pointerdown", 10, 10);
+  pointer("pointermove", 190, 140);
+  pointer("pointerup", 190, 140);
+  expect([icon.style.left, icon.style.top]).not.toEqual(before);
+  icon.click();
+  icon.dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  await flushShell();
+  expect(s.document.querySelector(".notepad-window")).toBeNull();
+});
+
+test("Ctrl-clicking a desktop icon from the keyboard toggles its selection", async () => {
+  const s = await login(await loadShell());
+  const computer = s.document.querySelector(
+    '[data-desktop-id="__my-computer"]',
+  );
+  const click = () =>
+    computer.dispatchEvent(
+      new s.window.MouseEvent("click", { bubbles: true, ctrlKey: true }),
+    );
+  click();
+  expect(computer.classList.contains("selected")).toBeTrue();
+  click();
+  expect(computer.classList.contains("selected")).toBeFalse();
+});
+
+test("desktop sorts place folders by their type and break date ties by name", async () => {
+  const s = await login(await loadShell()),
+    fs = s.window.VirtualFS;
+  const text = fs.createFile(fs.DESKTOP, "notes.txt");
+  const folder = fs.createFolder(fs.DESKTOP, "Album");
+  const bitmap = fs.createFile(fs.DESKTOP, "photo.bmp");
+  await flushShell();
+  const ids = new Set([text.id, folder.id, bitmap.id]);
+  for (const node of [text, folder, bitmap])
+    fs.getNode(node.id).modified = 1_000;
+  await action(s, "sort-modified");
+  expect(
+    [...s.document.querySelectorAll(".desktop-icon")]
+      .map((el) => el.dataset.desktopId)
+      .filter((id) => ids.has(id)),
+  ).toEqual([folder.id, text.id, bitmap.id]);
+  await action(s, "sort-type");
+  expect(
+    [...s.document.querySelectorAll(".desktop-icon")]
+      .map((el) => el.dataset.desktopId)
+      .filter((id) => ids.has(id)),
+  ).toEqual([bitmap.id, text.id, folder.id]);
+});

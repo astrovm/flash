@@ -182,7 +182,6 @@ const renderTrayVisibility = () => {
       (settings.volumeBehavior === "auto" &&
         Date.now() - taskbarVolumeLastUsed >= 10 * 60 * 1000));
   const expand = document.getElementById("tray-expand");
-  if (!expand) return;
   expand.hidden = !hidden;
   expand.textContent = taskbarTrayExpanded ? "›" : "‹";
   expand.setAttribute(
@@ -227,18 +226,16 @@ const openNewTaskbarToolbar = () => {
   };
   const render = () => {
     tree.replaceChildren();
-    const seen = new Set();
     const ancestors = new Set();
     let parent = fs.getNode(selected)?.parent;
     while (parent && !ancestors.has(parent)) {
       ancestors.add(parent);
       parent = fs.getNode(parent)?.parent;
     }
+    // Desktop and My Documents are separate roots whose folder children are
+    // added once each.
     const add = (id, parent, depth = 0) => {
-      if (seen.has(id)) return;
       const node = fs.getNode(id);
-      if (!node || node.type !== "folder") return;
-      seen.add(id);
       const row = document.createElement("button");
       row.type = "button";
       row.dataset.folder = id;
@@ -325,11 +322,10 @@ const openNewTaskbarToolbar = () => {
                 ),
               )
             ];
-    if (next) {
-      event.preventDefault();
-      next.focus();
-      choose(next.dataset.folder);
-    }
+    // The Desktop and My Documents rows are always visible.
+    event.preventDefault();
+    next.focus();
+    choose(next.dataset.folder);
   });
   const buttons = dialog.body.querySelector(".toolbar-folder-buttons");
   buttons.append(

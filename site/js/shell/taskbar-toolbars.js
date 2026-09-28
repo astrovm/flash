@@ -1,8 +1,9 @@
 "use strict";
 
 const QUICK_LAUNCH = "__quick-launch";
+// Only toolbars for existing folders are rendered.
 const toolbarName = (id) =>
-  id === QUICK_LAUNCH ? "Quick Launch" : fs.getNode(id)?.name || "";
+  id === QUICK_LAUNCH ? "Quick Launch" : fs.getNode(id).name;
 const toolbarLayout = (id) => {
   const saved = getTaskbarSettings().toolbarLayouts[id] || {};
   return {
@@ -68,8 +69,8 @@ const toolbarEntries = (id) => {
             ? "Show Desktop"
             : desktopEntry?.querySelector(".icon-label")?.textContent ||
               (gamesList[key] ? formatGameTitle(key) : node?.name) ||
-              systemShortcuts[key]?.title ||
-              formatGameTitle(key),
+              // Entries without a node or game are system shortcuts.
+              systemShortcuts[key].title,
         icon:
           key === "__show-desktop"
             ? "assets/xp/icons/ShowDesktop.png"
@@ -478,7 +479,6 @@ let toolbarObserver;
 const fitToolbarItems = (toolbar) => {
   const items = toolbar.querySelector(".toolbar-items"),
     overflow = toolbar.querySelector(".toolbar-overflow");
-  if (!items) return;
   if (toolbar.classList.contains("floating")) {
     [...items.children].forEach((item) => {
       item.hidden = false;
@@ -678,15 +678,13 @@ const renderTaskbarToolbars = () => {
   const fit = () =>
     document.querySelectorAll(".taskbar-toolbar").forEach(fitToolbarItems);
   requestAnimationFrame(fit);
-  if (typeof ResizeObserver !== "undefined") {
-    toolbarObserver = new ResizeObserver(() => {
-      fit();
-      renderTaskButtons();
-    });
-    document
-      .querySelectorAll(".taskbar-toolbar")
-      .forEach((toolbar) => toolbarObserver.observe(toolbar));
-  }
+  toolbarObserver = new ResizeObserver(() => {
+    fit();
+    renderTaskButtons();
+  });
+  document
+    .querySelectorAll(".taskbar-toolbar")
+    .forEach((toolbar) => toolbarObserver.observe(toolbar));
   for (const [name, value] of [
     ["quick-launch", settings.quickLaunch],
     ["desktop", settings.desktopToolbar],

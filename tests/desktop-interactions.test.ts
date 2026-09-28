@@ -61,7 +61,7 @@ describe("desktop", () => {
     }
     s.window.FileReader = class extends s.window.EventTarget {
       readAsDataURL() {
-        this.error = new Error("The file could not be read.");
+        this.error = new Error("");
         queueMicrotask(() => this.dispatchEvent(new s.window.Event("error")));
       }
     };
@@ -80,7 +80,7 @@ describe("desktop", () => {
     )
       await new Promise((resolve) => setTimeout(resolve, 10));
     expect(s.document.querySelector(".xp-dialog").textContent).toContain(
-      "The file could not be read.",
+      "The file operation failed.",
     );
     const fs = s.window.VirtualFS;
     expect(fs.findChild(fs.DESKTOP, "locked.bin")).toBeNull();

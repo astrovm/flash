@@ -324,3 +324,123 @@ test("toolbars fit their buttons and hide the ones that overflow", async () => {
   observed();
   expect(buttons.every((button) => !button.hidden)).toBeTrue();
 });
+
+test("toolbars dock before the toolbar they are dropped on, on horizontal and vertical taskbars", async () => {
+  for (const edge of ["bottom", "left"]) {
+    const s = await shellWithToolbars({
+      edge,
+      quickLaunch: true,
+      folders: ["my-documents"],
+      toolbarOrder: ["__quick-launch", "my-documents"],
+    });
+    const quickLaunch = s.document.querySelector(".quick-launch-toolbar");
+    quickLaunch.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 100,
+      height: 100,
+      right: 100,
+      bottom: 100,
+    });
+    const grip = s.document.querySelector(
+      '[data-toolbar-id="my-documents"] .toolbar-grip',
+    );
+    pointer(s, grip, "pointerdown", 4, 4);
+    pointer(s, grip, "pointermove", 30, 30);
+    press(s, s.document.body, "a");
+    pointer(s, grip, "pointermove", 0, 0);
+    pointer(s, grip, "pointerup", 0, 0);
+    expect(settings(s).toolbarOrder).toEqual([
+      "my-documents",
+      "__quick-launch",
+    ]);
+  }
+});
+
+test("dragging a floating toolbar keeps its width", async () => {
+  const s = await shellWithToolbars({
+    quickLaunch: true,
+    toolbarLayouts: {
+      "__quick-launch": {
+        floating: true,
+        width: 220,
+        height: 90,
+        x: 50,
+        y: 50,
+      },
+    },
+  });
+  const title = s.document.querySelector(
+    ".quick-launch-toolbar.floating .toolbar-title",
+  );
+  title.setPointerCapture = () => {};
+  pointer(s, title, "pointerdown", 60, 60);
+  pointer(s, title, "pointermove", 400, 300);
+  pointer(s, title, "pointerup", 400, 300);
+  expect(layout(s, "__quick-launch")).toMatchObject({
+    floating: true,
+    width: 220,
+  });
+});
+
+test("a Quick Launch drag ignores other keys and swallows the click that ends it", async () => {
+  const s = await shellWithToolbars({
+    quickLaunch: true,
+    quickLaunchItems: ["__my-computer", "__my-documents"],
+  });
+  const button = (id) =>
+    s.document.querySelector(`.quick-launch-toolbar [data-shortcut="${id}"]`);
+  const documents = button("__my-documents");
+  documents.setPointerCapture = () => {};
+  pointer(s, documents, "pointerdown", 0, 0);
+  pointer(s, documents, "pointermove", -20, -20);
+  press(s, s.document.body, "a");
+  pointer(s, documents, "pointerup", -20, -20);
+  expect(settings(s).quickLaunchItems).toEqual([
+    "__my-documents",
+    "__my-computer",
+  ]);
+  documents.click();
+  await flushShell();
+  expect(
+    s.document.querySelector('.xp-window[data-game="__my-documents"]'),
+  ).toBeNull();
+  button("__my-documents").click();
+  await flushShell();
+  expect(
+    s.document.querySelector('.xp-window[data-game="__my-documents"]'),
+  ).not.toBeNull();
+});
+
+test("vertical toolbars show every button that fits", async () => {
+  let observed;
+  const s = await shellWithToolbars(
+    {
+      edge: "left",
+      quickLaunch: true,
+      quickLaunchItems: ["__my-computer", "__my-documents"],
+    },
+    {
+      beforeScripts: (window) => {
+        window.ResizeObserver = class {
+          constructor(callback) {
+            observed = callback;
+          }
+          observe() {}
+          disconnect() {}
+        };
+      },
+    },
+  );
+  const toolbar = s.document.querySelector(".quick-launch-toolbar");
+  const items = toolbar.querySelector(".toolbar-items");
+  Object.defineProperty(items, "clientWidth", { get: () => 40 });
+  items.getBoundingClientRect = () => ({ bottom: 100 });
+  const buttons = [...items.children];
+  buttons.forEach((button, index) => {
+    button.getBoundingClientRect = () => ({ bottom: 30 + index * 30 });
+  });
+  observed();
+  expect(buttons.every((button) => !button.hidden)).toBeTrue();
+  expect(toolbar.querySelector(".toolbar-overflow").hidden).toBeTrue();
+});

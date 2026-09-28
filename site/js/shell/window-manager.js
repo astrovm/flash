@@ -103,7 +103,8 @@ const parseWindowLength = (value, fallback) => {
 };
 
 const persistWindowPlacement = (win) => {
-  const source = win.maximized && win.prevRect ? win.prevRect : win.el.style;
+  // Maximizing records the restore geometry before the window grows.
+  const source = win.maximized ? win.prevRect : win.el.style;
   const placement = {
     left: parseWindowLength(source.left, win.el.offsetLeft),
     top: parseWindowLength(source.top, win.el.offsetTop),
@@ -308,9 +309,10 @@ const restoreWindowState = (snapshot) => {
   focusedGameId = openWindows.has(snapshot.focusedGameId)
     ? snapshot.focusedGameId
     : null;
+  // Opening a window focuses it, so every open window has a z-index.
   zIndexCounter = Math.max(
     snapshot.zIndexCounter,
-    ...[...openWindows.values()].map((win) => win.zIndex || 0),
+    ...[...openWindows.values()].map((win) => win.zIndex),
   );
   openWindows.forEach((win, gameId) =>
     win.el.classList.toggle("active", gameId === focusedGameId),
@@ -320,7 +322,7 @@ const restoreWindowState = (snapshot) => {
   const monitor = getSimulatedMonitorSize();
   if (activeMonitorResolution === "auto" || monitor.limited)
     keepWindowsInWorkArea();
-  if (iconsBuilt) layoutDesktopIcons();
+  layoutDesktopIcons();
   applyFocusVolumes();
   renderTaskButtons();
   updateDocumentTitle();
@@ -352,25 +354,22 @@ const syncWindowVolumeUI = (win) => {
   });
   win.volumeBtn.title = muted ? "Unmute / Volume" : "Mute / Volume";
   win.volumeBtn.setAttribute("aria-label", win.volumeBtn.title);
-  const label = win.volumeMenuItem?.querySelector(".menu-item-label");
-  if (label) {
-    const menuLabel = muted ? "&Unmute" : "&Mute";
-    win.volumeMenuItem.dataset.accessKey =
-      XPDialogs.parseAccessKey(menuLabel).key;
-    setAccessKeyText(label, menuLabel);
-  }
-  if (win.volumeSlider) {
-    win.volumeSlider.value = String(numericVolume);
-    win.volumeSlider.setAttribute(
-      "aria-valuetext",
-      muted ? `Muted, volume ${numericVolume}%` : `${numericVolume}%`,
-    );
-  }
+  // Only game windows, which have every volume control, reach here.
+  const label = win.volumeMenuItem.querySelector(".menu-item-label");
+  const menuLabel = muted ? "&Unmute" : "&Mute";
+  win.volumeMenuItem.dataset.accessKey =
+    XPDialogs.parseAccessKey(menuLabel).key;
+  setAccessKeyText(label, menuLabel);
+  win.volumeSlider.value = String(numericVolume);
+  win.volumeSlider.setAttribute(
+    "aria-valuetext",
+    muted ? `Muted, volume ${numericVolume}%` : `${numericVolume}%`,
+  );
 };
 
+// The value comes from a range input, which is always numeric.
 const setWindowVolume = (win, value) => {
   const numericValue = parseInt(value, 10);
-  if (!Number.isFinite(numericValue)) return;
 
   const isMuted = numericValue === 0;
   setGameVolume(win.gameId, numericValue, isMuted);
@@ -401,8 +400,8 @@ const toggleWindowMute = (win) => {
   syncWindowVolumeUI(win);
 };
 
+// Only game windows, which have favorite controls, reach here.
 const updateFavoriteUI = (win) => {
-  if (!win.favoriteBtn) return;
   const isFavorite = getFavorites().includes(win.gameId);
   [win.favoriteBtn, win.favoriteMenuItem].filter(Boolean).forEach((button) => {
     button.classList.toggle("active", isFavorite);
@@ -414,15 +413,11 @@ const updateFavoriteUI = (win) => {
     ? "Remove from Favorites"
     : "Add to Favorites";
   win.favoriteBtn.setAttribute("aria-label", win.favoriteBtn.title);
-  const label = win.favoriteMenuItem?.querySelector(".menu-item-label");
-  if (label) {
-    const menuLabel = isFavorite
-      ? "&Remove from Favorites"
-      : "Add to &Favorites";
-    win.favoriteMenuItem.dataset.accessKey =
-      XPDialogs.parseAccessKey(menuLabel).key;
-    setAccessKeyText(label, menuLabel);
-  }
+  const label = win.favoriteMenuItem.querySelector(".menu-item-label");
+  const menuLabel = isFavorite ? "&Remove from Favorites" : "Add to &Favorites";
+  win.favoriteMenuItem.dataset.accessKey =
+    XPDialogs.parseAccessKey(menuLabel).key;
+  setAccessKeyText(label, menuLabel);
 };
 
 const toggleFavorite = (gameId) => {
@@ -436,11 +431,8 @@ const toggleFavorite = (gameId) => {
   }
 
   setFavorites(favorites);
-
-  const win = openWindows.get(gameId);
-  if (win) {
-    updateFavoriteUI(win);
-  }
+  // Favorites are toggled from the game's own window.
+  updateFavoriteUI(openWindows.get(gameId));
 
   // Refresh start menu if it's open
   const startMenu = document.getElementById("start-menu");
@@ -467,11 +459,8 @@ const trackGamePlay = (gameId) => {
   gameStats[gameId].lastPlayed = timestamp;
 
   writeJsonStorage("gameStats", gameStats);
-
-  const win = openWindows.get(gameId);
-  if (win) {
-    win.lastUsed = timestamp;
-  }
+  // The window is registered just before its play is tracked.
+  openWindows.get(gameId).lastUsed = timestamp;
 };
 
 const createWindowElement = (gameId) => {
@@ -542,7 +531,7 @@ const createWindowElement = (gameId) => {
     item.type = "button";
     item.className = "game-menu-item";
     item.dataset.gameAction = action;
-    if (key) item.dataset.accessKey = key;
+    item.dataset.accessKey = key;
     item.setAttribute(
       "role",
       options.checkbox ? "menuitemcheckbox" : "menuitem",
@@ -662,8 +651,7 @@ const createWindowElement = (gameId) => {
 };
 
 const updateMaximizeButton = (win) => {
-  const button = win.maximizeBtn || win.el.querySelector(".maximize-btn");
-  if (!button) return;
+  const button = win.maximizeBtn;
 
   button.classList.toggle("restore-btn", win.maximized);
   button.title = win.maximized ? "Restore" : "Maximize";
@@ -774,9 +762,8 @@ const getLoadedMovieFrameRate = (player) => {
   }
 };
 
+// Properties is only enabled for Flash games.
 const openGameProperties = (win) => {
-  if (win.type !== "swf") return;
-
   const currentSetting = getGameFrameRateSetting(win.gameId);
   const defaultFrameRate = normalizeFrameRate(gamesList[win.gameId]?.frameRate);
   const nativeFrameRate = getLoadedMovieFrameRate(win.player);
@@ -1090,16 +1077,12 @@ const toggleShowDesktop = () => {
   minimizeAllWindows();
 };
 
-const toggleMaximize = (gameId, { notifyApplication = true } = {}) => {
+const toggleMaximize = (gameId) => {
   const win = openWindows.get(gameId);
-  if (!win) return;
-
-  if (notifyApplication) {
-    const handled = win.maximized
-      ? win.mountedApplication?.restore?.()
-      : win.mountedApplication?.maximize?.();
-    if (handled === false) return;
-  }
+  const handled = win.maximized
+    ? win.mountedApplication?.restore?.()
+    : win.mountedApplication?.maximize?.();
+  if (handled === false) return;
   if (!win.maximized) {
     win.prevRect = {
       left: win.el.style.left,
@@ -1112,21 +1095,20 @@ const toggleMaximize = (gameId, { notifyApplication = true } = {}) => {
     win.maximized = true;
   } else {
     win.el.classList.remove("maximized");
-    if (win.prevRect) {
-      Object.assign(win.el.style, win.prevRect);
-      const position = clampWindowPosition(
-        win,
-        win.el.offsetLeft,
-        win.el.offsetTop,
-      );
-      win.el.style.left = `${position.left}px`;
-      win.el.style.top = `${position.top}px`;
-    }
+    // Maximizing always records the restore geometry.
+    Object.assign(win.el.style, win.prevRect);
+    const position = clampWindowPosition(
+      win,
+      win.el.offsetLeft,
+      win.el.offsetTop,
+    );
+    win.el.style.left = `${position.left}px`;
+    win.el.style.top = `${position.top}px`;
     win.maximized = false;
     fitNativeProgramToWorkArea(win);
   }
   updateMaximizeButton(win);
-  focusWindow(gameId, { notifyApplication });
+  focusWindow(gameId);
 };
 
 const closeGameWindow = (
@@ -1435,8 +1417,7 @@ const wireResize = (win) => {
 let systemMenuWin = null;
 
 const closeWindowSystemMenu = () => {
-  const menu = document.getElementById("window-system-menu");
-  if (menu) menu.hidden = true;
+  document.getElementById("window-system-menu").hidden = true;
   systemMenuWin = null;
 };
 
@@ -1503,8 +1484,8 @@ const nudgeResize = (win, deltaX, deltaY) => {
 
 // Windows XP Move/Size commands: the window follows the pointer or the
 // arrow keys until Enter (or a click) commits or Escape cancels.
+// The system menu only enables Move and Size for normal windows.
 const startMoveSizeMode = (win, mode) => {
-  if (win.maximized || win.minimized) return;
   focusWindow(win.gameId);
 
   const el = win.el;
@@ -1641,7 +1622,6 @@ const wireWindowControls = (win) => {
   const openGameMenu = (name, focusFirstItem = false) => {
     const menu = menus.find((item) => item.dataset.gameMenu === name);
     const button = menuButtons.find((item) => item.dataset.gameMenu === name);
-    if (!menu || !button) return;
     closeGameMenus();
     menu.hidden = false;
     button.setAttribute("aria-expanded", "true");
