@@ -198,7 +198,7 @@ const createMenuBar = (run, panelVisible) => {
         item.children[0].textContent = "✓";
       item.addEventListener("click", () => {
         closeMenus();
-        run(command, item);
+        run(command);
       });
       menu.appendChild(item);
     }
@@ -257,8 +257,8 @@ const mountPaint = (shell, instance) => {
   const setTitle = () => shell.setTitle(`${fileName} - Paint`);
   const updateFileCommandState = () => {
     for (const command of ["wallpaper-tiled", "wallpaper-centered"]) {
-      const item = root.querySelector(`[data-paint-command="${command}"]`);
-      if (item) item.disabled = !fileId;
+      root.querySelector(`[data-paint-command="${command}"]`).disabled =
+        !fileId;
     }
   };
 
@@ -417,7 +417,7 @@ const mountPaint = (shell, instance) => {
       );
     }
   };
-  const save = async (saveAs = false) => {
+  const save = async (saveAs) => {
     let destination =
       fileId && !saveAs ? { existingId: fileId, name: fileName } : null;
     if (!destination) {
@@ -468,7 +468,7 @@ const mountPaint = (shell, instance) => {
     if (answer === "cancel") return false;
     return answer === "no" || save(false);
   };
-  const run = async (command, menuItem) => {
+  const run = async (command) => {
     if (command === "new") {
       if (!(await confirmSaveChanges())) return;
       engine.reset(516, 384);
@@ -538,19 +538,16 @@ const mountPaint = (shell, instance) => {
       root
         .querySelector(`[data-paint-panel="${command}"]`)
         .toggleAttribute("hidden", !panelState[command]);
-      const checkmark =
-        menuItem?.querySelector(".paint-menu-check") ||
-        root.querySelector(
-          `[data-paint-command="${command}"] .paint-menu-check`,
-        );
-      checkmark.textContent = panelState[command] ? "✓" : "";
-    } else if (command === "opaque") {
+      root.querySelector(
+        `[data-paint-command="${command}"] .paint-menu-check`,
+      ).textContent = panelState[command] ? "✓" : "";
+    } else {
+      // Draw Opaque is the only remaining enabled command.
       panelState.opaque = !panelState.opaque;
       engine.setOption("opaque", panelState.opaque);
-      const checkmark =
-        menuItem?.querySelector(".paint-menu-check") ||
-        root.querySelector('[data-paint-command="opaque"] .paint-menu-check');
-      checkmark.textContent = panelState.opaque ? "✓" : "";
+      root.querySelector(
+        '[data-paint-command="opaque"] .paint-menu-check',
+      ).textContent = panelState.opaque ? "✓" : "";
     }
   };
 

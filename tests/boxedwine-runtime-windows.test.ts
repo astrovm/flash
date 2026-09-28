@@ -14,7 +14,7 @@ const settle = async (s, time = 20) => {
   await flushShell();
 };
 
-async function setup() {
+async function setup({ beforeOpen = (_s) => {}, open = true } = {}) {
   const s = await login(await loadShell({ stubBoxedWineReadiness: false }));
   s.window.addEventListener(
     "error",
@@ -52,11 +52,16 @@ async function setup() {
     }
   };
   const resizeObservers = [];
-  s.document.getElementById("start-button").click();
-  s.document.getElementById("all-programs-button").click();
-  const flyouts = s.document.getElementById("start-menu-flyouts");
-  flyouts.querySelector('[data-program-id="accessories"]').click();
-  flyouts.querySelector('[data-program-id="calculator"]').click();
+  beforeOpen(s);
+  if (open) {
+    s.document.getElementById("start-button").click();
+    s.document.getElementById("all-programs-button").click();
+    const flyouts = s.document.getElementById("start-menu-flyouts");
+    flyouts.querySelector('[data-program-id="accessories"]').click();
+    flyouts.querySelector('[data-program-id="calculator"]').click();
+  } else {
+    s.window.XPBoxedWineRuntime.start();
+  }
   const frame = s.document.querySelector(
     "iframe.boxedwine-shared-runtime-frame",
   );
@@ -295,4 +300,350 @@ test("process exits close mounted windows or retry launches that never showed", 
     processId: 5,
     error: 0,
   });
+});
+
+const commandsFor = (h, action) =>
+  h.requests.filter(
+    (request) =>
+      request.type === "boxedwine-native-command" && request.action === action,
+  );
+
+const launched = (h, launchToken, processId = 77) =>
+  h.send({
+    type: "boxedwine-process-launched",
+    appId: "calculator",
+    launchToken,
+    processId,
+    error: 0,
+  });
+
+test("starting the runtime without an open application boots Calculator from a slashless root", async () => {
+  const h = await setup({
+    open: false,
+    beforeOpen: (s) => {
+      s.window.ASTRO_GAME_ROOTS = {
+        "boxedwine-runtime": "https://cdn.example/boxedwine",
+      };
+    },
+  });
+  const url = new URL(h.frame.src);
+  expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
+  expect(url.searchParams.get("appRoot")).toBe(
+    "https://cdn.example/boxedwine/",
+  );
+  expect(h.app()).toBeNull();
+  h.send({ type: "boxedwine-runtime-ready" });
+  await h.s.window.XPBoxedWineRuntime.ready();
+  expect(h.s.document.documentElement.dataset.boxedwineRuntimeState).toBe(
+    "ready",
+  );
+});
+
+test("launch tokens stay nonzero without crypto randomness or a usable clock", async () => {
+  const now = Date.now;
+  let h;
+  try {
+    h = await setup({
+      beforeOpen: (s) => {
+        Object.defineProperty(s.window, "crypto", {
+          configurable: true,
+          value: {},
+        });
+        Date.now = () => Number.NaN;
+      },
+    });
+  } finally {
+    Date.now = now;
+  }
+  expect(h.token()).toBe("1");
+  h.send({ type: "boxedwine-runtime-ready" });
+  h.send({
+    type: "boxedwine-process-launched",
+    appId: "calculator",
+    launchToken: "1",
+    processId: 0,
+    error: 87,
+  });
+  await settle(h.s, 300);
+  const retry = h.requests.at(-1);
+  expect(retry.type).toBe("boxedwine-launch-process");
+  expect(retry.launchToken).toMatch(/^[1-9]\d*$/);
+  expect(retry.launchToken).not.toBe("1");
+});
+
+test("first frames from foreign launches, other processes, or closed applications never take over the shell window", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  const host = () => h.app().querySelector(".boxedwine-shared-app-host");
+
+  await openWindow(h, 9, "424242", 50);
+  expect(host().querySelector("canvas")).toBeNull();
+
+  await openWindow(h, 10, launchToken, 0);
+  expect(host().querySelector("canvas").dataset.boxedwineWindow).toBe("10");
+  expect(
+    h.requests.some((request) => request.type === "boxedwine-observe-process"),
+  ).toBeFalse();
+
+  await openWindow(h, 12, launchToken, 99);
+  expect(host().querySelector("canvas").dataset.boxedwineWindow).toBe("10");
+
+  h.app().querySelector(".close-btn").click();
+  await settle(h.s, 600);
+  expect(h.app()).toBeNull();
+  const terminations = () =>
+    h.requests.filter(
+      (request) => request.type === "boxedwine-terminate-process",
+    );
+  expect(terminations()).toEqual([]);
+
+  await openWindow(h, 13, launchToken, 0);
+  await openWindow(h, 14, launchToken, 88);
+  expect(terminations().map((request) => request.processId)).toEqual([88]);
+  expect(
+    h.s.document.querySelector('canvas[data-boxedwine-window="14"]'),
+  ).toBeNull();
+
+  h.native({ type: "created", id: 15, parentId: 1, launchToken });
+  h.native({ type: "destroyed", id: 15 });
+  await settle(h.s);
+  expect(h.app()).toBeNull();
+});
+
+test("closing a launching application discards its late launch failure", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  h.app().querySelector(".close-btn").click();
+  await settle(h.s, 600);
+  const requestCount = h.requests.length;
+  h.send({
+    type: "boxedwine-process-launched",
+    appId: "calculator",
+    launchToken,
+    processId: 0,
+    error: 87,
+  });
+  await settle(h.s, 300);
+  expect(h.s.document.documentElement.dataset.boxedwineRuntimeError).toBe(
+    "launch:calculator:87",
+  );
+  expect(h.requests).toHaveLength(requestCount);
+});
+
+test("three processes exiting before their first frame restart the runtime", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  let launchToken = h.token();
+  for (const processId of [61, 62, 63]) {
+    launched(h, launchToken, processId);
+    h.send({
+      type: "boxedwine-process-exited",
+      appId: "calculator",
+      launchToken,
+      processId,
+    });
+    await settle(h.s, 300);
+    launchToken = h.requests.at(-1).launchToken ?? h.token();
+  }
+  expect(h.s.document.documentElement.dataset.boxedwineRuntimeRecovery).toBe(
+    "1:launch:calculator:process-exited",
+  );
+  expect(new URL(h.frame.src).searchParams.get("recovery")).toBe("1");
+});
+
+test("runtime recovery drops native dialogs and pending minimizes, then relaunches the application", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  h.native({
+    type: "created",
+    id: 20,
+    ownerId: 10,
+    processId: 77,
+    dialog: true,
+    title: "About Calculator",
+    x: 20,
+    y: 20,
+    width: 200,
+    height: 120,
+    frameTop: 25,
+    win32Metrics: true,
+  });
+  h.native({ type: "mapped", id: 20 });
+  h.native({ type: "frame", id: 20, width: 200, height: 120 });
+  await settle(h.s);
+  const dialog = h.s.document.querySelector('[data-native-window-id="20"]');
+  dialog.querySelector(".close-btn").click();
+  expect(commandsFor(h, "close").map((request) => request.windowId)).toEqual([
+    20,
+  ]);
+
+  h.native({ type: "unmapped", id: 10 });
+  h.send({ type: "boxedwine-runtime-failed", reason: "wasm-trap" });
+  await settle(h.s, 150);
+  expect(h.app().style.display).not.toBe("none");
+  expect(h.s.document.querySelector("[data-native-window-id]")).toBeNull();
+  expect(h.app().textContent).toContain("Restarting Windows application");
+
+  await settle(h.s, 300);
+  const relaunch = new URL(h.frame.src).searchParams;
+  expect(relaunch.get("recovery")).toBe("1");
+  expect(relaunch.get("launchToken")).not.toBe(launchToken);
+  h.send({ type: "boxedwine-runtime-ready" });
+  expect(h.s.document.documentElement.dataset.boxedwineRuntimeState).toBe(
+    "ready",
+  );
+  await openWindow(h, 30, relaunch.get("launchToken"), 78);
+  expect(
+    h.app().querySelector(".boxedwine-shared-app-host canvas").dataset
+      .boxedwineWindow,
+  ).toBe("30");
+});
+
+test("repeated failures after startup mark the runtime failed without rejecting readiness", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  await h.s.window.XPBoxedWineRuntime.applicationsReady();
+  h.s.document.querySelector(".welcome-instruction")?.remove();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    h.send({ type: "boxedwine-runtime-failed", reason: "crash" });
+    await settle(h.s, 300);
+  }
+  const dataset = h.s.document.documentElement.dataset;
+  expect(dataset.boxedwineRuntimeState).toBe("failed");
+  expect(dataset.boxedwineRuntimeError).toBe("crash");
+  await h.s.window.XPBoxedWineRuntime.ready();
+  await h.s.window.XPBoxedWineRuntime.applicationsReady();
+});
+
+test("native window state changes wait for native metadata and respect fixed windows", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  const win = h.app();
+
+  win.querySelector(".minimize-btn").click();
+  await settle(h.s, 200);
+  expect(win.style.display).not.toBe("none");
+
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  const host = win.querySelector(".boxedwine-shared-app-host");
+  Object.defineProperties(host, {
+    clientWidth: { configurable: true, value: 300 },
+    clientHeight: { configurable: true, value: 200 },
+  });
+  h.resizeObservers.at(-1).callback();
+  await settle(h.s, 100);
+  expect(commandsFor(h, "bounds")).toEqual([]);
+  win.querySelector(".maximize-btn").click();
+  await settle(h.s, 100);
+  expect(win.classList.contains("maximized")).toBeTrue();
+  expect(commandsFor(h, "maximize")).toEqual([]);
+
+  h.native({
+    type: "metadata",
+    id: 10,
+    win32Metrics: true,
+    outerWidth: 320,
+    outerHeight: 240,
+    clientWidth: 300,
+    clientHeight: 200,
+    frameTop: 30,
+    canMaximize: true,
+  });
+  await settle(h.s, 100);
+  expect(commandsFor(h, "maximize")).toHaveLength(1);
+
+  win.querySelector(".maximize-btn").click();
+  await settle(h.s, 100);
+  expect(win.classList.contains("maximized")).toBeFalse();
+  expect(commandsFor(h, "restore")).toHaveLength(1);
+
+  const handle = win.querySelector(".resize-handle");
+  const pointer = (type) =>
+    handle.dispatchEvent(
+      new h.s.window.PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        clientX: 10,
+        clientY: 10,
+      }),
+    );
+  pointer("pointerdown");
+  pointer("pointerup");
+  await settle(h.s, 100);
+  expect(commandsFor(h, "bounds").length).toBeGreaterThan(0);
+
+  h.native({
+    type: "metadata",
+    id: 10,
+    win32Metrics: true,
+    outerWidth: 320,
+    outerHeight: 240,
+    clientWidth: 300,
+    clientHeight: 200,
+    frameTop: 30,
+    canMaximize: false,
+  });
+  await settle(h.s);
+  win
+    .querySelector(".title-bar")
+    .dispatchEvent(new h.s.window.MouseEvent("dblclick", { bubbles: true }));
+  await settle(h.s, 100);
+  expect(win.classList.contains("maximized")).toBeFalse();
+  expect(commandsFor(h, "maximize")).toHaveLength(1);
+});
+
+test("native minimizes are ignored for windows the shell never bound", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  h.native({ type: "created", id: 1, parentId: 0 });
+  h.native({
+    type: "created",
+    id: 10,
+    parentId: 1,
+    launchToken: Number(launchToken),
+    width: 300,
+    height: 200,
+  });
+  h.native({ type: "mapped", id: 10 });
+  h.native({ type: "unmapped", id: 10 });
+  await settle(h.s, 150);
+  expect(h.app().style.display).not.toBe("none");
+});
+
+test("unknown applications are rejected before the shared runtime is created", async () => {
+  const { Window } = await import("happy-dom");
+  const page = new Window({ url: "https://flash.example/" });
+  const globals = ["window", "document", "location"];
+  const previous = globals.map((key) => globalThis[key]);
+  Object.assign(globalThis, {
+    window: page,
+    document: page.document,
+    location: page.location,
+  });
+  try {
+    const { mountSharedBoxedWineApplication } =
+      await import("../site/apps/core/boxedwine-runtime.js");
+    expect(() => mountSharedBoxedWineApplication("bogus", {})).toThrow(
+      "Unknown BoxedWine application: bogus",
+    );
+    expect(page.document.querySelector("iframe")).toBeNull();
+    expect(page.XPBoxedWineRuntime).toBeDefined();
+  } finally {
+    globals.forEach((key, index) => {
+      if (previous[index] === undefined) delete globalThis[key];
+      else globalThis[key] = previous[index];
+    });
+    await page.happyDOM.close();
+  }
 });

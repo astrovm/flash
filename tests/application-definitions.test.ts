@@ -2,8 +2,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { defineApplication } from "../site/apps/core/application.js";
-import { defineLazyApplication } from "../site/apps/core/lazy-application.js";
+import {
+  createRetryingLoader,
+  defineLazyApplication,
+} from "../site/apps/core/lazy-application.js";
 import { createApplicationRegistry } from "../site/apps/core/registry.js";
+import { defineProgram } from "../site/apps/programs/define-program.js";
 import { validateBoxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
 
 const element = { nodeType: 1 };
@@ -60,6 +64,26 @@ describe("application definitions", () => {
     await lazy.load();
     expect(lazy.mount().element).toBe(element);
     expect(attempts).toBe(2);
+  });
+
+  test("retrying loaders share one load and retry after a failure", async () => {
+    const results = [Promise.reject(new Error("offline")), Promise.resolve(1)];
+    let calls = 0;
+    const load = createRetryingLoader(() => results[calls++]);
+    const failed = load();
+    expect(load()).toBe(failed);
+    await expect(failed).rejects.toThrow("offline");
+    const loaded = load();
+    expect(await loaded).toBe(1);
+    expect(load()).toBe(loaded);
+    expect(calls).toBe(2);
+  });
+
+  test("programs require a renderer for their kind", () => {
+    expect(() => defineProgram({ ...metadata, kind: "spreadsheet" })).toThrow(
+      "No renderer registered for application: example",
+    );
+    expect(defineProgram({ ...metadata, kind: "volume" }).mount).toBeFunction();
   });
 
   test("registries reject duplicate identifiers", () => {

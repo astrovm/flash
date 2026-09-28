@@ -7,8 +7,7 @@ const PROGRAM_RENDERERS = Object.freeze({
 });
 
 export const defineProgram = (metadata) => {
-  const renderer =
-    PROGRAM_RENDERERS[`id:${metadata.id}`] || PROGRAM_RENDERERS[metadata.kind];
+  const renderer = PROGRAM_RENDERERS[metadata.kind];
   if (!renderer) {
     throw new Error(`No renderer registered for application: ${metadata.id}`);
   }

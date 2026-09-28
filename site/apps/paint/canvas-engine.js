@@ -39,7 +39,7 @@ const drawRoundedRect = (context, x, y, width, height) => {
 
 export const createCanvasEngine = ({ canvas, frame, onChange, onPosition }) => {
   const context = canvas.getContext("2d", { willReadFrequently: true });
-  const history = createPaintHistory(3);
+  const history = createPaintHistory();
   let tool = "pencil";
   let primary = "#000000";
   let secondary = "#ffffff";
@@ -340,7 +340,7 @@ export const createCanvasEngine = ({ canvas, frame, onChange, onPosition }) => {
       polygon = [];
       clearSelectionOverlay();
     },
-    setColors(first, second = secondary) {
+    setColors(first, second) {
       primary = first;
       secondary = second;
     },

@@ -212,7 +212,6 @@ const mountMinesweeper = (context, instance) => {
     timer = null;
   };
   const startTimer = () => {
-    if (timer || status !== "playing") return;
     timer = setInterval(() => {
       if (!root.isConnected) return stopTimer();
       elapsed = Math.min(999, elapsed + 1);
@@ -474,7 +473,7 @@ const mountMinesweeper = (context, instance) => {
         "Best Times",
         "Beginner: Anonymous     999 seconds\nIntermediate: Anonymous     999 seconds\nExpert: Anonymous     999 seconds",
       );
-    } else if (command === "exit") context.close();
+    } else context.close(); // Exit is the only remaining Game command.
   });
   helpMenu.popup.addEventListener("click", (event) => {
     const command = event.target.closest("[data-command]")?.dataset.command;

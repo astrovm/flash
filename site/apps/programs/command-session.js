@@ -81,7 +81,7 @@ export class CommandSession {
   }
 
   resolve(path, options = {}) {
-    let value = String(path || "").trim();
+    let value = path.trim();
     if (!value || value === ".") return this.cwd;
     value = value.replaceAll("/", "\\");
     const driveMatch = value.match(/^([cdf]):(?:\\|$)/i);

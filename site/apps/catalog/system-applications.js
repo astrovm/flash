@@ -1,14 +1,14 @@
 import { defineApplication } from "../core/application.js";
-import { defineLazyApplication } from "../core/lazy-application.js";
+import {
+  createRetryingLoader,
+  defineLazyApplication,
+} from "../core/lazy-application.js";
 
 // The system window runtime is only needed once a system window opens, so it
 // stays out of the startup module graph.
-let systemRuntimeModule = null;
-const loadSystemRuntime = () =>
-  (systemRuntimeModule ??= import("../system/runtime.js").catch((error) => {
-    systemRuntimeModule = null;
-    throw error;
-  }));
+const loadSystemRuntime = createRetryingLoader(
+  () => import("../system/runtime.js"),
+);
 
 const system = (id, title, icon, window = {}, activation = null) => {
   const metadata = {

@@ -97,3 +97,16 @@ test("ISO parsing rejects unsupported images, malformed directory entries and in
     gameFilesFromIso(new Blob([image()]), { ...game, fileSets: [["MISSING"]] }),
   ).rejects.toThrow("missing required game files");
 });
+
+test("the ISO 9660 reader exposes itself as a browser global without CommonJS", async () => {
+  const { instrumentSource } = await import("./helpers/coverage");
+  const path = require.resolve("../site/iframe/scummvm/iso9660.js");
+  const source = instrumentSource(await Bun.file(path).text(), path);
+  const scope = globalThis as { AstroIso9660?: { indexIsoFiles: unknown } };
+  try {
+    new Function("module", source)(undefined);
+    expect(scope.AstroIso9660?.indexIsoFiles).toBeFunction();
+  } finally {
+    delete scope.AstroIso9660;
+  }
+});

@@ -221,8 +221,8 @@ const mountNotepad = (context, instance) => {
         ["Time/&Date", "time-date", "F5"],
       ],
     ],
-    ["F&ormat", [["&Word Wrap", "word-wrap", ""]]],
-    ["&View", [["&Status Bar", "status-bar", ""]]],
+    ["F&ormat", [["&Word Wrap", "word-wrap", "", false]]],
+    ["&View", [["&Status Bar", "status-bar", "", false]]],
     ["&Help", [["&About Notepad", "about", ""]]],
   ];
 
@@ -260,10 +260,11 @@ const mountNotepad = (context, instance) => {
       item.type = "button";
       item.className = "notepad-menu-item";
       item.dataset.command = command;
-      item.setAttribute("role", checked ? "menuitemcheckbox" : "menuitem");
-      if (checked) {
-        item.classList.add("checked");
-        item.setAttribute("aria-checked", "true");
+      const checkable = typeof checked === "boolean";
+      item.setAttribute("role", checkable ? "menuitemcheckbox" : "menuitem");
+      if (checkable) {
+        item.classList.toggle("checked", checked);
+        item.setAttribute("aria-checked", String(checked));
       }
       const check = document.createElement("span");
       check.className = "notepad-menu-check";

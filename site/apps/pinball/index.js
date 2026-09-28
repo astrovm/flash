@@ -7,7 +7,6 @@ const TITLE = "3D Pinball for Windows - Space Cadet";
 const state = {
   canvas: null,
   module: null,
-  promise: null,
 };
 
 const pauseRuntime = (module) => {
@@ -44,9 +43,8 @@ const createCanvas = (context) => {
 };
 
 const loadRuntime = (context, status, progress) => {
-  if (state.promise) return state.promise;
   state.canvas = createCanvas(context);
-  state.promise = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let totalDependencies = 0;
     const module = {
       canvas: state.canvas,
@@ -139,7 +137,6 @@ const loadRuntime = (context, status, progress) => {
     });
     document.head.appendChild(script);
   });
-  return state.promise;
 };
 
 const mountPinball = (context) => {

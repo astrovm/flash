@@ -595,7 +595,7 @@ export const createSystemRuntime = (context) => {
         const text = document.createElement("span");
         text.textContent = label;
         button.append(image, text);
-        if (onClick) button.addEventListener("click", onClick);
+        button.addEventListener("click", onClick);
         container.appendChild(button);
         return button;
       };
@@ -613,17 +613,13 @@ export const createSystemRuntime = (context) => {
         restoreAll.textContent = "Restore all items";
         restoreAll.addEventListener("click", async () => {
           try {
-            try {
-              await fileOps.restore(
-                fs.getChildren(fs.RECYCLE_BIN).map((node) => node.id),
-              );
-            } catch (error) {
-              await XPDialogs.alert(error.message, "Restore files", "error");
-            }
+            await fileOps.restore(
+              fs.getChildren(fs.RECYCLE_BIN).map((node) => node.id),
+            );
           } catch (error) {
             await XPDialogs.alert(
               error.message || "The file operation failed.",
-              "File operation",
+              "Restore files",
               "error",
             );
           }
@@ -879,11 +875,9 @@ export const createSystemRuntime = (context) => {
           });
       };
       const showExplorerSubmenu = (name, parentItem, focusFirst) => {
-        const entries = explorerSubmenus[name];
-        if (!entries) return false;
         renderExplorerMenuEntries(
           explorerSubmenu,
-          entries,
+          explorerSubmenus[name],
           "explorerSubcommand",
         );
         explorerSubmenu.dataset.explorerSubmenuName = name;
@@ -893,16 +887,21 @@ export const createSystemRuntime = (context) => {
         explorerSubmenu.hidden = false;
         if (focusFirst)
           explorerSubmenu.querySelector("button:not(:disabled)")?.focus();
-        return true;
       };
+      // My Computer and the Recycle Bin are the only folders without a
+      // parent, and XP shows the Desktop above both.
+      const navigateUp = () =>
+        navigateExplorer(
+          win,
+          (fs.getParent(win.currentFolderId) || fs.getNode(fs.DESKTOP)).id,
+        );
       const showExplorerMenu = (name, button, focusFirst) => {
         const selected = selectedExplorerNodes(win);
         const protectedSelection = selected.some((id) => fs.isProtected(id));
         const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
           win.currentFolderId,
         );
-        const currentFolderName =
-          fs.getNode(win.currentFolderId)?.name || "Folder";
+        const currentFolderName = fs.getNode(win.currentFolderId).name;
         const actions = {
           file: [
             {
@@ -1093,11 +1092,7 @@ export const createSystemRuntime = (context) => {
                 .querySelector('[data-explorer-action="folders"]')
                 ?.setAttribute("aria-pressed", "true");
             }
-            if (subcommand === "up-one-level") {
-              const parent =
-                fs.getParent(win.currentFolderId) || fs.getNode(fs.DESKTOP);
-              if (parent) navigateExplorer(win, parent.id);
-            }
+            if (subcommand === "up-one-level") navigateUp();
             if (subcommand === "my-computer")
               navigateExplorer(win, fs.MY_COMPUTER);
             if (subcommand === "properties-current")
@@ -1115,14 +1110,7 @@ export const createSystemRuntime = (context) => {
           if (!action) return;
           if (action === "back") explorerBack(win);
           if (action === "forward") explorerForward(win);
-          if (action === "up") {
-            const parent =
-              fs.getParent(win.currentFolderId) ||
-              ([fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId)
-                ? fs.getNode(fs.DESKTOP)
-                : null);
-            if (parent) navigateExplorer(win, parent.id);
-          }
+          if (action === "up") navigateUp();
           if (action === "folders") {
             const foldersVisible = content.classList.toggle("folders-visible");
             actionButton.setAttribute("aria-pressed", String(foldersVisible));

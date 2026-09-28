@@ -1,20 +1,24 @@
 import { defineApplication } from "./application.js";
 
+// Shares one in-flight load between callers and forgets a failed load, so the
+// next call retries instead of replaying the rejection.
+export const createRetryingLoader = (loader) => {
+  let pending = null;
+  return () =>
+    (pending ??= loader().catch((error) => {
+      pending = null;
+      throw error;
+    }));
+};
+
 export const defineLazyApplication = (metadata, loader) => {
   let loaded = null;
-  let pending = null;
-  const load = () => {
-    pending ||= loader()
-      .then((application) => {
-        loaded = application;
-        return application;
-      })
-      .catch((error) => {
-        pending = null;
-        throw error;
-      });
-    return pending;
-  };
+  const load = createRetryingLoader(() =>
+    loader().then((application) => {
+      loaded = application;
+      return application;
+    }),
+  );
   return Object.freeze({
     ...defineApplication({
       ...metadata,

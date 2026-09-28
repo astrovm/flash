@@ -23,11 +23,5 @@ export const createPaintHistory = (limit = 3) => {
       undo.length = 0;
       redo.length = 0;
     },
-    get canUndo() {
-      return undo.length > 0;
-    },
-    get canRedo() {
-      return redo.length > 0;
-    },
   };
 };

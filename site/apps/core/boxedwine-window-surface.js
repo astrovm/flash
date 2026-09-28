@@ -483,7 +483,7 @@ export const createBoxedWineWindowSurface = ({
   };
 
   const requestRender = (topId, frameId = 0) => {
-    if (topId) pendingRenderIds.add(topId);
+    pendingRenderIds.add(topId);
     if (frameId) pendingFrameIds.add(frameId);
     if (animationFrame) return;
     const request = window.requestAnimationFrame || window.setTimeout;
