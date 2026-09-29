@@ -2,11 +2,6 @@ name: Test and deploy GitHub Pages
 
 on:
   pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "**/LICENSE"
-      - "**/LICENSE.*"
-      - "**/LICENSE-*"
   push:
     branches:
       - main
@@ -41,18 +36,22 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Check formatting and lint
+        if: github.event_name != 'push'
         run: bun run quality
 
       - name: Run tests
+        if: github.event_name != 'push'
         run: bun run test
 
       - name: Enforce first-party coverage
+        if: github.event_name != 'push'
         run: bun run test:coverage
 
       - name: Build production site
         run: bun run build --revision "${{ github.sha }}"
 
       - name: Confirm source tree was not modified
+        if: github.event_name != 'push'
         shell: bash
         run: |
           changes="$(git status --porcelain --untracked-files=all -- site)"
