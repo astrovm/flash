@@ -140,7 +140,8 @@ the editor keeps its draft.
 ## Deployment
 
 Pull requests run formatting, lint, tests, the coverage check, and a production
-build. Pushes to `main` run the same checks, deploy and smoke-test the Cloudflare
+build. The protected `main` branch requires passing PR checks. Pushes to `main`
+build, deploy and smoke-test the Cloudflare
 Worker, and then publish the site to GitHub Pages.
 
 CI needs these GitHub Actions secrets:
