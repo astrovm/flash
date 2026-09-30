@@ -1,6 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "bun"
+    assignees: [astrovm]
     directory: "/"
     schedule:
       interval: "weekly"
@@ -11,6 +12,8 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "github-actions"
+
+    assignees: [astrovm]
     directory: "/"
     schedule:
       interval: "weekly"
