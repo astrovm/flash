@@ -406,6 +406,53 @@ describe("development server edge cases", () => {
     watcher.close();
   });
 
+  test("does not overlap fingerprint checks while a source check is pending", async () => {
+    let checks = 0;
+    let builds = 0;
+    let checkStarted!: () => void;
+    let finishCheck!: () => void;
+    let reload!: () => void;
+    const started = new Promise<void>((resolve) => {
+      checkStarted = resolve;
+    });
+    const pendingCheck = new Promise<void>((resolve) => {
+      finishCheck = resolve;
+    });
+    const reloaded = new Promise<void>((resolve) => {
+      reload = resolve;
+    });
+    const watcher = await watchDevelopmentBuild({
+      debounceMs: 5,
+      fingerprint: async () => {
+        checks += 1;
+        if (checks === 1) return "initial";
+        if (checks === 2) {
+          checkStarted();
+          await pendingCheck;
+        }
+        return "changed";
+      },
+      onReload: reload,
+      rebuild: async () => {
+        builds += 1;
+        return { rebuilt: true };
+      },
+    });
+    try {
+      await started;
+      // Several timer ticks occur while the first source check is held open.
+      await Bun.sleep(30);
+      expect(checks).toBe(2);
+      expect(builds).toBe(0);
+      finishCheck();
+      await reloaded;
+      expect(builds).toBe(1);
+    } finally {
+      watcher.close();
+      finishCheck();
+    }
+  });
+
   test("queues changes during a rebuild and reports failures", async () => {
     const errors: unknown[][] = [];
     const originalError = console.error;
