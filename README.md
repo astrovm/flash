@@ -4,8 +4,6 @@
 
 A Windows XP-style desktop that runs in your browser. Play classic games and use selected original Windows XP applications without installing anything.
 
-[Open Astro Flash Collection](https://flash.4st.li/)
-
 ## 🚀 Use
 
 - Open [flash.4st.li](https://flash.4st.li/). There's nothing to install.
