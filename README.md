@@ -1,20 +1,47 @@
 # Astro Flash Collection
 
-A Windows XP-style desktop that runs in your browser. Play classic games and use
-selected original Windows XP applications without installing anything.
+**Classic games and Windows XP apps, right in your browser.**
+
+A Windows XP-style desktop that runs in your browser. Play classic games and use selected original Windows XP applications without installing anything.
 
 [Open Astro Flash Collection](https://flash.4st.li/)
 
+## 🚀 Use
+
+- Open [flash.4st.li](https://flash.4st.li/). There's nothing to install.
+- Want a game offline? Open an included game once, or download it in **Settings → Games**.
+
 ## Features
 
-- A Windows XP shell with Explorer, Paint, Notepad, Pinball, themes, and settings
-- Original XP applications such as Calculator, WordPad, and the card games
-- Draggable game windows with task switching, fullscreen, and volume controls
-- Favorites, recently played games, categories, search, and deep links
-- Offline play, with optional downloads for individual games
-- An Internet Games catalog backed by Flashpoint Archive
+- **XP shell.** Explorer, Paint, Notepad, Pinball, themes, and settings.
+- **Original XP apps.** Such as Calculator, WordPad, and the card games.
+- **Real windows.** Drag game windows around, switch tasks, go fullscreen, and set the volume.
+- **Find games fast.** Favorites, recently played, categories, search, and deep links.
+- **Offline play.** With optional downloads for individual games.
+- **Internet Games.** A catalog backed by Flashpoint Archive.
 
-## Getting started
+## Offline and updates
+
+- **The shell is cached automatically.** The XP desktop works offline without doing anything.
+- **Included games cache themselves.** Opening one starts a background download so it works offline next time.
+- **Manage downloads.** **Settings → Games** downloads or removes games one at a time or all together.
+- **Runtimes load on demand.** The shared Ruffle, ScummVM, and BoxedWine runtimes download only when a game needs them.
+- **Updates don't interrupt you.** They install in the background and leave the current page alone.
+- **Switching versions.** Reopen the site to get the new version, or press **Update Now** to reload right away.
+- **Internet Games are stored separately.** They live in IndexedDB and Cache Storage.
+- **GameZIP titles install completely.** Legacy titles cache extra files as the game requests them.
+
+Installing Internet Games needs a browser with IndexedDB, OPFS, and streaming responses.
+
+## Your files
+
+- **Each document is saved on its own.** Documents are separate IndexedDB records.
+- **Old files come along.** Older localStorage files migrate automatically in a single transaction, and the old snapshot is kept as a recovery backup.
+- **Saves are real saves.** A save finishes only after the database commits it.
+- **Multiple tabs are safe.** Any tab can write, but if another tab changed the same file first, the save is rejected so the editor keeps its draft.
+
+<details>
+<summary><b>Getting started (development)</b></summary>
 
 Install the Bun version pinned in `package.json`. CI reads the same pin.
 
@@ -25,11 +52,18 @@ bun run dev
 
 Then open <http://127.0.0.1:8000>.
 
-The development server builds the site into `dist/`, watches the build inputs,
-rebuilds on change, and reloads open tabs after each successful build. It also
-serves the local `/api/games` proxy that Internet Games uses. When `dist/` is
-already current it starts immediately. Pass `--rebuild` to force a fresh build
-or `--no-sync` to serve the existing output as is:
+The development server:
+
+- builds the site into `dist/`
+- watches the build inputs and rebuilds on change
+- reloads open tabs after each successful build
+- serves the local `/api/games` proxy that Internet Games uses
+- starts immediately when `dist/` is already current
+
+| Flag        | What it does                     |
+| ----------- | -------------------------------- |
+| `--rebuild` | Forces a fresh build             |
+| `--no-sync` | Serves the existing output as is |
 
 ```bash
 bun run dev -- --rebuild
@@ -41,9 +75,7 @@ bun run dev -- --rebuild
 bun run preview
 ```
 
-Preview serves the real production service worker and gives every rebuild a new
-local version. It does not reload the page for you. Use
-**Settings > Updates > Check for Updates** to walk through the update flow.
+Preview serves the real production service worker and gives every rebuild a new local version. It does not reload the page for you. Use **Settings → Updates → Check for Updates** to walk through the update flow.
 
 ### XP reference VM
 
@@ -51,41 +83,33 @@ local version. It does not reload the page for you. Use
 bun run xp:vm --instance <name>
 ```
 
-This starts an isolated Windows XP VM to compare against. Changes are discarded
-when it stops, so several sessions can share one base disk. Pass `--write-base`
-only when a change must be saved to that disk.
+This starts an isolated Windows XP VM to compare against. Changes are discarded when it stops, so several sessions can share one base disk. Pass `--write-base` only when a change must be saved to that disk.
 
-The [fidelity roadmap](docs/XP-FIDELITY-ROADMAP.md) lists known taskbar gaps,
-finished reference passes, and the remaining areas in priority order.
+The [fidelity roadmap](docs/XP-FIDELITY-ROADMAP.md) lists known taskbar gaps, finished reference passes, and the remaining areas in priority order.
 
-## Checks
+</details>
+
+<details>
+<summary><b>Checks</b></summary>
 
 Run these before pushing:
 
-```bash
-bun run quality        # Prettier and ESLint
-bun run test           # typecheck, tests, and asset validation
-bun run test:coverage  # tests with first-party coverage
-```
+| Command                 | What it runs                           |
+| ----------------------- | -------------------------------------- |
+| `bun run quality`       | Prettier and ESLint                    |
+| `bun run test`          | typecheck, tests, and asset validation |
+| `bun run test:coverage` | tests with first-party coverage        |
 
-Typechecking uses the native TypeScript 7 compiler from `@typescript/native`.
-TypeScript 6 stays installed because TypeScript ESLint still needs it.
+Typechecking uses the native TypeScript 7 compiler from `@typescript/native`. TypeScript 6 stays installed because TypeScript ESLint still needs it.
 
-Tests run in parallel worker processes. Each test file groups its tests under a
-`describe` that names the subject, and each test name is a lowercase,
-present-tense behavior that reads as a sentence after it, for example
-`Flash URL router` › `rejects ambiguous and unsafe routes`. Shell tests move XP
-timers forward with `shell.advanceTime(ms)` from `tests/helpers/shell-harness.ts`
-instead of waiting in real time.
+Tests run in parallel worker processes. Each test file groups its tests under a `describe` that names the subject, and each test name is a lowercase, present-tense behavior that reads as a sentence after it, for example `Flash URL router` › `rejects ambiguous and unsafe routes`. Shell tests move XP timers forward with `shell.advanceTime(ms)` from `tests/helpers/shell-harness.ts` instead of waiting in real time.
 
-`bun run test:coverage` instruments first-party code with Istanbul, including
-the classic scripts the shell harness loads into Happy DOM. It writes an HTML
-report to `coverage/index.html` and fails unless lines, statements, functions,
-and branches are all at 100%. Instrumentation slows the suite, so this run
-allows each test 30 seconds. CI enforces the same threshold on every pull
-request.
+`bun run test:coverage` instruments first-party code with Istanbul, including the classic scripts the shell harness loads into Happy DOM. It writes an HTML report to `coverage/index.html` and fails unless lines, statements, functions, and branches are all at 100%. Instrumentation slows the suite, so this run allows each test 30 seconds. CI enforces the same threshold on every pull request.
 
-## Project layout
+</details>
+
+<details>
+<summary><b>Project layout</b></summary>
 
 | Path                                          | Contents                                                   |
 | --------------------------------------------- | ---------------------------------------------------------- |
@@ -101,54 +125,40 @@ request.
 | `tests/`                                      | Bun and TypeScript tests                                   |
 | `dist/`                                       | Generated production build, ignored by Git                 |
 
-## Games and applications
+</details>
 
-Catalog games live in `site/js/games.js`. Ruffle games use `type: "swf"`.
-Embedded HTML5, js-dos, ScummVM, and reVCDOS games use `type: "iframe"`.
+<details>
+<summary><b>Games and applications</b></summary>
 
-Original XP applications are registered in
-`site/apps/core/boxedwine-applications.js` and share one BoxedWine runtime.
-Windows XP Pinball is mounted directly from `site/apps/pinball/`.
+Catalog games live in `site/js/games.js`.
 
-## Offline support and storage
+| Game kind                                    | `type`     |
+| -------------------------------------------- | ---------- |
+| Ruffle                                       | `"swf"`    |
+| Embedded HTML5, js-dos, ScummVM, and reVCDOS | `"iframe"` |
 
-The XP shell is cached automatically. Opening an included game starts a
-background download so it works offline next time. **Settings > Games** can
-download or remove games one at a time or all together. The shared Ruffle,
-ScummVM, and BoxedWine runtimes download only when a game needs them.
+Original XP applications are registered in `site/apps/core/boxedwine-applications.js` and share one BoxedWine runtime. Windows XP Pinball is mounted directly from `site/apps/pinball/`.
 
-Updates install in the background and leave the current page alone. Reopen the
-site to switch to the new version, or press **Update Now** to reload right away.
+</details>
 
-Games installed from **Internet Games** are kept separately in IndexedDB and
-Cache Storage. GameZIP titles install completely. Legacy titles cache extra
-files as the game requests them.
+<details>
+<summary><b>How Internet Games installs work</b></summary>
 
-Installing a game streams the download into a temporary file in the browser's
-private filesystem (OPFS), validates the ZIP index, and extracts one file at a
-time into Cache Storage. Reads are bounded, and sizes and CRCs are checked. If
-the install is cancelled or fails, partial cache entries and the temporary
-archive are removed. This needs a browser with IndexedDB, OPFS, and streaming
-responses.
+Installing a game streams the download into a temporary file in the browser's private filesystem (OPFS), validates the ZIP index, and extracts one file at a time into Cache Storage. Reads are bounded, and sizes and CRCs are checked. If the install is cancelled or fails, partial cache entries and the temporary archive are removed. This needs a browser with IndexedDB, OPFS, and streaming responses.
 
-Documents are stored as separate IndexedDB records. Older localStorage files
-migrate automatically in a single transaction, and the old snapshot is kept as a
-recovery backup. A save finishes only after the database commits it. Any tab can
-write, but if another tab changed the same file first, the save is rejected so
-the editor keeps its draft.
+</details>
 
-## Deployment
+<details>
+<summary><b>Deployment</b></summary>
 
-Pull requests run formatting, lint, tests, the coverage check, and a production
-build. The protected `main` branch requires passing PR checks. Pushes to `main`
-build, deploy and smoke-test the Cloudflare
-Worker, and then publish the site to GitHub Pages.
+Pull requests run formatting, lint, tests, the coverage check, and a production build. The protected `main` branch requires passing PR checks. Pushes to `main` build, deploy and smoke-test the Cloudflare Worker, and then publish the site to GitHub Pages.
 
 CI needs these GitHub Actions secrets:
 
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN`, with **Workers Scripts: Edit** on the account and
-  **Workers Routes: Edit** on the `4st.li` zone
+| Secret                  | Value                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                                                                                 |
+| `CLOUDFLARE_API_TOKEN`  | Token with **Workers Scripts: Edit** on the account and **Workers Routes: Edit** on the `4st.li` zone |
 
 To deploy the Worker by hand:
 
@@ -156,8 +166,14 @@ To deploy the Worker by hand:
 bun run deploy:worker
 ```
 
-## Contributing
+</details>
 
-Before opening a pull request, check game compatibility, controls, frame rate,
-and category, and make sure `bun run quality`, `bun run test`, and
-`bun run test:coverage` all pass.
+<details>
+<summary><b>Contributing</b></summary>
+
+Before opening a pull request:
+
+- Check game compatibility, controls, frame rate, and category.
+- Make sure `bun run quality`, `bun run test`, and `bun run test:coverage` all pass.
+
+</details>
