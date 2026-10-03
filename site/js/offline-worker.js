@@ -228,9 +228,16 @@
 
     event.respondWith(
       caches.open(BUNDLED_GAME_CACHE).then(async (cache) => {
-        const cached = await cache.match(event.request, { ignoreSearch: true });
+        // Downloads are cached without the release prefix (see offline.js).
+        const key = new URL(url.href);
+        key.pathname = path;
+        const cached = await cache.match(key.href, { ignoreSearch: true });
         try {
-          return await fetch(event.request);
+          const response = await fetch(event.request);
+          // Only one release is hosted, so a tab still on an older release
+          // gets 404s for files it may already have downloaded.
+          if (!response.ok && cached) return cached;
+          return response;
         } catch (error) {
           if (cached) return cached;
           throw error;

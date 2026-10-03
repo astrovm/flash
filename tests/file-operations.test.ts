@@ -374,6 +374,65 @@ describe("file operations", () => {
     expect(fs.getNode(selectedChild.id).parent).toBe(selectedFolder.id);
   });
 
+  test("restores a file to its nested folder when a higher folder is also selected", () => {
+    const outer = operations.createFolder(fs.MY_DOCUMENTS, "Outer");
+    const inner = operations.createFolder(outer.id, "Inner");
+    const file = operations.createFile(inner.id, "deep.txt");
+    operations.removeToBin([file.id]);
+    operations.removeToBin([outer.id]);
+    operations.restore([file.id, outer.id]);
+    expect(fs.getNode(outer.id).parent).toBe(fs.MY_DOCUMENTS);
+    expect(fs.getNode(file.id).parent).toBe(inner.id);
+  });
+
+  test("keeps a file that was renamed while the replace dialog was open", async () => {
+    const { conflictFile, conflictTarget, existingFile } =
+      createConflictFixture();
+
+    operations.cut([conflictFile.id]);
+    await operations.pasteWithConflicts(conflictTarget.id, () => {
+      operations.rename(existingFile.id, "kept.txt");
+      return "replace";
+    });
+    expect(fs.getNode(existingFile.id).name).toBe("kept.txt");
+    expect(fs.getNode(conflictFile.id).parent).toBe(conflictTarget.id);
+    expect(fs.getNode(conflictFile.id).name).toBe("same.txt");
+  });
+
+  test("keeps a copy clipboard unchanged when a copy fails", async () => {
+    const { note, destination } = createClipboardFixture();
+    const copy = fs.copy;
+    fs.copy = () => {
+      throw new Error("synthetic storage failure");
+    };
+    operations.copy([note.id]);
+    await expect(operations.pasteWithConflicts(destination.id)).rejects.toThrow(
+      "synthetic storage failure",
+    );
+    fs.copy = copy;
+    expect(operations.getClipboard()).toEqual({ mode: "copy", ids: [note.id] });
+  });
+
+  test("leaves only unmoved items on the clipboard when a paste fails partway", async () => {
+    const { source, note, destination } = createClipboardFixture();
+    const other = operations.createFile(source.id, "other.txt");
+    const move = fs.move;
+    let moves = 0;
+    fs.move = (...args) => {
+      moves += 1;
+      if (moves === 2) throw new Error("synthetic storage failure");
+      return move(...args);
+    };
+    operations.cut([note.id, other.id]);
+    await expect(operations.pasteWithConflicts(destination.id)).rejects.toThrow(
+      "synthetic storage failure",
+    );
+    fs.move = move;
+    expect(fs.getNode(note.id).parent).toBe(destination.id);
+    expect(fs.getNode(other.id).parent).toBe(source.id);
+    expect(operations.getClipboard()).toEqual({ mode: "cut", ids: [other.id] });
+  });
+
   test("restores original names after temporary Recycle Bin conflict names", () => {
     const nameFolderA = operations.createFolder(fs.MY_DOCUMENTS, "Name A");
     const nameFolderB = operations.createFolder(fs.MY_DOCUMENTS, "Name B");

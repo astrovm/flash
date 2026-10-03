@@ -456,6 +456,46 @@ describe("BoxedWine window control edge cases", () => {
     expect(harness.received).toHaveLength(before + 1);
   });
 
+  test("waits for Wine to read each command before writing the next", () => {
+    const harness = setup();
+    harness.module.onRuntimeInitialized();
+    const state = "/d_drive/boxedwine-window-control.out";
+    const sent = () => {
+      const view = new DataView(harness.command().buffer);
+      return [view.getUint32(4, true), view.getUint32(12, true)];
+    };
+    const send = (action, width = 0) =>
+      harness.message({
+        type: "boxedwine-native-command",
+        action,
+        windowId: 4,
+        width,
+      });
+
+    send("maximize");
+    send("bounds", 300);
+    send("bounds", 320);
+    send("activate");
+    expect(sent()).toEqual([1, 3]);
+
+    // One new generation may come from a poll that started before the write.
+    harness.files.set(state, stateBytes(1, []));
+    harness.tick();
+    expect(sent()).toEqual([1, 3]);
+    harness.files.set(state, stateBytes(2, []));
+    harness.tick();
+    expect(sent()).toEqual([2, 5]);
+    expect(new DataView(harness.command().buffer).getUint32(24, true)).toBe(
+      320,
+    );
+
+    // A stalled helper does not hold later commands forever.
+    for (let poll = 0; poll < 9; poll += 1) harness.tick();
+    expect(sent()).toEqual([2, 5]);
+    harness.tick();
+    expect(sent()).toEqual([3, 6]);
+  });
+
   test("disposes before the runtime starts", () => {
     const harness = setup();
     harness.dispose();

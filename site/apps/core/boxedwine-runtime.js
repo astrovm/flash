@@ -197,8 +197,8 @@ const createRuntime = (initialApplicationId) => {
     const missingApplications = [...mounts.keys()].filter(
       (appId) => !runningWindows.has(appId) && !processes.has(appId),
     );
+    window.clearTimeout(launchTimer);
     if (missingApplications.length > 0) {
-      window.clearTimeout(launchTimer);
       launchTimer = window.setTimeout(
         () => recoverRuntime("application-warmup-timeout"),
         120000,
@@ -638,6 +638,9 @@ const createRuntime = (initialApplicationId) => {
             );
           }
           mounts.delete(appId);
+          // Closing an app that was still launching must not leave its warm-up
+          // timeout running, or it would later tear down the idle runtime.
+          ensureMountedApplications();
         },
       };
     },

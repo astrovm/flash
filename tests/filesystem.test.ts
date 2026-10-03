@@ -64,6 +64,14 @@ describe("virtual filesystem", () => {
     expect(fs.resolvePath("F:\\")).toBe(fs.DRIVE_F);
   });
 
+  test("resolves the paths it gives to Recycle Bin items", () => {
+    const file = fs.createFile(fs.MY_DOCUMENTS, "binned.txt");
+    fs.remove(file.id);
+    const path = fs.getPath(file.id);
+    expect(path).toStartWith("Recycle Bin\\");
+    expect(fs.resolvePath(path)).toBe(file.id);
+  });
+
   test("rejects names that are invalid on Windows", () => {
     expect(fs.validateName("notes.txt")).toBe("notes.txt");
     expect(fs.validateName("  notes.txt")).toBe("notes.txt");

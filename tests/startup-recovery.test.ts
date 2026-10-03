@@ -202,6 +202,51 @@ describe("startup recovery edge cases", () => {
     }
   });
 
+  test("leaves a page alone when startup finishes during the checks", async () => {
+    const recovery = makeEnvironment();
+    const fetch = recovery.environment.fetch;
+    const startup = createStartupRecovery(recovery.environment);
+    recovery.environment.fetch = async (url, options) => {
+      startup.markReady();
+      return fetch(url, options);
+    };
+
+    await recovery.timers[0].callback();
+
+    expect(recovery.getUnregisters()).toBe(0);
+    expect(recovery.deletedCaches).toEqual([]);
+    expect(recovery.getReplacement()).toBeNull();
+    expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
+  });
+
+  test("does not reload when startup finishes while caches are cleared", async () => {
+    const recovery = makeEnvironment();
+    const startup = createStartupRecovery(recovery.environment);
+    recovery.environment.caches.keys = async () => {
+      startup.markReady();
+      return ["astro-flash-precache-v2"];
+    };
+
+    await recovery.timers[0].callback();
+
+    expect(recovery.getReplacement()).toBeNull();
+    expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
+  });
+
+  test("stops retrying when startup finishes before a check fails", async () => {
+    const recovery = makeEnvironment();
+    const startup = createStartupRecovery(recovery.environment);
+    recovery.environment.fetch = async () => {
+      startup.markReady();
+      return new Response("down", { status: 503 });
+    };
+
+    await recovery.timers[0].callback();
+
+    expect(recovery.errors).toEqual([]);
+    expect(recovery.timers).toHaveLength(1);
+  });
+
   test("recovers without service workers or Cache Storage", async () => {
     const recovery = makeEnvironment();
     delete recovery.environment.navigator.serviceWorker;

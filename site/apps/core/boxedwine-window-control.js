@@ -3,6 +3,8 @@ const STATE_PATH = "/d_drive/boxedwine-window-control.out";
 const COMMAND_MAGIC = 0x42574331;
 const STATE_MAGIC = 0x42575331;
 const STATE_RECORD_BYTES = 64;
+// About half a second of 50 ms polls.
+const COMMAND_TIMEOUT_POLLS = 10;
 
 const commandCodes = Object.freeze({
   close: 1,
@@ -26,6 +28,11 @@ export const installBoxedWineWindowControlBridge = (hostWindow, module) => {
   let sequence = 0;
   let generation = 0;
   let timer = null;
+  // Wine reads one command per poll, so a second write before that poll would
+  // overwrite the first. Later commands wait until two new state generations
+  // show the helper has polled since the last write, or until it stalls.
+  const queue = [];
+  let inFlight = null;
 
   const onNativeWindow = (event) => {
     const detail = event.detail;
@@ -67,6 +74,22 @@ export const installBoxedWineWindowControlBridge = (hostWindow, module) => {
     // legacy X11 command handler, because two independent resize/state paths
     // can race and use different client/outer geometry.
     event.stopImmediatePropagation();
+    const next = { windowId, command, x, y, width, height };
+    const last = queue.at(-1);
+    // Only the latest pending size matters for a window being resized.
+    if (
+      last?.command === commandCodes.bounds &&
+      command === commandCodes.bounds &&
+      last.windowId === windowId
+    )
+      queue[queue.length - 1] = next;
+    else queue.push(next);
+    sendNextCommand();
+  };
+
+  const sendNextCommand = () => {
+    if (inFlight || !queue.length) return;
+    const { windowId, command, x, y, width, height } = queue.shift();
     const bytes = new Uint8Array(32);
     const view = new DataView(bytes.buffer);
     view.setUint32(0, COMMAND_MAGIC, true);
@@ -78,6 +101,19 @@ export const installBoxedWineWindowControlBridge = (hostWindow, module) => {
     view.setUint32(24, Math.max(0, Math.trunc(width)), true);
     view.setUint32(28, Math.max(0, Math.trunc(height)), true);
     module.FS.writeFile(COMMAND_PATH, bytes);
+    inFlight = { generation, polls: 0 };
+  };
+
+  const settleCommand = () => {
+    if (!inFlight) return;
+    inFlight.polls += 1;
+    if (
+      (generation - inFlight.generation) >>> 0 >= 2 ||
+      inFlight.polls >= COMMAND_TIMEOUT_POLLS
+    ) {
+      inFlight = null;
+      sendNextCommand();
+    }
   };
 
   const readState = () => {
@@ -146,7 +182,10 @@ export const installBoxedWineWindowControlBridge = (hostWindow, module) => {
     onRuntimeInitialized?.();
     module.FS.writeFile(COMMAND_PATH, new Uint8Array(32));
     module.FS.writeFile(STATE_PATH, emptyStateFile());
-    timer = hostWindow.setInterval(readState, 50);
+    timer = hostWindow.setInterval(() => {
+      readState();
+      settleCommand();
+    }, 50);
   };
 
   return () => {

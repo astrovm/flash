@@ -1143,6 +1143,14 @@ describe("Windows XP shell", () => {
     }
   });
 
+  test("ignores deep links that only match built-in object properties", async () => {
+    const shell = await loadShell();
+    shell.window.location.hash = "#constructor";
+    await login(shell);
+    await flushShell();
+    expect(shell.document.querySelector(".xp-window")).toBeNull();
+  });
+
   test("does not save played built-in games when automatic offline copies are disabled", async () => {
     const shell = await loadShell({
       offlineSettings: { savePlayedGamesOffline: false },

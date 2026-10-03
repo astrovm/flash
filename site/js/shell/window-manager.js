@@ -1039,6 +1039,8 @@ const restoreWindow = (gameId, { notifyApplication = true } = {}) => {
 
 const minimizeAllWindows = () => {
   openWindows.forEach((win) => {
+    // Apps hear about it so the later restore() is balanced.
+    if (!win.minimized) win.mountedApplication?.minimize?.();
     win.minimized = true;
     win.el.style.display = "none";
     win.setOwnedWindowsVisible?.(false);
@@ -1211,7 +1213,7 @@ const wireDrag = (win) => {
       left: win.el.offsetLeft,
       top: win.el.offsetTop,
       width: win.el.offsetWidth,
-      desktop: getDesktopSize(),
+      desktop: getVisibleWorkArea(),
     };
     let frame = 0;
     let nextPosition = { left: start.left, top: start.top };
@@ -1355,7 +1357,7 @@ const wireResize = (win) => {
         width: win.el.offsetWidth,
         height: win.el.offsetHeight,
       };
-      const desktopSize = getDesktopSize();
+      const desktopSize = getVisibleWorkArea();
       let frame = 0;
       let nextPointer = { x: e.clientX, y: e.clientY };
 
@@ -1466,7 +1468,7 @@ const nudgeWindow = (win, deltaX, deltaY) => {
 };
 
 const nudgeResize = (win, deltaX, deltaY) => {
-  const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
+  const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
   const width = Math.min(
     Math.max(win.el.offsetWidth + deltaX, MIN_WINDOW_WIDTH),
     desktopWidth - win.el.offsetLeft,
@@ -1502,7 +1504,16 @@ const startMoveSizeMode = (win, mode) => {
     el.classList.remove(`${mode}-mode`);
     if (!commit) {
       Object.assign(el.style, original);
+      return;
     }
+    // Same as finishing a pointer drag or resize.
+    persistWindowPlacement(win);
+    win.mountedApplication?.bounds?.(
+      el.offsetLeft,
+      el.offsetTop,
+      el.offsetWidth,
+      el.offsetHeight,
+    );
   };
 
   const onKey = (e) => {
