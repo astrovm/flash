@@ -1587,6 +1587,26 @@
       "member": "SHELL32.DL_",
       "expandedName": "shell32.dll",
       "resourceType": 14,
+      "resourceId": 45,
+      "width": 24,
+      "height": 24,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/StartMenuLogOff.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 28,
+      "width": 24,
+      "height": 24,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/StartMenuTurnOff.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
       "resourceId": 21,
       "width": 48,
       "height": 48,

@@ -96,10 +96,10 @@ test.each(["click", "hover", "keyboard"])(
 test("recent documents has an empty state and Internet Games can be launched from All Programs", async () => {
   const s = await login(await loadShell());
   clickStartAction(s, "recent");
-  expect(s.document.querySelector(".xp-dialog").textContent).toContain(
-    "There are no recent documents.",
-  );
-  s.document.querySelector('.xp-dialog [data-action="close"]').click();
+  const empty = panels(s)[0].querySelector(".start-program-empty");
+  expect(empty.textContent).toBe("(Empty)");
+  expect(empty.disabled).toBeTrue();
+  s.document.getElementById("start-button").click();
   s.document.getElementById("start-button").click();
   const all = s.document.getElementById("all-programs-button");
   all.click();

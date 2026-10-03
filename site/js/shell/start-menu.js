@@ -71,40 +71,14 @@ const getProgramGroups = () => {
     ]);
 };
 
-const openRecentDocuments = () => {
-  const dialog = XPDialogs.createDialog({ title: "My Recent Documents" });
+// XP lists recent documents in a submenu; here they are recently played games.
+const getRecentDocuments = () => {
   const recentGames = Object.entries(getGameStats())
     .filter(([gameId]) => gamesList[gameId])
     .sort(([, a], [, b]) => b.lastPlayed - a.lastPlayed)
-    .slice(0, 10)
-    .map(([gameId]) => gameId);
-
-  const heading = document.createElement("p");
-  heading.textContent = "Documents you have opened recently:";
-  dialog.body.appendChild(heading);
-
-  if (!recentGames.length) {
-    const empty = document.createElement("p");
-    empty.textContent = "There are no recent documents.";
-    dialog.body.appendChild(empty);
-  } else {
-    const list = document.createElement("div");
-    list.className = "shell-dialog-list";
-    recentGames.forEach((gameId) => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.textContent = formatGameTitle(gameId);
-      item.addEventListener("click", () => {
-        dialog.close();
-        openGameWindow(gameId);
-      });
-      list.appendChild(item);
-    });
-    dialog.body.appendChild(list);
-  }
-  XPDialogs.addButtonRow(dialog, [
-    { id: "close", label: "Close", isDefault: true, isCancel: true },
-  ]);
+    .slice(0, 15)
+    .map(([gameId]) => ({ gameId }));
+  return recentGames.length ? recentGames : [{ empty: true }];
 };
 
 const openControlPanel = () => openSystemWindow("__control-panel");
@@ -205,7 +179,6 @@ const openRunDialog = () => {
 
 const startDestinationActions = {
   documents: () => openSystemWindow("__my-documents"),
-  recent: openRecentDocuments,
   pictures: () => openSystemWindow("__my-pictures"),
   music: () => openSystemWindow("__my-music"),
   computer: () => openSystemWindow("__my-computer"),
@@ -228,10 +201,11 @@ const buildPlaces = () => {
     title = label,
     action,
     children,
+    primary = false,
   }) => {
     const { key } = XPDialogs.parseAccessKey(label);
     const item = document.createElement("button");
-    item.className = "sm-place";
+    item.className = primary ? "sm-place sm-place-primary" : "sm-place";
     item.type = "button";
     if (id) item.dataset.startAction = id;
     item.dataset.accessKey = key;
@@ -255,7 +229,12 @@ const buildPlaces = () => {
       arrow.textContent = "▶";
       item.appendChild(arrow);
       const open = (focusFirst = false) => {
-        openProgramSubmenu(children, item, 0);
+        openProgramSubmenu(
+          typeof children === "function" ? children() : children,
+          item,
+          0,
+        );
+        item.classList.add("submenu-open");
         if (focusFirst)
           document
             .querySelector("#start-menu-flyouts .start-program-flyout button")
@@ -339,25 +318,36 @@ const buildPlaces = () => {
     return;
   }
 
+  const addSeparator = () => {
+    const separator = document.createElement("div");
+    separator.className = "sm-place-separator";
+    container.appendChild(separator);
+  };
   [
     ["documents", "My &Documents", "MyDocuments.png"],
-    ["recent", "My &Recent Documents", "RecentDocuments.png"],
+    [
+      "recent",
+      "My &Recent Documents",
+      "RecentDocuments.png",
+      getRecentDocuments,
+    ],
     ["pictures", "My &Pictures", "MyPictures.png"],
     ["music", "My &Music", "MyMusic.png"],
     ["computer", "My &Computer", "MyComputer.png"],
-  ].forEach(([id, label, icon]) =>
-    container.appendChild(createPlace({ id, label, icon })),
+  ].forEach(([id, label, icon, children]) =>
+    container.appendChild(
+      createPlace({ id, label, icon, children, primary: true }),
+    ),
   );
-
-  const separatorOne = document.createElement("div");
-  separatorOne.className = "sm-place-separator";
-  container.appendChild(separatorOne);
-
-  [["controlPanel", "&Control Panel", "ControlPanel.png"]].forEach(
-    ([id, label, icon]) =>
-      container.appendChild(createPlace({ id, label, icon })),
+  addSeparator();
+  container.appendChild(
+    createPlace({
+      id: "controlPanel",
+      label: "&Control Panel",
+      icon: "ControlPanel.png",
+    }),
   );
-
+  addSeparator();
   [
     ["search", "&Search", "Search.png"],
     ["run", "&Run...", "Run.png"],
@@ -431,15 +421,25 @@ const buildPinnedPrograms = () => {
     "__internet-games",
     "sm-game-icon",
   );
+  internetGames.classList.add("sm-pinned");
+  const internetText = document.createElement("span");
+  internetText.className = "sm-pinned-text";
   const internetTitle = document.createElement("span");
   internetTitle.className = "sm-game-title";
   internetTitle.textContent = "Internet Games";
-  internetGames.append(internetIcon, internetTitle);
+  const internetSource = document.createElement("span");
+  internetSource.className = "sm-pinned-subtitle";
+  internetSource.textContent = "Flashpoint Archive";
+  internetText.append(internetTitle, internetSource);
+  internetGames.append(internetIcon, internetText);
   internetGames.addEventListener("click", () => {
     closeStartMenu();
     openSystemWindow("__internet-games");
   });
   container.appendChild(internetGames);
+  const pinnedSeparator = document.createElement("div");
+  pinnedSeparator.className = "sm-pinned-separator";
+  container.appendChild(pinnedSeparator);
 
   pinned.forEach((gameId) =>
     container.appendChild(createMenuGameItem(gameId, gameStats)),
@@ -453,6 +453,9 @@ const closeAllPrograms = () => {
   host.replaceChildren();
   host.hidden = true;
   document.getElementById("all-programs-button").classList.remove("active");
+  document
+    .querySelectorAll(".sm-place.submenu-open")
+    .forEach((item) => item.classList.remove("submenu-open"));
 };
 
 const positionStartFlyout = (panel, anchor) => {
@@ -468,7 +471,13 @@ const positionStartFlyout = (panel, anchor) => {
   const height = panel.offsetHeight;
   const right = rect.right + width <= innerWidth - 2;
   panel.style.left = `${Math.max(2, Math.min(right ? rect.right : rect.left - width, innerWidth - width - 2))}px`;
-  panel.style.top = `${Math.max(2, Math.min(rect.top, taskbarTop - height - 2))}px`;
+  // All Programs grows upward from its button, like XP; submenus open at
+  // their item and only move up when they would cross the taskbar.
+  const preferredTop =
+    anchor.id === "all-programs-button" && getStartMenuStyle() !== "classic"
+      ? rect.bottom - height
+      : rect.top;
+  panel.style.top = `${Math.max(2, Math.min(preferredTop, taskbarTop - height - 2))}px`;
   panel.style.visibility = "";
 };
 
@@ -590,6 +599,15 @@ const getAllProgramsTree = () => {
 };
 
 const createProgramMenuItem = (definition, depth, gameStats) => {
+  if (definition.empty) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "start-program-item start-program-empty";
+    item.setAttribute("role", "menuitem");
+    item.disabled = true;
+    item.textContent = "(Empty)";
+    return item;
+  }
   if (definition.gameId) {
     const item = createMenuGameItem(definition.gameId, gameStats);
     item.setAttribute("role", "menuitem");
@@ -707,8 +725,36 @@ const toggleAllPrograms = () => {
   else closeAllPrograms();
 };
 
+// XP hides access-key underlines until the keyboard is used in the menu.
+let startMenuKeyboardInput = false;
+const showStartMenuKeyboardCues = (visible) => {
+  document
+    .getElementById("start-menu")
+    .classList.toggle("keyboard-cues", visible);
+  document
+    .getElementById("start-menu-flyouts")
+    .classList.toggle("keyboard-cues", visible);
+};
+document.addEventListener(
+  "keydown",
+  () => {
+    startMenuKeyboardInput = true;
+    if (!document.getElementById("start-menu").hidden)
+      showStartMenuKeyboardCues(true);
+  },
+  true,
+);
+document.addEventListener(
+  "pointerdown",
+  () => {
+    startMenuKeyboardInput = false;
+  },
+  true,
+);
+
 const openStartMenu = () => {
   const classic = getStartMenuStyle() === "classic";
+  showStartMenuKeyboardCues(startMenuKeyboardInput);
   buildPinnedPrograms();
   buildPlaces();
   closeAllPrograms();

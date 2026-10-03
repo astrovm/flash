@@ -329,7 +329,8 @@ html[data-xp-appearance="classic"] .sm-place {
   color: #000;
 }
 
-html[data-xp-appearance="classic"] .sm-place:hover {
+html[data-xp-appearance="classic"] .sm-place:hover,
+html[data-xp-appearance="classic"] .sm-place.submenu-open {
   background: #0a246a;
   color: #fff;
 }
@@ -555,6 +556,8 @@ html[data-xp-start-menu="classic"]
 }
 
 html[data-xp-start-menu="classic"] #all-programs-button {
+  width: 100%;
+  margin: 0;
   height: 33px;
   justify-content: flex-start;
   gap: 7px;
@@ -599,6 +602,7 @@ html[data-xp-start-menu="classic"] .sm-place {
 }
 
 html[data-xp-start-menu="classic"] .sm-place:hover,
+html[data-xp-start-menu="classic"] .sm-place.submenu-open,
 html[data-xp-start-menu="classic"] .sm-place:focus-visible {
   color: #fff;
   background: #316ac5;

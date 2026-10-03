@@ -2086,6 +2086,32 @@
       "pixelSha256": "cc04ce7c08651f2b5f73ad70e0c90e45894f344f48a91db56a31dbf3d4855fba"
     }
   },
+  "assets/xp/icons/StartMenuLogOff.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "d663a35207745c48424ead4f1ae2133d35f1295e7769988ccdb7b85158ef80ee",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 45,
+      "language": 1033,
+      "frame": "24x24x32",
+      "pixelSha256": "ba18fe1d7b42a655ee0a28f8c958c72eaed79db5712e554e8319a07316c55cfc"
+    }
+  },
+  "assets/xp/icons/StartMenuTurnOff.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SHELL32.DL_",
+    "sha256": "d35195b5e4e9face2e3f0a89d2669318cd275e48388655c45719294727c1c34d",
+    "resource": {
+      "parentSha256": "7c201e812138e2b9cbc2aa94e41d5573775d893b8104833a997acc79486d9a3a",
+      "type": 14,
+      "id": 28,
+      "language": 1033,
+      "frame": "24x24x32",
+      "pixelSha256": "e6f21dc8e1a53fd304a05e701dbd5291583d7332d0b0ab8270c53de523160785"
+    }
+  },
   "assets/xp/icons/RecentDocuments.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/SHELL32.DL_",

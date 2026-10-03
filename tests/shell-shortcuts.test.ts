@@ -328,7 +328,7 @@ test("Start menu shows recent play history, favorites and keyboard-navigable pro
     }),
   );
   clickStartAction(s, "recent");
-  const recent = s.document.querySelector(".shell-dialog-list");
+  const recent = s.document.querySelector(".start-program-flyout");
   expect(recent.textContent).toContain("Inside the Firewall");
   recent.querySelector("button").click();
   await flushShell();
