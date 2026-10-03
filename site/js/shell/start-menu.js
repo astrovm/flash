@@ -312,7 +312,10 @@ const getControlPanelMenu = () => [
 
 const openCustomizeStartMenu = () => {
   const options = getStartMenuOptions();
-  const dialog = XPDialogs.createDialog({ title: "Customize Start Menu" });
+  const dialog = XPDialogs.createDialog({
+    title: "Customize Start Menu",
+    help: true,
+  });
   dialog.el.classList.add(
     "taskbar-properties-dialog",
     "customize-start-menu-dialog",
@@ -444,6 +447,7 @@ const openCustomizeClassicStartMenu = () => {
   const options = getStartMenuOptions();
   const dialog = XPDialogs.createDialog({
     title: "Customize Classic Start Menu",
+    help: true,
   });
   dialog.el.classList.add(
     "taskbar-properties-dialog",
