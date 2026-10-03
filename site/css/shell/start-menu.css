@@ -105,17 +105,54 @@
   padding-inline: 8px;
 }
 
+.sm-pinned-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sm-pinned .sm-game-title {
+  font-weight: 700;
+}
+
+.sm-pinned-subtitle {
+  color: #7f7f7f;
+}
+
+.sm-game:hover .sm-pinned-subtitle {
+  color: #fff;
+}
+
+html[data-xp-start-menu="classic"] .sm-all-programs-separator {
+  display: none;
+}
+
+.sm-pinned-separator,
+.sm-all-programs-separator {
+  height: 1px;
+  margin: 4px 10px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #d5d2ca 10%,
+    #d5d2ca 90%,
+    transparent
+  );
+}
+
+/* XP highlights an inset item, and the flyout opens from its right edge. */
 #all-programs-button {
   flex: none;
-  width: 100%;
-  height: 34px;
+  width: auto;
+  height: 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 12px;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 4px 45px 6px 8px;
+  padding: 0 0 0 12px;
   border: 0;
-  border-top: 1px solid #d7d7d7;
+  border-radius: 0;
   background: #fff;
   color: #111;
   font-size: 11px;
@@ -159,9 +196,12 @@
   z-index: 7100;
   pointer-events: none;
 }
+/* XP sizes each program menu to its longest entry. */
 .start-program-flyout {
   position: fixed;
-  width: min(218px, 72vw);
+  width: max-content;
+  min-width: 80px;
+  max-width: min(400px, 72vw);
   max-height: min(520px, 78vh);
   overflow: auto;
   padding: 2px;
@@ -176,10 +216,12 @@
 .start-program-flyout button {
   width: 100%;
   min-height: 23px;
+  font: inherit;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 6px;
+  gap: 7px;
+  padding: 2px 8px 2px 4px;
+  white-space: nowrap;
   border: 0;
   background: #fff;
   color: #111;
@@ -195,8 +237,15 @@
 .start-program-folder {
   font-weight: 400;
 }
+/* XP leaves the icon column empty before "(Empty)". */
+.start-program-flyout .start-program-empty {
+  padding-left: 30px;
+  color: #808080;
+}
+
 .start-program-arrow {
   margin-left: auto;
+  padding-left: 18px;
   font-size: 8px;
 }
 
@@ -362,8 +411,7 @@
   width: 188px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 4px;
+  padding: 6px 4px;
   background: #d3e5fa;
   border-left: 1px solid #95bdee;
   overflow-y: auto;
@@ -378,11 +426,11 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  min-height: 28px;
-  padding: 4px;
-  border-radius: 3px;
+  min-height: 30px;
+  padding: 0 4px;
+  border-radius: 0;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 400;
   color: #0b3d91;
   text-decoration: none;
   cursor: var(--xp-cursor);
@@ -406,14 +454,41 @@
   object-fit: contain;
 }
 
-.sm-place-separator {
-  height: 1px;
-  margin: 3px 6px;
-  background: #9abfe8;
+.sm-place-primary {
+  font-weight: 700;
 }
 
-.sm-place:hover {
-  background: #b3d0f0;
+/* XP's right-column separators are short and fade at both ends. */
+.sm-place-separator {
+  flex: none;
+  height: 1px;
+  margin: 3px 22px 4px 25px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #9dbde9 8%,
+    #9dbde9 92%,
+    transparent
+  );
+}
+
+#start-menu:not(.keyboard-cues) .menu-accesskey,
+#start-menu-flyouts:not(.keyboard-cues) .menu-accesskey {
+  text-decoration: none;
+}
+
+.sm-place:hover,
+.sm-place.submenu-open {
+  background: #316ac5;
+  color: #fff;
+}
+
+.sm-place {
+  white-space: nowrap;
+}
+
+.sm-place .start-program-arrow {
+  padding-left: 4px;
 }
 
 .shell-dialog-list {
@@ -465,24 +540,22 @@
 .start-menu-footer {
   display: flex;
   align-items: center;
-  gap: 6px;
   justify-content: flex-end;
   margin: 0 2px 2px;
-  padding: 4px 10px;
+  padding: 4px 6px;
   background: var(--menu-footer-gradient);
 }
 
 .start-menu-footer button {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
+  gap: 3px;
+  padding: 3px 4px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 3px;
   color: #fff;
   font-size: 11px;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
   cursor: var(--xp-cursor);
 }
 
@@ -501,7 +574,7 @@
 }
 
 .start-menu-footer .xp-power-icon {
-  background-image: url("../../assets/xp/icons/Power.png");
+  background-image: url("../../assets/xp/icons/StartMenuTurnOff.png");
 }
 
 .start-menu-footer .xp-power-icon::before,
@@ -512,7 +585,7 @@
 }
 
 .start-menu-footer .xp-logoff-icon {
-  background-image: url("../../assets/xp/icons/Logout.png");
+  background-image: url("../../assets/xp/icons/StartMenuLogOff.png");
 }
 
 .xp-logoff-icon {
