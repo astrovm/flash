@@ -495,6 +495,10 @@ html[data-xp-start-menu="classic"] .start-menu-user {
   transform: rotate(180deg);
 }
 
+html[data-xp-start-menu="classic"] .start-menu-edition {
+  font-weight: 400;
+}
+
 html[data-xp-start-menu="classic"] .start-menu-body {
   min-height: 0;
   max-height: none;
@@ -523,7 +527,7 @@ html[data-xp-start-menu="classic"] #start-menu-pinned {
 }
 
 html[data-xp-start-menu="classic"] #start-menu-pinned .classic-start-command {
-  min-height: 33px;
+  min-height: 32px;
   gap: 7px;
   padding: 3px 8px;
   color: #000;
@@ -558,12 +562,11 @@ html[data-xp-start-menu="classic"]
 html[data-xp-start-menu="classic"] #all-programs-button {
   width: 100%;
   margin: 0;
-  height: 33px;
+  height: 32px;
   justify-content: flex-start;
   gap: 7px;
   padding: 0 8px;
-  border-top: 1px solid #aca899;
-  border-bottom: 1px solid #aca899;
+  border: 0;
   background: transparent;
   color: #000;
   font-weight: 400;
@@ -592,7 +595,7 @@ html[data-xp-start-menu="classic"] .all-programs-icon img {
 }
 
 html[data-xp-start-menu="classic"] .sm-place {
-  min-height: 33px;
+  min-height: 32px;
   gap: 7px;
   padding: 3px 8px;
   border-radius: 0;
@@ -628,8 +631,9 @@ html[data-xp-start-menu="classic"] .start-menu-footer {
 
 html[data-xp-start-menu="classic"] .start-menu-footer button {
   width: 100%;
-  min-height: 33px;
+  min-height: 32px;
   justify-content: flex-start;
+  gap: 7px;
   padding: 3px 8px;
   border: 0;
   border-radius: 0;
@@ -1401,4 +1405,58 @@ html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
 html[data-xp-appearance="classic"][data-xp-start-menu="classic"]
   .start-menu-footer {
   background: #d4d0c8;
+}
+
+/* Customize Classic Start Menu: small icons drop the side banner, like XP. */
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .start-menu-header {
+  display: none;
+}
+
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .start-menu-body,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .start-menu-footer {
+  margin-left: 0;
+}
+
+html[data-xp-start-menu="classic"] #start-menu.classic-small-icons .sm-place,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  #all-programs-button,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .start-menu-footer
+  button {
+  min-height: 22px;
+  height: auto;
+}
+
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .sm-place-icon,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .sm-place-icon
+  img,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .all-programs-icon,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .all-programs-icon
+  img,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .start-menu-footer
+  .xp-power-icon,
+html[data-xp-start-menu="classic"]
+  #start-menu.classic-small-icons
+  .start-menu-footer
+  .xp-logoff-icon {
+  width: 16px;
+  height: 16px;
 }

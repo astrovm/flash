@@ -213,11 +213,17 @@ html:not([data-xp-appearance="classic"]) .task-button:active {
   justify-content: center;
 }
 
+#start-button-menu,
 #taskbar-context-menu,
 #tray-volume-menu,
 #taskbar-overflow-menu {
   position: fixed;
   z-index: 8200;
+}
+
+#start-button-menu {
+  min-width: 120px;
+  padding-bottom: 4px;
 }
 
 #tray-volume-menu button {
@@ -232,12 +238,14 @@ html[data-xp-appearance="classic"] #tray-volume-popup {
   padding-bottom: 4px;
 }
 
+#start-button-menu button,
 #taskbar-context-menu button {
   display: flex;
   align-items: center;
   padding-left: 1px;
 }
 
+#start-button-menu > button,
 #taskbar-context-menu > button,
 #taskbar-context-menu > .context-parent > button {
   min-height: 17px;

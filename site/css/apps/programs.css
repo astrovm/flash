@@ -1621,3 +1621,224 @@
 .dlg-file-name-row .xp-input {
   flex: 1;
 }
+
+/* Customize Start Menu, positioned from the XP SP3 dialog at 1024×768. */
+.customize-start-menu-dialog {
+  height: min(425px, calc(100vh - 8px));
+}
+
+.customize-start-menu-dialog .taskbar-properties-group p {
+  position: absolute;
+  top: 12px;
+  left: 10px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.customize-icon-size-group {
+  top: 17px;
+  height: 53px;
+}
+
+.customize-large-icon {
+  position: absolute;
+  top: 10px;
+  left: 13px;
+  width: 32px;
+  height: 32px;
+}
+
+.customize-small-icon {
+  position: absolute;
+  top: 20px;
+  left: 224px;
+  width: 16px;
+  height: 16px;
+}
+
+.customize-large-choice,
+.customize-small-choice {
+  top: 25px;
+}
+
+.customize-icon-size-group .customize-large-choice {
+  left: 54px;
+}
+
+.customize-icon-size-group .customize-small-choice {
+  left: 254px;
+}
+
+.customize-programs-group {
+  top: 86px;
+  height: 108px;
+}
+
+.customize-program-count {
+  top: 53px;
+}
+
+.customize-program-count input {
+  width: 40px;
+  height: 19px;
+  margin-left: 8px;
+}
+
+.customize-clear-programs,
+.customize-clear-recent {
+  position: absolute;
+  left: 264px;
+  width: 84px;
+  height: 21px;
+}
+
+.customize-clear-programs {
+  top: 75px;
+}
+
+.customize-show-group {
+  top: 211px;
+  height: 94px;
+}
+
+.customize-internet {
+  top: 17px;
+}
+
+.customize-internet-program {
+  position: absolute;
+  top: 13px;
+  left: 137px;
+  width: 210px;
+  height: 21px;
+  font: inherit;
+}
+
+.customize-settings-group {
+  top: 17px;
+  height: 60px;
+}
+
+.customize-settings-group label {
+  top: 18px;
+}
+
+.customize-items-label {
+  position: absolute;
+  top: 88px;
+  left: 13px;
+}
+
+.customize-start-items {
+  position: absolute;
+  top: 103px;
+  left: 13px;
+  box-sizing: border-box;
+  width: 358px;
+  height: 106px;
+  padding: 1px 2px;
+  overflow-y: auto;
+  border: 1px solid #7f9db9;
+  background: #fff;
+}
+
+.customize-start-item,
+.customize-start-choice,
+.customize-start-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 16px;
+  white-space: nowrap;
+}
+
+.customize-start-item img {
+  width: 16px;
+  height: 16px;
+}
+
+.customize-start-choice {
+  padding-left: 20px;
+}
+
+.customize-recent-group {
+  top: 223px;
+  height: 82px;
+}
+
+.customize-list-recent {
+  top: 51px;
+}
+
+.customize-clear-recent {
+  top: 47px;
+}
+
+.customize-start-items input {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+}
+
+/* Customize Classic Start Menu, positioned from the XP SP3 dialog. */
+.customize-classic-start-menu-dialog {
+  width: min(357px, calc(100vw - 8px));
+  height: min(300px, calc(100vh - 8px));
+}
+
+.customize-classic-start-menu-dialog .dlg-body {
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.customize-classic-group {
+  top: 15px;
+  left: 9px;
+  width: 327px;
+  height: 66px;
+}
+
+.customize-classic-clear-icon {
+  position: absolute;
+  top: 12px;
+  left: 18px;
+  width: 32px;
+  height: 32px;
+}
+
+.customize-classic-group p {
+  position: absolute;
+  top: 12px;
+  left: 61px;
+  margin: 0;
+}
+
+.customize-classic-clear {
+  position: absolute;
+  top: 22px;
+  left: 232px;
+  width: 77px;
+  height: 21px;
+}
+
+.customize-classic-options-label {
+  top: 96px;
+  left: 9px;
+}
+
+.customize-classic-options {
+  top: 110px;
+  left: 9px;
+  width: 327px;
+  height: 116px;
+}
+
+.customize-classic-options input {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin: 0 3px 0 4px;
+}

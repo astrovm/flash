@@ -620,3 +620,13 @@ html[data-xp-start-menu="classic"] .sm-all-programs-separator {
 .start-menu-footer h6 {
   display: none;
 }
+
+/* Customize Start Menu → Small icons. */
+#start-menu-pinned.sm-small-icons .sm-game {
+  min-height: 24px;
+}
+
+#start-menu-pinned.sm-small-icons .sm-game-icon.has-image {
+  width: 16px;
+  height: 16px;
+}
