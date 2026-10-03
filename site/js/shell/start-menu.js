@@ -73,8 +73,12 @@ const getProgramGroups = () => {
 
 // XP lists recent documents in a submenu; here they are recently played games.
 const getRecentDocuments = () => {
+  const { recentClearedAt } = getStartMenuOptions();
   const recentGames = Object.entries(getGameStats())
-    .filter(([gameId]) => gamesList[gameId])
+    .filter(
+      ([gameId, stats]) =>
+        gamesList[gameId] && stats.lastPlayed > recentClearedAt,
+    )
     .sort(([, a], [, b]) => b.lastPlayed - a.lastPlayed)
     .slice(0, 15)
     .map(([gameId]) => ({ gameId }));
@@ -177,6 +181,339 @@ const openRunDialog = () => {
   input.focus();
 };
 
+// Customize Start Menu options. Each one changes what the menu shows.
+const START_MENU_OPTIONS_KEY = "startMenuOptions";
+const START_MENU_ITEM_IDS = [
+  "controlPanel",
+  "computer",
+  "documents",
+  "music",
+  "pictures",
+];
+const DEFAULT_START_MENU_OPTIONS = Object.freeze({
+  largeIcons: true,
+  programCount: 6,
+  showInternet: true,
+  hoverOpen: true,
+  listRecent: true,
+  run: true,
+  search: true,
+  items: Object.freeze(
+    Object.fromEntries(START_MENU_ITEM_IDS.map((id) => [id, "link"])),
+  ),
+  programsClearedAt: 0,
+  recentClearedAt: 0,
+  classicRun: true,
+  classicSmallIcons: false,
+  classicExpand: Object.freeze({
+    controlPanel: false,
+    documents: false,
+    pictures: false,
+  }),
+});
+const getStartMenuOptions = () => {
+  const stored = readJsonStorage(
+    START_MENU_OPTIONS_KEY,
+    {},
+    (value) => value && typeof value === "object" && !Array.isArray(value),
+  );
+  const pick = (key, valid) =>
+    valid(stored[key]) ? stored[key] : DEFAULT_START_MENU_OPTIONS[key];
+  const isBoolean = (value) => typeof value === "boolean";
+  const isTime = (value) => Number.isFinite(value) && value >= 0;
+  return {
+    largeIcons: pick("largeIcons", isBoolean),
+    programCount: pick(
+      "programCount",
+      (value) => Number.isInteger(value) && value >= 0 && value <= 30,
+    ),
+    showInternet: pick("showInternet", isBoolean),
+    hoverOpen: pick("hoverOpen", isBoolean),
+    listRecent: pick("listRecent", isBoolean),
+    run: pick("run", isBoolean),
+    search: pick("search", isBoolean),
+    items: Object.fromEntries(
+      START_MENU_ITEM_IDS.map((id) => [
+        id,
+        ["link", "menu", "none"].includes(stored.items?.[id])
+          ? stored.items[id]
+          : "link",
+      ]),
+    ),
+    programsClearedAt: pick("programsClearedAt", isTime),
+    recentClearedAt: pick("recentClearedAt", isTime),
+    classicRun: pick("classicRun", isBoolean),
+    classicSmallIcons: pick("classicSmallIcons", isBoolean),
+    classicExpand: Object.fromEntries(
+      ["controlPanel", "documents", "pictures"].map((id) => [
+        id,
+        stored.classicExpand?.[id] === true,
+      ]),
+    ),
+  };
+};
+const saveStartMenuOptions = (changes) => {
+  writeJsonStorage(START_MENU_OPTIONS_KEY, {
+    ...getStartMenuOptions(),
+    ...changes,
+  });
+  renderedPlacesStyle = null;
+  renderedPinnedKey = null;
+};
+
+// "Display as a menu" lists a folder's contents, with subfolders as submenus.
+const getFolderMenu = (folderId) => {
+  const children = fs
+    .getChildren(folderId)
+    .slice()
+    .sort(
+      (left, right) =>
+        (left.type === "folder" ? 0 : 1) - (right.type === "folder" ? 0 : 1) ||
+        startMenuTitleCollator.compare(left.name, right.name),
+    )
+    .map((node) => ({
+      text: node.name,
+      ...(node.id === fs.DRIVE_F
+        ? { icon: "RemovableMedia.png" }
+        : node.id === fs.DRIVE_C || node.id === fs.DRIVE_D
+          ? { icon: "LocalDisk.png" }
+          : node.type === "folder"
+            ? { icon: "NewFolder.png" }
+            : {
+                iconSrc: /\.(txt|log|csv|md)$/i.test(node.name)
+                  ? "assets/xp/icons/TextDocument.png"
+                  : "assets/xp/icons/GenericFile.png",
+              }),
+      ...(node.type === "folder"
+        ? { children: () => getFolderMenu(node.id) }
+        : { action: () => openDesktopItem(node.id) }),
+    }));
+  return children.length ? children : [{ empty: true }];
+};
+
+const getControlPanelMenu = () => [
+  {
+    label: "Date and Time",
+    icon: "DateTimeRegional.png",
+    action: openDateTimeProperties,
+  },
+  {
+    label: "Display",
+    icon: "Display.png",
+    action: () => openSystemWindow("__display-properties"),
+  },
+  {
+    label: "Taskbar and Start Menu",
+    icon: "TaskbarAndStartMenu.png",
+    action: () => openTaskbarProperties(),
+  },
+];
+
+const openCustomizeStartMenu = () => {
+  const options = getStartMenuOptions();
+  const dialog = XPDialogs.createDialog({ title: "Customize Start Menu" });
+  dialog.el.classList.add(
+    "taskbar-properties-dialog",
+    "customize-start-menu-dialog",
+  );
+  const itemRows = [
+    ["controlPanel", "Control Panel", "ControlPanel.png"],
+    ["computer", "My Computer", "MyComputer.png"],
+    ["documents", "My Documents", "MyDocuments.png"],
+    ["music", "My Music", "MyMusic.png"],
+    ["pictures", "My Pictures", "MyPictures.png"],
+  ]
+    .map(
+      ([id, label, icon]) => `
+        <div class="customize-start-item"><img src="${XP_ICON_PATHS[icon]}" alt=""><span>${label}</span></div>
+        ${[
+          ["link", "Display as a link"],
+          ["menu", "Display as a menu"],
+          ["none", "Don't display this item"],
+        ]
+          .map(
+            ([value, text]) =>
+              `<label class="customize-start-choice"><input type="radio" name="start-item-${id}" value="${value}" ${options.items[id] === value ? "checked" : ""}> ${text}</label>`,
+          )
+          .join("")}`,
+    )
+    .join("");
+  dialog.body.innerHTML = `
+    <div class="taskbar-properties-tabs" role="tablist">
+      <button type="button" role="tab" data-customize-tab="general" aria-selected="true">General</button>
+      <button type="button" role="tab" data-customize-tab="advanced" aria-selected="false">Advanced</button>
+    </div>
+    <div class="taskbar-properties-panel" data-customize-panel="general">
+      <div class="taskbar-properties-group customize-icon-size-group"><span class="taskbar-properties-legend">Select an icon size for programs</span>
+        <img class="customize-large-icon" src="${XP_ICON_PATHS["MyComputer.png"]}" alt="">
+        <label class="customize-large-choice"><input type="radio" name="start-icon-size" value="large" ${options.largeIcons ? "checked" : ""}> Large icons</label>
+        <img class="customize-small-icon" src="${XP_ICON_PATHS["MyComputer.png"]}" alt="">
+        <label class="customize-small-choice"><input type="radio" name="start-icon-size" value="small" ${options.largeIcons ? "" : "checked"}> Small icons</label>
+      </div>
+      <div class="taskbar-properties-group customize-programs-group"><span class="taskbar-properties-legend">Programs</span>
+        <p>The Start menu contains shortcuts to the programs you use most often.<br>Clearing the list of shortcuts does not delete the programs.</p>
+        <label class="customize-program-count">Number of programs on Start menu: <input type="number" min="0" max="30" value="${options.programCount}"></label>
+        <button type="button" class="xp-btn customize-clear-programs">Clear List</button>
+      </div>
+      <div class="taskbar-properties-group customize-show-group"><span class="taskbar-properties-legend">Show on Start menu</span>
+        <label class="customize-internet"><input type="checkbox" ${options.showInternet ? "checked" : ""}> Internet:</label>
+        <select class="customize-internet-program" aria-label="Internet program"><option>Internet Games</option></select>
+      </div>
+    </div>
+    <div class="taskbar-properties-panel" data-customize-panel="advanced" hidden>
+      <div class="taskbar-properties-group customize-settings-group"><span class="taskbar-properties-legend">Start menu settings</span>
+        <label><input type="checkbox" class="customize-hover-open" ${options.hoverOpen ? "checked" : ""}> Open submenus when I pause on them with my mouse</label>
+      </div>
+      <span class="customize-items-label">Start menu items:</span>
+      <div class="customize-start-items" role="group" aria-label="Start menu items">
+        ${itemRows}
+        <label class="customize-start-check"><input type="checkbox" class="customize-run" ${options.run ? "checked" : ""}> Run command</label>
+        <label class="customize-start-check"><input type="checkbox" class="customize-search" ${options.search ? "checked" : ""}> Search</label>
+      </div>
+      <div class="taskbar-properties-group customize-recent-group"><span class="taskbar-properties-legend">Recent documents</span>
+        <p>Select this option to provide quick access to the documents you<br>opened most recently.  Clearing this list does not delete the documents.</p>
+        <label class="customize-list-recent"><input type="checkbox" ${options.listRecent ? "checked" : ""}> List my most recently opened documents</label>
+        <button type="button" class="xp-btn customize-clear-recent">Clear List</button>
+      </div>
+    </div>
+    <div class="dlg-buttons taskbar-properties-buttons"></div>
+  `;
+  const tabs = [...dialog.body.querySelectorAll("[data-customize-tab]")];
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () => {
+      tabs.forEach((entry) =>
+        entry.setAttribute("aria-selected", String(entry === tab)),
+      );
+      dialog.body
+        .querySelectorAll("[data-customize-panel]")
+        .forEach((panel) => {
+          panel.hidden =
+            panel.dataset.customizePanel !== tab.dataset.customizeTab;
+        });
+    }),
+  );
+  const query = (selector) => dialog.body.querySelector(selector);
+  // Clear List takes effect at once, like XP.
+  const clearButton = (selector, key) => {
+    const button = query(selector);
+    button.addEventListener("click", () => {
+      saveStartMenuOptions({ [key]: Date.now() });
+      button.disabled = true;
+    });
+  };
+  clearButton(".customize-clear-programs", "programsClearedAt");
+  clearButton(".customize-clear-recent", "recentClearedAt");
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      const count = Number.parseInt(
+        query(".customize-program-count input").value,
+        10,
+      );
+      saveStartMenuOptions({
+        largeIcons: query('[name="start-icon-size"]:checked').value === "large",
+        programCount: Number.isInteger(count)
+          ? Math.min(30, Math.max(0, count))
+          : DEFAULT_START_MENU_OPTIONS.programCount,
+        showInternet: query(".customize-internet input").checked,
+        hoverOpen: query(".customize-hover-open").checked,
+        listRecent: query(".customize-list-recent input").checked,
+        run: query(".customize-run").checked,
+        search: query(".customize-search").checked,
+        items: Object.fromEntries(
+          START_MENU_ITEM_IDS.map((id) => [
+            id,
+            query(`[name="start-item-${id}"]:checked`).value,
+          ]),
+        ),
+      });
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  dialog.defaultButton = ok;
+  query(".taskbar-properties-buttons").append(ok, cancel);
+  ok.focus();
+};
+
+const openCustomizeClassicStartMenu = () => {
+  const options = getStartMenuOptions();
+  const dialog = XPDialogs.createDialog({
+    title: "Customize Classic Start Menu",
+  });
+  dialog.el.classList.add(
+    "taskbar-properties-dialog",
+    "customize-classic-start-menu-dialog",
+  );
+  const choices = [
+    ["classic-run", "Display Run", options.classicRun],
+    [
+      "expand-controlPanel",
+      "Expand Control Panel",
+      options.classicExpand.controlPanel,
+    ],
+    [
+      "expand-documents",
+      "Expand My Documents",
+      options.classicExpand.documents,
+    ],
+    ["expand-pictures", "Expand My Pictures", options.classicExpand.pictures],
+    [
+      "classic-small-icons",
+      "Show Small Icons in Start menu",
+      options.classicSmallIcons,
+    ],
+  ]
+    .map(
+      ([id, label, checked]) =>
+        `<label class="customize-start-check"><input type="checkbox" data-classic-option="${id}" ${checked ? "checked" : ""}> ${label}</label>`,
+    )
+    .join("");
+  dialog.body.innerHTML = `
+    <div class="taskbar-properties-group customize-classic-group"><span class="taskbar-properties-legend">Start menu</span>
+      <img class="customize-classic-clear-icon" src="${XP_ICON_PATHS["RecyclerFull.png"]}" alt="">
+      <p>To remove records of recently<br>accessed documents, programs,<br>and Web sites, click Clear.</p>
+      <button type="button" class="xp-btn customize-classic-clear">Clear</button>
+    </div>
+    <span class="customize-items-label customize-classic-options-label">Advanced Start menu options:</span>
+    <div class="customize-start-items customize-classic-options" role="group" aria-label="Advanced Start menu options">${choices}</div>
+    <div class="dlg-buttons taskbar-properties-buttons"></div>
+  `;
+  const query = (selector) => dialog.body.querySelector(selector);
+  const clear = query(".customize-classic-clear");
+  clear.addEventListener("click", () => {
+    const now = Date.now();
+    saveStartMenuOptions({ programsClearedAt: now, recentClearedAt: now });
+    clear.disabled = true;
+  });
+  const checked = (id) => query(`[data-classic-option="${id}"]`).checked;
+  const ok = XPDialogs.createDialogButton(
+    { id: "ok", label: "OK", isDefault: true },
+    () => {
+      saveStartMenuOptions({
+        classicRun: checked("classic-run"),
+        classicSmallIcons: checked("classic-small-icons"),
+        classicExpand: {
+          controlPanel: checked("expand-controlPanel"),
+          documents: checked("expand-documents"),
+          pictures: checked("expand-pictures"),
+        },
+      });
+      dialog.close("ok");
+    },
+  );
+  const cancel = XPDialogs.createDialogButton(
+    { id: "cancel", label: "Cancel", isCancel: true },
+    () => dialog.close("cancel"),
+  );
+  dialog.defaultButton = ok;
+  query(".taskbar-properties-buttons").append(ok, cancel);
+  ok.focus();
+};
+
 const startDestinationActions = {
   documents: () => openSystemWindow("__my-documents"),
   pictures: () => openSystemWindow("__my-pictures"),
@@ -190,8 +527,10 @@ const startDestinationActions = {
 const buildPlaces = () => {
   const container = document.getElementById("start-menu-places");
   const style = getStartMenuStyle();
-  if (renderedPlacesStyle === style) return;
-  renderedPlacesStyle = style;
+  const options = getStartMenuOptions();
+  const renderKey = JSON.stringify([style, options]);
+  if (renderedPlacesStyle === renderKey) return;
+  renderedPlacesStyle = renderKey;
   container.replaceChildren();
 
   const createPlace = ({
@@ -242,7 +581,8 @@ const buildPlaces = () => {
       };
       item.addEventListener("pointerenter", () => {
         clearTimeout(startFlyoutTimer);
-        startFlyoutTimer = setTimeout(open, 220);
+        if (getStartMenuOptions().hoverOpen)
+          startFlyoutTimer = setTimeout(open, 220);
       });
       // Without clearing here, a hover just before the click leaves its
       // 220ms timer pending; it later fires open() again on its own stale
@@ -277,44 +617,82 @@ const buildPlaces = () => {
     item.click();
   });
 
+  document.getElementById("start-menu").classList.remove("classic-small-icons");
   if (style === "classic") {
+    // Expand options turn these entries into menus of their contents.
+    const expandable = (id, definition, children) =>
+      options.classicExpand[id]
+        ? { label: definition.label, icon: definition.icon, children }
+        : definition;
+    const recent = getRecentDocuments().filter(
+      (definition) => !definition.empty,
+    );
     const documents = [
-      {
-        label: "My &Documents",
-        icon: "MyDocuments.png",
-        action: startDestinationActions.documents,
-      },
-      {
-        label: "My &Pictures",
-        icon: "MyPictures.png",
-        action: startDestinationActions.pictures,
-      },
+      expandable(
+        "documents",
+        {
+          label: "My &Documents",
+          icon: "MyDocuments.png",
+          action: startDestinationActions.documents,
+        },
+        () => getFolderMenu(fs.MY_DOCUMENTS),
+      ),
+      expandable(
+        "pictures",
+        {
+          label: "My &Pictures",
+          icon: "MyPictures.png",
+          action: startDestinationActions.pictures,
+        },
+        () => getFolderMenu(fs.MY_PICTURES),
+      ),
       {
         label: "My &Music",
         icon: "MyMusic.png",
         action: startDestinationActions.music,
       },
+      ...(recent.length ? [{ separator: true }, ...recent] : []),
     ];
     const settings = [
-      {
-        label: "&Control Panel",
-        icon: "ControlPanel.png",
-        action: startDestinationActions.controlPanel,
-      },
-
+      expandable(
+        "controlPanel",
+        {
+          label: "&Control Panel",
+          icon: "ControlPanel.png",
+          action: startDestinationActions.controlPanel,
+        },
+        getControlPanelMenu,
+      ),
       {
         label: "Taskbar and Start &Menu",
         icon: "TaskbarAndStartMenu.png",
         action: openTaskbarProperties,
       },
     ];
+    document
+      .getElementById("start-menu")
+      .classList.toggle("classic-small-icons", options.classicSmallIcons);
     [
       { label: "&Documents", icon: "RecentDocuments.png", children: documents },
       { label: "&Settings", icon: "ControlPanel.png", children: settings },
-      { id: "search", label: "&Search", icon: "Search.png" },
-
-      { id: "run", label: "&Run...", icon: "Run.png" },
-    ].forEach((definition) => container.appendChild(createPlace(definition)));
+      {
+        label: "Sear&ch",
+        icon: "Search.png",
+        children: [
+          {
+            id: "search-files",
+            label: "For &Files or Folders...",
+            icon: "Search.png",
+            action: startDestinationActions.search,
+          },
+        ],
+      },
+      options.classicRun
+        ? { id: "run", label: "&Run...", icon: "Run.png" }
+        : null,
+    ]
+      .filter(Boolean)
+      .forEach((definition) => container.appendChild(createPlace(definition)));
     return;
   }
 
@@ -323,37 +701,52 @@ const buildPlaces = () => {
     separator.className = "sm-place-separator";
     container.appendChild(separator);
   };
-  [
-    ["documents", "My &Documents", "MyDocuments.png"],
-    [
-      "recent",
-      "My &Recent Documents",
-      "RecentDocuments.png",
-      getRecentDocuments,
-    ],
-    ["pictures", "My &Pictures", "MyPictures.png"],
-    ["music", "My &Music", "MyMusic.png"],
-    ["computer", "My &Computer", "MyComputer.png"],
-  ].forEach(([id, label, icon, children]) =>
-    container.appendChild(
-      createPlace({ id, label, icon, children, primary: true }),
-    ),
-  );
-  addSeparator();
-  container.appendChild(
-    createPlace({
-      id: "controlPanel",
-      label: "&Control Panel",
-      icon: "ControlPanel.png",
-    }),
-  );
-  addSeparator();
-  [
-    ["search", "&Search", "Search.png"],
-    ["run", "&Run...", "Run.png"],
-  ].forEach(([id, label, icon]) =>
-    container.appendChild(createPlace({ id, label, icon })),
-  );
+  const folderIds = {
+    documents: fs.MY_DOCUMENTS,
+    pictures: fs.MY_PICTURES,
+    music: fs.MY_MUSIC,
+    computer: fs.MY_COMPUTER,
+  };
+  const place = (id, label, icon, extra = {}) => {
+    const display = options.items[id];
+    if (display === "none") return null;
+    if (display === "menu")
+      extra.children =
+        id === "controlPanel"
+          ? getControlPanelMenu
+          : () => getFolderMenu(folderIds[id]);
+    return createPlace({ id, label, icon, ...extra });
+  };
+  const appendGroup = (items) => {
+    const shown = items.filter(Boolean);
+    if (!shown.length) return;
+    if (container.children.length) addSeparator();
+    shown.forEach((item) => container.appendChild(item));
+  };
+  appendGroup([
+    place("documents", "My &Documents", "MyDocuments.png", { primary: true }),
+    options.listRecent
+      ? createPlace({
+          id: "recent",
+          label: "My &Recent Documents",
+          icon: "RecentDocuments.png",
+          children: getRecentDocuments,
+          primary: true,
+        })
+      : null,
+    place("pictures", "My &Pictures", "MyPictures.png", { primary: true }),
+    place("music", "My &Music", "MyMusic.png", { primary: true }),
+    place("computer", "My &Computer", "MyComputer.png", { primary: true }),
+  ]);
+  appendGroup([place("controlPanel", "&Control Panel", "ControlPanel.png")]);
+  appendGroup([
+    options.search
+      ? createPlace({ id: "search", label: "&Search", icon: "Search.png" })
+      : null,
+    options.run
+      ? createPlace({ id: "run", label: "&Run...", icon: "Run.png" })
+      : null,
+  ]);
 };
 
 // The pinned list only changes when favorites, play history or the menu style
@@ -364,8 +757,12 @@ const buildPinnedPrograms = () => {
   const container = document.getElementById("start-menu-pinned");
   const style = getStartMenuStyle();
   const gameStats = getGameStats();
+  const options = getStartMenuOptions();
   const recentGames = Object.entries(gameStats)
-    .filter(([gameId]) => gamesList[gameId])
+    .filter(
+      ([gameId, stats]) =>
+        gamesList[gameId] && stats.lastPlayed > options.programsClearedAt,
+    )
     .sort((a, b) => b[1].lastPlayed - a[1].lastPlayed)
     .map(([gameId]) => gameId);
   const pinned =
@@ -382,9 +779,11 @@ const buildPinnedPrograms = () => {
           ),
         ]
           .filter((gameId, index, all) => all.indexOf(gameId) === index)
-          .slice(0, 6);
+          .slice(0, options.programCount);
   const pinnedKey = JSON.stringify([
     style,
+    options.showInternet,
+    options.largeIcons,
     pinned.map((gameId) => [
       gameId,
       formatGameTitle(gameId),
@@ -395,6 +794,7 @@ const buildPinnedPrograms = () => {
   if (pinnedKey === renderedPinnedKey && container.isConnected) return;
   renderedPinnedKey = pinnedKey;
   container.innerHTML = "";
+  container.classList.toggle("sm-small-icons", !options.largeIcons);
 
   const allProgramsLabel = document.querySelector(
     "#all-programs-button > .all-programs-label",
@@ -406,7 +806,7 @@ const buildPinnedPrograms = () => {
     const programsIcon = document.createElement("span");
     programsIcon.className = "all-programs-icon";
     const programsImage = document.createElement("img");
-    programsImage.src = XP_ICON_PATHS["Programs.png"];
+    programsImage.src = XP_ICON_PATHS["ProgramFolder.png"];
     programsImage.alt = "";
     programsIcon.appendChild(programsImage);
     allProgramsButton.prepend(programsIcon);
@@ -436,10 +836,12 @@ const buildPinnedPrograms = () => {
     closeStartMenu();
     openSystemWindow("__internet-games");
   });
-  container.appendChild(internetGames);
-  const pinnedSeparator = document.createElement("div");
-  pinnedSeparator.className = "sm-pinned-separator";
-  container.appendChild(pinnedSeparator);
+  if (options.showInternet) {
+    container.appendChild(internetGames);
+    const pinnedSeparator = document.createElement("div");
+    pinnedSeparator.className = "sm-pinned-separator";
+    container.appendChild(pinnedSeparator);
+  }
 
   pinned.forEach((gameId) =>
     container.appendChild(createMenuGameItem(gameId, gameStats)),
@@ -623,12 +1025,13 @@ const createProgramMenuItem = (definition, depth, gameStats) => {
   const icon = document.createElement("span");
   icon.className = "start-program-icon";
   const image = document.createElement("img");
-  image.src = XP_ICON_PATHS[definition.icon];
+  image.src = definition.iconSrc || XP_ICON_PATHS[definition.icon];
   image.alt = "";
   icon.appendChild(image);
   const label = document.createElement("span");
-  const { key } = setAccessKeyText(label, definition.label);
-  item.dataset.accessKey = key;
+  // File names are shown as-is; built-in labels carry access keys.
+  if (definition.text) label.textContent = definition.text;
+  else item.dataset.accessKey = setAccessKeyText(label, definition.label).key;
   item.append(icon, label);
   if (definition.children) {
     item.setAttribute("aria-haspopup", "menu");
@@ -640,7 +1043,13 @@ const createProgramMenuItem = (definition, depth, gameStats) => {
       if (["accessories", "games"].includes(definition.id)) {
         window.XPBoxedWinePreload?.preload().catch(() => {});
       }
-      openProgramSubmenu(definition.children, item, depth + 1);
+      openProgramSubmenu(
+        typeof definition.children === "function"
+          ? definition.children()
+          : definition.children,
+        item,
+        depth + 1,
+      );
       if (focusFirst)
         document
           .querySelectorAll("#start-menu-flyouts .start-program-flyout")
@@ -649,7 +1058,8 @@ const createProgramMenuItem = (definition, depth, gameStats) => {
     };
     item.addEventListener("pointerenter", () => {
       clearTimeout(startFlyoutTimer);
-      startFlyoutTimer = setTimeout(open, 220);
+      if (getStartMenuOptions().hoverOpen)
+        startFlyoutTimer = setTimeout(open, 220);
     });
     // Without clearing here, a hover just before the click leaves its
     // 220ms timer pending; it later fires open() again on its own stale
@@ -758,9 +1168,16 @@ const openStartMenu = () => {
   buildPinnedPrograms();
   buildPlaces();
   closeAllPrograms();
-  document.querySelector(".start-menu-user").textContent = classic
-    ? "Windows XP Professional"
-    : "astro";
+  const user = document.querySelector(".start-menu-user");
+  if (classic) {
+    // XP's Classic banner sets the edition in regular weight.
+    const edition = document.createElement("span");
+    edition.className = "start-menu-edition";
+    edition.textContent = "Professional";
+    user.replaceChildren("Windows XP ", edition);
+  } else {
+    user.textContent = "astro";
+  }
   document.getElementById("log-off-button").lastChild.textContent = classic
     ? " Log Off astro..."
     : " Log Off";
@@ -801,7 +1218,10 @@ const setupSearch = () => {
   const button = document.getElementById("all-programs-button");
   button.addEventListener("click", toggleAllPrograms);
   button.addEventListener("pointerenter", () => {
-    if (!document.getElementById("start-menu").hidden) {
+    if (
+      !document.getElementById("start-menu").hidden &&
+      getStartMenuOptions().hoverOpen
+    ) {
       clearTimeout(startFlyoutTimer);
       startFlyoutTimer = setTimeout(openAllPrograms, 220);
     }

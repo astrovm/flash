@@ -5,6 +5,7 @@
 // ============================================
 
 const closeTaskbarMenus = () => {
+  document.getElementById("start-button-menu").hidden = true;
   document.getElementById("taskbar-context-menu").hidden = true;
   document.getElementById("taskbar-overflow-menu").hidden = true;
   document.getElementById("tray-volume-menu").hidden = true;
@@ -558,7 +559,7 @@ const applyStartMenuStyle = (style, persist = true) => {
   closeStartMenu();
 };
 
-const openTaskbarProperties = () => {
+const openTaskbarProperties = (initialTab = "taskbar") => {
   const dialog = XPDialogs.createDialog({
     title: "Taskbar and Start Menu Properties",
     modal: false,
@@ -629,6 +630,9 @@ const openTaskbarProperties = () => {
       });
     }),
   );
+  dialog.body
+    .querySelector(`[data-taskbar-properties-tab="${initialTab}"]`)
+    .click();
   const buttonRow = dialog.body.querySelector(".taskbar-properties-buttons");
   const apply = XPDialogs.createDialogButton(
     { id: "apply", label: "Apply" },
@@ -684,6 +688,12 @@ const openTaskbarProperties = () => {
         !classic;
     }
   });
+  dialog.body
+    .querySelector(".taskbar-start-customize")
+    .addEventListener("click", openCustomizeStartMenu);
+  dialog.body
+    .querySelector(".taskbar-classic-customize")
+    .addEventListener("click", openCustomizeClassicStartMenu);
   dialog.body
     .querySelector("[data-customize-tray]")
     .addEventListener("click", () => {
@@ -803,6 +813,28 @@ const setupTaskbarContextMenu = () => {
       const key = action === "desktop" ? "desktopToolbar" : "quickLaunch";
       saveTaskbarSettings({ [key]: !getTaskbarSettings()[key] });
     }
+  });
+  // XP gives the Start button its own menu. Open, Explore, and the All Users
+  // entries are omitted because there is no Start Menu folder to show.
+  const startButtonMenu = document.getElementById("start-button-menu");
+  wireTaskbarMenuKeyboard(startButtonMenu);
+  document
+    .getElementById("start-button")
+    .addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeStartMenu();
+      closeWindowSystemMenu();
+      closeTaskbarMenus();
+      positionTaskbarMenu(startButtonMenu, event.clientX, event.clientY);
+    });
+  startButtonMenu.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-start-button-action]")?.dataset
+      .startButtonAction;
+    if (!action) return;
+    closeTaskbarMenus();
+    if (action === "search") openSystemWindow("__search");
+    else openTaskbarProperties("start-menu");
   });
   taskbar.addEventListener("contextmenu", (event) => {
     if (event.target.closest(".task-button, #tray-volume-popup")) return;
