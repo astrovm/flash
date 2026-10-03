@@ -90,6 +90,18 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
+      - name: Invalidate Cloudflare cache
+        env:
+          CLOUDFLARE_CACHE_TOKEN: ${{ secrets.CLOUDFLARE_CACHE_TOKEN }}
+        # Marks cached copies stale so the edge revalidates them against the new deploy.
+        run: |
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            --request POST \
+            --header "Authorization: Bearer $CLOUDFLARE_CACHE_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data '{"hosts":["flash.4st.li"]}' \
+            "https://api.cloudflare.com/client/v4/zones/2da89ffd98b154334e04add0a5034e9b/invalidate_cache"
+
   deploy-worker:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
