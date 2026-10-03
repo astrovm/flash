@@ -226,35 +226,49 @@
       if (decision === "cancel") return { cancelled: true, results: [] };
       decisions.push({ conflict, decision });
     }
+    // Items already moved leave a cut clipboard; the rest can be retried.
+    const keepUnmovedOnClipboard = (index) => {
+      if (mode !== "cut") return;
+      const remaining = ids
+        .slice(index)
+        .filter((remainingId) => !!fs.getNode(remainingId));
+      clipboard = remaining.length ? { mode: "cut", ids: remaining } : null;
+      notify({ type: "clipboard", mode: clipboard?.mode || null });
+    };
     const results = [];
     for (const [index, id] of ids.entries()) {
       if (options.isCancelled?.()) {
-        if (mode === "cut") {
-          const remaining = ids
-            .slice(index)
-            .filter((remainingId) => !!fs.getNode(remainingId));
-          clipboard = remaining.length ? { mode: "cut", ids: remaining } : null;
-          notify({ type: "clipboard", mode: clipboard?.mode || null });
-        }
+        keepUnmovedOnClipboard(index);
         return { cancelled: true, results };
       }
       const planned = decisions.find(
         ({ conflict }) => conflict.source.id === id,
       );
-      await fs.transaction(() => {
-        if (
-          planned?.decision === "replace" &&
-          planned.conflict.source.type === "file" &&
-          planned.conflict.existing.type === "file"
-        ) {
-          fs.destroy(planned.conflict.existing.id);
-        }
-        results.push(
-          mode === "cut"
-            ? fs.move(id, destinationId)
-            : fs.copy(id, destinationId),
-        );
-      });
+      try {
+        await fs.transaction(() => {
+          // Replace only the file that still holds the clashing name; it may
+          // have been renamed or moved while the conflict dialog was open.
+          const existing =
+            planned?.decision === "replace"
+              ? fs.findChild(destinationId, fs.getNode(id).name)
+              : null;
+          if (
+            existing?.id === planned?.conflict.existing.id &&
+            existing?.type === "file" &&
+            planned.conflict.source.type === "file"
+          ) {
+            fs.destroy(existing.id);
+          }
+          results.push(
+            mode === "cut"
+              ? fs.move(id, destinationId)
+              : fs.copy(id, destinationId),
+          );
+        });
+      } catch (error) {
+        keepUnmovedOnClipboard(index);
+        throw error;
+      }
       options.onProgress?.({
         completed: index + 1,
         total: ids.length,
@@ -324,12 +338,23 @@
       }
     });
     const pending = new Set(topLevelIds);
+    // An item waits while its original folder, or any folder above it, is
+    // still in the bin and selected, so it returns to its real location.
+    const waitsForPending = (id) => {
+      for (
+        let folderId = fs.getNode(id)?.originalParent;
+        folderId;
+        folderId = fs.getNode(folderId)?.parent
+      ) {
+        if (pending.has(folderId)) return true;
+      }
+      return false;
+    };
     const orderedIds = [];
     while (pending.size) {
       const nextId =
-        [...pending].find(
-          (id) => !pending.has(fs.getNode(id)?.originalParent),
-        ) || pending.values().next().value;
+        [...pending].find((id) => !waitsForPending(id)) ||
+        pending.values().next().value;
       pending.delete(nextId);
       orderedIds.push(nextId);
     }

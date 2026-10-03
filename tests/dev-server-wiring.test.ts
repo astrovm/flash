@@ -183,7 +183,8 @@ describe("development server wiring", () => {
   });
 
   test("development builds use the release builder by default", async () => {
-    const deploy = await import("../tools/deploy");
+    // mock.module() patches the live namespace, so restore from a copy.
+    const deploy = { ...(await import("../tools/deploy")) };
     const builds = [];
     mock.module("../tools/deploy", () => ({
       ...deploy,

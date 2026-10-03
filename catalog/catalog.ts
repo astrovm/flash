@@ -268,12 +268,21 @@ const fetchPlayerDetails = async (
   return parseGameDetails(html, requestOrigin, uuid);
 };
 
-const proxyResponse = (upstream: Response, cacheSeconds: number): Response => {
+// Proxied files share the app's origin, so they must never render as a page
+// that can run scripts there. Game data is always served as plain bytes.
+const proxyResponse = (
+  upstream: Response,
+  cacheSeconds: number,
+  gameData = false,
+): Response => {
   const headers = new Headers({
     "Access-Control-Allow-Origin": "*",
     "Cache-Control": `public, max-age=${cacheSeconds}`,
-    "Content-Type":
-      upstream.headers.get("content-type") ?? "application/octet-stream",
+    "Content-Security-Policy": "sandbox",
+    "Content-Type": gameData
+      ? "application/octet-stream"
+      : (upstream.headers.get("content-type") ?? "application/octet-stream"),
+    "X-Content-Type-Options": "nosniff",
   });
   for (const name of [
     "content-length",
@@ -298,7 +307,26 @@ const checkedAssetResponse = (
       413,
     );
   }
-  return proxyResponse(upstream, cacheSeconds);
+  if (length || !upstream.body) {
+    return proxyResponse(upstream, cacheSeconds, true);
+  }
+  // Without a length the limit can only be enforced while streaming.
+  let received = 0;
+  const limited = upstream.body.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        received += chunk.byteLength;
+        if (received > MAX_LEGACY_ASSET_BYTES) {
+          controller.error(
+            new Error("Legacy asset exceeds the supported size limit."),
+          );
+          return;
+        }
+        controller.enqueue(chunk);
+      },
+    }),
+  );
+  return proxyResponse(new Response(limited, upstream), cacheSeconds, true);
 };
 
 export async function handleCatalogRequest(
@@ -387,7 +415,7 @@ export async function handleCatalogRequest(
       }
       return details.packageType === "legacy"
         ? checkedAssetResponse(upstream, 3600)
-        : proxyResponse(upstream, 3600);
+        : proxyResponse(upstream, 3600, true);
     }
     if (action === "asset") {
       if (!details.compatible || !details.legacyServerUrl) {

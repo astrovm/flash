@@ -234,6 +234,24 @@ describe("catalog proxy and upstream failures", () => {
       if (kind === "asset")
         expect(seen.at(-1)).toEndWith("/localflash/assets/a.bin");
     });
+    test(`${kind} never lets archived pages run scripts on the site`, async () => {
+      const upstreamType = kind === "logo" ? "image/svg+xml" : "text/html";
+      const result = await handleCatalogRequest(
+        request(`/api/games/${uuid}/${kind}?path=content/localflash/page.html`),
+        async (url) =>
+          String(url).includes("?id=")
+            ? new Response(detailsHtml)
+            : new Response("<script>parent.stolen = true</script>", {
+                headers: { "content-type": upstreamType },
+              }),
+      );
+      expect(result.status).toBe(200);
+      expect(result.headers.get("content-security-policy")).toBe("sandbox");
+      expect(result.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(result.headers.get("content-type")).toBe(
+        kind === "logo" ? upstreamType : "application/octet-stream",
+      );
+    });
     test(`${kind} reports unavailable upstream content`, async () => {
       const result = await handleCatalogRequest(
         request(`/api/games/${uuid}/${kind}?path=content/localflash/a.swf`),
@@ -289,6 +307,51 @@ describe("catalog proxy and upstream failures", () => {
     expect(result.status).toBe(200);
     expect(result.headers.get("content-type")).toBe("application/octet-stream");
     expect(await result.text()).toBe("FWS");
+  });
+  test("legacy assets without length metadata stop at the size limit", async () => {
+    const chunk = new Uint8Array(16 * 1024 * 1024);
+    let sent = 0;
+    const result = await handleCatalogRequest(
+      request(`/api/games/${uuid}/asset?path=content/localflash/huge.bin`),
+      async (url) =>
+        String(url).includes("?id=")
+          ? new Response(legacyHtml)
+          : new Response(
+              new ReadableStream({
+                pull(controller) {
+                  sent += 1;
+                  controller.enqueue(chunk);
+                  if (sent > 8) controller.close();
+                },
+              }),
+            ),
+    );
+    expect(result.status).toBe(200);
+    await expect(result.arrayBuffer()).rejects.toThrow(
+      "Legacy asset exceeds the supported size limit.",
+    );
+    expect(sent).toBeLessThan(8);
+  });
+  test("logos without a type are served as plain bytes", async () => {
+    const result = await handleCatalogRequest(
+      request(`/api/games/${uuid}/logo`),
+      async (url) =>
+        String(url).includes("?id=")
+          ? new Response(detailsHtml)
+          : new Response(Uint8Array.of(137, 80, 78, 71)),
+    );
+    expect(result.headers.get("content-type")).toBe("application/octet-stream");
+  });
+  test("legacy assets without a body return an empty file", async () => {
+    const result = await handleCatalogRequest(
+      request(`/api/games/${uuid}/asset?path=content/localflash/empty.txt`),
+      async (url) =>
+        String(url).includes("?id=")
+          ? new Response(legacyHtml)
+          : new Response(null),
+    );
+    expect(result.status).toBe(200);
+    expect(await result.text()).toBe("");
   });
   for (const path of ["/api/games?q=test", `/api/games/${uuid}`]) {
     for (const failure of [

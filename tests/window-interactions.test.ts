@@ -270,3 +270,30 @@ test("SWF playback properties validate and apply custom, native and default fram
     );
   }
 });
+test("dragging and resizing stop at the taskbar", async () => {
+  const { s, win } = await documents();
+  Object.defineProperties(s.document.getElementById("desktop"), {
+    clientWidth: { configurable: true, value: 1024 },
+    clientHeight: { configurable: true, value: 768 },
+  });
+  Object.defineProperties(s.window, {
+    innerWidth: { configurable: true, value: 1024 },
+    innerHeight: { configurable: true, value: 768 },
+  });
+  s.document.getElementById("taskbar").getBoundingClientRect = () => ({
+    height: 30,
+  });
+  const bar = win.querySelector(".title-bar");
+  pointer(s, bar, "pointerdown", 120, 90);
+  pointer(s, bar, "pointermove", 120, 2000);
+  pointer(s, bar, "pointerup", 120, 2000);
+  // 738px work area minus the 28px that keeps the caption reachable.
+  expect(win.style.top).toBe("710px");
+
+  win.style.top = "80px";
+  const handle = win.querySelector('.resize-handle[data-dir="s"]');
+  pointer(s, handle, "pointerdown", 300, 480);
+  pointer(s, handle, "pointermove", 300, 2000);
+  pointer(s, handle, "pointerup", 300, 2000);
+  expect(win.offsetTop + win.offsetHeight).toBe(738);
+});

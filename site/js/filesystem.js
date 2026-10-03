@@ -301,6 +301,10 @@
         f: WELL_KNOWN.DRIVE_F,
       }[segments[0][0].toLowerCase()];
       segments.shift();
+    } else if (/^recycle bin$/i.test(segments[0])) {
+      // getPath() names Recycle Bin items from the bin itself.
+      currentId = WELL_KNOWN.RECYCLE_BIN;
+      segments.shift();
     } else {
       currentId = WELL_KNOWN.MY_COMPUTER;
     }

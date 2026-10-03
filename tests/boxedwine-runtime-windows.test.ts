@@ -919,3 +919,69 @@ test("a remembered native window position is kept while an unusable remembered s
   expect([win.style.left, win.style.top]).toEqual(["40px", "30px"]);
   expect(win.style.width).toBe("300px");
 });
+
+test("keyboard sizing and showing the desktop keep native windows in sync", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  const launchToken = h.token();
+  const win = h.app();
+  launched(h, launchToken);
+  await openWindow(h, 10, launchToken);
+  h.native({
+    type: "metadata",
+    id: 10,
+    win32Metrics: true,
+    outerWidth: 320,
+    outerHeight: 240,
+    clientWidth: 300,
+    clientHeight: 200,
+    frameTop: 30,
+    canMaximize: true,
+  });
+  const host = win.querySelector(".boxedwine-shared-app-host");
+  Object.defineProperties(host, {
+    clientWidth: { configurable: true, value: 300 },
+    clientHeight: { configurable: true, value: 200 },
+  });
+  await settle(h.s, 100);
+
+  const boundsBefore = commandsFor(h, "bounds").length;
+  win.querySelector(".title-bar").dispatchEvent(
+    new h.s.window.MouseEvent("contextmenu", {
+      bubbles: true,
+      clientX: 20,
+      clientY: 10,
+    }),
+  );
+  h.s.document
+    .querySelector('#window-system-menu [data-command="size"]')
+    .click();
+  for (const key of ["ArrowRight", "Enter"]) {
+    h.s.document.dispatchEvent(
+      new h.s.window.KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  }
+  await settle(h.s, 100);
+  expect(commandsFor(h, "bounds").length).toBeGreaterThan(boundsBefore);
+
+  h.s.window.history.replaceState(null, "", "#");
+  h.s.window.dispatchEvent(new h.s.window.HashChangeEvent("hashchange"));
+  await settle(h.s, 100);
+  expect(win.style.display).toBe("none");
+  expect(commandsFor(h, "minimize")).toHaveLength(1);
+});
+
+test("closing an application while it launches keeps the warm runtime", async () => {
+  const h = await setup();
+  h.send({ type: "boxedwine-runtime-ready" });
+  h.app().querySelector(".close-btn").click();
+  await settle(h.s, 600);
+  await settle(h.s, 121_000);
+  expect(h.s.document.documentElement.dataset.boxedwineRuntimeState).not.toBe(
+    "idle",
+  );
+});

@@ -65,6 +65,8 @@
         if (versionFromHtml(await htmlResponse.text()) !== metadata.version) {
           throw new Error("Recovery page version is inconsistent");
         }
+        // Startup can finish while the checks above are in flight.
+        if (ready) return;
 
         const registrations =
           (await environment.navigator.serviceWorker?.getRegistrations?.()) ||
@@ -80,9 +82,11 @@
               .map((name) => environment.caches.delete(name)),
           );
         }
+        if (ready) return;
         environment.sessionStorage.setItem(RECOVERY_KEY, String(nonce));
         environment.location.replace(recoveryUrl.href);
       } catch (error) {
+        if (ready) return;
         environment.console.error("Automatic startup recovery failed:", error);
         scheduleRecovery(retryTimeout);
       }

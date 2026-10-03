@@ -22,6 +22,7 @@
   const SAVE_PLAYED_GAMES_KEY = "astroFlashSavePlayedGamesOffline";
   const AUTOMATIC_UPDATES_KEY = "astroFlashAutomaticUpdatesEnabled";
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
+  const RELEASE_PREFIX = /^\/releases\/[^/]+(?=\/)/;
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
   const UPDATE_RETRY_DELAY = 30 * 1000;
 
@@ -654,14 +655,25 @@
     };
 
     const ensureManifest = async () => manifest || loadGameManifest();
-    const absoluteUrl = (url) =>
-      new URL(
+    // Game files keep the same cache key across releases, so a download stays
+    // usable offline after an update that did not change the game itself.
+    const absoluteUrl = (url) => {
+      const key = new URL(
         url,
         environment.document?.baseURI ||
           environment.location?.href ||
           environment.location?.origin ||
           "https://astro.local/",
-      ).href;
+      );
+      key.pathname = key.pathname.replace(RELEASE_PREFIX, "");
+      return key.href;
+    };
+    const hasAllFiles = async (cache, record) =>
+      (
+        await Promise.all(
+          (record.files || []).map((url) => cache.match(absoluteUrl(url))),
+        )
+      ).every(Boolean);
 
     const cacheEntry = async (id, entry, progress) => {
       const cache = await environment.caches.open(bundledCacheName);
@@ -671,11 +683,9 @@
       if (
         records[id]?.revision === entry.revision &&
         Array.isArray(records[id].files) &&
-        (
-          await Promise.all(
-            entry.files.map((file) => cache.match(absoluteUrl(file.url))),
-          )
-        ).every(Boolean)
+        (await hasAllFiles(cache, {
+          files: entry.files.map((file) => file.url),
+        }))
       ) {
         return;
       }
@@ -877,8 +887,22 @@
       return snapshot();
     };
 
+    // Releases before stable cache keys stored files under /releases/<version>/.
+    const removeReleaseScopedFiles = async (cache) => {
+      const keys = await cache.keys();
+      await Promise.all(
+        keys
+          .filter((request) =>
+            RELEASE_PREFIX.test(new URL(request.url).pathname),
+          )
+          .map((request) => cache.delete(request).catch(() => {})),
+      );
+    };
+
     const syncDownloadedGames = async () => {
       const currentManifest = await ensureManifest();
+      const cache = await environment.caches.open(bundledCacheName);
+      await removeReleaseScopedFiles(cache);
       const selectedIds = Object.keys(records).filter(
         (key) => !key.startsWith("__runtime__"),
       );
@@ -896,10 +920,15 @@
         const runtimeRecordId = entry.runtime
           ? `__runtime__:${entry.runtime}`
           : "__runtime__";
+        // Missing files can only be fetched again while online.
+        const online = navigatorObject.onLine !== false;
         if (
           records[id].revision !== entry.revision ||
+          (online && !(await hasAllFiles(cache, records[id]))) ||
           (runtimeEntry &&
-            records[runtimeRecordId]?.revision !== runtimeEntry.revision)
+            (records[runtimeRecordId]?.revision !== runtimeEntry.revision ||
+              (online &&
+                !(await hasAllFiles(cache, records[runtimeRecordId])))))
         ) {
           await downloadGame(id);
         }

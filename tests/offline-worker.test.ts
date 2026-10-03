@@ -25,14 +25,22 @@ describe("offline service worker", () => {
       },
     };
     const stale = new Response("stale runtime");
+    // Downloads are stored without the release prefix, so a file saved
+    // before an update is still found under the new release's URL.
     globalThis.caches = {
-      open: async () => ({ match: async () => stale.clone() }),
+      open: async () => ({
+        match: async (key) =>
+          key ===
+          "https://flash.example/vendor/boxedwine/26R1/boxedwine.12345678.wasm"
+            ? stale.clone()
+            : undefined,
+      }),
     };
     globalThis.fetch = async () => new Response("current runtime");
     require(workerPath);
 
     const request = new Request(
-      "https://flash.example/releases/26.07.28-abcdef1/vendor/boxedwine/26R1/boxedwine.12345678.wasm",
+      "https://flash.example/releases/26.08.01-1234567/vendor/boxedwine/26R1/boxedwine.12345678.wasm",
     );
     let responsePromise;
     listeners.get("fetch")({
@@ -53,6 +61,26 @@ describe("offline service worker", () => {
       },
     });
     expect(await (await responsePromise).text()).toBe("stale runtime");
+
+    globalThis.fetch = async () => new Response("gone", { status: 404 });
+    listeners.get("fetch")({
+      request,
+      respondWith(promise) {
+        responsePromise = promise;
+      },
+    });
+    expect(await (await responsePromise).text()).toBe("stale runtime");
+
+    const uncached = new Request(
+      "https://flash.example/releases/26.08.01-1234567/swf/missing.swf",
+    );
+    listeners.get("fetch")({
+      request: uncached,
+      respondWith(promise) {
+        responsePromise = promise;
+      },
+    });
+    expect((await responsePromise).status).toBe(404);
   });
 });
 

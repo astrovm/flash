@@ -54,7 +54,8 @@ let screenSaverPreviewCleanup = null;
 const PIPES_SCREEN_SAVER_URL =
   "vendor/pipes/86e8eb1418f937ef43f9acbd871085c5160714fc/index.html";
 
-const gamesList = { ...window.FLASH_GAMES };
+// No prototype, so ids such as "constructor" from a URL are not games.
+const gamesList = Object.assign(Object.create(null), window.FLASH_GAMES);
 const installedGameIds = new Set();
 let gameLibrary = null;
 let gameLibraryError = null;

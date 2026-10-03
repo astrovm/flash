@@ -93,7 +93,10 @@ class MemoryCache {
     return this.values.get(String(key));
   }
   async delete(key) {
-    return this.values.delete(String(key));
+    return this.values.delete(String(key?.url ?? key));
+  }
+  async keys() {
+    return [...this.values.keys()].map((key) => new Request(key));
   }
 }
 
@@ -559,10 +562,114 @@ describe("offline manager", () => {
     );
     await versionedManager.downloadGame("bike-mania");
     expect(
-      versioned.bundledCache.values.has(
-        `https://flash.example/releases/${manifest.version}/swf/bike-mania.bike-1/main.swf`,
+      versioned.fetches.some(
+        ({ url }) =>
+          new URL(url, `https://flash.example/releases/${manifest.version}/`)
+            .href ===
+          `https://flash.example/releases/${manifest.version}/swf/bike-mania.bike-1/main.swf`,
       ),
     ).toBe(true);
+    expect(
+      versioned.bundledCache.values.has(
+        "https://flash.example/swf/bike-mania.bike-1/main.swf",
+      ),
+    ).toBe(true);
+  });
+
+  test("keeps downloaded games offline after an update to a new release", async () => {
+    const before = makeEnvironment({
+      assetBaseUrl: "https://flash.example/releases/26.07.28-old/",
+    });
+    const oldManager = await createInitializedManager(before.environment);
+    await oldManager.downloadGame("bike-mania");
+    const legacyKey =
+      "https://flash.example/releases/26.07.28-old/swf/legacy/main.swf";
+    await before.bundledCache.put(legacyKey, new Response("old layout"));
+
+    const after = makeEnvironment({
+      assetBaseUrl: `https://flash.example/releases/${manifest.version}/`,
+      storageValues: Object.fromEntries(before.storage.values),
+    });
+    after.bundledCache.values = before.bundledCache.values;
+    const manager = await createInitializedManager(after.environment);
+    await flushUntil(() => !after.bundledCache.values.has(legacyKey));
+
+    expect(manager.getSnapshot().downloadedGameIds).toEqual(["bike-mania"]);
+    expect(
+      after.fetches.some(({ url }) => String(url).includes("main.swf")),
+    ).toBeFalse();
+    expect([...after.bundledCache.values.keys()].sort()).toEqual([
+      "https://flash.example/js/runtime.wasm?rev=runtime-1",
+      "https://flash.example/swf/bike-mania.bike-1/main.swf",
+    ]);
+  });
+
+  test("downloads a game again when its files are missing from the cache", async () => {
+    const initial = makeEnvironment();
+    const manager = await createInitializedManager(initial.environment);
+    await manager.downloadGame("bike-mania");
+    initial.bundledCache.values.clear();
+
+    const restarted = makeEnvironment({
+      storageValues: Object.fromEntries(initial.storage.values),
+    });
+    restarted.bundledCache.values = initial.bundledCache.values;
+    await createInitializedManager(restarted.environment);
+    await flushUntil(() => restarted.bundledCache.values.size === 2);
+
+    expect(
+      restarted.fetches.filter(({ url }) => String(url).includes("main.swf")),
+    ).toHaveLength(1);
+  });
+
+  test("keeps synchronizing when an old release file cannot be deleted", async () => {
+    const h = makeEnvironment();
+    const legacyKey = "https://flash.example/releases/26.07.28-old/swf/a.swf";
+    await h.bundledCache.put(legacyKey, new Response("old layout"));
+    h.bundledCache.delete = async () => {
+      throw new Error("synthetic cache failure");
+    };
+    const manager = await createInitializedManager(h.environment);
+    await flush();
+    expect(manager.getSnapshot().gameError).toBeNull();
+  });
+
+  test("keeps older game records that never listed their files", async () => {
+    const legacy = makeEnvironment({
+      storageValues: {
+        astroFlashOfflineGameRecords: JSON.stringify({
+          doom: { bytes: 6, revision: "doom-1", type: "iframe" },
+        }),
+      },
+    });
+    const manager = await createInitializedManager(legacy.environment);
+    await flush();
+    expect(
+      legacy.fetches.some(({ url }) => String(url).includes("doom")),
+    ).toBeFalse();
+    expect(manager.getSnapshot().downloadedGameIds).toEqual(["doom"]);
+  });
+
+  test("waits until online before downloading missing files again", async () => {
+    const initial = makeEnvironment();
+    const manager = await createInitializedManager(initial.environment);
+    await manager.downloadGame("bike-mania");
+    initial.bundledCache.values.clear();
+
+    const offline = makeEnvironment({
+      storageValues: Object.fromEntries(initial.storage.values),
+    });
+    offline.environment.navigator.onLine = false;
+    const offlineManager = await createInitializedManager(offline.environment);
+    await flush();
+
+    expect(
+      offline.fetches.some(({ url }) => String(url).includes("main.swf")),
+    ).toBeFalse();
+    expect(offlineManager.getSnapshot().gameError).toBeNull();
+    expect(offlineManager.getSnapshot().downloadedGameIds).toEqual([
+      "bike-mania",
+    ]);
   });
 
   test("restores a missing cached file when a downloaded game is downloaded again", async () => {
@@ -1405,6 +1512,12 @@ describe("offline manager edge cases", () => {
     });
     const staleUrl = "https://flash.example/swf/bike-mania.old/main.swf";
     await h.bundledCache.put(staleUrl, new Response("old"));
+    for (const { url } of manifest.games.doom.files) {
+      await h.bundledCache.put(
+        new URL(url, "https://flash.example/").href,
+        new Response("cached"),
+      );
+    }
     const manager = await createInitializedManager(h.environment);
     const records = () =>
       JSON.parse(h.storage.getItem("astroFlashOfflineGameRecords"));
