@@ -96,6 +96,7 @@
     <link rel="stylesheet" href="css/shell/start-menu.css" />
     <link rel="stylesheet" href="css/shell/session.css" />
     <link rel="stylesheet" href="css/shell/scrollbars.css" />
+    <link rel="stylesheet" href="css/shell/controls.css" />
     <link rel="stylesheet" href="css/shell/responsive.css" />
     <link rel="stylesheet" href="css/shell/themes.css" />
     <link rel="stylesheet" href="css/apps/minesweeper.css" />
@@ -170,20 +171,35 @@
 
       <div id="window-system-menu" class="xp-context-menu" role="menu" hidden>
         <button type="button" role="menuitem" data-command="restore">
-          Restore
+          <span class="context-check sysmenu-glyph" aria-hidden="true"></span>
+          <span class="context-label">Restore</span>
         </button>
-        <button type="button" role="menuitem" data-command="move">Move</button>
-        <button type="button" role="menuitem" data-command="size">Size</button>
-        <span class="context-separator" aria-hidden="true"></span>
+        <button type="button" role="menuitem" data-command="move">
+          <span class="context-check" aria-hidden="true"></span>
+          <span class="context-label">Move</span>
+        </button>
+        <button type="button" role="menuitem" data-command="size">
+          <span class="context-check" aria-hidden="true"></span>
+          <span class="context-label">Size</span>
+        </button>
         <button type="button" role="menuitem" data-command="minimize">
-          Minimize
+          <span class="context-check sysmenu-glyph" aria-hidden="true"></span>
+          <span class="context-label">Minimize</span>
         </button>
         <button type="button" role="menuitem" data-command="maximize">
-          Maximize
+          <span class="context-check sysmenu-glyph" aria-hidden="true"></span>
+          <span class="context-label">Maximize</span>
         </button>
         <span class="context-separator" aria-hidden="true"></span>
-        <button type="button" role="menuitem" data-command="close">
-          Close
+        <button
+          type="button"
+          role="menuitem"
+          data-command="close"
+          class="context-default"
+        >
+          <span class="context-check sysmenu-glyph" aria-hidden="true"></span>
+          <span class="context-label">Close</span>
+          <span class="context-shortcut">Alt+F4</span>
         </button>
       </div>
 

@@ -1,37 +1,122 @@
 /* ============ Windows ============ */
 
+/* Luna frames are drawn from the original theme bitmaps (Luna.msstyles):
+   a 30px caption sliced with the theme's sizing margins, and 4px side and
+   bottom edges. XP draws no drop shadow around windows. */
+:root {
+  --win-caption-active: url("../../assets/xp/windows/blue-caption-0.png");
+  --win-caption-inactive: url("../../assets/xp/windows/blue-caption-1.png");
+  --win-caption-max-active: url("../../assets/xp/windows/blue-caption-maximized-0.png");
+  --win-caption-max-inactive: url("../../assets/xp/windows/blue-caption-maximized-1.png");
+  --win-caption-button: url("../../assets/xp/windows/blue-caption-button.png");
+  --win-close-button: url("../../assets/xp/windows/blue-close-button.png");
+  --win-minimize-glyph: url("../../assets/xp/windows/blue-minimize-glyph.png");
+  --win-maximize-glyph: url("../../assets/xp/windows/blue-maximize-glyph.png");
+  --win-restore-glyph: url("../../assets/xp/windows/blue-restore-glyph.png");
+  --win-close-glyph: url("../../assets/xp/windows/blue-close-glyph.png");
+  --win-help-glyph: url("../../assets/xp/windows/blue-help-glyph.png");
+  --win-title-color: #fff;
+  --win-title-inactive-color: #d8e4f8;
+  --win-title-shadow: #0a1883;
+}
+
+html[data-xp-appearance="olive"] {
+  --win-caption-active: url("../../assets/xp/windows/olive-caption-0.png");
+  --win-caption-inactive: url("../../assets/xp/windows/olive-caption-1.png");
+  --win-caption-max-active: url("../../assets/xp/windows/olive-caption-maximized-0.png");
+  --win-caption-max-inactive: url("../../assets/xp/windows/olive-caption-maximized-1.png");
+  --win-caption-button: url("../../assets/xp/windows/olive-caption-button.png");
+  --win-close-button: url("../../assets/xp/windows/olive-close-button.png");
+  --win-minimize-glyph: url("../../assets/xp/windows/olive-minimize-glyph.png");
+  --win-maximize-glyph: url("../../assets/xp/windows/olive-maximize-glyph.png");
+  --win-restore-glyph: url("../../assets/xp/windows/olive-restore-glyph.png");
+  --win-close-glyph: url("../../assets/xp/windows/olive-close-glyph.png");
+  --win-help-glyph: url("../../assets/xp/windows/olive-help-glyph.png");
+  --win-title-inactive-color: #fff;
+  --win-title-shadow: #41400a;
+}
+
+html[data-xp-appearance="silver"] {
+  --win-caption-active: url("../../assets/xp/windows/silver-caption-0.png");
+  --win-caption-inactive: url("../../assets/xp/windows/silver-caption-1.png");
+  --win-caption-max-active: url("../../assets/xp/windows/silver-caption-maximized-0.png");
+  --win-caption-max-inactive: url("../../assets/xp/windows/silver-caption-maximized-1.png");
+  --win-caption-button: url("../../assets/xp/windows/silver-caption-button.png");
+  --win-close-button: url("../../assets/xp/windows/silver-close-button.png");
+  --win-minimize-glyph: url("../../assets/xp/windows/silver-minimize-glyph.png");
+  --win-maximize-glyph: url("../../assets/xp/windows/silver-maximize-glyph.png");
+  --win-restore-glyph: url("../../assets/xp/windows/silver-restore-glyph.png");
+  --win-close-glyph: url("../../assets/xp/windows/silver-close-glyph.png");
+  --win-help-glyph: url("../../assets/xp/windows/silver-help-glyph.png");
+  --win-title-color: #0e1010;
+  --win-title-inactive-color: #a2a1a1;
+  --win-title-shadow: #c7c2d1;
+}
+
 .xp-window {
+  --win-frame-left: var(--frame-left-inactive);
+  --win-frame-right: var(--frame-right-inactive);
+  --win-frame-bottom: var(--frame-bottom-inactive);
+  --win-caption: var(--win-caption-inactive);
   position: absolute;
   display: flex;
   flex-direction: column;
-  background: var(--xp-beige);
-  padding: 0 3px 3px;
-  border-radius: 8px 8px 0 0;
-  box-shadow:
-    2px 2px 14px rgba(0, 0, 0, 0.45),
-    var(--window-frame-inactive);
+  padding: 0 4px 4px;
+  border-radius: 0;
+  /* XP stretches the 5px edge bitmaps to its 4px sizing frame by dropping
+     the middle column; nearest-neighbor scaling keeps the same columns. */
+  image-rendering: pixelated;
+  background:
+    var(--win-frame-left) left 30px / 4px calc(100% - 30px) no-repeat,
+    var(--win-frame-right) right 30px / 4px calc(100% - 30px) no-repeat,
+    linear-gradient(var(--xp-beige), var(--xp-beige)) 0 30px / 100%
+      calc(100% - 30px) no-repeat;
+  box-shadow: none;
   min-width: min(340px, calc(100% - 8px));
   min-height: min(240px, calc(100% - 8px));
   z-index: 10;
 }
 
+.xp-window > * {
+  image-rendering: auto;
+}
+
+.xp-window::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  border-style: solid;
+  border-width: 2px 5px;
+  border-image: var(--win-frame-bottom) 2 5 fill / 2px 5px stretch;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
 .xp-window.active {
-  box-shadow:
-    2px 2px 14px rgba(0, 0, 0, 0.45),
-    var(--window-frame);
+  --win-frame-left: var(--frame-left-active);
+  --win-frame-right: var(--frame-right-active);
+  --win-frame-bottom: var(--frame-bottom-active);
+  --win-caption: var(--win-caption-active);
 }
 
 .xp-window.moving {
   will-change: transform;
 }
 
+/* XP pushes a maximized window's sizing frame just past the work area. */
 .xp-window.maximized {
-  left: 0 !important;
-  top: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  padding: 0;
-  border-radius: 0;
+  --win-caption: var(--win-caption-max-inactive);
+  left: -4px !important;
+  top: -4px !important;
+  width: calc(100% + 8px) !important;
+  height: calc(100% + 8px) !important;
+}
+
+.xp-window.maximized.active {
+  --win-caption: var(--win-caption-max-active);
 }
 
 .xp-window.maximized .resize-handle {
@@ -39,33 +124,36 @@
 }
 
 .title-bar {
-  height: 28px;
+  position: relative;
+  isolation: isolate;
+  height: 30px;
   flex: none;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0 -3px;
-  padding: 0 2px 0 8px;
-  border-radius: 8px 8px 0 0;
-  background: var(--titlebar-inactive);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  color: #fff;
+  gap: 3px;
+  margin: 0 -4px;
+  padding: 1px 6px 0 6px;
+  color: var(--win-title-inactive-color);
   font-family: "Trebuchet MS", var(--chrome-font);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.2px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
   touch-action: none;
   cursor: var(--xp-cursor);
 }
 
-.xp-window.active .title-bar {
-  background: var(--titlebar-active);
+.title-bar::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-style: solid;
+  border-width: 9px 35px 17px 28px;
+  border-image: var(--win-caption) 9 35 17 28 fill / 9px 35px 17px 28px stretch;
 }
 
-.xp-window.maximized .title-bar {
-  margin: 0;
-  border-radius: 0;
+.xp-window.active .title-bar {
+  color: var(--win-title-color);
+  text-shadow: 1px 1px var(--win-title-shadow);
 }
 
 .title-icon {
@@ -93,11 +181,13 @@
   text-overflow: ellipsis;
 }
 
+/* Measured on XP: buttons 6px below the window top and 6px from its right
+   edge, 2px apart. */
 .title-buttons {
   display: flex;
-  align-items: center;
+  align-self: flex-start;
   gap: 2px;
-  margin-right: 2px;
+  margin-top: 5px;
 }
 
 .tb-btn {
@@ -164,28 +254,33 @@
 
 .minimize-btn,
 .maximize-btn,
-.restore-btn {
-  background-image: url("../../assets/xp/icons/CaptionButton.png");
+.restore-btn,
+.help-btn {
+  background-image: var(--win-caption-button);
 }
 
 .minimize-btn::after {
-  background-image: url("../../assets/xp/icons/Minimize.png");
+  background-image: var(--win-minimize-glyph);
 }
 
 .maximize-btn::after {
-  background-image: url("../../assets/xp/icons/Maximize.png");
+  background-image: var(--win-maximize-glyph);
 }
 
 .restore-btn::after {
-  background-image: url("../../assets/xp/icons/Restore.png");
+  background-image: var(--win-restore-glyph);
+}
+
+.help-btn::after {
+  background-image: var(--win-help-glyph);
 }
 
 .close-btn {
-  background-image: url("../../assets/xp/icons/Exit.png");
+  background-image: var(--win-close-button);
 }
 
 .close-btn::after {
-  background-image: url("../../assets/xp/icons/Close.png");
+  background-image: var(--win-close-glyph);
 }
 
 /* ---- Game application menu bar ---- */
@@ -196,11 +291,12 @@
   flex: none;
   display: flex;
   align-items: center;
-  height: 22px;
-  padding: 0 2px;
+  /* 19px bar plus XP's 1px white bottom line. */
+  height: 20px;
+  padding: 0;
   background: var(--xp-beige);
-  border-bottom: 1px solid #aca899;
-  color: #111;
+  border-bottom: 1px solid #fff;
+  color: #000;
   font:
     11px Tahoma,
     "Segoe UI",
@@ -214,9 +310,9 @@
 }
 
 .game-menu-button {
-  height: 20px;
-  padding: 1px 7px 2px;
-  border: 1px solid transparent;
+  height: 19px;
+  padding: 0 6px 2px;
+  border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -226,13 +322,21 @@
 .game-menu-button:hover,
 .game-menu-button:focus-visible,
 .game-menu-button[aria-expanded="true"] {
-  border-color: #0a246a;
   background: #316ac5;
   color: #fff;
   outline: 0;
 }
 
 .menu-accesskey {
+  text-decoration: underline;
+}
+
+html:not(.keyboard-cues) .menu-accesskey {
+  text-decoration: none;
+}
+
+#start-menu.keyboard-cues .menu-accesskey,
+#start-menu-flyouts.keyboard-cues .menu-accesskey {
   text-decoration: underline;
 }
 
@@ -387,7 +491,7 @@
   background: var(--xp-beige);
   color: #000;
   overflow: hidden;
-  padding: 1px 1px 3px;
+  padding: 0;
 }
 
 .notepad-menu-bar {
@@ -395,9 +499,10 @@
   z-index: 4;
   flex: none;
   display: flex;
-  height: 21px;
-  padding: 0 2px;
-  border-bottom: 1px solid #aca899;
+  /* 19px bar plus XP's 1px white bottom line. */
+  height: 20px;
+  padding: 0;
+  border-bottom: 1px solid #fff;
   background: var(--xp-beige);
   font:
     11px Tahoma,
@@ -410,9 +515,9 @@
 }
 
 .notepad-menu-button {
-  height: 20px;
-  padding: 1px 6px;
-  border: 1px solid transparent;
+  height: 19px;
+  padding: 0 6px 2px;
+  border: 0;
   background: transparent;
   color: #000;
   font: inherit;
@@ -421,7 +526,6 @@
 .notepad-menu-button:hover,
 .notepad-menu-button:focus-visible,
 .notepad-menu-button[aria-expanded="true"] {
-  border-color: #0a246a;
   background: #316ac5;
   color: #fff;
   outline: 0;
@@ -429,7 +533,7 @@
 
 .notepad-menu {
   position: absolute;
-  top: 20px;
+  top: 19px;
   left: 0;
   z-index: 5;
   min-width: 178px;
@@ -1445,4 +1549,10 @@
 
 .explorer-item small {
   color: #777;
+}
+
+/* XP draws an inactive window's menu bar in gray text. */
+.xp-window:not(.active) .game-menu-button,
+.xp-window:not(.active) .notepad-menu-button {
+  color: #aca899;
 }

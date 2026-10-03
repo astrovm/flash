@@ -1109,6 +1109,8 @@ const createExplorerIcon = (node) => {
   );
 };
 
+XPDialogs.setNodeIconFactory(createExplorerIcon);
+
 const explorerItemDescription = (node) => {
   if (node.id === fs.DRIVE_C || node.id === fs.DRIVE_D) return "Local Disk";
   if (node.id === fs.DRIVE_F) return "Removable Disk";

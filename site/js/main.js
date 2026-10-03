@@ -806,6 +806,31 @@ const toggleFullscreen = (element) => {
   }
 };
 
+// XP hides access-key underlines until the keyboard is used to navigate, and
+// hides them again after mouse input.
+const KEYBOARD_CUE_KEYS = new Set([
+  "Alt",
+  "Tab",
+  "F10",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+]);
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (KEYBOARD_CUE_KEYS.has(event.key))
+      document.documentElement.classList.add("keyboard-cues");
+  },
+  true,
+);
+document.addEventListener(
+  "pointerdown",
+  () => document.documentElement.classList.remove("keyboard-cues"),
+  true,
+);
+
 const setAccessKeyText = (element, label) => {
   const { text, key } = XPDialogs.parseAccessKey(label);
   const marker = label.indexOf("&");

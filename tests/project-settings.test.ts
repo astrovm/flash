@@ -338,11 +338,13 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
     "error occurred",
   );
   dialog.querySelector('[aria-label="Help"]').click();
-  expect(s.document.querySelectorAll(".xp-dialog").length).toBe(2);
-  [...s.document.querySelectorAll(".xp-dialog .dlg-buttons button")]
-    .filter((b) => b.textContent === "OK")
-    .at(-1)
-    .click();
+  expect(dialog.classList.contains("whats-this")).toBeTrue();
+  dialog
+    .querySelector(".datetime-sync-status")
+    .dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
+  expect(s.document.querySelector(".xp-help-popup").textContent).toBe(
+    "No Help topic is associated with this item.",
+  );
   button("Date & Time").click();
   change('[aria-label="Time"]', "invalid");
   dialog.querySelector('[aria-label="Increase time"]').click();

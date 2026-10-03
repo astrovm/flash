@@ -449,3 +449,40 @@ html[data-xp-appearance="classic"] .xp-context-menu {
 html[data-xp-appearance="classic"] .desktop-icon .icon-label {
   text-shadow: none;
 }
+
+/* XP's window menu draws Marlett glyphs beside Restore, Minimize, Maximize,
+   and Close, in the item's text color. */
+.sysmenu-glyph {
+  height: 9px;
+  vertical-align: -1px;
+  background: currentColor;
+  mask: center / 9px 9px no-repeat;
+}
+
+[data-command="restore"] > .sysmenu-glyph {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath fill-rule='evenodd' d='M3 0h6v6H7V2H3z M0 3h6v6H0z M1 5v3h4V5z'/%3E%3C/svg%3E");
+}
+
+[data-command="minimize"] > .sysmenu-glyph {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M1 6h6v2H1z'/%3E%3C/svg%3E");
+}
+
+[data-command="maximize"] > .sysmenu-glyph {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath fill-rule='evenodd' d='M0 0h9v9H0z M1 2v6h7V2z'/%3E%3C/svg%3E");
+}
+
+[data-command="close"] > .sysmenu-glyph {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 1h2l2.5 2.5L7 1h2L5.5 4.5 9 8H7L4.5 5.5 2 8H0l3.5-3.5z'/%3E%3C/svg%3E");
+}
+
+.context-shortcut {
+  float: right;
+  margin-left: 24px;
+  line-height: 16px;
+}
+
+/* A mouse-opened menu shows no highlight until the keyboard is used. */
+html:not(.keyboard-cues) .xp-context-menu button:focus-visible:not(:hover) {
+  background: transparent;
+  color: inherit;
+}

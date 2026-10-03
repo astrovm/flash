@@ -736,83 +736,51 @@
   color: #a1a192;
 }
 
-/* Message boxes */
+/* Message boxes: user32's 32px icons, laid out like XP's MessageBox and as
+   wide as their text needs. */
+.xp-message-box {
+  width: fit-content;
+  min-width: 140px;
+  max-width: min(640px, calc(100vw - 32px));
+}
+
+.xp-message-box .dlg-body {
+  padding: 9px 12px 11px 9px;
+}
+
 .dlg-message {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 5px 4px 13px;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 0 0 17px;
 }
 
 .dlg-text {
-  margin: 0;
+  margin: 5px 0 0;
   white-space: pre-line;
 }
 
 .dlg-icon {
-  position: relative;
   width: 32px;
   height: 32px;
   flex: none;
-}
-
-.dlg-icon::before {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-}
-
-.dlg-icon-info,
-.dlg-icon-question,
-.dlg-icon-error {
-  border-radius: 50%;
+  background: center / 32px 32px no-repeat;
 }
 
 .dlg-icon-info {
-  background: radial-gradient(circle at 35% 30%, #7db3f4, #1e52b0 70%);
-}
-
-.dlg-icon-info::before {
-  content: "i";
-  font:
-    italic 700 22px Georgia,
-    serif;
+  background-image: url("../../assets/xp/icons/MessageInformation.png");
 }
 
 .dlg-icon-question {
-  background: radial-gradient(circle at 35% 30%, #7db3f4, #1e52b0 70%);
-}
-
-.dlg-icon-question::before {
-  content: "?";
-  font-size: 20px;
+  background-image: url("../../assets/xp/icons/MessageQuestion.png");
 }
 
 .dlg-icon-error {
-  background: radial-gradient(circle at 35% 30%, #f49a8c, #c13018 70%);
-}
-
-.dlg-icon-error::before {
-  content: "×";
-  font-size: 24px;
+  background-image: url("../../assets/xp/icons/MessageError.png");
 }
 
 .dlg-icon-warning {
-  background: linear-gradient(180deg, #fdf17e, #e5b60f);
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-}
-
-.dlg-icon-warning::before {
-  content: "!";
-  top: 6px;
-  color: #111;
-  font-size: 18px;
-  text-shadow: none;
+  background-image: url("../../assets/xp/icons/SystemWarning.png");
 }
 
 .dlg-buttons {
@@ -1546,34 +1514,126 @@
   height: 32px;
 }
 
-.dlg-node-icon-file {
-  font-size: 24px;
+/* Open / Save As dialogs */
+/* Open and Save As, positioned from XP's common file dialog at 96 DPI. */
+.xp-file-dialog {
+  width: min(558px, calc(100vw - 16px));
 }
 
-/* Open / Save As dialogs */
+.xp-file-dialog .dlg-body {
+  position: relative;
+  height: 384px;
+  padding: 0;
+}
+
 .dlg-file-toolbar {
+  position: absolute;
+  top: 4px;
+  left: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 1px;
 }
 
-.dlg-file-toolbar .xp-btn {
-  min-width: 44px;
+.dlg-file-folder-field {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-right: 17px;
 }
 
-.dlg-file-path {
-  flex: 1;
-  overflow: hidden;
+.dlg-file-folder-field > span,
+.dlg-file-fields span {
   white-space: nowrap;
-  text-overflow: ellipsis;
-  color: #444;
+}
+
+.dlg-file-folder-field > span {
+  width: 90px;
+  text-align: right;
+}
+
+.dlg-file-folder {
+  width: 259px;
+  height: 22px;
+}
+
+.dlg-file-tool {
+  width: 23px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+}
+
+.dlg-file-tool:hover:not(:disabled) {
+  border-color: #cecec3;
+  background: #fff;
+}
+
+.dlg-file-tool:disabled img {
+  filter: grayscale(1) opacity(0.45);
+}
+
+.dlg-file-tool img {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.dlg-file-places {
+  position: absolute;
+  top: 33px;
+  left: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 84px;
+  height: 339px;
+  padding: 2px 0;
+  border: 1px solid #a5a497;
+  background: var(--xp-beige);
+}
+
+.dlg-file-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 68px;
+  margin: 0 2px;
+  padding: 6px 2px 0;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  text-align: center;
+}
+
+.dlg-file-place img {
+  width: 32px;
+  height: 32px;
+}
+
+.dlg-file-place:hover,
+.dlg-file-place.selected {
+  border-color: #a5a497;
+  background: #fff;
 }
 
 .dlg-file-list {
-  height: 150px;
+  position: absolute;
+  top: 33px;
+  left: 96px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  box-sizing: border-box;
+  width: 450px;
+  height: 283px;
   padding: 2px;
-  overflow-y: auto;
+  overflow-x: auto;
   border: 1px solid #7f9db9;
   background: #fff;
 }
@@ -1581,25 +1641,22 @@
 .dlg-file-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 2px 4px;
+  gap: 2px;
+  height: 17px;
+  max-width: 220px;
+  padding: 0 2px;
   border: 0;
   background: none;
-  color: inherit;
   font: inherit;
   text-align: left;
-  cursor: var(--xp-cursor);
+  white-space: nowrap;
 }
 
 .dlg-file-item .dlg-node-icon,
 .dlg-file-item .dlg-node-icon img {
   width: 16px;
   height: 16px;
-}
-
-.dlg-file-item .dlg-node-icon-file {
-  font-size: 13px;
+  flex: none;
 }
 
 .dlg-file-item.selected {
@@ -1607,19 +1664,59 @@
   color: #fff;
 }
 
-.dlg-file-name-row {
-  display: flex;
+.dlg-file-fields {
+  position: absolute;
+  top: 326px;
+  left: 98px;
+  display: grid;
+  gap: 5px;
+}
+
+.dlg-file-name-row,
+.dlg-file-type-row {
+  display: grid;
+  grid-template-columns: 94px 245px;
   align-items: center;
-  gap: 6px;
-  margin: 8px 0 10px;
 }
 
-.dlg-file-name-row label {
-  white-space: nowrap;
+.dlg-file-fields .xp-input,
+.dlg-file-type {
+  box-sizing: border-box;
+  height: 22px;
 }
 
-.dlg-file-name-row .xp-input {
-  flex: 1;
+.dlg-file-buttons {
+  position: absolute;
+  top: 325px;
+  left: 472px;
+  display: grid;
+  gap: 4px;
+  padding: 0;
+}
+
+.dlg-file-buttons .xp-btn {
+  width: 75px;
+}
+
+/* "What's This?" help, armed from a dialog's ? button. */
+.xp-dialog.whats-this .dlg-body,
+.xp-dialog.whats-this .dlg-body * {
+  cursor: help;
+}
+
+.xp-help-popup {
+  position: fixed;
+  z-index: 9900;
+  max-width: 300px;
+  padding: 6px 8px;
+  border: 1px solid #000;
+  background: #ffffe1;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.35);
+  color: #000;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
 }
 
 /* Customize Start Menu, positioned from the XP SP3 dialog at 1024×768. */
