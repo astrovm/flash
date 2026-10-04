@@ -83,6 +83,8 @@ bun run xp:vm --instance <name>
 
 This starts an isolated Windows XP VM to compare against. Changes are discarded when it stops, so several sessions can share one base disk. Pass `--write-base` only when a change must be saved to that disk.
 
+By default the VM uses the Cirrus adapter of the original reference captures, up to 1280×1024. Pass `--vga std` for 1920×1080 at 32-bit color. That mode uses the free [VBEMP](http://bearwindows.zcm.com.au/vbemp.htm) display driver (`vbempk.zip`, VBE20/XP/PNP), installed in the base disk. It is the only software in the VM that isn't from the XP SP3 ISO.
+
 The [fidelity roadmap](docs/XP-FIDELITY-ROADMAP.md) lists known taskbar gaps, finished reference passes, and the remaining areas in priority order.
 
 </details>

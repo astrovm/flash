@@ -28,6 +28,9 @@ let snapshotName: string | undefined;
 let writeBase = false;
 let audioOutput: string | undefined;
 let sharedDirectory: string | undefined;
+// Cirrus matches the original reference captures (up to 1280×1024). The
+// standard adapter with the VBEMP driver adds widescreen modes at 32-bit.
+let vga = "cirrus";
 const arguments_ = Bun.argv.slice(2);
 for (let index = 0; index < arguments_.length; index += 1) {
   const argument = arguments_[index];
@@ -44,6 +47,10 @@ for (let index = 0; index < arguments_.length; index += 1) {
     if (!value) throw new Error(`${argument} requires a path`);
     if (argument === "--audio-output") audioOutput = resolve(value);
     else sharedDirectory = resolve(value);
+  } else if (argument === "--vga") {
+    vga = arguments_[++index] || "";
+    if (!["cirrus", "std"].includes(vga))
+      throw new Error("--vga must be cirrus or std");
   } else if (argument === "--write-base") {
     writeBase = true;
   } else {
@@ -75,7 +82,11 @@ const qemu = spawn(
     "-boot",
     "c",
     "-vga",
-    "cirrus",
+    vga,
+    // VBEMP starts in the monitor's preferred EDID mode.
+    ...(vga === "std"
+      ? ["-global", "VGA.xres=1920", "-global", "VGA.yres=1080"]
+      : []),
     "-device",
     "piix3-usb-uhci,id=usb",
     "-device",
