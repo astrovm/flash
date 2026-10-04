@@ -2697,6 +2697,45 @@
       "pixelSha256": "6054385c7a3d8ac578be3e77ce6f399a52547ee1cece6ba82e1595cbfef379eb"
     }
   },
+  "assets/xp/volume/balance-left.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SNDVOL32.EX_",
+    "sha256": "faa7635138049f30d98d03ad2c5e9247198371b775116c2954eb405dff64fac1",
+    "resource": {
+      "parentSha256": "760fbbecef10ebe18aa84b1eddbc2237efb914c29a4413fb3cb6a7c60759b4f6",
+      "type": 14,
+      "id": 301,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "e6c39322381dcc285b269db7e76965cae95f779af8752b2b5a653fdb95d8b714"
+    }
+  },
+  "assets/xp/volume/balance-right.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SNDVOL32.EX_",
+    "sha256": "f7dfc9883f697588f7a6377f17673502bef3960b6c0635bf73e3c0d277eace45",
+    "resource": {
+      "parentSha256": "760fbbecef10ebe18aa84b1eddbc2237efb914c29a4413fb3cb6a7c60759b4f6",
+      "type": 14,
+      "id": 302,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "1795c2fb7de16450f3f2f6ba21586d367aae1dcfeae1fa220f361270bbe45437"
+    }
+  },
+  "assets/xp/volume/volume-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SNDVOL32.EX_",
+    "sha256": "53364577801144ea68fcd9175226c993594fd170a891a08b2bec5a288849a93f",
+    "resource": {
+      "parentSha256": "760fbbecef10ebe18aa84b1eddbc2237efb914c29a4413fb3cb6a7c60759b4f6",
+      "type": 14,
+      "id": 300,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "139109a609114bd6096a0a4357de7a24ec8a7065d58cf41815b92c25bca36b0e"
+    }
+  },
   "assets/xp/taskbar/blue-toolbar-background-0.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14597,6 +14636,84 @@
       "language": 1033,
       "frame": "2x11x32",
       "pixelSha256": "180629d89d4a24d9387a619c617ed97efc08a7148a24b810d68eecf56b789b36"
+    }
+  },
+  "assets/xp/controls/blue-trackbar-thumb.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "651e91c6aa8d2ed3b93e9a18a05c3b822f69b0d09660b6b8d2e03a7dc2fb5bdd",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRACKBARHORIZONTAL_BMP",
+      "language": 1033,
+      "frame": "11x105x32",
+      "pixelSha256": "f56830ff3a5b40444227b1c5b8e819cc1ba0c0801c25bb7b39d1a0dd1e4ab42a"
+    }
+  },
+  "assets/xp/controls/blue-trackbar-thumb-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "b5b1d9b61158f227d78991dec2cb479d2395f06c16933557462d0ff1cb2c0610",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRACKBARVERTICAL_BMP",
+      "language": 1033,
+      "frame": "21x55x32",
+      "pixelSha256": "a936c5d01936ac348201d86ca300b048ad907f80a404f6907e74b8849fac6905"
+    }
+  },
+  "assets/xp/controls/olive-trackbar-thumb.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a8bca3ab443bc99060dee825c77032e073d60b86d137b0c43f64b406328e409a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRACKBARHORIZONTAL_BMP",
+      "language": 1033,
+      "frame": "11x105x32",
+      "pixelSha256": "f1168abcba9735c5226d3104a537d81b07183b20bd8dd7c475553ad6204c02b1"
+    }
+  },
+  "assets/xp/controls/olive-trackbar-thumb-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "75c10a24ec121eb9ad9f007b023c24b1b733d2ff0c2f953bb692be63cf06b51b",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRACKBARVERTICAL_BMP",
+      "language": 1033,
+      "frame": "21x55x32",
+      "pixelSha256": "dadac78c925b4cab8ab6dd1bd9bb6a492afdc4888a54dc64ad060df0da19d1d4"
+    }
+  },
+  "assets/xp/controls/silver-trackbar-thumb.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "2bf4cd792d7aec5a8e682d4bbcdfee398949245b0fccdf8c7b72f42093da5bd2",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRACKBARHORIZONTAL_BMP",
+      "language": 1033,
+      "frame": "11x105x32",
+      "pixelSha256": "84e00db661e00f6ace353a955ab2c1461eb9ea2b8ba5a42903b81d4c374c7cb7"
+    }
+  },
+  "assets/xp/controls/silver-trackbar-thumb-vertical.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "e0f7d1fe8dff601dd66aaa6c73b8c35e5b88e9056385beb85b9ddc78567b9d22",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRACKBARVERTICAL_BMP",
+      "language": 1033,
+      "frame": "21x55x32",
+      "pixelSha256": "a47c3f73281167614eb76ffe3d986e203c54b32c8ed73c78e9ff353d6eebdbf7"
     }
   },
   "assets/xp/system/SecurityHelp.png": {

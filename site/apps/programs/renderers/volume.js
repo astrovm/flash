@@ -1,15 +1,177 @@
 import { createProgramRoot } from "../ui.js";
 
-export const renderVolume = (context, program, programId) => {
-  const content = createProgramRoot(program);
+// sndvol32's mixer: a Volume Control column and a column per playback line,
+// laid out from its dialog templates. Every shell sound plays through Wave.
+const MENUS = [
+  [
+    "O&ptions",
+    [
+      ["P&roperties", "properties"],
+      ["&Advanced Controls", "advanced"],
+      "-",
+      ["E&xit", "exit"],
+    ],
+  ],
+  ["&Help", [["&About Volume Control", "about"]]],
+];
 
-  const { volume, isMuted } = context.getSystemVolume();
-  content.innerHTML = `<div class="xp-volume-console"><div class="xp-volume-heading">Volume Control</div><label>Volume<input type="range" min="0" max="100" value="${volume}" orient="vertical" aria-label="Volume level"></label><label><input type="checkbox" ${isMuted ? "checked" : ""}> Mute</label></div>`;
-  const slider = content.querySelector('input[type="range"]');
-  const mute = content.querySelector('input[type="checkbox"]');
-  const apply = () =>
-    context.setSystemVolume(Number(slider.value), mute.checked);
-  slider.addEventListener("input", apply);
-  mute.addEventListener("change", apply);
-  return content;
+const line = (id, title, muteLabel) => `
+  <section class="xp-mixer-line" data-line="${id}">
+    <h2>${title}</h2>
+    <span class="xp-mixer-caption">Balance:</span>
+    <img class="xp-mixer-left" src="assets/xp/volume/balance-left.png" alt="">
+    <input class="xp-mixer-balance" type="range" min="-100" max="100" step="25" aria-label="${title} balance">
+    <img class="xp-mixer-right" src="assets/xp/volume/balance-right.png" alt="">
+    <span class="xp-mixer-caption xp-mixer-volume-caption">Volume:</span>
+    <input class="xp-mixer-volume" type="range" min="0" max="100" step="5" aria-label="${title} volume">
+    <label class="xp-mixer-mute"><input type="checkbox"><span>${muteLabel}</span></label>
+  </section>`;
+
+export const renderVolume = (context) => {
+  const content = createProgramRoot({ kind: "volume" });
+  content.innerHTML = `
+    <div class="tm-menu-bar" role="menubar"></div>
+    <div class="xp-mixer-lines">
+      ${line("master", "Volume Control", "<u>M</u>ute all")}
+      ${line("wave", "Wave", "<u>M</u>ute")}
+    </div>
+    <div class="xp-mixer-status">Default Audio Device</div>`;
+  const [master, wave] = content.querySelectorAll(".xp-mixer-line");
+  const controls = (section) => ({
+    balance: section.querySelector(".xp-mixer-balance"),
+    volume: section.querySelector(".xp-mixer-volume"),
+    mute: section.querySelector('[type="checkbox"]'),
+  });
+  const masterControls = controls(master);
+  const waveControls = controls(wave);
+
+  const sync = () => {
+    const { volume, isMuted } = context.getSystemVolume();
+    const mixer = context.getMixer();
+    masterControls.volume.value = String(volume);
+    masterControls.mute.checked = isMuted;
+    masterControls.balance.value = String(mixer.masterBalance);
+    waveControls.volume.value = String(mixer.wave);
+    waveControls.mute.checked = mixer.waveMuted;
+    waveControls.balance.value = String(mixer.waveBalance);
+    wave.hidden = !mixer.showWave;
+    content.classList.toggle("xp-mixer-single", !mixer.showWave);
+  };
+  window.addEventListener("xp-volume-change", sync);
+
+  const applyMaster = () =>
+    context.setSystemVolume(
+      Number(masterControls.volume.value),
+      masterControls.mute.checked,
+    );
+  masterControls.volume.addEventListener("input", applyMaster);
+  masterControls.mute.addEventListener("change", applyMaster);
+  masterControls.balance.addEventListener("input", () =>
+    context.setMixer({ masterBalance: Number(masterControls.balance.value) }),
+  );
+  waveControls.volume.addEventListener("input", () =>
+    context.setMixer({ wave: Number(waveControls.volume.value) }),
+  );
+  waveControls.mute.addEventListener("change", () =>
+    context.setMixer({ waveMuted: waveControls.mute.checked }),
+  );
+  waveControls.balance.addEventListener("input", () =>
+    context.setMixer({ waveBalance: Number(waveControls.balance.value) }),
+  );
+
+  // Properties chooses which playback controls show, like XP's list.
+  const openProperties = () => {
+    const dialog = context.dialogs.createDialog({ title: "Properties" });
+    dialog.el.classList.add("xp-mixer-properties");
+    dialog.body.innerHTML = `
+      <label class="xp-mixer-device">Mixer device: <select disabled><option>Default Audio Device</option></select></label>
+      <fieldset class="dlg-group"><legend>Adjust volume for</legend>
+        <label><input type="radio" name="xp-mixer-adjust" checked> <u>P</u>layback</label>
+        <label><input type="radio" name="xp-mixer-adjust" disabled> <u>R</u>ecording</label>
+      </fieldset>
+      <p>Show the following volume controls:</p>
+      <div class="xp-mixer-controls">
+        <label><input type="checkbox" checked disabled> Volume Control</label>
+        <label><input type="checkbox" data-mixer-show="wave"> Wave</label>
+      </div>`;
+    const showWave = dialog.body.querySelector('[data-mixer-show="wave"]');
+    showWave.checked = context.getMixer().showWave;
+    dialog.onResult((choice) => {
+      if (choice === "ok") context.setMixer({ showWave: showWave.checked });
+    });
+    context.dialogs.addButtonRow(dialog, [
+      { id: "ok", label: "OK", isDefault: true },
+      { id: "cancel", label: "Cancel", isCancel: true },
+    ]);
+  };
+  const commands = {
+    properties: openProperties,
+    exit: () => context.close(),
+    about: () =>
+      context.openAboutWindows({
+        application: "Volume Control",
+        icon: "assets/xp/volume/volume-32.png",
+      }),
+  };
+
+  // Menus, styled like Task Manager's. Advanced Controls stays gray: the
+  // device has no tone controls.
+  const menuBar = content.querySelector(".tm-menu-bar");
+  let openMenu = null;
+  const closeMenu = () => {
+    openMenu?.remove();
+    openMenu = null;
+    menuBar
+      .querySelectorAll(":scope > button")
+      .forEach((button) => button.setAttribute("aria-expanded", "false"));
+  };
+  MENUS.forEach(([label, items]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("role", "menuitem");
+    button.setAttribute("aria-expanded", "false");
+    button.dataset.tmMenu = label.replace(/&/g, "").toLowerCase();
+    context.setAccessKeyText(button, label);
+    button.addEventListener("click", () => {
+      const wasOpen = Boolean(openMenu);
+      closeMenu();
+      if (wasOpen) return;
+      openMenu = document.createElement("div");
+      openMenu.className = "tm-menu";
+      openMenu.setAttribute("role", "menu");
+      openMenu.style.left = `${button.offsetLeft}px`;
+      items.forEach((item) => {
+        if (item === "-") {
+          openMenu.insertAdjacentHTML(
+            "beforeend",
+            '<div class="tm-menu-separator"></div>',
+          );
+          return;
+        }
+        const [itemLabel, command] = item;
+        const entry = document.createElement("button");
+        entry.type = "button";
+        entry.setAttribute("role", "menuitem");
+        entry.dataset.command = command;
+        entry.disabled = command === "advanced";
+        const text = document.createElement("span");
+        context.setAccessKeyText(text, itemLabel);
+        entry.append(text, document.createElement("kbd"));
+        entry.addEventListener("click", () => {
+          closeMenu();
+          commands[command]();
+        });
+        openMenu.append(entry);
+      });
+      menuBar.append(openMenu);
+      button.setAttribute("aria-expanded", "true");
+    });
+    menuBar.append(button);
+  });
+
+  sync();
+  return {
+    element: content,
+    unmount: () => window.removeEventListener("xp-volume-change", sync),
+  };
 };

@@ -235,6 +235,9 @@ const applicationContext = (win) => ({
   getDesktopSize,
   getSystemVolume,
   setSystemVolume,
+  getMixer,
+  setMixer,
+  openAboutWindows,
   setSize(width, height) {
     win.el.style.width = `${width}px`;
     win.el.style.height = `${height}px`;

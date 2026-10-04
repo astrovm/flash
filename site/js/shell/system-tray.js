@@ -14,6 +14,48 @@ const getSystemVolume = () => {
   };
 };
 
+// Volume Control's other settings. Every sound in the shell plays through
+// Wave, so its level and mute scale everything after Master's.
+const MIXER_KEY = "mixer";
+const DEFAULT_MIXER = Object.freeze({
+  masterBalance: 0,
+  wave: 100,
+  waveMuted: false,
+  waveBalance: 0,
+  showWave: true,
+});
+const getMixer = () => {
+  const mixer = { ...DEFAULT_MIXER, ...readJsonStorage(MIXER_KEY, {}) };
+  const level = (value, low) =>
+    Number.isFinite(value) ? Math.min(Math.max(value, low), 100) : 0;
+  return {
+    masterBalance: level(mixer.masterBalance, -100),
+    wave: level(mixer.wave, 0),
+    waveMuted: mixer.waveMuted === true,
+    waveBalance: level(mixer.waveBalance, -100),
+    showWave: mixer.showWave !== false,
+  };
+};
+const setMixer = (changes) => {
+  localStorage.setItem(
+    MIXER_KEY,
+    JSON.stringify({ ...getMixer(), ...changes }),
+  );
+  applyFocusVolumes();
+  window.dispatchEvent(new Event("xp-volume-change"));
+};
+// The share of full volume that reaches the speakers, from 0 to 1.
+const getAudioLevel = () => {
+  const { volume, isMuted } = getSystemVolume();
+  const { wave, waveMuted } = getMixer();
+  return isMuted || waveMuted ? 0 : (volume / 100) * (wave / 100);
+};
+// Master and Wave balance add up, from -1 (left) to 1 (right).
+const getAudioBalance = () => {
+  const { masterBalance, waveBalance } = getMixer();
+  return Math.min(Math.max((masterBalance + waveBalance) / 100, -1), 1);
+};
+
 const syncTrayVolumeUI = () => {
   const { volume, isMuted } = getSystemVolume();
   const button = document.getElementById("tray-volume-button");
@@ -34,6 +76,7 @@ const setSystemVolume = (volume, isMuted) => {
   localStorage.setItem("isMuted", String(isMuted));
   applyFocusVolumes();
   syncTrayVolumeUI();
+  window.dispatchEvent(new Event("xp-volume-change"));
 };
 
 // Programs add their icons left of the existing ones, like XP. Double-click,
