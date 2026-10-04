@@ -32,6 +32,15 @@ screenshots use the browser's JPEG capture. The high-resolution VM captures use
 this is not a claim of identical pixels on every host display. The two systems
 also have different applications and notification icons installed.
 
+Files are named `xp-<scheme>-<size>.png` and `vm-<scheme>-<edge><width>.png`
+for the VM, and `app-<scheme>-<size>.jpg` or `app-<scheme>-<edge><width>.jpg`
+for the app. Other app captures show two rows (`app-two-rows1024.jpg`),
+grouped buttons (`app-group390.jpg`), the narrow-screen overflow
+(`app-overflow-390x844.jpg`), and the volume popup (`app-volume-1024x768.jpg`).
+The VM's toolbar and notification dialogs are `vm-new-toolbar1024.png` and
+`vm-customize-notifications1024.png`. The `completion/` folder holds the
+follow-up pass.
+
 ## Start artwork and background corrections
 
 A follow-up comparison of the running XP VM at 1024×768 and the existing

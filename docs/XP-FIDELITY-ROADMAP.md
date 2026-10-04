@@ -1,17 +1,17 @@
 # Windows XP fidelity handoff
 
-Updated by the taskbar completion implementation after pulling main `7fb1a79`.
-The remaining application areas below have not been started. Detailed evidence,
-implementation decisions, and verification limits are in the
-[completion notes](reference/taskbar/completion/README.md).
+Updated on main `d543ebf`, after the Display Properties pass (#182). Areas 1 to
+8 are done; area 9 is next. Each finished area links its evidence, decisions,
+and verification limits in the table below.
 
 ## Working agreement
 
 - Work in startup/use order. Finish the current area before opening the next.
 - Run the original XP VM and the app in the in-app browser. Compare actual
   behavior and original resources; do not invent assets or reference details.
-- Keep screenshots at their captured dimensions. Use at least 1024×768 and
-  1280×1024, plus a narrow viewport for web usability. Do not resize screenshots
+- Keep screenshots at their captured dimensions. Use 1024×768, 1280×1024, and
+  1920×1080 (`bun run xp:vm -- --vga std`), plus a narrow viewport for web
+  usability. Do not resize screenshots
   to make comparisons fit. Record actual guest mode, browser viewport, and any
   unavailable display-density checks.
 - Blue, Olive Green, Silver, and Windows Classic must work throughout the app.
@@ -91,8 +91,8 @@ individual app scope decisions still require inspection.
 ## Resume procedure
 
 1. Pull merged main and read this document plus the taskbar reference README.
-2. Note the taskbar's remaining verification limits before starting the Start
-   menu pass.
+2. Read the remaining differences in the finished areas' reference notes
+   before starting the next area.
 3. For each exposed feature, classify it as a real simulation action, an agreed
    web adaptation, or an omission. Record unresolved choices rather than
    silently treating them as approved exceptions.
@@ -101,6 +101,5 @@ individual app scope decisions still require inspection.
 5. Update this checklist and the area's reference notes in its implementation
    PR. Keep future areas pending until they have their own comparison pass.
 
-The taskbar completion pass had 219 passing tests across 39 files and verifies 483
-extracted assets against the original ISO. Its evidence includes fresh disposable
-VM and in-app browser comparisons; the earlier screenshots remain historical.
+Main currently has 1137 passing tests across 87 files at 100% coverage, and
+verifies 891 extracted assets against the original ISO.
