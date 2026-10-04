@@ -1178,7 +1178,8 @@ html[data-xp-appearance="silver"] .taskbar-toolbar.floating > .toolbar-title {
   color: black;
 }
 
-:root {
+:root,
+[data-scheme-preview] {
   --toolbar-background: url("../../assets/xp/taskbar/blue-toolbar-background-0.png");
   --frame-left-active: url("../../assets/xp/taskbar/blue-frame-left-0.png");
   --frame-left-inactive: url("../../assets/xp/taskbar/blue-frame-left-1.png");
@@ -1188,7 +1189,8 @@ html[data-xp-appearance="silver"] .taskbar-toolbar.floating > .toolbar-title {
   --frame-bottom-inactive: url("../../assets/xp/taskbar/blue-frame-bottom-1.png");
 }
 
-html[data-xp-appearance="olive"] {
+html[data-xp-appearance="olive"],
+[data-scheme-preview="olive"] {
   --toolbar-background: url("../../assets/xp/taskbar/olive-toolbar-background-0.png");
   --frame-left-active: url("../../assets/xp/taskbar/olive-frame-left-0.png");
   --frame-left-inactive: url("../../assets/xp/taskbar/olive-frame-left-1.png");
@@ -1198,7 +1200,8 @@ html[data-xp-appearance="olive"] {
   --frame-bottom-inactive: url("../../assets/xp/taskbar/olive-frame-bottom-1.png");
 }
 
-html[data-xp-appearance="silver"] {
+html[data-xp-appearance="silver"],
+[data-scheme-preview="silver"] {
   --toolbar-background: url("../../assets/xp/taskbar/silver-toolbar-background-0.png");
   --frame-left-active: url("../../assets/xp/taskbar/silver-frame-left-0.png");
   --frame-left-inactive: url("../../assets/xp/taskbar/silver-frame-left-1.png");

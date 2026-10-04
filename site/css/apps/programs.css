@@ -351,8 +351,8 @@
 }
 
 .taskbar-properties-dialog {
-  width: min(403px, calc(100vw - 8px));
-  height: min(454px, calc(100vh - 8px));
+  width: min(404px, calc(100vw - 8px));
+  height: min(455px, calc(100vh - 8px));
 }
 
 .taskbar-properties-dialog .dlg-body {
@@ -362,19 +362,23 @@
   padding: 0;
 }
 
+/* Tabs at XP's offsets: 18px tabs 9px below the client area, the selected
+   tab 2px taller and wider, over the page's top edge. */
 .taskbar-properties-tabs {
   position: absolute;
   z-index: 2;
-  top: 7px;
-  left: 7px;
+  top: 9px;
+  left: 8px;
   display: flex;
+  align-items: flex-start;
 }
 
 .taskbar-properties-tabs button {
-  height: 20px;
-  margin-right: -1px;
-  padding: 1px 7px 2px;
+  height: 18px;
+  margin-right: 0;
+  padding: 0 6px 1px;
   border: 1px solid #919b9c;
+  border-bottom: 0;
   border-radius: 3px 3px 0 0;
   background: var(--xp-beige);
   font:
@@ -386,16 +390,16 @@
 .taskbar-properties-tabs button[aria-selected="true"] {
   z-index: 1;
   height: 21px;
-  margin-top: -1px;
-  border-bottom-color: #f5f3ed;
+  margin: -2px -2px 0;
+  padding: 0 8px 3px;
   background: #f5f3ed;
 }
 
 .taskbar-properties-panel {
   position: absolute;
-  top: 28px;
-  right: 9px;
-  bottom: 38px;
+  top: 27px;
+  right: 6px;
+  bottom: 36px;
   left: 6px;
   border: 1px solid #919b9c;
   background: #f5f3ed;
@@ -1703,8 +1707,8 @@
 }
 
 /* "What's This?" help, armed from a dialog's ? button. */
-.xp-dialog.whats-this .dlg-body,
-.xp-dialog.whats-this .dlg-body * {
+.xp-window.whats-this > :not(.title-bar),
+.xp-window.whats-this > :not(.title-bar) * {
   cursor: help;
 }
 

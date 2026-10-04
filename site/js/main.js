@@ -122,8 +122,9 @@ const DEFAULT_DISPLAY_SETTINGS = Object.freeze({
   theme: "windows-xp",
   wallpaper: "bliss",
   customWallpaper: "",
+  customWallpaperName: "",
   position: "stretch",
-  backgroundColor: "#3a6ea5",
+  backgroundColor: "#004e98",
   appearance: "blue",
   fontSize: "normal",
   screenSaver: "pipes",
@@ -447,6 +448,7 @@ const isDisplaySettings = (value) =>
     /^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=]+$/i.test(
       value.customWallpaper,
     )) &&
+  typeof value.customWallpaperName === "string" &&
   ["center", "tile", "stretch"].includes(value.position) &&
   /^#[0-9a-f]{6}$/i.test(value.backgroundColor) &&
   ["blue", "olive", "silver", "classic"].includes(value.appearance) &&

@@ -719,8 +719,10 @@ const openSystemWindow = (shortcutId) => {
   if (win.currentFolderId) renderExplorerItems(win);
   wireSystemWindowControls(win);
   if (application.window.dialogControls) {
+    el.classList.add("dialog-frame");
     el.querySelector(".minimize-btn").remove();
     el.querySelector(".maximize-btn").remove();
+    XPDialogs.addWhatsThisHelp(el, mounted.element);
   }
   application.activate?.(context, { application, window: win }, mounted);
   focusWindow(shortcutId);

@@ -4870,6 +4870,58 @@
       "pixelSha256": "6853cbf63ecafa4a116f1f9220ba35902564a4392e2bc939db10ad8074a6b25c"
     }
   },
+  "assets/xp/ColorQuality.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/THEMEUI.DL_",
+    "sha256": "168de95d507f296a55d853bf9d66ac33886c14f902342046a0225bc0fb54279c",
+    "resource": {
+      "parentSha256": "f377590227e3bfc356996524ae2ff99b3eceffbc163f6ad9503b8aad24aecdb3",
+      "type": 2,
+      "id": 124,
+      "language": 1033,
+      "frame": "288x32x32",
+      "pixelSha256": "fdad903719525c4bae82c7d8e328553e087781d2ad1b901b98301ee9a480b59b"
+    }
+  },
+  "assets/xp/controls/blue-trackbar-thumb-down.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "3890bddd551c30e80121fa544d900e06fbacd43c90c3a079c54213a1d1ccfb59",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_TRACKBARDOWN13_BMP",
+      "language": 1033,
+      "frame": "11x105x32",
+      "pixelSha256": "66260d06d49e37d0846fe75d91932cae8470b8f627fdce69aa4b3748b244850d"
+    }
+  },
+  "assets/xp/controls/olive-trackbar-thumb-down.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "c66a29367a40a079d6defeaee64a6366648b22af4c0ea690c902eebc08ec0538",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_TRACKBARDOWN13_BMP",
+      "language": 1033,
+      "frame": "11x105x32",
+      "pixelSha256": "54deb525d6d5c168c76e69fb69ad5cbc255037f68a8514900a177f7f0472a5c5"
+    }
+  },
+  "assets/xp/controls/silver-trackbar-thumb-down.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "dbf75f551cac3584283bafc1561baf268e451309a27145b5a5314f5da4cf7e45",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_TRACKBARDOWN13_BMP",
+      "language": 1033,
+      "frame": "11x105x32",
+      "pixelSha256": "98739c619caeb152d9d0a4cae7f5cf672ea79e90446094a64eab1bc998e3cef1"
+    }
+  },
   "assets/xp/StartButton.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",

@@ -78,9 +78,9 @@ export const systemApplications = [
     "DisplaySettings.png",
     {
       width: 404,
-      height: 454,
+      height: 455,
       left: 22,
-      top: 30,
+      top: 29,
       className: "display-properties-window",
       dialogControls: true,
     },

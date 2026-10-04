@@ -123,7 +123,7 @@ test("desktop icon customization toggles visibility and restores owner focus", a
   await flushShell();
   expect(s.document.querySelector(".desktop-items-dialog")).toBeNull();
 });
-test("wallpaper upload rejects non-images, previews a valid picture and can clear it", async () => {
+test("Browse rejects non-pictures and lists a chosen picture by name", async () => {
   const h = await open();
   const { s, q } = h;
   q(".display-browse").click();
@@ -133,21 +133,37 @@ test("wallpaper upload rejects non-images, previews a valid picture and can clea
     value: [new s.window.File(["no"], "bad.txt", { type: "text/plain" })],
   });
   input.dispatchEvent(new s.window.Event("change"));
-  expect(q(".display-status").textContent).toContain("Choose a PNG");
+  const error = [...s.document.querySelectorAll(".xp-dialog")].at(-1);
+  expect(error.textContent).toContain("bad.txt is not a picture");
+  expect(error.querySelector(".dlg-icon-error")).not.toBeNull();
+  h.dialogButton(error, "OK");
+  await flushShell();
+  const custom = q(".display-custom-wallpaper");
+  expect(custom.hidden).toBeTrue();
   Object.defineProperty(input, "files", {
     configurable: true,
     value: [new s.window.File(["image"], "art.png", { type: "image/png" })],
   });
   input.dispatchEvent(new s.window.Event("change"));
-  for (let i = 0; i < 20 && q(".display-clear-image").hidden; i++)
-    await flushShell();
-  expect(q(".display-clear-image").hidden).toBeFalse();
+  for (let i = 0; i < 20 && custom.hidden; i++) await flushShell();
+  expect(custom.hidden).toBeFalse();
+  expect(custom.textContent).toBe("art");
+  expect(custom.getAttribute("aria-selected")).toBe("true");
   expect(s.document.querySelector(".wallpaper-browse-dialog")).toBeNull();
   q('[data-display-action="apply"]').click();
+  expect(h.saved()).toMatchObject({ customWallpaperName: "art" });
   expect(h.saved().customWallpaper).toStartWith("data:image/png");
-  q(".display-clear-image").click();
+  // Clicking the listed picture keeps it; picking another wallpaper drops it.
+  custom.click();
+  expect(q('[data-display-action="apply"]').disabled).toBeTrue();
+  q('[data-wallpaper="azul"]').click();
+  expect(custom.hidden).toBeTrue();
   q('[data-display-action="apply"]').click();
-  expect(h.saved().customWallpaper).toBe("");
+  expect(h.saved()).toMatchObject({
+    wallpaper: "azul",
+    customWallpaper: "",
+    customWallpaperName: "",
+  });
   q(".display-browse").click();
   h.dialogButton(
     s.document.querySelector(".wallpaper-browse-dialog"),
@@ -246,65 +262,30 @@ test("effects restore scroll transitions and ClearType and can turn both off", a
   ).toMatchObject({ transitionEffect: "none", fontSmoothing: "none" });
 });
 
-test("the wallpaper list scrolls with its arrows, track, and thumb", async () => {
+test("the wallpaper list moves with the keyboard and skips hidden items", async () => {
   const h = await open();
   const { s, q } = h;
   q('[role="tab"][aria-controls="display-panel-desktop"]').click();
-  const scroller = q(".display-wallpaper-items");
-  const track = q(".display-scrollbar .scroll-track");
-  const thumb = q(".display-scrollbar .scroll-thumb");
-  const scrolls = [];
-  scroller.scrollBy = ({ top }) => scrolls.push(top);
-  Object.defineProperties(scroller, {
-    scrollHeight: { configurable: true, value: 400 },
-    clientHeight: { configurable: true, value: 100 },
-  });
-  Object.defineProperty(track, "clientHeight", {
-    configurable: true,
-    value: 80,
-  });
-  scroller.dispatchEvent(new s.window.Event("scroll"));
-  expect(thumb.style.height).toBe("22px");
-  const pointer = (target, type, clientY, bubbles = true) =>
-    target.dispatchEvent(
-      new s.window.PointerEvent(type, {
-        bubbles,
-        cancelable: true,
-        clientY,
-        pointerId: 1,
-      }),
-    );
-  pointer(q(".display-scrollbar .scroll-arrow.up"), "pointerdown", 0);
-  pointer(q(".display-scrollbar .scroll-arrow.down"), "pointerdown", 0);
-  thumb.getBoundingClientRect = () => ({ top: 50 });
-  pointer(track, "pointerdown", 10);
-  pointer(track, "pointerdown", 90);
-  expect(scrolls).toEqual([-18, 18, -100, 100]);
-  thumb.setPointerCapture = () => {};
-  Object.defineProperty(thumb, "offsetHeight", {
-    configurable: true,
-    value: 22,
-  });
-  pointer(thumb, "pointerdown", 0);
-  pointer(thumb, "pointermove", 29, false);
-  expect(scroller.scrollTop).toBe(150);
-  pointer(thumb, "pointerup", 29, false);
-  Object.defineProperty(thumb, "offsetHeight", {
-    configurable: true,
-    value: 80,
-  });
-  pointer(thumb, "pointerdown", 0);
-  pointer(thumb, "pointermove", 40, false);
-  pointer(thumb, "pointercancel", 40, false);
-  expect(scroller.scrollTop).toBe(150);
   const list = q(".display-wallpaper-list");
+  const selected = () => list.querySelector('[aria-selected="true"]');
+  const key = (k) =>
+    list.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", { key: k, bubbles: true }),
+    );
+  key("Home");
+  expect(selected().dataset.wallpaper).toBe("none");
+  key("ArrowUp");
+  expect(selected().dataset.wallpaper).toBe("none");
+  key("ArrowDown");
+  expect(selected().dataset.wallpaper).toBe("ascent");
+  key("End");
+  expect(selected().dataset.wallpaper).toBe("zapotec");
+  key("a");
   list.dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
-  list.dispatchEvent(
-    new s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
-  );
   q('[role="tab"]').dispatchEvent(
     new s.window.KeyboardEvent("keydown", { key: "a", bubbles: true }),
   );
+  expect(selected().dataset.wallpaper).toBe("zapotec");
 });
 
 test("display settings reject empty choices and report save failures", async () => {
@@ -333,9 +314,12 @@ test("display settings reject empty choices and report save failures", async () 
   });
   try {
     q('[data-display-action="ok"]').click();
-    expect(q(".display-status").textContent).toContain("could not save");
+    const error = [...s.document.querySelectorAll(".xp-dialog")].at(-1);
+    expect(error.textContent).toContain("could not save");
     expect(h.d.isConnected).toBeTrue();
     expect(errors).toHaveLength(1);
+    h.dialogButton(error, "OK");
+    await flushShell();
   } finally {
     Object.defineProperty(s.window, "localStorage", {
       configurable: true,
@@ -398,9 +382,9 @@ test("a picture chosen after its browse dialog closed still becomes the wallpape
     value: [new s.window.File(["image"], "late.png", { type: "image/png" })],
   });
   input.dispatchEvent(new s.window.Event("change"));
-  for (let i = 0; i < 20 && q(".display-clear-image").hidden; i++)
+  for (let i = 0; i < 20 && q(".display-custom-wallpaper").hidden; i++)
     await flushShell();
-  expect(q(".display-status").textContent).toContain("late.png");
+  expect(q(".display-custom-wallpaper").textContent).toBe("late");
   expect(s.document.querySelector(".wallpaper-browse-dialog")).toBeNull();
 });
 
@@ -418,4 +402,84 @@ test("a stored custom wallpaper is restored on the desktop", async () => {
       .getElementById("desktop")
       .style.getPropertyValue("--desktop-background"),
   ).toBe(`url("${wallpaper}")`);
+});
+
+test("Display Properties is an XP dialog with What's This help", async () => {
+  const h = await open();
+  const { s, q } = h;
+  const win = h.d.closest(".xp-window");
+  expect(win.classList.contains("dialog-frame")).toBeTrue();
+  expect(
+    [...win.querySelectorAll(".title-buttons .tb-btn")].map((button) =>
+      button.getAttribute("aria-label"),
+    ),
+  ).toEqual(["Help", "Close"]);
+  win.querySelector(".help-btn").click();
+  q("#display-theme").dispatchEvent(
+    new s.window.MouseEvent("click", { bubbles: true, cancelable: true }),
+  );
+  expect(s.document.querySelector(".xp-help-popup").textContent).toContain(
+    "Lists the themes you can use.",
+  );
+});
+
+test("Windows and buttons switches between XP and Classic color schemes", async () => {
+  const h = await open();
+  const { q, change } = h;
+  const schemes = () =>
+    [...q("#display-appearance").options]
+      .filter((option) => !option.hidden)
+      .map((option) => option.textContent);
+  expect(schemes()).toEqual(["Default (blue)", "Olive Green", "Silver"]);
+  expect(q(".appearance-preview").dataset.schemePreview).toBe("blue");
+  change("#display-appearance", "olive");
+  expect(q(".appearance-preview").dataset.schemePreview).toBe("olive");
+  expect(q(".display-theme-sample").dataset.schemePreview).toBe("olive");
+  change("#display-window-style", "classic");
+  expect(schemes()).toEqual(["Windows Standard"]);
+  expect(q("#display-appearance").value).toBe("classic");
+  change("#display-window-style", "xp");
+  expect(q("#display-appearance").value).toBe("blue");
+  expect(q('[data-display-action="apply"]').disabled).toBeTrue();
+  change("#display-window-style", "classic");
+  q('[data-display-action="apply"]').click();
+  expect(h.saved().appearance).toBe("classic");
+});
+
+test("the Wait up-down steps the minutes within XP's range", async () => {
+  const h = await open();
+  const { q, change } = h;
+  const spin = (step) => q(`.display-saver-spin [data-step="${step}"]`).click();
+  change("#display-saver-wait", "59");
+  spin(1);
+  spin(1);
+  expect(q("#display-saver-wait").value).toBe("60");
+  change("#display-saver-wait", "2");
+  spin(-1);
+  spin(-1);
+  expect(q("#display-saver-wait").value).toBe("1");
+  q(".display-saver-spin").click();
+  expect(q("#display-saver-wait").value).toBe("1");
+});
+
+test("Color quality names the screen's real color depth", async () => {
+  for (const [depth, label] of [
+    [24, "High (24 bit)"],
+    [32, "Highest (32 bit)"],
+  ]) {
+    const s = await login(await loadShell());
+    Object.defineProperty(s.window.screen, "colorDepth", {
+      configurable: true,
+      value: depth,
+    });
+    clickStartAction(s, "controlPanel");
+    s.document
+      .querySelector('[data-control-panel-category="appearance"]')
+      .click();
+    s.document.querySelector('[data-control-panel-action="display"]').click();
+    expect(s.document.querySelector("#display-color-quality").textContent).toBe(
+      label,
+    );
+    cleanupShells();
+  }
 });

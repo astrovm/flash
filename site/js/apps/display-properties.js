@@ -5,17 +5,10 @@ const openDesktopItemsDialog = (ownerWindow) => {
   const dialog = XPDialogs.createDialog({
     title: "Desktop Items",
     onCancel: () => dialog.close("cancel"),
+    help: true,
   });
   dialog.el.classList.add("desktop-items-dialog");
   ownerWindow.el.classList.remove("active");
-
-  const titleButtons = dialog.el.querySelector(".title-buttons");
-  const help = document.createElement("button");
-  help.type = "button";
-  help.className = "tb-btn help-btn";
-  help.title = "Help";
-  help.setAttribute("aria-label", "Help");
-  titleButtons.prepend(help);
 
   const tabs = document.createElement("div");
   tabs.className = "desktop-items-tabs";
@@ -115,9 +108,9 @@ const setDisplayDialogOwnerActive = (ownerWindow, active) => {
   if (active) focusWindow(ownerWindow.gameId);
 };
 
-const openDisplayNotice = (ownerWindow, title, message) => {
+const openDisplayNotice = (ownerWindow, title, message, icon = "info") => {
   setDisplayDialogOwnerActive(ownerWindow, false);
-  XPDialogs.alert(message, title, "info").finally(() =>
+  XPDialogs.alert(message, title, icon).finally(() =>
     setDisplayDialogOwnerActive(ownerWindow, true),
   );
 };
@@ -127,6 +120,7 @@ const openDisplayEffectsDialog = (ownerWindow, settings, onCommit) => {
   const dialog = XPDialogs.createDialog({
     title: "Effects",
     onCancel: () => dialog.close("cancel"),
+    help: true,
   });
   dialog.el.classList.add("display-effects-dialog");
   setDisplayDialogOwnerActive(ownerWindow, false);
@@ -207,6 +201,7 @@ const openAdvancedAppearanceDialog = (ownerWindow, settings, onCommit) => {
   const dialog = XPDialogs.createDialog({
     title: "Advanced Appearance",
     onCancel: () => dialog.close("cancel"),
+    help: true,
   });
   dialog.el.classList.add("advanced-appearance-dialog");
   setDisplayDialogOwnerActive(ownerWindow, false);
@@ -307,7 +302,7 @@ const wireDisplayProperties = (win) => {
     position: content.querySelector("#display-position"),
     color: content.querySelector("#display-color"),
     image: content.querySelector("#display-image"),
-    clearImage: content.querySelector(".display-clear-image"),
+    customWallpaper: content.querySelector(".display-custom-wallpaper"),
     saver: content.querySelector("#display-saver"),
     saverSettings: content.querySelector(".display-saver-settings"),
     saverPreviewButton: content.querySelector(".display-saver-preview-button"),
@@ -322,17 +317,15 @@ const wireDisplayProperties = (win) => {
     saverPreview: content.querySelector(".screen-saver-preview"),
     appearancePreview: content.querySelector(".appearance-preview"),
     themeSample: content.querySelector(".display-theme-sample"),
-    resolutionPreview: content.querySelector(".display-resolution-preview"),
     resolutionValue: content.querySelector(".display-resolution-value"),
-    status: content.querySelector(".display-status"),
+    colorQuality: content.querySelector("#display-color-quality"),
     customize: content.querySelector(".display-customize"),
     browse: content.querySelector(".display-browse"),
     apply: content.querySelector('[data-display-action="apply"]'),
   };
-  const setStatus = (message = "") => {
-    controls.status.textContent = message;
-    controls.status.hidden = !message;
-  };
+  // The browser reports its real color depth; XP names 24-bit "High" and
+  // 32-bit "Highest".
+  controls.colorQuality.innerHTML = `<option>${screen.colorDepth > 24 ? "Highest (32 bit)" : "High (24 bit)"}</option>`;
   const syncScreenSaverPreview = () =>
     renderScreenSaver(
       controls.saverPreview,
@@ -343,7 +336,7 @@ const wireDisplayProperties = (win) => {
     "windows-xp": {
       appearance: "blue",
       wallpaper: "bliss",
-      backgroundColor: "#3a6ea5",
+      backgroundColor: "#004e98",
     },
     classic: {
       appearance: "classic",
@@ -356,11 +349,17 @@ const wireDisplayProperties = (win) => {
       backgroundColor: "#586b2f",
     },
   };
+  const selectedWallpaper = () =>
+    pending.customWallpaper ? "custom" : pending.wallpaper;
   const sync = () => {
     controls.theme.value = pending.theme;
     controls.wallpaper.value = pending.wallpaper;
+    controls.customWallpaper.hidden = !pending.customWallpaper;
+    controls.customWallpaper.querySelector(
+      ".display-custom-wallpaper-name",
+    ).textContent = pending.customWallpaperName;
     content.querySelectorAll("[data-wallpaper]").forEach((item) => {
-      const selected = item.dataset.wallpaper === pending.wallpaper;
+      const selected = item.dataset.wallpaper === selectedWallpaper();
       item.classList.toggle("selected", selected);
       item.setAttribute("aria-selected", String(selected));
       item.tabIndex = selected ? 0 : -1;
@@ -372,10 +371,13 @@ const wireDisplayProperties = (win) => {
     controls.saverPreviewButton.disabled = pending.screenSaver === "none";
     controls.saverWait.value = String(pending.screenSaverWait);
     controls.saverLogin.checked = pending.requireLoginOnResume;
+    // Windows Classic style offers only its own color scheme.
+    const classic = pending.appearance === "classic";
+    controls.windowStyle.value = classic ? "classic" : "xp";
+    [...controls.appearance.options].forEach((option) => {
+      option.hidden = (option.value === "classic") !== classic;
+    });
     controls.appearance.value = pending.appearance;
-    controls.appearance.disabled = pending.appearance === "classic";
-    controls.windowStyle.value =
-      pending.appearance === "classic" ? "classic" : "xp";
     controls.fontSize.value = pending.fontSize;
     controls.resolution.value = pending.resolution;
     controls.resolutionSlider.value = String(
@@ -383,7 +385,6 @@ const wireDisplayProperties = (win) => {
         ? 1
         : ["800x600", "1024x768", "1440x900"].indexOf(pending.resolution),
     );
-    controls.clearImage.hidden = !pending.customWallpaper;
     controls.preview.style.backgroundColor = pending.backgroundColor;
     controls.preview.style.backgroundImage = displayBackground(pending);
     controls.preview.dataset.position = pending.position;
@@ -391,11 +392,10 @@ const wireDisplayProperties = (win) => {
       pending.backgroundColor;
     controls.saverPreview.dataset.saver = pending.screenSaver;
     syncScreenSaverPreview();
-    controls.appearancePreview.dataset.appearance = pending.appearance;
-    controls.themeSample.dataset.appearance = pending.appearance;
+    controls.appearancePreview.dataset.schemePreview = pending.appearance;
+    controls.themeSample.dataset.schemePreview = pending.appearance;
     controls.themeSample.style.backgroundColor = pending.backgroundColor;
     controls.themeSample.style.backgroundImage = displayBackground(pending);
-    controls.resolutionPreview.dataset.resolution = pending.resolution;
     const monitor = getSimulatedMonitorSize(pending.resolution);
     controls.resolutionValue.textContent =
       pending.resolution === "auto"
@@ -417,8 +417,6 @@ const wireDisplayProperties = (win) => {
       panel.hidden = !active;
       panel.classList.toggle("active", active);
     });
-    if (panelId === "display-panel-desktop")
-      requestAnimationFrame(syncWallpaperScrollbar);
     syncScreenSaverPreview();
   };
   tabs.forEach((tab, index) => {
@@ -445,6 +443,7 @@ const wireDisplayProperties = (win) => {
       ...pending,
       theme: controls.theme.value,
       customWallpaper: "",
+      customWallpaperName: "",
       ...themes[controls.theme.value],
     };
     sync();
@@ -454,101 +453,22 @@ const wireDisplayProperties = (win) => {
       ...pending,
       wallpaper: controls.wallpaper.value,
       customWallpaper: "",
+      customWallpaperName: "",
     };
     sync();
   });
   const wallpaperList = content.querySelector(".display-wallpaper-list");
-  const wallpaperItems = [
-    ...wallpaperList.querySelectorAll("[data-wallpaper]"),
+  const wallpaperItems = () => [
+    ...wallpaperList.querySelectorAll("[data-wallpaper]:not([hidden])"),
   ];
-  const wallpaperScroller = wallpaperList.querySelector(
-    ".display-wallpaper-items",
-  );
-  const wallpaperScrollbar = wallpaperList.querySelector(".display-scrollbar");
-  const wallpaperScrollTrack =
-    wallpaperScrollbar.querySelector(".scroll-track");
-  const wallpaperScrollThumb =
-    wallpaperScrollbar.querySelector(".scroll-thumb");
-  const syncWallpaperScrollbar = () => {
-    const maxScroll = Math.max(
-      0,
-      wallpaperScroller.scrollHeight - wallpaperScroller.clientHeight,
-    );
-    const trackHeight = wallpaperScrollTrack.clientHeight;
-    const thumbHeight =
-      maxScroll === 0
-        ? trackHeight
-        : Math.max(
-            22,
-            Math.round(
-              trackHeight *
-                (wallpaperScroller.clientHeight /
-                  wallpaperScroller.scrollHeight),
-            ),
-          );
-    const thumbTravel = Math.max(0, trackHeight - thumbHeight);
-    const thumbTop =
-      maxScroll === 0
-        ? 0
-        : Math.round((wallpaperScroller.scrollTop / maxScroll) * thumbTravel);
-    wallpaperScrollThumb.style.height = `${thumbHeight}px`;
-    wallpaperScrollThumb.style.transform = `translateY(${thumbTop}px)`;
-    wallpaperScrollbar.classList.toggle("disabled", maxScroll === 0);
-  };
-  wallpaperScroller.addEventListener("scroll", syncWallpaperScrollbar);
-  wallpaperScrollbar
-    .querySelector(".scroll-arrow.up")
-    .addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      wallpaperScroller.scrollBy({ top: -18 });
-    });
-  wallpaperScrollbar
-    .querySelector(".scroll-arrow.down")
-    .addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      wallpaperScroller.scrollBy({ top: 18 });
-    });
-  // The thumb stops its own pointerdown, so this only sees track presses.
-  wallpaperScrollTrack.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    const thumbBounds = wallpaperScrollThumb.getBoundingClientRect();
-    const direction = event.clientY < thumbBounds.top ? -1 : 1;
-    wallpaperScroller.scrollBy({
-      top: direction * wallpaperScroller.clientHeight,
-    });
-  });
-  wallpaperScrollThumb.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const startY = event.clientY;
-    const startScrollTop = wallpaperScroller.scrollTop;
-    const maxScroll =
-      wallpaperScroller.scrollHeight - wallpaperScroller.clientHeight;
-    const thumbTravel =
-      wallpaperScrollTrack.clientHeight - wallpaperScrollThumb.offsetHeight;
-    wallpaperScrollThumb.setPointerCapture(event.pointerId);
-    const dragThumb = (moveEvent) => {
-      if (thumbTravel <= 0) return;
-      wallpaperScroller.scrollTop =
-        startScrollTop +
-        ((moveEvent.clientY - startY) / thumbTravel) * maxScroll;
-    };
-    const stopDragging = () => {
-      wallpaperScrollThumb.removeEventListener("pointermove", dragThumb);
-      wallpaperScrollThumb.removeEventListener("pointerup", stopDragging);
-      wallpaperScrollThumb.removeEventListener("pointercancel", stopDragging);
-    };
-    wallpaperScrollThumb.addEventListener("pointermove", dragThumb);
-    wallpaperScrollThumb.addEventListener("pointerup", stopDragging);
-    wallpaperScrollThumb.addEventListener("pointercancel", stopDragging);
-  });
-  requestAnimationFrame(syncWallpaperScrollbar);
   const selectWallpaper = (item, { focus = false } = {}) => {
-    pending = {
-      ...pending,
-      wallpaper: item.dataset.wallpaper,
-      customWallpaper: "",
-    };
+    if (item !== controls.customWallpaper)
+      pending = {
+        ...pending,
+        wallpaper: item.dataset.wallpaper,
+        customWallpaper: "",
+        customWallpaperName: "",
+      };
     sync();
     item.scrollIntoView({ block: "nearest" });
     if (focus) item.focus();
@@ -561,22 +481,30 @@ const wireDisplayProperties = (win) => {
   wallpaperList.addEventListener("keydown", (event) => {
     if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const selectedIndex = wallpaperItems.findIndex(
-      (item) => item.dataset.wallpaper === pending.wallpaper,
+    const items = wallpaperItems();
+    const selectedIndex = items.findIndex(
+      (item) => item.dataset.wallpaper === selectedWallpaper(),
     );
     const targetIndex =
       event.key === "Home"
         ? 0
         : event.key === "End"
-          ? wallpaperItems.length - 1
+          ? items.length - 1
           : Math.max(
               0,
               Math.min(
-                wallpaperItems.length - 1,
+                items.length - 1,
                 selectedIndex + (event.key === "ArrowDown" ? 1 : -1),
               ),
             );
-    selectWallpaper(wallpaperItems[targetIndex], { focus: true });
+    selectWallpaper(items[targetIndex], { focus: true });
+  });
+  controls.windowStyle.addEventListener("change", () => {
+    pending = {
+      ...pending,
+      appearance: controls.windowStyle.value === "classic" ? "classic" : "blue",
+    };
+    sync();
   });
   ["position", "appearance", "saver"].forEach((name) => {
     controls[name].addEventListener("change", () => {
@@ -615,6 +543,16 @@ const wireDisplayProperties = (win) => {
     pending = { ...pending, backgroundColor: controls.color.value };
     sync();
   });
+  content
+    .querySelector(".display-saver-spin")
+    .addEventListener("click", (event) => {
+      const step = event.target.closest("[data-step]");
+      if (!step) return;
+      controls.saverWait.value = String(
+        pending.screenSaverWait + Number(step.dataset.step),
+      );
+      controls.saverWait.dispatchEvent(new Event("change"));
+    });
   controls.saverWait.addEventListener("change", () => {
     const wait = Math.min(
       60,
@@ -648,25 +586,29 @@ const wireDisplayProperties = (win) => {
       "image/webp",
     ];
     if (!supportedTypes.includes(file.type)) {
-      setStatus("Choose a PNG, JPEG, GIF, or WebP image.");
       controls.image.value = "";
+      openDisplayNotice(
+        win,
+        "Display Properties",
+        `${file.name} is not a picture that can be used as a background. Choose a PNG, JPEG, GIF, or WebP file.`,
+        "error",
+      );
       return;
     }
     const reader = new FileReader();
     // The type check above guarantees an image data URL.
     reader.addEventListener("load", () => {
-      pending = { ...pending, customWallpaper: reader.result };
-      setStatus(`${file.name} will be used after you apply changes.`);
+      pending = {
+        ...pending,
+        customWallpaper: reader.result,
+        customWallpaperName: file.name.replace(/\.[^.]+$/, ""),
+      };
       sync();
+      controls.customWallpaper.scrollIntoView({ block: "nearest" });
       wallpaperBrowseDialog?.setChosenFile(file.name);
       wallpaperBrowseDialog = null;
     });
     reader.readAsDataURL(file);
-  });
-  controls.clearImage.addEventListener("click", () => {
-    pending = { ...pending, customWallpaper: "" };
-    controls.image.value = "";
-    sync();
   });
   controls.customize.addEventListener("click", () => {
     openDesktopItemsDialog(win);
@@ -716,14 +658,18 @@ const wireDisplayProperties = (win) => {
       // Every control only produces valid settings, so pending needs no
       // re-validation here.
       if (!saveDisplaySettings(pending)) {
-        setStatus("Windows could not save this picture. Try a smaller image.");
+        openDisplayNotice(
+          win,
+          "Display Properties",
+          "Windows could not save this picture. Try a smaller image.",
+          "error",
+        );
         return;
       }
       current = { ...pending };
       applyDisplaySettings(current);
       resolutionPreviewActive = false;
       resolutionPreviewSnapshot = null;
-      setStatus();
       sync();
     });
   content
