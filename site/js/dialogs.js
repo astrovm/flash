@@ -106,12 +106,43 @@
   //   wide     - use the wider dialog variant (file dialogs)
   //   modal    - block other UI and trap focus (default: true)
   //   onCancel - Escape/title-close behavior (default: close with null)
+  //   help     - add the title bar ? button for "What's This?" help
   // Returns { el, body, close, onResult }.
+  // XP's "What's This?" help: the title bar ? button arms help mode, and the
+  // next click on a control shows its help text. Controls without help get
+  // XP's own "No Help topic" message.
+  const NO_HELP_TOPIC = "No Help topic is associated with this item.";
+  let helpPopup = null;
+  const closeHelpPopup = () => {
+    helpPopup?.remove();
+    helpPopup = null;
+  };
+  const showHelpPopup = (text, x, y) => {
+    closeHelpPopup();
+    helpPopup = document.createElement("div");
+    helpPopup.className = "xp-help-popup";
+    helpPopup.setAttribute("role", "tooltip");
+    helpPopup.textContent = text;
+    document.body.appendChild(helpPopup);
+    helpPopup.style.left = `${Math.max(2, Math.min(x, innerWidth - helpPopup.offsetWidth - 2))}px`;
+    helpPopup.style.top = `${Math.max(2, Math.min(y, innerHeight - helpPopup.offsetHeight - 2))}px`;
+    const dismiss = () => {
+      closeHelpPopup();
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("keydown", dismiss, true);
+    };
+    setTimeout(() => {
+      document.addEventListener("pointerdown", dismiss, true);
+      document.addEventListener("keydown", dismiss, true);
+    });
+  };
+
   const createDialog = ({
     title = "",
     wide = false,
     modal = true,
     onCancel = null,
+    help = false,
   } = {}) => {
     const previouslyFocused = document.activeElement;
 
@@ -138,6 +169,17 @@
     closeBtn.title = "Close";
     closeBtn.setAttribute("aria-label", "Close");
     closeBtn.addEventListener("click", () => dialog.cancel());
+    if (help) {
+      const helpBtn = document.createElement("button");
+      helpBtn.type = "button";
+      helpBtn.className = "tb-btn help-btn";
+      helpBtn.title = "Help";
+      helpBtn.setAttribute("aria-label", "Help");
+      helpBtn.addEventListener("click", () => {
+        el.classList.add("whats-this");
+      });
+      titleButtons.appendChild(helpBtn);
+    }
     titleButtons.appendChild(closeBtn);
     titleBar.append(titleText, titleButtons);
 
@@ -146,6 +188,24 @@
 
     el.append(titleBar, body);
     overlay.appendChild(el);
+    if (help) {
+      body.addEventListener(
+        "click",
+        (event) => {
+          if (!el.classList.contains("whats-this")) return;
+          event.preventDefault();
+          event.stopPropagation();
+          el.classList.remove("whats-this");
+          const helpText = event.target.closest("[data-help]")?.dataset.help;
+          showHelpPopup(
+            helpText || NO_HELP_TOPIC,
+            event.clientX,
+            event.clientY,
+          );
+        },
+        true,
+      );
+    }
 
     let resultCallback = null;
 
@@ -160,6 +220,7 @@
       close(result = null) {
         if (!dialogStack.includes(dialog)) return;
         dialogStack.splice(dialogStack.indexOf(dialog), 1);
+        dialogStack.at(-1)?.el.classList.add("active");
         overlay.remove();
         if (!dialogStack.length) {
           document.removeEventListener("keydown", handleGlobalKeydown, true);
@@ -184,7 +245,10 @@
         }
         if (e.key === "Escape") {
           e.preventDefault();
-          dialog.cancel();
+          // Escape leaves "What's This?" mode before it closes the dialog.
+          if (el.classList.contains("whats-this"))
+            el.classList.remove("whats-this");
+          else dialog.cancel();
           return;
         }
         if (e.key === "Enter") {
@@ -242,6 +306,8 @@
     if (!dialogStack.length) {
       document.addEventListener("keydown", handleGlobalKeydown, true);
     }
+    // Only the newest dialog is active; the ones behind it draw inactive.
+    dialogStack.at(-1)?.el.classList.remove("active");
     dialogStack.push(dialog);
     overlay.style.zIndex = (modal ? BASE_Z_INDEX : 6900) + dialogStack.length;
     document.body.appendChild(overlay);
@@ -305,7 +371,8 @@
     const amp = label.indexOf("&");
     if (key && amp !== -1) {
       button.append(label.slice(0, amp));
-      const underlined = document.createElement("u");
+      const underlined = document.createElement("span");
+      underlined.className = "menu-accesskey";
       underlined.textContent = label[amp + 1];
       button.append(underlined, label.slice(amp + 2));
     } else {
@@ -366,6 +433,7 @@
         },
       });
       dialog.onResult(resolve);
+      dialog.el.classList.add("xp-message-box");
 
       const row = document.createElement("div");
       row.className = "dlg-message";
@@ -452,29 +520,26 @@
 
   const fs = () => getFS();
 
+  // The shell registers Explorer's icon factory so dialogs show the same
+  // icons as Explorer.
+  let nodeIconFactory = null;
+  const setNodeIconFactory = (factory) => {
+    nodeIconFactory = factory;
+  };
+
   const createNodeIcon = (node) => {
     const icon = document.createElement("span");
     icon.className = "dlg-node-icon";
-    if (node.id === fs().DRIVE_C || node.id === fs().DRIVE_D) {
-      icon.classList.add("drive-icon");
-    } else if (node.id === fs().DRIVE_F) {
-      icon.classList.add("removable-icon");
-    } else if (node.id === fs().RECYCLE_BIN) {
+    if (node.id === fs().RECYCLE_BIN) {
       const image = document.createElement("img");
       image.src = fs().getChildren(fs().RECYCLE_BIN).length
         ? "assets/xp/icons/RecyclerFull.png"
         : "assets/xp/icons/RecyclerEmpty.png";
       image.alt = "";
       icon.appendChild(image);
-    } else if (node.type === "folder") {
-      const image = document.createElement("img");
-      image.src = "assets/xp/icons/MyDocuments.png";
-      image.alt = "";
-      icon.appendChild(image);
-    } else {
-      icon.classList.add("dlg-node-icon-file");
-      icon.textContent = "📄";
+      return icon;
     }
+    icon.append(...nodeIconFactory(node).childNodes);
     return icon;
   };
 
@@ -565,62 +630,184 @@
     );
   };
 
-  // Shared folder browser. onAccept({ folderId, name }) validates the
-  // current entry and returns false (or Promise<false>) to keep the
-  // dialog open, or any other value (or Promise of one) to close the
-  // dialog and resolve with that value. Cancel resolves with null.
+  // Shared folder browser laid out like XP's Open and Save As dialogs: a
+  // Places bar, a "Look in"/"Save in" folder list with Back, Up, and New
+  // Folder, a column-flowing file list, and the file name and type fields.
+  // onAccept({ folderId, name }) validates the current entry and returns
+  // false (or Promise<false>) to keep the dialog open, or any other value
+  // (or Promise of one) to close the dialog and resolve with that value.
+  // Cancel resolves with null.
+  const describeFilter = (filter) =>
+    filter?.length
+      ? `${filter.map((ext) => ext.replace(".", "").toUpperCase()).join(", ")} Files (${filter.map((ext) => `*${ext}`).join(";")})`
+      : "All Files (*.*)";
+
   const browseFiles = ({
     title,
     startFolder,
     filter,
     initialName = "",
     acceptLabel,
+    folderLabel,
     onAccept,
   }) =>
     new Promise((resolve) => {
       let currentFolderId = startFolder || fs().MY_DOCUMENTS;
       if (!fs().getNode(currentFolderId)) currentFolderId = fs().MY_DOCUMENTS;
+      const history = [];
+      let activeFilter = filter;
 
       const dialog = createDialog({
         title,
-        wide: true,
+        help: true,
         onCancel: () => dialog.close(null),
       });
+      dialog.el.classList.add("xp-file-dialog");
       dialog.onResult(resolve);
 
-      // Toolbar: Up one level + current path.
+      const field = (className, labelText, control) => {
+        const label = document.createElement("label");
+        label.className = className;
+        const text = document.createElement("span");
+        text.textContent = parseAccessKey(labelText).text;
+        label.append(text, control);
+        return label;
+      };
+
+      // "Save in" / "Look in" lists the current folder's ancestors and the
+      // usual top-level places.
+      const folderSelect = document.createElement("select");
+      folderSelect.className = "dlg-file-folder";
+      folderSelect.addEventListener("change", () =>
+        navigate(folderSelect.value),
+      );
+
+      const toolButton = (action, label, icon, onClick) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "dlg-file-tool";
+        button.dataset.action = action;
+        button.title = label;
+        button.setAttribute("aria-label", label);
+        const image = document.createElement("img");
+        image.src = icon;
+        image.alt = "";
+        button.appendChild(image);
+        button.addEventListener("click", onClick);
+        return button;
+      };
+      const backBtn = toolButton(
+        "back",
+        "Back",
+        "assets/xp/icons/Back.png",
+        () => {
+          currentFolderId = history.pop();
+          renderList();
+        },
+      );
+      const upBtn = toolButton(
+        "up",
+        "Up One Level",
+        "assets/xp/icons/Up.png",
+        () => navigate(fs().getNode(currentFolderId).parent),
+      );
+      const newFolderBtn = toolButton(
+        "new-folder",
+        "Create New Folder",
+        "assets/xp/icons/NewFolder.png",
+        () => {
+          try {
+            const folder = fs().createFolder(currentFolderId, "New Folder");
+            renderList();
+            nameInput.value = folder.name;
+          } catch (error) {
+            message({
+              title,
+              text: error.message,
+              icon: "error",
+              buttons: BUTTON_SETS.ok,
+            });
+          }
+        },
+      );
       const toolbar = document.createElement("div");
       toolbar.className = "dlg-file-toolbar";
-      // renderList disables Up at the root, so the current folder has a parent.
-      const upBtn = createDialogButton({ id: "up", label: "&Up" }, () => {
-        currentFolderId = fs().getNode(currentFolderId).parent;
-        renderList();
-      });
-      const pathLabel = document.createElement("span");
-      pathLabel.className = "dlg-file-path";
-      toolbar.append(upBtn, pathLabel);
+      toolbar.append(
+        field("dlg-file-folder-field", folderLabel, folderSelect),
+        backBtn,
+        upBtn,
+        newFolderBtn,
+      );
 
-      // File list.
+      const places = document.createElement("div");
+      places.className = "dlg-file-places";
+      [
+        ["Desktop", "assets/xp/icons/Desktop.png", fs().DESKTOP],
+        ["My Documents", "assets/xp/icons/MyDocuments.png", fs().MY_DOCUMENTS],
+        ["My Computer", "assets/xp/icons/MyComputer.png", fs().MY_COMPUTER],
+      ].forEach(([label, icon, folderId]) => {
+        const place = document.createElement("button");
+        place.type = "button";
+        place.className = "dlg-file-place";
+        place.dataset.folderId = folderId;
+        const image = document.createElement("img");
+        image.src = icon;
+        image.alt = "";
+        const text = document.createElement("span");
+        text.textContent = label;
+        place.append(image, text);
+        place.addEventListener("click", () => navigate(folderId));
+        places.appendChild(place);
+      });
+
       const list = document.createElement("div");
       list.className = "dlg-file-list";
       list.setAttribute("role", "listbox");
 
-      // Filename field.
-      const nameRow = document.createElement("div");
-      nameRow.className = "dlg-file-name-row";
-      const nameLabel = document.createElement("label");
-      nameLabel.textContent = "File &name:";
       const nameInput = document.createElement("input");
       nameInput.type = "text";
       nameInput.className = "xp-input";
       nameInput.value = initialName;
-      nameLabel.htmlFor = nameInput.id = "dlg-file-name";
-      nameRow.append(nameLabel, nameInput);
+      nameInput.id = "dlg-file-name";
+      const typeSelect = document.createElement("select");
+      typeSelect.className = "dlg-file-type";
+      [filter, null]
+        .filter((entry, index) => index === 0 || filter?.length)
+        .forEach((entry) => {
+          const option = document.createElement("option");
+          option.textContent = describeFilter(entry);
+          option.value = entry ? entry.join(",") : "";
+          typeSelect.appendChild(option);
+        });
+      typeSelect.addEventListener("change", () => {
+        activeFilter = typeSelect.value ? typeSelect.value.split(",") : null;
+        renderList();
+      });
 
-      dialog.body.append(toolbar, list, nameRow);
+      const fields = document.createElement("div");
+      fields.className = "dlg-file-fields";
+      fields.append(
+        field("dlg-file-name-row", "File &name:", nameInput),
+        field(
+          "dlg-file-type-row",
+          acceptLabel === "&Save" ? "Save as &type:" : "Files of &type:",
+          typeSelect,
+        ),
+      );
+
+      dialog.body.append(toolbar, places, list, fields);
 
       const matchesFilter = (node) =>
-        node.type === "folder" || !filter || filter.includes(node.ext);
+        node.type === "folder" ||
+        !activeFilter ||
+        activeFilter.includes(node.ext);
+
+      const navigate = (folderId) => {
+        if (!folderId || folderId === currentFolderId) return;
+        history.push(currentFolderId);
+        currentFolderId = folderId;
+        renderList();
+      };
 
       const accept = () => {
         const context = {
@@ -632,10 +819,43 @@
         });
       };
 
+      const renderFolders = () => {
+        const chain = [];
+        for (
+          let node = fs().getNode(currentFolderId);
+          node;
+          node = node.parent ? fs().getNode(node.parent) : null
+        )
+          chain.unshift(node);
+        const roots = [fs().DESKTOP, fs().MY_DOCUMENTS, fs().MY_COMPUTER];
+        folderSelect.replaceChildren();
+        [
+          ...new Map(
+            [...roots.map((id) => fs().getNode(id)), ...chain].map((node) => [
+              node.id,
+              node,
+            ]),
+          ).values(),
+        ].forEach((node) => {
+          const option = document.createElement("option");
+          option.value = node.id;
+          option.textContent = node.name;
+          folderSelect.appendChild(option);
+        });
+        folderSelect.value = currentFolderId;
+        places.querySelectorAll(".dlg-file-place").forEach((place) => {
+          place.classList.toggle(
+            "selected",
+            place.dataset.folderId === currentFolderId,
+          );
+        });
+      };
+
       const renderList = () => {
         const folder = fs().getNode(currentFolderId);
-        pathLabel.textContent = fs().getPath(folder.id);
+        renderFolders();
         upBtn.disabled = !folder.parent;
+        backBtn.disabled = !history.length;
         list.innerHTML = "";
         fs()
           .getChildren(folder.id)
@@ -664,8 +884,7 @@
             });
             item.addEventListener("dblclick", () => {
               if (child.type === "folder") {
-                currentFolderId = child.id;
-                renderList();
+                navigate(child.id);
               } else {
                 nameInput.value = child.name;
                 accept();
@@ -675,9 +894,9 @@
           });
       };
 
-      // Accept / Cancel row (Accept is validated, Cancel closes).
+      // Accept and Cancel sit beside the file name and type fields.
       const row = document.createElement("div");
-      row.className = "dlg-buttons";
+      row.className = "dlg-buttons dlg-file-buttons";
       const acceptBtn = createDialogButton(
         { id: "accept", label: acceptLabel, isDefault: true },
         accept,
@@ -690,7 +909,6 @@
       dialog.body.appendChild(row);
       dialog.defaultButton = acceptBtn;
       registerAccessKey(dialog, acceptBtn, acceptLabel);
-      registerAccessKey(dialog, upBtn, "&Up");
 
       renderList();
       nameInput.focus();
@@ -709,6 +927,7 @@
       startFolder,
       filter,
       acceptLabel: "&Open",
+      folderLabel: "Look &in:",
       onAccept: ({ folderId, name }) => {
         const node = findChildByName(folderId, name);
         if (node && node.type === "file") return node;
@@ -736,6 +955,7 @@
       filter,
       initialName: defaultName,
       acceptLabel: "&Save",
+      folderLabel: "Save &in:",
       onAccept: ({ folderId, name }) => {
         if (!name) return false;
         const existing = findChildByName(folderId, name);
@@ -768,6 +988,7 @@
     confirm,
     progress,
     properties,
+    setNodeIconFactory,
     openFile,
     saveFile,
   };

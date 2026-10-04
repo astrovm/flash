@@ -1,47 +1,280 @@
-/* ============ Scrollbars (authentic XP) ============ */
+/* ============ Scrollbars ============ */
 
-#start-menu-programs::-webkit-scrollbar,
-.start-menu-right::-webkit-scrollbar,
-#desktop-icons::-webkit-scrollbar,
-.explorer-sidebar::-webkit-scrollbar,
-.explorer-main::-webkit-scrollbar,
-.notepad-editor::-webkit-scrollbar {
+/* Luna scrollbars drawn from Luna.msstyles: 17px arrows and shafts, thumbs
+   sliced with the theme's 5px sizing margins, and a centered gripper. */
+:root {
+  --sb-size-grip: url("../../assets/xp/scrollbar/blue-size-grip.png");
+  --sb-scheme: blue;
+  --sb-arrows: url("../../assets/xp/scrollbar/blue-arrows.png");
+  --sb-shaft-v: url("../../assets/xp/scrollbar/blue-shaft-vertical-normal.png");
+  --sb-shaft-h: url("../../assets/xp/scrollbar/blue-shaft-horizontal-normal.png");
+  --sb-thumb-v: url("../../assets/xp/scrollbar/blue-thumb-vertical-normal.png");
+  --sb-thumb-v-hot: url("../../assets/xp/scrollbar/blue-thumb-vertical-hot.png");
+  --sb-thumb-v-pressed: url("../../assets/xp/scrollbar/blue-thumb-vertical-pressed.png");
+  --sb-thumb-h: url("../../assets/xp/scrollbar/blue-thumb-horizontal-normal.png");
+  --sb-thumb-h-hot: url("../../assets/xp/scrollbar/blue-thumb-horizontal-hot.png");
+  --sb-thumb-h-pressed: url("../../assets/xp/scrollbar/blue-thumb-horizontal-pressed.png");
+  --sb-gripper-v: url("../../assets/xp/scrollbar/blue-gripper-vertical.png");
+  --sb-gripper-h: url("../../assets/xp/scrollbar/blue-gripper-horizontal.png");
+  --sb-glyph-up: url("../../assets/xp/scrollbar/blue-glyph-up-normal.png");
+  --sb-glyph-up-hot: url("../../assets/xp/scrollbar/blue-glyph-up-hot.png");
+  --sb-glyph-up-pressed: url("../../assets/xp/scrollbar/blue-glyph-up-pressed.png");
+  --sb-glyph-down: url("../../assets/xp/scrollbar/blue-glyph-down-normal.png");
+  --sb-glyph-down-hot: url("../../assets/xp/scrollbar/blue-glyph-down-hot.png");
+  --sb-glyph-down-pressed: url("../../assets/xp/scrollbar/blue-glyph-down-pressed.png");
+  --sb-glyph-left: url("../../assets/xp/scrollbar/blue-glyph-left-normal.png");
+  --sb-glyph-left-hot: url("../../assets/xp/scrollbar/blue-glyph-left-hot.png");
+  --sb-glyph-left-pressed: url("../../assets/xp/scrollbar/blue-glyph-left-pressed.png");
+  --sb-glyph-right: url("../../assets/xp/scrollbar/blue-glyph-right-normal.png");
+  --sb-glyph-right-hot: url("../../assets/xp/scrollbar/blue-glyph-right-hot.png");
+  --sb-glyph-right-pressed: url("../../assets/xp/scrollbar/blue-glyph-right-pressed.png");
+}
+
+html[data-xp-appearance="olive"] {
+  --sb-size-grip: url("../../assets/xp/scrollbar/olive-size-grip.png");
+  --sb-arrows: url("../../assets/xp/scrollbar/olive-arrows.png");
+  --sb-shaft-v: url("../../assets/xp/scrollbar/olive-shaft-vertical-normal.png");
+  --sb-shaft-h: url("../../assets/xp/scrollbar/olive-shaft-horizontal-normal.png");
+  --sb-thumb-v: url("../../assets/xp/scrollbar/olive-thumb-vertical-normal.png");
+  --sb-thumb-v-hot: url("../../assets/xp/scrollbar/olive-thumb-vertical-hot.png");
+  --sb-thumb-v-pressed: url("../../assets/xp/scrollbar/olive-thumb-vertical-pressed.png");
+  --sb-thumb-h: url("../../assets/xp/scrollbar/olive-thumb-horizontal-normal.png");
+  --sb-thumb-h-hot: url("../../assets/xp/scrollbar/olive-thumb-horizontal-hot.png");
+  --sb-thumb-h-pressed: url("../../assets/xp/scrollbar/olive-thumb-horizontal-pressed.png");
+  --sb-gripper-v: url("../../assets/xp/scrollbar/olive-gripper-vertical.png");
+  --sb-gripper-h: url("../../assets/xp/scrollbar/olive-gripper-horizontal.png");
+  --sb-glyph-up: url("../../assets/xp/scrollbar/olive-glyph-up-normal.png");
+  --sb-glyph-up-hot: url("../../assets/xp/scrollbar/olive-glyph-up-hot.png");
+  --sb-glyph-up-pressed: url("../../assets/xp/scrollbar/olive-glyph-up-pressed.png");
+  --sb-glyph-down: url("../../assets/xp/scrollbar/olive-glyph-down-normal.png");
+  --sb-glyph-down-hot: url("../../assets/xp/scrollbar/olive-glyph-down-hot.png");
+  --sb-glyph-down-pressed: url("../../assets/xp/scrollbar/olive-glyph-down-pressed.png");
+  --sb-glyph-left: url("../../assets/xp/scrollbar/olive-glyph-left-normal.png");
+  --sb-glyph-left-hot: url("../../assets/xp/scrollbar/olive-glyph-left-hot.png");
+  --sb-glyph-left-pressed: url("../../assets/xp/scrollbar/olive-glyph-left-pressed.png");
+  --sb-glyph-right: url("../../assets/xp/scrollbar/olive-glyph-right-normal.png");
+  --sb-glyph-right-hot: url("../../assets/xp/scrollbar/olive-glyph-right-hot.png");
+  --sb-glyph-right-pressed: url("../../assets/xp/scrollbar/olive-glyph-right-pressed.png");
+}
+
+html[data-xp-appearance="silver"] {
+  --sb-size-grip: url("../../assets/xp/scrollbar/silver-size-grip.png");
+  --sb-arrows: url("../../assets/xp/scrollbar/silver-arrows.png");
+  --sb-shaft-v: url("../../assets/xp/scrollbar/silver-shaft-vertical-normal.png");
+  --sb-shaft-h: url("../../assets/xp/scrollbar/silver-shaft-horizontal-normal.png");
+  --sb-thumb-v: url("../../assets/xp/scrollbar/silver-thumb-vertical-normal.png");
+  --sb-thumb-v-hot: url("../../assets/xp/scrollbar/silver-thumb-vertical-hot.png");
+  --sb-thumb-v-pressed: url("../../assets/xp/scrollbar/silver-thumb-vertical-pressed.png");
+  --sb-thumb-h: url("../../assets/xp/scrollbar/silver-thumb-horizontal-normal.png");
+  --sb-thumb-h-hot: url("../../assets/xp/scrollbar/silver-thumb-horizontal-hot.png");
+  --sb-thumb-h-pressed: url("../../assets/xp/scrollbar/silver-thumb-horizontal-pressed.png");
+  --sb-gripper-v: url("../../assets/xp/scrollbar/silver-gripper-vertical.png");
+  --sb-gripper-h: url("../../assets/xp/scrollbar/silver-gripper-horizontal.png");
+  --sb-glyph-up: url("../../assets/xp/scrollbar/silver-glyph-up-normal.png");
+  --sb-glyph-up-hot: url("../../assets/xp/scrollbar/silver-glyph-up-hot.png");
+  --sb-glyph-up-pressed: url("../../assets/xp/scrollbar/silver-glyph-up-pressed.png");
+  --sb-glyph-down: url("../../assets/xp/scrollbar/silver-glyph-down-normal.png");
+  --sb-glyph-down-hot: url("../../assets/xp/scrollbar/silver-glyph-down-hot.png");
+  --sb-glyph-down-pressed: url("../../assets/xp/scrollbar/silver-glyph-down-pressed.png");
+  --sb-glyph-left: url("../../assets/xp/scrollbar/silver-glyph-left-normal.png");
+  --sb-glyph-left-hot: url("../../assets/xp/scrollbar/silver-glyph-left-hot.png");
+  --sb-glyph-left-pressed: url("../../assets/xp/scrollbar/silver-glyph-left-pressed.png");
+  --sb-glyph-right: url("../../assets/xp/scrollbar/silver-glyph-right-normal.png");
+  --sb-glyph-right-hot: url("../../assets/xp/scrollbar/silver-glyph-right-hot.png");
+  --sb-glyph-right-pressed: url("../../assets/xp/scrollbar/silver-glyph-right-pressed.png");
+}
+
+::-webkit-scrollbar {
   width: 17px;
   height: 17px;
 }
 
-#start-menu-programs::-webkit-scrollbar-corner,
-.start-menu-right::-webkit-scrollbar-corner,
-#desktop-icons::-webkit-scrollbar-corner,
-.explorer-sidebar::-webkit-scrollbar-corner,
-.explorer-main::-webkit-scrollbar-corner,
-.notepad-editor::-webkit-scrollbar-corner {
-  background: #dfdfdf;
+::-webkit-scrollbar-track:vertical {
+  background: var(--sb-shaft-v) 0 0 / 17px 100%;
 }
 
-#start-menu-programs::-webkit-scrollbar-track,
-.start-menu-right::-webkit-scrollbar-track,
-#desktop-icons::-webkit-scrollbar-track,
-.explorer-sidebar::-webkit-scrollbar-track,
-.explorer-main::-webkit-scrollbar-track,
-.notepad-editor::-webkit-scrollbar-track {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -0.5 17 1' shape-rendering='crispEdges'%3E%3Cpath stroke='%23eeede5' d='M0 0h1m15 0h1'/%3E%3Cpath stroke='%23f3f1ec' d='M1 0h1'/%3E%3Cpath stroke='%23f4f1ec' d='M2 0h1'/%3E%3Cpath stroke='%23f4f3ee' d='M3 0h1'/%3E%3Cpath stroke='%23f5f4ef' d='M4 0h1'/%3E%3Cpath stroke='%23f6f5f0' d='M5 0h1'/%3E%3Cpath stroke='%23f7f7f3' d='M6 0h1'/%3E%3Cpath stroke='%23f9f8f4' d='M7 0h1'/%3E%3Cpath stroke='%23f9f9f7' d='M8 0h1'/%3E%3Cpath stroke='%23fbfbf8' d='M9 0h1'/%3E%3Cpath stroke='%23fbfbf9' d='M10 0h2'/%3E%3Cpath stroke='%23fdfdfa' d='M12 0h1'/%3E%3Cpath stroke='%23fefefb' d='M13 0h3'/%3E%3C/svg%3E");
+::-webkit-scrollbar-track:horizontal {
+  background: var(--sb-shaft-h) 0 0 / 100% 17px;
 }
 
-#start-menu-programs::-webkit-scrollbar-thumb,
-.start-menu-right::-webkit-scrollbar-thumb,
-#desktop-icons::-webkit-scrollbar-thumb,
-.explorer-sidebar::-webkit-scrollbar-thumb,
-.explorer-main::-webkit-scrollbar-thumb,
-.notepad-editor::-webkit-scrollbar-thumb {
-  background-position: 50%;
+::-webkit-scrollbar-thumb:vertical {
+  border: 5px solid transparent;
+  border-image: var(--sb-thumb-v) 5 fill / 5px stretch;
+  background: var(--sb-gripper-v) center / 8px 8px no-repeat;
+  background-clip: border-box;
+}
+
+::-webkit-scrollbar-thumb:vertical:hover {
+  border-image-source: var(--sb-thumb-v-hot);
+}
+
+::-webkit-scrollbar-thumb:vertical:active {
+  border-image-source: var(--sb-thumb-v-pressed);
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+  border: 5px solid transparent;
+  border-image: var(--sb-thumb-h) 5 fill / 5px stretch;
+  background: var(--sb-gripper-h) center / 8px 8px no-repeat;
+}
+
+::-webkit-scrollbar-thumb:horizontal:hover {
+  border-image-source: var(--sb-thumb-h-hot);
+}
+
+::-webkit-scrollbar-thumb:horizontal:active {
+  border-image-source: var(--sb-thumb-h-pressed);
+}
+
+/* One arrow at each end, like XP. */
+::-webkit-scrollbar-button:vertical:start:increment,
+::-webkit-scrollbar-button:vertical:end:decrement,
+::-webkit-scrollbar-button:horizontal:start:increment,
+::-webkit-scrollbar-button:horizontal:end:decrement {
+  display: none;
+}
+
+::-webkit-scrollbar-button {
+  display: block;
+  width: 17px;
+  height: 17px;
   background-repeat: no-repeat;
-  background-color: #c8d6fb;
-  background-size: 7px;
-  border: 1px solid #fff;
-  border-radius: 2px;
+  background-size:
+    9px 9px,
+    17px 272px;
+}
+
+::-webkit-scrollbar-button:vertical:start:decrement {
+  background-image: var(--sb-glyph-up), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 0;
+}
+::-webkit-scrollbar-button:vertical:start:decrement:hover {
+  background-image: var(--sb-glyph-up-hot), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -17px;
+}
+::-webkit-scrollbar-button:vertical:start:decrement:active {
+  background-image: var(--sb-glyph-up-pressed), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -34px;
+}
+
+::-webkit-scrollbar-button:vertical:end:increment {
+  background-image: var(--sb-glyph-down), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -68px;
+}
+::-webkit-scrollbar-button:vertical:end:increment:hover {
+  background-image: var(--sb-glyph-down-hot), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -85px;
+}
+::-webkit-scrollbar-button:vertical:end:increment:active {
+  background-image: var(--sb-glyph-down-pressed), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -102px;
+}
+
+::-webkit-scrollbar-button:horizontal:start:decrement {
+  background-image: var(--sb-glyph-left), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -136px;
+}
+::-webkit-scrollbar-button:horizontal:start:decrement:hover {
+  background-image: var(--sb-glyph-left-hot), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -153px;
+}
+::-webkit-scrollbar-button:horizontal:start:decrement:active {
+  background-image: var(--sb-glyph-left-pressed), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -170px;
+}
+
+::-webkit-scrollbar-button:horizontal:end:increment {
+  background-image: var(--sb-glyph-right), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -204px;
+}
+::-webkit-scrollbar-button:horizontal:end:increment:hover {
+  background-image: var(--sb-glyph-right-hot), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -221px;
+}
+::-webkit-scrollbar-button:horizontal:end:increment:active {
+  background-image: var(--sb-glyph-right-pressed), var(--sb-arrows);
+  background-position:
+    4px 4px,
+    0 -238px;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--xp-beige, #ece9d8);
+}
+
+/* A sizable window's bottom-right scrollbar corner holds the size grip. */
+.notepad-editor::-webkit-scrollbar-corner {
+  background: var(--sb-size-grip) right bottom no-repeat
+    var(--xp-beige, #ece9d8);
+}
+
+/* Windows Classic draws raised 3D scrollbars. */
+html[data-xp-appearance="classic"] ::-webkit-scrollbar-track {
+  background: repeating-conic-gradient(#d4d0c8 0 25%, #fff 0 50%) 0 0 / 2px 2px;
+}
+
+html[data-xp-appearance="classic"] ::-webkit-scrollbar-thumb,
+html[data-xp-appearance="classic"] ::-webkit-scrollbar-button {
+  border: 0;
+  border-image: none;
+  background: #d4d0c8;
   box-shadow:
-    inset -3px 0 #bad1fc,
-    inset 1px 1px #b7caf5;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 -0.5 7 8' shape-rendering='crispEdges'%3E%3Cpath stroke='%23eef4fe' d='M0 0h6M0 2h6M0 4h6M0 6h6'/%3E%3Cpath stroke='%23bad1fc' d='M6 0h1M6 2h1M6 4h1'/%3E%3Cpath stroke='%23c8d6fb' d='M0 1h1M0 3h1M0 5h1M0 7h1'/%3E%3Cpath stroke='%238cb0f8' d='M1 1h6M1 3h6M1 5h6M1 7h6'/%3E%3Cpath stroke='%23bad3fc' d='M6 6h1'/%3E%3C/svg%3E");
+    inset -1px -1px #404040,
+    inset 1px 1px #fff,
+    inset -2px -2px #808080,
+    inset 2px 2px #d4d0c8;
+}
+
+html[data-xp-appearance="classic"]
+  ::-webkit-scrollbar-button:vertical:start:decrement {
+  background:
+    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cpolygon points='3,8 10,8 6.5,4.5' fill='%23000'/%3E%3C/svg%3E")
+      2px 2px no-repeat,
+    #d4d0c8;
+}
+
+html[data-xp-appearance="classic"]
+  ::-webkit-scrollbar-button:vertical:end:increment {
+  background:
+    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cpolygon points='3,5 10,5 6.5,8.5' fill='%23000'/%3E%3C/svg%3E")
+      2px 2px no-repeat,
+    #d4d0c8;
+}
+
+html[data-xp-appearance="classic"]
+  ::-webkit-scrollbar-button:horizontal:start:decrement {
+  background:
+    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cpolygon points='8,3 8,10 4.5,6.5' fill='%23000'/%3E%3C/svg%3E")
+      2px 2px no-repeat,
+    #d4d0c8;
+}
+
+html[data-xp-appearance="classic"]
+  ::-webkit-scrollbar-button:horizontal:end:increment {
+  background:
+    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13'%3E%3Cpolygon points='5,3 5,10 8.5,6.5' fill='%23000'/%3E%3C/svg%3E")
+      2px 2px no-repeat,
+    #d4d0c8;
 }

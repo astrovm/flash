@@ -798,16 +798,9 @@ const openDateTimeProperties = () => {
   const dialog = XPDialogs.createDialog({
     title: "Date and Time Properties",
     wide: true,
+    help: true,
   });
   dialog.el.classList.add("datetime-dialog");
-
-  const titleButtons = dialog.el.querySelector(".title-buttons");
-  const helpButton = document.createElement("button");
-  helpButton.type = "button";
-  helpButton.className = "tb-btn help-btn";
-  helpButton.title = "Help";
-  helpButton.setAttribute("aria-label", "Help");
-  titleButtons.prepend(helpButton);
 
   const shellNow = getShellTime();
   const state = {
@@ -1151,13 +1144,6 @@ const openDateTimeProperties = () => {
   updateNow.addEventListener("click", () => {
     syncStatus.textContent =
       "An error occurred while Windows was synchronizing with time.windows.com.";
-  });
-  helpButton.addEventListener("click", () => {
-    XPDialogs.alert(
-      "Select a tab to change the date, time, time zone, or Internet time settings.",
-      "Date and Time Help",
-      "info",
-    );
   });
 
   renderCalendar();

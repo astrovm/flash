@@ -1219,22 +1219,6 @@
   gap: 6px;
 }
 
-.help-btn {
-  background-image: url("../../assets/xp/icons/CaptionButton.png");
-}
-
-.help-btn::after {
-  content: "?";
-  inset: 1px 3px 3px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font:
-    bold 15px/17px Tahoma,
-    sans-serif;
-  text-shadow: 1px 1px #124ba0;
-}
-
 /* Resize handles on every edge and corner, with XP resize cursors */
 .resize-handle {
   position: absolute;

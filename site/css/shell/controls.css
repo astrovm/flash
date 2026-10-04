@@ -1,0 +1,496 @@
+/* ============ Common controls ============ */
+
+/* Luna buttons, check boxes, radio buttons, group boxes, tabs, and combo box
+   buttons drawn from Luna.msstyles with the theme's sizing margins. Windows
+   Classic keeps its own 3D controls. */
+
+:root {
+  --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-normal.png");
+  --ctl-spinbuttonbackgroundup-hot: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-hot.png");
+  --ctl-spinbuttonbackgroundup-pressed: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-pressed.png");
+  --ctl-spinbuttonbackgroundup-disabled: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-disabled.png");
+  --ctl-spinbuttonbackgrounddown-normal: url("../../assets/xp/controls/blue-spinbuttonbackgrounddown-normal.png");
+  --ctl-spinbuttonbackgrounddown-hot: url("../../assets/xp/controls/blue-spinbuttonbackgrounddown-hot.png");
+  --ctl-spinbuttonbackgrounddown-pressed: url("../../assets/xp/controls/blue-spinbuttonbackgrounddown-pressed.png");
+  --ctl-spinbuttonbackgrounddown-disabled: url("../../assets/xp/controls/blue-spinbuttonbackgrounddown-disabled.png");
+  --ctl-spinupglyph-normal: url("../../assets/xp/controls/blue-spinupglyph-normal.png");
+  --ctl-spinupglyph-hot: url("../../assets/xp/controls/blue-spinupglyph-hot.png");
+  --ctl-spinupglyph-pressed: url("../../assets/xp/controls/blue-spinupglyph-pressed.png");
+  --ctl-spinupglyph-disabled: url("../../assets/xp/controls/blue-spinupglyph-disabled.png");
+  --ctl-spindownglyph-normal: url("../../assets/xp/controls/blue-spindownglyph-normal.png");
+  --ctl-spindownglyph-hot: url("../../assets/xp/controls/blue-spindownglyph-hot.png");
+  --ctl-spindownglyph-pressed: url("../../assets/xp/controls/blue-spindownglyph-pressed.png");
+  --ctl-spindownglyph-disabled: url("../../assets/xp/controls/blue-spindownglyph-disabled.png");
+  --ctl-button-normal: url("../../assets/xp/controls/blue-button-normal.png");
+  --ctl-button-hot: url("../../assets/xp/controls/blue-button-hot.png");
+  --ctl-button-pressed: url("../../assets/xp/controls/blue-button-pressed.png");
+  --ctl-button-disabled: url("../../assets/xp/controls/blue-button-disabled.png");
+  --ctl-button-default: url("../../assets/xp/controls/blue-button-default.png");
+  --ctl-checkbox13-unchecked-normal: url("../../assets/xp/controls/blue-checkbox13-unchecked-normal.png");
+  --ctl-checkbox13-unchecked-hot: url("../../assets/xp/controls/blue-checkbox13-unchecked-hot.png");
+  --ctl-checkbox13-unchecked-pressed: url("../../assets/xp/controls/blue-checkbox13-unchecked-pressed.png");
+  --ctl-checkbox13-unchecked-disabled: url("../../assets/xp/controls/blue-checkbox13-unchecked-disabled.png");
+  --ctl-checkbox13-checked-normal: url("../../assets/xp/controls/blue-checkbox13-checked-normal.png");
+  --ctl-checkbox13-checked-hot: url("../../assets/xp/controls/blue-checkbox13-checked-hot.png");
+  --ctl-checkbox13-checked-pressed: url("../../assets/xp/controls/blue-checkbox13-checked-pressed.png");
+  --ctl-checkbox13-checked-disabled: url("../../assets/xp/controls/blue-checkbox13-checked-disabled.png");
+  --ctl-checkbox13-mixed-normal: url("../../assets/xp/controls/blue-checkbox13-mixed-normal.png");
+  --ctl-checkbox13-mixed-hot: url("../../assets/xp/controls/blue-checkbox13-mixed-hot.png");
+  --ctl-checkbox13-mixed-pressed: url("../../assets/xp/controls/blue-checkbox13-mixed-pressed.png");
+  --ctl-checkbox13-mixed-disabled: url("../../assets/xp/controls/blue-checkbox13-mixed-disabled.png");
+  --ctl-radiobutton13-unchecked-normal: url("../../assets/xp/controls/blue-radiobutton13-unchecked-normal.png");
+  --ctl-radiobutton13-unchecked-hot: url("../../assets/xp/controls/blue-radiobutton13-unchecked-hot.png");
+  --ctl-radiobutton13-unchecked-pressed: url("../../assets/xp/controls/blue-radiobutton13-unchecked-pressed.png");
+  --ctl-radiobutton13-unchecked-disabled: url("../../assets/xp/controls/blue-radiobutton13-unchecked-disabled.png");
+  --ctl-radiobutton13-checked-normal: url("../../assets/xp/controls/blue-radiobutton13-checked-normal.png");
+  --ctl-radiobutton13-checked-hot: url("../../assets/xp/controls/blue-radiobutton13-checked-hot.png");
+  --ctl-radiobutton13-checked-pressed: url("../../assets/xp/controls/blue-radiobutton13-checked-pressed.png");
+  --ctl-radiobutton13-checked-disabled: url("../../assets/xp/controls/blue-radiobutton13-checked-disabled.png");
+  --ctl-groupbox-normal: url("../../assets/xp/controls/blue-groupbox-normal.png");
+  --ctl-tabitem-normal: url("../../assets/xp/controls/blue-tabitem-normal.png");
+  --ctl-tabitem-hot: url("../../assets/xp/controls/blue-tabitem-hot.png");
+  --ctl-tabitem-disabled: url("../../assets/xp/controls/blue-tabitem-disabled.png");
+  --ctl-tabitemleft-normal: url("../../assets/xp/controls/blue-tabitemleft-normal.png");
+  --ctl-tabitemleft-hot: url("../../assets/xp/controls/blue-tabitemleft-hot.png");
+  --ctl-tabitemleft-disabled: url("../../assets/xp/controls/blue-tabitemleft-disabled.png");
+  --ctl-tabitemtop-selected: url("../../assets/xp/controls/blue-tabitemtop-selected.png");
+  --ctl-tabitemtopleft-selected: url("../../assets/xp/controls/blue-tabitemtopleft-selected.png");
+  --ctl-tabpaneedge-normal: url("../../assets/xp/controls/blue-tabpaneedge-normal.png");
+  --ctl-combobutton-normal: url("../../assets/xp/controls/blue-combobutton-normal.png");
+  --ctl-combobutton-hot: url("../../assets/xp/controls/blue-combobutton-hot.png");
+  --ctl-combobutton-pressed: url("../../assets/xp/controls/blue-combobutton-pressed.png");
+  --ctl-combobutton-disabled: url("../../assets/xp/controls/blue-combobutton-disabled.png");
+  --ctl-combobuttonglyph-normal: url("../../assets/xp/controls/blue-combobuttonglyph-normal.png");
+  --ctl-combobuttonglyph-hot: url("../../assets/xp/controls/blue-combobuttonglyph-hot.png");
+  --ctl-combobuttonglyph-pressed: url("../../assets/xp/controls/blue-combobuttonglyph-pressed.png");
+  --ctl-combobuttonglyph-disabled: url("../../assets/xp/controls/blue-combobuttonglyph-disabled.png");
+}
+
+html[data-xp-appearance="olive"] {
+  --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-normal.png");
+  --ctl-spinbuttonbackgroundup-hot: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-hot.png");
+  --ctl-spinbuttonbackgroundup-pressed: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-pressed.png");
+  --ctl-spinbuttonbackgroundup-disabled: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-disabled.png");
+  --ctl-spinbuttonbackgrounddown-normal: url("../../assets/xp/controls/olive-spinbuttonbackgrounddown-normal.png");
+  --ctl-spinbuttonbackgrounddown-hot: url("../../assets/xp/controls/olive-spinbuttonbackgrounddown-hot.png");
+  --ctl-spinbuttonbackgrounddown-pressed: url("../../assets/xp/controls/olive-spinbuttonbackgrounddown-pressed.png");
+  --ctl-spinbuttonbackgrounddown-disabled: url("../../assets/xp/controls/olive-spinbuttonbackgrounddown-disabled.png");
+  --ctl-spinupglyph-normal: url("../../assets/xp/controls/olive-spinupglyph-normal.png");
+  --ctl-spinupglyph-hot: url("../../assets/xp/controls/olive-spinupglyph-hot.png");
+  --ctl-spinupglyph-pressed: url("../../assets/xp/controls/olive-spinupglyph-pressed.png");
+  --ctl-spinupglyph-disabled: url("../../assets/xp/controls/olive-spinupglyph-disabled.png");
+  --ctl-spindownglyph-normal: url("../../assets/xp/controls/olive-spindownglyph-normal.png");
+  --ctl-spindownglyph-hot: url("../../assets/xp/controls/olive-spindownglyph-hot.png");
+  --ctl-spindownglyph-pressed: url("../../assets/xp/controls/olive-spindownglyph-pressed.png");
+  --ctl-spindownglyph-disabled: url("../../assets/xp/controls/olive-spindownglyph-disabled.png");
+  --ctl-button-normal: url("../../assets/xp/controls/olive-button-normal.png");
+  --ctl-button-hot: url("../../assets/xp/controls/olive-button-hot.png");
+  --ctl-button-pressed: url("../../assets/xp/controls/olive-button-pressed.png");
+  --ctl-button-disabled: url("../../assets/xp/controls/olive-button-disabled.png");
+  --ctl-button-default: url("../../assets/xp/controls/olive-button-default.png");
+  --ctl-checkbox13-unchecked-normal: url("../../assets/xp/controls/olive-checkbox13-unchecked-normal.png");
+  --ctl-checkbox13-unchecked-hot: url("../../assets/xp/controls/olive-checkbox13-unchecked-hot.png");
+  --ctl-checkbox13-unchecked-pressed: url("../../assets/xp/controls/olive-checkbox13-unchecked-pressed.png");
+  --ctl-checkbox13-unchecked-disabled: url("../../assets/xp/controls/olive-checkbox13-unchecked-disabled.png");
+  --ctl-checkbox13-checked-normal: url("../../assets/xp/controls/olive-checkbox13-checked-normal.png");
+  --ctl-checkbox13-checked-hot: url("../../assets/xp/controls/olive-checkbox13-checked-hot.png");
+  --ctl-checkbox13-checked-pressed: url("../../assets/xp/controls/olive-checkbox13-checked-pressed.png");
+  --ctl-checkbox13-checked-disabled: url("../../assets/xp/controls/olive-checkbox13-checked-disabled.png");
+  --ctl-checkbox13-mixed-normal: url("../../assets/xp/controls/olive-checkbox13-mixed-normal.png");
+  --ctl-checkbox13-mixed-hot: url("../../assets/xp/controls/olive-checkbox13-mixed-hot.png");
+  --ctl-checkbox13-mixed-pressed: url("../../assets/xp/controls/olive-checkbox13-mixed-pressed.png");
+  --ctl-checkbox13-mixed-disabled: url("../../assets/xp/controls/olive-checkbox13-mixed-disabled.png");
+  --ctl-radiobutton13-unchecked-normal: url("../../assets/xp/controls/olive-radiobutton13-unchecked-normal.png");
+  --ctl-radiobutton13-unchecked-hot: url("../../assets/xp/controls/olive-radiobutton13-unchecked-hot.png");
+  --ctl-radiobutton13-unchecked-pressed: url("../../assets/xp/controls/olive-radiobutton13-unchecked-pressed.png");
+  --ctl-radiobutton13-unchecked-disabled: url("../../assets/xp/controls/olive-radiobutton13-unchecked-disabled.png");
+  --ctl-radiobutton13-checked-normal: url("../../assets/xp/controls/olive-radiobutton13-checked-normal.png");
+  --ctl-radiobutton13-checked-hot: url("../../assets/xp/controls/olive-radiobutton13-checked-hot.png");
+  --ctl-radiobutton13-checked-pressed: url("../../assets/xp/controls/olive-radiobutton13-checked-pressed.png");
+  --ctl-radiobutton13-checked-disabled: url("../../assets/xp/controls/olive-radiobutton13-checked-disabled.png");
+  --ctl-groupbox-normal: url("../../assets/xp/controls/olive-groupbox-normal.png");
+  --ctl-tabitem-normal: url("../../assets/xp/controls/olive-tabitem-normal.png");
+  --ctl-tabitem-hot: url("../../assets/xp/controls/olive-tabitem-hot.png");
+  --ctl-tabitem-disabled: url("../../assets/xp/controls/olive-tabitem-disabled.png");
+  --ctl-tabitemleft-normal: url("../../assets/xp/controls/olive-tabitemleft-normal.png");
+  --ctl-tabitemleft-hot: url("../../assets/xp/controls/olive-tabitemleft-hot.png");
+  --ctl-tabitemleft-disabled: url("../../assets/xp/controls/olive-tabitemleft-disabled.png");
+  --ctl-tabitemtop-selected: url("../../assets/xp/controls/olive-tabitemtop-selected.png");
+  --ctl-tabitemtopleft-selected: url("../../assets/xp/controls/olive-tabitemtopleft-selected.png");
+  --ctl-tabpaneedge-normal: url("../../assets/xp/controls/olive-tabpaneedge-normal.png");
+  --ctl-combobutton-normal: url("../../assets/xp/controls/olive-combobutton-normal.png");
+  --ctl-combobutton-hot: url("../../assets/xp/controls/olive-combobutton-hot.png");
+  --ctl-combobutton-pressed: url("../../assets/xp/controls/olive-combobutton-pressed.png");
+  --ctl-combobutton-disabled: url("../../assets/xp/controls/olive-combobutton-disabled.png");
+  --ctl-combobuttonglyph-normal: url("../../assets/xp/controls/olive-combobuttonglyph-normal.png");
+  --ctl-combobuttonglyph-hot: url("../../assets/xp/controls/olive-combobuttonglyph-hot.png");
+  --ctl-combobuttonglyph-pressed: url("../../assets/xp/controls/olive-combobuttonglyph-pressed.png");
+  --ctl-combobuttonglyph-disabled: url("../../assets/xp/controls/olive-combobuttonglyph-disabled.png");
+}
+
+html[data-xp-appearance="silver"] {
+  --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-normal.png");
+  --ctl-spinbuttonbackgroundup-hot: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-hot.png");
+  --ctl-spinbuttonbackgroundup-pressed: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-pressed.png");
+  --ctl-spinbuttonbackgroundup-disabled: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-disabled.png");
+  --ctl-spinbuttonbackgrounddown-normal: url("../../assets/xp/controls/silver-spinbuttonbackgrounddown-normal.png");
+  --ctl-spinbuttonbackgrounddown-hot: url("../../assets/xp/controls/silver-spinbuttonbackgrounddown-hot.png");
+  --ctl-spinbuttonbackgrounddown-pressed: url("../../assets/xp/controls/silver-spinbuttonbackgrounddown-pressed.png");
+  --ctl-spinbuttonbackgrounddown-disabled: url("../../assets/xp/controls/silver-spinbuttonbackgrounddown-disabled.png");
+  --ctl-spinupglyph-normal: url("../../assets/xp/controls/silver-spinupglyph-normal.png");
+  --ctl-spinupglyph-hot: url("../../assets/xp/controls/silver-spinupglyph-hot.png");
+  --ctl-spinupglyph-pressed: url("../../assets/xp/controls/silver-spinupglyph-pressed.png");
+  --ctl-spinupglyph-disabled: url("../../assets/xp/controls/silver-spinupglyph-disabled.png");
+  --ctl-spindownglyph-normal: url("../../assets/xp/controls/silver-spindownglyph-normal.png");
+  --ctl-spindownglyph-hot: url("../../assets/xp/controls/silver-spindownglyph-hot.png");
+  --ctl-spindownglyph-pressed: url("../../assets/xp/controls/silver-spindownglyph-pressed.png");
+  --ctl-spindownglyph-disabled: url("../../assets/xp/controls/silver-spindownglyph-disabled.png");
+  --ctl-button-normal: url("../../assets/xp/controls/silver-button-normal.png");
+  --ctl-button-hot: url("../../assets/xp/controls/silver-button-hot.png");
+  --ctl-button-pressed: url("../../assets/xp/controls/silver-button-pressed.png");
+  --ctl-button-disabled: url("../../assets/xp/controls/silver-button-disabled.png");
+  --ctl-button-default: url("../../assets/xp/controls/silver-button-default.png");
+  --ctl-checkbox13-unchecked-normal: url("../../assets/xp/controls/silver-checkbox13-unchecked-normal.png");
+  --ctl-checkbox13-unchecked-hot: url("../../assets/xp/controls/silver-checkbox13-unchecked-hot.png");
+  --ctl-checkbox13-unchecked-pressed: url("../../assets/xp/controls/silver-checkbox13-unchecked-pressed.png");
+  --ctl-checkbox13-unchecked-disabled: url("../../assets/xp/controls/silver-checkbox13-unchecked-disabled.png");
+  --ctl-checkbox13-checked-normal: url("../../assets/xp/controls/silver-checkbox13-checked-normal.png");
+  --ctl-checkbox13-checked-hot: url("../../assets/xp/controls/silver-checkbox13-checked-hot.png");
+  --ctl-checkbox13-checked-pressed: url("../../assets/xp/controls/silver-checkbox13-checked-pressed.png");
+  --ctl-checkbox13-checked-disabled: url("../../assets/xp/controls/silver-checkbox13-checked-disabled.png");
+  --ctl-checkbox13-mixed-normal: url("../../assets/xp/controls/silver-checkbox13-mixed-normal.png");
+  --ctl-checkbox13-mixed-hot: url("../../assets/xp/controls/silver-checkbox13-mixed-hot.png");
+  --ctl-checkbox13-mixed-pressed: url("../../assets/xp/controls/silver-checkbox13-mixed-pressed.png");
+  --ctl-checkbox13-mixed-disabled: url("../../assets/xp/controls/silver-checkbox13-mixed-disabled.png");
+  --ctl-radiobutton13-unchecked-normal: url("../../assets/xp/controls/silver-radiobutton13-unchecked-normal.png");
+  --ctl-radiobutton13-unchecked-hot: url("../../assets/xp/controls/silver-radiobutton13-unchecked-hot.png");
+  --ctl-radiobutton13-unchecked-pressed: url("../../assets/xp/controls/silver-radiobutton13-unchecked-pressed.png");
+  --ctl-radiobutton13-unchecked-disabled: url("../../assets/xp/controls/silver-radiobutton13-unchecked-disabled.png");
+  --ctl-radiobutton13-checked-normal: url("../../assets/xp/controls/silver-radiobutton13-checked-normal.png");
+  --ctl-radiobutton13-checked-hot: url("../../assets/xp/controls/silver-radiobutton13-checked-hot.png");
+  --ctl-radiobutton13-checked-pressed: url("../../assets/xp/controls/silver-radiobutton13-checked-pressed.png");
+  --ctl-radiobutton13-checked-disabled: url("../../assets/xp/controls/silver-radiobutton13-checked-disabled.png");
+  --ctl-groupbox-normal: url("../../assets/xp/controls/silver-groupbox-normal.png");
+  --ctl-tabitem-normal: url("../../assets/xp/controls/silver-tabitem-normal.png");
+  --ctl-tabitem-hot: url("../../assets/xp/controls/silver-tabitem-hot.png");
+  --ctl-tabitem-disabled: url("../../assets/xp/controls/silver-tabitem-disabled.png");
+  --ctl-tabitemleft-normal: url("../../assets/xp/controls/silver-tabitemleft-normal.png");
+  --ctl-tabitemleft-hot: url("../../assets/xp/controls/silver-tabitemleft-hot.png");
+  --ctl-tabitemleft-disabled: url("../../assets/xp/controls/silver-tabitemleft-disabled.png");
+  --ctl-tabitemtop-selected: url("../../assets/xp/controls/silver-tabitemtop-selected.png");
+  --ctl-tabitemtopleft-selected: url("../../assets/xp/controls/silver-tabitemtopleft-selected.png");
+  --ctl-tabpaneedge-normal: url("../../assets/xp/controls/silver-tabpaneedge-normal.png");
+  --ctl-combobutton-normal: url("../../assets/xp/controls/silver-combobutton-normal.png");
+  --ctl-combobutton-hot: url("../../assets/xp/controls/silver-combobutton-hot.png");
+  --ctl-combobutton-pressed: url("../../assets/xp/controls/silver-combobutton-pressed.png");
+  --ctl-combobutton-disabled: url("../../assets/xp/controls/silver-combobutton-disabled.png");
+  --ctl-combobuttonglyph-normal: url("../../assets/xp/controls/silver-combobuttonglyph-normal.png");
+  --ctl-combobuttonglyph-hot: url("../../assets/xp/controls/silver-combobuttonglyph-hot.png");
+  --ctl-combobuttonglyph-pressed: url("../../assets/xp/controls/silver-combobuttonglyph-pressed.png");
+  --ctl-combobuttonglyph-disabled: url("../../assets/xp/controls/silver-combobuttonglyph-disabled.png");
+}
+
+/* Zero specificity, so dialogs can still position their buttons. */
+:where(html:not([data-xp-appearance="classic"]) .xp-btn) {
+  position: relative;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn {
+  isolation: isolate;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #000;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-style: solid;
+  border-width: 9px 8px;
+  border-image: var(--ctl-button-normal) 9 8 fill / 9px 8px stretch;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn.default::before,
+html:not([data-xp-appearance="classic"]) .xp-btn:focus-visible::before {
+  border-image-source: var(--ctl-button-default);
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn:hover:not(:disabled)::before {
+  border-image-source: var(--ctl-button-hot);
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn:active:not(:disabled)::before {
+  border-image-source: var(--ctl-button-pressed);
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn:disabled {
+  background: none;
+  color: #a1a192;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-btn:disabled::before {
+  border-image-source: var(--ctl-button-disabled);
+}
+
+html:not([data-xp-appearance="classic"]) .xp-window input[type="checkbox"],
+html:not([data-xp-appearance="classic"]) .xp-window input[type="radio"] {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: var(--ctl-checkbox13-unchecked-normal) 0 0 / 13px 13px no-repeat;
+  box-shadow: none;
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]::after,
+html:not([data-xp-appearance="classic"]) .xp-window input[type="radio"]::after {
+  content: none;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-window input[type="checkbox"] {
+  background-image: var(--ctl-checkbox13-unchecked-normal);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:hover {
+  background-image: var(--ctl-checkbox13-unchecked-hot);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:active {
+  background-image: var(--ctl-checkbox13-unchecked-pressed);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:disabled {
+  background-image: var(--ctl-checkbox13-unchecked-disabled);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:checked {
+  background-image: var(--ctl-checkbox13-checked-normal);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:checked:hover {
+  background-image: var(--ctl-checkbox13-checked-hot);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:checked:active {
+  background-image: var(--ctl-checkbox13-checked-pressed);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:checked:disabled {
+  background-image: var(--ctl-checkbox13-checked-disabled);
+}
+
+html:not([data-xp-appearance="classic"]) .xp-window input[type="radio"] {
+  background-image: var(--ctl-radiobutton13-unchecked-normal);
+}
+html:not([data-xp-appearance="classic"]) .xp-window input[type="radio"]:hover {
+  background-image: var(--ctl-radiobutton13-unchecked-hot);
+}
+html:not([data-xp-appearance="classic"]) .xp-window input[type="radio"]:active {
+  background-image: var(--ctl-radiobutton13-unchecked-pressed);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="radio"]:disabled {
+  background-image: var(--ctl-radiobutton13-unchecked-disabled);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="radio"]:checked {
+  background-image: var(--ctl-radiobutton13-checked-normal);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="radio"]:checked:hover {
+  background-image: var(--ctl-radiobutton13-checked-hot);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="radio"]:checked:active {
+  background-image: var(--ctl-radiobutton13-checked-pressed);
+}
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="radio"]:checked:disabled {
+  background-image: var(--ctl-radiobutton13-checked-disabled);
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="checkbox"]:indeterminate {
+  background-image: var(--ctl-checkbox13-mixed-normal);
+}
+
+/* Group boxes: tiled 4px Luna edges and the theme's blue caption. */
+html:not([data-xp-appearance="classic"]) .taskbar-properties-group,
+html:not([data-xp-appearance="classic"]) .xp-window .dlg-group {
+  border-style: solid;
+  border-width: 1px;
+  border-image: var(--ctl-groupbox-normal) 4 / 4px round;
+}
+
+html:not([data-xp-appearance="classic"]) .taskbar-properties-legend,
+html:not([data-xp-appearance="classic"]) .xp-window .dlg-group > legend {
+  color: #0046d5;
+}
+
+/* Tabs: unselected tabs from TabItem, the selected tab from TopTabItem with
+   its orange highlight, and the page from TabPaneEdge. */
+html:not([data-xp-appearance="classic"]) .xp-window [role="tablist"] > button {
+  border-color: transparent;
+  border-image: var(--ctl-tabitem-normal) 6 fill / 6px stretch;
+  background: none;
+  box-shadow: none;
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button:first-child {
+  border-image-source: var(--ctl-tabitemleft-normal);
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button:hover {
+  border-image-source: var(--ctl-tabitem-hot);
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button:first-child:hover {
+  border-image-source: var(--ctl-tabitemleft-hot);
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button[aria-selected="true"],
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button.active {
+  border-image-source: var(--ctl-tabitemtop-selected);
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button:first-child[aria-selected="true"],
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  [role="tablist"]
+  > button:first-child.active {
+  border-image-source: var(--ctl-tabitemtopleft-selected);
+}
+
+html:not([data-xp-appearance="classic"]) .taskbar-properties-panel,
+html:not([data-xp-appearance="classic"]) .datetime-panel-host {
+  border-image: var(--ctl-tabpaneedge-normal) 2 4 4 2 fill / 2px 4px 4px 2px
+    stretch;
+  background: none;
+  box-shadow: none;
+}
+
+/* Combo boxes: a 1px #7f9db9 field with the Luna drop-down button. */
+html:not([data-xp-appearance="classic"]) .xp-window select {
+  appearance: none;
+  border: 1px solid #7f9db9;
+  border-radius: 0;
+  padding-right: 20px;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  background:
+    var(--ctl-combobuttonglyph-normal) right 4px center / 10px 7px no-repeat,
+    var(--ctl-combobutton-normal) right 0 top 0 / 17px 100% no-repeat,
+    #fff;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-window select:hover {
+  background:
+    var(--ctl-combobuttonglyph-hot) right 4px center / 10px 7px no-repeat,
+    var(--ctl-combobutton-hot) right 0 top 0 / 17px 100% no-repeat,
+    #fff;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-window select:disabled {
+  background:
+    var(--ctl-combobuttonglyph-disabled) right 4px center / 10px 7px no-repeat,
+    var(--ctl-combobutton-disabled) right 0 top 0 / 17px 100% no-repeat,
+    #fff;
+}
+
+/* Up-down controls: Luna spin halves with their glyphs. A filled border
+   image would paint over the glyph, so the face is a stretched background
+   under the glyph and the border image draws only the edges. */
+html:not([data-xp-appearance="classic"]) .datetime-spinner button {
+  --spin-face: var(--ctl-spinbuttonbackgroundup-normal);
+  --spin-glyph: var(--ctl-spinupglyph-normal);
+  border: 0;
+  border-image: var(--spin-face) 4 / 4px stretch;
+  background:
+    var(--spin-glyph) center / 7px 6px no-repeat,
+    var(--spin-face) 0 0 / 100% 100% no-repeat;
+  color: transparent;
+}
+
+html:not([data-xp-appearance="classic"]) .datetime-spinner button:hover {
+  --spin-face: var(--ctl-spinbuttonbackgroundup-hot);
+}
+
+html:not([data-xp-appearance="classic"]) .datetime-spinner button:active {
+  --spin-face: var(--ctl-spinbuttonbackgroundup-pressed);
+}
+
+html:not([data-xp-appearance="classic"]) .datetime-spinner button + button {
+  --spin-face: var(--ctl-spinbuttonbackgrounddown-normal);
+  --spin-glyph: var(--ctl-spindownglyph-normal);
+}
+
+html:not([data-xp-appearance="classic"])
+  .datetime-spinner
+  button
+  + button:hover {
+  --spin-face: var(--ctl-spinbuttonbackgrounddown-hot);
+}
+
+html:not([data-xp-appearance="classic"])
+  .datetime-spinner
+  button
+  + button:active {
+  --spin-face: var(--ctl-spinbuttonbackgrounddown-pressed);
+}
+
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  input[type="number"]::-webkit-inner-spin-button {
+  width: 15px;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  opacity: 1;
+  background:
+    var(--ctl-spinupglyph-normal) center 25% / 7px 6px no-repeat,
+    var(--ctl-spindownglyph-normal) center 75% / 7px 6px no-repeat,
+    var(--ctl-spinbuttonbackgroundup-normal) 0 0 / 15px 50% no-repeat,
+    var(--ctl-spinbuttonbackgrounddown-normal) 0 100% / 15px 50% no-repeat;
+}

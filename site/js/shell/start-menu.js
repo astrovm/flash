@@ -141,8 +141,9 @@ const openRunDialog = () => {
   const run = () => {
     const resolved = resolveShellCommand(input.value);
     if (!resolved || resolved.run() === false) {
-      status.textContent = `Windows cannot find "${input.value}". Make sure you typed the name correctly, and then try again.`;
-      XPDialogs.alert(status.textContent, "Run", "error");
+      // XP titles this error with the command that could not be found.
+      status.textContent = `Windows cannot find '${input.value}'. Make sure you typed the name correctly, and then try again. To search for a file, click the Start button, and then click Search.`;
+      XPDialogs.alert(status.textContent, input.value, "error");
       return;
     }
     rememberRunCommand(input.value);
@@ -311,7 +312,10 @@ const getControlPanelMenu = () => [
 
 const openCustomizeStartMenu = () => {
   const options = getStartMenuOptions();
-  const dialog = XPDialogs.createDialog({ title: "Customize Start Menu" });
+  const dialog = XPDialogs.createDialog({
+    title: "Customize Start Menu",
+    help: true,
+  });
   dialog.el.classList.add(
     "taskbar-properties-dialog",
     "customize-start-menu-dialog",
@@ -443,6 +447,7 @@ const openCustomizeClassicStartMenu = () => {
   const options = getStartMenuOptions();
   const dialog = XPDialogs.createDialog({
     title: "Customize Classic Start Menu",
+    help: true,
   });
   dialog.el.classList.add(
     "taskbar-properties-dialog",

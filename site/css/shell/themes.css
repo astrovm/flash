@@ -14,6 +14,19 @@ html[data-xp-appearance="classic"] .xp-window {
     inset -1px -1px #808080;
 }
 
+html[data-xp-appearance="classic"] .xp-window::after,
+html[data-xp-appearance="classic"] .title-bar::before {
+  display: none;
+}
+
+html[data-xp-appearance="classic"] .title-bar {
+  color: #d4d0c8;
+}
+
+html[data-xp-appearance="classic"] .xp-window.active .title-bar {
+  color: #fff;
+}
+
 html[data-xp-appearance="classic"] .xp-window.active {
   box-shadow:
     inset 1px 1px #fff,

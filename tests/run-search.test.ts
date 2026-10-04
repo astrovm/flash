@@ -61,9 +61,17 @@ test("Run resolves filesystem paths and reports unknown commands without recordi
   ).toBe(fs.getPath(folder.id));
   await run(s, "unknown synthetic program");
   expect(s.document.querySelectorAll(".xp-dialog").length).toBe(2);
-  expect(s.document.body.textContent).toContain(
-    'Windows cannot find "unknown synthetic program"',
+  const error = [...s.document.querySelectorAll(".xp-dialog")].at(-1);
+  expect(error.querySelector(".title-text").textContent).toBe(
+    "unknown synthetic program",
   );
+  expect(error.textContent).toContain(
+    "Windows cannot find 'unknown synthetic program'. Make sure you typed the name correctly, and then try again. To search for a file, click the Start button, and then click Search.",
+  );
+  expect(
+    s.document.querySelectorAll(".xp-dialog")[0].classList.contains("active"),
+  ).toBeFalse();
+  expect(error.classList.contains("active")).toBeTrue();
   expect(JSON.parse(s.window.localStorage.getItem("runHistory"))).toEqual([
     fs.getPath(folder.id),
   ]);
