@@ -27,6 +27,10 @@ color handling, and JPEG capture compression can differ from the VM. These
 captures support the layout and behavior corrections, not a claim of identical
 pixels across platforms.
 
+Files are named `xp-<scheme>-<size>.png` for the VM and
+`app-<scheme>-<size>.jpg` for the app. `xp-blue-selected-1024x768.png` and
+`xp-blue-menu-1024x768.png` show a selected icon and the desktop menu.
+
 ## Corrections
 
 - Stretch wallpaper across the monitor, including the area behind the taskbar.
