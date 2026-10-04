@@ -78,12 +78,22 @@ test("Explorer typeahead cycles matching items and keyboard shortcuts act on the
 
   h.item(h.other.id).click();
   h.surface().focus();
-  s.window.prompt = () => null;
+  const rename = (value) => {
+    const input = s.document.querySelector(".explorer-rename");
+    if (value !== null) input.value = value;
+    input.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", {
+        key: value === null ? "Escape" : "Enter",
+        bubbles: true,
+      }),
+    );
+  };
   press(s, h.surface(), "F2");
+  rename(null);
   await settle();
   expect(fs.getNode(h.other.id).name).toBe("other.txt");
-  s.window.prompt = () => "renamed.txt";
   press(s, h.surface(), "F2");
+  rename("renamed.txt");
   await settle();
   expect(fs.getNode(h.other.id).name).toBe("renamed.txt");
 

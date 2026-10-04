@@ -1936,6 +1936,26 @@
       "height": 32,
       "bitDepth": 32,
       "output": "site/assets/xp/icons/Desktop.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 240,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Delete.png"
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 14,
+      "resourceId": 242,
+      "width": 16,
+      "height": 16,
+      "bitDepth": 32,
+      "output": "site/assets/xp/icons/Rename.png"
     }
   ],
   "resourceBitmaps": [
@@ -9529,6 +9549,588 @@
         "top": 21,
         "width": 10,
         "height": 7
+      }
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 214,
+      "output": "site/assets/xp/explorer/toolbar-back.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 214,
+      "output": "site/assets/xp/explorer/toolbar-forward.png",
+      "crop": {
+        "left": 24,
+        "top": 0,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 214,
+      "output": "site/assets/xp/explorer/toolbar-search.png",
+      "crop": {
+        "left": 408,
+        "top": 0,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 214,
+      "output": "site/assets/xp/explorer/toolbar-up.png",
+      "crop": {
+        "left": 672,
+        "top": 0,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 214,
+      "output": "site/assets/xp/explorer/toolbar-views.png",
+      "crop": {
+        "left": 768,
+        "top": 0,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "member": "SHELL32.DL_",
+      "expandedName": "shell32.dll",
+      "resourceType": 2,
+      "resourceId": 214,
+      "output": "site/assets/xp/explorer/toolbar-folders.png",
+      "crop": {
+        "left": 1032,
+        "top": 0,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-collapse-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-collapse-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-collapse-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-expand-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-expand-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-expand-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-special-collapse-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-special-collapse-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-special-collapse-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-special-expand-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-special-expand-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/blue-special-expand-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-collapse-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-collapse-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-collapse-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-expand-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-expand-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-expand-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-special-collapse-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-special-collapse-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-special-collapse-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-special-expand-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-special-expand-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/olive-special-expand-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-collapse-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-collapse-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_NORMALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-collapse-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-expand-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-expand-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_NORMALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-expand-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-special-collapse-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-special-collapse-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SPECIALGROUPCOLLAPSE_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-special-collapse-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-special-expand-normal.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-special-expand-hot.png",
+      "crop": {
+        "left": 0,
+        "top": 19,
+        "width": 19,
+        "height": 19
+      }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_SPECIALGROUPEXPAND_BMP",
+      "transparentColor": [255, 0, 255],
+      "output": "site/assets/xp/explorer/silver-special-expand-pressed.png",
+      "crop": {
+        "left": 0,
+        "top": 38,
+        "width": 19,
+        "height": 19
       }
     }
   ],

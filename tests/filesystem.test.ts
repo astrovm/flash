@@ -45,7 +45,7 @@ describe("virtual filesystem", () => {
     expect(fs.getNode(fs.RECYCLE_BIN), "Recycle Bin exists").toBeTruthy();
     expect(fs.getChildren(fs.MY_COMPUTER).length).toBe(3);
     expect(fs.getNode(fs.DRIVE_D).name).toBe("Local Disk (D:)");
-    expect(fs.getNode(fs.DRIVE_F).name).toBe("Removable Device (F:)");
+    expect(fs.getNode(fs.DRIVE_F).name).toBe("Removable Disk (F:)");
   });
 
   test("converts between Windows paths and nodes", () => {

@@ -3,7 +3,6 @@ export const createSystemRuntime = (context) => {
     XPDialogs,
     XP_ICON_PATHS,
     closeGameWindow,
-    confirmEmptyRecycleBin,
     confirmRecycleDelete,
     explorerBack,
     explorerForward,
@@ -13,8 +12,6 @@ export const createSystemRuntime = (context) => {
     openAboutWindows,
     openControlPanel,
     openDateTimeProperties,
-
-    openProjectSettings,
 
     openSearchDialog,
     openShellProperties,
@@ -26,7 +23,9 @@ export const createSystemRuntime = (context) => {
     renderExplorerTree,
     renderTaskButtons,
     selectedExplorerNodes,
+    renderExplorerSelection,
     setAccessKeyText,
+    startExplorerRename,
     wireProjectSettings,
   } = context;
 
@@ -40,12 +39,12 @@ export const createSystemRuntime = (context) => {
         <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
       </div>
       <div class="explorer-toolbar">
-        <button type="button" disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-        <button type="button" disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-        <button type="button" disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+        <button type="button" disabled><img src="assets/xp/explorer/toolbar-back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" disabled aria-label="Forward"><img src="assets/xp/explorer/toolbar-forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+        <button type="button" disabled aria-label="Up"><img src="assets/xp/explorer/toolbar-up.png" alt=""></button>
         <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-        <button type="button" data-control-panel-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+        <button type="button" data-control-panel-action="search"><img src="assets/xp/explorer/toolbar-search.png" alt=""> Search</button>
+        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/explorer/toolbar-folders.png" alt=""> Folders</button>
         <span class="explorer-toolbar-separator" aria-hidden="true"></span>
 
       </div>
@@ -507,14 +506,14 @@ export const createSystemRuntime = (context) => {
                     <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
                 </div>
                 <div class="explorer-toolbar">
-                    <button disabled><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-                    <button disabled aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-                    <button disabled aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+                    <button disabled><img src="assets/xp/explorer/toolbar-back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button disabled aria-label="Forward"><img src="assets/xp/explorer/toolbar-forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button disabled aria-label="Up"><img src="assets/xp/explorer/toolbar-up.png" alt=""></button>
                     <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-                    <button class="search-toolbar-active"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-                    <button><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+                    <button class="search-toolbar-active"><img src="assets/xp/explorer/toolbar-search.png" alt=""> Search</button>
+                    <button><img src="assets/xp/explorer/toolbar-folders.png" alt=""> Folders</button>
                     <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-                    <button aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+                    <button aria-label="Views"><img src="assets/xp/explorer/toolbar-views.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
                 </div>
                 <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/Search.png" alt=""><input type="text" aria-label="Address" value="Search Results" readonly></span><button type="button" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
             </div>
@@ -579,128 +578,28 @@ export const createSystemRuntime = (context) => {
       const tasksBody = document.createElement("div");
       tasksBody.className = "explorer-section-body";
       tasksSection.append(tasksTitle, tasksBody);
-      const appendSidebarAction = (
-        container,
-        label,
-        icon,
-        onClick,
-        place = "",
-      ) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        if (place) button.dataset.place = place;
-        const image = document.createElement("img");
-        image.src = XP_ICON_PATHS[icon];
-        image.alt = "";
-        const text = document.createElement("span");
-        text.textContent = label;
-        button.append(image, text);
-        button.addEventListener("click", onClick);
-        container.appendChild(button);
-        return button;
+      // Explorer fills in the tasks for the folder being shown.
+
+      const sidebarSection = (className, title) => {
+        const section = document.createElement("section");
+        section.className = className;
+        section.innerHTML = `<h3><button type="button" class="explorer-section-toggle" aria-expanded="true">${title}<span aria-hidden="true">⌃</span></button></h3>`;
+        const body = document.createElement("div");
+        body.className = "explorer-section-body";
+        section.appendChild(body);
+        return section;
       };
+      // Explorer fills these in for the folder being shown.
+      const placesSection = sidebarSection(
+        "explorer-places-section",
+        "Other Places",
+      );
+      const detailsSection = sidebarSection(
+        "explorer-details-section",
+        "Details",
+      );
 
-      if (shortcutId === "__recycle-bin") {
-        const emptyBin = document.createElement("button");
-        emptyBin.type = "button";
-        emptyBin.className = "recycle-task";
-        emptyBin.textContent = "Empty Recycle Bin";
-        emptyBin.addEventListener("click", confirmEmptyRecycleBin);
-
-        const restoreAll = document.createElement("button");
-        restoreAll.type = "button";
-        restoreAll.className = "recycle-task";
-        restoreAll.textContent = "Restore all items";
-        restoreAll.addEventListener("click", async () => {
-          try {
-            await fileOps.restore(
-              fs.getChildren(fs.RECYCLE_BIN).map((node) => node.id),
-            );
-          } catch (error) {
-            await XPDialogs.alert(
-              error.message || "The file operation failed.",
-              "Restore files",
-              "error",
-            );
-          }
-        });
-
-        tasksBody.append(emptyBin, restoreAll);
-        const restoreSelected = document.createElement("button");
-        restoreSelected.type = "button";
-        restoreSelected.className = "recycle-task";
-        restoreSelected.textContent = "Restore selected items";
-        restoreSelected.addEventListener("click", async () => {
-          try {
-            const ids = selectedExplorerNodes(win);
-            if (ids.length) await fileOps.restore(ids);
-          } catch (error) {
-            await XPDialogs.alert(
-              error.message || "The file operation failed.",
-              "File operation",
-              "error",
-            );
-          }
-        });
-        const deleteSelected = document.createElement("button");
-        deleteSelected.type = "button";
-        deleteSelected.className = "recycle-task";
-        deleteSelected.textContent = "Delete selected items";
-        deleteSelected.addEventListener("click", () => {
-          const ids = selectedExplorerNodes(win);
-          if (!ids.length) return;
-          XPDialogs.confirm(
-            "Are you sure you want to permanently delete the selected items?",
-            "Confirm File Delete",
-            "warning",
-          ).then(async (yes) => yes && (await fileOps.permanentlyDelete(ids)));
-        });
-        tasksBody.append(restoreSelected, deleteSelected);
-      } else {
-        [
-          [
-            "View System Information",
-            "ExplorerProperties.png",
-            openProjectSettings,
-          ],
-          ["Add or remove programs", "AddRemovePrograms.png", openControlPanel],
-          ["Change a setting", "ControlPanel.png", openControlPanel],
-        ].forEach(([label, icon, action]) =>
-          appendSidebarAction(tasksBody, label, icon, action),
-        );
-      }
-
-      const placesSection = document.createElement("section");
-      placesSection.innerHTML =
-        '<h3><button type="button" class="explorer-section-toggle" aria-expanded="true">Other Places<span aria-hidden="true">⌃</span></button></h3>';
-      const placesBody = document.createElement("div");
-      placesBody.className = "explorer-section-body";
-      {
-        appendSidebarAction(
-          placesBody,
-          "My Computer",
-          "MyComputer.png",
-          () => navigateExplorer(win, fs.MY_COMPUTER),
-          "computer",
-        );
-        appendSidebarAction(
-          placesBody,
-          "My Documents",
-          "MyDocuments.png",
-          () => navigateExplorer(win, fs.MY_DOCUMENTS),
-          "documents",
-        );
-        appendSidebarAction(
-          placesBody,
-          "Control Panel",
-          "ControlPanel.png",
-          openControlPanel,
-          "control-panel",
-        );
-      }
-      placesSection.appendChild(placesBody);
-
-      sidebar.append(tasksSection, placesSection);
+      sidebar.append(tasksSection, placesSection, detailsSection);
       const treeSection = document.createElement("section");
       treeSection.className = "explorer-tree-section";
       treeSection.innerHTML = "<h3>Folders</h3>";
@@ -729,9 +628,14 @@ export const createSystemRuntime = (context) => {
       items.className = "explorer-items";
       items.tabIndex = 0;
       main.appendChild(items);
+      // Clicking empty space clears the selection, like XP.
       main.addEventListener("pointerdown", (event) => {
         if (!event.target.closest(".explorer-item")) {
           items.focus({ preventScroll: true });
+          items
+            .querySelectorAll(".explorer-item.selected")
+            .forEach((item) => item.classList.remove("selected"));
+          renderExplorerSelection(win);
         }
       });
 
@@ -743,14 +647,14 @@ export const createSystemRuntime = (context) => {
             <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
         </div>
         <div class="explorer-toolbar">
-            <button data-explorer-action="back"><img src="assets/xp/icons/Back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-            <button data-explorer-action="forward" aria-label="Forward"><img src="assets/xp/icons/Forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-            <button data-explorer-action="up" aria-label="Up"><img src="assets/xp/icons/Up.png" alt=""></button>
+            <button data-explorer-action="back"><img src="assets/xp/explorer/toolbar-back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="forward" aria-label="Forward"><img src="assets/xp/explorer/toolbar-forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="up" aria-label="Up"><img src="assets/xp/explorer/toolbar-up.png" alt=""></button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-            <button data-explorer-action="search"><img src="assets/xp/icons/Search.png" alt=""> Search</button>
-            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/icons/NewFolder.png" alt=""> Folders</button>
+            <button data-explorer-action="search"><img src="assets/xp/explorer/toolbar-search.png" alt=""> Search</button>
+            <button data-explorer-action="folders" aria-pressed="false"><img src="assets/xp/explorer/toolbar-folders.png" alt=""> Folders</button>
             <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
+            <button data-explorer-action="view" aria-label="Views"><img src="assets/xp/explorer/toolbar-views.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
         </div>
         <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/MyComputer.png" alt=""><input type="text" aria-label="Address"></span><button type="button" data-explorer-action="go" aria-label="Go"><img src="assets/xp/icons/Go.png" alt=""></button></label>
     `;
@@ -1045,13 +949,7 @@ export const createSystemRuntime = (context) => {
                 "Windows Explorer",
                 "info",
               );
-            if (command === "rename") {
-              const name = window.prompt(
-                "Rename",
-                fs.getNode(selected[0]).name,
-              );
-              if (name !== null) await fileOps.rename(selected[0], name);
-            }
+            if (command === "rename") startExplorerRename(win, selected[0]);
             if (
               ["thumbnails", "tiles", "icons", "list", "details"].includes(
                 command,

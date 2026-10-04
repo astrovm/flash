@@ -67,6 +67,21 @@ async function openDocuments(options) {
   };
 }
 
+// Inline rename: the label becomes an edit box; Enter commits, Escape cancels.
+const finishRename = (s, value) => {
+  const input = s.document.querySelector(".explorer-rename");
+  if (value === null) {
+    input.dispatchEvent(
+      new s.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    return;
+  }
+  input.value = value;
+  input.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+  );
+};
+
 test("Explorer menus run file, edit, view and go-to commands", async () => {
   const h = await openDocuments(),
     { s, fs } = h;
@@ -95,12 +110,14 @@ test("Explorer menus run file, edit, view and go-to commands", async () => {
   await h.command("cut");
   expect(s.window.FileOperations.getClipboard().mode).toBe("cut");
   h.menu("file");
-  s.window.prompt = () => null;
   await h.command("rename");
+  finishRename(s, null);
+  await settle();
   expect(fs.getNode(h.note.id).name).toBe("note.txt");
   h.menu("file");
-  s.window.prompt = () => "memo.txt";
   await h.command("rename");
+  finishRename(s, "memo.txt");
+  await settle();
   expect(fs.getNode(h.note.id).name).toBe("memo.txt");
   h.item(h.note.id).click();
   h.menu("file");
@@ -124,7 +141,7 @@ test("Explorer menus run file, edit, view and go-to commands", async () => {
   h.menu("view");
   await h.command("go-to");
   await h.subcommand("up-one-level");
-  expect(h.address().value).toBe(fs.getPath(fs.MY_DOCUMENTS));
+  expect(h.address().value).toBe("My Documents");
   h.menu("view");
   await h.command("go-to");
   await h.subcommand("my-computer");
@@ -160,7 +177,7 @@ test("Explorer toolbar, address bar, tree, and task panes navigate folders", asy
   h.address().dispatchEvent(new s.window.Event("change"));
   expect(h.address().value).toBe("My Computer");
   await h.action("up");
-  expect(h.address().value).toBe(fs.getPath(fs.DESKTOP));
+  expect(h.address().value).toBe("Desktop");
 
   const toggles = [...h.win.querySelectorAll(".explorer-section-toggle")];
   toggles[0].click();
@@ -170,7 +187,7 @@ test("Explorer toolbar, address bar, tree, and task panes navigate folders", asy
   h.win.querySelector('.explorer-sidebar [data-place="computer"]').click();
   expect(h.address().value).toBe("My Computer");
   h.win.querySelector('.explorer-sidebar [data-place="documents"]').click();
-  expect(h.address().value).toBe(fs.getPath(fs.MY_DOCUMENTS));
+  expect(h.address().value).toBe("My Documents");
 
   const tree = () => [...h.win.querySelectorAll(".explorer-tree-item")];
   const row = (id) => tree().find((entry) => entry.dataset.nodeId === id);
@@ -209,41 +226,41 @@ test("Recycle Bin tasks restore and delete selected items", async () => {
   await settle();
   const win = s.document.querySelector('.xp-window[data-game="__recycle-bin"]');
   const task = (label) =>
-    [...win.querySelectorAll(".recycle-task")].find(
-      (button) => button.textContent === label,
-    );
+    [
+      ...win.querySelectorAll(".explorer-sidebar > section:first-child button"),
+    ].find((button) => button.textContent === label);
   const item = (id) =>
     win.querySelector(`.explorer-item[data-node-id="${id}"]`);
-  task("Restore selected items").click();
-  task("Delete selected items").click();
-  await settle();
-  expect(s.document.querySelector(".xp-dialog")).toBeFalsy();
+  expect(task("Empty the Recycle Bin")).toBeTruthy();
+  expect(task("Restore this item")).toBeUndefined();
   item(files[0].id).click();
-  task("Restore selected items").click();
+  task("Restore this item").click();
   await settle();
   expect(fs.getNode(files[0].id).parent).toBe(fs.DESKTOP);
   item(files[1].id).click();
-  task("Delete selected items").click();
-  await answer(s, "yes");
-  expect(fs.getNode(files[1].id)).toBeNull();
+  item(files[2].id).dispatchEvent(
+    new s.window.MouseEvent("click", { ctrlKey: true, bubbles: true }),
+  );
+  expect(task("Restore the selected items")).toBeTruthy();
 
   const restore = s.window.FileOperations.restore;
   s.window.FileOperations.restore = async () => {
     throw new Error("");
   };
   try {
-    item(files[2].id).click();
-    task("Restore selected items").click();
-    await settle();
-    expect(dialogText(s)).toContain("The file operation failed.");
-    await answer(s, "ok");
-    task("Restore all items").click();
+    task("Restore the selected items").click();
     await settle();
     expect(dialogText(s)).toContain("The file operation failed.");
     await answer(s, "ok");
     s.window.FileOperations.restore = async () => {
       throw new Error("The Desktop is full.");
     };
+    win
+      .querySelector(".explorer-main")
+      .dispatchEvent(
+        new s.window.PointerEvent("pointerdown", { bubbles: true }),
+      );
+    expect(win.querySelectorAll(".explorer-item.selected")).toHaveLength(0);
     task("Restore all items").click();
     await settle();
     expect(dialogText(s)).toContain("Restore files");
@@ -256,6 +273,9 @@ test("Recycle Bin tasks restore and delete selected items", async () => {
   task("Restore all items").click();
   await settle();
   expect(fs.getChildren(fs.RECYCLE_BIN)).toHaveLength(0);
+  expect(
+    win.querySelector(".explorer-sidebar > section:first-child").hidden,
+  ).toBeTrue();
 });
 
 test("Explorer context menus handle declined and failing commands and keyboard use", async () => {
@@ -278,9 +298,9 @@ test("Explorer context menus handle declined and failing commands and keyboard u
   expect(menu.isConnected).toBeFalse();
 
   menu = context(h.note.id);
-  s.window.prompt = () => null;
   menu.querySelector('[data-command="rename"]').click();
   await settle();
+  finishRename(s, null);
   expect(fs.getNode(h.note.id).name).toBe("note.txt");
   menu = context(h.note.id);
   menu.dispatchEvent(
@@ -393,21 +413,21 @@ test("Explorer rename shortcuts keep names on cancel and report failures", async
   const h = await openDocuments(),
     { s, fs } = h;
   const item = h.item(h.note.id);
-  s.window.prompt = () => null;
   item.dispatchEvent(
     new s.window.KeyboardEvent("keydown", { key: "F2", bubbles: true }),
   );
   await settle();
+  finishRename(s, null);
   expect(fs.getNode(h.note.id).name).toBe("note.txt");
   const rename = s.window.FileOperations.rename;
   s.window.FileOperations.rename = async () => {
     throw new Error("");
   };
-  s.window.prompt = () => "other.txt";
   try {
     h.item(h.note.id).dispatchEvent(
       new s.window.KeyboardEvent("keydown", { key: "F2", bubbles: true }),
     );
+    finishRename(s, "other.txt");
     await settle();
   } finally {
     s.window.FileOperations.rename = rename;
@@ -458,7 +478,7 @@ test("Explorer shows current folder properties and goes up from My Computer to t
   h.menu("view");
   await h.command("go-to");
   await h.subcommand("up-one-level");
-  expect(h.address().value).toBe(fs.getPath(fs.DESKTOP));
+  expect(h.address().value).toBe("Desktop");
   await h.action("up");
   expect(h.address().value).toBe(fs.getPath(fs.USER_PROFILE));
 });
@@ -554,7 +574,7 @@ test("Explorer Back and Forward keep the current folder when a history entry was
   await h.action("back");
   expect(h.address().value).toBe(fs.getPath(other.id));
   await h.action("back");
-  expect(h.address().value).toBe(fs.getPath(fs.MY_DOCUMENTS));
+  expect(h.address().value).toBe("My Documents");
   expect(
     h.win.querySelector('[data-explorer-action="back"]').disabled,
   ).toBeTrue();
