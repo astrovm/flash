@@ -1075,6 +1075,11 @@ const readTimeSync = () => {
 // lies under it. Positions come from a sine table scaled by 8000, rounded
 // the way GDI's MulDiv rounds.
 const CLOCK_SIZE = 148;
+const CLOCK_SHADOWS = {
+  blue: [172, 168, 153],
+  silver: [157, 157, 161],
+  classic: [128, 128, 128],
+};
 const CLOCK_CENTER = { x: 74, y: 73 };
 
 const clockPoint = (position, length) => {
@@ -1119,11 +1124,10 @@ const drawXpClockFace = (canvas, date) => {
   const plot = (x, y, color) => {
     image.data.set([...color, 255], (y * CLOCK_SIZE + x) * 4);
   };
-  // The shadow is the theme's 3D shadow color.
+  // The shadow is the scheme's 3D shadow color.
   const shadow =
-    document.documentElement.dataset.xpAppearance === "classic"
-      ? [128, 128, 128]
-      : [172, 168, 153];
+    CLOCK_SHADOWS[document.documentElement.dataset.xpAppearance] ||
+    CLOCK_SHADOWS.blue;
   const { x: centerX, y: centerY } = CLOCK_CENTER;
   for (let hour = 0; hour < 12; hour += 1) {
     const [dx, dy] = clockPoint(hour * 5, 62);

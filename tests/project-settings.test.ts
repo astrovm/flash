@@ -471,6 +471,13 @@ test("date and time properties restore the saved zone and synchronization", asyn
   expect(dialog.querySelector(".datetime-server-select").value).toBe(
     "time.windows.com",
   );
+  // Olive Green shares Blue's 3D shadow.
+  dialog.querySelector('[data-action="cancel"]').click();
+  s.document.documentElement.dataset.xpAppearance = "olive";
+  s.document
+    .getElementById("taskbar-clock")
+    .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  expect(s.document.querySelector(".datetime-dialog")).not.toBeNull();
 });
 
 test("date and time properties pick the host's zone by name, then by offset", async () => {

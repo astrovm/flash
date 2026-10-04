@@ -868,7 +868,7 @@ html:not([data-xp-appearance="classic"]) .display-panel {
   border: 1px solid #919b9c;
   border-bottom: 0;
   border-radius: 3px 3px 0 0;
-  background: #ece9d8;
+  background: var(--xp-beige);
   font: inherit;
 }
 
@@ -1032,7 +1032,7 @@ html:not([data-xp-appearance="classic"]) .display-panel {
 .advanced-appearance-preview {
   position: relative;
   height: 205px;
-  border: 9px solid #ece9d8;
+  border: 9px solid var(--xp-beige);
   background: #07579b;
   font-weight: 700;
 }
@@ -1067,7 +1067,7 @@ html:not([data-xp-appearance="classic"]) .display-panel {
   height: 21px;
   margin: -3px 0 0 2px;
   border: 1px solid #fff;
-  background: #ece9d8;
+  background: var(--xp-beige);
   color: #111;
   text-align: center;
 }
@@ -1080,7 +1080,7 @@ html:not([data-xp-appearance="classic"]) .display-panel {
   height: 23px;
   padding: 4px 6px;
   box-sizing: border-box;
-  background: #ece9d8;
+  background: var(--xp-beige);
   font-weight: 400;
 }
 
@@ -1106,7 +1106,7 @@ html:not([data-xp-appearance="classic"]) .display-panel {
   width: 275px;
   height: 74px;
   border: 3px solid #0757d5;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 
 .advanced-message strong {

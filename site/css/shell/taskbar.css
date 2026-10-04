@@ -385,7 +385,7 @@ html[data-xp-appearance="classic"] .task-button.needs-attention:not(.active) {
   height: 136px;
   gap: 4px;
   padding: 8px 7px 5px;
-  background: #ece9d8;
+  background: var(--xp-beige);
   border: 1px solid #aca899;
   border-top-color: #fff;
   border-left-color: #fff;
@@ -667,7 +667,7 @@ html[data-xp-appearance="silver"] {
   align-items: center;
 }
 .notification-customize-head {
-  background: #ece9d8;
+  background: var(--xp-beige);
   padding: 2px 10px;
   border-bottom: 1px solid #aca899;
 }

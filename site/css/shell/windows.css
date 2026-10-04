@@ -933,7 +933,7 @@ html:not(.keyboard-cues) .menu-accesskey {
   min-height: 18px;
   padding: 2px 6px;
   border-top: 1px solid #aca899;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 .explorer-content:not(.folders-visible) .explorer-tree-section {
   display: none;
@@ -1151,7 +1151,7 @@ html:not(.keyboard-cues) .menu-accesskey {
   flex: none;
   grid-template-columns: 201px minmax(0, 1fr);
   border-bottom: 1px solid #aca899;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 
 .search-column-header > span:first-child {
@@ -1380,7 +1380,7 @@ html:not(.keyboard-cues) .menu-accesskey {
   gap: 2px;
   padding: 6px 10px 0;
   border-bottom: 1px solid #919b9c;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 
 .internet-games-tabs button {
@@ -1534,7 +1534,7 @@ html:not(.keyboard-cues) .menu-accesskey {
 .explorer-details-header {
   padding: 3px 6px;
   border-bottom: 1px solid #aaa;
-  background: #ece9d8;
+  background: var(--xp-beige);
   font-weight: bold;
 }
 .explorer-items[data-view="details"] .explorer-item-icon {

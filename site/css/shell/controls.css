@@ -4,6 +4,40 @@
    buttons drawn from Luna.msstyles with the theme's sizing margins. Windows
    Classic keeps its own 3D controls. */
 
+/* System colors from each scheme's [SysMetrics] in Luna.msstyles, and from
+   the Windows Standard scheme for Classic. */
+:root {
+  --sys-highlight: #316ac5;
+  --sys-highlight-text: #fff;
+  --sys-active-caption: #0054e3;
+  --sys-caption-text: #fff;
+  --sys-inactive-caption: #7a96df;
+  --sys-inactive-caption-text: #d8e4f8;
+}
+
+html[data-xp-appearance="olive"] {
+  --sys-highlight: #93a070;
+  --sys-active-caption: #8ba169;
+  --sys-inactive-caption: #d4d6ba;
+  --sys-inactive-caption-text: #fff;
+}
+
+html[data-xp-appearance="silver"] {
+  --sys-highlight: #b2b4bf;
+  --sys-highlight-text: #000;
+  --sys-active-caption: #c0c0c0;
+  --sys-caption-text: #0e1010;
+  --sys-inactive-caption: #fff;
+  --sys-inactive-caption-text: #a2a1a1;
+}
+
+html[data-xp-appearance="classic"] {
+  --sys-highlight: #0a246a;
+  --sys-active-caption: #0a246a;
+  --sys-inactive-caption: #808080;
+  --sys-inactive-caption-text: #d4d0c8;
+}
+
 :root,
 [data-scheme-preview] {
   --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-normal.png");
@@ -444,12 +478,12 @@ html:not([data-xp-appearance="classic"]) .xp-window select {
    rectangle. */
 html:not([data-xp-appearance="classic"]) .xp-window select:focus {
   outline: 0;
-  color: #fff;
+  color: var(--sys-highlight-text);
   background:
     var(--ctl-combobuttonglyph-normal) right 4px center / 10px 7px no-repeat,
     var(--ctl-combobutton-normal) right 0 top 0 / 17px 100% no-repeat,
-    linear-gradient(#316ac5, #316ac5) 2px 2px / calc(100% - 21px)
-      calc(100% - 4px) no-repeat,
+    linear-gradient(var(--sys-highlight), var(--sys-highlight)) 2px 2px /
+      calc(100% - 21px) calc(100% - 4px) no-repeat,
     #fff;
 }
 
@@ -464,8 +498,8 @@ html:not([data-xp-appearance="classic"]) .xp-window select:focus:hover {
   background:
     var(--ctl-combobuttonglyph-hot) right 4px center / 10px 7px no-repeat,
     var(--ctl-combobutton-hot) right 0 top 0 / 17px 100% no-repeat,
-    linear-gradient(#316ac5, #316ac5) 2px 2px / calc(100% - 21px)
-      calc(100% - 4px) no-repeat,
+    linear-gradient(var(--sys-highlight), var(--sys-highlight)) 2px 2px /
+      calc(100% - 21px) calc(100% - 4px) no-repeat,
     #fff;
 }
 
