@@ -295,6 +295,12 @@ document.addEventListener("keydown", async (e) => {
     )
       return;
 
+    if (e.ctrlKey && e.shiftKey && e.key === "Escape") {
+      e.preventDefault();
+      openTaskManager();
+      return;
+    }
+
     if ((e.ctrlKey && e.key === "Escape") || e.key === "Meta") {
       e.preventDefault();
       toggleStartMenu();

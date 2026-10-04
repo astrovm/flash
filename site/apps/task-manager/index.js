@@ -1,0 +1,921 @@
+import { defineApplication } from "../core/application.js";
+import { boxedWineApplications } from "../core/boxedwine-applications.js";
+import { applicationMetadata } from "./metadata.js";
+
+const USER = "astro";
+// Full paths, so the build can fingerprint them.
+const TRAY_ICONS = [
+  "assets/xp/task-manager/tray-0.png",
+  "assets/xp/task-manager/tray-1.png",
+  "assets/xp/task-manager/tray-2.png",
+  "assets/xp/task-manager/tray-3.png",
+  "assets/xp/task-manager/tray-4.png",
+  "assets/xp/task-manager/tray-5.png",
+  "assets/xp/task-manager/tray-6.png",
+  "assets/xp/task-manager/tray-7.png",
+  "assets/xp/task-manager/tray-8.png",
+  "assets/xp/task-manager/tray-9.png",
+  "assets/xp/task-manager/tray-10.png",
+  "assets/xp/task-manager/tray-11.png",
+];
+const PHYSICAL_MEMORY_K = 523696;
+const COMMIT_LIMIT_K = 1280180;
+// View → Update Speed, from taskmgr.exe's menu help strings.
+const UPDATE_SPEEDS = { high: 500, normal: 2000, low: 4000, paused: 0 };
+const GRAPH_GRID = 12;
+
+// The reference install's processes, oldest first. Each is
+// [image, user, memory K, handles, threads].
+const BASE_PROCESSES = [
+  ["System Idle Process", "SYSTEM", 16, 0, 1],
+  ["System", "SYSTEM", 212, 254, 56],
+  ["smss.exe", "SYSTEM", 372, 21, 3],
+  ["csrss.exe", "SYSTEM", 2844, 383, 11],
+  ["winlogon.exe", "SYSTEM", 5224, 507, 19],
+  ["services.exe", "SYSTEM", 2932, 262, 16],
+  ["lsass.exe", "SYSTEM", 980, 335, 19],
+  ["svchost.exe", "SYSTEM", 4208, 196, 17],
+  ["svchost.exe", "NETWORK SERVICE", 3872, 231, 10],
+  ["svchost.exe", "SYSTEM", 16024, 1189, 61],
+  ["svchost.exe", "NETWORK SERVICE", 2644, 82, 5],
+  ["svchost.exe", "LOCAL SERVICE", 4096, 152, 12],
+  ["explorer.exe", USER, 10888, 351, 13],
+  ["spoolsv.exe", "SYSTEM", 4356, 121, 10],
+  ["alg.exe", "LOCAL SERVICE", 3320, 104, 6],
+  ["wscntfy.exe", USER, 1840, 39, 1],
+  ["wuauclt.exe", "SYSTEM", 6432, 182, 5],
+];
+// Ending these is refused, as XP refuses its critical system processes.
+const CRITICAL = new Set([
+  "System Idle Process",
+  "System",
+  "smss.exe",
+  "csrss.exe",
+  "winlogon.exe",
+  "services.exe",
+  "lsass.exe",
+]);
+
+// Programs that run in their own process, with XP's image names and a
+// typical working set. Folders and Control Panel run inside explorer.exe.
+const PROGRAM_IMAGES = {
+  __notepad: ["notepad.exe", 2932],
+  __paint: ["mspaint.exe", 5428],
+  __minesweeper: ["winmine.exe", 2412],
+  __pinball: ["PINBALL.EXE", 9836],
+  "__command-prompt": ["cmd.exe", 1612],
+  "__volume-control": ["sndvol32.exe", 2148],
+  "__task-manager": ["taskmgr.exe", 3744],
+  ...Object.fromEntries(
+    boxedWineApplications.map((application) => [
+      `__${application.id}`,
+      [application.executable.split("/").at(-1), 3360],
+    ]),
+  ),
+};
+const GAME_IMAGES = {
+  swf: ["SAFlashPlayer.exe", 18240],
+  iframe: ["iexplore.exe", 21364],
+};
+
+// taskmgr.exe's menus, by page. Items are [label, command, help] with "-"
+// for separators; a nested array is a submenu.
+const UPDATE_SPEED_MENU = [
+  "&Update Speed",
+  [
+    ["&High", "speed-high"],
+    ["&Normal", "speed-normal"],
+    ["&Low", "speed-low"],
+    ["&Paused", "speed-paused"],
+  ],
+];
+const OPTIONS = [
+  ["&Always On Top", "always-on-top"],
+  ["&Minimize On Use", "minimize-on-use"],
+  ["&Hide When Minimized", "hide-when-minimized"],
+];
+const SHUT_DOWN = [
+  ["Stand &By", "stand-by"],
+  ["T&urn Off", "turn-off"],
+  ["&Restart", "restart"],
+  [`&Log Off ${USER}`, "log-off"],
+  ["&Switch User", "switch-user", "WinKey+L"],
+];
+// There is no Help and Support Center, so Help only has About.
+const HELP = [["&About Task Manager", "about"]];
+const FILE_MENU = [
+  ["&New Task (Run...)", "new-task"],
+  "-",
+  ["E&xit Task Manager", "exit"],
+];
+const MENUS = {
+  applications: [
+    ["&File", FILE_MENU],
+    ["&Options", OPTIONS],
+    [
+      "&View",
+      [
+        ["&Refresh Now", "refresh"],
+        UPDATE_SPEED_MENU,
+        "-",
+        ["Lar&ge Icons", "view-large"],
+        ["S&mall Icons", "view-small"],
+        ["&Details", "view-details"],
+      ],
+    ],
+    [
+      "&Windows",
+      [
+        ["Tile &Horizontally", "tile-horizontal"],
+        ["Tile &Vertically", "tile-vertical"],
+        ["&Minimize", "minimize"],
+        ["Ma&ximize", "maximize"],
+        ["&Cascade", "cascade"],
+        ["&Bring To Front", "bring-to-front"],
+      ],
+    ],
+    ["Sh&ut Down", SHUT_DOWN],
+    ["&Help", HELP],
+  ],
+  processes: [
+    ["&File", FILE_MENU],
+    ["&Options", OPTIONS],
+    ["&View", [["&Refresh Now", "refresh"], UPDATE_SPEED_MENU]],
+    ["Sh&ut Down", SHUT_DOWN],
+    ["&Help", HELP],
+  ],
+  performance: [
+    ["&File", FILE_MENU],
+    ["&Options", OPTIONS],
+    [
+      "&View",
+      [
+        ["&Refresh Now", "refresh"],
+        UPDATE_SPEED_MENU,
+        "-",
+        ["&Show Kernel Times", "kernel-times"],
+      ],
+    ],
+    ["Sh&ut Down", SHUT_DOWN],
+    ["&Help", HELP],
+  ],
+  networking: [
+    ["&File", [["E&xit Task Manager", "exit"]]],
+    ["&Options", OPTIONS],
+    ["&View", [["&Refresh Now", "refresh"], UPDATE_SPEED_MENU]],
+    ["Sh&ut Down", SHUT_DOWN],
+    ["&Help", HELP],
+  ],
+  users: [
+    ["&File", FILE_MENU],
+    ["&Options", OPTIONS],
+    ["&View", [["&Refresh Now", "refresh"], UPDATE_SPEED_MENU]],
+    ["Sh&ut Down", SHUT_DOWN],
+    ["&Help", HELP],
+  ],
+};
+const TABS = [
+  ["applications", "Applications"],
+  ["processes", "Processes"],
+  ["performance", "Performance"],
+  ["networking", "Networking"],
+  ["users", "Users"],
+];
+const SETTINGS_KEY = "taskManager";
+const DEFAULT_SETTINGS = {
+  tab: "applications",
+  alwaysOnTop: true,
+  minimizeOnUse: true,
+  hideWhenMinimized: false,
+  kernelTimes: false,
+  speed: "normal",
+  view: "details",
+};
+
+const readSettings = () => {
+  try {
+    return {
+      ...DEFAULT_SETTINGS,
+      ...JSON.parse(localStorage.getItem(SETTINGS_KEY)),
+    };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+};
+
+const escapeText = (value) =>
+  String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+
+const formatK = (value) => `${value.toLocaleString("en-US")} K`;
+
+const groupBox = (className, title, rows) =>
+  `<fieldset class="dlg-group ${className}"><legend>${title}</legend>${rows
+    .map(
+      ([label, key]) =>
+        `<span>${label}</span><span data-tm-value="${key}"></span>`,
+    )
+    .join("")}</fieldset>`;
+
+const mountTaskManager = (context, { window: win }) => {
+  const settings = readSettings();
+  const saveSettings = () =>
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  const root = document.createElement("div");
+  root.className = "task-manager";
+  root.innerHTML = `
+    <div class="tm-menu-bar" role="menubar"></div>
+    <div class="tm-tabs" role="tablist" aria-label="Windows Task Manager">${TABS.map(
+      ([id, label]) =>
+        `<button type="button" role="tab" data-tm-tab="${id}">${label}</button>`,
+    ).join("")}</div>
+    <div class="tm-pane">
+      <section class="tm-page" data-tm-page="applications">
+        <div class="tm-list tm-tasks" role="listbox" tabindex="0" aria-label="Tasks"></div>
+        <button type="button" class="xp-btn tm-end-task" data-tm-command="end-task"><u>E</u>nd Task</button>
+        <button type="button" class="xp-btn tm-switch-to" data-tm-command="switch-to"><u>S</u>witch To</button>
+        <button type="button" class="xp-btn tm-new-task" data-tm-command="new-task"><u>N</u>ew Task...</button>
+      </section>
+      <section class="tm-page" data-tm-page="processes">
+        <div class="tm-list tm-processes" role="listbox" tabindex="0" aria-label="Processes"></div>
+        <label class="tm-all-users"><input type="checkbox"><span><u>S</u>how processes from all users</span></label>
+        <button type="button" class="xp-btn tm-end-process" data-tm-command="end-process"><u>E</u>nd Process</button>
+      </section>
+      <section class="tm-page" data-tm-page="performance">
+        <fieldset class="dlg-group tm-cpu-usage"><legend>CPU Usage</legend><div class="tm-meter"><i></i><i></i><canvas width="68" height="21"></canvas></div></fieldset>
+        <fieldset class="dlg-group tm-cpu-history"><legend>CPU Usage History</legend><canvas class="tm-graph" width="229" height="57"></canvas></fieldset>
+        <fieldset class="dlg-group tm-pf-usage"><legend>PF Usage</legend><div class="tm-meter"><i></i><i></i><canvas width="68" height="21"></canvas></div></fieldset>
+        <fieldset class="dlg-group tm-pf-history"><legend>Page File Usage History</legend><canvas class="tm-graph" width="229" height="57"></canvas></fieldset>
+        ${groupBox("tm-totals", "Totals", [
+          ["Handles", "handles"],
+          ["Threads", "threads"],
+          ["Processes", "processes"],
+        ])}
+        ${groupBox("tm-physical", "Physical Memory (K)", [
+          ["Total", "physical-total"],
+          ["Available", "physical-available"],
+          ["System Cache", "system-cache"],
+        ])}
+        ${groupBox("tm-commit", "Commit Charge (K)", [
+          ["Total", "commit-total"],
+          ["Limit", "commit-limit"],
+          ["Peak", "commit-peak"],
+        ])}
+        ${groupBox("tm-kernel", "Kernel Memory (K)", [
+          ["Total", "kernel-total"],
+          ["Paged", "kernel-paged"],
+          ["Nonpaged", "kernel-nonpaged"],
+        ])}
+      </section>
+      <section class="tm-page" data-tm-page="networking">
+        <p class="tm-no-adapters">No Active Network Adapters Found.</p>
+      </section>
+      <section class="tm-page" data-tm-page="users">
+        <div class="tm-list tm-users" role="listbox" tabindex="0" aria-label="Users"></div>
+        <button type="button" class="xp-btn tm-disconnect" data-tm-command="disconnect"><u>D</u>isconnect</button>
+        <button type="button" class="xp-btn tm-logoff" data-tm-command="logoff-user"><u>L</u>ogoff</button>
+        <button type="button" class="xp-btn tm-send-message" disabled><u>S</u>end Message...</button>
+      </section>
+    </div>
+    <div class="tm-status"><span></span><span></span><span></span></div>`;
+  const $ = (selector) => root.querySelector(selector);
+  const menuBar = $(".tm-menu-bar");
+  const statusPanes = root.querySelectorAll(".tm-status span");
+
+  // Processes: one per program window, the rest from the reference install.
+  let nextPid = 4;
+  const createProcess = (
+    [image, user, memory, handles, threads],
+    windowId,
+  ) => ({
+    pid: (nextPid += 4),
+    image,
+    user,
+    memory,
+    handles,
+    threads,
+    windowId,
+    cpu: 0,
+    cpuTime: 0,
+  });
+  const processes = BASE_PROCESSES.map((entry) => createProcess(entry, null));
+  const ended = new Set();
+  const processImage = (task) =>
+    PROGRAM_IMAGES[task.gameId] || GAME_IMAGES[task.type];
+  const tasks = () =>
+    [...context.openWindows.values()].filter(
+      (task) => task.gameId !== win.gameId,
+    );
+  const syncProcesses = () => {
+    const windows = new Map(
+      [...context.openWindows.values()]
+        .filter(processImage)
+        .map((task) => [task.gameId, task]),
+    );
+    for (let index = processes.length - 1; index >= 0; index--) {
+      const { windowId } = processes[index];
+      if (windowId && !windows.has(windowId)) processes.splice(index, 1);
+    }
+    windows.forEach((task, id) => {
+      const [image, memory] = processImage(task);
+      if (!processes.some((process) => process.windowId === id))
+        processes.push(createProcess([image, USER, memory, 120, 4], id));
+    });
+  };
+
+  // CPU: the share of each interval the page's main thread was busy, which is
+  // where Flash and emulated programs run, on top of a little idle noise.
+  let busy = 0;
+  const { PerformanceObserver } = window;
+  const observer = PerformanceObserver.supportedEntryTypes.includes("longtask")
+    ? new PerformanceObserver((list) =>
+        list.getEntries().forEach((entry) => (busy += entry.duration)),
+      )
+    : null;
+  observer?.observe({ entryTypes: ["longtask"] });
+  const cpuHistory = [];
+  const pfHistory = [];
+  let cpuTotal = 0;
+  let kernelShare = 0;
+  let lastSample = performance.now();
+  let peakCommit = 0;
+  const sample = () => {
+    const now = performance.now();
+    const elapsed = Math.max(1, now - lastSample);
+    lastSample = now;
+    const running = processes.filter(
+      (process) => process.windowId && process.image !== "taskmgr.exe",
+    );
+    cpuTotal = Math.min(
+      100,
+      Math.round((busy / elapsed) * 100 + Math.random() * 3),
+    );
+    busy = 0;
+    kernelShare = Math.round(cpuTotal * (0.3 + Math.random() * 0.2));
+    processes.forEach((process) => (process.cpu = 0));
+    const shares = running.length ? running : processes.slice(-1);
+    let left = cpuTotal;
+    shares.forEach((process, index) => {
+      process.cpu =
+        index === shares.length - 1
+          ? left
+          : Math.floor(cpuTotal / shares.length);
+      left -= process.cpu;
+    });
+    processes[0].cpu = 100 - cpuTotal;
+    processes.forEach(
+      (process) => (process.cpuTime += (process.cpu * elapsed) / 100),
+    );
+    cpuHistory.unshift([cpuTotal, kernelShare]);
+    cpuHistory.length = Math.min(cpuHistory.length, 400);
+    pfHistory.unshift(commitTotal());
+    pfHistory.length = Math.min(pfHistory.length, 400);
+    peakCommit = Math.max(peakCommit, commitTotal());
+  };
+  const sum = (key) =>
+    processes.reduce((total, process) => total + process[key], 0);
+  // XP counts the kernel's pools and the system cache on top of processes.
+  const commitTotal = () => sum("memory") + 15352;
+
+  // Lists: a header and rows. Columns are [label, width, right padding],
+  // with the padding only for XP's right-aligned columns.
+  const selection = { tasks: null, processes: null, users: USER };
+  const alignment = (padding) =>
+    padding ? ` class="right" style="padding-right: ${padding}px"` : "";
+  const renderList = (list, key, columns, rows) => {
+    list.style.setProperty(
+      "--tm-columns",
+      columns.map(([, width]) => `${width}px`).join(" "),
+    );
+    list.innerHTML = `<div class="tm-list-header">${columns
+      .map(
+        ([label, , padding], index) =>
+          `<button type="button" data-tm-sort="${index}"${padding ? ' class="right"' : ""}><span>${label}</span></button>`,
+      )
+      .join("")}<span></span></div>${rows
+      .map(
+        (row) =>
+          `<div class="tm-row" role="option" data-tm-id="${escapeText(row.id)}" aria-selected="${row.id === selection[key]}">${row.cells
+            .map(
+              (cell, index) =>
+                `<span${alignment(columns[index][2])}>${index ? escapeText(cell) : `${row.icon || ""}<span class="tm-label">${escapeText(cell)}</span>`}</span>`,
+            )
+            .join("")}</div>`,
+      )
+      .join("")}`;
+  };
+  const iconHtml = (task) =>
+    context.createGameIconElement(task.gameId, "tm-icon").outerHTML;
+  const renderTasks = () => {
+    const list = $(".tm-tasks");
+    const current = tasks();
+    if (!current.some((task) => task.gameId === selection.tasks))
+      selection.tasks = current[0]?.gameId ?? null;
+    list.dataset.view = settings.view;
+    renderList(
+      list,
+      "tasks",
+      [
+        ["Task", 255],
+        ["Status", 100],
+      ],
+      current.map((task) => ({
+        id: task.gameId,
+        icon: iconHtml(task),
+        cells: [task.el.querySelector(".title-text").textContent, "Running"],
+      })),
+    );
+  };
+  let processSort = null;
+  const processRows = () => {
+    const rows = processes
+      .filter((process) => !ended.has(process.pid))
+      .map((process) => ({
+        id: String(process.pid),
+        process,
+        cells: [
+          process.image,
+          process.user,
+          String(process.cpu).padStart(2, "0"),
+          formatK(process.memory),
+        ],
+      }))
+      .reverse();
+    if (processSort) {
+      const [column, direction] = processSort;
+      const value = (row) =>
+        [
+          row.process.image.toLowerCase(),
+          row.process.user.toLowerCase(),
+          row.process.cpu,
+          row.process.memory,
+        ][column];
+      rows.sort(
+        (a, b) =>
+          (value(a) > value(b) ? 1 : value(a) < value(b) ? -1 : 0) * direction,
+      );
+    }
+    return rows;
+  };
+  const renderProcesses = () => {
+    renderList(
+      $(".tm-processes"),
+      "processes",
+      [
+        ["Image Name", 107],
+        ["User Name", 107],
+        ["CPU", 35, 9],
+        ["Mem Usage", 70, 7],
+      ],
+      processRows(),
+    );
+  };
+  const renderUsers = () => {
+    renderList(
+      $(".tm-users"),
+      "users",
+      [
+        ["User", 120],
+        ["ID", 35, 6],
+        ["Status", 93],
+        ["Client Name", 100],
+        ["Session", 124],
+      ],
+      [
+        {
+          id: USER,
+          icon: `<img class="tm-icon" src="assets/xp/task-manager/user.png" alt="">`,
+          cells: [USER, "0", "Active", "", "Console"],
+        },
+      ],
+    );
+  };
+
+  // Performance: XP's LED meters and scrolling history graphs. A meter's
+  // 28 bar rows light from the bottom; the label is a canvas below them.
+  const drawMeter = (meter, fraction, text) => {
+    const lit = Math.round(28 * fraction);
+    const [off, on] = meter.querySelectorAll("i");
+    off.style.height = `${28 - lit}px`;
+    on.style.top = `${34 - lit}px`;
+    on.style.height = `${lit}px`;
+    on.style.backgroundPosition = `0 ${lit - 28}px`;
+    // GDI draws the label in 11px Arial without smoothing.
+    const graphics = meter.querySelector("canvas").getContext("2d");
+    graphics.fillStyle = "#000";
+    graphics.fillRect(0, 0, 68, 21);
+    graphics.fillStyle = "#0f0";
+    graphics.font = "11px Arial";
+    graphics.textAlign = "center";
+    graphics.fillText(text, 34, 15);
+    const label = graphics.getImageData(0, 0, 68, 21);
+    for (let index = 0; index < label.data.length; index += 4) {
+      label.data[index + 1] = (label.data[index + 1] >> 7) * 255;
+      label.data[index] = label.data[index + 2] = 0;
+      label.data[index + 3] = 255;
+    }
+    graphics.putImageData(label, 0, 0);
+  };
+  let graphOffset = 0;
+  const drawGraph = (canvas, values, scale, color, kernel) => {
+    const graphics = canvas.getContext("2d");
+    const { width, height } = canvas;
+    graphics.fillStyle = "#000";
+    graphics.fillRect(0, 0, width, height);
+    graphics.fillStyle = "#008040";
+    for (let y = GRAPH_GRID - 1; y < height; y += GRAPH_GRID)
+      graphics.fillRect(0, y, width, 1);
+    for (let x = width - 1 - graphOffset; x >= 0; x -= GRAPH_GRID)
+      graphics.fillRect(x, 0, 1, height);
+    const plot = (index, stroke) => {
+      graphics.strokeStyle = stroke;
+      graphics.beginPath();
+      values.forEach((value, step) => {
+        const y =
+          height - 1 - Math.round((value[index] / scale) * (height - 1));
+        graphics.lineTo(width - 1 - step * 2 + 0.5, y + 0.5);
+      });
+      graphics.stroke();
+    };
+    if (kernel) plot(1, "#f00");
+    plot(0, color);
+  };
+  const setValue = (key, value) => {
+    root.querySelector(`[data-tm-value="${key}"]`).textContent = value;
+  };
+  const renderPerformance = () => {
+    const [cpuMeter, pfMeter] = root.querySelectorAll(".tm-meter");
+    const [cpuGraph, pfGraph] = root.querySelectorAll(".tm-graph");
+    const commit = commitTotal();
+    drawMeter(cpuMeter, cpuTotal / 100, `${cpuTotal} %`);
+    drawMeter(
+      pfMeter,
+      commit / COMMIT_LIMIT_K,
+      `${(commit / 1024).toFixed(1)} MB`,
+    );
+    drawGraph(cpuGraph, cpuHistory, 100, "#0f0", settings.kernelTimes);
+    drawGraph(
+      pfGraph,
+      pfHistory.map((value) => [value]),
+      COMMIT_LIMIT_K,
+      "#ff0",
+      false,
+    );
+    const memory = sum("memory");
+    setValue("handles", sum("handles"));
+    setValue("threads", sum("threads"));
+    setValue("processes", processes.length);
+    setValue("physical-total", PHYSICAL_MEMORY_K);
+    setValue("physical-available", PHYSICAL_MEMORY_K - memory - 42868);
+    setValue("system-cache", 60988);
+    setValue("commit-total", commit);
+    setValue("commit-limit", COMMIT_LIMIT_K);
+    setValue("commit-peak", peakCommit);
+    setValue("kernel-total", 12264);
+    setValue("kernel-paged", 9444);
+    setValue("kernel-nonpaged", 2820);
+  };
+
+  const renderStatus = () => {
+    const commit = Math.round(commitTotal() / 1024);
+    statusPanes[0].textContent = `Processes: ${processes.length}`;
+    statusPanes[1].textContent = `CPU Usage: ${cpuTotal}%`;
+    statusPanes[2].textContent = `Commit Charge: ${commit}M / ${Math.round(COMMIT_LIMIT_K / 1024)}M`;
+  };
+
+  // The tray icon fills with CPU usage in twelve steps, like XP's.
+  const trayIcon = context.addTrayIcon("Windows Task Manager", () => {
+    context.restoreWindow(win.gameId);
+    context.focusWindow(win.gameId);
+  });
+  const renderTray = () => {
+    trayIcon.style.backgroundImage = `url("${TRAY_ICONS[Math.min(11, Math.floor(cpuTotal / 9))]}")`;
+    trayIcon.title = `CPU Usage: ${cpuTotal}%`;
+  };
+
+  const renderers = {
+    applications: renderTasks,
+    processes: renderProcesses,
+    performance: renderPerformance,
+    networking: () => {},
+    users: renderUsers,
+  };
+  const refresh = () => {
+    syncProcesses();
+    sample();
+    renderers[settings.tab]();
+    renderStatus();
+    renderTray();
+    graphOffset = (graphOffset + 2) % GRAPH_GRID;
+  };
+  let timer = 0;
+  const schedule = () => {
+    clearInterval(timer);
+    const delay = UPDATE_SPEEDS[settings.speed];
+    timer = delay ? setInterval(refresh, delay) : 0;
+  };
+
+  // Menus.
+  let openMenu = null;
+  const closeMenus = () => {
+    openMenu?.remove();
+    openMenu = null;
+    menuBar
+      .querySelectorAll("[aria-expanded]")
+      .forEach((button) => button.setAttribute("aria-expanded", "false"));
+  };
+  const isChecked = {
+    "always-on-top": () => settings.alwaysOnTop,
+    "minimize-on-use": () => settings.minimizeOnUse,
+    "hide-when-minimized": () => settings.hideWhenMinimized,
+    "kernel-times": () => settings.kernelTimes,
+  };
+  const isRadio = {
+    "speed-high": () => settings.speed === "high",
+    "speed-normal": () => settings.speed === "normal",
+    "speed-low": () => settings.speed === "low",
+    "speed-paused": () => settings.speed === "paused",
+    "view-large": () => settings.view === "large",
+    "view-small": () => settings.view === "small",
+    "view-details": () => settings.view === "details",
+  };
+  // Submenu parents are divs, so their items aren't buttons inside a
+  // button. Hovering or clicking one opens its submenu.
+  const buildMenu = (items) => {
+    const menu = document.createElement("div");
+    menu.className = "tm-menu";
+    menu.setAttribute("role", "menu");
+    items.forEach((item) => {
+      if (item === "-") {
+        menu.insertAdjacentHTML(
+          "beforeend",
+          '<div class="tm-menu-separator"></div>',
+        );
+        return;
+      }
+      const [label, command, shortcut = ""] = item;
+      const submenu = Array.isArray(command);
+      const entry = document.createElement(submenu ? "div" : "button");
+      entry.setAttribute("role", "menuitem");
+      const text = document.createElement("span");
+      context.setAccessKeyText(text, label);
+      entry.append(text);
+      entry.insertAdjacentHTML("beforeend", `<kbd>${shortcut}</kbd>`);
+      if (submenu) {
+        entry.className = "tm-submenu";
+        const items = buildMenu(command);
+        entry.append(items);
+        entry.addEventListener("click", () => items.classList.toggle("open"));
+      } else {
+        entry.type = "button";
+        entry.dataset.tmCommand = command;
+        entry.classList.toggle("checked", Boolean(isChecked[command]?.()));
+        entry.classList.toggle("radio", Boolean(isRadio[command]?.()));
+      }
+      menu.append(entry);
+    });
+    return menu;
+  };
+  const renderMenuBar = () => {
+    closeMenus();
+    menuBar.replaceChildren(
+      ...MENUS[settings.tab].map(([label, items]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("role", "menuitem");
+        button.setAttribute("aria-expanded", "false");
+        button.dataset.tmMenu = label.replace(/[& ]/g, "").toLowerCase();
+        context.setAccessKeyText(button, label);
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const wasOpen = button.getAttribute("aria-expanded") === "true";
+          closeMenus();
+          if (wasOpen) return;
+          openMenu = buildMenu(items);
+          openMenu.style.left = `${button.offsetLeft}px`;
+          menuBar.append(openMenu);
+          button.setAttribute("aria-expanded", "true");
+        });
+        return button;
+      }),
+    );
+  };
+  const onDocumentPointerDown = (event) => {
+    if (!menuBar.contains(event.target)) closeMenus();
+  };
+  document.addEventListener("pointerdown", onDocumentPointerDown);
+
+  // Commands.
+  const selectedTask = () => context.openWindows.get(selection.tasks);
+  const selectedProcess = () =>
+    processes.find((process) => String(process.pid) === selection.processes);
+  const applyWindowOptions = () => {
+    context.setWindowTopmost(win.gameId, settings.alwaysOnTop);
+    win.hideWhenMinimized = settings.hideWhenMinimized;
+    context.renderTaskButtons();
+  };
+  const toggleSetting = (key) => {
+    settings[key] = !settings[key];
+    saveSettings();
+  };
+  const endProcess = async () => {
+    const process = selectedProcess();
+    if (!process) return;
+    if (CRITICAL.has(process.image)) {
+      await context.XPDialogs.alert(
+        "The operation could not be completed.\n\nThis is a critical system process.  Task Manager cannot end this process.",
+        "Unable to Terminate Process",
+        "error",
+      );
+      return;
+    }
+    const confirmed = await context.XPDialogs.confirm(
+      "WARNING: Terminating a process can cause undesired\nresults including loss of data and system instability. The\nprocess will not be given the chance to save its state or\ndata before it is terminated.  Are you sure you want to\nterminate the process?",
+      "Task Manager Warning",
+      "warning",
+    );
+    if (!confirmed) return;
+    if (process.image === "taskmgr.exe") {
+      context.closeGameWindow(win.gameId);
+      return;
+    }
+    if (process.windowId) {
+      await context.closeGameWindow(process.windowId, {
+        skipBeforeClose: true,
+      });
+    } else if (process.image === "explorer.exe") {
+      // Explorer's folder windows close with it. The shell keeps running, as
+      // if Winlogon had restarted it.
+      tasks()
+        .filter((task) => !processImage(task))
+        .forEach((task) => context.closeGameWindow(task.gameId));
+    } else {
+      ended.add(process.pid);
+    }
+    refresh();
+  };
+  const commands = {
+    "new-task": () => context.openRunDialog({ title: "Create New Task" }),
+    exit: () => context.closeGameWindow(win.gameId),
+    "always-on-top": () => {
+      toggleSetting("alwaysOnTop");
+      applyWindowOptions();
+    },
+    "minimize-on-use": () => toggleSetting("minimizeOnUse"),
+    "hide-when-minimized": () => {
+      toggleSetting("hideWhenMinimized");
+      applyWindowOptions();
+    },
+    "kernel-times": () => {
+      toggleSetting("kernelTimes");
+      refresh();
+    },
+    refresh,
+    ...Object.fromEntries(
+      Object.keys(UPDATE_SPEEDS).map((speed) => [
+        `speed-${speed}`,
+        () => {
+          settings.speed = speed;
+          saveSettings();
+          schedule();
+        },
+      ]),
+    ),
+    ...Object.fromEntries(
+      ["large", "small", "details"].map((view) => [
+        `view-${view}`,
+        () => {
+          settings.view = view;
+          saveSettings();
+          renderTasks();
+        },
+      ]),
+    ),
+    "tile-horizontal": () =>
+      context.arrangeTaskbarWindows("tile-horizontal", tasks()),
+    "tile-vertical": () =>
+      context.arrangeTaskbarWindows("tile-vertical", tasks()),
+    cascade: () => context.arrangeTaskbarWindows("cascade", tasks()),
+    minimize: () => selectedTask() && context.minimizeWindow(selection.tasks),
+    maximize: () => {
+      const task = selectedTask();
+      if (!task) return;
+      context.restoreWindow(task.gameId);
+      if (!task.maximized) context.toggleMaximize(task.gameId);
+    },
+    "bring-to-front": () => {
+      if (!selectedTask()) return;
+      context.restoreWindow(selection.tasks);
+      context.focusWindow(selection.tasks);
+      context.focusWindow(win.gameId);
+    },
+    "switch-to": () => {
+      if (!selectedTask()) return;
+      context.restoreWindow(selection.tasks);
+      context.focusWindow(selection.tasks);
+      if (settings.minimizeOnUse) context.minimizeWindow(win.gameId);
+    },
+    "end-task": async () => {
+      if (!selectedTask()) return;
+      await context.closeGameWindow(selection.tasks);
+      refresh();
+    },
+    "end-process": endProcess,
+    "stand-by": () => context.setSuspended(true),
+    "turn-off": () => context.turnOff(),
+    restart: () => context.restart(),
+    "log-off": () => context.logOff(),
+    "switch-user": () => context.switchUser(),
+    disconnect: () => context.switchUser(),
+    "logoff-user": async () => {
+      if (
+        await context.XPDialogs.confirm(
+          "Are you sure you want to logoff the selected user(s)?",
+          "Windows Task Manager",
+          "question",
+        )
+      )
+        context.logOff();
+    },
+    about: () =>
+      context.openAboutWindows({
+        application: "Windows Task Manager",
+        icon: "assets/xp/task-manager/icon-32.png",
+      }),
+  };
+  root.addEventListener("click", (event) => {
+    const command = event.target.closest("[data-tm-command]");
+    if (command) {
+      closeMenus();
+      commands[command.dataset.tmCommand]();
+      return;
+    }
+    const tab = event.target.closest("[data-tm-tab]");
+    if (tab) {
+      showTab(tab.dataset.tmTab);
+      return;
+    }
+    const sort = event.target.closest("[data-tm-sort]");
+    if (sort && sort.closest(".tm-processes")) {
+      const column = Number(sort.dataset.tmSort);
+      processSort = [column, processSort?.[0] === column ? -processSort[1] : 1];
+      renderProcesses();
+      return;
+    }
+    const row = event.target.closest(".tm-row");
+    if (row) {
+      const list = row.closest(".tm-list");
+      const key = list.classList.contains("tm-tasks")
+        ? "tasks"
+        : list.classList.contains("tm-processes")
+          ? "processes"
+          : "users";
+      selection[key] = row.dataset.tmId;
+      list
+        .querySelectorAll(".tm-row")
+        .forEach((entry) =>
+          entry.setAttribute("aria-selected", String(entry === row)),
+        );
+    }
+  });
+  root.addEventListener("dblclick", (event) => {
+    if (event.target.closest(".tm-tasks .tm-row")) commands["switch-to"]();
+  });
+  $(".tm-all-users input").addEventListener("change", renderProcesses);
+
+  const showTab = (id) => {
+    settings.tab = id;
+    saveSettings();
+    root.querySelectorAll("[data-tm-tab]").forEach((tab) => {
+      const selected = tab.dataset.tmTab === id;
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    root
+      .querySelectorAll("[data-tm-page]")
+      .forEach((page) => (page.hidden = page.dataset.tmPage !== id));
+    renderMenuBar();
+    renderers[id]();
+  };
+
+  applyWindowOptions();
+  showTab(settings.tab);
+  refresh();
+  schedule();
+  return {
+    element: root,
+    unmount() {
+      clearInterval(timer);
+      observer?.disconnect();
+      trayIcon.remove();
+      document.removeEventListener("pointerdown", onDocumentPointerDown);
+    },
+  };
+};
+
+export const taskManagerApplication = defineApplication({
+  ...applicationMetadata,
+  mount: mountTaskManager,
+});

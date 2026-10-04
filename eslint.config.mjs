@@ -85,6 +85,7 @@ export default defineConfig(
       "site/apps/programs/**/*.js",
       "site/apps/system/**/*.js",
       "site/apps/notepad/**/*.js",
+      "site/apps/task-manager/**/*.js",
       "site/apps/paint/index.js",
       "site/apps/pinball/index.js",
     ],

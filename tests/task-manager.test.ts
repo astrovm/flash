@@ -1,0 +1,485 @@
+// @ts-nocheck -- Windows Task Manager through the real shell.
+import { afterEach, expect, test } from "bun:test";
+import {
+  cleanupShells,
+  clickStartAction,
+  flushShell,
+  loadShell,
+  login,
+} from "./helpers/shell-harness";
+
+afterEach(cleanupShells);
+
+const settle = async () => {
+  await flushShell();
+  await flushShell();
+};
+const windowOf = (s, id) =>
+  s.document.querySelector(`.xp-window[data-game="${id}"]`);
+const openTaskManager = async (s) => {
+  s.document
+    .getElementById("taskbar")
+    .dispatchEvent(
+      new s.window.MouseEvent("contextmenu", { bubbles: true, clientY: 700 }),
+    );
+  s.document.querySelector('[data-taskbar-action="task-manager"]').click();
+  await settle();
+  return windowOf(s, "__task-manager");
+};
+const tab = (tm, id) => tm.querySelector(`[data-tm-tab="${id}"]`).click();
+const menu = (tm, name) => tm.querySelector(`[data-tm-menu="${name}"]`).click();
+const command = async (tm, name) => {
+  tm.querySelector(`[data-tm-command="${name}"]`).click();
+  await settle();
+};
+const menuCommand = async (tm, name, item) => {
+  menu(tm, name);
+  await command(tm, item);
+};
+const rows = (tm, list) =>
+  [...tm.querySelectorAll(`.tm-${list} .tm-row`)].map((row) =>
+    [...row.children].map((cell) => cell.textContent),
+  );
+const row = (tm, list, text) =>
+  [...tm.querySelectorAll(`.tm-${list} .tm-row`)].find(
+    (entry) => entry.firstElementChild.textContent === text,
+  );
+const answer = async (s, action) => {
+  [...s.document.querySelectorAll(".xp-dialog")]
+    .at(-1)
+    .querySelector(`[data-action="${action}"]`)
+    .click();
+  await settle();
+};
+const withRuffle = (s) => {
+  s.window.RufflePlayer = {
+    newest: () => ({
+      createPlayer: () => {
+        const player = s.document.createElement("ruffle-player");
+        player.load = () => {};
+        return player;
+      },
+    }),
+  };
+};
+const runCommand = async (s, text) => {
+  clickStartAction(s, "run");
+  const dialog = s.document.querySelector(".run-dialog");
+  dialog.querySelector("#run-command").value = text;
+  dialog.querySelector('[data-action="run"]').click();
+  await settle();
+};
+const openNotepad = async (s) => {
+  const fs = s.window.VirtualFS;
+  fs.open(fs.createFile(fs.MY_DOCUMENTS, "draft.txt").id);
+  await settle();
+};
+
+test("Task Manager opens as XP's window with five pages, a status bar and a tray icon", async () => {
+  const s = await login(await loadShell());
+  const tm = await openTaskManager(s);
+  expect([tm.style.left, tm.style.top]).toEqual(["10px", "10px"]);
+  expect(tm.querySelector(".title-text").textContent).toBe(
+    "Windows Task Manager",
+  );
+  expect(windowOf(s, "__task-manager").style.zIndex).toBe("6800");
+  const tray = s.document.querySelector(
+    '.tray-icon[aria-label="Windows Task Manager"]',
+  );
+  expect(tray.title).toMatch(/^CPU Usage: \d+%$/);
+  expect(tray.style.backgroundImage).toContain("tray-");
+  const status = () =>
+    [...tm.querySelectorAll(".tm-status span")].map((pane) => pane.textContent);
+  expect(status()[0]).toBe("Processes: 18");
+  expect(status()[2]).toMatch(/^Commit Charge: \d+M \/ 1250M$/);
+
+  const menus = () =>
+    [...tm.querySelectorAll(".tm-menu-bar > button")].map(
+      (button) => button.textContent,
+    );
+  expect(menus()).toEqual([
+    "File",
+    "Options",
+    "View",
+    "Windows",
+    "Shut Down",
+    "Help",
+  ]);
+  expect(tm.querySelector(".tm-tasks").textContent).toBe("TaskStatus");
+
+  tab(tm, "processes");
+  expect(menus()).not.toContain("Windows");
+  expect(rows(tm, "processes")[0]).toEqual([
+    "taskmgr.exe",
+    "astro",
+    expect.stringMatching(/^\d\d$/),
+    "3,744 K",
+  ]);
+  expect(rows(tm, "processes").at(-1)[0]).toBe("System Idle Process");
+  const header = (index) =>
+    tm.querySelector(`.tm-processes [data-tm-sort="${index}"]`).click();
+  header(0);
+  expect(rows(tm, "processes")[0][0]).toBe("alg.exe");
+  header(0);
+  expect(rows(tm, "processes")[0][0]).toBe("wuauclt.exe");
+  header(1);
+  expect(rows(tm, "processes")[0][1]).toBe("astro");
+  expect(rows(tm, "processes").at(-1)[1]).toBe("SYSTEM");
+  header(3);
+  expect(rows(tm, "processes")[0][0]).toBe("System Idle Process");
+  const allUsers = tm.querySelector(".tm-all-users input");
+  allUsers.checked = true;
+  allUsers.dispatchEvent(new s.window.Event("change"));
+  expect(rows(tm, "processes")).toHaveLength(18);
+
+  tab(tm, "performance");
+  const value = (key) =>
+    tm.querySelector(`[data-tm-value="${key}"]`).textContent;
+  expect(value("processes")).toBe("18");
+  expect(value("physical-total")).toBe("523696");
+  expect(value("commit-limit")).toBe("1280180");
+  expect(Number(value("commit-peak"))).toBeGreaterThanOrEqual(
+    Number(value("commit-total")),
+  );
+  const [off, on] = tm.querySelectorAll(".tm-cpu-usage .tm-meter i");
+  expect(
+    Number.parseInt(off.style.height) + Number.parseInt(on.style.height),
+  ).toBe(28);
+
+  tab(tm, "networking");
+  expect(menus()).toEqual(["File", "Options", "View", "Shut Down", "Help"]);
+  menu(tm, "file");
+  expect(tm.querySelector(".tm-menu").textContent).toBe("Exit Task Manager");
+  expect(tm.querySelector(".tm-no-adapters").textContent).toBe(
+    "No Active Network Adapters Found.",
+  );
+
+  tab(tm, "users");
+  expect(rows(tm, "users")).toEqual([["astro", "0", "Active", "", "Console"]]);
+  expect(tm.querySelector(".tm-send-message").disabled).toBeTrue();
+  row(tm, "users", "astro").click();
+
+  // The page and settings come back with the next Task Manager.
+  await menuCommand(tm, "file", "exit");
+  expect(windowOf(s, "__task-manager")).toBeNull();
+  expect(s.document.querySelector(".tray-icon[aria-label]")).not.toBeNull();
+  expect(
+    s.document.querySelector('.tray-icon[aria-label="Windows Task Manager"]'),
+  ).toBeNull();
+  const again = await openTaskManager(s);
+  expect(
+    again.querySelector('[data-tm-tab="users"]').getAttribute("aria-selected"),
+  ).toBe("true");
+  expect(again.querySelector('[data-tm-page="users"]').hidden).toBeFalse();
+});
+
+test("Task Manager menus check options, change the update speed and close on outside clicks", async () => {
+  const s = await login(
+    await loadShell({ initialStorage: { taskManager: "{" } }),
+  );
+  Object.defineProperty(
+    s.document.getElementById("task-buttons"),
+    "clientWidth",
+    { value: 800 },
+  );
+  const tm = await openTaskManager(s);
+  const item = (name) => tm.querySelector(`[data-tm-command="${name}"]`);
+  menu(tm, "options");
+  expect(item("always-on-top").className).toContain("checked");
+  expect(item("minimize-on-use").className).toContain("checked");
+  expect(item("hide-when-minimized").className).not.toContain("checked");
+  menu(tm, "options");
+  expect(tm.querySelector(".tm-menu")).toBeNull();
+
+  // Always On Top keeps Task Manager above windows that open later.
+  await menuCommand(tm, "options", "always-on-top");
+  expect(tm.style.zIndex).not.toBe("6800");
+  await menuCommand(tm, "options", "always-on-top");
+  expect(tm.style.zIndex).toBe("6800");
+
+  // Hide When Minimized drops the task button; the tray icon brings it back.
+  await menuCommand(tm, "options", "hide-when-minimized");
+  tm.querySelector(".minimize-btn").click();
+  await settle();
+  expect(
+    s.document.querySelector('.task-button[data-game="__task-manager"]'),
+  ).toBeNull();
+  const tray = s.document.querySelector(
+    '.tray-icon[aria-label="Windows Task Manager"]',
+  );
+  tray.dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  await settle();
+  expect(tm.style.display).not.toBe("none");
+  tray.dispatchEvent(new s.window.MouseEvent("click", { detail: 1 }));
+  tm.querySelector(".minimize-btn").click();
+  await settle();
+  tray.click();
+  await settle();
+  expect(tm.style.display).not.toBe("none");
+  expect(
+    s.document.querySelector('.task-button[data-game="__task-manager"]'),
+  ).not.toBeNull();
+
+  // View → Update Speed, with Paused stopping the refresh.
+  menu(tm, "view");
+  const speed = tm.querySelector(".tm-submenu");
+  expect(speed.textContent).toContain("Update Speed");
+  speed.click();
+  expect(speed.querySelector(".tm-menu").className).toContain("open");
+  expect(item("speed-normal").className).toContain("radio");
+  await command(tm, "speed-paused");
+  const list = tm.querySelector(".tm-tasks");
+  const before = list.firstElementChild;
+  await s.advanceTime(5000);
+  expect(list.firstElementChild).toBe(before);
+  await menuCommand(tm, "view", "refresh");
+  expect(list.firstElementChild).not.toBe(before);
+  for (const name of ["speed-high", "speed-low", "speed-normal"]) {
+    menu(tm, "view");
+    await command(tm, name);
+  }
+  const current = list.firstElementChild;
+  await s.advanceTime(2000);
+  expect(list.firstElementChild).not.toBe(current);
+
+  // Applications views.
+  for (const view of ["large", "small", "details"]) {
+    await menuCommand(tm, "view", `view-${view}`);
+    expect(list.dataset.view).toBe(view);
+  }
+
+  // Performance → Show Kernel Times.
+  tab(tm, "performance");
+  await menuCommand(tm, "view", "kernel-times");
+  menu(tm, "view");
+  expect(item("kernel-times").className).toContain("checked");
+
+  // Clicks in the menu bar keep the menu; clicks elsewhere close it.
+  tm.querySelector(".tm-menu-bar").dispatchEvent(
+    new s.window.Event("pointerdown", { bubbles: true }),
+  );
+  expect(tm.querySelector(".tm-menu")).not.toBeNull();
+  s.document.body.dispatchEvent(
+    new s.window.Event("pointerdown", { bubbles: true }),
+  );
+  expect(tm.querySelector(".tm-menu")).toBeNull();
+  expect(JSON.parse(s.window.localStorage.getItem("taskManager"))).toEqual(
+    expect.objectContaining({
+      alwaysOnTop: true,
+      hideWhenMinimized: true,
+      kernelTimes: true,
+      speed: "normal",
+      tab: "performance",
+      view: "details",
+    }),
+  );
+  tm.querySelector(".close-btn").click();
+  await settle();
+  s.document.body.dispatchEvent(
+    new s.window.Event("pointerdown", { bubbles: true }),
+  );
+});
+
+test("Task Manager ends, switches to and arranges real windows", async () => {
+  const s = await login(await loadShell());
+  withRuffle(s);
+  await runCommand(s, "bike-mania");
+  await openNotepad(s);
+  clickStartAction(s, "documents");
+  await settle();
+  const tm = await openTaskManager(s);
+  expect(rows(tm, "tasks").map(([task, status]) => [task, status])).toEqual([
+    ["Bike Mania", "Running"],
+    ["draft.txt - Notepad", "Running"],
+    ["My Documents", "Running"],
+  ]);
+  const selected = () =>
+    tm.querySelector('.tm-tasks [aria-selected="true"]').textContent;
+  expect(selected()).toContain("Bike Mania");
+
+  // The Windows menu acts on the selected window.
+  row(tm, "tasks", "My Documents").click();
+  await menuCommand(tm, "windows", "maximize");
+  expect(windowOf(s, "__my-documents").className).toContain("maximized");
+  await menuCommand(tm, "windows", "maximize");
+  await menuCommand(tm, "windows", "minimize");
+  expect(windowOf(s, "__my-documents").style.display).toBe("none");
+  await menuCommand(tm, "windows", "bring-to-front");
+  expect(windowOf(s, "__my-documents").style.display).not.toBe("none");
+  for (const name of ["cascade", "tile-horizontal", "tile-vertical"])
+    await menuCommand(tm, "windows", name);
+  expect(windowOf(s, "__notepad").style.left).not.toBe("");
+
+  // Switch To activates the window and minimizes Task Manager.
+  row(tm, "tasks", "draft.txt - Notepad").click();
+  row(tm, "tasks", "draft.txt - Notepad").dispatchEvent(
+    new s.window.MouseEvent("dblclick", { bubbles: true }),
+  );
+  await settle();
+  expect(windowOf(s, "__notepad").className).toContain("active");
+  expect(tm.style.display).toBe("none");
+  await openTaskManager(s);
+  tm.querySelector(".tm-pane").dispatchEvent(
+    new s.window.MouseEvent("dblclick", { bubbles: true }),
+  );
+  await menuCommand(tm, "options", "minimize-on-use");
+  await command(tm, "switch-to");
+  expect(tm.style.display).not.toBe("none");
+
+  // Programs run in their own processes; folders run inside Explorer.
+  tab(tm, "processes");
+  const images = () => rows(tm, "processes").map(([image]) => image);
+  expect(images().slice(0, 3)).toEqual([
+    "taskmgr.exe",
+    "notepad.exe",
+    "SAFlashPlayer.exe",
+  ]);
+  expect(rows(tm, "processes")[2][3]).toBe("18,240 K");
+
+  // Critical processes can't be ended; the rest end after XP's warning.
+  await command(tm, "end-process");
+  row(tm, "processes", "csrss.exe").click();
+  await command(tm, "end-process");
+  expect(s.document.querySelector(".xp-dialog").textContent).toContain(
+    "This is a critical system process.",
+  );
+  await answer(s, "ok");
+  row(tm, "processes", "notepad.exe").click();
+  await command(tm, "end-process");
+  await answer(s, "no");
+  expect(windowOf(s, "__notepad")).not.toBeNull();
+  await command(tm, "end-process");
+  await answer(s, "yes");
+  expect(windowOf(s, "__notepad")).toBeNull();
+  expect(images()).not.toContain("notepad.exe");
+  row(tm, "processes", "explorer.exe").click();
+  await command(tm, "end-process");
+  await answer(s, "yes");
+  expect(windowOf(s, "__my-documents")).toBeNull();
+  expect(images()).toContain("explorer.exe");
+  row(tm, "processes", "spoolsv.exe").click();
+  await command(tm, "end-process");
+  await answer(s, "yes");
+  expect(images()).not.toContain("spoolsv.exe");
+
+  // End Task closes the selected window.
+  tab(tm, "applications");
+  tm.querySelector(".tm-tasks [data-tm-sort]").click();
+  expect(rows(tm, "tasks").map(([task]) => task)).toEqual(["Bike Mania"]);
+  await command(tm, "end-task");
+  expect(windowOf(s, "bike-mania")).toBeNull();
+  expect(tm.querySelector(".tm-tasks .tm-row")).toBeNull();
+
+  // With nothing selected, the window commands do nothing.
+  await command(tm, "end-task");
+  await command(tm, "switch-to");
+  for (const name of ["bring-to-front", "minimize", "maximize"])
+    await menuCommand(tm, "windows", name);
+
+  tab(tm, "processes");
+  row(tm, "processes", "taskmgr.exe").click();
+  await command(tm, "end-process");
+  await answer(s, "yes");
+  expect(windowOf(s, "__task-manager")).toBeNull();
+});
+
+test("Task Manager starts tasks, shows About and runs Shut Down commands", async () => {
+  const s = await login(await loadShell());
+  const tm = await openTaskManager(s);
+  await command(tm, "new-task");
+  expect(s.document.querySelector(".run-dialog .title-text").textContent).toBe(
+    "Create New Task",
+  );
+  s.document.querySelector('.run-dialog [data-action="cancel"]').click();
+  await menuCommand(tm, "help", "about");
+  const about = s.document.querySelector(".about-windows-dialog");
+  expect(about.querySelector(".title-text").textContent).toBe(
+    "About Windows Task Manager",
+  );
+  expect(about.querySelector(".about-windows-icon").src).toContain(
+    "icon-32.png",
+  );
+  expect(about.textContent).toContain("Microsoft ® Windows Task Manager");
+  await answer(s, "ok");
+
+  await menuCommand(tm, "shutdown", "stand-by");
+  expect(s.document.getElementById("standby-screen").hidden).toBeFalse();
+  s.document.getElementById("standby-resume").click();
+
+  tab(tm, "users");
+  await command(tm, "logoff-user");
+  await answer(s, "no");
+  expect(s.document.getElementById("desktop").hidden).toBeFalse();
+  await command(tm, "disconnect");
+  expect(s.document.getElementById("welcome-screen").hidden).toBeFalse();
+});
+
+test("Task Manager's Shut Down menu turns off, restarts, logs off and switches users", async () => {
+  for (const [name, check] of [
+    ["turn-off", (s) => !s.document.getElementById("turn-off-screen").hidden],
+    ["restart", (s) => !s.document.getElementById("boot-screen").hidden],
+    ["log-off", (s) => !s.document.getElementById("welcome-screen").hidden],
+    ["switch-user", (s) => !s.document.getElementById("welcome-screen").hidden],
+    ["logoff-user", (s) => !s.document.getElementById("welcome-screen").hidden],
+  ]) {
+    const s = await login(await loadShell());
+    const tm = await openTaskManager(s);
+    if (name === "logoff-user") {
+      tab(tm, "users");
+      await command(tm, name);
+      await answer(s, "yes");
+    } else await menuCommand(tm, "shutdown", name);
+    await s.advanceTime(2000);
+    expect([name, check(s)]).toEqual([name, true]);
+  }
+});
+
+test("Ctrl+Shift+Esc opens Task Manager, which measures CPU from long tasks", async () => {
+  let report;
+  let disconnected = false;
+  const s = await login(
+    await loadShell({
+      beforeScripts: (window) => {
+        window.PerformanceObserver = class {
+          static supportedEntryTypes = ["longtask"];
+          constructor(callback) {
+            report = callback;
+          }
+          observe() {}
+          disconnect() {
+            disconnected = true;
+          }
+        };
+      },
+    }),
+  );
+  withRuffle(s);
+  await runCommand(s, "bike-mania");
+  await openNotepad(s);
+  clickStartAction(s, "pictures");
+  await settle();
+  s.document.body.dispatchEvent(
+    new s.window.KeyboardEvent("keydown", {
+      key: "Escape",
+      ctrlKey: true,
+      shiftKey: true,
+      bubbles: true,
+    }),
+  );
+  await settle();
+  const tm = windowOf(s, "__task-manager");
+  report({ getEntries: () => [{ duration: 1e9 }] });
+  await menuCommand(tm, "view", "refresh");
+  expect(tm.querySelector(".tm-status span:nth-child(2)").textContent).toBe(
+    "CPU Usage: 100%",
+  );
+  expect(
+    s.document.querySelector('.tray-icon[aria-label="Windows Task Manager"]')
+      .style.backgroundImage,
+  ).toContain("tray-11");
+  await openNotepad(s);
+  await s.advanceTime(2000);
+  tm.querySelector(".close-btn").click();
+  await settle();
+  expect(disconnected).toBeTrue();
+});

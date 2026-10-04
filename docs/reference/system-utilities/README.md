@@ -64,3 +64,62 @@ VM dialog's position. The images are 1:1 crops of the dialog from the
 - Windows Classic has no classic combo boxes, tabs, or up-downs in dialogs
   yet. That belongs to a shared controls pass.
 - Olive Green was checked against Luna.msstyles' colors, not in the VM.
+
+## Windows Task Manager
+
+| Page         | VM                                 | App                                 |
+| ------------ | ---------------------------------- | ----------------------------------- |
+| Applications | `xp-task-manager-applications.png` | `app-task-manager-applications.png` |
+| Processes    | `xp-task-manager-processes.png`    | `app-task-manager-processes.png`    |
+| Performance  | `xp-task-manager-performance.png`  | `app-task-manager-performance.png`  |
+| Networking   | `xp-task-manager-networking.png`   | `app-task-manager-networking.png`   |
+| Users        | `xp-task-manager-users.png`        | `app-task-manager-users.png`        |
+| Classic      |                                    | `app-task-manager-classic.png`      |
+
+The layout, menus, and strings come from taskmgr.exe's resources and the VM.
+The meter bitmaps, tray icons, and user icon are extracted from taskmgr.exe,
+and the list header and status bar from Luna.msstyles.
+
+### Matched
+
+- A real 404×455 window at (10, 10) that resizes, minimizes, and has a task
+  button. It opens from the taskbar menu and Ctrl+Shift+Esc.
+- The five tabs, the page, list views with Luna headers and XP's column widths
+  and alignment, the buttons, and the status bar with its size grip.
+- Each page has XP's own menu bar, with item widths, 17px items, check marks,
+  radio bullets, submenu arrows, and shortcut columns drawn like XP's.
+- Performance has XP's LED meters, with the label in unsmoothed Arial, and
+  scrolling history graphs on XP's 12px grid.
+- A notification area icon fills with CPU usage in XP's twelve steps.
+
+### Working simulation
+
+- Applications lists the real windows. End Task, Switch To, New Task, and the
+  Windows menu act on them. Large Icons, Small Icons, and Details work.
+- Processes lists the reference install's processes plus one per program
+  window, with XP's image names. End Process closes the program's window,
+  refuses critical processes, and asks first, with XP's messages. Columns sort.
+- CPU usage is the share of time the page's main thread was busy, where Flash
+  and emulated programs run. Memory figures add up from the processes.
+- Always On Top, Minimize On Use, Hide When Minimized, Update Speed, Refresh
+  Now, and Show Kernel Times work and are saved.
+- Shut Down stands by, turns off, restarts, logs off, and switches users.
+  Users can disconnect or log off the session.
+- About shows XP's About Windows Task Manager.
+
+### Astro Flash adaptations
+
+- The reference install's processes and their memory are fixed values. Only
+  program windows add or end processes. Winamp's agent is left out, since
+  Winamp was removed.
+- Networking shows XP's "No Active Network Adapters Found.", like the
+  reference VM, which has no network adapter.
+- Help has only About: there is no Help and Support Center. Hibernate is left
+  out, as in the Turn Off Computer dialog.
+- Select Columns, the right-click menus, and processor affinity are omitted.
+
+### Remaining differences
+
+- Text rasterization differs from XP, so menus are 1 to 3px narrower or wider.
+- Windows Classic gets classic list headers, lists, and status panes, but the
+  tabs still wait for the shared Classic controls pass.
