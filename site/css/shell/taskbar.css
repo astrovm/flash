@@ -1187,6 +1187,14 @@ html[data-xp-appearance="silver"] .taskbar-toolbar.floating > .toolbar-title {
   --frame-right-inactive: url("../../assets/xp/taskbar/blue-frame-right-1.png");
   --frame-bottom-active: url("../../assets/xp/taskbar/blue-frame-bottom-0.png");
   --frame-bottom-inactive: url("../../assets/xp/taskbar/blue-frame-bottom-1.png");
+  --frame-left-active-sizing: url("../../assets/xp/windows/blue-frame-left-0-sizing.png");
+  --frame-left-active-dialog: url("../../assets/xp/windows/blue-frame-left-0-dialog.png");
+  --frame-left-inactive-sizing: url("../../assets/xp/windows/blue-frame-left-1-sizing.png");
+  --frame-left-inactive-dialog: url("../../assets/xp/windows/blue-frame-left-1-dialog.png");
+  --frame-right-active-sizing: url("../../assets/xp/windows/blue-frame-right-0-sizing.png");
+  --frame-right-active-dialog: url("../../assets/xp/windows/blue-frame-right-0-dialog.png");
+  --frame-right-inactive-sizing: url("../../assets/xp/windows/blue-frame-right-1-sizing.png");
+  --frame-right-inactive-dialog: url("../../assets/xp/windows/blue-frame-right-1-dialog.png");
 }
 
 html[data-xp-appearance="olive"],
@@ -1198,6 +1206,14 @@ html[data-xp-appearance="olive"],
   --frame-right-inactive: url("../../assets/xp/taskbar/olive-frame-right-1.png");
   --frame-bottom-active: url("../../assets/xp/taskbar/olive-frame-bottom-0.png");
   --frame-bottom-inactive: url("../../assets/xp/taskbar/olive-frame-bottom-1.png");
+  --frame-left-active-sizing: url("../../assets/xp/windows/olive-frame-left-0-sizing.png");
+  --frame-left-active-dialog: url("../../assets/xp/windows/olive-frame-left-0-dialog.png");
+  --frame-left-inactive-sizing: url("../../assets/xp/windows/olive-frame-left-1-sizing.png");
+  --frame-left-inactive-dialog: url("../../assets/xp/windows/olive-frame-left-1-dialog.png");
+  --frame-right-active-sizing: url("../../assets/xp/windows/olive-frame-right-0-sizing.png");
+  --frame-right-active-dialog: url("../../assets/xp/windows/olive-frame-right-0-dialog.png");
+  --frame-right-inactive-sizing: url("../../assets/xp/windows/olive-frame-right-1-sizing.png");
+  --frame-right-inactive-dialog: url("../../assets/xp/windows/olive-frame-right-1-dialog.png");
 }
 
 html[data-xp-appearance="silver"],
@@ -1209,11 +1225,19 @@ html[data-xp-appearance="silver"],
   --frame-right-inactive: url("../../assets/xp/taskbar/silver-frame-right-1.png");
   --frame-bottom-active: url("../../assets/xp/taskbar/silver-frame-bottom-0.png");
   --frame-bottom-inactive: url("../../assets/xp/taskbar/silver-frame-bottom-1.png");
+  --frame-left-active-sizing: url("../../assets/xp/windows/silver-frame-left-0-sizing.png");
+  --frame-left-active-dialog: url("../../assets/xp/windows/silver-frame-left-0-dialog.png");
+  --frame-left-inactive-sizing: url("../../assets/xp/windows/silver-frame-left-1-sizing.png");
+  --frame-left-inactive-dialog: url("../../assets/xp/windows/silver-frame-left-1-dialog.png");
+  --frame-right-active-sizing: url("../../assets/xp/windows/silver-frame-right-0-sizing.png");
+  --frame-right-active-dialog: url("../../assets/xp/windows/silver-frame-right-0-dialog.png");
+  --frame-right-inactive-sizing: url("../../assets/xp/windows/silver-frame-right-1-sizing.png");
+  --frame-right-inactive-dialog: url("../../assets/xp/windows/silver-frame-right-1-dialog.png");
 }
 
 .taskbar-toolbar.floating {
-  --toolbar-frame-left: var(--frame-left-inactive);
-  --toolbar-frame-right: var(--frame-right-inactive);
+  --toolbar-frame-left: var(--frame-left-inactive-dialog);
+  --toolbar-frame-right: var(--frame-right-inactive-dialog);
   --toolbar-frame-bottom: var(--frame-bottom-inactive);
   background:
     var(--toolbar-frame-left) left bottom / 3px calc(100% - 19px) no-repeat,
@@ -1223,8 +1247,8 @@ html[data-xp-appearance="silver"],
   box-shadow: none;
 }
 .taskbar-toolbar.floating.active {
-  --toolbar-frame-left: var(--frame-left-active);
-  --toolbar-frame-right: var(--frame-right-active);
+  --toolbar-frame-left: var(--frame-left-active-dialog);
+  --toolbar-frame-right: var(--frame-right-active-dialog);
   --toolbar-frame-bottom: var(--frame-bottom-active);
   box-shadow: none;
 }
