@@ -1,0 +1,776 @@
+/* ============ Windows Task Manager ============ */
+
+/* Positions are XP's, measured in the reference VM from the window's client
+   area (396x421 at the default size). Pages stretch with the window, and
+   their lists and buttons keep XP's distance from the bottom right. */
+
+:root {
+  --tm-header-item: url("../../assets/xp/controls/blue-header-item.png");
+  --tm-header-background: url("../../assets/xp/controls/blue-header-background.png");
+  --tm-status-background: url("../../assets/xp/controls/blue-status-background.png");
+  --tm-status-divider: url("../../assets/xp/controls/blue-status-divider.png");
+}
+
+html[data-xp-appearance="olive"] {
+  --tm-header-item: url("../../assets/xp/controls/olive-header-item.png");
+  --tm-header-background: url("../../assets/xp/controls/olive-header-background.png");
+  --tm-status-background: url("../../assets/xp/controls/olive-status-background.png");
+  --tm-status-divider: url("../../assets/xp/controls/olive-status-divider.png");
+}
+
+html[data-xp-appearance="silver"] {
+  --tm-header-item: url("../../assets/xp/controls/silver-header-item.png");
+  --tm-header-background: url("../../assets/xp/controls/silver-header-background.png");
+  --tm-status-background: url("../../assets/xp/controls/silver-status-background.png");
+  --tm-status-divider: url("../../assets/xp/controls/silver-status-divider.png");
+}
+
+.task-manager {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--xp-beige);
+  color: #000;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  cursor: var(--xp-cursor);
+}
+
+.task-manager button,
+.task-manager input {
+  font: inherit;
+}
+
+/* 19px menu bar, XP's 1px white line, then an etched line. */
+.tm-menu-bar {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  height: 20px;
+  border-bottom: 1px solid #fff;
+  box-shadow:
+    0 1px #aca899,
+    0 2px #fff;
+}
+
+.tm-menu-bar > button {
+  height: 19px;
+  padding: 0 0 2px 6px;
+  border: 0;
+  text-align: left;
+  background: transparent;
+  color: #000;
+}
+
+/* Item widths come from XP's GDI text widths. */
+[data-tm-menu="file"] {
+  width: 28px;
+}
+
+[data-tm-menu="options"] {
+  width: 49px;
+}
+
+[data-tm-menu="view"] {
+  width: 34px;
+}
+
+[data-tm-menu="windows"] {
+  width: 55px;
+}
+
+[data-tm-menu="shutdown"] {
+  width: 64px;
+}
+
+[data-tm-menu="help"] {
+  width: 33px;
+}
+
+.tm-menu-bar > button:hover,
+.tm-menu-bar > button[aria-expanded="true"] {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+}
+
+.xp-window:not(.active) .tm-menu-bar > button {
+  color: #aca899;
+}
+
+/* XP's flat menus: 17px items, 20px for the check, a 1px border, and the
+   drop shadow. */
+.tm-menu {
+  position: absolute;
+  top: 19px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  padding: 0 0 4px;
+  border: 1px solid #aca899;
+  background: #fff;
+  box-shadow: 3px 3px 3px rgb(0 0 0 / 30%);
+  white-space: nowrap;
+}
+
+/* Shortcuts line up in a column after the longest label, like XP's tab
+   stop. */
+.tm-menu > button,
+.tm-submenu {
+  position: relative;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  height: 17px;
+  padding: 2px 21px 0 18px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  text-align: left;
+}
+
+.tm-menu > button:hover,
+.tm-menu > button:focus-visible,
+.tm-submenu:hover {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+  outline: 0;
+}
+
+.tm-menu kbd {
+  padding-left: 9px;
+  font: inherit;
+}
+
+.tm-menu kbd:empty {
+  padding: 0;
+}
+
+/* XP's menu check mark and radio bullet, pixel for pixel. */
+.tm-menu .checked::before,
+.tm-menu .radio::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 5px;
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v1H6zM5 1h2v1H5zM0 2h1v1H0zM4 2h3v1H4zM0 3h2v1H0zM3 3h3v1H3zM0 4h5v1H0zM1 5h3v1H1zM2 6h1v1H2z'/%3E%3C/svg%3E");
+}
+
+.tm-menu .radio::before {
+  top: 7px;
+  left: 7px;
+  width: 6px;
+  height: 6px;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h4v1H1zM0 1h6v4H0zM1 5h4v1H1z'/%3E%3C/svg%3E");
+}
+
+.tm-submenu::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 4px;
+  height: 7px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v7H0zM1 1h1v5H1zM2 2h1v3H2zM3 3h1v1H3z'/%3E%3C/svg%3E");
+}
+
+.tm-submenu > .tm-menu {
+  display: none;
+  top: -1px;
+  left: 100%;
+}
+
+.tm-submenu:hover > .tm-menu,
+.tm-submenu > .tm-menu.open {
+  display: grid;
+}
+
+.tm-menu-separator {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 5px 1px 3px;
+  background: #aca899;
+}
+
+.tm-tabs {
+  position: absolute;
+  z-index: 2;
+  top: 27px;
+  left: 7px;
+  display: flex;
+  align-items: flex-end;
+  height: 18px;
+}
+
+.tm-tabs button {
+  height: 18px;
+  margin: 0;
+  padding: 0 0 1px;
+  border: 1px solid #919b9c;
+  border-bottom: 0;
+  background: var(--xp-beige);
+  color: #000;
+  white-space: nowrap;
+}
+
+/* Tab widths come from XP's GDI text widths. */
+.tm-tabs button:nth-child(1) {
+  width: 69px;
+}
+
+.tm-tabs button:nth-child(2) {
+  width: 60px;
+}
+
+.tm-tabs button:nth-child(3) {
+  width: 73px;
+}
+
+.tm-tabs button:nth-child(4) {
+  width: 66px;
+}
+
+.tm-tabs button:nth-child(5) {
+  width: 42px;
+}
+
+.tm-tabs button[aria-selected="true"] {
+  position: relative;
+  z-index: 1;
+  height: 21px;
+  margin: 0 -2px -1px;
+  padding-bottom: 3px;
+  background: #fcfcfe;
+}
+
+.tm-tabs button:nth-child(1)[aria-selected="true"] {
+  width: 73px;
+}
+
+.tm-tabs button:nth-child(2)[aria-selected="true"] {
+  width: 64px;
+}
+
+.tm-tabs button:nth-child(3)[aria-selected="true"] {
+  width: 77px;
+}
+
+.tm-tabs button:nth-child(4)[aria-selected="true"] {
+  width: 70px;
+}
+
+.tm-tabs button:nth-child(5)[aria-selected="true"] {
+  width: 46px;
+}
+
+.tm-pane {
+  position: absolute;
+  top: 45px;
+  right: 5px;
+  bottom: 28px;
+  left: 5px;
+  border: 1px solid #919b9c;
+  border-right-width: 3px;
+  border-bottom-width: 3px;
+  background: #fcfcfe;
+}
+
+html:not([data-xp-appearance="classic"]) .tm-pane {
+  border-width: 2px 4px 4px 2px;
+  border-image: var(--ctl-tabpaneedge-normal) 2 4 4 2 fill / 2px 4px 4px 2px
+    stretch;
+  background: none;
+}
+
+/* The pages are plain dialogs, so they cover the pane's gradient with the
+   button face. */
+.tm-page {
+  position: absolute;
+  inset: 0;
+  background: var(--xp-beige);
+}
+
+html:not([data-xp-appearance="classic"]) .tm-page {
+  inset: 0 0 0 2px;
+}
+
+.tm-page[hidden] {
+  display: none;
+}
+
+.tm-page > * {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.tm-page > .xp-btn {
+  bottom: 13px;
+  height: 21px;
+  padding: 0;
+}
+
+/* List views: a 1px border, the Luna header, and rows. */
+.tm-list {
+  top: 15px;
+  right: 12px;
+  bottom: 41px;
+  left: 14px;
+  overflow: auto;
+  border: 1px solid #7f9db9;
+  border-width: 1px 1px 1px 1px;
+  padding: 1px 0 0 1px;
+  background: #fff;
+  outline: 0;
+}
+
+.tm-list-header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: grid;
+  grid-template-columns: var(--tm-columns) minmax(0, 1fr);
+  width: max-content;
+  min-width: 100%;
+  height: 20px;
+}
+
+.tm-list-header > button,
+.tm-list-header > span {
+  min-width: 0;
+  height: 20px;
+  padding: 0 0 2px 8px;
+  border-style: solid;
+  border-width: 3px 8px 4px;
+  border-image: var(--tm-header-item) 3 8 4 8 fill / 3px 8px 4px 8px stretch;
+  background: none;
+  color: #000;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.tm-list-header > button {
+  padding: 0 0 0 1px;
+  border-left-width: 8px;
+  margin-left: 0;
+}
+
+.tm-list-header > span {
+  padding: 0;
+  border-width: 0 0 3px;
+  border-image: var(--tm-header-background) 0 0 3 fill / 0 0 3px stretch;
+}
+
+/* Right-aligned headers end 7px from the divider, and can run into the
+   left edge. */
+.tm-list-header > .right {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0;
+  overflow: visible;
+}
+
+.tm-list-header > .right > span {
+  position: relative;
+  left: 1px;
+}
+
+.tm-row {
+  display: grid;
+  grid-template-columns: var(--tm-columns);
+  width: max-content;
+  height: 14px;
+  white-space: nowrap;
+}
+
+.tm-row > span {
+  overflow: hidden;
+  padding: 0 6px 0 5px;
+  text-overflow: ellipsis;
+}
+
+.tm-row > span.right {
+  text-align: right;
+}
+
+.tm-row > span:first-child {
+  display: flex;
+  padding: 0 0 0 4px;
+}
+
+.tm-tasks .tm-row,
+.tm-users .tm-row {
+  height: 17px;
+}
+
+.tm-tasks .tm-row > span,
+.tm-users .tm-row > span {
+  padding-top: 1px;
+}
+
+.tm-tasks .tm-row > span:first-child,
+.tm-users .tm-row > span:first-child {
+  padding-top: 0;
+}
+
+.tm-icon,
+.tm-icon img {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.tm-label {
+  height: 17px;
+  padding: 1px 2px 0 1px;
+}
+
+.tm-processes .tm-label {
+  height: 14px;
+  padding: 0 2px;
+}
+
+/* A selected item shows the highlight while its list has focus, and the
+   button face otherwise. Processes highlight the whole row. */
+.tm-row[aria-selected="true"] .tm-label {
+  background: var(--xp-beige);
+}
+
+.tm-list:focus .tm-row[aria-selected="true"] .tm-label {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+}
+
+.tm-processes:focus .tm-row[aria-selected="true"] {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+}
+
+.tm-processes:focus .tm-row[aria-selected="true"] .tm-label {
+  background: none;
+}
+
+.tm-tasks[data-view="large"],
+.tm-tasks[data-view="small"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.tm-tasks[data-view="large"] .tm-list-header,
+.tm-tasks[data-view="small"] .tm-list-header,
+.tm-tasks[data-view="large"] .tm-row > span:not(:first-child),
+.tm-tasks[data-view="small"] .tm-row > span:not(:first-child) {
+  display: none;
+}
+
+.tm-tasks[data-view="small"] .tm-row {
+  display: block;
+  width: auto;
+}
+
+.tm-tasks[data-view="large"] .tm-row {
+  display: block;
+  width: 75px;
+  height: auto;
+  margin: 2px 0 0;
+}
+
+.tm-tasks[data-view="large"] .tm-row > span:first-child {
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 0 0;
+  white-space: normal;
+  text-align: center;
+}
+
+.tm-tasks[data-view="large"] .tm-icon,
+.tm-tasks[data-view="large"] .tm-icon img {
+  width: 32px;
+  height: 32px;
+}
+
+.tm-tasks[data-view="large"] .tm-label {
+  height: auto;
+}
+
+.tm-end-task {
+  right: 181px;
+  width: 78px;
+}
+
+.tm-switch-to {
+  right: 97px;
+  width: 78px;
+}
+
+.tm-new-task {
+  right: 13px;
+  width: 78px;
+}
+
+.tm-end-process,
+.tm-send-message {
+  right: 13px;
+  width: 97px;
+}
+
+.tm-disconnect {
+  right: 204px;
+  width: 81px;
+}
+
+.tm-logoff {
+  right: 119px;
+  width: 76px;
+}
+
+.tm-all-users {
+  bottom: 21px;
+  left: 15px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tm-all-users input {
+  margin: 0;
+}
+
+/* Performance keeps XP's fixed layout. */
+.tm-page > fieldset {
+  padding: 0;
+}
+
+.tm-page legend {
+  margin-left: 6px;
+  padding: 0 2px;
+  line-height: 13px;
+}
+
+.tm-cpu-usage,
+.tm-pf-usage {
+  left: 12px;
+  width: 90px;
+  height: 89px;
+}
+
+.tm-cpu-usage,
+.tm-cpu-history {
+  top: 8px;
+}
+
+.tm-pf-usage,
+.tm-pf-history {
+  top: 101px;
+}
+
+.tm-cpu-history,
+.tm-pf-history {
+  left: 117px;
+  width: 249px;
+  height: 89px;
+}
+
+.tm-meter {
+  width: 68px;
+  height: 57px;
+}
+
+/* Offsets skip the 1px inner edge. */
+.tm-meter i {
+  position: absolute;
+  top: 7px;
+  left: 18px;
+  width: 33px;
+  background: url("../../assets/xp/task-manager/meter-off.png") 0 0 no-repeat;
+}
+
+.tm-meter i + i {
+  background-image: url("../../assets/xp/task-manager/meter-on.png");
+}
+
+.tm-meter canvas {
+  position: absolute;
+  top: 37px;
+  left: 1px;
+}
+
+.tm-meter,
+.tm-graph {
+  position: absolute;
+  box-sizing: content-box;
+  border: 1px solid;
+  border-color: #aca899 #fff #fff #aca899;
+  box-shadow:
+    inset 1px 1px #716f64,
+    inset -1px -1px #f1efe2;
+  padding: 1px;
+  background: #000;
+}
+
+.tm-meter,
+.tm-graph {
+  top: 7px;
+  left: 7px;
+}
+
+.tm-pf-usage .tm-meter {
+  left: 8px;
+}
+
+.tm-page > .tm-totals,
+.tm-page > .tm-physical,
+.tm-page > .tm-commit,
+.tm-page > .tm-kernel {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-auto-rows: 15px;
+  align-content: start;
+  height: 63px;
+  padding: 2px 10px 0 8px;
+}
+
+.tm-totals,
+.tm-commit {
+  left: 12px;
+  width: 170px;
+}
+
+.tm-physical,
+.tm-kernel {
+  left: 195px;
+  width: 171px;
+}
+
+.tm-totals,
+.tm-physical {
+  top: 196px;
+}
+
+.tm-commit,
+.tm-kernel {
+  top: 267px;
+}
+
+[data-tm-value] {
+  text-align: right;
+}
+
+.tm-no-adapters {
+  top: 131px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+/* The Luna status bar, with dividers between its three panes. */
+.tm-status {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 96px 120px 1fr;
+  height: 23px;
+}
+
+.tm-status::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-style: solid;
+  border-width: 5px 17px 9px 50px;
+  border-image: var(--tm-status-background) 5 17 9 50 fill / 5px 17px 9px 50px
+    stretch;
+}
+
+.tm-status span {
+  position: relative;
+  padding: 6px 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tm-status span:first-child {
+  padding-left: 1px;
+}
+
+.tm-status span:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 0;
+  width: 2px;
+  height: 17px;
+  background: var(--tm-status-divider) 0 0 / 2px 11px repeat-y;
+}
+
+/* The size grip, while the window can be resized. */
+.tm-status span:last-child {
+  background: var(--sb-size-grip) right bottom no-repeat;
+}
+
+.xp-window.maximized .tm-status span:last-child {
+  background: none;
+}
+
+html[data-xp-appearance="classic"] .tm-status::before {
+  border: 0;
+}
+
+/* Windows Classic: 3D header buttons, a sunken list, and sunken status
+   panes. */
+html[data-xp-appearance="classic"] .tm-list {
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 0;
+  box-shadow:
+    inset 1px 1px #404040,
+    inset -1px -1px var(--xp-beige);
+}
+
+html[data-xp-appearance="classic"] .tm-list-header > button,
+html[data-xp-appearance="classic"] .tm-list-header > span {
+  border: 1px solid;
+  border-color: #fff #404040 #404040 #fff;
+  border-image: none;
+  background: var(--xp-beige);
+  box-shadow: inset -1px -1px #808080;
+}
+
+html[data-xp-appearance="classic"] .tm-list-header > button {
+  padding-left: 6px;
+}
+
+html[data-xp-appearance="classic"] .tm-list-header > .right {
+  padding: 0 6px 0 0;
+}
+
+html[data-xp-appearance="classic"] .tm-status {
+  gap: 2px;
+  padding-top: 2px;
+}
+
+html[data-xp-appearance="classic"] .tm-status span {
+  padding: 3px 0 0 2px;
+  border: 1px solid;
+  border-color: #808080 #fff #fff #808080;
+}
+
+html[data-xp-appearance="classic"] .tm-status span::after {
+  content: none;
+}

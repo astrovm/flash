@@ -152,34 +152,6 @@ test("task buttons minimize the active window and restore it on the next click",
   expect(s.document.getElementById("window-system-menu").hidden).toBeFalse();
 });
 
-test("Task Manager lists no applications and opens shell dialogs from its menus", async () => {
-  const s = await login(await loadShell());
-  const open = () => {
-    context(s, s.document.getElementById("taskbar"));
-    s.document.querySelector('[data-taskbar-action="task-manager"]').click();
-    return [...s.document.querySelectorAll(".task-manager-dialog")].at(-1);
-  };
-  let manager = open();
-  expect(manager.textContent).toContain("No applications are running.");
-  manager.querySelector('[data-task-manager-action="end-task"]').click();
-  manager.querySelector('[data-task-manager-action="switch-to"]').click();
-  manager.querySelector('[data-task-manager-action="new-task"]').click();
-  expect(!!s.document.querySelector(".run-dialog")).toBeTrue();
-  s.document.querySelector('.run-dialog [data-action="cancel"]').click();
-  manager.querySelector('[data-task-manager-action="about"]').click();
-  await settle();
-  for (const [action, dialog] of [
-    ["turn-off", "shutdown-dialog"],
-    ["restart", "shutdown-dialog"],
-    ["log-off", "logoff-dialog"],
-  ]) {
-    manager = open();
-    manager.querySelector(`[data-task-manager-action="${action}"]`).click();
-    expect(s.document.getElementById(dialog).hidden).toBeFalse();
-    s.document.getElementById(dialog).hidden = true;
-  }
-});
-
 test("taskbar menus activate items from the keyboard and ignore nested menus", async () => {
   const s = await login(await loadShell());
   context(s, s.document.getElementById("taskbar"));
@@ -390,15 +362,16 @@ test("Task Manager selects only the first task and keeps windows that refuse to 
   await openDirtyNotepad(s);
   context(s, s.document.getElementById("taskbar"));
   s.document.querySelector('[data-taskbar-action="task-manager"]').click();
-  const manager = s.document.querySelector(".task-manager-dialog");
-  const rows = () => [...manager.querySelectorAll(".task-manager-row")];
+  await settle();
+  const manager = windowOf(s, "__task-manager");
+  const rows = () => [...manager.querySelectorAll(".tm-tasks .tm-row")];
   expect(rows().map((row) => row.getAttribute("aria-selected"))).toEqual([
     "true",
     "false",
   ]);
   expect(rows()[0].textContent).toContain("Bike Mania");
   rows()[1].click();
-  manager.querySelector('[data-task-manager-action="end-task"]').click();
+  manager.querySelector('[data-tm-command="end-task"]').click();
   await settle();
   [...s.document.querySelectorAll(".xp-dialog")]
     .at(-1)
@@ -422,8 +395,10 @@ test("arranging windows does nothing while every window is minimized", async () 
   expect(cascade.disabled).toBeTrue();
   context(s, s.document.getElementById("taskbar"));
   s.document.querySelector('[data-taskbar-action="task-manager"]').click();
-  const manager = s.document.querySelector(".task-manager-dialog");
-  manager.querySelector('[data-task-manager-action="cascade"]').click();
+  await settle();
+  const manager = windowOf(s, "__task-manager");
+  manager.querySelector('[data-tm-menu="windows"]').click();
+  manager.querySelector('[data-tm-command="cascade"]').click();
   await settle();
   expect([win.style.left, win.style.top]).toEqual(before);
   expect(win.style.display).toBe("none");

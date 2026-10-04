@@ -95,7 +95,10 @@ const taskButtonCache = new Map();
 
 const renderTaskButtons = () => {
   const container = document.getElementById("task-buttons");
-  let windows = [...openWindows.entries()];
+  // Task Manager's Hide When Minimized drops its button while minimized.
+  let windows = [...openWindows.entries()].filter(
+    ([, win]) => !(win.minimized && win.hideWhenMinimized),
+  );
   const explorerWindows = windows.filter(
     ([, win]) => win.type === "system" && win.currentFolderId,
   );
@@ -418,133 +421,7 @@ const arrangeTaskbarWindows = (mode, members = [...openWindows.values()]) => {
   focusWindow(windows[windows.length - 1].gameId);
 };
 
-const openTaskManager = () => {
-  const dialog = XPDialogs.createDialog({ title: "Windows Task Manager" });
-  dialog.el.classList.add("task-manager-dialog");
-  const title = dialog.el.querySelector(".title-text");
-  const titleIcon = document.createElement("img");
-  titleIcon.className = "task-manager-title-icon";
-  titleIcon.src = "assets/xp/icons/TaskManager.png";
-  titleIcon.alt = "";
-  title.before(titleIcon);
-  const titleButtons = dialog.el.querySelector(".title-buttons");
-  const minimize = document.createElement("button");
-  minimize.type = "button";
-  minimize.className = "tb-btn minimize-btn";
-  minimize.setAttribute("aria-label", "Minimize");
-  const maximize = document.createElement("button");
-  maximize.type = "button";
-  maximize.className = "tb-btn maximize-btn";
-  maximize.setAttribute("aria-label", "Maximize");
-  titleButtons.prepend(minimize, maximize);
-
-  const escapeTaskManagerText = (value) =>
-    String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
-  const applications = [...openWindows.values()].map((win) => ({
-    id: win.gameId,
-    title: win.title || formatGameTitle(win.gameId),
-    minimized: win.minimized,
-  }));
-  const applicationRows = applications.length
-    ? applications
-        .map(
-          (application, index) =>
-            `<button type="button" class="task-manager-row${index ? "" : " selected"}" data-task-manager-window="${application.id}" role="option" aria-selected="${index ? "false" : "true"}"><span><img src="${systemShortcuts[application.id]?.icon || "assets/xp/icons/FolderOptions.png"}" alt="">${escapeTaskManagerText(application.title)}</span><span>${application.minimized ? "Minimized" : "Running"}</span></button>`,
-        )
-        .join("")
-    : '<p class="task-manager-empty">No applications are running.</p>';
-  dialog.body.innerHTML = `
-    <div class="task-manager-menu-bar" role="menubar">
-      <button type="button" role="menuitem" data-task-manager-menu="file">File</button>
-
-      <button type="button" role="menuitem" data-task-manager-menu="windows">Windows</button>
-      <button type="button" role="menuitem" data-task-manager-menu="shutdown">Shut Down</button>
-      <button type="button" role="menuitem" data-task-manager-menu="help">Help</button>
-    </div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="file" role="menu" hidden><button role="menuitem" data-task-manager-action="new-task">New Task (Run...)</button><hr><button role="menuitem" data-task-manager-action="exit">Exit Task Manager</button></div>
-
-    <div class="task-manager-menu-popup" data-task-manager-popup="windows" role="menu" hidden><button role="menuitem" data-task-manager-action="cascade">Cascade</button><button role="menuitem" data-task-manager-action="tile-horizontal">Tile Horizontally</button><button role="menuitem" data-task-manager-action="tile-vertical">Tile Vertically</button><hr></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="shutdown" role="menu" hidden><hr><button role="menuitem" data-task-manager-action="turn-off">Turn Off</button><button role="menuitem" data-task-manager-action="restart">Restart</button><hr><button role="menuitem" data-task-manager-action="log-off">Log Off Administrator</button></div>
-    <div class="task-manager-menu-popup" data-task-manager-popup="help" role="menu" hidden><hr><button role="menuitem" data-task-manager-action="about">About Task Manager</button></div>
-    <div class="task-manager-tabs" role="tablist" aria-label="Windows Task Manager">
-      <button type="button" role="tab" data-task-manager-tab="applications" aria-selected="true">Applications</button>
-
-    </div>
-    <div class="task-manager-panel task-manager-applications" data-task-manager-panel="applications">
-      <div class="task-manager-list-head"><span>Task</span><span>Status</span></div>
-      <div class="task-manager-app-list" role="listbox">${applicationRows}</div>
-      <div class="task-manager-panel-buttons"><button type="button" class="xp-btn" data-task-manager-action="end-task">End Task</button><button type="button" class="xp-btn" data-task-manager-action="switch-to">Switch To</button><button type="button" class="xp-btn" data-task-manager-action="new-task">New Task...</button></div>
-    </div>
-`;
-
-  const closeMenus = () =>
-    dialog.body
-      .querySelectorAll("[data-task-manager-popup]")
-      .forEach((popup) => (popup.hidden = true));
-  dialog.body.querySelectorAll("[data-task-manager-menu]").forEach((button) =>
-    button.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const popup = dialog.body.querySelector(
-        `[data-task-manager-popup="${button.dataset.taskManagerMenu}"]`,
-      );
-      const open = popup.hidden;
-      closeMenus();
-      popup.hidden = !open;
-      popup.style.left = `${button.offsetLeft}px`;
-    }),
-  );
-  dialog.body.addEventListener("click", async (event) => {
-    const row = event.target.closest(".task-manager-row");
-    if (row) {
-      dialog.body.querySelectorAll(".task-manager-row").forEach((entry) => {
-        const selected = entry === row;
-        entry.classList.toggle("selected", selected);
-        entry.setAttribute("aria-selected", String(selected));
-      });
-    }
-    const action = event.target.closest("[data-task-manager-action]")?.dataset
-      .taskManagerAction;
-    if (!action) return;
-    const selectedWindow = dialog.body.querySelector(
-      ".task-manager-row.selected",
-    )?.dataset.taskManagerWindow;
-    closeMenus();
-    if (action === "new-task") openRunDialog();
-    else if (action === "exit") dialog.close("exit");
-    else if (action === "end-task" && selectedWindow) {
-      if (await closeGameWindow(selectedWindow))
-        dialog.body
-          .querySelector(`[data-task-manager-window="${selectedWindow}"]`)
-          ?.remove();
-    } else if (action === "switch-to" && selectedWindow) {
-      dialog.close("switch");
-      restoreWindow(selectedWindow);
-      focusWindow(selectedWindow);
-    } else if (action === "about") openAboutWindows();
-    else if (action === "cascade") arrangeTaskbarWindows("cascade");
-    else if (action === "tile-horizontal")
-      arrangeTaskbarWindows("tile-horizontal");
-    else if (action === "tile-vertical") arrangeTaskbarWindows("tile-vertical");
-    else if (action === "turn-off" || action === "restart") {
-      dialog.close(action);
-      showShutdownDialog();
-    } else if (action === "log-off") {
-      dialog.close(action);
-      showLogoffDialog();
-    }
-  });
-  document.addEventListener("pointerdown", closeMenus, { once: true });
-  minimize.addEventListener("click", () =>
-    dialog.el.classList.toggle("task-manager-minimized"),
-  );
-  maximize.addEventListener("click", () =>
-    dialog.el.classList.toggle("task-manager-maximized"),
-  );
-};
+const openTaskManager = () => openSystemWindow("__task-manager");
 
 const getStartMenuStyle = () =>
   localStorage.getItem(START_MENU_STYLE_KEY) === "classic"

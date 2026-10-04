@@ -926,7 +926,7 @@ const focusWindow = (
   win.needsAttention = false;
   win.lastUsed = Date.now();
   win.zIndex = ++zIndexCounter;
-  win.el.style.zIndex = win.zIndex;
+  win.el.style.zIndex = win.alwaysOnTop ? TOPMOST_Z_INDEX : win.zIndex;
   if (notifyApplication) win.mountedApplication?.focus?.();
 
   openWindows.forEach((w, id) => {
@@ -948,6 +948,15 @@ const focusWindow = (
     deepLinkUrl.hash = deepLinkId;
     history.replaceState(null, "", deepLinkUrl);
   }
+};
+
+// Topmost windows (Task Manager's Always On Top) stay above the others but
+// below shell dialogs (6900) and the taskbar.
+const TOPMOST_Z_INDEX = 6800;
+const setWindowTopmost = (gameId, topmost) => {
+  const win = openWindows.get(gameId);
+  win.alwaysOnTop = topmost;
+  win.el.style.zIndex = topmost ? TOPMOST_Z_INDEX : win.zIndex;
 };
 
 const focusTopWindow = () => {

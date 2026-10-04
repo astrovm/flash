@@ -225,6 +225,7 @@ const XP_ICON_PATHS = Object.freeze({
   "SoundsAudioSmall.png": "assets/xp/icons/SoundsAudioSmall.png",
   "Synchronize.png": "assets/xp/icons/Synchronize.png",
   "System.png": "assets/xp/icons/System.png",
+  "TaskManager.png": "assets/xp/icons/TaskManager.png",
   "TourWindowsXP.png": "assets/xp/icons/TourWindowsXP.png",
   "UserAccounts.png": "assets/xp/icons/UserAccounts.png",
   "Volume.png": "assets/xp/icons/Volume.png",

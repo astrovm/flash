@@ -36,6 +36,21 @@ const setSystemVolume = (volume, isMuted) => {
   syncTrayVolumeUI();
 };
 
+// Programs add their icons left of the existing ones, like XP. Double-click,
+// or Enter on the focused icon, opens the program.
+const addTrayIcon = (label, onOpen) => {
+  const icon = document.createElement("button");
+  icon.type = "button";
+  icon.className = "tray-icon";
+  icon.setAttribute("aria-label", label);
+  icon.addEventListener("dblclick", onOpen);
+  icon.addEventListener("click", (event) => {
+    if (event.detail === 0) onOpen();
+  });
+  document.getElementById("tray-volume-button").before(icon);
+  return icon;
+};
+
 const closeTrayVolumePopup = () => {
   const popup = document.getElementById("tray-volume-popup");
   const button = document.getElementById("tray-volume-button");

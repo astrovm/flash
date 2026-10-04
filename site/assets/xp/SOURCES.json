@@ -2502,6 +2502,201 @@
       "pixelSha256": "97b91c8a5788405617d22f0e46b8f67092e3c5ed9e439af8949d7adbfe79e7e5"
     }
   },
+  "assets/xp/task-manager/window.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "d7a878d127bdc552d037a7c96a9f385ede591a9376eddad2f04ea9eb8673437f",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 118,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "89f22994a3c479763fea88001462cbf09d0cc95bb45d0bc985daa79d5b0a1f36"
+    }
+  },
+  "assets/xp/task-manager/user.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "35d8cec9bcf0ad5856dbaa0df01e636653c1eb3395e784786166fefb96ea3652",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 3003,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "a0f4d29f00e5fc5f281aba8f9afa417df24f187a5689f4970e5ed1a263091261"
+    }
+  },
+  "assets/xp/task-manager/tray-0.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "d57b0febf00c22baae899ae0b12d813da12d14eac32ebdba20f740d1fcd5f6ec",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 127,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "e98f4f915d478a30876abf369c9b6b5fc2d11e4c6afe2152e96966e42f250ab5"
+    }
+  },
+  "assets/xp/task-manager/tray-1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "6d5bb592b85a644089c0bb4d6ee396c51c26ece9e37e8574e47dd7e38eb5e64f",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 128,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "9dca2aa38f7ee155d011cff592b318b125dc4b95470460d06e071dd1c5377b28"
+    }
+  },
+  "assets/xp/task-manager/tray-2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "21df567da1e0509aa39f8a94531d118bd60a9ed2fc94cd818298b6c67393f9f9",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 129,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "ae47bb9b92b38fef639dc48de61b44b7d1a00335b03cc56349225ae6f228c2d1"
+    }
+  },
+  "assets/xp/task-manager/tray-3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "edc54b1b42bb1fc62f68f75bb57f154d6751f58cb928cf79a92a49824bafc183",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 130,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "1bfc711b4ed5a99e3779062d83f44cf6ec4ef989b637af4b40c5032888467d2f"
+    }
+  },
+  "assets/xp/task-manager/tray-4.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "d21689e6392b0bd7762e08d7a1ad1ae51a3a2f5a589bb877e0f059afdaafd5f7",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 131,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "819fc1858faead38e29409529d5226a14a8c4f85117043774c37250d53bd7adc"
+    }
+  },
+  "assets/xp/task-manager/tray-5.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "ae5acb423ae93b0041ecf301171585936defbec43d4eac2d2138244d3a1f6e7e",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 132,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "15847a08d11d06fc2530641855ae708e551382e6bc37ccb4042b18a3cb17a1ef"
+    }
+  },
+  "assets/xp/task-manager/tray-6.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "db1d320b902e321931c44da26169e1dd08324f2671e548bbf72cf015dd90a452",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 133,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "ffd5af9dc84fa195485a933fe3aa15e6b292e57d3e645eb9aa16c2e999503685"
+    }
+  },
+  "assets/xp/task-manager/tray-7.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "778f3ffccf13ba05c2ec68262a74bb61b772c692ee0a2ef04130b17899d287ce",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 134,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "f803140758c3ced6290cdf6928083fc840f41ac30fd9c4f82fc7d8337b5dae10"
+    }
+  },
+  "assets/xp/task-manager/tray-8.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "c0ae233209d048b34afbf539f0819d3051759a1e725ea40ea3ffaf5b1c821da1",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 135,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "f91cbd6f1489d494312e2d4df5c01a2405b447f0540ab3103234104e2676ef04"
+    }
+  },
+  "assets/xp/task-manager/tray-9.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "a33e86feff818893d738b4065720b466042d3900d853e9982ef704deacf87172",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 136,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "73b8553aa98b85c6be2df52663ec888b32fc6f02b935315368b6602b956a4257"
+    }
+  },
+  "assets/xp/task-manager/tray-10.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "3824a113c45f3f41af340d27d72d3570e38d03d4330994c48691ee2dbc69f909",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 137,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "48e9faf8921e365e59fc10eaf4cfa2e92fbb8b3bd9f980d89e7b62cf0cd5a839"
+    }
+  },
+  "assets/xp/task-manager/tray-11.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "cb9c3b419f16f77b1d698e54f462e4b621bc40e7eddd718929f95cb08326e0f0",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 138,
+      "language": 1033,
+      "frame": "16x16x4",
+      "pixelSha256": "9ac2ce3faf59781858ed325d4e615693de86a27ded21cb8e6c3234b30f283bb2"
+    }
+  },
+  "assets/xp/task-manager/icon-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "d7e70756180c360c1b910e912609d1cc6c9ee775bc0e11dea7118735d0183441",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 14,
+      "id": 107,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "6054385c7a3d8ac578be3e77ce6f399a52547ee1cece6ba82e1595cbfef379eb"
+    }
+  },
   "assets/xp/taskbar/blue-toolbar-background-0.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14184,6 +14379,224 @@
       "language": 1033,
       "frame": "3x31x32",
       "pixelSha256": "ba84cfc945436f0a15f09e3b2d35d5038af35fb3c6e19209f3baa253741d514d"
+    }
+  },
+  "assets/xp/task-manager/meter-on.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "1b20c2d2d7efe21efa3289da10ce36aa450db5e5fb37b0ea0cb12ef1b7085e8d",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 2,
+      "id": 103,
+      "language": 1033,
+      "frame": "33x75x32",
+      "pixelSha256": "ccd5e0f92bbbc5088f7a79937c7e731003079713b6d68991fcfe3e52ddc4863d"
+    }
+  },
+  "assets/xp/task-manager/meter-off.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/TASKMGR.EX_",
+    "sha256": "db7907b8afe533dcf97c8c045a9334751958efd481c9690ea22c685e56c2cab3",
+    "resource": {
+      "parentSha256": "f899e8c466b518346d47c7cd56f6d4ae3eed38369b8e38b6badf0227b93e7f82",
+      "type": 2,
+      "id": 104,
+      "language": 1033,
+      "frame": "33x75x32",
+      "pixelSha256": "241895d07a4f0d68b5a2f053be10e4831a5c6c227c7a49dd010a89419cf337cf"
+    }
+  },
+  "assets/xp/controls/blue-header-item.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6c4bb0993e83d7f893a0a61fb528cdb246efeab6bd49d9fe5b2970047fa8bfc9",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_LISTVIEWHEADER_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 18,
+        "height": 18
+      },
+      "language": 1033,
+      "frame": "18x18x32",
+      "pixelSha256": "826db0aa270a9a96ad91a5dff2b303595d1acc67a5b91ef96351292066ec4aa0"
+    }
+  },
+  "assets/xp/controls/blue-header-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "7acb262a7eceb5d98c1928a562c8d17eaf93af20285ddd95533fe515f79e69e6",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_LISTVIEWHEADERBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "1x17x32",
+      "pixelSha256": "f7cbe2c1356b322d065214058b9b0095f1028554a692e13c6078d663ae6fb013"
+    }
+  },
+  "assets/xp/controls/blue-status-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "295f8d5736e4ab41de52639708ee29c7ee513a13905a0425a3d2eef9e8132422",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_STATUSBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "68x15x32",
+      "pixelSha256": "2bb1a751b893468f3db7a10c107461a14c38f9d379b9f9e04aaf70c734d158d5"
+    }
+  },
+  "assets/xp/controls/blue-status-divider.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "34c7a6ecdd786ff4048707aceb419b03e696375fd8208bc317502c2dfdcc7373",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_STATUSPANE_BMP",
+      "crop": {
+        "left": 1,
+        "top": 2,
+        "width": 2,
+        "height": 11
+      },
+      "language": 1033,
+      "frame": "2x11x32",
+      "pixelSha256": "180629d89d4a24d9387a619c617ed97efc08a7148a24b810d68eecf56b789b36"
+    }
+  },
+  "assets/xp/controls/olive-header-item.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "6c4bb0993e83d7f893a0a61fb528cdb246efeab6bd49d9fe5b2970047fa8bfc9",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_LISTVIEWHEADER_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 18,
+        "height": 18
+      },
+      "language": 1033,
+      "frame": "18x18x32",
+      "pixelSha256": "826db0aa270a9a96ad91a5dff2b303595d1acc67a5b91ef96351292066ec4aa0"
+    }
+  },
+  "assets/xp/controls/olive-header-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "7acb262a7eceb5d98c1928a562c8d17eaf93af20285ddd95533fe515f79e69e6",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_LISTVIEWHEADERBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "1x17x32",
+      "pixelSha256": "f7cbe2c1356b322d065214058b9b0095f1028554a692e13c6078d663ae6fb013"
+    }
+  },
+  "assets/xp/controls/olive-status-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "a9a030342a0ba563412b726ccb695980f1ef295bbebb05e9085980544624b235",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_STATUSBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "68x15x32",
+      "pixelSha256": "a6bac2a61aef65f03998f9b6c883396a2a18199c13492465c2dfad1ec218eec7"
+    }
+  },
+  "assets/xp/controls/olive-status-divider.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "34c7a6ecdd786ff4048707aceb419b03e696375fd8208bc317502c2dfdcc7373",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_STATUSPANE_BMP",
+      "crop": {
+        "left": 1,
+        "top": 2,
+        "width": 2,
+        "height": 11
+      },
+      "language": 1033,
+      "frame": "2x11x32",
+      "pixelSha256": "180629d89d4a24d9387a619c617ed97efc08a7148a24b810d68eecf56b789b36"
+    }
+  },
+  "assets/xp/controls/silver-header-item.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "ddd96de528fb3d670e0088fe9c5cad536647578cfa8252dc2ce2c0f34987ec5e",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_LISTVIEWHEADER_BMP",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 18,
+        "height": 18
+      },
+      "language": 1033,
+      "frame": "18x18x32",
+      "pixelSha256": "f9a9aa5662ef806ee2c1c7f96f63795438482e8a1525d979440b7d2f77ba66ba"
+    }
+  },
+  "assets/xp/controls/silver-header-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "56944def8607e11d773edf27060a5de75610110c969523d3d7d4a72df998383a",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_LISTVIEWHEADERBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "1x17x32",
+      "pixelSha256": "9a666a4222052c0d15fa7525edf62f5ac2ad280cb1d6ed362168877b73cfe46d"
+    }
+  },
+  "assets/xp/controls/silver-status-background.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "44fd7370ad227a6baed62553bfa90abe0fec63263c4fb66cce77692398d1d51f",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_STATUSBACKGROUND_BMP",
+      "language": 1033,
+      "frame": "68x15x32",
+      "pixelSha256": "0f0cf0d6d1cc806ab86a069bf1cff30c272b87444f6be8bd9975bfda17d27b84"
+    }
+  },
+  "assets/xp/controls/silver-status-divider.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "34c7a6ecdd786ff4048707aceb419b03e696375fd8208bc317502c2dfdcc7373",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_STATUSPANE_BMP",
+      "crop": {
+        "left": 1,
+        "top": 2,
+        "width": 2,
+        "height": 11
+      },
+      "language": 1033,
+      "frame": "2x11x32",
+      "pixelSha256": "180629d89d4a24d9387a619c617ed97efc08a7148a24b810d68eecf56b789b36"
     }
   },
   "assets/xp/system/SecurityHelp.png": {

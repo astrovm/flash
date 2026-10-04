@@ -1598,36 +1598,40 @@ describe("Windows XP shell", () => {
     expect(document.getElementById("standby-screen")!.hidden).toBeTrue();
   });
 
-  test("lists real applications in Task Manager without fabricated metrics", async () => {
+  test("lists real applications in Task Manager and ends them", async () => {
     const shell = await login(await loadShell());
     clickStartAction(shell, "documents");
     shell.document
       .querySelector<HTMLButtonElement>('[data-taskbar-action="task-manager"]')!
       .click();
+    await flushShell();
     const manager = shell.document.querySelector<HTMLElement>(
-      ".task-manager-dialog",
+      '.xp-window[data-game="__task-manager"]',
     )!;
-    expect(manager).not.toBeNull();
     expect(
-      [...manager.querySelectorAll("[data-task-manager-tab]")].map(
-        (tab) => tab.dataset.taskManagerTab,
+      [...manager.querySelectorAll<HTMLElement>("[data-tm-tab]")].map(
+        (tab) => tab.dataset.tmTab,
       ),
-    ).toEqual(["applications"]);
-    expect(manager.querySelector(".task-manager-status")).toBeNull();
+    ).toEqual([
+      "applications",
+      "processes",
+      "performance",
+      "networking",
+      "users",
+    ]);
     expect(
-      manager.querySelector('[data-task-manager-window="__my-documents"]'),
+      manager.querySelector('.tm-tasks [data-tm-id="__my-documents"]'),
     ).not.toBeNull();
     manager
-      .querySelector<HTMLButtonElement>(
-        '[data-task-manager-action="end-task"]',
-      )!
+      .querySelector<HTMLButtonElement>('[data-tm-command="end-task"]')!
       .click();
+    await flushShell();
     await flushShell();
     expect(
       shell.document.querySelector('.xp-window[data-game="__my-documents"]'),
     ).toBeNull();
     expect(
-      manager.querySelector('[data-task-manager-window="__my-documents"]'),
+      manager.querySelector('.tm-tasks [data-tm-id="__my-documents"]'),
     ).toBeNull();
   });
 

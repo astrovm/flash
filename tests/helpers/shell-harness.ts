@@ -192,6 +192,7 @@ export async function loadShell({
       drawImage() {},
       ellipse() {},
       fillRect() {},
+      fillText() {},
       getImageData() {
         return { data: image, width, height };
       },

@@ -166,7 +166,7 @@ test("desktop marquee selects intersecting icons and additive selection preserve
   expect(icons[0].classList.contains("selected")).toBeTrue();
   expect(icons[4].classList.contains("selected")).toBeTrue();
 });
-test("taskbar attention, keyboard menus and Task Manager act on selected windows", async () => {
+test("taskbar attention and keyboard menus act on selected windows", async () => {
   const s = await login(await loadShell());
   Object.defineProperty(
     s.document.getElementById("task-buttons"),
@@ -183,43 +183,12 @@ test("taskbar attention, keyboard menus and Task Manager act on selected windows
   expect(task.className).toContain("attention");
   task.click();
   expect(task.className).not.toContain("attention");
-  const open = () => {
-    context(s, s.document.getElementById("taskbar"));
-    s.document.querySelector('[data-taskbar-action="task-manager"]').click();
-    return s.document.querySelector(".task-manager-dialog");
-  };
+
   context(s, s.document.getElementById("taskbar"));
   const menu = s.document.getElementById("taskbar-context-menu");
   for (const k of ["End", "Home", "ArrowDown", "ArrowUp"]) key(s, menu, k);
   key(s, menu, "Escape");
   expect(menu.hidden).toBeTrue();
-  let tm = open();
-  tm.querySelector('[data-task-manager-tab="applications"]').click();
-  for (const name of ["file", "windows", "shutdown", "help"]) {
-    tm.querySelector(`[data-task-manager-menu="${name}"]`).click();
-    expect(
-      tm.querySelector(`[data-task-manager-popup="${name}"]`).hidden,
-    ).toBeFalse();
-  }
-  for (const action of ["cascade", "tile-horizontal", "tile-vertical"])
-    tm.querySelector(`[data-task-manager-action="${action}"]`).click();
-  tm.querySelector(".minimize-btn").click();
-  expect(tm.classList.contains("task-manager-minimized")).toBeTrue();
-  tm.querySelector(".minimize-btn").click();
-  tm.querySelector(".maximize-btn").click();
-  expect(tm.classList.contains("task-manager-maximized")).toBeTrue();
-  tm.querySelector('[data-task-manager-window="__my-pictures"]').click();
-  tm.querySelector('[data-task-manager-action="end-task"]').click();
-  await flushShell();
-  expect(
-    s.document.querySelector('.xp-window[data-game="__my-pictures"]') === null,
-  ).toBeTrue();
-  tm.querySelector('[data-task-manager-window="__my-documents"]').click();
-  tm.querySelector('[data-task-manager-action="switch-to"]').click();
-  expect(tm.isConnected).toBeFalse();
-  tm = open();
-  tm.querySelector('[data-task-manager-action="exit"]').click();
-  expect(tm.isConnected).toBeFalse();
 });
 test("toolbar context controls change text, title and icon size and keyboard resize persists", async () => {
   const s = await login(
