@@ -1,4 +1,11 @@
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  open,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { createInterface } from "node:readline";
 import { dirname, resolve } from "node:path";
@@ -67,6 +74,10 @@ let instanceName = `agent-${process.pid}`;
 let snapshotName: string | undefined;
 let writeBase = false;
 let audioOutput: string | undefined;
+// The guest's sound card, AC97 by default, whose driver is installed in
+// the base disk. --audio-output records it to a WAV file; otherwise it
+// plays into QEMU's silent backend. `--sound none` removes it.
+let sound = "AC97";
 let sharedDirectory: string | undefined;
 // Cirrus matches the original reference captures (up to 1280×1024). The
 // standard adapter with the VBEMP driver adds widescreen modes at 32-bit.
@@ -95,6 +106,9 @@ for (let index = 0; index < arguments_.length; index += 1) {
     vga = arguments_[++index] || "";
     if (!["cirrus", "std"].includes(vga))
       throw new Error("--vga must be cirrus or std");
+  } else if (argument === "--sound") {
+    sound = arguments_[++index] || "";
+    if (!sound) throw new Error("--sound requires a QEMU device");
   } else if (argument === "--nic") {
     nic = arguments_[++index] || "";
     if (!nic) throw new Error("--nic requires a QEMU -nic value");
@@ -140,14 +154,16 @@ const qemu = spawn(
     "usb-tablet,bus=usb.0",
     "-nic",
     nic,
-    ...(audioOutput
-      ? [
+    ...(sound === "none"
+      ? []
+      : [
           "-audiodev",
-          `wav,id=reference,path=${audioOutput}`,
+          audioOutput
+            ? `wav,id=reference,path=${audioOutput},in.voices=0`
+            : "none,id=reference",
           "-device",
-          "AC97,audiodev=reference",
-        ]
-      : []),
+          `${sound},audiodev=reference`,
+        ]),
     ...(sharedDirectory
       ? [
           "-drive",
@@ -324,7 +340,7 @@ async function run(input: string): Promise<string | null> {
     if (!command) return output;
     if (command === "help") {
       log(
-        "Commands: record-boot <directory>, screenshot [path], wait [timeout ms] [settle ms], until <x> <y> <rrggbb> [timeout ms], size, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], drag <x1> <y1> <x2> <y2> [width height], save <name>, load <name>, status, quit. Clicks and drags use the screen size unless given another.",
+        "Commands: record-boot <directory>, screenshot [path], wait [timeout ms] [settle ms], until <x> <y> <rrggbb> [timeout ms], size, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], drag <x1> <y1> <x2> <y2> [width height], save <name>, load <name>, monitor <command>, status, quit. Clicks and drags use the screen size unless given another.",
       );
     } else if (command === "record-boot") {
       if (!args[0]) throw new Error("record-boot requires an output directory");
@@ -460,6 +476,16 @@ async function run(input: string): Promise<string | null> {
       await execute("human-monitor-command", {
         "command-line": `${command === "save" ? "savevm" : "loadvm"} ${args[0]}`,
       });
+    } else if (command === "monitor") {
+      // QEMU's human monitor, for diagnostics such as `info irq`.
+      if (!args.length) throw new Error("monitor requires a command");
+      log(
+        String(
+          await execute("human-monitor-command", {
+            "command-line": args.join(" "),
+          }),
+        ).trimEnd(),
+      );
     } else if (command === "status") {
       log(JSON.stringify(await execute("query-status")));
     } else if (command === "quit") {
@@ -496,9 +522,41 @@ const shutDown = () => {
   void rm(socket, { force: true });
   void rm(idlePath, { force: true });
 };
-qemu.on("exit", () => {
+qemu.on("exit", async (code) => {
   shutDown();
-  process.exit(0);
+  try {
+    if (code === 0 && audioOutput && sound !== "none") {
+      // QEMU 11.1 can exit with PCM data written but both WAV lengths still
+      // zero. Finish only that exact header after QEMU closes the file.
+      const file = await open(audioOutput, "r+");
+      try {
+        const header = Buffer.alloc(44);
+        const { bytesRead } = await file.read(header, 0, 44, 0);
+        if (
+          bytesRead === 44 &&
+          header.toString("ascii", 0, 4) === "RIFF" &&
+          header.toString("ascii", 8, 16) === "WAVEfmt " &&
+          header.readUInt32LE(16) === 16 &&
+          header.toString("ascii", 36, 40) === "data" &&
+          header.readUInt32LE(4) === 0 &&
+          header.readUInt32LE(40) === 0
+        ) {
+          const { size } = await file.stat();
+          if (size - 8 > 0xffffffff)
+            throw new Error("Audio recording exceeds the WAV size limit");
+          header.writeUInt32LE(size - 8, 4);
+          header.writeUInt32LE(size - 44, 40);
+          await file.write(header, 0, 44, 0);
+        }
+      } finally {
+        await file.close();
+      }
+    }
+  } catch (error) {
+    process.stderr.write(errorText(error));
+    process.exit(1);
+  }
+  process.exit(code ?? 1);
 });
 
 const commands = createInterface({ input: process.stdin });
