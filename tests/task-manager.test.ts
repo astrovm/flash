@@ -113,8 +113,12 @@ test("Task Manager opens as XP's window with five pages, a status bar and a tray
     "taskmgr.exe",
     "astro",
     expect.stringMatching(/^\d\d$/),
-    "3,744 K",
+    expect.stringMatching(/^\d,\d{3} K$/),
   ]);
+  // Its memory is its base working set plus what its window holds.
+  expect(
+    Number.parseInt(rows(tm, "processes")[0][3].replace(",", "")),
+  ).toBeGreaterThan(3744);
   expect(rows(tm, "processes").at(-1)[0]).toBe("System Idle Process");
   const header = (index) =>
     tm.querySelector(`.tm-processes [data-tm-sort="${index}"]`).click();
@@ -150,9 +154,10 @@ test("Task Manager opens as XP's window with five pages, a status bar and a tray
   expect(menus()).toEqual(["File", "Options", "View", "Shut Down", "Help"]);
   menu(tm, "file");
   expect(tm.querySelector(".tm-menu").textContent).toBe("Exit Task Manager");
-  expect(tm.querySelector(".tm-no-adapters").textContent).toBe(
-    "No Active Network Adapters Found.",
-  );
+  expect(rows(tm, "adapters")).toEqual([
+    ["Local Area Connection", "0 %", "100 Mbps", "Operational"],
+  ]);
+  row(tm, "adapters", "Local Area Connection").click();
 
   tab(tm, "users");
   expect(rows(tm, "users")).toEqual([["astro", "0", "Active", "", "Console"]]);
@@ -334,7 +339,9 @@ test("Task Manager ends, switches to and arranges real windows", async () => {
     "notepad.exe",
     "SAFlashPlayer.exe",
   ]);
-  expect(rows(tm, "processes")[2][3]).toBe("18,240 K");
+  expect(
+    Number.parseInt(rows(tm, "processes")[2][3].replace(",", "")),
+  ).toBeGreaterThanOrEqual(18240);
 
   // Critical processes can't be ended; the rest end after XP's warning.
   await command(tm, "end-process");
@@ -434,16 +441,22 @@ test("Task Manager's Shut Down menu turns off, restarts, logs off and switches u
   }
 });
 
-test("Ctrl+Shift+Esc opens Task Manager, which measures CPU from long tasks", async () => {
-  let report;
+test("Ctrl+Shift+Esc opens Task Manager, which measures CPU from late frames and graphs downloads", async () => {
+  let frame;
+  let canceled = false;
+  let download;
   let disconnected = false;
   const s = await login(
     await loadShell({
       beforeScripts: (window) => {
+        window.requestAnimationFrame = (callback) => {
+          frame = callback;
+          return 7;
+        };
+        window.cancelAnimationFrame = (id) => (canceled = id === 7);
         window.PerformanceObserver = class {
-          static supportedEntryTypes = ["longtask"];
           constructor(callback) {
-            report = callback;
+            download = callback;
           }
           observe() {}
           disconnect() {
@@ -455,9 +468,6 @@ test("Ctrl+Shift+Esc opens Task Manager, which measures CPU from long tasks", as
   );
   withRuffle(s);
   await runCommand(s, "bike-mania");
-  await openNotepad(s);
-  clickStartAction(s, "pictures");
-  await settle();
   s.document.body.dispatchEvent(
     new s.window.KeyboardEvent("keydown", {
       key: "Escape",
@@ -468,18 +478,76 @@ test("Ctrl+Shift+Esc opens Task Manager, which measures CPU from long tasks", as
   );
   await settle();
   const tm = windowOf(s, "__task-manager");
-  report({ getEntries: () => [{ duration: 1e9 }] });
+  const cpu = () =>
+    tm.querySelector(".tm-status span:nth-child(2)").textContent;
+
+  // Frames that run late count as busy time for the active program.
+  frame(0);
+  frame(16);
+  frame(1e9);
   await menuCommand(tm, "view", "refresh");
-  expect(tm.querySelector(".tm-status span:nth-child(2)").textContent).toBe(
-    "CPU Usage: 100%",
-  );
+  expect(cpu()).toBe("CPU Usage: 100%");
   expect(
     s.document.querySelector('.tray-icon[aria-label="Windows Task Manager"]')
       .style.backgroundImage,
   ).toContain("tray-11");
-  await openNotepad(s);
-  await s.advanceTime(2000);
+  tab(tm, "processes");
+  expect(row(tm, "processes", "taskmgr.exe").children[2].textContent).toBe(
+    "100",
+  );
+  s.document
+    .querySelector('.xp-window[data-game="bike-mania"]')
+    .dispatchEvent(new s.window.Event("pointerdown", { bubbles: true }));
+  frame(2e9);
+  await menuCommand(tm, "view", "refresh");
+  expect(
+    row(tm, "processes", "SAFlashPlayer.exe").children[2].textContent,
+  ).toBe("100");
+  clickStartAction(s, "documents");
+  await settle();
+  await menuCommand(tm, "view", "refresh");
+  expect(row(tm, "processes", "explorer.exe").children[2].textContent).toBe(
+    "00",
+  );
+
+  // Networking graphs the page's downloads against the 100 Mbps link.
+  tab(tm, "networking");
+  const utilization = () => rows(tm, "adapters")[0][1];
+  download({ getEntries: () => [{ transferSize: 50_000 }] });
+  await menuCommand(tm, "view", "refresh");
+  expect(utilization()).not.toBe("0 %");
+  download({ getEntries: () => [{ transferSize: 1e12 }] });
+  await menuCommand(tm, "view", "refresh");
+  for (const name of [
+    "auto-scale",
+    "auto-scale",
+    "show-scale",
+    "show-scale",
+    "tab-always-active",
+    "reset",
+  ])
+    await menuCommand(tm, "options", name);
+  for (const line of ["sent", "received", "total"]) {
+    menu(tm, "view");
+    await command(tm, `history-${line}`);
+  }
+  menu(tm, "options");
+  expect(
+    tm.querySelector('[data-tm-command="tab-always-active"]').className,
+  ).toContain("checked");
+  menu(tm, "options");
+  expect(
+    JSON.parse(s.window.localStorage.getItem("taskManager")).history,
+  ).toEqual({ sent: true, received: true, total: false });
+
+  // Off the page, history only grows with Tab Always Active.
+  tab(tm, "users");
+  await menuCommand(tm, "view", "refresh");
+  Object.defineProperty(s.window.navigator, "onLine", { value: false });
+  tab(tm, "networking");
+  expect(rows(tm, "adapters")[0][3]).toBe("Disconnected");
+
   tm.querySelector(".close-btn").click();
   await settle();
-  expect(disconnected).toBeTrue();
+  expect([canceled, disconnected]).toEqual([true, true]);
 });
