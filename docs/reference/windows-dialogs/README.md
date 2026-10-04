@@ -33,6 +33,11 @@ Measurements were taken from pixel rows and columns of both captures.
   6px from the top and right edges. Title text uses the theme's colors and
   1px shadow, and inactive captions drop the shadow.
 - Maximized windows push their 4px frame past the work area, like XP.
+- The side edges are cut at extraction to the exact bitmap columns XP draws
+  (four for windows, three for dialogs), so nothing is resampled. On
+  high-density screens the frame, caption, and caption buttons scale by
+  nearest neighbor, so each XP pixel stays a sharp block. Earlier, the 5px
+  bitmaps were squeezed in the browser, which only matched at 1×.
 - Menu bars are 19px with XP's 1px white bottom line, 6px item padding, and a
   flat blue highlight. Inactive windows draw their menu text in gray.
 - Access-key underlines stay hidden until Alt, Tab, F10, or an arrow key is

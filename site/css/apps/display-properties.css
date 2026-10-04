@@ -616,8 +616,8 @@ html:not([data-xp-appearance="classic"]) .display-panel {
    the same Luna caption, frame, and button bitmaps as real windows. */
 .scheme-window {
   --sample-caption: var(--win-caption-active);
-  --sample-frame-left: var(--frame-left-active);
-  --sample-frame-right: var(--frame-right-active);
+  --sample-frame-left: var(--frame-left-active-sizing);
+  --sample-frame-right: var(--frame-right-active-sizing);
   --sample-frame-bottom: var(--frame-bottom-active);
   position: absolute;
   box-sizing: border-box;
@@ -646,8 +646,8 @@ html:not([data-xp-appearance="classic"]) .display-panel {
 
 .scheme-window.inactive {
   --sample-caption: var(--win-caption-inactive);
-  --sample-frame-left: var(--frame-left-inactive);
-  --sample-frame-right: var(--frame-right-inactive);
+  --sample-frame-left: var(--frame-left-inactive-sizing);
+  --sample-frame-right: var(--frame-right-inactive-sizing);
   --sample-frame-bottom: var(--frame-bottom-inactive);
 }
 
@@ -668,11 +668,11 @@ html:not([data-xp-appearance="classic"]) .display-panel {
     bold 13px "Trebuchet MS",
     var(--chrome-font);
   text-shadow: 1px 1px var(--win-title-shadow);
-  image-rendering: auto;
 }
 
 .scheme-caption::before {
   content: "";
+  image-rendering: pixelated;
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -703,6 +703,11 @@ html:not([data-xp-appearance="classic"]) .display-panel {
   --caption-button-y: -84px;
 }
 
+.scheme-client,
+.scheme-face {
+  image-rendering: auto;
+}
+
 .scheme-client {
   position: relative;
   flex: 1;
@@ -711,7 +716,6 @@ html:not([data-xp-appearance="classic"]) .display-panel {
   font:
     11px/13px Tahoma,
     sans-serif;
-  image-rendering: auto;
 }
 
 .scheme-client > span {
@@ -742,27 +746,18 @@ html:not([data-xp-appearance="classic"]) .display-panel {
 .scheme-face {
   position: relative;
   flex: 1;
-  image-rendering: auto;
 }
 
 /* The message box is a dialog: a 29px caption and XP's 3px dialog frame
    (see .dialog-frame in windows.css). */
 .scheme-window.message {
+  --sample-frame-left: var(--frame-left-active-dialog);
+  --sample-frame-right: var(--frame-right-active-dialog);
   padding: 29px 3px 3px;
   background:
-    var(--sample-frame-left) left -1px top 29px / 4px calc(100% - 29px)
-      no-repeat,
+    var(--sample-frame-left) left 29px / 3px calc(100% - 29px) no-repeat,
+    var(--sample-frame-right) right 29px / 3px calc(100% - 29px) no-repeat,
     var(--xp-beige);
-}
-
-.scheme-window.message::before {
-  content: "";
-  position: absolute;
-  top: 29px;
-  right: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--sample-frame-right) right top / 4px 100% no-repeat;
 }
 
 .scheme-window.message::after {

@@ -28,6 +28,9 @@ type ResourceIcon = DirectAsset & {
 };
 type ResourceBitmap = DirectAsset & {
   crop?: { left: number; top: number; width: number; height: number };
+  // Keeps only these source columns, in order, after cropping. Used for the
+  // frame edges XP draws narrower than their bitmaps.
+  columns?: number[];
   expandedName: string;
   resourceType: number;
   resourceId: number | string;
@@ -489,12 +492,33 @@ async function extractBitmap(
     raw: { width: decoded.width, height: decoded.height, channels: 4 },
   });
   if (bitmap.crop) bitmapImage = bitmapImage.extract(bitmap.crop);
+  if (bitmap.columns) {
+    const { data, info } = await bitmapImage
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const selected = Buffer.alloc(bitmap.columns.length * info.height * 4);
+    for (let y = 0; y < info.height; y += 1)
+      bitmap.columns.forEach((column, x) => {
+        if (column >= info.width)
+          throw new Error(`${bitmap.output} has no column ${column}`);
+        data.copy(
+          selected,
+          (y * bitmap.columns!.length + x) * 4,
+          (y * info.width + column) * 4,
+          (y * info.width + column + 1) * 4,
+        );
+      });
+    bitmapImage = sharp(selected, {
+      raw: { width: bitmap.columns.length, height: info.height, channels: 4 },
+    });
+  }
   const png = await bitmapImage.png().toBuffer();
+  const width = bitmap.columns?.length ?? bitmap.crop?.width ?? decoded.width;
   return {
     png,
     parentSha256: sha256(parent),
     pixelSha256: sha256(await sharp(png).ensureAlpha().raw().toBuffer()),
-    frame: `${bitmap.crop?.width ?? decoded.width}x${bitmap.crop?.height ?? decoded.height}x32`,
+    frame: `${width}x${bitmap.crop?.height ?? decoded.height}x32`,
   };
 }
 
@@ -679,6 +703,7 @@ try {
         type: bitmap.resourceType,
         id: bitmap.resourceId,
         ...(bitmap.crop ? { crop: bitmap.crop } : {}),
+        ...(bitmap.columns ? { columns: bitmap.columns } : {}),
         language: manifest.source.language,
         frame: extracted.frame,
         pixelSha256: extracted.pixelSha256,

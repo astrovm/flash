@@ -10160,6 +10160,342 @@
         "width": 19,
         "height": 19
       }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-left-0-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-left-0-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-left-1-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-left-1-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-right-0-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-right-0-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-right-1-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/blue-frame-right-1-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-left-0-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-left-0-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-left-1-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-left-1-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-right-0-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-right-0-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-right-1-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/olive-frame-right-1-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-left-0-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-left-0-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-left-1-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMELEFT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-left-1-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-right-0-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-right-0-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-right-1-sizing.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [0, 1, 3, 4]
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_FRAMERIGHT_BMP",
+      "output": "site/assets/xp/windows/silver-frame-right-1-dialog.png",
+      "crop": {
+        "left": 0,
+        "top": 31,
+        "width": 5,
+        "height": 31
+      },
+      "columns": [1, 3, 4]
     }
   ],
   "resourcePngs": [
