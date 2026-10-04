@@ -1253,37 +1253,6 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   flex: 1;
 }
 
-.xp-volume-console {
-  display: flex;
-  height: calc(100% - 20px);
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border: 2px outset #fff;
-}
-
-.xp-volume-heading {
-  width: 100%;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #808080;
-  text-align: center;
-}
-
-.xp-volume-console label:first-of-type {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.xp-volume-console input[type="range"] {
-  width: 150px;
-  margin: 65px -55px;
-  transform: rotate(-90deg);
-}
-
 .xp-recorder-display {
   padding: 10px;
   border: 2px inset #fff;

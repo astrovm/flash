@@ -14,10 +14,20 @@ const xpSoundPaths = {
   startup: "assets/xp/sounds/startup.wav",
 };
 
+// Shell sounds follow Master and Wave. A balance away from center routes
+// them through Web Audio to pan them.
+let shellAudioContext = null;
 const createXPSound = (name) => {
-  const { volume, isMuted } = getSystemVolume();
   const audio = new Audio(xpSoundPaths[name]);
-  audio.volume = isMuted ? 0 : Math.min(Math.max(volume, 0), 100) / 100;
+  audio.volume = getAudioLevel();
+  const pan = getAudioBalance();
+  if (pan) {
+    shellAudioContext ||= new AudioContext();
+    shellAudioContext
+      .createMediaElementSource(audio)
+      .connect(new StereoPannerNode(shellAudioContext, { pan }))
+      .connect(shellAudioContext.destination);
+  }
   return audio;
 };
 

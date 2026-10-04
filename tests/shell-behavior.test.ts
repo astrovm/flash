@@ -1414,7 +1414,7 @@ describe("Windows XP shell", () => {
       .querySelector<HTMLButtonElement>('[data-program-id="volume-control"]')!
       .click();
     const volume = shell.document.querySelector<HTMLInputElement>(
-      '.xp-window[data-game="__volume-control"] input[type="range"]',
+      '.xp-window[data-game="__volume-control"] .xp-mixer-volume',
     )!;
     volume.value = "35";
     volume.dispatchEvent(new shell.window.Event("input", { bubbles: true }));
@@ -1437,9 +1437,9 @@ describe("Windows XP shell", () => {
     )!;
     const mute = win.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
     expect(mute.checked).toBeTrue();
-    expect(
-      win.querySelector<HTMLInputElement>('input[type="range"]')!.value,
-    ).toBe("40");
+    expect(win.querySelector<HTMLInputElement>(".xp-mixer-volume")!.value).toBe(
+      "40",
+    );
     mute.checked = false;
     mute.dispatchEvent(new shell.window.Event("change", { bubbles: true }));
     expect(shell.window.localStorage.getItem("isMuted")).toBe("false");

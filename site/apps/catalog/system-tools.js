@@ -7,7 +7,15 @@ const program = (id, title, icon, kind, extra) =>
 
 export const systemToolApplications = [
   program("__volume-control", "Volume Control", "Volume.png", "volume", {
-    window: { width: 250, height: 360 },
+    window: {
+      width: 251,
+      height: 318,
+      left: 66,
+      top: 88,
+      resizable: false,
+      maximizable: false,
+      className: "xp-volume-window",
+    },
   }),
   defineLazyApplication(taskManagerMetadata, () =>
     import("../task-manager/index.js").then(

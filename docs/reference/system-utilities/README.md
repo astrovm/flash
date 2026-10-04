@@ -137,3 +137,51 @@ and the list header and status bar from Luna.msstyles.
 - Text rasterization differs from XP, so menus are 1 to 3px narrower or wider.
 - Windows Classic gets classic list headers, lists, and status panes, but the
   tabs still wait for the shared Classic controls pass.
+
+## Volume Control
+
+| Scheme  | App                              |
+| ------- | -------------------------------- |
+| Blue    | `app-volume-control.png`         |
+| Classic | `app-volume-control-classic.png` |
+
+There is no VM capture. The reference VM freezes as soon as it has a sound
+card: with QEMU's AC97 device, on both the WAV and silent audio backends,
+the guest clock stops and QEMU runs at full CPU. Without a sound card, XP's
+Volume Control only reports that no mixer device is installed.
+
+The layout instead comes from sndvol32.exe's own dialog templates, converted
+from MS Shell Dlg 8 dialog units (1.5px across, 1.625px down), as verified on
+the Date and Time and Task Manager pages. The menus and strings come from
+the same file, the speaker icons and About icon from its icons, and the
+trackbar thumbs from Luna.msstyles.
+
+### Working simulation
+
+- **Volume Control** is the master fader. It and the tray volume stay in
+  step both ways.
+- **Wave** scales every sound after Master, as all of the shell's audio is
+  wave output: games, programs, and system sounds.
+- **Mute all** and **Mute** silence everything and Wave.
+- **Balance** pans the shell's sounds through Web Audio. Master and Wave
+  balance add up.
+- **Options** → **Properties** shows or hides the Wave column.
+- **Advanced Controls** stays gray, as XP shows it for devices without tone
+  controls. **Exit** and **About Volume Control** work.
+
+### Astro Flash adaptations
+
+- Only Volume Control and Wave are shown. The other lines a sound card
+  offers (SW Synth, CD Player, Line In) have no source in the browser.
+- Recording is unavailable, since nothing records.
+- The device is named Default Audio Device: browsers don't reveal the
+  sound card's name.
+- Games play through their own players, which browsers don't let a page
+  pan, so Balance affects only the shell's sounds.
+- Help Topics is omitted: there is no Help and Support Center.
+
+### Remaining differences
+
+- Positions come from the dialog templates, not a capture, so they may be a
+  few pixels off where sndvol32 moves controls at run time.
+- The number of trackbar ticks is an estimate.

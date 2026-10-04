@@ -769,14 +769,11 @@ const normalizeGameVolume = (gameId) => {
     ? Math.min(Math.max(numericVolume, 0), 100)
     : 100;
 
-  // Windows XP's Volume Control has one Master fader that scales every
-  // audio source on top of that source's own level, like a hardware
-  // mixer - so the system volume slider still attenuates games, in
-  // addition to (not instead of) each game's own volume.
-  const { volume: systemVolume, isMuted: systemMuted } = getSystemVolume();
-
-  if (isMuted || systemMuted) return 0;
-  return (clampedVolume / 100) * (systemVolume / 100);
+  // Volume Control's Master and Wave faders scale every audio source on
+  // top of that source's own level, like a hardware mixer, so they still
+  // attenuate games in addition to each game's own volume.
+  if (isMuted) return 0;
+  return (clampedVolume / 100) * getAudioLevel();
 };
 
 const setPlayerVolume = (player, type, normalizedVolume) => {

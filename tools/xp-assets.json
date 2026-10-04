@@ -2106,6 +2106,36 @@
       "height": 32,
       "bitDepth": 4,
       "output": "site/assets/xp/task-manager/icon-32.png"
+    },
+    {
+      "member": "SNDVOL32.EX_",
+      "expandedName": "sndvol32.exe",
+      "resourceType": 14,
+      "resourceId": 301,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/volume/balance-left.png"
+    },
+    {
+      "member": "SNDVOL32.EX_",
+      "expandedName": "sndvol32.exe",
+      "resourceType": 14,
+      "resourceId": 302,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/volume/balance-right.png"
+    },
+    {
+      "member": "SNDVOL32.EX_",
+      "expandedName": "sndvol32.exe",
+      "resourceType": 14,
+      "resourceId": 300,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/volume/volume-32.png"
     }
   ],
   "resourceBitmaps": [
@@ -10786,6 +10816,48 @@
         "width": 2,
         "height": 11
       }
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TRACKBARHORIZONTAL_BMP",
+      "output": "site/assets/xp/controls/blue-trackbar-thumb.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TRACKBARVERTICAL_BMP",
+      "output": "site/assets/xp/controls/blue-trackbar-thumb-vertical.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TRACKBARHORIZONTAL_BMP",
+      "output": "site/assets/xp/controls/olive-trackbar-thumb.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TRACKBARVERTICAL_BMP",
+      "output": "site/assets/xp/controls/olive-trackbar-thumb-vertical.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TRACKBARHORIZONTAL_BMP",
+      "output": "site/assets/xp/controls/silver-trackbar-thumb.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TRACKBARVERTICAL_BMP",
+      "output": "site/assets/xp/controls/silver-trackbar-thumb-vertical.png"
     }
   ],
   "resourcePngs": [
