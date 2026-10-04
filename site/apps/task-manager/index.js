@@ -23,6 +23,11 @@ const COMMIT_LIMIT_K = 1280180;
 // View → Update Speed, from taskmgr.exe's menu help strings.
 const UPDATE_SPEEDS = { high: 500, normal: 2000, low: 4000, paused: 0 };
 const GRAPH_GRID = 12;
+// A frame later than this counts as busy time.
+const FRAME_BUDGET = 20;
+// XP draws kernel time in red. The browser can't tell it apart, so it's an
+// estimate of the share XP typically shows.
+const KERNEL_SHARE = 0.4;
 
 // The reference install's processes, oldest first. Each is
 // [image, user, memory K, handles, threads].
@@ -161,8 +166,33 @@ const MENUS = {
   ],
   networking: [
     ["&File", [["E&xit Task Manager", "exit"]]],
-    ["&Options", OPTIONS],
-    ["&View", [["&Refresh Now", "refresh"], UPDATE_SPEED_MENU]],
+    [
+      "&Options",
+      [
+        ...OPTIONS,
+        "-",
+        ["&Tab Always Active", "tab-always-active"],
+        ["A&uto Scale", "auto-scale"],
+        ["&Reset", "reset"],
+        ["&Show Scale", "show-scale"],
+      ],
+    ],
+    [
+      "&View",
+      [
+        ["&Refresh Now", "refresh"],
+        UPDATE_SPEED_MENU,
+        "-",
+        [
+          "&Network Adapter History",
+          [
+            ["Bytes &Sent", "history-sent", "(Red)"],
+            ["Bytes &Received", "history-received", "(Yellow)"],
+            ["Bytes &Total", "history-total", "(Green)"],
+          ],
+        ],
+      ],
+    ],
     ["Sh&ut Down", SHUT_DOWN],
     ["&Help", HELP],
   ],
@@ -190,17 +220,24 @@ const DEFAULT_SETTINGS = {
   kernelTimes: false,
   speed: "normal",
   view: "details",
+  tabAlwaysActive: false,
+  autoScale: true,
+  showScale: true,
+  history: { sent: false, received: false, total: true },
 };
 
 const readSettings = () => {
+  let stored = {};
   try {
-    return {
-      ...DEFAULT_SETTINGS,
-      ...JSON.parse(localStorage.getItem(SETTINGS_KEY)),
-    };
+    stored = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    // Unreadable settings fall back to XP's defaults.
   }
+  return {
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    history: { ...DEFAULT_SETTINGS.history, ...stored.history },
+  };
 };
 
 const escapeText = (value) =>
@@ -233,13 +270,13 @@ const mountTaskManager = (context, { window: win }) => {
     ).join("")}</div>
     <div class="tm-pane">
       <section class="tm-page" data-tm-page="applications">
-        <div class="tm-list tm-tasks" role="listbox" tabindex="0" aria-label="Tasks"></div>
+        <div class="tm-list tm-tasks" data-tm-list="tasks" role="listbox" tabindex="0" aria-label="Tasks"></div>
         <button type="button" class="xp-btn tm-end-task" data-tm-command="end-task"><u>E</u>nd Task</button>
         <button type="button" class="xp-btn tm-switch-to" data-tm-command="switch-to"><u>S</u>witch To</button>
         <button type="button" class="xp-btn tm-new-task" data-tm-command="new-task"><u>N</u>ew Task...</button>
       </section>
       <section class="tm-page" data-tm-page="processes">
-        <div class="tm-list tm-processes" role="listbox" tabindex="0" aria-label="Processes"></div>
+        <div class="tm-list tm-processes" data-tm-list="processes" role="listbox" tabindex="0" aria-label="Processes"></div>
         <label class="tm-all-users"><input type="checkbox"><span><u>S</u>how processes from all users</span></label>
         <button type="button" class="xp-btn tm-end-process" data-tm-command="end-process"><u>E</u>nd Process</button>
       </section>
@@ -270,10 +307,11 @@ const mountTaskManager = (context, { window: win }) => {
         ])}
       </section>
       <section class="tm-page" data-tm-page="networking">
-        <p class="tm-no-adapters">No Active Network Adapters Found.</p>
+        <fieldset class="dlg-group tm-adapter"><legend>Local Area Connection</legend><canvas class="tm-graph" width="350" height="222"></canvas></fieldset>
+        <div class="tm-list tm-adapters" data-tm-list="adapters" role="listbox" tabindex="0" aria-label="Adapters"></div>
       </section>
       <section class="tm-page" data-tm-page="users">
-        <div class="tm-list tm-users" role="listbox" tabindex="0" aria-label="Users"></div>
+        <div class="tm-list tm-users" data-tm-list="users" role="listbox" tabindex="0" aria-label="Users"></div>
         <button type="button" class="xp-btn tm-disconnect" data-tm-command="disconnect"><u>D</u>isconnect</button>
         <button type="button" class="xp-btn tm-logoff" data-tm-command="logoff-user"><u>L</u>ogoff</button>
         <button type="button" class="xp-btn tm-send-message" disabled><u>S</u>end Message...</button>
@@ -293,6 +331,7 @@ const mountTaskManager = (context, { window: win }) => {
     pid: (nextPid += 4),
     image,
     user,
+    base: memory,
     memory,
     handles,
     threads,
@@ -301,13 +340,25 @@ const mountTaskManager = (context, { window: win }) => {
     cpuTime: 0,
   });
   const processes = BASE_PROCESSES.map((entry) => createProcess(entry, null));
-  const ended = new Set();
   const processImage = (task) =>
     PROGRAM_IMAGES[task.gameId] || GAME_IMAGES[task.type];
   const tasks = () =>
     [...context.openWindows.values()].filter(
       (task) => task.gameId !== win.gameId,
     );
+  // A window's real footprint: its canvas and image pixels, and its elements.
+  const footprint = (task) => {
+    let bytes = task.el.getElementsByTagName("*").length * 512;
+    task.el
+      .querySelectorAll("canvas")
+      .forEach((canvas) => (bytes += canvas.width * canvas.height * 4));
+    task.el
+      .querySelectorAll("img")
+      .forEach(
+        (image) => (bytes += image.naturalWidth * image.naturalHeight * 4),
+      );
+    return Math.round(bytes / 1024);
+  };
   const syncProcesses = () => {
     const windows = new Map(
       [...context.openWindows.values()]
@@ -323,18 +374,31 @@ const mountTaskManager = (context, { window: win }) => {
       if (!processes.some((process) => process.windowId === id))
         processes.push(createProcess([image, USER, memory, 120, 4], id));
     });
+    // Programs grow with what they show; folder windows live in Explorer.
+    processes.forEach((process) => {
+      if (process.windowId)
+        process.memory =
+          process.base + footprint(windows.get(process.windowId));
+      else if (process.image === "explorer.exe")
+        process.memory =
+          process.base +
+          tasks()
+            .filter((task) => !processImage(task))
+            .reduce((total, task) => total + footprint(task), 0);
+    });
   };
 
-  // CPU: the share of each interval the page's main thread was busy, which is
-  // where Flash and emulated programs run, on top of a little idle noise.
+  // CPU: how late each animation frame ran. That counts all of the page's
+  // main-thread work, which is where Flash and emulated programs run too.
   let busy = 0;
-  const { PerformanceObserver } = window;
-  const observer = PerformanceObserver.supportedEntryTypes.includes("longtask")
-    ? new PerformanceObserver((list) =>
-        list.getEntries().forEach((entry) => (busy += entry.duration)),
-      )
-    : null;
-  observer?.observe({ entryTypes: ["longtask"] });
+  let lastFrame = 0;
+  let frame = 0;
+  const onFrame = (time) => {
+    if (lastFrame) busy += Math.max(0, time - lastFrame - FRAME_BUDGET);
+    lastFrame = time;
+    frame = window.requestAnimationFrame(onFrame);
+  };
+  frame = window.requestAnimationFrame(onFrame);
   const cpuHistory = [];
   const pfHistory = [];
   let cpuTotal = 0;
@@ -345,25 +409,20 @@ const mountTaskManager = (context, { window: win }) => {
     const now = performance.now();
     const elapsed = Math.max(1, now - lastSample);
     lastSample = now;
-    const running = processes.filter(
-      (process) => process.windowId && process.image !== "taskmgr.exe",
-    );
-    cpuTotal = Math.min(
-      100,
-      Math.round((busy / elapsed) * 100 + Math.random() * 3),
-    );
+    cpuTotal = Math.min(100, Math.round((busy / elapsed) * 100));
     busy = 0;
-    kernelShare = Math.round(cpuTotal * (0.3 + Math.random() * 0.2));
+    kernelShare = Math.round(cpuTotal * KERNEL_SHARE);
+    sampleNetwork(elapsed);
+    // The work belongs to the active program, or to the shell.
     processes.forEach((process) => (process.cpu = 0));
-    const shares = running.length ? running : processes.slice(-1);
-    let left = cpuTotal;
-    shares.forEach((process, index) => {
-      process.cpu =
-        index === shares.length - 1
-          ? left
-          : Math.floor(cpuTotal / shares.length);
-      left -= process.cpu;
-    });
+    const active = [...context.openWindows.values()].find((task) =>
+      task.el.classList.contains("active"),
+    );
+    (
+      processes.find(
+        (process) => active && process.windowId === active.gameId,
+      ) || processes.find((process) => process.image === "explorer.exe")
+    ).cpu = cpuTotal;
     processes[0].cpu = 100 - cpuTotal;
     processes.forEach(
       (process) => (process.cpuTime += (process.cpu * elapsed) / 100),
@@ -381,7 +440,12 @@ const mountTaskManager = (context, { window: win }) => {
 
   // Lists: a header and rows. Columns are [label, width, right padding],
   // with the padding only for XP's right-aligned columns.
-  const selection = { tasks: null, processes: null, users: USER };
+  const selection = {
+    tasks: null,
+    processes: null,
+    users: USER,
+    adapters: null,
+  };
   const alignment = (padding) =>
     padding ? ` class="right" style="padding-right: ${padding}px"` : "";
   const renderList = (list, key, columns, rows) => {
@@ -431,7 +495,6 @@ const mountTaskManager = (context, { window: win }) => {
   let processSort = null;
   const processRows = () => {
     const rows = processes
-      .filter((process) => !ended.has(process.pid))
       .map((process) => ({
         id: String(process.pid),
         process,
@@ -493,6 +556,108 @@ const mountTaskManager = (context, { window: win }) => {
     );
   };
 
+  // Networking: one adapter, graphing what the page downloads. Browsers
+  // don't report uploads, so Bytes Sent stays at zero.
+  const LINK_SPEED = 100_000_000;
+  let received = 0;
+  const network = new window.PerformanceObserver((list) =>
+    list.getEntries().forEach((entry) => (received += entry.transferSize)),
+  );
+  network.observe({ type: "resource" });
+  const networkHistory = [];
+  const sampleNetwork = (elapsed) => {
+    const percent = ((received * 8) / LINK_SPEED / (elapsed / 1000)) * 100;
+    received = 0;
+    if (settings.tab === "networking" || settings.tabAlwaysActive)
+      networkHistory.unshift({ sent: 0, received: percent, total: percent });
+    networkHistory.length = Math.min(networkHistory.length, 400);
+  };
+  const formatPercent = (value) => `${value ? value.toFixed(2) : 0} %`;
+  // XP's auto scale steps through 1, 10 and 100 percent.
+  const networkScale = () =>
+    settings.autoScale
+      ? [1, 10, 100].find((limit) =>
+          networkHistory.every((sample) => sample.total <= limit),
+        ) || 100
+      : 100;
+  const renderNetworking = () => {
+    const canvas = root.querySelector(".tm-adapter canvas");
+    const graphics = canvas.getContext("2d");
+    const { width, height } = canvas;
+    const scale = networkScale();
+    // Show Scale gives the labels a 36px column and a yellow axis.
+    const left = settings.showScale ? 37 : 0;
+    graphics.fillStyle = "#000";
+    graphics.fillRect(0, 0, width, height);
+    graphics.fillStyle = "#008040";
+    for (let y = 4; y < height - 1; y += 31)
+      graphics.fillRect(left, y, width - left, 1);
+    for (let x = width - 1 - graphOffset; x >= left; x -= GRAPH_GRID)
+      graphics.fillRect(x, 0, 1, height);
+    if (settings.showScale) {
+      graphics.fillRect(36, 0, 1, height);
+      graphics.fillStyle = "#ff0";
+      graphics.fillRect(36, 0, 1, 4);
+      for (let y = 5; y < height; y += 31)
+        graphics.fillRect(36, y, 1, Math.min(30, height - y));
+      graphics.font = "10px Arial";
+      graphics.textAlign = "right";
+      graphics.fillText(`${scale} %`, 32, 10);
+      graphics.fillText(`${scale / 2} %`, 32, 115);
+      graphics.fillText("0 %", 32, 220);
+      binarize(graphics, 0, 0, 36, height);
+    }
+    [
+      ["sent", "#f00"],
+      ["received", "#ff0"],
+      ["total", "#0f0"],
+    ]
+      .filter(([key]) => settings.history[key])
+      .forEach(([key, color]) => {
+        graphics.strokeStyle = color;
+        graphics.beginPath();
+        networkHistory.forEach((sample, step) => {
+          const y =
+            height - 1 - Math.round((sample[key] / scale) * (height - 1));
+          graphics.lineTo(width - 1 - step * 2 + 0.5, y + 0.5);
+        });
+        graphics.stroke();
+      });
+    renderList(
+      $(".tm-adapters"),
+      "adapters",
+      [
+        ["Adapter Name", 96],
+        ["Network Utilization", 96, 7],
+        ["Link Speed", 60],
+        ["State", 96, 7],
+      ],
+      [
+        {
+          id: "lan",
+          cells: [
+            "Local Area Connection",
+            formatPercent(networkHistory[0]?.total ?? 0),
+            "100 Mbps",
+            navigator.onLine ? "Operational" : "Disconnected",
+          ],
+        },
+      ],
+    );
+  };
+
+  // GDI draws graph and meter labels without smoothing.
+  const binarize = (graphics, x, y, width, height) => {
+    const label = graphics.getImageData(x, y, width, height);
+    for (let index = 0; index < label.data.length; index += 4) {
+      label.data[index] = (label.data[index] >> 7) * 255;
+      label.data[index + 1] = (label.data[index + 1] >> 7) * 255;
+      label.data[index + 2] = 0;
+      label.data[index + 3] = 255;
+    }
+    graphics.putImageData(label, x, y);
+  };
+
   // Performance: XP's LED meters and scrolling history graphs. A meter's
   // 28 bar rows light from the bottom; the label is a canvas below them.
   const drawMeter = (meter, fraction, text) => {
@@ -502,7 +667,6 @@ const mountTaskManager = (context, { window: win }) => {
     on.style.top = `${34 - lit}px`;
     on.style.height = `${lit}px`;
     on.style.backgroundPosition = `0 ${lit - 28}px`;
-    // GDI draws the label in 11px Arial without smoothing.
     const graphics = meter.querySelector("canvas").getContext("2d");
     graphics.fillStyle = "#000";
     graphics.fillRect(0, 0, 68, 21);
@@ -510,13 +674,7 @@ const mountTaskManager = (context, { window: win }) => {
     graphics.font = "11px Arial";
     graphics.textAlign = "center";
     graphics.fillText(text, 34, 15);
-    const label = graphics.getImageData(0, 0, 68, 21);
-    for (let index = 0; index < label.data.length; index += 4) {
-      label.data[index + 1] = (label.data[index + 1] >> 7) * 255;
-      label.data[index] = label.data[index + 2] = 0;
-      label.data[index + 3] = 255;
-    }
-    graphics.putImageData(label, 0, 0);
+    binarize(graphics, 0, 0, 68, 21);
   };
   let graphOffset = 0;
   const drawGraph = (canvas, values, scale, color, kernel) => {
@@ -599,7 +757,7 @@ const mountTaskManager = (context, { window: win }) => {
     applications: renderTasks,
     processes: renderProcesses,
     performance: renderPerformance,
-    networking: () => {},
+    networking: renderNetworking,
     users: renderUsers,
   };
   const refresh = () => {
@@ -631,6 +789,12 @@ const mountTaskManager = (context, { window: win }) => {
     "minimize-on-use": () => settings.minimizeOnUse,
     "hide-when-minimized": () => settings.hideWhenMinimized,
     "kernel-times": () => settings.kernelTimes,
+    "tab-always-active": () => settings.tabAlwaysActive,
+    "auto-scale": () => settings.autoScale,
+    "show-scale": () => settings.showScale,
+    "history-sent": () => settings.history.sent,
+    "history-received": () => settings.history.received,
+    "history-total": () => settings.history.total,
   };
   const isRadio = {
     "speed-high": () => settings.speed === "high",
@@ -752,7 +916,7 @@ const mountTaskManager = (context, { window: win }) => {
         .filter((task) => !processImage(task))
         .forEach((task) => context.closeGameWindow(task.gameId));
     } else {
-      ended.add(process.pid);
+      processes.splice(processes.indexOf(process), 1);
     }
     refresh();
   };
@@ -773,6 +937,29 @@ const mountTaskManager = (context, { window: win }) => {
       refresh();
     },
     refresh,
+    "tab-always-active": () => toggleSetting("tabAlwaysActive"),
+    "auto-scale": () => {
+      toggleSetting("autoScale");
+      renderNetworking();
+    },
+    "show-scale": () => {
+      toggleSetting("showScale");
+      renderNetworking();
+    },
+    reset: () => {
+      networkHistory.length = 0;
+      renderNetworking();
+    },
+    ...Object.fromEntries(
+      ["sent", "received", "total"].map((line) => [
+        `history-${line}`,
+        () => {
+          settings.history[line] = !settings.history[line];
+          saveSettings();
+          renderNetworking();
+        },
+      ]),
+    ),
     ...Object.fromEntries(
       Object.keys(UPDATE_SPEEDS).map((speed) => [
         `speed-${speed}`,
@@ -867,11 +1054,7 @@ const mountTaskManager = (context, { window: win }) => {
     const row = event.target.closest(".tm-row");
     if (row) {
       const list = row.closest(".tm-list");
-      const key = list.classList.contains("tm-tasks")
-        ? "tasks"
-        : list.classList.contains("tm-processes")
-          ? "processes"
-          : "users";
+      const key = list.dataset.tmList;
       selection[key] = row.dataset.tmId;
       list
         .querySelectorAll(".tm-row")
@@ -908,7 +1091,8 @@ const mountTaskManager = (context, { window: win }) => {
     element: root,
     unmount() {
       clearInterval(timer);
-      observer?.disconnect();
+      window.cancelAnimationFrame(frame);
+      network.disconnect();
       trayIcon.remove();
       document.removeEventListener("pointerdown", onDocumentPointerDown);
     },

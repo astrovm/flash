@@ -77,6 +77,9 @@ VM dialog's position. The images are 1:1 crops of the dialog from the
 | Classic      |                                    | `app-task-manager-classic.png`      |
 
 The layout, menus, and strings come from taskmgr.exe's resources and the VM.
+The Networking capture comes from the VM started with a restricted RTL8139
+adapter (`-nic user,model=rtl8139,restrict=on`), since the reference VM has
+no network adapter.
 The meter bitmaps, tray icons, and user icon are extracted from taskmgr.exe,
 and the list header and status bar from Luna.msstyles.
 
@@ -90,6 +93,8 @@ and the list header and status bar from Luna.msstyles.
   radio bullets, submenu arrows, and shortcut columns drawn like XP's.
 - Performance has XP's LED meters, with the label in unsmoothed Arial, and
   scrolling history graphs on XP's 12px grid.
+- Networking has XP's adapter graph, with its scale column, yellow axis, and
+  31px rows, over the adapter list.
 - A notification area icon fills with CPU usage in XP's twelve steps.
 
 ### Working simulation
@@ -99,8 +104,15 @@ and the list header and status bar from Luna.msstyles.
 - Processes lists the reference install's processes plus one per program
   window, with XP's image names. End Process closes the program's window,
   refuses critical processes, and asks first, with XP's messages. Columns sort.
-- CPU usage is the share of time the page's main thread was busy, where Flash
-  and emulated programs run. Memory figures add up from the processes.
+- CPU usage is measured from how late each animation frame runs, which counts
+  all of the page's work, including Flash and the emulated programs. It goes
+  to the active program's process, or to explorer.exe.
+- Each program's memory is its working set plus what its window really holds:
+  canvas and image pixels and its elements. Folder windows add to
+  explorer.exe. The totals, commit charge, and PF Usage add up from that.
+- Networking graphs what the page really downloads, against a 100 Mbps link.
+  The adapter shows Disconnected while the browser is offline. Auto Scale,
+  Show Scale, Reset, Tab Always Active, and the three history lines work.
 - Always On Top, Minimize On Use, Hide When Minimized, Update Speed, Refresh
   Now, and Show Kernel Times work and are saved.
 - Shut Down stands by, turns off, restarts, logs off, and switches users.
@@ -109,11 +121,13 @@ and the list header and status bar from Luna.msstyles.
 
 ### Astro Flash adaptations
 
-- The reference install's processes and their memory are fixed values. Only
-  program windows add or end processes. Winamp's agent is left out, since
-  Winamp was removed.
-- Networking shows XP's "No Active Network Adapters Found.", like the
-  reference VM, which has no network adapter.
+- The reference install's background processes keep fixed memory, handles,
+  and threads. Program windows add, grow, and end processes. Winamp's agent
+  is left out, since Winamp was removed.
+- Browsers can't tell kernel time apart, so Show Kernel Times draws an
+  estimated 40% share. They don't report uploads either, so Bytes Sent stays
+  at zero.
+- Show Cumulative Data is omitted, since its columns are.
 - Help has only About: there is no Help and Support Center. Hibernate is left
   out, as in the Turn Off Computer dialog.
 - Select Columns, the right-click menus, and processor affinity are omitted.

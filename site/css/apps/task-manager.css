@@ -357,6 +357,7 @@ html:not([data-xp-appearance="classic"]) .tm-page {
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
   image-rendering: pixelated;
 }
 
@@ -384,6 +385,10 @@ html:not([data-xp-appearance="classic"]) .tm-page {
 .tm-list-header > .right > span {
   position: relative;
   left: 1px;
+  overflow: hidden;
+  flex: none;
+  max-width: calc(100% + 4px);
+  text-overflow: ellipsis;
 }
 
 .tm-row {
@@ -432,6 +437,9 @@ html:not([data-xp-appearance="classic"]) .tm-page {
 }
 
 .tm-label {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
   height: 17px;
   padding: 1px 2px 0 1px;
 }
@@ -668,13 +676,24 @@ html:not([data-xp-appearance="classic"]) .tm-page {
   text-align: right;
 }
 
-.tm-no-adapters {
-  top: 131px;
-  left: 0;
-  right: 0;
-  text-align: center;
+/* Networking: the adapter's history graph over its list. */
+.tm-page > .tm-adapter {
+  top: 6px;
+  left: 6px;
+  width: 366px;
+  height: 252px;
 }
 
+.tm-adapter .tm-graph {
+  left: 5px;
+}
+
+.tm-page > .tm-adapters {
+  top: 264px;
+  right: 6px;
+  bottom: 0;
+  left: 6px;
+}
 /* The Luna status bar, with dividers between its three panes. */
 .tm-status {
   position: absolute;
