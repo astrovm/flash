@@ -704,7 +704,7 @@ html[data-xp-appearance="classic"] .start-program-flyout button:focus-visible {
   height: 100%;
   padding: 10px;
   overflow: auto;
-  background: #ece9d8;
+  background: var(--xp-beige);
   color: #000;
   font:
     12px Tahoma,

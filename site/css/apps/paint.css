@@ -7,7 +7,7 @@
   height: 100%;
   padding: 0;
   overflow: hidden;
-  background: #ece9d8;
+  background: var(--xp-beige);
   font:
     11px Tahoma,
     sans-serif;
@@ -94,7 +94,7 @@
   flex: 0 0 56px;
   padding: 3px 2px;
   border-right: 2px groove #fff;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 .paint-tool-options {
   position: relative;
@@ -102,7 +102,7 @@
   height: 64px;
   margin: 4px 3px 0;
   border: 2px inset #fff;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 .paint-tool-option {
   position: relative;
@@ -157,7 +157,7 @@
   min-width: 0;
   padding: 0;
   border: 1px outset #fff;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 .paint-tool::after {
   content: "";
@@ -378,7 +378,7 @@
   gap: 1px;
   padding: 3px 4px;
   border-top: 2px groove #fff;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 .paint-palette-grid {
   display: grid;
@@ -517,7 +517,7 @@
   gap: 2px;
   padding: 2px;
   border-top: 1px solid #aca899;
-  background: #ece9d8;
+  background: var(--xp-beige);
 }
 .paint-status span {
   padding: 1px 4px;
@@ -645,5 +645,5 @@
   bottom: 0;
   width: var(--paint-scrollbar-size);
   height: var(--paint-scrollbar-size);
-  background: #ece9d8;
+  background: var(--xp-beige);
 }

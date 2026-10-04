@@ -4,6 +4,40 @@
    buttons drawn from Luna.msstyles with the theme's sizing margins. Windows
    Classic keeps its own 3D controls. */
 
+/* System colors from each scheme's [SysMetrics] in Luna.msstyles, and from
+   the Windows Standard scheme for Classic. */
+:root {
+  --sys-highlight: #316ac5;
+  --sys-highlight-text: #fff;
+  --sys-active-caption: #0054e3;
+  --sys-caption-text: #fff;
+  --sys-inactive-caption: #7a96df;
+  --sys-inactive-caption-text: #d8e4f8;
+}
+
+html[data-xp-appearance="olive"] {
+  --sys-highlight: #93a070;
+  --sys-active-caption: #8ba169;
+  --sys-inactive-caption: #d4d6ba;
+  --sys-inactive-caption-text: #fff;
+}
+
+html[data-xp-appearance="silver"] {
+  --sys-highlight: #b2b4bf;
+  --sys-highlight-text: #000;
+  --sys-active-caption: #c0c0c0;
+  --sys-caption-text: #0e1010;
+  --sys-inactive-caption: #fff;
+  --sys-inactive-caption-text: #a2a1a1;
+}
+
+html[data-xp-appearance="classic"] {
+  --sys-highlight: #0a246a;
+  --sys-active-caption: #0a246a;
+  --sys-inactive-caption: #808080;
+  --sys-inactive-caption-text: #d4d0c8;
+}
+
 :root,
 [data-scheme-preview] {
   --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-normal.png");
@@ -408,11 +442,20 @@ html:not([data-xp-appearance="classic"])
 }
 
 html:not([data-xp-appearance="classic"]) .taskbar-properties-panel,
-html:not([data-xp-appearance="classic"]) .datetime-panel-host {
+html:not([data-xp-appearance="classic"]) .datetime-panel {
   border-image: var(--ctl-tabpaneedge-normal) 2 4 4 2 fill / 2px 4px 4px 2px
     stretch;
   background: none;
   box-shadow: none;
+}
+
+/* uxtheme stretches theme bitmaps without smoothing. */
+html:not([data-xp-appearance="classic"]) .xp-window select,
+html:not([data-xp-appearance="classic"]) .xp-updown button,
+html:not([data-xp-appearance="classic"]) .xp-window [role="tablist"] > button,
+html:not([data-xp-appearance="classic"]) .xp-btn,
+html:not([data-xp-appearance="classic"]) .xp-btn::before {
+  image-rendering: pixelated;
 }
 
 /* Combo boxes: a 1px #7f9db9 field with the Luna drop-down button. */
@@ -431,10 +474,32 @@ html:not([data-xp-appearance="classic"]) .xp-window select {
     #fff;
 }
 
+/* A focused drop-down list highlights its text instead of drawing a focus
+   rectangle. */
+html:not([data-xp-appearance="classic"]) .xp-window select:focus {
+  outline: 0;
+  color: var(--sys-highlight-text);
+  background:
+    var(--ctl-combobuttonglyph-normal) right 4px center / 10px 7px no-repeat,
+    var(--ctl-combobutton-normal) right 0 top 0 / 17px 100% no-repeat,
+    linear-gradient(var(--sys-highlight), var(--sys-highlight)) 2px 2px /
+      calc(100% - 21px) calc(100% - 4px) no-repeat,
+    #fff;
+}
+
 html:not([data-xp-appearance="classic"]) .xp-window select:hover {
   background:
     var(--ctl-combobuttonglyph-hot) right 4px center / 10px 7px no-repeat,
     var(--ctl-combobutton-hot) right 0 top 0 / 17px 100% no-repeat,
+    #fff;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-window select:focus:hover {
+  background:
+    var(--ctl-combobuttonglyph-hot) right 4px center / 10px 7px no-repeat,
+    var(--ctl-combobutton-hot) right 0 top 0 / 17px 100% no-repeat,
+    linear-gradient(var(--sys-highlight), var(--sys-highlight)) 2px 2px /
+      calc(100% - 21px) calc(100% - 4px) no-repeat,
     #fff;
 }
 
@@ -445,53 +510,44 @@ html:not([data-xp-appearance="classic"]) .xp-window select:disabled {
     #fff;
 }
 
-/* Up-down controls: Luna spin halves with their glyphs. A filled border
-   image would paint over the glyph, so the face is a stretched background
-   under the glyph and the border image draws only the edges. */
-html:not([data-xp-appearance="classic"])
-  :is(.datetime-spinner, .xp-updown)
-  button {
+/* Up-down controls: Luna spin halves with their glyphs. The glyph sits on
+   a layer above the face, since the border image paints over backgrounds. */
+html:not([data-xp-appearance="classic"]) .xp-updown button {
   --spin-face: var(--ctl-spinbuttonbackgroundup-normal);
   --spin-glyph: var(--ctl-spinupglyph-normal);
+  position: relative;
   border: 0;
-  border-image: var(--spin-face) 4 / 4px stretch;
-  background:
-    var(--spin-glyph) center / 7px 6px no-repeat,
-    var(--spin-face) 0 0 / 100% 100% no-repeat;
+  border-image: var(--spin-face) 4 fill / 4px stretch;
+  background: none;
   color: transparent;
 }
 
-html:not([data-xp-appearance="classic"])
-  :is(.datetime-spinner, .xp-updown)
-  button:hover {
+html:not([data-xp-appearance="classic"]) .xp-updown button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* XP rounds the glyph's centered offset down. */
+  background: var(--spin-glyph) center calc(50% - 0.5px) / 7px 6px no-repeat;
+}
+
+html:not([data-xp-appearance="classic"]) .xp-updown button:hover {
   --spin-face: var(--ctl-spinbuttonbackgroundup-hot);
 }
 
-html:not([data-xp-appearance="classic"])
-  :is(.datetime-spinner, .xp-updown)
-  button:active {
+html:not([data-xp-appearance="classic"]) .xp-updown button:active {
   --spin-face: var(--ctl-spinbuttonbackgroundup-pressed);
 }
 
-html:not([data-xp-appearance="classic"])
-  :is(.datetime-spinner, .xp-updown)
-  button
-  + button {
+html:not([data-xp-appearance="classic"]) .xp-updown button + button {
   --spin-face: var(--ctl-spinbuttonbackgrounddown-normal);
   --spin-glyph: var(--ctl-spindownglyph-normal);
 }
 
-html:not([data-xp-appearance="classic"])
-  :is(.datetime-spinner, .xp-updown)
-  button
-  + button:hover {
+html:not([data-xp-appearance="classic"]) .xp-updown button + button:hover {
   --spin-face: var(--ctl-spinbuttonbackgrounddown-hot);
 }
 
-html:not([data-xp-appearance="classic"])
-  :is(.datetime-spinner, .xp-updown)
-  button
-  + button:active {
+html:not([data-xp-appearance="classic"]) .xp-updown button + button:active {
   --spin-face: var(--ctl-spinbuttonbackgrounddown-pressed);
 }
 

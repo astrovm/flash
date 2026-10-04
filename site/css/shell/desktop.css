@@ -145,6 +145,8 @@ html[data-xp-appearance="olive"] {
 }
 
 html[data-xp-appearance="silver"] {
+  /* Metallic's button face. */
+  --xp-beige: #e0dfe3;
   --titlebar-active: linear-gradient(#a7b0bf, #6d7788 55%, #535d6c);
   --taskbar-gradient: linear-gradient(#8793a5, #596575);
 }

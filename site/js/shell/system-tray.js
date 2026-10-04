@@ -794,10 +794,417 @@ const MONTH_NAMES = [
 ];
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
+// XP's Time Zone list, in its order. Offsets are standard time in minutes
+// east of UTC; `zones` are IANA names used to recognize the host's zone.
+const XP_TIME_ZONES = [
+  ["Dateline", -720, "International Date Line West"],
+  ["Samoa", -660, "Midway Island, Samoa", "Pacific/Pago_Pago"],
+  ["Hawaiian", -600, "Hawaii", "Pacific/Honolulu"],
+  ["Alaskan", -540, "Alaska", "America/Anchorage"],
+  [
+    "Pacific",
+    -480,
+    "Pacific Time (US & Canada); Tijuana",
+    "America/Los_Angeles America/Vancouver America/Tijuana",
+  ],
+  ["US Mountain", -420, "Arizona", "America/Phoenix"],
+  [
+    "Mexico Standard Time 2",
+    -420,
+    "Chihuahua, La Paz, Mazatlan",
+    "America/Chihuahua America/Mazatlan",
+  ],
+  [
+    "Mountain",
+    -420,
+    "Mountain Time (US & Canada)",
+    "America/Denver America/Edmonton",
+  ],
+  [
+    "Central America",
+    -360,
+    "Central America",
+    "America/Guatemala America/Costa_Rica",
+  ],
+  [
+    "Central",
+    -360,
+    "Central Time (US & Canada)",
+    "America/Chicago America/Winnipeg",
+  ],
+  [
+    "Mexico",
+    -360,
+    "Guadalajara, Mexico City, Monterrey",
+    "America/Mexico_City America/Monterrey",
+  ],
+  ["Canada Central", -360, "Saskatchewan", "America/Regina"],
+  [
+    "SA Pacific",
+    -300,
+    "Bogota, Lima, Quito",
+    "America/Bogota America/Lima America/Guayaquil",
+  ],
+  [
+    "Eastern",
+    -300,
+    "Eastern Time (US & Canada)",
+    "America/New_York America/Toronto America/Detroit",
+  ],
+  ["US Eastern", -300, "Indiana (East)", "America/Indiana/Indianapolis"],
+  ["Atlantic", -240, "Atlantic Time (Canada)", "America/Halifax"],
+  ["SA Western", -240, "Caracas, La Paz", "America/Caracas America/La_Paz"],
+  ["Pacific SA", -240, "Santiago", "America/Santiago"],
+  ["Newfoundland", -210, "Newfoundland", "America/St_Johns"],
+  ["E. South America", -180, "Brasilia", "America/Sao_Paulo"],
+  [
+    "SA Eastern",
+    -180,
+    "Buenos Aires, Georgetown",
+    "America/Buenos_Aires America/Argentina/Buenos_Aires America/Argentina/Cordoba America/Guyana",
+  ],
+  ["Greenland", -180, "Greenland", "America/Godthab America/Nuuk"],
+  ["Mid-Atlantic", -120, "Mid-Atlantic", "Atlantic/South_Georgia"],
+  ["Azores", -60, "Azores", "Atlantic/Azores"],
+  ["Cape Verde", -60, "Cape Verde Is.", "Atlantic/Cape_Verde"],
+  ["Greenwich", 0, "Casablanca, Monrovia", "Africa/Casablanca Africa/Monrovia"],
+  [
+    "GMT",
+    0,
+    "Greenwich Mean Time : Dublin, Edinburgh, Lisbon, London",
+    "Europe/London Europe/Dublin Europe/Lisbon UTC Etc/UTC",
+  ],
+  [
+    "W. Europe",
+    60,
+    "Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
+    "Europe/Amsterdam Europe/Berlin Europe/Zurich Europe/Rome Europe/Stockholm Europe/Vienna",
+  ],
+  [
+    "Central Europe",
+    60,
+    "Belgrade, Bratislava, Budapest, Ljubljana, Prague",
+    "Europe/Belgrade Europe/Bratislava Europe/Budapest Europe/Ljubljana Europe/Prague",
+  ],
+  [
+    "Romance",
+    60,
+    "Brussels, Copenhagen, Madrid, Paris",
+    "Europe/Brussels Europe/Copenhagen Europe/Madrid Europe/Paris",
+  ],
+  [
+    "Central European",
+    60,
+    "Sarajevo, Skopje, Warsaw, Zagreb",
+    "Europe/Sarajevo Europe/Skopje Europe/Warsaw Europe/Zagreb",
+  ],
+  ["W. Central Africa", 60, "West Central Africa", "Africa/Lagos"],
+  [
+    "GTB",
+    120,
+    "Athens, Istanbul, Minsk",
+    "Europe/Athens Europe/Istanbul Europe/Minsk",
+  ],
+  ["E. Europe", 120, "Bucharest", "Europe/Bucharest"],
+  ["Egypt", 120, "Cairo", "Africa/Cairo"],
+  [
+    "South Africa",
+    120,
+    "Harare, Pretoria",
+    "Africa/Harare Africa/Johannesburg",
+  ],
+  [
+    "FLE",
+    120,
+    "Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
+    "Europe/Helsinki Europe/Kiev Europe/Kyiv Europe/Riga Europe/Sofia Europe/Tallinn Europe/Vilnius",
+  ],
+  ["Israel", 120, "Jerusalem", "Asia/Jerusalem"],
+  ["Arabic", 180, "Baghdad", "Asia/Baghdad"],
+  ["Arab", 180, "Kuwait, Riyadh", "Asia/Kuwait Asia/Riyadh"],
+  [
+    "Russian",
+    180,
+    "Moscow, St. Petersburg, Volgograd",
+    "Europe/Moscow Europe/Volgograd",
+  ],
+  ["E. Africa", 180, "Nairobi", "Africa/Nairobi"],
+  ["Iran", 210, "Tehran", "Asia/Tehran"],
+  ["Arabian", 240, "Abu Dhabi, Muscat", "Asia/Dubai Asia/Muscat"],
+  [
+    "Caucasus",
+    240,
+    "Baku, Tbilisi, Yerevan",
+    "Asia/Baku Asia/Tbilisi Asia/Yerevan",
+  ],
+  ["Afghanistan", 270, "Kabul", "Asia/Kabul"],
+  ["Ekaterinburg", 300, "Ekaterinburg", "Asia/Yekaterinburg"],
+  [
+    "West Asia",
+    300,
+    "Islamabad, Karachi, Tashkent",
+    "Asia/Karachi Asia/Tashkent",
+  ],
+  [
+    "India",
+    330,
+    "Chennai, Kolkata, Mumbai, New Delhi",
+    "Asia/Kolkata Asia/Calcutta",
+  ],
+  ["Nepal", 345, "Kathmandu", "Asia/Kathmandu Asia/Katmandu"],
+  [
+    "N. Central Asia",
+    360,
+    "Almaty, Novosibirsk",
+    "Asia/Almaty Asia/Novosibirsk",
+  ],
+  ["Central Asia", 360, "Astana, Dhaka", "Asia/Dhaka"],
+  ["Sri Lanka", 360, "Sri Jayawardenepura", "Asia/Colombo"],
+  ["Myanmar", 390, "Rangoon", "Asia/Rangoon Asia/Yangon"],
+  [
+    "SE Asia",
+    420,
+    "Bangkok, Hanoi, Jakarta",
+    "Asia/Bangkok Asia/Ho_Chi_Minh Asia/Saigon Asia/Jakarta",
+  ],
+  ["North Asia", 420, "Krasnoyarsk", "Asia/Krasnoyarsk"],
+  [
+    "China",
+    480,
+    "Beijing, Chongqing, Hong Kong, Urumqi",
+    "Asia/Shanghai Asia/Hong_Kong Asia/Urumqi",
+  ],
+  [
+    "North Asia East",
+    480,
+    "Irkutsk, Ulaan Bataar",
+    "Asia/Irkutsk Asia/Ulaanbaatar",
+  ],
+  [
+    "Singapore",
+    480,
+    "Kuala Lumpur, Singapore",
+    "Asia/Kuala_Lumpur Asia/Singapore",
+  ],
+  ["W. Australia", 480, "Perth", "Australia/Perth"],
+  ["Taipei", 480, "Taipei", "Asia/Taipei"],
+  ["Tokyo", 540, "Osaka, Sapporo, Tokyo", "Asia/Tokyo"],
+  ["Korea", 540, "Seoul", "Asia/Seoul"],
+  ["Yakutsk", 540, "Yakutsk", "Asia/Yakutsk"],
+  ["Cen. Australia", 570, "Adelaide", "Australia/Adelaide"],
+  ["AUS Central", 570, "Darwin", "Australia/Darwin"],
+  ["E. Australia", 600, "Brisbane", "Australia/Brisbane"],
+  [
+    "AUS Eastern",
+    600,
+    "Canberra, Melbourne, Sydney",
+    "Australia/Sydney Australia/Melbourne Australia/Canberra",
+  ],
+  [
+    "West Pacific",
+    600,
+    "Guam, Port Moresby",
+    "Pacific/Guam Pacific/Port_Moresby",
+  ],
+  ["Tasmania", 600, "Hobart", "Australia/Hobart"],
+  ["Vladivostok", 600, "Vladivostok", "Asia/Vladivostok"],
+  [
+    "Central Pacific",
+    660,
+    "Magadan, Solomon Is., New Caledonia",
+    "Asia/Magadan Pacific/Guadalcanal Pacific/Noumea",
+  ],
+  ["New Zealand", 720, "Auckland, Wellington", "Pacific/Auckland"],
+  [
+    "Fiji",
+    720,
+    "Fiji, Kamchatka, Marshall Is.",
+    "Pacific/Fiji Asia/Kamchatka Pacific/Majuro",
+  ],
+  ["Tonga", 780, "Nuku'alofa", "Pacific/Tongatapu"],
+].map(([id, offset, cities, zones = ""]) => {
+  const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+  const minutes = String(Math.abs(offset) % 60).padStart(2, "0");
+  return {
+    id,
+    offset,
+    label: offset
+      ? `(GMT${offset < 0 ? "-" : "+"}${hours}:${minutes}) ${cities}`
+      : `(GMT) ${cities}`,
+    standardName: id.endsWith(" 2") ? id : `${id} Standard Time`,
+    zones: zones.split(" "),
+  };
+});
+
+const TIME_ZONE_KEY = "timeZone";
+const TIME_SYNC_KEY = "timeSync";
+
+// The host's zone, matched by name and then by its current UTC offset.
+const getHostTimeZone = () => {
+  const name = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offset = -new Date().getTimezoneOffset();
+  return (
+    XP_TIME_ZONES.find((zone) => zone.zones.includes(name)) ||
+    XP_TIME_ZONES.find((zone) => zone.offset === offset) ||
+    XP_TIME_ZONES.find((zone) => zone.id === "GMT")
+  );
+};
+
+const getShellTimeZone = () =>
+  XP_TIME_ZONES.find(
+    (zone) => zone.id === localStorage.getItem(TIME_ZONE_KEY),
+  ) || getHostTimeZone();
+
+const readTimeSync = () => {
+  try {
+    const stored = JSON.parse(localStorage.getItem(TIME_SYNC_KEY));
+    return {
+      enabled: stored?.enabled !== false,
+      server:
+        stored?.server === "time.nist.gov" ? stored.server : "time.windows.com",
+      last: Number.isFinite(stored?.last) ? stored.last : null,
+    };
+  } catch {
+    return { enabled: true, server: "time.windows.com", last: null };
+  }
+};
+
+// The clock face from timedate.cpl, drawn pixel for pixel: twelve 2px hour
+// marks, hour and minute hands as filled quadrilaterals with a white
+// highlight and a shadow offset by 2px, and a second hand that inverts what
+// lies under it. Positions come from a sine table scaled by 8000, rounded
+// the way GDI's MulDiv rounds.
+const CLOCK_SIZE = 148;
+const CLOCK_SHADOWS = {
+  blue: [172, 168, 153],
+  silver: [157, 157, 161],
+  classic: [128, 128, 128],
+};
+const CLOCK_CENTER = { x: 74, y: 73 };
+
+const clockPoint = (position, length) => {
+  const angle = (position * Math.PI) / 30;
+  const sin = Math.round(Math.sin(angle) * 8000);
+  const cos = Math.round(Math.cos(angle) * 8000);
+  return [
+    Math.round((sin * length) / 8000),
+    Math.round((-cos * length) / 8000),
+  ];
+};
+
+const clockHand = (position, tip, halfWidth, tail) => {
+  const { x, y } = CLOCK_CENTER;
+  const [tipX, tipY] = clockPoint(position, tip);
+  const [sideX, sideY] = clockPoint((position + 15) % 60, halfWidth);
+  const [tailX, tailY] = clockPoint(position, tail);
+  return [
+    [x + tipX, y + tipY],
+    [x + sideX, y + sideY],
+    [x - tailX, y - tailY],
+    [x - sideX, y - sideY],
+  ];
+};
+
+const insidePolygon = (points, px, py) => {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [xi, yi] = points[i];
+    const [xj, yj] = points[j];
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+};
+
+const drawXpClockFace = (canvas, date) => {
+  const context = canvas.getContext("2d");
+  const image = context.getImageData(0, 0, CLOCK_SIZE, CLOCK_SIZE);
+  image.data.fill(0);
+  const plot = (x, y, color) => {
+    image.data.set([...color, 255], (y * CLOCK_SIZE + x) * 4);
+  };
+  // The shadow is the scheme's 3D shadow color.
+  const shadow =
+    CLOCK_SHADOWS[document.documentElement.dataset.xpAppearance] ||
+    CLOCK_SHADOWS.blue;
+  const { x: centerX, y: centerY } = CLOCK_CENTER;
+  for (let hour = 0; hour < 12; hour += 1) {
+    const [dx, dy] = clockPoint(hour * 5, 62);
+    for (const row of [-1, 0]) {
+      plot(centerX + dx - 1, centerY + dy + row, [0, 255, 255]);
+      plot(centerX + dx, centerY + dy + row, [0, 0, 0]);
+    }
+  }
+  const minutes = date.getMinutes();
+  const hands = [
+    clockHand(
+      ((date.getHours() % 12) * 5 + Math.floor(minutes / 12)) % 60,
+      40,
+      4,
+      9,
+    ),
+    clockHand(minutes, 50, 3, 12),
+  ];
+  for (const hand of hands) {
+    for (const [color, shift] of [
+      [[255, 255, 255], -2],
+      [shadow, 2],
+      [[0, 128, 128], 0],
+    ]) {
+      const points = hand.map(([x, y]) => [x + shift, y + shift]);
+      const xs = points.map(([x]) => x);
+      const ys = points.map(([, y]) => y);
+      for (let y = Math.min(...ys); y <= Math.max(...ys); y += 1) {
+        for (let x = Math.min(...xs); x <= Math.max(...xs); x += 1) {
+          if (insidePolygon(points, x, y)) plot(x, y, color);
+        }
+      }
+    }
+  }
+  context.putImageData(image, 0, 0);
+};
+
+// The second hand is a GDI line without its last pixel, drawn white on a
+// layer that inverts the face and background under it.
+const drawXpClockSecondHand = (canvas, date) => {
+  const context = canvas.getContext("2d");
+  const image = context.getImageData(0, 0, CLOCK_SIZE, CLOCK_SIZE);
+  image.data.fill(0);
+  let { x, y } = CLOCK_CENTER;
+  const [dx, dy] = clockPoint(date.getSeconds(), 50);
+  const endX = x + dx;
+  const endY = y + dy;
+  const stepX = Math.sign(dx);
+  const stepY = Math.sign(dy);
+  let error = Math.abs(dx) - Math.abs(dy);
+  while (x !== endX || y !== endY) {
+    image.data.set([255, 255, 255, 255], (y * CLOCK_SIZE + x) * 4);
+    const doubled = 2 * error;
+    if (doubled >= -Math.abs(dy)) {
+      error -= Math.abs(dy);
+      x += stepX;
+    }
+    if (doubled <= Math.abs(dx)) {
+      error += Math.abs(dx);
+      y += stepY;
+    }
+  }
+  context.putImageData(image, 0, 0);
+};
+
+const DATETIME_HELP = {
+  date: "Displays the date currently set on your computer. To change it, click a month and year, and then click a day on the calendar.",
+  time: "Displays the time currently set on your computer. To change it, click the hour, minutes, seconds, or AM/PM, and then type a new value or click the arrows.",
+  zone: "Displays the time zone your computer uses. To change it, click a time zone in the list.",
+  sync: "Specifies whether your computer clock is synchronized with an Internet time server once a week.",
+  server: "Specifies the Internet time server your computer synchronizes with.",
+  update: "Synchronizes your computer clock with the Internet time server now.",
+};
+
 const openDateTimeProperties = () => {
   const dialog = XPDialogs.createDialog({
     title: "Date and Time Properties",
-    wide: true,
     help: true,
   });
   dialog.el.classList.add("datetime-dialog");
@@ -807,160 +1214,75 @@ const openDateTimeProperties = () => {
     year: shellNow.getFullYear(),
     month: shellNow.getMonth(),
     day: shellNow.getDate(),
+    // The clock keeps running until the time is edited.
+    time: shellNow,
+    timeEdited: false,
+    zone: getShellTimeZone(),
+    sync: readTimeSync(),
   };
+  const dateFormat = new Intl.DateTimeFormat("en-US");
+  const shortTimeFormat = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
-  const tabs = document.createElement("div");
-  tabs.className = "datetime-tabs";
-  tabs.setAttribute("role", "tablist");
-  tabs.setAttribute("aria-label", "Date and Time Properties");
-  const panelHost = document.createElement("div");
-  panelHost.className = "datetime-panel-host";
+  dialog.body.innerHTML = `
+    <div class="datetime-tabs" role="tablist" aria-label="Date and Time Properties"></div>
+    <section class="datetime-panel datetime-date-panel" role="tabpanel">
+      <fieldset class="dlg-group datetime-date-group"><legend>Date</legend></fieldset>
+      <select class="xp-select dlg-month-select" aria-label="Month" data-help="${DATETIME_HELP.date}"></select>
+      <input type="text" class="xp-input dlg-year-input" aria-label="Year" inputmode="numeric" maxlength="4" data-help="${DATETIME_HELP.date}">
+      <span class="xp-updown datetime-year-spin" data-help="${DATETIME_HELP.date}"><button type="button" tabindex="-1" aria-label="Next year">▲</button><button type="button" tabindex="-1" aria-label="Previous year">▼</button></span>
+      <div class="dlg-calendar" data-help="${DATETIME_HELP.date}"></div>
+      <fieldset class="dlg-group datetime-time-group"><legend>Time</legend></fieldset>
+      <canvas class="datetime-clock" width="${CLOCK_SIZE}" height="${CLOCK_SIZE}" aria-hidden="true" data-help="${DATETIME_HELP.time}"></canvas>
+      <canvas class="datetime-clock-second" width="${CLOCK_SIZE}" height="${CLOCK_SIZE}" aria-hidden="true"></canvas>
+      <input type="text" class="xp-input datetime-time-input" aria-label="Time" data-help="${DATETIME_HELP.time}">
+      <span class="xp-updown datetime-time-spin" data-help="${DATETIME_HELP.time}"><button type="button" tabindex="-1" aria-label="Increase time">▲</button><button type="button" tabindex="-1" aria-label="Decrease time">▼</button></span>
+      <p class="datetime-current-zone" data-help="${DATETIME_HELP.zone}"></p>
+    </section>
+    <section class="datetime-panel datetime-time-zone-panel" role="tabpanel" hidden>
+      <select class="xp-select datetime-zone-select" aria-label="Time zone" data-help="${DATETIME_HELP.zone}"></select>
+      <img class="datetime-zone-map" src="assets/xp/TimeZoneMap.png" alt="World time zone map" draggable="false">
+    </section>
+    <section class="datetime-panel datetime-internet-panel" role="tabpanel" hidden>
+      <label class="datetime-sync-label" data-help="${DATETIME_HELP.sync}"><input type="checkbox">Automatically synchronize with an Internet time server</label>
+      <label class="datetime-server-label" for="datetime-server">Server:</label>
+      <select class="xp-select datetime-server-select" id="datetime-server" data-help="${DATETIME_HELP.server}"><option>time.windows.com</option><option>time.nist.gov</option></select>
+      <button type="button" class="xp-btn datetime-update-now" data-help="${DATETIME_HELP.update}">Update Now</button>
+      <p class="datetime-sync-status"></p>
+      <p class="datetime-next-sync"></p>
+      <p class="datetime-sync-note">Synchronization can occur only when your computer is connected to the Internet.  Learn more about <u>time synchronization</u> in Help and Support Center.</p>
+    </section>`;
+  const $ = (selector) => dialog.body.querySelector(selector);
+  const tabs = $(".datetime-tabs");
+  const monthSelect = $(".dlg-month-select");
+  const yearInput = $(".dlg-year-input");
+  const calendar = $(".dlg-calendar");
+  const clockFace = $(".datetime-clock");
+  const clockSecond = $(".datetime-clock-second");
+  const timeInput = $(".datetime-time-input");
+  const zoneText = $(".datetime-current-zone");
+  const zoneSelect = $(".datetime-zone-select");
+  const syncCheckbox = $(".datetime-sync-label input");
+  const serverSelect = $(".datetime-server-select");
+  const updateNow = $(".datetime-update-now");
+  const syncStatus = $(".datetime-sync-status");
+  const nextSync = $(".datetime-next-sync");
 
-  // ---- Date group ----
-  const dateGroup = document.createElement("fieldset");
-  dateGroup.className = "dlg-group datetime-date-group";
-  const dateLegend = document.createElement("legend");
-  dateLegend.textContent = "Date";
-  dateGroup.appendChild(dateLegend);
-
-  const monthSelect = document.createElement("select");
-  monthSelect.className = "xp-select dlg-month-select";
-  monthSelect.setAttribute("aria-label", "Month");
   MONTH_NAMES.forEach((monthName, index) => {
-    const option = document.createElement("option");
-    option.value = String(index);
-    option.textContent = monthName;
-    monthSelect.appendChild(option);
+    monthSelect.add(new Option(monthName, String(index)));
   });
   monthSelect.value = String(state.month);
-
-  const yearInput = document.createElement("input");
-  yearInput.type = "number";
-  yearInput.min = "1901";
-  yearInput.max = "2099";
-  yearInput.className = "xp-input dlg-year-input";
-  yearInput.setAttribute("aria-label", "Year");
   yearInput.value = String(state.year);
+  XP_TIME_ZONES.forEach((zone) => {
+    zoneSelect.add(new Option(zone.label, zone.id));
+  });
+  zoneSelect.value = state.zone.id;
+  zoneText.textContent = `Current time zone:  ${state.zone.standardName}`;
 
-  const monthYearRow = document.createElement("div");
-  monthYearRow.className = "dlg-month-year";
-  monthYearRow.append(monthSelect, yearInput);
-
-  const calendar = document.createElement("div");
-  calendar.className = "dlg-calendar";
-  dateGroup.append(monthYearRow, calendar);
-
-  // ---- Time group ----
-  const timeGroup = document.createElement("fieldset");
-  timeGroup.className = "dlg-group datetime-time-group";
-  const timeLegend = document.createElement("legend");
-  timeLegend.textContent = "Time";
-  timeGroup.appendChild(timeLegend);
-
-  const analogClock = document.createElement("div");
-  analogClock.className = "datetime-analog-clock";
-  analogClock.setAttribute("aria-hidden", "true");
-  for (let tick = 0; tick < 60; tick += 1) {
-    const mark = document.createElement("i");
-    mark.className = tick % 5 === 0 ? "hour-tick" : "minute-tick";
-    mark.style.setProperty("--tick", tick);
-    analogClock.appendChild(mark);
-  }
-  const hourHand = document.createElement("span");
-  hourHand.className = "datetime-clock-hand hour";
-  const minuteHand = document.createElement("span");
-  minuteHand.className = "datetime-clock-hand minute";
-  const secondHand = document.createElement("span");
-  secondHand.className = "datetime-clock-hand second";
-  const clockPin = document.createElement("span");
-  clockPin.className = "datetime-clock-pin";
-  analogClock.append(hourHand, minuteHand, secondHand, clockPin);
-
-  const timeEdit = document.createElement("div");
-  timeEdit.className = "datetime-time-edit";
-  const timeInput = document.createElement("input");
-  timeInput.type = "text";
-  timeInput.className = "xp-input";
-  timeInput.setAttribute("aria-label", "Time");
-  const spinner = document.createElement("span");
-  spinner.className = "datetime-spinner";
-  spinner.innerHTML =
-    '<button type="button" aria-label="Increase time">▲</button><button type="button" aria-label="Decrease time">▼</button>';
-  timeEdit.append(timeInput, spinner);
-  timeGroup.append(analogClock, timeEdit);
-
-  const datePanel = document.createElement("section");
-  datePanel.className = "datetime-panel datetime-date-panel";
-  datePanel.setAttribute("role", "tabpanel");
-  datePanel.append(dateGroup, timeGroup);
-  const timeZoneText = document.createElement("p");
-  timeZoneText.className = "datetime-current-zone";
-  timeZoneText.textContent = "Current time zone:  SA Eastern Standard Time";
-  datePanel.appendChild(timeZoneText);
-
-  const timeZonePanel = document.createElement("section");
-  timeZonePanel.className = "datetime-panel datetime-time-zone-panel";
-  timeZonePanel.setAttribute("role", "tabpanel");
-  timeZonePanel.hidden = true;
-  const timeZoneSelect = document.createElement("select");
-  timeZoneSelect.className = "xp-select datetime-zone-select";
-  timeZoneSelect.setAttribute("aria-label", "Time zone");
-  const timeZoneOption = document.createElement("option");
-  timeZoneOption.textContent = "(GMT-03:00) Buenos Aires, Georgetown";
-  timeZoneSelect.appendChild(timeZoneOption);
-  const timeZoneMap = document.createElement("img");
-  timeZoneMap.className = "datetime-zone-map";
-  timeZoneMap.src = "assets/xp/TimeZoneMap.png";
-  timeZoneMap.alt = "World time zone map";
-  timeZoneMap.draggable = false;
-  timeZonePanel.append(timeZoneSelect, timeZoneMap);
-
-  const internetPanel = document.createElement("section");
-  internetPanel.className = "datetime-panel datetime-internet-panel";
-  internetPanel.setAttribute("role", "tabpanel");
-  internetPanel.hidden = true;
-  const syncLabel = document.createElement("label");
-  syncLabel.className = "datetime-sync-label";
-  const syncCheckbox = document.createElement("input");
-  syncCheckbox.type = "checkbox";
-  syncCheckbox.checked = true;
-  syncLabel.append(
-    syncCheckbox,
-    "Automatically synchronize with an Internet time server",
-  );
-  const serverRow = document.createElement("div");
-  serverRow.className = "datetime-server-row";
-  const serverLabel = document.createElement("label");
-  serverLabel.textContent = "Server:";
-  const serverSelect = document.createElement("select");
-  serverSelect.className = "xp-select";
-  serverSelect.innerHTML =
-    "<option>time.windows.com</option><option>time.nist.gov</option>";
-  const updateNow = document.createElement("button");
-  updateNow.type = "button";
-  updateNow.className = "xp-btn";
-  updateNow.textContent = "Update Now";
-  serverRow.append(serverLabel, serverSelect, updateNow);
-  const syncStatus = document.createElement("p");
-  syncStatus.className = "datetime-sync-status";
-  syncStatus.textContent =
-    "Windows has never attempted to synchronize with an Internet time server.";
-  const nextSync = document.createElement("p");
-  nextSync.className = "datetime-next-sync";
-  nextSync.textContent = `Next synchronization: ${shellNow.toLocaleDateString("en-US")} at ${shellNow.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
-  const syncNote = document.createElement("p");
-  syncNote.className = "datetime-sync-note";
-  syncNote.innerHTML =
-    "Synchronization can occur only when your computer is connected to the Internet. Learn more about <u>time synchronization</u> in Help and Support Center.";
-  internetPanel.append(syncLabel, serverRow, syncStatus, nextSync, syncNote);
-
-  const panels = [datePanel, timeZonePanel, internetPanel];
-  const tabDefinitions = [
-    ["Date & Time", datePanel],
-    ["Time Zone", timeZonePanel],
-    ["Internet Time", internetPanel],
-  ];
-  tabDefinitions.forEach(([label, panel], index) => {
+  const panels = [...dialog.body.querySelectorAll(".datetime-panel")];
+  ["Date & Time", "Time Zone", "Internet Time"].forEach((label, index) => {
     const tab = document.createElement("button");
     tab.type = "button";
     tab.setAttribute("role", "tab");
@@ -968,9 +1290,11 @@ const openDateTimeProperties = () => {
     tab.classList.toggle("active", index === 0);
     tab.textContent = label;
     tab.addEventListener("click", () => {
-      panels.forEach((candidate) => {
-        candidate.hidden = candidate !== panel;
+      panels.forEach((panel, panelIndex) => {
+        panel.hidden = panelIndex !== index;
       });
+      // Like a property sheet, the page's first control takes the focus.
+      panels[index].querySelector("select, input").focus();
       [...tabs.children].forEach((candidate) => {
         const selected = candidate === tab;
         candidate.classList.toggle("active", selected);
@@ -979,39 +1303,28 @@ const openDateTimeProperties = () => {
     });
     tabs.appendChild(tab);
   });
-  panelHost.append(...panels);
-  dialog.body.append(tabs, panelHost);
 
   const renderCalendar = () => {
-    calendar.innerHTML = "";
-    DAY_LETTERS.forEach((letter) => {
-      const head = document.createElement("span");
-      head.className = "dlg-calendar-head";
-      head.textContent = letter;
-      calendar.appendChild(head);
-    });
-    const today = getShellTime();
+    calendar.replaceChildren(
+      ...DAY_LETTERS.map((letter) => {
+        const head = document.createElement("span");
+        head.className = "dlg-calendar-head";
+        head.textContent = letter;
+        return head;
+      }),
+    );
     const firstWeekday = new Date(state.year, state.month, 1).getDay();
     for (let i = 0; i < firstWeekday; i += 1) {
-      const blank = document.createElement("span");
-      calendar.appendChild(blank);
+      calendar.appendChild(document.createElement("span"));
     }
     const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
     for (let day = 1; day <= daysInMonth; day += 1) {
       const dayButton = document.createElement("button");
       dayButton.type = "button";
+      dayButton.tabIndex = -1;
       dayButton.className = "dlg-calendar-day";
+      dayButton.classList.toggle("selected", day === state.day);
       dayButton.textContent = String(day);
-      if (day === state.day) {
-        dayButton.classList.add("selected");
-      }
-      if (
-        day === today.getDate() &&
-        state.month === today.getMonth() &&
-        state.year === today.getFullYear()
-      ) {
-        dayButton.classList.add("today");
-      }
       dayButton.addEventListener("click", () => {
         state.day = day;
         renderCalendar();
@@ -1026,27 +1339,36 @@ const openDateTimeProperties = () => {
       minute: "2-digit",
       second: "2-digit",
     });
-  const renderAnalogClock = (date) => {
-    const seconds = date.getSeconds();
-    const minutes = date.getMinutes() + seconds / 60;
-    const hours = (date.getHours() % 12) + minutes / 60;
-    hourHand.style.setProperty("--angle", `${hours * 30}deg`);
-    minuteHand.style.setProperty("--angle", `${minutes * 6}deg`);
-    secondHand.style.setProperty("--angle", `${seconds * 6}deg`);
+  const parseTime = (value) => {
+    const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(value.trim());
+    const time = new Date(2000, 0, 1);
+    if (match) {
+      let hours = Math.min(Math.max(parseInt(match[1], 10), 1), 12) % 12;
+      if (match[4].toUpperCase() === "PM") hours += 12;
+      time.setHours(
+        hours,
+        Math.min(parseInt(match[2], 10), 59),
+        Math.min(parseInt(match[3], 10), 59),
+      );
+    }
+    return time;
   };
-  timeInput.value = formatTime(shellNow);
-  renderAnalogClock(shellNow);
+  const showTime = (date) => {
+    state.time = date;
+    timeInput.value = formatTime(date);
+    drawXpClockFace(clockFace, date);
+    drawXpClockSecondHand(clockSecond, date);
+  };
+  showTime(shellNow);
+  const tick = setInterval(() => {
+    if (!dialog.el.isConnected) {
+      clearInterval(tick);
+      return;
+    }
+    if (!state.timeEdited) showTime(getShellTime());
+  }, 1000);
 
-  monthSelect.addEventListener("change", () => {
-    state.month = parseInt(monthSelect.value, 10);
-    state.day = Math.min(
-      state.day,
-      new Date(state.year, state.month + 1, 0).getDate(),
-    );
-    renderCalendar();
-  });
-  yearInput.addEventListener("change", () => {
-    const year = parseInt(yearInput.value, 10);
+  const setYear = (year) => {
     state.year = Number.isFinite(year)
       ? Math.min(Math.max(year, 1901), 2099)
       : state.year;
@@ -1056,31 +1378,130 @@ const openDateTimeProperties = () => {
       new Date(state.year, state.month + 1, 0).getDate(),
     );
     renderCalendar();
+  };
+  monthSelect.addEventListener("change", () => {
+    state.month = parseInt(monthSelect.value, 10);
+    setYear(state.year);
+  });
+  yearInput.addEventListener("change", () => {
+    setYear(parseInt(yearInput.value, 10));
+  });
+  $(".datetime-year-spin").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    setYear(
+      state.year + (button.getAttribute("aria-label") === "Next year" ? 1 : -1),
+    );
+    markDirty();
+  });
+
+  // The up-down changes the part of the time the caret is in, like the
+  // time picker: hours, minutes, seconds, or AM/PM.
+  let timeField = 0;
+  const rememberTimeField = () => {
+    const caret = timeInput.selectionStart;
+    const separators = [...timeInput.value.matchAll(/[: ]/g)].map(
+      (match) => match.index,
+    );
+    timeField = separators.filter((index) => index < caret).length;
+  };
+  timeInput.addEventListener("click", rememberTimeField);
+  timeInput.addEventListener("keyup", rememberTimeField);
+  timeInput.addEventListener("input", () => {
+    state.timeEdited = true;
+  });
+  timeInput.addEventListener("change", () => {
+    state.timeEdited = true;
+    showTime(parseTime(timeInput.value));
+  });
+  $(".datetime-time-spin").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const step = button.getAttribute("aria-label") === "Increase time" ? 1 : -1;
+    const time = parseTime(timeInput.value);
+    if (timeField === 0) time.setHours(time.getHours() + step);
+    else if (timeField === 1) time.setMinutes(time.getMinutes() + step);
+    else if (timeField === 2) time.setSeconds(time.getSeconds() + step);
+    else time.setHours(time.getHours() + 12);
+    state.timeEdited = true;
+    showTime(time);
+    markDirty();
+  });
+
+  const renderSync = () => {
+    const { enabled, server, last } = state.sync;
+    syncCheckbox.checked = enabled;
+    serverSelect.value = server;
+    serverSelect.disabled = !enabled;
+    updateNow.disabled = !enabled;
+    syncStatus.textContent = last
+      ? `The time has been successfully synchronized with ${server} on ${dateFormat.format(last)} at ${shortTimeFormat.format(last)}.`
+      : "Windows has never attempted to synchronize with an internet time server.";
+    const next = last ? new Date(last + 7 * 86400000) : getShellTime();
+    nextSync.hidden = !enabled;
+    nextSync.textContent = `Next synchronization: ${dateFormat.format(next)} at ${shortTimeFormat.format(next)}`;
+  };
+  const saveSync = () => {
+    localStorage.setItem(TIME_SYNC_KEY, JSON.stringify(state.sync));
+  };
+  renderSync();
+  syncCheckbox.addEventListener("change", () => {
+    state.sync.enabled = syncCheckbox.checked;
+    saveSync();
+    renderSync();
+  });
+  serverSelect.addEventListener("change", () => {
+    state.sync.server = serverSelect.value;
+    saveSync();
+    renderSync();
+  });
+  // The host clock stands in for the time server: synchronizing drops any
+  // manual change and keeps only the chosen time zone's difference.
+  updateNow.addEventListener("click", () => {
+    const hostOffset = -new Date().getTimezoneOffset();
+    localStorage.setItem(
+      CLOCK_OFFSET_KEY,
+      String((state.zone.offset - hostOffset) * 60000),
+    );
+    updateClockDisplay();
+    state.sync.last = getShellTime().getTime();
+    saveSync();
+    renderSync();
+    state.timeEdited = false;
+    showTime(getShellTime());
   });
 
   const applyDateTime = () => {
-    const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(
-      timeInput.value.trim(),
-    );
-    let hours = match ? Math.min(Math.max(parseInt(match[1], 10), 1), 12) : 12;
-    const minutes = match ? Math.min(parseInt(match[2], 10), 59) : 0;
-    const seconds = match ? Math.min(parseInt(match[3], 10), 59) : 0;
-    hours %= 12;
-    if (match?.[4].toUpperCase() === "PM") hours += 12;
+    // An untouched clock keeps running, so it applies the current time.
+    const time = state.timeEdited ? parseTime(timeInput.value) : getShellTime();
     const chosen = new Date(
       state.year,
       state.month,
       state.day,
-      hours,
-      minutes,
-      seconds,
+      time.getHours(),
+      time.getMinutes(),
+      time.getSeconds(),
     );
+    // A new zone moves the clock by the difference between the zones.
+    const zone = XP_TIME_ZONES.find((item) => item.id === zoneSelect.value);
+    const zoneShift = (zone.offset - state.zone.offset) * 60000;
     localStorage.setItem(
       CLOCK_OFFSET_KEY,
-      String(chosen.getTime() - Date.now()),
+      String(chosen.getTime() - Date.now() + zoneShift),
     );
+    localStorage.setItem(TIME_ZONE_KEY, zone.id);
+    state.zone = zone;
+    zoneText.textContent = `Current time zone:  ${zone.standardName}`;
     updateClockDisplay();
-    renderAnalogClock(chosen);
+    state.timeEdited = false;
+    showTime(getShellTime());
+    const now = getShellTime();
+    state.year = now.getFullYear();
+    state.month = now.getMonth();
+    state.day = now.getDate();
+    monthSelect.value = String(state.month);
+    yearInput.value = String(state.year);
+    renderCalendar();
   };
 
   const row = document.createElement("div");
@@ -1108,46 +1529,17 @@ const openDateTimeProperties = () => {
   dialog.body.appendChild(row);
   dialog.defaultButton = okButton;
 
-  const markDirty = () => {
+  function markDirty() {
     applyButton.disabled = false;
-  };
-  [
-    monthSelect,
-    yearInput,
-    timeInput,
-    timeZoneSelect,
-    syncCheckbox,
-    serverSelect,
-  ].forEach((control) => control.addEventListener("change", markDirty));
+  }
+  [monthSelect, yearInput, timeInput, zoneSelect].forEach((control) =>
+    control.addEventListener("change", markDirty),
+  );
   calendar.addEventListener("click", markDirty);
-  spinner.querySelectorAll("button").forEach((button, index) => {
-    button.addEventListener("click", () => {
-      const value = new Date(2000, 0, 1);
-      const match = /^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(
-        timeInput.value.trim(),
-      );
-      if (match) {
-        let hours = parseInt(match[1], 10) % 12;
-        if (match[4].toUpperCase() === "PM") hours += 12;
-        value.setHours(hours, parseInt(match[2], 10), parseInt(match[3], 10));
-      }
-      value.setSeconds(value.getSeconds() + (index === 0 ? 1 : -1));
-      timeInput.value = formatTime(value);
-      renderAnalogClock(value);
-      markDirty();
-    });
-  });
-  syncCheckbox.addEventListener("change", () => {
-    serverSelect.disabled = !syncCheckbox.checked;
-    updateNow.disabled = !syncCheckbox.checked;
-  });
-  updateNow.addEventListener("click", () => {
-    syncStatus.textContent =
-      "An error occurred while Windows was synchronizing with time.windows.com.";
-  });
 
   renderCalendar();
-  okButton.focus();
+  // XP opens with the month list focused.
+  monthSelect.focus();
 };
 
 const setupSystemTray = () => {
