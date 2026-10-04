@@ -3,7 +3,8 @@
 /* Luna frames are drawn from the original theme bitmaps (Luna.msstyles):
    a 30px caption sliced with the theme's sizing margins, and 4px side and
    bottom edges. XP draws no drop shadow around windows. */
-:root {
+:root,
+[data-scheme-preview] {
   --win-caption-active: url("../../assets/xp/windows/blue-caption-0.png");
   --win-caption-inactive: url("../../assets/xp/windows/blue-caption-1.png");
   --win-caption-max-active: url("../../assets/xp/windows/blue-caption-maximized-0.png");
@@ -20,7 +21,8 @@
   --win-title-shadow: #0a1883;
 }
 
-html[data-xp-appearance="olive"] {
+html[data-xp-appearance="olive"],
+[data-scheme-preview="olive"] {
   --win-caption-active: url("../../assets/xp/windows/olive-caption-0.png");
   --win-caption-inactive: url("../../assets/xp/windows/olive-caption-1.png");
   --win-caption-max-active: url("../../assets/xp/windows/olive-caption-maximized-0.png");
@@ -36,7 +38,8 @@ html[data-xp-appearance="olive"] {
   --win-title-shadow: #41400a;
 }
 
-html[data-xp-appearance="silver"] {
+html[data-xp-appearance="silver"],
+[data-scheme-preview="silver"] {
   --win-caption-active: url("../../assets/xp/windows/silver-caption-0.png");
   --win-caption-inactive: url("../../assets/xp/windows/silver-caption-1.png");
   --win-caption-max-active: url("../../assets/xp/windows/silver-caption-maximized-0.png");
@@ -100,6 +103,54 @@ html[data-xp-appearance="silver"] {
   --win-frame-right: var(--frame-right-active);
   --win-frame-bottom: var(--frame-bottom-active);
   --win-caption: var(--win-caption-active);
+}
+
+/* Dialogs have XP's fixed 3px frame and 29px caption. XP keeps the left
+   and right bitmaps' three inner columns and the bottom's first and last
+   two rows. The right edge is a 3px ::before that clips the outer column. */
+.xp-window.xp-dialog,
+.xp-window.dialog-frame {
+  padding: 0 3px 3px;
+  background:
+    var(--win-frame-left) left -1px top 29px / 4px calc(100% - 29px) no-repeat,
+    linear-gradient(var(--xp-beige), var(--xp-beige)) 0 29px / 100%
+      calc(100% - 29px) no-repeat;
+}
+
+.xp-window.xp-dialog::before,
+.xp-window.dialog-frame::before {
+  content: "";
+  position: absolute;
+  top: 29px;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--win-frame-right) right top / 4px 100% no-repeat;
+  pointer-events: none;
+}
+
+.xp-window.xp-dialog::after,
+.xp-window.dialog-frame::after {
+  height: 3px;
+  border-width: 1px 5px 2px;
+  border-image: var(--win-frame-bottom) 1 5 2 fill / 1px 5px 2px stretch;
+}
+
+.xp-dialog > .title-bar,
+.dialog-frame > .title-bar {
+  height: 29px;
+  margin: 0 -3px;
+  padding-right: 5px;
+}
+
+.xp-dialog .title-buttons,
+.dialog-frame .title-buttons {
+  margin-top: 4px;
+}
+
+html[data-xp-appearance="classic"] .xp-window.xp-dialog::before,
+html[data-xp-appearance="classic"] .xp-window.dialog-frame::before {
+  display: none;
 }
 
 .xp-window.moving {
@@ -624,10 +675,6 @@ html:not(.keyboard-cues) .menu-accesskey {
     "Segoe UI",
     sans-serif;
   text-align: right;
-}
-
-.explorer-window {
-  background: #fff;
 }
 
 .explorer-content {

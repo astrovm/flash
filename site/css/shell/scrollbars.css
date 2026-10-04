@@ -2,7 +2,8 @@
 
 /* Luna scrollbars drawn from Luna.msstyles: 17px arrows and shafts, thumbs
    sliced with the theme's 5px sizing margins, and a centered gripper. */
-:root {
+:root,
+[data-scheme-preview] {
   --sb-size-grip: url("../../assets/xp/scrollbar/blue-size-grip.png");
   --sb-scheme: blue;
   --sb-arrows: url("../../assets/xp/scrollbar/blue-arrows.png");
@@ -30,7 +31,8 @@
   --sb-glyph-right-pressed: url("../../assets/xp/scrollbar/blue-glyph-right-pressed.png");
 }
 
-html[data-xp-appearance="olive"] {
+html[data-xp-appearance="olive"],
+[data-scheme-preview="olive"] {
   --sb-size-grip: url("../../assets/xp/scrollbar/olive-size-grip.png");
   --sb-arrows: url("../../assets/xp/scrollbar/olive-arrows.png");
   --sb-shaft-v: url("../../assets/xp/scrollbar/olive-shaft-vertical-normal.png");
@@ -57,7 +59,8 @@ html[data-xp-appearance="olive"] {
   --sb-glyph-right-pressed: url("../../assets/xp/scrollbar/olive-glyph-right-pressed.png");
 }
 
-html[data-xp-appearance="silver"] {
+html[data-xp-appearance="silver"],
+[data-scheme-preview="silver"] {
   --sb-size-grip: url("../../assets/xp/scrollbar/silver-size-grip.png");
   --sb-arrows: url("../../assets/xp/scrollbar/silver-arrows.png");
   --sb-shaft-v: url("../../assets/xp/scrollbar/silver-shaft-vertical-normal.png");
@@ -97,33 +100,41 @@ html[data-xp-appearance="silver"] {
   background: var(--sb-shaft-h) 0 0 / 100% 17px;
 }
 
+/* A filled border image would paint over the gripper, so the thumb's face
+   is a background stretched along the thumb, under the gripper, and the
+   border image draws only the 5px edges. */
 ::-webkit-scrollbar-thumb:vertical {
+  --sb-thumb: var(--sb-thumb-v);
   border: 5px solid transparent;
-  border-image: var(--sb-thumb-v) 5 fill / 5px stretch;
-  background: var(--sb-gripper-v) center / 8px 8px no-repeat;
-  background-clip: border-box;
+  border-image: var(--sb-thumb) 5 / 5px stretch;
+  background:
+    var(--sb-gripper-v) center / 8px 8px no-repeat,
+    var(--sb-thumb) 0 0 / 100% 100% no-repeat border-box;
 }
 
 ::-webkit-scrollbar-thumb:vertical:hover {
-  border-image-source: var(--sb-thumb-v-hot);
+  --sb-thumb: var(--sb-thumb-v-hot);
 }
 
 ::-webkit-scrollbar-thumb:vertical:active {
-  border-image-source: var(--sb-thumb-v-pressed);
+  --sb-thumb: var(--sb-thumb-v-pressed);
 }
 
 ::-webkit-scrollbar-thumb:horizontal {
+  --sb-thumb: var(--sb-thumb-h);
   border: 5px solid transparent;
-  border-image: var(--sb-thumb-h) 5 fill / 5px stretch;
-  background: var(--sb-gripper-h) center / 8px 8px no-repeat;
+  border-image: var(--sb-thumb) 5 / 5px stretch;
+  background:
+    var(--sb-gripper-h) center / 8px 8px no-repeat,
+    var(--sb-thumb) 0 0 / 100% 100% no-repeat border-box;
 }
 
 ::-webkit-scrollbar-thumb:horizontal:hover {
-  border-image-source: var(--sb-thumb-h-hot);
+  --sb-thumb: var(--sb-thumb-h-hot);
 }
 
 ::-webkit-scrollbar-thumb:horizontal:active {
-  border-image-source: var(--sb-thumb-h-pressed);
+  --sb-thumb: var(--sb-thumb-h-pressed);
 }
 
 /* One arrow at each end, like XP. */

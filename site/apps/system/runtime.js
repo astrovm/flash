@@ -283,6 +283,41 @@ export const createSystemRuntime = (context) => {
     },
     "__display-properties": (win) => {
       const content = createSystemContentRoot();
+      const wallpapers = [
+        ["none", "(None)"],
+        ["ascent", "Ascent"],
+        ["autumn", "Autumn"],
+        ["azul", "Azul"],
+        ["bliss", "Bliss"],
+        ["blue-lace", "Blue Lace 16"],
+        ["coffee", "Coffee Bean"],
+        ["crystal", "Crystal"],
+        ["follow", "Follow"],
+        ["friend", "Friend"],
+        ["greenstone", "Greenstone"],
+        ["home", "Home"],
+        ["moon-flower", "Moon flower"],
+        ["peace", "Peace"],
+        ["power", "Power"],
+        ["prairie-wind", "Prairie Wind"],
+        ["purple-flower", "Purple flower"],
+        ["radiance", "Radiance"],
+        ["red-moon-desert", "Red moon desert"],
+        ["ripple", "Ripple"],
+        ["stonehenge", "Stonehenge"],
+        ["tulips", "Tulips"],
+        ["vortec-space", "Vortec space"],
+        ["wind", "Wind"],
+        ["windows-xp", "Windows XP"],
+        ["zapotec", "Zapotec"],
+      ];
+      // Sample windows drawn with the pending color scheme's Luna bitmaps.
+      const sampleWindow = (title, className, buttons, body = "") =>
+        `<div class="scheme-window ${className}"><div class="scheme-caption"><span>${title}</span>${buttons
+          .map((button) => `<i class="tb-btn ${button}-btn"></i>`)
+          .join("")}</div>${body}</div>`;
+      const sampleText =
+        '<div class="scheme-client"><span>Window Text</span><div class="scheme-scroll"><div></div></div></div>';
 
       content.className = "display-properties-content";
       content.innerHTML = `
@@ -293,170 +328,96 @@ export const createSystemRuntime = (context) => {
                 <button type="button" role="tab" id="display-tab-appearance" aria-controls="display-panel-appearance" aria-selected="false" tabindex="-1">Appearance</button>
                 <button type="button" role="tab" id="display-tab-settings" aria-controls="display-panel-settings" aria-selected="false" tabindex="-1">Settings</button>
             </div>
-            <div class="display-panel" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop" hidden>
-                <div class="display-preview" aria-label="Desktop preview">
-                    <img src="assets/xp/DisplaySettings.png" alt="">
-                    <div class="display-preview-surface"></div>
-                </div>
-                <div class="display-desktop-controls">
-                    <div class="display-background-column">
-                        <label class="display-wallpaper-label" for="display-wallpaper">Background:</label>
-                        <select id="display-wallpaper" aria-label="Desktop background" hidden>
-                            <option value="none">None</option>
-                            <option value="ascent">Ascent</option>
-                            <option value="autumn">Autumn</option>
-                            <option value="azul">Azul</option>
-                            <option value="bliss">Bliss</option>
-                            <option value="blue-lace">Blue Lace 16</option>
-                            <option value="coffee">Coffee Bean</option>
-                            <option value="crystal">Crystal</option>
-                            <option value="follow">Follow</option>
-                            <option value="friend">Friend</option>
-                            <option value="greenstone">Greenstone</option>
-                            <option value="home">Home</option>
-                            <option value="moon-flower">Moon flower</option>
-                            <option value="peace">Peace</option>
-                            <option value="power">Power</option>
-                            <option value="prairie-wind">Prairie Wind</option>
-                            <option value="purple-flower">Purple flower</option>
-                            <option value="radiance">Radiance</option>
-                            <option value="red-moon-desert">Red moon desert</option>
-                            <option value="ripple">Ripple</option>
-                            <option value="stonehenge">Stonehenge</option>
-                            <option value="tulips">Tulips</option>
-                            <option value="vortec-space">Vortec space</option>
-                            <option value="wind">Wind</option>
-                            <option value="windows-xp">Windows XP</option>
-                            <option value="zapotec">Zapotec</option>
-                        </select>
-                        <div class="display-wallpaper-list" role="listbox" aria-label="Desktop background">
-                            <div class="display-wallpaper-items">
-                                <button type="button" role="option" data-wallpaper="none"><span class="wallpaper-icon none"></span>(None)</button>
-                                <button type="button" role="option" data-wallpaper="ascent"><span class="wallpaper-icon"></span>Ascent</button>
-                                <button type="button" role="option" data-wallpaper="autumn"><span class="wallpaper-icon"></span>Autumn</button>
-                                <button type="button" role="option" data-wallpaper="azul"><span class="wallpaper-icon"></span>Azul</button>
-                                <button type="button" role="option" data-wallpaper="bliss"><span class="wallpaper-icon"></span>Bliss</button>
-                                <button type="button" role="option" data-wallpaper="blue-lace"><span class="wallpaper-icon"></span>Blue Lace 16</button>
-                                <button type="button" role="option" data-wallpaper="coffee"><span class="wallpaper-icon"></span>Coffee Bean</button>
-                                <button type="button" role="option" data-wallpaper="crystal"><span class="wallpaper-icon"></span>Crystal</button>
-                                <button type="button" role="option" data-wallpaper="follow"><span class="wallpaper-icon"></span>Follow</button>
-                                <button type="button" role="option" data-wallpaper="friend"><span class="wallpaper-icon"></span>Friend</button>
-                                <button type="button" role="option" data-wallpaper="greenstone"><span class="wallpaper-icon"></span>Greenstone</button>
-                                <button type="button" role="option" data-wallpaper="home"><span class="wallpaper-icon"></span>Home</button>
-                                <button type="button" role="option" data-wallpaper="moon-flower"><span class="wallpaper-icon"></span>Moon flower</button>
-                                <button type="button" role="option" data-wallpaper="peace"><span class="wallpaper-icon"></span>Peace</button>
-                                <button type="button" role="option" data-wallpaper="power"><span class="wallpaper-icon"></span>Power</button>
-                                <button type="button" role="option" data-wallpaper="prairie-wind"><span class="wallpaper-icon"></span>Prairie Wind</button>
-                                <button type="button" role="option" data-wallpaper="purple-flower"><span class="wallpaper-icon"></span>Purple flower</button>
-                                <button type="button" role="option" data-wallpaper="radiance"><span class="wallpaper-icon"></span>Radiance</button>
-                                <button type="button" role="option" data-wallpaper="red-moon-desert"><span class="wallpaper-icon"></span>Red moon desert</button>
-                                <button type="button" role="option" data-wallpaper="ripple"><span class="wallpaper-icon"></span>Ripple</button>
-                                <button type="button" role="option" data-wallpaper="stonehenge"><span class="wallpaper-icon"></span>Stonehenge</button>
-                                <button type="button" role="option" data-wallpaper="tulips"><span class="wallpaper-icon"></span>Tulips</button>
-                                <button type="button" role="option" data-wallpaper="vortec-space"><span class="wallpaper-icon"></span>Vortec space</button>
-                                <button type="button" role="option" data-wallpaper="wind"><span class="wallpaper-icon"></span>Wind</button>
-                                <button type="button" role="option" data-wallpaper="windows-xp"><span class="wallpaper-icon"></span>Windows XP</button>
-                                <button type="button" role="option" data-wallpaper="zapotec"><span class="wallpaper-icon"></span>Zapotec</button>
-                            </div>
-                            <div class="display-scrollbar" aria-hidden="true">
-                                <span class="scroll-arrow up"></span>
-                                <span class="scroll-track">
-                                    <span class="scroll-thumb"><i></i><i></i><i></i></span>
-                                </span>
-                                <span class="scroll-arrow down"></span>
-                            </div>
-                        </div>
-                        <button type="button" class="display-customize">Customize Desktop...</button>
-                    </div>
-                    <div class="display-background-actions">
-                        <button type="button" class="display-browse">Browse...</button>
-                        <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
-                        <label for="display-position">Position:</label>
-                        <select id="display-position"><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
-                        <label for="display-color">Color:</label>
-                        <label class="display-color-button" for="display-color"><span></span><b>▼</b></label>
-                        <input id="display-color" type="color" value="#3a6ea5" hidden>
-                    </div>
-                </div>
-                <button type="button" class="display-clear-image" hidden>Remove custom picture</button>
-                <p class="display-status" aria-live="polite" hidden></p>
-            </div>
             <div class="display-panel active" id="display-panel-themes" role="tabpanel" aria-labelledby="display-tab-themes">
-                <p class="display-theme-description">A theme is a background plus a set of sounds, icons, and other elements<br>to help you personalize your computer with one click.</p>
-                <label class="display-control-label" for="display-theme">Theme:</label>
-                <div class="display-theme-row">
-                    <select id="display-theme"><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option></select>
-
-
-                </div>
+                <p class="display-theme-description" data-help="Describes what a theme changes.">A theme is a background plus a set of sounds, icons, and other elements<br>to help you personalize your computer with one click.</p>
+                <label class="display-theme-label" for="display-theme">T<span class="menu-accesskey">h</span>eme:</label>
+                <select id="display-theme" data-help="Lists the themes you can use. Choosing one changes the background, colors, and window style together."><option value="windows-xp">Windows XP</option><option value="classic">Windows Classic</option></select>
                 <span class="display-sample-label">Sample:</span>
-                <div class="display-theme-sample" aria-label="Theme sample">
-                    <div class="display-sample-window">
-                        <strong>Active Window</strong><i>—</i><i>□</i><i>×</i>
-                        <span>Window Text</span>
-                        <b class="sample-scroll-up">▲</b><b class="sample-scroll-thumb">≡</b><b class="sample-scroll-down">▼</b>
-                    </div>
+                <div class="display-theme-sample" aria-label="Theme sample" data-help="Shows how the selected theme will look.">
+                    ${sampleWindow("Active Window", "active", ["minimize", "maximize", "close"], sampleText)}
                     <img src="assets/xp/icons/RecyclerFull.png" alt="">
                 </div>
             </div>
+            <div class="display-panel" id="display-panel-desktop" role="tabpanel" aria-labelledby="display-tab-desktop" hidden>
+                <div class="display-monitor" aria-label="Desktop preview">
+                    <img src="assets/xp/DisplaySettings.png" alt="">
+                    <div class="display-preview-surface"></div>
+                </div>
+                <label class="display-wallpaper-label" for="display-wallpaper"><span class="menu-accesskey">B</span>ackground:</label>
+                <select id="display-wallpaper" aria-label="Desktop background" hidden>${wallpapers
+                  .map(([id, name]) => `<option value="${id}">${name}</option>`)
+                  .join("")}</select>
+                <div class="display-wallpaper-list" role="listbox" aria-label="Desktop background" data-help="Lists the pictures you can use as your desktop background.">
+                    <button type="button" role="option" class="display-custom-wallpaper" data-wallpaper="custom" hidden><span class="wallpaper-icon"></span><span class="display-custom-wallpaper-name"></span></button>
+                    ${wallpapers
+                      .map(
+                        ([id, name]) =>
+                          `<button type="button" role="option" data-wallpaper="${id}"><span class="wallpaper-icon${id === "none" ? " none" : ""}"></span><span>${name}</span></button>`,
+                      )
+                      .join("")}
+                </div>
+                <button type="button" class="xp-btn display-browse" data-help="Opens a picture from your computer to use as the background."><span class="menu-accesskey">B</span>rowse...</button>
+                <input id="display-image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                <label class="display-position-label" for="display-position"><span class="menu-accesskey">P</span>osition:</label>
+                <select id="display-position" data-help="Sets how the picture fills the desktop."><option value="center">Center</option><option value="tile">Tile</option><option value="stretch">Stretch</option></select>
+                <label class="display-color-label" for="display-color"><span class="menu-accesskey">C</span>olor:</label>
+                <label class="display-color-button" for="display-color" data-help="Sets the color shown behind or instead of the picture."><span></span></label>
+                <input id="display-color" type="color" value="#004e98" hidden>
+                <button type="button" class="xp-btn display-customize" data-help="Chooses which icons appear on the desktop."><span class="menu-accesskey">C</span>ustomize Desktop...</button>
+            </div>
             <div class="display-panel" id="display-panel-saver" role="tabpanel" aria-labelledby="display-tab-saver" hidden>
-                <div class="display-saver-monitor" aria-label="Screen saver preview">
+                <div class="display-monitor" aria-label="Screen saver preview">
                     <img src="assets/xp/DisplaySettings.png" alt="">
                     <div class="screen-saver-preview"></div>
                 </div>
-                <fieldset class="display-saver-group"><legend>Screen saver</legend>
-                    <div class="display-saver-row">
-                        <select id="display-saver" aria-label="Screen saver"><option value="none">(None)</option><option value="pipes">3D Pipes</option><option value="blank">Blank</option><option value="marquee">Marquee</option><option value="stars">Starfield</option><option value="windows-xp">Windows XP</option></select>
-                        <button type="button" class="xp-property-button display-saver-settings">Settings</button>
-                        <button type="button" class="xp-property-button display-saver-preview-button">Preview</button>
-                    </div>
-                    <div class="display-saver-wait-row">
-                        <label for="display-saver-wait">Wait:</label>
-                        <input id="display-saver-wait" type="number" min="1" max="60">
-                        <span>minutes</span>
-                        <label><input type="checkbox" class="display-saver-login"> On resume, password protect</label>
-                    </div>
+                <fieldset class="dlg-group display-saver-group"><legend><span class="menu-accesskey">S</span>creen saver</legend>
+                    <select id="display-saver" aria-label="Screen saver" data-help="Lists the screen savers you can use."><option value="none">(None)</option><option value="pipes">3D Pipes</option><option value="blank">Blank</option><option value="marquee">Marquee</option><option value="stars">Starfield</option><option value="windows-xp">Windows XP</option></select>
+                    <button type="button" class="xp-btn display-saver-settings" data-help="Shows the options for the selected screen saver.">Se<span class="menu-accesskey">t</span>tings</button>
+                    <button type="button" class="xp-btn display-saver-preview-button" data-help="Shows the screen saver full screen until you move the mouse or press a key.">Pre<span class="menu-accesskey">v</span>iew</button>
+                    <label class="display-saver-wait-label" for="display-saver-wait"><span class="menu-accesskey">W</span>ait:</label>
+                    <input id="display-saver-wait" type="number" min="1" max="60" data-help="Sets how many idle minutes pass before the screen saver starts.">
+                    <span class="xp-updown display-saver-spin"><button type="button" tabindex="-1" aria-label="More minutes" data-step="1">▲</button><button type="button" tabindex="-1" aria-label="Fewer minutes" data-step="-1">▼</button></span>
+                    <span class="display-saver-minutes">minutes</span>
+                    <label class="display-saver-login-label" data-help="Shows the Welcome screen when you return from the screen saver."><input type="checkbox" class="display-saver-login"><span>On resume, <span class="menu-accesskey">p</span>assword protect</span></label>
                 </fieldset>
-
             </div>
             <div class="display-panel" id="display-panel-appearance" role="tabpanel" aria-labelledby="display-tab-appearance" hidden>
-                <div class="appearance-preview" aria-label="Appearance sample">
-                    <div class="appearance-window inactive"><strong>Inactive Window</strong><i>—</i><i>□</i><i>×</i></div>
-                    <div class="appearance-window active"><strong>Active Window</strong><i>—</i><i>□</i><i>×</i><span>Window Text</span></div>
-                    <div class="appearance-message"><strong>Message Box</strong><i>×</i><button type="button" tabindex="-1">OK</button></div>
+                <div class="appearance-preview" aria-label="Appearance sample" data-help="Shows how windows look with the selected style and colors.">
+                    ${sampleWindow("Inactive Window", "inactive", ["minimize", "maximize", "close"])}
+                    ${sampleWindow("Active Window", "active", ["minimize", "maximize", "close"], sampleText)}
+                    ${sampleWindow("Message Box", "message", ["close"], '<div class="scheme-face"><span class="xp-btn default">OK</span></div>')}
                 </div>
-                <label class="display-control-label" for="display-window-style">Windows and buttons:</label>
-                <select id="display-window-style" disabled><option value="xp">Windows XP style</option><option value="classic">Windows Classic style</option></select>
-                <label class="display-control-label" for="display-appearance">Color scheme:</label>
-                <select id="display-appearance"><option value="blue">Default (blue)</option><option value="olive">Olive green</option><option value="silver">Silver</option><option value="classic">Windows Standard</option></select>
-                <label class="display-control-label" for="display-font-size">Font size:</label>
-                        <select id="display-font-size"><option value="normal">Normal</option><option value="large">Large Fonts</option><option value="extra-large">Extra Large Fonts</option></select>
-                <div class="display-appearance-actions">
-                    <button type="button" class="xp-property-button display-effects">Effects...</button>
-                    <button type="button" class="xp-property-button display-advanced-appearance">Advanced</button>
-                </div>
+                <label class="display-style-label" for="display-window-style"><span class="menu-accesskey">W</span>indows and buttons:</label>
+                <select id="display-window-style" data-help="Chooses Windows XP style windows and buttons, or Windows Classic."><option value="xp">Windows XP style</option><option value="classic">Windows Classic style</option></select>
+                <label class="display-scheme-label" for="display-appearance"><span class="menu-accesskey">C</span>olor scheme:</label>
+                <select id="display-appearance" data-help="Lists the color schemes for the selected style."><option value="blue">Default (blue)</option><option value="olive">Olive Green</option><option value="silver">Silver</option><option value="classic">Windows Standard</option></select>
+                <label class="display-font-label" for="display-font-size"><span class="menu-accesskey">F</span>ont size:</label>
+                <select id="display-font-size" data-help="Sets the size of text in windows and menus."><option value="normal">Normal</option><option value="large">Large Fonts</option><option value="extra-large">Extra Large Fonts</option></select>
+                <button type="button" class="xp-btn display-effects" data-help="Sets menu effects, font smoothing, and other visual effects."><span class="menu-accesskey">E</span>ffects...</button>
+                <button type="button" class="xp-btn display-advanced-appearance" data-help="Changes the desktop color.">A<span class="menu-accesskey">d</span>vanced</button>
             </div>
             <div class="display-panel" id="display-panel-settings" role="tabpanel" aria-labelledby="display-tab-settings" hidden>
-                <div class="display-settings-monitor" aria-label="Display preview">
+                <div class="display-monitor" aria-label="Display preview">
                     <img src="assets/xp/DisplaySettings.png" alt="">
-                    <div class="display-resolution-preview"><span></span></div>
                 </div>
-
-                <div class="display-settings-groups">
-                    <fieldset class="display-resolution-group"><legend>Screen resolution</legend>
-                        <div class="resolution-endpoints"><span>Less</span><span>More</span></div>
-                        <input id="display-resolution-slider" type="range" min="0" max="3" step="1" aria-label="Screen resolution">
-                        <select id="display-resolution" hidden><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option><option value="1440x900">1440 by 900 pixels</option><option value="auto">Use browser size</option></select>
-                        <p class="display-resolution-value"></p>
-                    </fieldset>
-
-                </div>
-
+                <span class="display-adapter-label">Display:</span>
+                <span class="display-adapter">Default Monitor on Web Browser</span>
+                <fieldset class="dlg-group display-resolution-group"><legend><span class="menu-accesskey">S</span>creen resolution</legend>
+                    <span class="display-resolution-less">Less</span>
+                    <input id="display-resolution-slider" type="range" min="0" max="3" step="1" aria-label="Screen resolution" data-help="Sets the size of the simulated screen. The last stop uses the whole browser window.">
+                    <span class="display-resolution-more">More</span>
+                    <select id="display-resolution" hidden><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option><option value="1440x900">1440 by 900 pixels</option><option value="auto">Use browser size</option></select>
+                    <p class="display-resolution-value"></p>
+                </fieldset>
+                <fieldset class="dlg-group display-color-quality-group"><legend><span class="menu-accesskey">C</span>olor quality</legend>
+                    <select id="display-color-quality" aria-label="Color quality" data-help="Shows the number of colors your screen uses."></select>
+                    <img class="display-color-bar" src="assets/xp/ColorQuality.png" alt="">
+                </fieldset>
             </div>
             <div class="display-dialog-buttons">
-                <button type="button" data-display-action="ok">OK</button>
-                <button type="button" data-display-action="cancel">Cancel</button>
-                <button type="button" data-display-action="apply" disabled>Apply</button>
+                <button type="button" class="xp-btn default" data-display-action="ok">OK</button>
+                <button type="button" class="xp-btn" data-display-action="cancel">Cancel</button>
+                <button type="button" class="xp-btn" data-display-action="apply" disabled><span class="menu-accesskey">A</span>pply</button>
             </div>
         `;
       return content;

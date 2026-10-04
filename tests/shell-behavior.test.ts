@@ -634,7 +634,7 @@ describe("Windows XP shell", () => {
 
     expect(
       display.querySelector<HTMLElement>(".display-theme-sample")!.dataset
-        .appearance,
+        .schemePreview,
     ).toBe("classic");
     expect(
       display.querySelector<HTMLSelectElement>("#display-window-style")!.value,

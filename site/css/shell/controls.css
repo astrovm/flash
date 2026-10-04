@@ -4,7 +4,8 @@
    buttons drawn from Luna.msstyles with the theme's sizing margins. Windows
    Classic keeps its own 3D controls. */
 
-:root {
+:root,
+[data-scheme-preview] {
   --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-normal.png");
   --ctl-spinbuttonbackgroundup-hot: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-hot.png");
   --ctl-spinbuttonbackgroundup-pressed: url("../../assets/xp/controls/blue-spinbuttonbackgroundup-pressed.png");
@@ -64,9 +65,11 @@
   --ctl-combobuttonglyph-hot: url("../../assets/xp/controls/blue-combobuttonglyph-hot.png");
   --ctl-combobuttonglyph-pressed: url("../../assets/xp/controls/blue-combobuttonglyph-pressed.png");
   --ctl-combobuttonglyph-disabled: url("../../assets/xp/controls/blue-combobuttonglyph-disabled.png");
+  --ctl-trackbar-thumb-down: url("../../assets/xp/controls/blue-trackbar-thumb-down.png");
 }
 
-html[data-xp-appearance="olive"] {
+html[data-xp-appearance="olive"],
+[data-scheme-preview="olive"] {
   --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-normal.png");
   --ctl-spinbuttonbackgroundup-hot: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-hot.png");
   --ctl-spinbuttonbackgroundup-pressed: url("../../assets/xp/controls/olive-spinbuttonbackgroundup-pressed.png");
@@ -126,9 +129,11 @@ html[data-xp-appearance="olive"] {
   --ctl-combobuttonglyph-hot: url("../../assets/xp/controls/olive-combobuttonglyph-hot.png");
   --ctl-combobuttonglyph-pressed: url("../../assets/xp/controls/olive-combobuttonglyph-pressed.png");
   --ctl-combobuttonglyph-disabled: url("../../assets/xp/controls/olive-combobuttonglyph-disabled.png");
+  --ctl-trackbar-thumb-down: url("../../assets/xp/controls/olive-trackbar-thumb-down.png");
 }
 
-html[data-xp-appearance="silver"] {
+html[data-xp-appearance="silver"],
+[data-scheme-preview="silver"] {
   --ctl-spinbuttonbackgroundup-normal: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-normal.png");
   --ctl-spinbuttonbackgroundup-hot: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-hot.png");
   --ctl-spinbuttonbackgroundup-pressed: url("../../assets/xp/controls/silver-spinbuttonbackgroundup-pressed.png");
@@ -188,6 +193,7 @@ html[data-xp-appearance="silver"] {
   --ctl-combobuttonglyph-hot: url("../../assets/xp/controls/silver-combobuttonglyph-hot.png");
   --ctl-combobuttonglyph-pressed: url("../../assets/xp/controls/silver-combobuttonglyph-pressed.png");
   --ctl-combobuttonglyph-disabled: url("../../assets/xp/controls/silver-combobuttonglyph-disabled.png");
+  --ctl-trackbar-thumb-down: url("../../assets/xp/controls/silver-trackbar-thumb-down.png");
 }
 
 /* Zero specificity, so dialogs can still position their buttons. */
@@ -442,7 +448,9 @@ html:not([data-xp-appearance="classic"]) .xp-window select:disabled {
 /* Up-down controls: Luna spin halves with their glyphs. A filled border
    image would paint over the glyph, so the face is a stretched background
    under the glyph and the border image draws only the edges. */
-html:not([data-xp-appearance="classic"]) .datetime-spinner button {
+html:not([data-xp-appearance="classic"])
+  :is(.datetime-spinner, .xp-updown)
+  button {
   --spin-face: var(--ctl-spinbuttonbackgroundup-normal);
   --spin-glyph: var(--ctl-spinupglyph-normal);
   border: 0;
@@ -453,28 +461,35 @@ html:not([data-xp-appearance="classic"]) .datetime-spinner button {
   color: transparent;
 }
 
-html:not([data-xp-appearance="classic"]) .datetime-spinner button:hover {
+html:not([data-xp-appearance="classic"])
+  :is(.datetime-spinner, .xp-updown)
+  button:hover {
   --spin-face: var(--ctl-spinbuttonbackgroundup-hot);
 }
 
-html:not([data-xp-appearance="classic"]) .datetime-spinner button:active {
+html:not([data-xp-appearance="classic"])
+  :is(.datetime-spinner, .xp-updown)
+  button:active {
   --spin-face: var(--ctl-spinbuttonbackgroundup-pressed);
 }
 
-html:not([data-xp-appearance="classic"]) .datetime-spinner button + button {
+html:not([data-xp-appearance="classic"])
+  :is(.datetime-spinner, .xp-updown)
+  button
+  + button {
   --spin-face: var(--ctl-spinbuttonbackgrounddown-normal);
   --spin-glyph: var(--ctl-spindownglyph-normal);
 }
 
 html:not([data-xp-appearance="classic"])
-  .datetime-spinner
+  :is(.datetime-spinner, .xp-updown)
   button
   + button:hover {
   --spin-face: var(--ctl-spinbuttonbackgrounddown-hot);
 }
 
 html:not([data-xp-appearance="classic"])
-  .datetime-spinner
+  :is(.datetime-spinner, .xp-updown)
   button
   + button:active {
   --spin-face: var(--ctl-spinbuttonbackgrounddown-pressed);

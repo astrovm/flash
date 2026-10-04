@@ -3848,6 +3848,34 @@
       "output": "site/assets/xp/DisplaySettings.png"
     },
     {
+      "member": "THEMEUI.DL_",
+      "expandedName": "themeui.dll",
+      "resourceType": 2,
+      "resourceId": 124,
+      "output": "site/assets/xp/ColorQuality.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "BLUE_TRACKBARDOWN13_BMP",
+      "output": "site/assets/xp/controls/blue-trackbar-thumb-down.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "HOMESTEAD_TRACKBARDOWN13_BMP",
+      "output": "site/assets/xp/controls/olive-trackbar-thumb-down.png"
+    },
+    {
+      "member": "LUNA.MS_",
+      "expandedName": "Luna.msstyles",
+      "resourceType": 2,
+      "resourceId": "METALLIC_TRACKBARDOWN13_BMP",
+      "output": "site/assets/xp/controls/silver-trackbar-thumb-down.png"
+    },
+    {
       "member": "LUNA.MS_",
       "expandedName": "Luna.msstyles",
       "resourceType": 2,

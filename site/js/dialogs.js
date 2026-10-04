@@ -137,6 +137,32 @@
     });
   };
 
+  // Adds the title bar ? button. It arms "What's This?" mode: the next click
+  // in the area shows that control's data-help text instead of acting.
+  const addWhatsThisHelp = (el, area) => {
+    const helpBtn = document.createElement("button");
+    helpBtn.type = "button";
+    helpBtn.className = "tb-btn help-btn";
+    helpBtn.title = "Help";
+    helpBtn.setAttribute("aria-label", "Help");
+    helpBtn.addEventListener("click", () => {
+      el.classList.add("whats-this");
+    });
+    el.querySelector(".title-buttons").prepend(helpBtn);
+    area.addEventListener(
+      "click",
+      (event) => {
+        if (!el.classList.contains("whats-this")) return;
+        event.preventDefault();
+        event.stopPropagation();
+        el.classList.remove("whats-this");
+        const helpText = event.target.closest("[data-help]")?.dataset.help;
+        showHelpPopup(helpText || NO_HELP_TOPIC, event.clientX, event.clientY);
+      },
+      true,
+    );
+  };
+
   const createDialog = ({
     title = "",
     wide = false,
@@ -169,17 +195,6 @@
     closeBtn.title = "Close";
     closeBtn.setAttribute("aria-label", "Close");
     closeBtn.addEventListener("click", () => dialog.cancel());
-    if (help) {
-      const helpBtn = document.createElement("button");
-      helpBtn.type = "button";
-      helpBtn.className = "tb-btn help-btn";
-      helpBtn.title = "Help";
-      helpBtn.setAttribute("aria-label", "Help");
-      helpBtn.addEventListener("click", () => {
-        el.classList.add("whats-this");
-      });
-      titleButtons.appendChild(helpBtn);
-    }
     titleButtons.appendChild(closeBtn);
     titleBar.append(titleText, titleButtons);
 
@@ -188,24 +203,7 @@
 
     el.append(titleBar, body);
     overlay.appendChild(el);
-    if (help) {
-      body.addEventListener(
-        "click",
-        (event) => {
-          if (!el.classList.contains("whats-this")) return;
-          event.preventDefault();
-          event.stopPropagation();
-          el.classList.remove("whats-this");
-          const helpText = event.target.closest("[data-help]")?.dataset.help;
-          showHelpPopup(
-            helpText || NO_HELP_TOPIC,
-            event.clientX,
-            event.clientY,
-          );
-        },
-        true,
-      );
-    }
+    if (help) addWhatsThisHelp(el, body);
 
     let resultCallback = null;
 
@@ -981,6 +979,7 @@
     parseAccessKey,
     formatBytes,
     createDialog,
+    addWhatsThisHelp,
     createDialogButton,
     addButtonRow,
     message,
