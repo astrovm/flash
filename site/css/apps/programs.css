@@ -1184,260 +1184,302 @@
   outline-offset: -3px;
 }
 
+/* Date and Time Properties, placed at the positions measured on XP SP3
+   from each tab page's top-left corner. */
 .datetime-dialog {
-  width: min(404px, calc(100vw - 8px));
-  height: min(345px, calc(100vh - 34px));
-  min-width: min(404px, calc(100vw - 8px));
-  min-height: min(345px, calc(100vh - 34px));
-}
-
-.datetime-dialog > .title-bar {
-  height: 26px;
+  width: 404px;
+  height: 348px;
 }
 
 .datetime-dialog .dlg-body {
-  display: flex;
-  min-height: 0;
+  position: relative;
   flex: 1;
-  flex-direction: column;
-  padding: 7px 6px 7px;
+  padding: 0;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
 }
 
 .datetime-tabs {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  left: 8px;
   display: flex;
-  height: 20px;
-  align-items: flex-end;
-  padding-left: 2px;
+  align-items: flex-start;
 }
 
 .datetime-tabs button {
-  height: 20px;
-  margin-right: -1px;
-  padding: 1px 7px 2px;
+  height: 18px;
+  margin: 0;
+  padding: 0 0 1px;
   border: 1px solid #919b9c;
-  border-bottom-color: #fff;
+  border-bottom: 0;
   border-radius: 3px 3px 0 0;
-  background: #ece9d8;
-  color: #111;
+  background: var(--xp-beige);
+  color: #000;
   font: inherit;
   white-space: nowrap;
-  cursor: var(--xp-cursor);
+}
+
+/* Tab widths come from XP's GDI text widths, which the browser's text
+   doesn't reproduce exactly. */
+.datetime-tabs button:nth-child(1) {
+  width: 70px;
+}
+
+.datetime-tabs button:nth-child(2) {
+  width: 61px;
+}
+
+.datetime-tabs button:nth-child(3) {
+  width: 76px;
 }
 
 .datetime-tabs button.active {
   position: relative;
-  z-index: 2;
-  height: 22px;
-  padding-top: 2px;
-  border-bottom-color: #ece9d8;
+  z-index: 1;
+  height: 21px;
+  margin: -2px -2px 0;
+  padding-bottom: 3px;
+  background: #fcfcfe;
 }
 
-.datetime-panel-host {
-  min-height: 0;
-  flex: 1;
-  border: 1px solid #919b9c;
-  background: #ece9d8;
-  box-shadow: inset 1px 1px #fff;
+.datetime-tabs button.active:nth-child(1) {
+  width: 74px;
+}
+
+.datetime-tabs button.active:nth-child(2) {
+  width: 65px;
+}
+
+.datetime-tabs button.active:nth-child(3) {
+  width: 80px;
 }
 
 .datetime-panel {
-  height: 100%;
+  position: absolute;
+  top: 27px;
+  left: 6px;
   box-sizing: border-box;
+  width: 384px;
+  height: 251px;
+  border: 1px solid #919b9c;
+  border-right-width: 3px;
+  border-bottom-width: 3px;
+  background: #fcfcfe;
 }
 
-.datetime-date-panel {
-  position: relative;
-  display: grid;
-  grid-template-columns: 184px 170px;
-  grid-template-rows: 207px auto;
-  gap: 0 9px;
-  padding: 8px 8px 6px;
+html:not([data-xp-appearance="classic"]) .datetime-panel {
+  border-color: transparent;
+  border-width: 1px;
 }
 
-.datetime-date-panel > .dlg-group {
-  height: 207px;
+.datetime-panel[hidden] {
+  display: none;
+}
+
+/* Offsets are from the page's outer corner, so they skip its 1px edge. */
+.datetime-panel > * {
+  position: absolute;
   box-sizing: border-box;
-  padding: 13px 10px 9px;
-  border-color: #d4d0c8;
+  margin: -1px 0 0 -1px;
 }
 
-.datetime-date-panel > .dlg-group legend {
-  color: #003399;
+.datetime-panel fieldset {
+  padding: 0;
+  min-width: 0;
+  border: 1px solid #d0d0bf;
+  border-radius: 3px;
 }
 
-.datetime-date-group .dlg-month-year {
-  height: 22px;
-  margin: 0 0 9px;
+.datetime-panel legend {
+  margin-left: 6px;
+  padding: 0 2px;
+  line-height: 13px;
 }
 
-.datetime-date-group .dlg-month-select {
+.datetime-panel select {
   height: 21px;
+  padding: 0 18px 2px 2px;
+  border: 1px solid #7f9db9;
+  border-radius: 0;
+  background-color: #fff;
+  color: #000;
+  font: inherit;
 }
 
-.datetime-date-group .dlg-year-input {
-  width: 64px;
+.datetime-panel input[type="text"] {
   height: 21px;
-  box-sizing: border-box;
-}
-
-.datetime-date-group .dlg-calendar {
-  display: grid;
-  width: 160px;
-  grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 18px;
-  gap: 0;
-  border: 1px solid #c7c7c7;
+  padding: 0 0 0 3px;
+  border: 1px solid #7f9db9;
+  border-radius: 0;
   background: #fff;
-  box-sizing: border-box;
+  color: #000;
+  font: inherit;
 }
 
-.datetime-date-group .dlg-calendar-head {
-  display: flex;
-  height: 19px;
-  align-items: center;
-  justify-content: center;
-  background: #7b90c5;
-  color: #fff;
+/* The Luna spin halves carry their own 1px white edge. */
+.datetime-panel .xp-updown {
+  display: grid;
+  grid-template-rows: 10px 10px;
+  width: 17px;
+  height: 20px;
 }
 
-.datetime-date-group .dlg-calendar-day {
-  width: auto;
-  height: 18px;
-  line-height: 16px;
+.datetime-panel .xp-updown button {
+  padding: 0;
+  font-size: 0;
 }
 
-.datetime-date-group .dlg-calendar-day.selected {
-  margin: 1px 2px;
-  line-height: 14px;
+/* A group box's top edge runs through the middle of its caption. */
+.datetime-date-group {
+  top: 5px;
+  left: 10px;
+  width: 183px;
+  height: 203px;
 }
 
 .datetime-time-group {
-  position: relative;
-  overflow: hidden;
+  top: 5px;
+  left: 202px;
+  width: 170px;
+  height: 203px;
 }
 
-.datetime-analog-clock {
-  position: relative;
-  width: 128px;
-  height: 128px;
-  margin: 3px auto 13px;
-  border-radius: 50%;
+.datetime-date-panel .dlg-month-select {
+  top: 30px;
+  left: 21px;
+  width: 75px;
 }
 
-.datetime-analog-clock > i {
-  --radius: 59px;
-  position: absolute;
-  left: 63px;
-  top: 63px;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: #168b84;
-  transform: rotate(calc(var(--tick) * 6deg))
-    translateY(calc(-1 * var(--radius)));
+.datetime-panel input.dlg-year-input {
+  top: 30px;
+  left: 106px;
+  width: 63px;
+  padding: 0 0 2px 4px;
 }
 
-.datetime-analog-clock > i.hour-tick {
-  width: 3px;
-  height: 3px;
-  background: #173f3f;
+.datetime-year-spin {
+  top: 30px;
+  left: 169px;
 }
 
-.datetime-clock-hand {
-  position: absolute;
-  left: 63px;
-  bottom: 63px;
-  width: 2px;
-  height: 43px;
-  background: #111;
-  transform: rotate(var(--angle));
-  transform-origin: 50% 100%;
+/* The month calendar: a sunken edge, a header band with the day letters,
+   and six 18px week rows. */
+.datetime-date-panel .dlg-calendar {
+  top: 62px;
+  left: 21px;
+  display: grid;
+  width: 162px;
+  height: 130px;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(7, 18px);
+  gap: 0;
+  align-content: start;
+  padding: 2px 4px 2px 0;
+  background:
+    linear-gradient(#7a96df, #7a96df) 2px 2px / calc(100% - 4px) 18px no-repeat,
+    #fff;
+  box-shadow:
+    inset 1px 1px #aca899,
+    inset -1px -1px #fff,
+    inset 2px 2px #716f64,
+    inset -2px -2px #f1efe2;
 }
 
-.datetime-clock-hand.hour {
-  width: 3px;
-  height: 34px;
+.datetime-date-panel .dlg-calendar-head {
+  display: grid;
+  place-items: center;
+  padding-right: 4px;
+  color: #d8e4f8;
 }
 
-.datetime-clock-hand.minute {
-  height: 51px;
+.datetime-date-panel .dlg-calendar-day {
+  display: grid;
+  place-items: center;
+  width: auto;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #000;
+  font: inherit;
 }
 
-.datetime-clock-hand.second {
-  width: 1px;
-  height: 55px;
-  background: #00a79d;
+.datetime-date-panel .dlg-calendar-day.selected {
+  place-self: center;
+  height: 13px;
+  padding: 0 1px;
+  background: #0054e3;
+  color: #fff;
 }
 
-.datetime-clock-pin {
-  position: absolute;
-  left: 61px;
-  top: 61px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #111;
+.datetime-date-panel .dlg-calendar-day:hover,
+.datetime-date-panel .dlg-calendar-day:focus-visible {
+  outline: 0;
+  border: 0;
 }
 
-.datetime-time-edit {
-  display: flex;
-  width: 104px;
-  height: 20px;
-  margin: 0 auto;
+.datetime-clock,
+.datetime-clock-second {
+  top: 21px;
+  left: 212px;
+  width: 148px;
+  height: 148px;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
 
-.datetime-time-edit > input {
+.datetime-clock-second {
+  mix-blend-mode: difference;
+}
+
+.datetime-panel input.datetime-time-input {
+  top: 173px;
+  left: 243px;
   width: 86px;
   height: 20px;
-  box-sizing: border-box;
-  border-right: 0;
+  padding: 0 0 1px 2px;
 }
 
-.datetime-spinner {
-  display: grid;
-  width: 18px;
-  grid-template-rows: 10px 10px;
-}
-
-.datetime-spinner button {
-  overflow: hidden;
-  padding: 0;
-  border: 1px solid #7f9db9;
-  background: linear-gradient(90deg, #fff, #d7e4f6);
-  color: #315b91;
-  font-size: 7px;
-  line-height: 7px;
+.datetime-time-spin.xp-updown {
+  top: 173px;
+  left: 330px;
+  grid-template-rows: 9px 9px;
+  height: 18px;
 }
 
 .datetime-current-zone {
-  grid-column: 1 / -1;
-  margin: 14px 0 0;
+  top: 222px;
+  left: 10px;
+  white-space: pre;
 }
 
-.datetime-time-zone-panel {
-  padding: 8px 12px;
-}
-
-.datetime-zone-select {
-  width: 100%;
-  height: 20px;
-  margin-bottom: 7px;
+.datetime-zone-select.xp-select {
+  top: 9px;
+  left: 12px;
+  width: 361px;
 }
 
 .datetime-zone-map {
-  display: block;
-  width: 356px;
-  height: 184px;
-  image-rendering: auto;
-}
-
-.datetime-internet-panel {
-  padding: 15px 14px;
+  top: 36px;
+  left: 13px;
+  width: 360px;
+  height: 188px;
+  padding: 2px;
+  background: #fff;
+  box-shadow:
+    inset 1px 1px #aca899,
+    inset -1px -1px #fff,
+    inset 2px 2px #716f64,
+    inset -2px -2px #f1efe2;
 }
 
 .datetime-sync-label {
+  top: 19px;
+  left: 16px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -1450,58 +1492,70 @@
   margin: 0;
 }
 
-.datetime-server-row {
-  display: grid;
-  grid-template-columns: 73px 173px 80px;
-  align-items: center;
-  gap: 8px;
-  margin: 10px 14px 0 45px;
+.datetime-server-label {
+  top: 44px;
+  left: 50px;
 }
 
-.datetime-server-row label {
-  text-align: right;
+/* XP's server box is an editable combo, so its text sits further in. */
+.datetime-server-select.xp-select {
+  top: 41px;
+  left: 94px;
+  width: 173px;
+  padding: 0 18px 3px 5px;
 }
 
-.datetime-server-row .xp-select,
-.datetime-server-row .xp-btn {
-  height: 21px;
-}
-
-.datetime-server-row .xp-btn {
-  min-width: 80px;
-  padding: 0 5px;
+.datetime-update-now.xp-btn {
+  top: 41px;
+  left: 274px;
+  width: 83px;
+  min-width: 0;
+  height: 23px;
+  padding: 0;
 }
 
 .datetime-sync-status {
-  width: 310px;
-  margin: 28px 0 0;
+  top: 86px;
+  left: 16px;
+  width: 330px;
 }
 
 .datetime-next-sync {
-  margin: 40px 0 0;
+  top: 179px;
+  left: 16px;
+}
+
+.datetime-next-sync[hidden] {
+  display: none;
 }
 
 .datetime-sync-note {
-  width: 348px;
-  margin: 8px 0 0;
+  top: 197px;
+  left: 16px;
+  width: 350px;
+  white-space: pre-wrap;
+}
+
+.datetime-sync-note u {
+  color: #0000ff;
 }
 
 .datetime-dialog .dlg-buttons {
-  justify-content: flex-end;
-  gap: 8px;
-  height: 28px;
-  padding-top: 9px;
+  position: absolute;
+  top: 286px;
+  left: 155px;
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
 }
 
 .datetime-dialog .dlg-buttons .xp-btn {
-  min-width: 73px;
-  height: 21px;
-}
-
-@media (max-width: 420px), (max-height: 380px) {
-  .datetime-dialog {
-    overflow: auto;
-  }
+  width: 75px;
+  min-width: 0;
+  height: 23px;
+  margin: 0;
+  padding: 0;
 }
 
 /* Node icons (Properties + file dialogs) */

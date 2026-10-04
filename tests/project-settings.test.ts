@@ -275,8 +275,8 @@ test("installed game data lists both stores, removes only the selected item and 
     h.content.querySelector('[data-project-status="game-data"]').textContent,
   ).toBe("");
 });
-test("date and time properties edit the shell clock, calendar, spinner and sync controls", async () => {
-  const s = await login(await loadShell());
+const openDateTime = async (options = {}) => {
+  const s = await login(await loadShell(options));
   s.document
     .getElementById("taskbar-clock")
     .dispatchEvent(
@@ -285,12 +285,20 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
   const dialog = s.document.querySelector(".datetime-dialog");
   const button = (text) =>
     [...dialog.querySelectorAll("button")].find((b) => b.textContent === text);
+  const control = (selector) => dialog.querySelector(selector);
   const change = (selector, value) => {
-    const el = dialog.querySelector(selector);
-    el.value = value;
+    const el = control(selector);
+    if (typeof value === "boolean") el.checked = value;
+    else el.value = value;
     el.dispatchEvent(new s.window.Event("change", { bubbles: true }));
     return el;
   };
+  return { s, dialog, button, control, change };
+};
+
+test("date and time properties set the date, the time, and the shell clock", async () => {
+  const { s, dialog, button, control, change } = await openDateTime();
+  expect(s.document.activeElement).toBe(control('[aria-label="Month"]'));
   const year = change('[aria-label="Year"]', "2024");
   change('[aria-label="Month"]', "1");
   expect(dialog.querySelectorAll(".dlg-calendar-day").length).toBe(29);
@@ -298,47 +306,124 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
     .find((b) => b.textContent === "29")
     .click();
   change('[aria-label="Year"]', "2025");
-  expect(dialog.querySelector(".dlg-calendar-day.selected").textContent).toBe(
-    "28",
-  );
+  expect(control(".dlg-calendar-day.selected").textContent).toBe("28");
   change('[aria-label="Year"]', "2500");
   expect(year.value).toBe("2099");
   change('[aria-label="Year"]', "1800");
   expect(year.value).toBe("1901");
   change('[aria-label="Year"]', "");
   expect(year.value).toBe("1901");
+  control('[aria-label="Next year"]').click();
+  expect(year.value).toBe("1902");
+  control('[aria-label="Previous year"]').click();
+  control(".datetime-year-spin").click();
+  expect(year.value).toBe("1901");
   change('[aria-label="Year"]', "2025");
-  const time = change('[aria-label="Time"]', "11:59:59 PM");
-  dialog.querySelector('[aria-label="Increase time"]').click();
-  expect(time.value).toBe("12:00:00 AM");
-  dialog.querySelector('[aria-label="Decrease time"]').click();
-  expect(time.value).toBe("11:59:59 PM");
+
+  // The up-down changes the part of the time the caret was last in.
+  const time = control('[aria-label="Time"]');
+  time.dispatchEvent(new s.window.Event("input"));
+  change('[aria-label="Time"]', "11:59:59 PM");
+  const spin = (label, caret) => {
+    if (caret !== undefined) {
+      time.setSelectionRange(caret, caret);
+      time.dispatchEvent(new s.window.MouseEvent("click"));
+    }
+    control(`[aria-label="${label}"]`).click();
+    return time.value;
+  };
+  expect(spin("Increase time")).toBe("12:59:59 AM");
+  expect(spin("Increase time", 4)).toBe("1:00:59 AM");
+  time.dispatchEvent(new s.window.KeyboardEvent("keyup"));
+  expect(spin("Decrease time", 7)).toBe("1:00:58 AM");
+  expect(spin("Increase time", 9)).toBe("1:00:58 PM");
+  control(".datetime-time-spin").click();
+  expect(time.value).toBe("1:00:58 PM");
+
+  // The clock stops while the time is being edited.
+  await s.advanceTime(1000);
+  expect(time.value).toBe("1:00:58 PM");
   button("Apply").click();
   expect(button("Apply").disabled).toBeTrue();
-  const clockOffset = Number(s.window.localStorage.getItem("clockOffsetMs"));
-  const chosen = new Date(Date.now() + clockOffset);
+  const shellTime = () =>
+    new Date(
+      Date.now() + Number(s.window.localStorage.getItem("clockOffsetMs")),
+    );
+  const chosen = shellTime();
   expect([
     chosen.getFullYear(),
     chosen.getMonth(),
     chosen.getDate(),
     chosen.getHours(),
     chosen.getMinutes(),
-  ]).toEqual([2025, 1, 28, 23, 59]);
-  button("Time Zone").click();
-  expect(dialog.querySelector(".datetime-time-zone-panel").hidden).toBeFalse();
-  button("Internet Time").click();
-  const sync = dialog.querySelector(".datetime-sync-label input");
-  sync.checked = false;
-  sync.dispatchEvent(new s.window.Event("change"));
-  expect(button("Update Now").disabled).toBeTrue();
-  sync.checked = true;
-  sync.dispatchEvent(new s.window.Event("change"));
-  button("Update Now").click();
-  expect(dialog.querySelector(".datetime-sync-status").textContent).toContain(
-    "error occurred",
+  ]).toEqual([2025, 1, 28, 13, 0]);
+  await s.advanceTime(1000);
+  expect(time.value).toBe(
+    shellTime().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    }),
   );
+
+  change('[aria-label="Time"]', "invalid");
+  expect(time.value).toBe("12:00:00 AM");
+  button("OK").click();
+  expect(dialog.isConnected).toBeFalse();
+  await s.advanceTime(1000);
+});
+
+test("date and time properties change the time zone and synchronize the clock", async () => {
+  const { s, dialog, button, control, change } = await openDateTime();
+  const storage = s.window.localStorage;
+  const hostOffset = -new Date().getTimezoneOffset();
+  const zone = control('[aria-label="Time zone"]');
+  const startZone = zone.value;
+  button("Time Zone").click();
+  expect(control(".datetime-time-zone-panel").hidden).toBeFalse();
+  expect(s.document.activeElement).toBe(zone);
+  expect(zone.options.length).toBe(75);
+  const before = Number(storage.getItem("clockOffsetMs") || 0);
+  change('[aria-label="Time zone"]', "Nepal");
+  button("Apply").click();
+  expect(storage.getItem("timeZone")).toBe("Nepal");
+  expect(control(".datetime-current-zone").textContent).toBe(
+    "Current time zone:  Nepal Standard Time",
+  );
+  // The clock moves by the difference between the zones, give or take the
+  // second the time box rounds away.
+  const [, sign, hours, minutes] = /^\(GMT(?:([+-])(\d\d):(\d\d))?\)/.exec(
+    [...zone.options].find((o) => o.value === startZone).textContent,
+  );
+  const startOffset = (sign === "-" ? -1 : 1) * (+hours * 60 + +minutes || 0);
+  const shift = Number(storage.getItem("clockOffsetMs")) - before;
+  expect(Math.abs(shift - (345 - startOffset) * 60000)).toBeLessThan(2000);
+
+  button("Internet Time").click();
+  expect(s.document.activeElement).toBe(control(".datetime-sync-label input"));
+  expect(control(".datetime-sync-status").textContent).toBe(
+    "Windows has never attempted to synchronize with an internet time server.",
+  );
+  change(".datetime-sync-label input", false);
+  expect(button("Update Now").disabled).toBeTrue();
+  expect(control(".datetime-next-sync").hidden).toBeTrue();
+  expect(JSON.parse(storage.getItem("timeSync")).enabled).toBeFalse();
+  change(".datetime-sync-label input", true);
+  change(".datetime-server-select", "time.nist.gov");
+  button("Update Now").click();
+  expect(Number(storage.getItem("clockOffsetMs"))).toBe(
+    (345 - hostOffset) * 60000,
+  );
+  expect(control(".datetime-sync-status").textContent).toMatch(
+    /^The time has been successfully synchronized with time\.nist\.gov on \d+\/\d+\/\d{4} at \d+:\d{2} [AP]M\.$/,
+  );
+  const sync = JSON.parse(storage.getItem("timeSync"));
+  expect(sync.server).toBe("time.nist.gov");
+  expect(control(".datetime-next-sync").textContent).toContain(
+    new Intl.DateTimeFormat("en-US").format(sync.last + 7 * 86400000),
+  );
+
   dialog.querySelector('[aria-label="Help"]').click();
-  expect(dialog.classList.contains("whats-this")).toBeTrue();
   dialog
     .querySelector(".datetime-sync-status")
     .dispatchEvent(new s.window.MouseEvent("click", { bubbles: true }));
@@ -346,12 +431,69 @@ test("date and time properties edit the shell clock, calendar, spinner and sync 
     "No Help topic is associated with this item.",
   );
   button("Date & Time").click();
-  change('[aria-label="Time"]', "invalid");
-  dialog.querySelector('[aria-label="Increase time"]').click();
-  expect(time.value).toBe("12:00:01 AM");
-  change('[aria-label="Time"]', "invalid");
-  button("OK").click();
-  expect(dialog.isConnected).toBeFalse();
+  expect(control(".datetime-date-panel").hidden).toBeFalse();
+});
+
+test("date and time properties restore the saved zone and synchronization", async () => {
+  const last = new Date(2026, 0, 2, 9, 30).getTime();
+  const { s, button, control } = await openDateTime({
+    initialStorage: {
+      timeZone: "Tokyo",
+      timeSync: JSON.stringify({
+        enabled: false,
+        server: "time.nist.gov",
+        last,
+      }),
+    },
+  });
+  expect(control(".datetime-current-zone").textContent).toBe(
+    "Current time zone:  Tokyo Standard Time",
+  );
+  expect(control('[aria-label="Time zone"]').value).toBe("Tokyo");
+  expect(control(".datetime-sync-label input").checked).toBeFalse();
+  expect(control(".datetime-server-select").value).toBe("time.nist.gov");
+  expect(button("Update Now").disabled).toBeTrue();
+  expect(control(".datetime-sync-status").textContent).toBe(
+    "The time has been successfully synchronized with time.nist.gov on 1/2/2026 at 9:30 AM.",
+  );
+  expect(control(".datetime-next-sync").textContent).toBe(
+    "Next synchronization: 1/9/2026 at 9:30 AM",
+  );
+  button("Cancel").click();
+
+  s.window.localStorage.setItem("timeSync", "{");
+  s.document.documentElement.dataset.xpAppearance = "classic";
+  s.document
+    .getElementById("taskbar-clock")
+    .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
+  const dialog = s.document.querySelector(".datetime-dialog");
+  expect(dialog.querySelector(".datetime-sync-label input").checked).toBeTrue();
+  expect(dialog.querySelector(".datetime-server-select").value).toBe(
+    "time.windows.com",
+  );
+});
+
+test("date and time properties pick the host's zone by name, then by offset", async () => {
+  const resolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
+  const getTimezoneOffset = Date.prototype.getTimezoneOffset;
+  const open = async (name, offset) => {
+    Intl.DateTimeFormat.prototype.resolvedOptions = function () {
+      return { ...resolvedOptions.call(this), timeZone: name };
+    };
+    Date.prototype.getTimezoneOffset = () => offset;
+    const { control } = await openDateTime();
+    return control('[aria-label="Time zone"]').value;
+  };
+  try {
+    expect(await open("America/Argentina/Buenos_Aires", 180)).toBe(
+      "SA Eastern",
+    );
+    expect(await open("Mars/Base", -345)).toBe("Nepal");
+    expect(await open("Mars/Base", 7)).toBe("GMT");
+  } finally {
+    Intl.DateTimeFormat.prototype.resolvedOptions = resolvedOptions;
+    Date.prototype.getTimezoneOffset = getTimezoneOffset;
+  }
 });
 
 test("restoring the desktop and resetting reload the page or report failures", async () => {
