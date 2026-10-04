@@ -26,6 +26,8 @@
     DRIVE_F: "drive-f",
     DOCUMENTS_AND_SETTINGS: "documents-and-settings",
     USER_PROFILE: "user-profile",
+    ALL_USERS: "all-users",
+    SHARED_DOCUMENTS: "shared-documents",
     DESKTOP: "desktop",
     MY_DOCUMENTS: "my-documents",
     MY_PICTURES: "my-pictures",
@@ -137,13 +139,19 @@
     folder(WELL_KNOWN.MY_COMPUTER, "My Computer", null);
     folder(WELL_KNOWN.DRIVE_C, "Local Disk (C:)", WELL_KNOWN.MY_COMPUTER);
     folder(WELL_KNOWN.DRIVE_D, "Local Disk (D:)", WELL_KNOWN.MY_COMPUTER);
-    folder(WELL_KNOWN.DRIVE_F, "Removable Device (F:)", WELL_KNOWN.MY_COMPUTER);
+    folder(WELL_KNOWN.DRIVE_F, "Removable Disk (F:)", WELL_KNOWN.MY_COMPUTER);
     folder(
       WELL_KNOWN.DOCUMENTS_AND_SETTINGS,
       "Documents and Settings",
       WELL_KNOWN.DRIVE_C,
     );
     folder(WELL_KNOWN.USER_PROFILE, "astro", WELL_KNOWN.DOCUMENTS_AND_SETTINGS);
+    folder(
+      WELL_KNOWN.ALL_USERS,
+      "All Users",
+      WELL_KNOWN.DOCUMENTS_AND_SETTINGS,
+    );
+    folder(WELL_KNOWN.SHARED_DOCUMENTS, "Documents", WELL_KNOWN.ALL_USERS);
     folder(WELL_KNOWN.DESKTOP, "Desktop", WELL_KNOWN.USER_PROFILE);
     folder(WELL_KNOWN.MY_DOCUMENTS, "My Documents", WELL_KNOWN.USER_PROFILE);
     folder(WELL_KNOWN.MY_PICTURES, "My Pictures", WELL_KNOWN.MY_DOCUMENTS);

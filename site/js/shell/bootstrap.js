@@ -492,8 +492,7 @@ document.addEventListener("keydown", async (e) => {
       }
       if (e.key === "F2" && selected.length === 1 && !protectedSelection) {
         e.preventDefault();
-        const name = window.prompt("Rename", fs.getNode(selected[0]).name);
-        if (name !== null) await fileOps.rename(selected[0], name);
+        startExplorerRename(explorerWin, selected[0]);
         return;
       }
       if (e.key === "Delete" && selected.length && !protectedSelection) {

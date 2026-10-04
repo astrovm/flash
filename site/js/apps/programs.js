@@ -623,6 +623,8 @@ const systemApplicationContext = () => ({
   renderExplorerTree,
   renderTaskButtons,
   selectedExplorerNodes,
+  renderExplorerSelection,
+  startExplorerRename,
   setAccessKeyText,
   wireDisplayProperties,
   wireSearchCompanion,

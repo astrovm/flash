@@ -783,6 +783,10 @@
   background-image: url("../../assets/xp/icons/SystemWarning.png");
 }
 
+.dlg-icon-recycle {
+  background-image: url("../../assets/xp/icons/RecyclerFull.png");
+}
+
 .dlg-buttons {
   display: flex;
   justify-content: center;

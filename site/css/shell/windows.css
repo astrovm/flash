@@ -1556,3 +1556,252 @@ html:not(.keyboard-cues) .menu-accesskey {
 .xp-window:not(.active) .notepad-menu-button {
   color: #aca899;
 }
+
+/* Explorer bands, measured on XP: a 22px menu band, a 38px toolbar band,
+   and the 22px address band, separated by etched lines on the lighter rebar
+   background. */
+html:not([data-xp-appearance="classic"]) .explorer-chrome {
+  background: #f0eddf;
+}
+
+html:not([data-xp-appearance="classic"]) .explorer-toolbar {
+  background: linear-gradient(#f0eedc, #edebd9);
+}
+
+.explorer-menu-row {
+  height: 23px;
+  min-height: 23px;
+  margin-bottom: 1px;
+  border-bottom: 1px solid #d8d2bd;
+  box-shadow: 0 1px #fff;
+}
+
+.explorer-menu-bar {
+  padding-block: 0;
+}
+
+.explorer-toolbar {
+  height: 39px;
+  min-height: 39px;
+  margin-bottom: 1px;
+  padding-block: 0;
+  border-bottom: 1px solid #d8d2bd;
+  box-shadow: 0 1px #fff;
+}
+
+.explorer-toolbar button img,
+.explorer-toolbar button[data-explorer-action] img {
+  width: 24px;
+  height: 24px;
+}
+
+.explorer-address {
+  height: 22px;
+  min-height: 22px;
+  padding-block: 0;
+  border-bottom: 0;
+}
+
+.explorer-address > span:first-child {
+  color: #7f7f7f;
+}
+
+.explorer-address-field {
+  box-sizing: border-box;
+  height: 22px;
+}
+
+html:not([data-xp-appearance="classic"]) .explorer-address-field::after {
+  content: "";
+  width: 17px;
+  height: 20px;
+  border-left: 0;
+  background:
+    var(--ctl-combobuttonglyph-normal) center / 10px 7px no-repeat,
+    var(--ctl-combobutton-normal) 0 0 / 100% 100% no-repeat;
+}
+
+/* Explorer task pane, measured on XP: a vertical gradient pane with 12px
+   margins, 25px section headers, and 20px task rows with 16px icons. The
+   collapse buttons come from Luna.msstyles. */
+.explorer-sidebar {
+  --task-collapse: url("../../assets/xp/explorer/blue-collapse-normal.png");
+  --task-collapse-hot: url("../../assets/xp/explorer/blue-collapse-hot.png");
+  --task-expand: url("../../assets/xp/explorer/blue-expand-normal.png");
+  --task-expand-hot: url("../../assets/xp/explorer/blue-expand-hot.png");
+  padding: 12px;
+}
+
+html[data-xp-appearance="olive"] .explorer-sidebar {
+  --task-collapse: url("../../assets/xp/explorer/olive-collapse-normal.png");
+  --task-collapse-hot: url("../../assets/xp/explorer/olive-collapse-hot.png");
+  --task-expand: url("../../assets/xp/explorer/olive-expand-normal.png");
+  --task-expand-hot: url("../../assets/xp/explorer/olive-expand-hot.png");
+}
+
+html[data-xp-appearance="silver"] .explorer-sidebar {
+  --task-collapse: url("../../assets/xp/explorer/silver-collapse-normal.png");
+  --task-collapse-hot: url("../../assets/xp/explorer/silver-collapse-hot.png");
+  --task-expand: url("../../assets/xp/explorer/silver-expand-normal.png");
+  --task-expand-hot: url("../../assets/xp/explorer/silver-expand-hot.png");
+}
+
+html[data-xp-appearance="blue"] .explorer-sidebar {
+  background: linear-gradient(#7ba2e7, #6375d6);
+}
+
+.explorer-sidebar section {
+  margin-bottom: 15px;
+  padding: 0 0 8px;
+  border: 1px solid #fff;
+  border-top: 0;
+  border-radius: 3px 3px 0 0;
+}
+
+html[data-xp-appearance="blue"] .explorer-sidebar section {
+  background: #d6dff7;
+}
+
+.explorer-sidebar h3 {
+  height: 25px;
+  margin: 0 -1px 8px;
+}
+
+html[data-xp-appearance="blue"] .explorer-sidebar h3 {
+  background: linear-gradient(90deg, #fff, #c6d3f7);
+}
+
+.explorer-sidebar h3 .explorer-section-toggle {
+  height: 25px;
+  padding: 0 2px 0 13px;
+  color: #215dc6;
+}
+
+.explorer-sidebar h3 .explorer-section-toggle span[aria-hidden="true"],
+.explorer-sidebar h3 .explorer-section-toggle b[aria-hidden="true"] {
+  width: 19px;
+  height: 19px;
+  border: 0;
+  border-radius: 0;
+  background: var(--task-collapse) 0 0 / 19px 19px no-repeat;
+  color: transparent;
+  font-size: 0;
+}
+
+.explorer-sidebar h3 .explorer-section-toggle:hover span[aria-hidden="true"],
+.explorer-sidebar h3 .explorer-section-toggle:hover b[aria-hidden="true"] {
+  background-image: var(--task-collapse-hot);
+}
+
+.explorer-sidebar section.collapsed h3 span[aria-hidden="true"],
+.explorer-sidebar section.collapsed h3 b[aria-hidden="true"] {
+  background-image: var(--task-expand);
+}
+
+.explorer-sidebar
+  section.collapsed
+  h3
+  .explorer-section-toggle:hover
+  span[aria-hidden="true"],
+.explorer-sidebar
+  section.collapsed
+  h3
+  .explorer-section-toggle:hover
+  b[aria-hidden="true"] {
+  background-image: var(--task-expand-hot);
+}
+
+.explorer-sidebar .explorer-section-body {
+  padding: 0 8px 0 12px;
+}
+
+.explorer-sidebar .explorer-section-body > button {
+  gap: 8px;
+  min-height: 20px;
+  padding: 0;
+  font-size: 11px;
+}
+
+.explorer-sidebar .explorer-section-body > button:hover:not(:disabled) span {
+  color: #428eff;
+  text-decoration: underline;
+}
+
+.explorer-sidebar .explorer-section-body > button img {
+  width: 16px;
+  height: 16px;
+}
+
+/* Tiles view, measured on XP: regular-weight names beside 48px icons in
+   218px columns, no hover box, and the selection drawn on the label. */
+.explorer-main {
+  padding: 2px 8px 4px;
+}
+
+.explorer-items {
+  grid-template-columns: repeat(auto-fill, 218px);
+  gap: 0;
+}
+
+.explorer-item {
+  gap: 4px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 0;
+}
+
+.explorer-item b {
+  font-weight: 400;
+}
+
+.explorer-item:hover,
+.explorer-item:focus-visible {
+  background: transparent;
+}
+
+.explorer-item.selected {
+  background: transparent;
+  color: inherit;
+}
+
+.explorer-item.selected b {
+  background: #316ac5;
+  color: #fff;
+}
+
+.explorer-item.selected .explorer-item-icon img {
+  filter: sepia(1) hue-rotate(180deg) saturate(4) brightness(0.85);
+}
+
+.my-computer-item .explorer-item-icon,
+.my-computer-item .explorer-item-icon img {
+  width: 48px;
+  height: 48px;
+}
+
+.explorer-group-heading {
+  margin: 0 0 7px;
+  border-bottom-width: 1px;
+  border-image: linear-gradient(90deg, #6f9be8, rgb(111 155 232 / 0)) 1;
+}
+
+.my-computer-item {
+  max-width: 218px;
+  min-height: 75px;
+}
+
+.explorer-details-section .explorer-section-body > * {
+  display: block;
+  line-height: 13px;
+}
+
+.explorer-details-section .explorer-section-body > strong {
+  margin-bottom: 1px;
+}
+
+.explorer-rename {
+  width: 120px;
+  padding: 0 1px;
+  border: 1px solid #000;
+  font: inherit;
+}

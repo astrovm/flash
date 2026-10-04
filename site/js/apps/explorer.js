@@ -528,14 +528,28 @@ const wireInternetGames = (win) => {
   query.focus();
 };
 
-const confirmRecycleDelete = (ids) =>
-  XPDialogs.confirm(
-    ids.length === 1
-      ? "Are you sure you want to send this item to the Recycle Bin?"
-      : "Are you sure you want to send these items to the Recycle Bin?",
-    "Confirm File Delete",
-    "warning",
-  ).then(async (yes) => yes && (await fileOps.removeToBin(ids)));
+// XP's wording and titles, with the Recycle Bin icon.
+const confirmRecycleDelete = (ids) => {
+  const node = fs.getNode(ids[0]);
+  const [text, title] =
+    ids.length > 1
+      ? [
+          `Are you sure you want to send these ${ids.length} items to the Recycle Bin?`,
+          "Confirm Multiple File Delete",
+        ]
+      : node.type === "folder"
+        ? [
+            `Are you sure you want to remove the folder '${node.name}' and move all its contents to the Recycle Bin?`,
+            "Confirm Folder Delete",
+          ]
+        : [
+            `Are you sure you want to send '${node.name}' to the Recycle Bin?`,
+            "Confirm File Delete",
+          ];
+  return XPDialogs.confirm(text, title, "recycle").then(
+    async (yes) => yes && (await fileOps.removeToBin(ids)),
+  );
+};
 
 // Empty Recycle Bin is only enabled while the bin has items.
 const confirmEmptyRecycleBin = () => {
@@ -799,12 +813,10 @@ const systemFolderShortcuts = {
   "__recycle-bin": () => fs.RECYCLE_BIN,
 };
 
-const explorerDescriptions = {
-  "__my-documents": "Files stored on this computer",
-  "__my-computer": "",
-  "__my-pictures": "Files stored in My Pictures",
-  "__my-music": "Files stored in My Music",
-};
+// XP shows the All Users documents folder as "Shared Documents", and lists
+// the user's documents in My Computer as "astro's Documents".
+const explorerDisplayName = (node) =>
+  node.id === fs.SHARED_DOCUMENTS ? "Shared Documents" : node.name;
 
 const navigateExplorer = (win, folderId, { history = true } = {}) => {
   const folder = fs.getNode(folderId);
@@ -838,45 +850,83 @@ const selectedExplorerNodes = (win) =>
     .map((item) => item.dataset.nodeId)
     .filter((id) => !!fs.getNode(id));
 
+// Inline rename, like XP: the label becomes an edit box; Enter or leaving
+// it commits, and Escape cancels.
+const startExplorerRename = (win, nodeId) => {
+  const item = win.el.querySelector(
+    `.explorer-item[data-node-id="${CSS.escape(nodeId)}"]`,
+  );
+  const label = item.querySelector("b");
+  const node = fs.getNode(nodeId);
+  const input = document.createElement("input");
+  input.className = "explorer-rename";
+  input.value = node.name;
+  label.replaceWith(input);
+  input.focus();
+  input.setSelectionRange(
+    0,
+    node.name.lastIndexOf(".") > 0
+      ? node.name.lastIndexOf(".")
+      : node.name.length,
+  );
+  let finished = false;
+  const finish = async (commit) => {
+    if (finished) return;
+    finished = true;
+    input.replaceWith(label);
+    item.focus();
+    if (!commit || input.value === node.name) return;
+    try {
+      await fileOps.rename(nodeId, input.value);
+    } catch (error) {
+      await XPDialogs.alert(
+        error.message || "The file operation failed.",
+        "Error Renaming File or Folder",
+        "error",
+      );
+    }
+  };
+  input.addEventListener("keydown", (event) => {
+    event.stopPropagation();
+    if (event.key === "Enter") finish(true);
+    if (event.key === "Escape") finish(false);
+  });
+  input.addEventListener("blur", () => finish(true));
+};
+
 const renderExplorerTaskPane = (win) => {
-  if (win.currentFolderId === fs.RECYCLE_BIN) return;
-  const title = win.el.querySelector(
-    ".explorer-sidebar > section:first-child .explorer-section-label",
+  const section = win.el.querySelector(
+    ".explorer-sidebar > section:first-child",
   );
-  const body = win.el.querySelector(
-    ".explorer-sidebar > section:first-child .explorer-section-body",
-  );
+  const title = section?.querySelector(".explorer-section-label");
+  const body = section?.querySelector(".explorer-section-body");
   if (!title || !body) return;
 
   const isComputer = win.currentFolderId === fs.MY_COMPUTER;
-  const isPictures = win.currentFolderId === fs.MY_PICTURES;
-  const isMusic = win.currentFolderId === fs.MY_MUSIC;
+  const isBin = win.currentFolderId === fs.RECYCLE_BIN;
   title.textContent = isComputer
     ? "System Tasks"
-    : isPictures
-      ? "Picture Tasks"
-      : isMusic
-        ? "Music Tasks"
-        : "File and Folder Tasks";
+    : isBin
+      ? "Recycle Bin Tasks"
+      : "File and Folder Tasks";
   body.replaceChildren();
 
-  const addTask = (label, icon, action, disabled = false) => {
+  const addTask = (label, icon, action) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.disabled = disabled;
     const image = document.createElement("img");
     image.src = XP_ICON_PATHS[icon];
     image.alt = "";
     const text = document.createElement("span");
     text.textContent = label;
     button.append(image, text);
-    if (action) button.addEventListener("click", action);
+    button.addEventListener("click", action);
     body.appendChild(button);
   };
 
   if (isComputer) {
     addTask(
-      "View System Information",
+      "View system information",
       "ExplorerProperties.png",
       openProjectSettings,
     );
@@ -889,31 +939,198 @@ const renderExplorerTaskPane = (win) => {
     return;
   }
 
-  if (isPictures) {
-    addTask("View as a slide show", "MyPictures.png", null, true);
-    addTask("Order prints online", "MyPictures.png", null, true);
-    addTask("Print pictures", "PrintersAndFaxes.png", null, true);
+  const selected = selectedExplorerNodes(win);
+  // XP offers these only while the bin has items.
+  if (isBin) {
+    const binItems = fs.getChildren(fs.RECYCLE_BIN).map((node) => node.id);
+    if (binItems.length)
+      addTask(
+        "Empty the Recycle Bin",
+        "RecyclerFull.png",
+        confirmEmptyRecycleBin,
+      );
+    const restore = async (ids) => {
+      try {
+        await fileOps.restore(ids);
+      } catch (error) {
+        await XPDialogs.alert(
+          error.message || "The file operation failed.",
+          "Restore files",
+          "error",
+        );
+      }
+    };
+    if (selected.length)
+      addTask(
+        selected.length === 1
+          ? "Restore this item"
+          : "Restore the selected items",
+        "RecyclerEmpty.png",
+        () => restore(selected),
+      );
+    else if (binItems.length)
+      addTask("Restore all items", "RecyclerEmpty.png", () =>
+        restore(binItems),
+      );
+    section.hidden = !body.children.length;
     return;
   }
 
-  if (isMusic) {
-    addTask("Play all", "MyMusic.png", null, true);
-    addTask("Shop for music online", "MyMusic.png", null, true);
-    addTask("Copy all items to audio CD", "MyMusic.png", null, true);
+  // XP's selection tasks; only the ones the simulation can carry out.
+  const editable = selected.filter((id) => !fs.getNode(id).protected);
+  if (selected.length === 1 && editable.length === 1) {
+    const kind = fs.getNode(selected[0]).type === "folder" ? "folder" : "file";
+    addTask(`Rename this ${kind}`, "Rename.png", () =>
+      startExplorerRename(win, selected[0]),
+    );
+    addTask(`Delete this ${kind}`, "Delete.png", () =>
+      confirmRecycleDelete(selected),
+    );
+  } else if (editable.length > 1) {
+    addTask("Delete the selected items", "Delete.png", () =>
+      confirmRecycleDelete(editable),
+    );
+  } else if (
+    !fs.getNode(win.currentFolderId).protected ||
+    [
+      fs.MY_DOCUMENTS,
+      fs.MY_PICTURES,
+      fs.MY_MUSIC,
+      fs.SHARED_DOCUMENTS,
+      fs.DESKTOP,
+      fs.DRIVE_C,
+      fs.DRIVE_D,
+      fs.DRIVE_F,
+    ].includes(win.currentFolderId)
+  ) {
+    addTask(
+      "Make a new folder",
+      "NewFolder.png",
+      async () => await fileOps.createFolder(win.currentFolderId, "New Folder"),
+    );
+  }
+  section.hidden = !body.children.length;
+};
+
+// XP's "Other Places" list depends on the folder being shown. My Network
+// Places is omitted because the simulation has no network folder.
+const renderExplorerOtherPlaces = (win) => {
+  const body = win.el.querySelector(
+    ".explorer-places-section .explorer-section-body",
+  );
+  if (!body) return;
+  const current = win.currentFolderId;
+  const folder = fs.getNode(current);
+  const place = (id) => [id, fs.getNode(id)];
+  let places;
+  if (current === fs.MY_COMPUTER)
+    places = [
+      place(fs.MY_DOCUMENTS),
+      place(fs.SHARED_DOCUMENTS),
+      ["control-panel"],
+    ];
+  else if (current === fs.MY_DOCUMENTS)
+    places = [
+      place(fs.DESKTOP),
+      place(fs.SHARED_DOCUMENTS),
+      place(fs.MY_COMPUTER),
+    ];
+  else if (current === fs.RECYCLE_BIN)
+    places = [place(fs.DESKTOP), place(fs.MY_DOCUMENTS), place(fs.MY_COMPUTER)];
+  else if (current === fs.DESKTOP)
+    places = [
+      place(fs.MY_COMPUTER),
+      place(fs.MY_DOCUMENTS),
+      place(fs.SHARED_DOCUMENTS),
+    ];
+  else if ([fs.MY_PICTURES, fs.MY_MUSIC].includes(current))
+    places = [place(fs.MY_DOCUMENTS), place(fs.MY_COMPUTER)];
+  else if (folder.parent === fs.MY_COMPUTER)
+    places = [
+      place(fs.MY_COMPUTER),
+      place(fs.MY_DOCUMENTS),
+      place(fs.SHARED_DOCUMENTS),
+    ];
+  else
+    places = [
+      place(folder.parent),
+      ...[fs.MY_DOCUMENTS, fs.SHARED_DOCUMENTS, fs.MY_COMPUTER]
+        .filter((id) => id !== folder.parent && id !== current)
+        .map(place),
+    ];
+  body.replaceChildren();
+  places.forEach(([id, node]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    const image = document.createElement("img");
+    const text = document.createElement("span");
+    if (id === "control-panel") {
+      button.dataset.place = "control-panel";
+      image.src = XP_ICON_PATHS["ControlPanel.png"];
+      text.textContent = "Control Panel";
+      button.addEventListener("click", openControlPanel);
+    } else {
+      button.dataset.place =
+        {
+          [fs.MY_COMPUTER]: "computer",
+          [fs.MY_DOCUMENTS]: "documents",
+          [fs.SHARED_DOCUMENTS]: "shared-documents",
+          [fs.DESKTOP]: "desktop",
+        }[id] || "parent";
+      image.src =
+        id === fs.MY_COMPUTER
+          ? XP_ICON_PATHS["MyComputer.png"]
+          : id === fs.MY_DOCUMENTS
+            ? XP_ICON_PATHS["MyDocuments.png"]
+            : id === fs.DESKTOP
+              ? "assets/xp/icons/Desktop.png"
+              : XP_ICON_PATHS["NewFolder.png"];
+      text.textContent = explorerDisplayName(node);
+      button.addEventListener("click", () => navigateExplorer(win, id));
+    }
+    image.alt = "";
+    button.append(image, text);
+    body.appendChild(button);
+  });
+};
+
+// XP's Details section names the selection, or the open folder when nothing
+// is selected.
+const renderExplorerDetails = (win) => {
+  const body = win.el.querySelector(
+    ".explorer-details-section .explorer-section-body",
+  );
+  if (!body) return;
+  const selected = selectedExplorerNodes(win);
+  const name = document.createElement("strong");
+  const type = document.createElement("span");
+  body.replaceChildren(name, type);
+  if (selected.length > 1) {
+    name.textContent = `${selected.length} items selected.`;
+    type.remove();
     return;
   }
+  const node = fs.getNode(selected[0] || win.currentFolderId);
+  name.textContent =
+    node.id === fs.MY_COMPUTER ? "My Computer" : explorerDisplayName(node);
+  type.textContent =
+    node.id === fs.MY_COMPUTER ||
+    (node.protected && node.type === "folder" && !node.id.startsWith("drive"))
+      ? "System Folder"
+      : explorerItemDescription(node);
+  if (node.type === "file") {
+    const modified = document.createElement("span");
+    modified.textContent = `Date Modified: ${new Date(node.modified).toLocaleString()}`;
+    const size = document.createElement("span");
+    size.textContent = `Size: ${XPDialogs.formatBytes(fs.getSize(node.id))}`;
+    body.append(modified, size);
+  }
+};
 
-  const writable = ![fs.RECYCLE_BIN, fs.MY_COMPUTER].includes(
-    win.currentFolderId,
-  );
-  addTask(
-    "Make a new folder",
-    "NewFolder.png",
-    async () => await fileOps.createFolder(win.currentFolderId, "New Folder"),
-    !writable,
-  );
-  addTask("Publish this folder to the Web", "PublishToWeb.png", null, true);
-  addTask("Share this folder", "SharedFolder.png", null, true);
+const renderExplorerSelection = (win) => {
+  renderExplorerTaskPane(win);
+  renderExplorerOtherPlaces(win);
+  renderExplorerDetails(win);
 };
 
 const renderExplorerTree = (win) => {
@@ -1004,10 +1221,7 @@ const openExplorerContextMenu = (win, clientX, clientY) => {
       if (command === "copy") fileOps.copy(selected);
       if (command === "restore") await fileOps.restore(selected);
       if (command === "properties") XPDialogs.properties(selected[0]);
-      if (command === "rename") {
-        const name = window.prompt("Rename", fs.getNode(selected[0]).name);
-        if (name !== null) await fileOps.rename(selected[0], name);
-      }
+      if (command === "rename") startExplorerRename(win, selected[0]);
       if (command === "delete") await confirmRecycleDelete(selected);
       if (command === "permanent") {
         const yes = await XPDialogs.confirm(
@@ -1137,7 +1351,8 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   const main = contentRoot.querySelector(".explorer-main");
   const folder = fs.getNode(win.currentFolderId);
 
-  win.title = folder.id === fs.MY_COMPUTER ? "My Computer" : folder.name;
+  win.title =
+    folder.id === fs.MY_COMPUTER ? "My Computer" : explorerDisplayName(folder);
   win.el.querySelector(".title-text").textContent = win.title;
   renderTaskButtons();
   const titleIcon = win.el.querySelector(".title-icon");
@@ -1156,11 +1371,17 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   image.alt = "";
   titleIcon.appendChild(image);
   renderExplorerTree(win);
-  renderExplorerTaskPane(win);
 
   const explorerContent = main.closest(".explorer-content");
   const chrome = explorerContent.querySelector(".explorer-chrome");
-  chrome.querySelector("input").value = fs.getPath(folder.id);
+  // XP names its shell folders in the address bar and shows paths elsewhere.
+  chrome.querySelector("input").value = [
+    fs.MY_DOCUMENTS,
+    fs.SHARED_DOCUMENTS,
+    fs.DESKTOP,
+  ].includes(folder.id)
+    ? explorerDisplayName(folder)
+    : fs.getPath(folder.id);
   chrome.querySelector(".explorer-address-field img").src =
     folder.id === fs.RECYCLE_BIN
       ? getRecycleBinIconPath()
@@ -1179,27 +1400,17 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     !folder.parent &&
     ![fs.MY_COMPUTER, fs.RECYCLE_BIN].includes(win.currentFolderId);
 
-  const heading = main.querySelector("h2");
-  if (win.currentFolderId === fs.RECYCLE_BIN) {
-    const count = fs.getChildren(fs.RECYCLE_BIN).length;
-    heading.textContent = count
-      ? `${count} ${count === 1 ? "object" : "objects"}`
-      : "The Recycle Bin is empty.";
-  } else if (win.currentFolderId === systemFolderShortcuts[win.gameId]?.()) {
-    heading.textContent = explorerDescriptions[win.gameId] || folder.name;
-  } else {
-    heading.textContent = folder.name;
-  }
-  heading.hidden = !heading.textContent || folder.id === fs.MY_COMPUTER;
+  // XP's tile view shows no folder heading.
+  main.querySelector("h2").hidden = true;
 
   const items = main.querySelector(".explorer-items");
   items.dataset.view = win.explorerView;
   items.innerHTML = "";
 
   const myComputerGroup = (node) =>
-    [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
+    [fs.SHARED_DOCUMENTS, fs.MY_DOCUMENTS].includes(node.id)
       ? "Files Stored on This Computer"
-      : [fs.DRIVE_D, fs.DRIVE_F].includes(node.id)
+      : node.id === fs.DRIVE_F
         ? "Devices with Removable Storage"
         : "Hard Disk Drives";
   const myComputerGroupOrder = [
@@ -1208,15 +1419,15 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
     "Devices with Removable Storage",
   ];
   const myComputerOrder = [
-    fs.MY_MUSIC,
-    fs.MY_PICTURES,
+    fs.SHARED_DOCUMENTS,
+    fs.MY_DOCUMENTS,
     fs.DRIVE_C,
-    fs.DRIVE_F,
     fs.DRIVE_D,
+    fs.DRIVE_F,
   ];
   const children = [
     ...(folder.id === fs.MY_COMPUTER
-      ? [fs.getNode(fs.MY_MUSIC), fs.getNode(fs.MY_PICTURES)]
+      ? [fs.getNode(fs.SHARED_DOCUMENTS), fs.getNode(fs.MY_DOCUMENTS)]
       : []),
     ...fs.getChildren(folder.id),
   ]
@@ -1230,20 +1441,10 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
           a.name.localeCompare(b.name),
     );
 
+  renderExplorerSelection(win);
   if (!children.length) {
-    const empty = document.createElement("p");
-    empty.className = "explorer-empty";
-    empty.textContent =
-      win.currentFolderId === fs.RECYCLE_BIN
-        ? "The Recycle Bin is empty."
-        : "There are no items to show in this view.";
-    items.appendChild(empty);
+    // XP leaves an empty folder's view blank.
     explorerContent.querySelector(".explorer-status").textContent = "0 objects";
-    if (win.currentFolderId === fs.RECYCLE_BIN) {
-      win.el.querySelectorAll(".recycle-task").forEach((button) => {
-        button.disabled = true;
-      });
-    }
     return;
   }
 
@@ -1275,29 +1476,20 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
 
     const label = document.createElement("span");
     const name = document.createElement("b");
-    const myComputerNames = {
-      [fs.MY_MUSIC]: "Shared Documents",
-      [fs.MY_PICTURES]: "Administrator's Documents",
-      [fs.DRIVE_F]: "3½ Floppy (A:)",
-      [fs.DRIVE_D]: "GRTMPVOL_EN (D:)",
-    };
     name.textContent =
-      folder.id === fs.MY_COMPUTER
-        ? myComputerNames[node.id] || node.name
-        : node.name;
+      folder.id === fs.MY_COMPUTER && node.id === fs.MY_DOCUMENTS
+        ? `${fs.getNode(fs.USER_PROFILE).name}'s Documents`
+        : explorerDisplayName(node);
     const description = document.createElement("small");
     description.textContent = explorerItemDescription(node);
     label.appendChild(name);
-    if (folder.id !== fs.MY_COMPUTER) label.appendChild(description);
+    // System folders show only their name, like XP.
+    if (folder.id !== fs.MY_COMPUTER && !node.protected)
+      label.appendChild(description);
 
     const itemIcon = createExplorerIcon(node);
-    if (
-      folder.id === fs.MY_COMPUTER &&
-      [fs.MY_MUSIC, fs.MY_PICTURES].includes(node.id)
-    ) {
+    if (folder.id === fs.MY_COMPUTER && node.id === fs.MY_DOCUMENTS) {
       itemIcon.querySelector("img").src = XP_ICON_PATHS["NewFolder.png"];
-    } else if (folder.id === fs.MY_COMPUTER && node.id === fs.DRIVE_D) {
-      itemIcon.querySelector("img").src = XP_ICON_PATHS["OpticalDrive.png"];
     }
     item.append(itemIcon, label);
     if (folder.id === fs.MY_COMPUTER) item.classList.add("my-computer-item");
@@ -1321,6 +1513,7 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
           .forEach((entry) => entry.classList.remove("selected"));
       }
       item.classList.add("selected");
+      renderExplorerSelection(win);
     });
     item.addEventListener("dragstart", (event) => {
       const ids = selectedExplorerNodes(win);
@@ -1331,23 +1524,14 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
       event.dataTransfer.effectAllowed = "move";
     });
     item.addEventListener("dblclick", () => openExplorerNode(win, node));
-    item.addEventListener("keydown", async (e) => {
-      try {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          openExplorerNode(win, node);
-        }
-        if (e.key === "F2" && !node.protected) {
-          e.preventDefault();
-          const next = window.prompt("Rename", node.name);
-          if (next !== null) await fileOps.rename(node.id, next);
-        }
-      } catch (error) {
-        await XPDialogs.alert(
-          error.message || "The file operation failed.",
-          "File operation",
-          "error",
-        );
+    item.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        openExplorerNode(win, node);
+      }
+      if (e.key === "F2" && !node.protected) {
+        e.preventDefault();
+        startExplorerRename(win, node.id);
       }
     });
     item.addEventListener("contextmenu", (event) => {
@@ -1360,11 +1544,6 @@ const renderExplorerItems = (win, contentRoot = win.el) => {
   });
   explorerContent.querySelector(".explorer-status").textContent =
     `${children.length} ${children.length === 1 ? "object" : "objects"}`;
-  if (win.currentFolderId === fs.RECYCLE_BIN) {
-    win.el.querySelectorAll(".recycle-task").forEach((button) => {
-      button.disabled = false;
-    });
-  }
 };
 
 // Games participate in the filesystem as ".game" files on the Desktop,

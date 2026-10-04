@@ -87,11 +87,19 @@ test("Explorer context menus support copy, cut, rename, properties and keyboard 
   });
   await h.command(h.file.id, "cut");
   expect(h.s.window.FileOperations.getClipboard().mode).toBe("cut");
-  h.s.window.prompt = () => "renamed.txt";
+  const finishRename = (value) => {
+    const input = h.s.document.querySelector(".explorer-rename");
+    input.value = value;
+    input.dispatchEvent(
+      new h.s.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+  };
   await h.command(h.file.id, "rename");
+  finishRename("renamed.txt");
+  await flushShell();
   expect(h.fs.getNode(h.file.id).name).toBe("renamed.txt");
-  h.s.window.prompt = () => "keyboard.txt";
   h.key(h.item(h.file.id), "F2");
+  finishRename("keyboard.txt");
   await flushShell();
   expect(h.fs.getNode(h.file.id).name).toBe("keyboard.txt");
   await h.command(h.file.id, "properties");
@@ -110,9 +118,8 @@ test("Explorer context menus support copy, cut, rename, properties and keyboard 
   );
   expect(menu.isConnected).toBeFalse();
   h.key(h.item(h.child.id), "Enter");
-  expect(h.win.querySelector(".explorer-empty").textContent).toContain(
-    "no items",
-  );
+  expect(h.win.querySelectorAll(".explorer-item")).toHaveLength(0);
+  expect(h.win.querySelector(".explorer-status").textContent).toBe("0 objects");
   h.win.querySelector('[data-explorer-action="back"]').click();
   expect(h.item(h.file.id)).not.toBeNull();
   h.win.querySelector('[data-explorer-action="forward"]').click();

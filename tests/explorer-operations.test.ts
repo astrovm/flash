@@ -385,10 +385,10 @@ test("Empty Recycle Bin is unavailable while the bin is already empty", async ()
     .dispatchEvent(new s.window.MouseEvent("dblclick", { bubbles: true }));
   await flushShell();
   const win = s.document.querySelector('.xp-window[data-game="__recycle-bin"]');
-  const task = [...win.querySelectorAll(".recycle-task")].find(
-    (button) => button.textContent === "Empty Recycle Bin",
-  );
-  expect(task.disabled).toBeTrue();
+  // XP hides the Recycle Bin tasks while the bin is empty.
+  expect(
+    win.querySelector(".explorer-sidebar > section:first-child").hidden,
+  ).toBeTrue();
   s.document.querySelector('[data-desktop-id="__recycle-bin"]').dispatchEvent(
     new s.window.MouseEvent("contextmenu", {
       bubbles: true,

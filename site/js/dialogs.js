@@ -19,7 +19,7 @@
 })(globalThis, function () {
   // ---- Pure definitions (no DOM, unit tested) ----
 
-  const ICONS = ["info", "warning", "error", "question"];
+  const ICONS = ["info", "warning", "error", "question", "recycle"];
 
   // Standard XP button sets. The first button is the default unless a
   // later one sets isDefault; isCancel marks the Escape/close result.
