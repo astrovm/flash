@@ -85,6 +85,20 @@ This starts an isolated Windows XP VM to compare against. Changes are discarded 
 
 By default the VM uses the Cirrus adapter of the original reference captures, up to 1280×1024. Pass `--vga std` for 1920×1080 at 32-bit color. That mode uses the free [VBEMP](http://bearwindows.zcm.com.au/vbemp.htm) display driver (`vbempk.zip`, VBE20/XP/PNP), installed in the base disk. It is the only software in the VM that isn't from the XP SP3 ISO.
 
+The VM has no network adapter. Pass `--nic user,model=rtl8139,restrict=on` for one with no Internet access, for pages such as Task Manager's **Networking**.
+
+Type commands into the VM's terminal, or send them from another shell. Each `send` waits for its command to finish:
+
+```bash
+bun tools/xp-vm.ts send until 960 1062 225ad9 240000  # wait for the 1920x1080 taskbar
+bun tools/xp-vm.ts send chord ctrl shift esc
+bun tools/xp-vm.ts send wait                          # until the screen settles
+bun tools/xp-vm.ts send click 120 76                  # in screen pixels
+bun tools/xp-vm.ts send screenshot /tmp/xp.png
+```
+
+`send` finds the running VM on its own; pass `--instance <name>` when several are running. Run `help` for every command.
+
 The [fidelity roadmap](docs/XP-FIDELITY-ROADMAP.md) lists known taskbar gaps, finished reference passes, and the remaining areas in priority order.
 
 </details>
