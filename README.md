@@ -85,6 +85,8 @@ This starts an isolated Windows XP VM to compare against. Changes are discarded 
 
 By default the VM uses the Cirrus adapter of the original reference captures, up to 1280×1024. Pass `--vga std` for 1920×1080 at 32-bit color. That mode uses the free [VBEMP](http://bearwindows.zcm.com.au/vbemp.htm) display driver (`vbempk.zip`, VBE20/XP/PNP), installed in the base disk. It is the only software in the VM that isn't from the XP SP3 ISO.
 
+The VM has an AC97 sound card, with Intel's driver from the XP ISO installed in the base disk, so the tray **Volume** icon and **Volume Control** work. It plays into a silent backend; `--audio-output <file.wav>` records it instead, and `--sound none` removes it.
+
 The VM has no network adapter. Pass `--nic user,model=rtl8139,restrict=on` for one with no Internet access, for pages such as Task Manager's **Networking**.
 
 Type commands into the VM's terminal, or send them from another shell. Each `send` waits for its command to finish:

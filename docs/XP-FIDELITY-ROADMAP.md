@@ -51,8 +51,9 @@ sound playback. See [taskbar evidence and boundaries](reference/taskbar/README.m
 
 The completion notes distinguish direct VM observations, original ISO settings,
 and browser checks. The ten-minute Volume inactivity rule remains a simulation
-heuristic: the reference VM cannot provide a working Volume device for an exact
-comparison. The grouping width and flash cadence are approximations; the native
+heuristic. The reference VM now has a working AC97 sound card, so Volume can
+be compared directly in later passes. See the [VM audio checks](reference/vm-audio/README.md).
+The grouping width and flash cadence are approximations; the native
 nine-to-ten-window boundary and default flash count are recorded separately.
 These are not claims of universal pixel or timing identity.
 
