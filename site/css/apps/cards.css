@@ -1,0 +1,112 @@
+/* Shared by the card games: a standard menu bar, and dialogs built from
+   the games' resource templates. */
+.cards-menu-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex: none;
+  /* 19px bar plus XP's 1px white bottom line. */
+  height: 20px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #fff;
+  background: var(--xp-beige);
+}
+
+.cards-menu-bar > button {
+  height: 19px;
+  padding: 0 6px 2px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+}
+
+.cards-menu-bar > button:hover,
+.cards-menu-bar > button[aria-expanded="true"] {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+}
+
+.xp-window:not(.active) .cards-menu-bar > button {
+  color: #aca899;
+}
+
+/* Dialogs laid out from their resource templates. */
+.xp-template-dialog {
+  width: auto;
+}
+
+.xp-template-body {
+  position: relative;
+  box-sizing: content-box;
+  padding: 0;
+}
+
+.xp-template-control {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.xp-template-text {
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  white-space: pre-wrap;
+  tab-size: 40px;
+}
+
+.xp-template-text.center {
+  text-align: center;
+}
+
+/* XP's 13-pixel box, then the text three pixels after it. */
+.xp-template-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-template-checkbox input {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin: var(--inset) 0 0;
+}
+
+.xp-template-checkbox span {
+  margin-top: var(--inset);
+}
+
+.xp-template-body input.xp-input:focus {
+  outline: 0;
+}
+
+/* Group boxes put their caption on the top edge, 6 pixels in. */
+.xp-template-group {
+  padding: 0;
+}
+
+.xp-template-group > legend {
+  margin-left: 6px;
+  padding: 0 1px;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-template-checkbox:has(input:disabled) {
+  color: #aca899;
+}
+
+/* Template buttons keep their resource width. */
+.xp-template-body .xp-btn {
+  min-width: 0;
+  padding: 0;
+}

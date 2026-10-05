@@ -23,6 +23,10 @@ import { applicationMetadata as freecellMetadata } from "./freecell/metadata.js"
 const freecellApplication = defineLazyApplication(freecellMetadata, () =>
   import("./freecell/index.js").then((module) => module.freecellApplication),
 );
+import { applicationMetadata as solitaireMetadata } from "./solitaire/metadata.js";
+const solitaireApplication = defineLazyApplication(solitaireMetadata, () =>
+  import("./solitaire/index.js").then((module) => module.solitaireApplication),
+);
 import { applicationMetadata as pinballMetadata } from "./pinball/metadata.js";
 const pinballApplication = defineLazyApplication(pinballMetadata, () =>
   import("./pinball/index.js").then((module) => module.pinballApplication),
@@ -35,6 +39,7 @@ export const applicationRegistry = createApplicationRegistry([
   ...boxedWineShellApplications,
   freecellApplication,
   minesweeperApplication,
+  solitaireApplication,
   notepadApplication,
   paintApplication,
   pinballApplication,

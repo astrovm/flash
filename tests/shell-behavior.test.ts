@@ -994,9 +994,8 @@ describe("Windows XP shell", () => {
     const solitaireWindow = shell.document.querySelector(
       '.xp-window[data-game="__solitaire"]',
     )!;
-    expect(
-      solitaireWindow.querySelector(".boxedwine-shared-app-host"),
-    ).not.toBeNull();
+    // Solitaire is web-native; Calculator keeps the one BoxedWine runtime.
+    expect(solitaireWindow.querySelector(".solitaire-board")).not.toBeNull();
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
     ).toHaveLength(1);

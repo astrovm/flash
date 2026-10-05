@@ -17,37 +17,6 @@
   outline: 0;
 }
 
-.freecell-menu-bar {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  flex: none;
-  /* 19px bar plus XP's 1px white bottom line. */
-  height: 20px;
-  box-sizing: border-box;
-  border-bottom: 1px solid #fff;
-  background: var(--xp-beige);
-}
-
-.freecell-menu-bar > button {
-  height: 19px;
-  padding: 0 6px 2px;
-  border: 0;
-  background: transparent;
-  color: #000;
-  font: inherit;
-}
-
-.freecell-menu-bar > button:hover,
-.freecell-menu-bar > button[aria-expanded="true"] {
-  background: var(--sys-highlight);
-  color: var(--sys-highlight-text);
-}
-
-.xp-window:not(.active) .freecell-menu-bar > button {
-  color: #aca899;
-}
-
 /* freecell.exe draws the count at the right end of its menu bar. */
 .freecell-cards-left {
   position: absolute;
@@ -153,62 +122,6 @@
 
 .freecell-statistics-text .indent {
   padding-left: 60px;
-}
-
-/* Dialogs laid out from their resource templates. */
-.xp-template-dialog {
-  width: auto;
-}
-
-.xp-template-body {
-  position: relative;
-  box-sizing: content-box;
-  padding: 0;
-}
-
-.xp-template-control {
-  position: absolute;
-  box-sizing: border-box;
-  margin: 0;
-}
-
-.xp-template-text {
-  font:
-    11px/13px Tahoma,
-    "Segoe UI",
-    sans-serif;
-  white-space: pre-wrap;
-  tab-size: 40px;
-}
-
-.xp-template-text.center {
-  text-align: center;
-}
-
-/* XP's 13-pixel box, then the text three pixels after it. */
-.xp-template-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: 3px;
-  font:
-    11px/13px Tahoma,
-    "Segoe UI",
-    sans-serif;
-}
-
-.xp-template-checkbox input {
-  flex: none;
-  width: 13px;
-  height: 13px;
-  margin: var(--inset) 0 0;
-}
-
-.xp-template-checkbox span {
-  margin-top: var(--inset);
-}
-
-.xp-template-body input.xp-input:focus {
-  outline: 0;
 }
 
 .freecell-statistics-line {

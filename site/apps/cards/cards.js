@@ -60,6 +60,29 @@ const FACE_URLS = [
   "assets/xp/cards/faces/52.png",
 ];
 
+// The twelve backs, in the order of Solitaire's Select Card Back dialog.
+export const BACKS = [54, 55, 60, 61, 58, 59, 56, 57, 62, 63, 64, 65];
+const BACK_URLS = {
+  54: "assets/xp/cards/backs/54.png",
+  55: "assets/xp/cards/backs/55.png",
+  56: "assets/xp/cards/backs/56.png",
+  57: "assets/xp/cards/backs/57.png",
+  58: "assets/xp/cards/backs/58.png",
+  59: "assets/xp/cards/backs/59.png",
+  60: "assets/xp/cards/backs/60.png",
+  61: "assets/xp/cards/backs/61.png",
+  62: "assets/xp/cards/backs/62.png",
+  63: "assets/xp/cards/backs/63.png",
+  64: "assets/xp/cards/backs/64.png",
+  65: "assets/xp/cards/backs/65.png",
+};
+// The empty-pile outline and the deck's X and O.
+const MARK_URLS = {
+  empty: "assets/xp/cards/Empty.png",
+  x: "assets/xp/cards/X.png",
+  o: "assets/xp/cards/O.png",
+};
+
 export const faceUrl = (card) =>
   FACE_URLS[(card % 4) * 13 + Math.floor(card / 4)];
 
@@ -119,6 +142,56 @@ const renderFace = (image, card, inverted) => {
   return canvas;
 };
 
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("The cards didn't load."));
+    image.src = src;
+  });
+
+// A back or mark with cards.dll's rounded corners. The empty-pile outline
+// shows the table through its white pixels.
+const renderArt = (image, clearWhite = false) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = CARD_WIDTH;
+  canvas.height = CARD_HEIGHT;
+  const context = canvas.getContext("2d");
+  context.drawImage(image, 0, 0);
+  const pixels = context.getImageData(0, 0, CARD_WIDTH, CARD_HEIGHT);
+  const { data } = pixels;
+  for (let y = 0; y < CARD_HEIGHT; y += 1)
+    for (let x = 0; x < CARD_WIDTH; x += 1) {
+      const offset = (y * CARD_WIDTH + x) * 4;
+      if (isCorner(x, y) || (clearWhite && data[offset] === 255))
+        data[offset + 3] = 0;
+    }
+  context.putImageData(pixels, 0, 0);
+  return canvas;
+};
+
+// Loads the backs and marks once.
+let artPromise = null;
+export const loadCardArt = () => {
+  artPromise ??= Promise.all([
+    ...BACKS.map((id) => loadImage(BACK_URLS[id])),
+    ...Object.values(MARK_URLS).map(loadImage),
+  ])
+    .then((images) => ({
+      backs: Object.fromEntries(
+        BACKS.map((id, index) => [id, renderArt(images[index])]),
+      ),
+      empty: renderArt(images[12], true),
+      x: renderArt(images[13]),
+      o: renderArt(images[14]),
+    }))
+    .catch((error) => {
+      artPromise = null;
+      throw error;
+    });
+  return artPromise;
+};
+
 // Loads the faces once. Each card keeps a normal and an inverted rendering.
 let facesPromise = null;
 export const loadCardFaces = () => {
@@ -142,4 +215,31 @@ export const loadCardFaces = () => {
     throw error;
   });
   return facesPromise;
+};
+
+// Shrinks card art the way GDI's StretchBlt does by default (BLACKONWHITE):
+// the source pixels that fall on one destination pixel are ANDed together,
+// which darkens fine detail.
+export const shrinkLikeGdi = (source, width, height) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const { data } = source
+    .getContext("2d")
+    .getImageData(0, 0, source.width, source.height);
+  const context = canvas.getContext("2d");
+  const output = context.getImageData(0, 0, width, height);
+  output.data.fill(255);
+  for (let y = 0; y < source.height; y += 1) {
+    const targetY = Math.floor((y * height) / source.height);
+    for (let x = 0; x < source.width; x += 1) {
+      const from = (y * source.width + x) * 4;
+      if (!data[from + 3]) continue;
+      const to = (targetY * width + Math.floor((x * width) / source.width)) * 4;
+      for (let channel = 0; channel < 3; channel += 1)
+        output.data[to + channel] &= data[from + channel];
+    }
+  }
+  context.putImageData(output, 0, 0);
+  return canvas;
 };

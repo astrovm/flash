@@ -61,13 +61,6 @@ export const boxedWineApplications = validateBoxedWineApplications([
     packagePath: "site/iframe/hearts/xp-hearts.zip",
   },
   {
-    id: "solitaire",
-    title: "Solitaire",
-    icon: "Solitaire.png",
-    executable: "solitaire/sol.exe",
-    packagePath: "site/iframe/solitaire/xp-solitaire.zip",
-  },
-  {
     id: "spider-solitaire",
     title: "Spider Solitaire",
     icon: "SpiderSolitaire.png",
