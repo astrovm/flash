@@ -6,12 +6,13 @@ const program = (id, title, icon, kind, extra) =>
   defineProgram({ id, title, icon, kind, ...extra });
 
 export const systemToolApplications = [
-  program("__volume-control", "Volume Control", "Volume.png", "volume", {
+  program("__volume-control", "Volume Control", "VolumeControl.png", "volume", {
     window: {
-      width: 251,
-      height: 318,
-      left: 66,
-      top: 88,
+      width: 247,
+      height: 302,
+      // sndvol32 opens one pixel above the screen's top edge.
+      left: 0,
+      top: -1,
       resizable: false,
       maximizable: false,
       className: "xp-volume-window",
