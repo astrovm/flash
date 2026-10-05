@@ -1161,6 +1161,31 @@ describe("Windows XP shell", () => {
     expect(shell.offlineDownloads).toEqual([]);
   });
 
+  test("reports a played built-in game that can't be saved for offline play", async () => {
+    const shell = await loadShell({
+      offlineMethods: {
+        async downloadGame() {
+          throw new Error("quota");
+        },
+      },
+    });
+    const warnings: unknown[][] = [];
+    shell.window.console.warn = (...args: unknown[]) => warnings.push(args);
+    shell.window.location.hash = "#hearts";
+    await login(shell);
+    await flushShell();
+    await flushShell();
+    expect(
+      warnings.find(([message]) =>
+        String(message).startsWith("Could not save game"),
+      ),
+    ).toEqual([
+      "Could not save game for offline play:",
+      "Hearts",
+      expect.any(Error),
+    ]);
+  });
+
   test("resolves bundled iframe deep links against the production release base URL", async () => {
     const shell = await loadShell();
     const version = "26.08.12-abcdef1";
