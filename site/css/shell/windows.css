@@ -1772,6 +1772,64 @@ html[data-xp-appearance="blue"] .explorer-sidebar h3 {
   text-decoration: underline;
 }
 
+/* Olive Green and Silver, from each scheme's shell style (home_ss.dll and
+   metal_ss.dll) and Luna's group header bitmaps. */
+html[data-xp-appearance="olive"] .explorer-sidebar {
+  background: linear-gradient(#ccd9ad, #a5bd84);
+}
+
+html[data-xp-appearance="olive"] .explorer-sidebar section {
+  background: #f6f6ec;
+}
+
+html[data-xp-appearance="olive"] .explorer-sidebar h3 {
+  background: linear-gradient(90deg, #fff, #cadcb2);
+}
+
+html[data-xp-appearance="olive"] .explorer-sidebar h3 .explorer-section-toggle,
+html[data-xp-appearance="olive"]
+  .explorer-sidebar
+  .explorer-section-body
+  > button {
+  color: #56662d;
+}
+
+html[data-xp-appearance="olive"]
+  .explorer-sidebar
+  .explorer-section-body
+  > button:hover:not(:disabled)
+  span {
+  color: #72921d;
+}
+
+html[data-xp-appearance="silver"] .explorer-sidebar {
+  background: linear-gradient(#c4c8d4, #b1b3c8);
+}
+
+html[data-xp-appearance="silver"] .explorer-sidebar section {
+  background: #f0f1f5;
+}
+
+html[data-xp-appearance="silver"] .explorer-sidebar h3 {
+  background: linear-gradient(90deg, #fff, #d1cfe5);
+}
+
+html[data-xp-appearance="silver"] .explorer-sidebar h3 .explorer-section-toggle,
+html[data-xp-appearance="silver"]
+  .explorer-sidebar
+  .explorer-section-body
+  > button {
+  color: #3f3d3d;
+}
+
+html[data-xp-appearance="silver"]
+  .explorer-sidebar
+  .explorer-section-body
+  > button:hover:not(:disabled)
+  span {
+  color: #7e7c7c;
+}
+
 .explorer-sidebar .explorer-section-body > button img {
   width: 16px;
   height: 16px;

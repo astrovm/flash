@@ -1,5 +1,6 @@
-/* Control Panel category view */
-
+/* Control Panel, measured on XP SP3 at 1920x1080. It uses the Explorer
+   chrome and task pane; the content area is the category view's blue
+   page, or Classic View's icons. */
 .control-panel-content {
   display: flex;
   min-height: 0;
@@ -7,130 +8,139 @@
   flex-direction: column;
   overflow: hidden;
   background: #fff;
-  color: #111;
+  color: #000;
   font:
     11px Tahoma,
     "Segoe UI",
     sans-serif;
 }
 
-.control-panel-chrome .explorer-menu-row {
-  min-height: 23px;
+.control-panel-chrome {
+  position: relative;
 }
 
-.control-panel-chrome .explorer-toolbar {
-  min-height: 40px;
-  padding-block: 1px;
-}
-
-.control-panel-chrome .explorer-toolbar button {
-  min-height: 36px;
-}
-
-.control-panel-chrome .explorer-toolbar button img {
-  width: 25px;
-  height: 25px;
-}
-
-.control-panel-chrome .explorer-address {
-  min-height: 23px;
-  padding: 1px 5px;
-}
-
-.control-panel-chrome .explorer-address-field img {
-  width: 16px;
-  height: 16px;
-  margin: 1px 3px;
-}
-
-.control-panel-chrome .explorer-address input {
-  height: 19px;
-}
-
-.control-panel-chrome .explorer-address button,
-.control-panel-chrome .explorer-address button img {
-  width: 20px;
-  height: 20px;
+.control-panel-chrome .explorer-menu {
+  position: absolute;
 }
 
 .control-panel-body {
   display: grid;
   min-height: 0;
   flex: 1;
-  grid-template-columns: 211px minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr);
   overflow: hidden;
 }
 
+.control-panel-content.folders-visible .control-panel-sidebar > section {
+  display: none;
+}
+
+/* The Control Panel section is XP's "special" task group, from Luna's
+   bitmaps, set lower so its 32px icon fits above it. */
 .control-panel-sidebar {
-  padding: 11px 12px 8px;
-  background: rgb(106, 131, 219);
+  --special-head: url("../../assets/xp/explorer/blue-special-head.png");
+  --special-background: url("../../assets/xp/explorer/blue-special-background.png");
+  --special-collapse: url("../../assets/xp/explorer/blue-special-collapse-normal.png");
+  --special-collapse-hot: url("../../assets/xp/explorer/blue-special-collapse-hot.png");
+  --special-expand: url("../../assets/xp/explorer/blue-special-expand-normal.png");
+  --special-expand-hot: url("../../assets/xp/explorer/blue-special-expand-hot.png");
 }
 
-.control-panel-sidebar section {
-  margin-bottom: 16px;
-  padding: 0 10px 9px;
-  border-radius: 3px 3px 0 0;
-  background: #d6e3fa;
+html[data-xp-appearance="olive"] .control-panel-sidebar {
+  --special-head: url("../../assets/xp/explorer/olive-special-head.png");
+  --special-background: url("../../assets/xp/explorer/olive-special-background.png");
+  --special-collapse: url("../../assets/xp/explorer/olive-special-collapse-normal.png");
+  --special-collapse-hot: url("../../assets/xp/explorer/olive-special-collapse-hot.png");
+  --special-expand: url("../../assets/xp/explorer/olive-special-expand-normal.png");
+  --special-expand-hot: url("../../assets/xp/explorer/olive-special-expand-hot.png");
 }
 
-.control-panel-sidebar h3 {
-  height: 34px;
-  margin: 0 -10px 4px;
-  background: linear-gradient(90deg, #f7faff, #c7d7f5);
-  color: #154ba0;
+html[data-xp-appearance="silver"] .control-panel-sidebar {
+  --special-head: url("../../assets/xp/explorer/silver-special-head.png");
+  --special-background: url("../../assets/xp/explorer/silver-special-background.png");
+  --special-collapse: url("../../assets/xp/explorer/silver-special-collapse-normal.png");
+  --special-collapse-hot: url("../../assets/xp/explorer/silver-special-collapse-hot.png");
+  --special-expand: url("../../assets/xp/explorer/silver-special-expand-normal.png");
+  --special-expand-hot: url("../../assets/xp/explorer/silver-special-expand-hot.png");
 }
 
-.control-panel-sidebar h3 .explorer-section-toggle {
-  height: 34px;
-  padding: 3px 5px 3px 10px;
-  color: #154ba0;
+.explorer-sidebar section.control-panel-special {
+  overflow: visible;
+  margin-top: 7px;
+  border: 0;
+  border-image: var(--special-background) 3 fill / 3px stretch;
 }
 
-.control-panel-sidebar h3 .explorer-section-toggle > img {
-  width: 30px;
-  height: 30px;
-  margin-left: -5px;
-  object-fit: contain;
+html:not([data-xp-appearance="classic"])
+  .explorer-sidebar
+  section.control-panel-special {
+  background: none;
 }
 
-.control-panel-sidebar h3 .explorer-section-toggle > span {
-  margin-right: auto;
+.explorer-sidebar section.control-panel-special h3 {
+  overflow: visible;
+  margin: 0 0 8px;
+  border-image: var(--special-head) 3 106 1 3 fill / 3px 106px 1px 3px stretch;
+  background: none;
+  image-rendering: pixelated;
 }
 
-.control-panel-sidebar h3 .explorer-section-toggle > b {
-  display: grid;
-  width: 17px;
-  height: 17px;
-  place-items: center;
-  border: 1px solid #7fa3dc;
-  border-radius: 50%;
-  background: #fff;
-  color: #215dc6;
-  font-size: 10px;
+.explorer-sidebar section.control-panel-special h3 .explorer-section-toggle {
+  position: relative;
+  padding-left: 34px;
+  color: #fff;
 }
 
-.control-panel-sidebar .explorer-section-body > button {
-  gap: 7px;
-  min-height: 24px;
-  padding: 2px 0;
+.explorer-sidebar
+  section.control-panel-special
+  h3
+  .explorer-section-toggle
+  > img {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 32px;
+  height: 32px;
 }
 
-.control-panel-see-icon.windows-update {
-  width: 18px;
-  height: 18px;
-  flex: none;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 65% 25%, #ffd82b 0 10%, transparent 11%),
-    conic-gradient(#0a55c7, #09a642, #ffd82b, #0a55c7);
+.explorer-sidebar
+  section.control-panel-special
+  h3
+  .explorer-section-toggle
+  b[aria-hidden="true"] {
+  background-image: var(--special-collapse);
 }
 
+.explorer-sidebar
+  section.control-panel-special
+  h3
+  .explorer-section-toggle:hover
+  b[aria-hidden="true"] {
+  background-image: var(--special-collapse-hot);
+}
+
+.explorer-sidebar
+  section.control-panel-special.collapsed
+  h3
+  b[aria-hidden="true"] {
+  background-image: var(--special-expand);
+}
+
+.explorer-sidebar
+  section.control-panel-special.collapsed
+  h3
+  .explorer-section-toggle:hover
+  b[aria-hidden="true"] {
+  background-image: var(--special-expand-hot);
+}
+
+/* The blue page, with the faded Control Panel picture at the bottom right. */
 .control-panel-main {
   position: relative;
   min-width: 0;
   overflow: auto;
-  padding: 18px 24px;
-  background: rgb(99, 117, 214);
+  padding: 0;
+  background: #6375d6;
   color: #fff;
 }
 
@@ -147,175 +157,35 @@
   pointer-events: none;
 }
 
-.control-panel-main h1 {
+.control-panel-main > * {
   position: relative;
   z-index: 1;
-  margin: 0 0 12px;
+}
+
+.control-panel-main h1,
+.control-panel-main h2 {
+  margin: 0;
+  padding: 24px 0 0 26px;
+  color: #d6dff5;
   font:
-    700 28px "Trebuchet MS",
+    700 28px/30px "Trebuchet MS",
     Tahoma,
     sans-serif;
-  letter-spacing: 0.2px;
 }
 
 .control-panel-categories {
-  position: relative;
-  z-index: 1;
   display: grid;
-  grid-template-columns: 244px minmax(0, 1fr);
-  grid-auto-flow: column;
-  grid-template-rows: repeat(5, 62px);
-  column-gap: 26px;
+  grid-template-columns: 272px 260px;
+  grid-auto-rows: 62px;
+  padding: 6px 0 0 21px;
 }
 
-.control-panel-categories button {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: 48px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font:
-    700 11px Tahoma,
-    "Segoe UI",
-    sans-serif;
-  text-align: left;
-  text-shadow: 1px 1px rgba(35, 62, 143, 0.7);
-  cursor: var(--xp-cursor);
-}
-
-.control-panel-categories button[data-column="left"] {
-  grid-column: 1;
-}
-
-.control-panel-categories button[data-column="right"] {
-  grid-column: 2;
-}
-
-.control-panel-categories button img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-}
-
-.control-panel-categories button:hover span,
-.control-panel-categories button:focus-visible span {
-  text-decoration: underline;
-}
-
-.control-panel-content.classic-view .control-panel-main {
-  padding: 6px 2px;
-  background: #fff;
-  color: #111;
-}
-
-.control-panel-content.classic-view .control-panel-main::after {
-  display: none;
-}
-
-.control-panel-content.classic-view .control-panel-main h1 {
-  display: none;
-}
-
-.control-panel-content.classic-view .control-panel-categories {
-  grid-auto-flow: row;
-  grid-template-columns: repeat(7, 75px);
-  grid-template-rows: repeat(5, 75px);
-  gap: 0;
-}
-
-.control-panel-content.classic-view .control-panel-categories button {
-  display: flex;
-  min-height: 75px;
-  flex-direction: column;
-  gap: 3px;
-  justify-content: flex-start;
-  padding: 0 2px;
-  color: #111;
-  font-weight: 400;
-  text-align: center;
-  text-shadow: none;
-}
-
-.control-panel-content.classic-view .control-panel-categories button img {
-  width: 32px;
-  height: 32px;
-}
-
-.control-panel-content.classic-view .control-panel-categories button span {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-height: 14px;
-}
-
-.control-panel-content.classic-view
-  .control-panel-categories
-  button[data-column] {
-  grid-column: auto;
-}
-
-.control-panel-content.folders-visible .control-panel-sidebar > section {
-  display: none;
-}
-
-.control-panel-category-page .control-panel-main {
-  padding: 8px 18px 18px;
-}
-
-.control-panel-category-heading {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  height: 41px;
-  align-items: center;
-  gap: 7px;
-  color: #fff;
-  font-weight: 700;
-}
-
-.control-panel-category-heading img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
-
-.control-panel-category-page .control-panel-main h1,
-.control-panel-category-page .control-panel-main h2 {
-  position: relative;
-  z-index: 1;
-  margin: 11px 0 9px 7px;
-  color: #fff;
-  font:
-    700 28px "Trebuchet MS",
-    Tahoma,
-    sans-serif;
-  letter-spacing: 0.2px;
-}
-
-.control-panel-category-page .control-panel-main h2 {
-  margin-top: 31px;
-}
-
-.control-panel-task-links {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-left: 4px;
-}
-
+.control-panel-categories button,
 .control-panel-task-links button,
 .control-panel-category-icons button {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 6px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -325,20 +195,21 @@
     "Segoe UI",
     sans-serif;
   text-align: left;
-  text-shadow: 1px 1px rgba(35, 62, 143, 0.7);
   cursor: var(--xp-cursor);
 }
 
-.control-panel-task-links button {
-  min-height: 25px;
+.control-panel-categories button {
+  gap: 6px;
 }
 
-.control-panel-task-links img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
+.control-panel-categories img {
+  width: 48px;
+  height: 48px;
+  flex: none;
 }
 
+.control-panel-categories button:hover span,
+.control-panel-categories button:focus-visible span,
 .control-panel-task-links button:hover span,
 .control-panel-task-links button:focus-visible span,
 .control-panel-category-icons button:hover span,
@@ -346,71 +217,187 @@
   text-decoration: underline;
 }
 
+/* A category page: XP's header band, its tasks, and its icons. */
+.control-panel-category-heading {
+  display: flex;
+  height: 35px;
+  margin: 0 0 0 1px;
+  align-items: center;
+  gap: 13px;
+  padding: 0 0 2px 6px;
+  background: linear-gradient(90deg, #3366cc, #6375d6);
+  font-weight: 700;
+}
+
+.control-panel-category-heading img {
+  width: 32px;
+  height: 32px;
+}
+
+.control-panel-category-page .control-panel-main h1 {
+  padding-top: 27px;
+}
+
+.control-panel-task-links {
+  display: flex;
+  flex-direction: column;
+  padding: 9px 0 0 22px;
+}
+
+.control-panel-task-links button {
+  gap: 4px;
+  height: 30px;
+}
+
+.control-panel-task-links img {
+  width: 16px;
+  height: 16px;
+}
+
+.control-panel-category-page .control-panel-main h2 {
+  padding-top: 28px;
+}
+
 .control-panel-category-icons {
-  position: relative;
-  z-index: 1;
   display: grid;
-  width: 390px;
-  grid-template-columns: 180px 190px;
-  gap: 8px 10px;
-  margin-left: 4px;
+  grid-template-columns: 178px 188px;
+  grid-auto-rows: 46px;
+  padding: 6px 0 0 20px;
 }
 
 .control-panel-category-icons button {
-  min-height: 38px;
-}
-
-.date-regional-category-icons {
-  grid-template-columns: 223px 190px;
+  gap: 6px;
 }
 
 .control-panel-category-icons img {
   width: 32px;
   height: 32px;
-  object-fit: contain;
 }
 
-.control-panel-category-page
-  .control-panel-sidebar
-  .explorer-section-body
-  > button {
-  min-height: 20px;
-  padding: 1px 0;
+/* Olive Green and Silver, from home_ss.dll and metal_ss.dll. */
+html[data-xp-appearance="olive"] .control-panel-main {
+  background: #a5bd84;
 }
 
-.control-panel-category-page .control-panel-sidebar .explorer-section-body img,
-.control-panel-small-glyph,
-.control-panel-help-glyph {
+html[data-xp-appearance="olive"] .control-panel-main :is(h1, h2) {
+  color: #e0e7b8;
+}
+
+html[data-xp-appearance="olive"] .control-panel-category-heading {
+  background: linear-gradient(90deg, #96a867, #a5bd84);
+}
+
+html[data-xp-appearance="silver"] .control-panel-main {
+  background: #b1b3c8;
+}
+
+html[data-xp-appearance="silver"] .control-panel-main :is(h1, h2) {
+  color: #dfe5f7;
+}
+
+html[data-xp-appearance="silver"] .control-panel-category-heading {
+  background: linear-gradient(90deg, #777792, #b1b3c8);
+}
+
+/* Windows Classic, from class_ss.dll: black text on the window color, and
+   the special group in the active caption colors. */
+html[data-xp-appearance="classic"] .control-panel-main,
+html[data-xp-appearance="classic"] .control-panel-category-heading {
+  background: #fff;
+  color: #000;
+}
+
+html[data-xp-appearance="classic"] .control-panel-main :is(h1, h2),
+html[data-xp-appearance="classic"] .control-panel-main button {
+  color: #000;
+}
+
+html[data-xp-appearance="classic"]
+  .explorer-sidebar
+  section.control-panel-special
+  h3 {
+  border: 0;
+  border-image: none;
+  background: var(--sys-active-caption);
+}
+
+html[data-xp-appearance="classic"]
+  .explorer-sidebar
+  section.control-panel-special
+  h3
+  .explorer-section-toggle {
+  padding-left: 34px;
+  color: var(--sys-caption-text);
+}
+
+/* Classic View: Explorer's Icons and List views on white. */
+.control-panel-content.classic-view .control-panel-main {
+  background: #fff;
+  color: #000;
+}
+
+.control-panel-content.classic-view .control-panel-main::after {
+  display: none;
+}
+
+.control-panel-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 75px);
+  grid-auto-rows: 75px;
+  padding: 3px 0 0 1px;
+  outline: 0;
+}
+
+.control-panel-icon {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 0 0;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+  text-align: center;
+}
+
+.control-panel-icon img {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.control-panel-icon span {
+  padding: 0 1px;
+  line-height: 13px;
+}
+
+.control-panel-icon.selected span {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+}
+
+.control-panel-icon.selected img {
+  filter: brightness(0.75) sepia(1) hue-rotate(190deg) saturate(3);
+}
+
+.control-panel-icons[data-view="list"] {
+  grid-template-columns: repeat(auto-fill, minmax(150px, max-content));
+  grid-auto-rows: 18px;
+  padding: 3px 0 0 4px;
+}
+
+.control-panel-icons[data-view="list"] .control-panel-icon {
+  flex-direction: row;
+  gap: 3px;
+  padding: 0;
+  text-align: left;
+}
+
+.control-panel-icons[data-view="list"] .control-panel-icon img {
   width: 16px;
   height: 16px;
-  flex: none;
-  object-fit: contain;
-}
-
-.control-panel-small-glyph {
-  border: 1px solid #6d88ad;
-  background: #fff;
-  box-shadow: inset 0 0 0 2px #222;
-}
-
-.control-panel-small-glyph.mouse-glyph {
-  border: 0;
-  border-radius: 50% 50% 45% 45%;
-  background: linear-gradient(135deg, #f9f9f9 45%, #9da2a6 46% 55%, #fff 56%);
-  box-shadow: 0 0 0 1px #777;
-}
-
-.control-panel-small-glyph.contrast-glyph {
-  background: linear-gradient(90deg, #000 50%, #fff 50%);
-}
-
-.control-panel-help-glyph {
-  display: grid;
-  place-items: center;
-  border: 1px solid #7290bd;
-  background: #eef4ff;
-  color: #1454a5;
-  font-weight: 700;
 }
 
 .explorer-empty {
