@@ -450,6 +450,7 @@ html:not([data-xp-appearance="classic"]) .datetime-panel {
 }
 
 /* uxtheme stretches theme bitmaps without smoothing. */
+html:not([data-xp-appearance="classic"]) .xp-window .dlg-group,
 html:not([data-xp-appearance="classic"]) .xp-window select,
 html:not([data-xp-appearance="classic"]) .xp-updown button,
 html:not([data-xp-appearance="classic"]) .xp-window [role="tablist"] > button,
