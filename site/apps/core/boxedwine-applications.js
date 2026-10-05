@@ -47,13 +47,6 @@ export const boxedWineApplications = validateBoxedWineApplications([
     packagePath: "site/iframe/calculator/xp-calculator.zip",
   },
   {
-    id: "wordpad",
-    title: "WordPad",
-    icon: "WordPad.png",
-    executable: "wordpad/wordpad.exe",
-    packagePath: "site/iframe/wordpad/xp-wordpad.zip",
-  },
-  {
     id: "hearts",
     title: "Hearts",
     icon: "Hearts.png",

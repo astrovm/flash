@@ -251,10 +251,10 @@ export async function loadShell({
     availableVersion: null,
     bundledGames: [
       { id: "freecell" },
+      { id: "calculator" },
       { id: "hearts" },
       { id: "solitaire" },
       { id: "spider-solitaire" },
-      { id: "wordpad" },
     ],
     downloadedGameIds: [],
     downloadedGameBytes: 0,
