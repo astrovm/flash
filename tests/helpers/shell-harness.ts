@@ -201,6 +201,7 @@ export async function loadShell({
       moveTo() {},
       putImageData() {},
       rect() {},
+      setTransform() {},
       stroke() {},
     } as unknown as CanvasRenderingContext2D;
   };

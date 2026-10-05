@@ -81,6 +81,7 @@ type Manifest = {
   resourceBitmaps: ResourceBitmap[];
   resourcePngs?: ResourcePng[];
   resourceFiles?: ResourceFile[];
+  resourceCursors?: ResourceFile[];
   renderedAssets?: RenderedAsset[];
   auditFiles: DirectAsset[];
 };
@@ -104,6 +105,39 @@ type SourceRecord = {
   };
 };
 
+// An RT_CURSOR resource: a hotspot, then a monochrome DIB twice as tall,
+// holding the XOR image above the AND mask.
+const decodeCursorResource = (resource: Uint8Array) => {
+  const buffer = Buffer.from(resource);
+  const header = 4;
+  const width = buffer.readInt32LE(header + 4);
+  const height = buffer.readInt32LE(header + 8) / 2;
+  const bitsPerPixel = buffer.readUInt16LE(header + 14);
+  if (buffer.readUInt32LE(header) !== 40 || bitsPerPixel !== 1)
+    throw new Error("Cursor resources must be monochrome DIBs");
+  const palette = [0, 1].map((index) => {
+    const offset = header + 40 + index * 4;
+    return [buffer[offset + 2], buffer[offset + 1], buffer[offset]];
+  });
+  const stride = Math.ceil(width / 32) * 4;
+  const xorStart = header + 48;
+  const andStart = xorStart + stride * height;
+  const bit = (start: number, x: number, y: number) =>
+    (buffer[start + (height - 1 - y) * stride + (x >> 3)] >> (7 - (x % 8))) & 1;
+  const rgba = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y += 1)
+    for (let x = 0; x < width; x += 1) {
+      if (bit(andStart, x, y)) continue;
+      rgba.set([...palette[bit(xorStart, x, y)], 255], (y * width + x) * 4);
+    }
+  return {
+    width,
+    height,
+    hotspot: [buffer.readUInt16LE(0), buffer.readUInt16LE(2)],
+    rgba,
+  };
+};
+
 const decodeOs2Bitmap = (bitmapFile: Uint8Array) => {
   const buffer = Buffer.from(bitmapFile);
   const headerSize = buffer.readUInt32LE(14);
@@ -119,8 +153,10 @@ const decodeOs2Bitmap = (bitmapFile: Uint8Array) => {
     const offset = 26 + index * 3;
     return [buffer[offset + 2], buffer[offset + 1], buffer[offset], 255];
   });
-  const pixelOffset = buffer.readUInt32LE(10);
   const rowStride = Math.ceil((width * bitsPerPixel) / 32) * 4;
+  // wrestool writes the wrong pixel offset for 12-byte headers, whose
+  // palettes use 3-byte entries. The pixels follow the palette.
+  const pixelOffset = 26 + paletteEntries * 3;
   const rgba = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y += 1) {
     const sourceY = height - y - 1;
@@ -747,6 +783,30 @@ try {
     };
   }
 
+  for (const asset of manifest.resourceCursors ?? []) {
+    const extracted = await extractResourceFile(isoPath, asset, workDirectory);
+    const cursor = decodeCursorResource(extracted.content);
+    const png = await sharp(cursor.rgba, {
+      raw: { width: cursor.width, height: cursor.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+    await verifyOrWrite(asset.output, png, sha256(cursor.rgba));
+    records[relative("site", asset.output)] = {
+      isoSha256: manifest.source.sha256,
+      member: `I386/${asset.member}`,
+      sha256: sha256(png),
+      resource: {
+        parentSha256: extracted.parentSha256,
+        type: asset.resourceType,
+        id: asset.resourceId,
+        language: manifest.source.language,
+        frame: `${cursor.width}x${cursor.height}x1 hotspot ${cursor.hotspot.join(",")}`,
+        pixelSha256: sha256(cursor.rgba),
+      },
+    };
+  }
+
   for (const asset of manifest.renderedAssets ?? []) {
     const content = await readFile(join(projectDirectory, asset.output));
     const { data } = await sharp(content).ensureAlpha().raw().toBuffer({
@@ -786,7 +846,7 @@ try {
     await copyFile(manifestPath, join(auditDirectory, "manifest.json"));
   }
   console.log(
-    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length + (manifest.resourcePngs?.length ?? 0) + (manifest.resourceFiles?.length ?? 0) + (manifest.renderedAssets?.length ?? 0)} web assets from the authenticated XP SP3 ISO.`,
+    `${checkOnly ? "Verified" : "Extracted"} ${manifest.webAssets.length + (manifest.cabAssets?.length ?? 0) + (manifest.cursorImages?.length ?? 0) + manifest.resourceIcons.length + manifest.resourceBitmaps.length + (manifest.resourcePngs?.length ?? 0) + (manifest.resourceFiles?.length ?? 0) + (manifest.resourceCursors?.length ?? 0) + (manifest.renderedAssets?.length ?? 0)} web assets from the authenticated XP SP3 ISO.`,
   );
 } finally {
   await rm(workDirectory, { force: true, recursive: true });

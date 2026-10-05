@@ -88,14 +88,18 @@ const getRecentDocuments = () => {
 const openControlPanel = () => openSystemWindow("__control-panel");
 
 // ShellAbout: programs such as Task Manager pass their name and icon.
-const openAboutWindows = ({ application = "Windows", icon = "" } = {}) => {
+const openAboutWindows = ({
+  application = "Windows",
+  icon = "",
+  otherStuff = "",
+} = {}) => {
   const dialog = XPDialogs.createDialog({ title: `About ${application}` });
   dialog.el.classList.add("about-windows-dialog");
   dialog.body.innerHTML = `
     <img class="about-windows-banner" src="assets/xp/AboutWindows.png" alt="Microsoft Windows XP Professional">
     ${icon && `<img class="about-windows-icon" src="${icon}" alt="">`}
     <div class="about-windows-copy">
-      <p>Microsoft ® ${application}<br>Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)<br>Copyright © 2007 Microsoft Corporation</p>
+      <p>Microsoft ® ${application}<br>Version 5.1 (Build 2600.xpsp.080413-2111 : Service Pack 3)<br>Copyright © 2007 Microsoft Corporation${otherStuff && `<br>${otherStuff}`}</p>
       <p>This product is licensed under the terms of the <a href="https://www.microsoft.com/useterms/" target="_blank" rel="noreferrer">End-User<br>License Agreement</a> to:</p>
       <p class="about-windows-user">astro</p>
       <hr>

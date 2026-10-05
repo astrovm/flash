@@ -1155,7 +1155,7 @@ describe("Windows XP shell", () => {
     const shell = await loadShell({
       offlineSettings: { savePlayedGamesOffline: false },
     });
-    shell.window.location.hash = "#freecell";
+    shell.window.location.hash = "#hearts";
     await login(shell);
     await flushShell();
     expect(shell.offlineDownloads).toEqual([]);

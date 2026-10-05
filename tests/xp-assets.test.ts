@@ -69,6 +69,9 @@ describe("Windows XP asset provenance", () => {
       ...(manifest.resourceFiles ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),
+      ...(manifest.resourceCursors ?? []).map(({ output }) =>
+        output.replace(/^site\//, ""),
+      ),
       ...(manifest.renderedAssets ?? []).map(({ output }) =>
         output.replace(/^site\//, ""),
       ),

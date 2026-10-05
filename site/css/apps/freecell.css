@@ -1,0 +1,223 @@
+/* FreeCell: a standard menu bar over freecell.exe's green table. */
+.xp-native-program.xp-freecell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #007f00;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-freecell:focus {
+  outline: 0;
+}
+
+.freecell-menu-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex: none;
+  /* 19px bar plus XP's 1px white bottom line. */
+  height: 20px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #fff;
+  background: var(--xp-beige);
+}
+
+.freecell-menu-bar > button {
+  height: 19px;
+  padding: 0 6px 2px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+}
+
+.freecell-menu-bar > button:hover,
+.freecell-menu-bar > button[aria-expanded="true"] {
+  background: var(--sys-highlight);
+  color: var(--sys-highlight-text);
+}
+
+.xp-window:not(.active) .freecell-menu-bar > button {
+  color: #aca899;
+}
+
+/* freecell.exe draws the count at the right end of its menu bar. */
+.freecell-cards-left {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 2px;
+  height: 19px;
+  padding-top: 3px;
+  box-sizing: border-box;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.freecell-board {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  image-rendering: pixelated;
+}
+
+.freecell-board[data-cursor="down"] {
+  cursor:
+    url("../../assets/xp/freecell/DownArrow.png") 13 25,
+    s-resize;
+}
+
+.freecell-board[data-cursor="up"] {
+  cursor:
+    url("../../assets/xp/system/cursors/AlternateSelect.png") 15 0,
+    n-resize;
+}
+
+.freecell-board[data-cursor="wait"] {
+  cursor:
+    url("../../assets/xp/system/cursors/Busy.png") 15 15,
+    wait;
+}
+
+/* A maximized freecell.exe stays 640 pixels wide. */
+.xp-freecell-window.maximized {
+  max-width: 640px;
+}
+
+/* One move left: the title bar flashes. */
+.xp-freecell-window.freecell-flash .title-bar {
+  filter: saturate(0.2) brightness(1.1);
+}
+
+.freecell-game-number .dlg-body,
+.freecell-won .dlg-body p {
+  text-align: center;
+}
+
+.freecell-game-number input {
+  width: 64px;
+  margin: 6px auto 12px;
+  text-align: left;
+}
+
+.freecell-game-over .dlg-body p {
+  margin: 0 0 12px;
+}
+
+.freecell-move-column-buttons {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px 40px 4px;
+}
+
+.freecell-move-column-buttons button:not(:last-child) {
+  width: 150px;
+}
+
+.freecell-options .dlg-body {
+  display: flex;
+  gap: 10px;
+}
+
+.freecell-options-list {
+  display: grid;
+  gap: 10px;
+}
+
+.freecell-options-list label {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.freecell-statistics-text dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  width: 200px;
+  margin: 0 0 12px;
+}
+
+.freecell-statistics-text dt,
+.freecell-statistics-text dd {
+  margin: 0;
+}
+
+.freecell-statistics-text .indent {
+  padding-left: 60px;
+}
+
+/* Dialogs laid out from their resource templates. */
+.xp-template-dialog {
+  width: auto;
+}
+
+.xp-template-body {
+  position: relative;
+  box-sizing: content-box;
+  padding: 0;
+}
+
+.xp-template-control {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.xp-template-text {
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  white-space: pre-wrap;
+  tab-size: 40px;
+}
+
+.xp-template-text.center {
+  text-align: center;
+}
+
+/* XP's 13-pixel box, then the text three pixels after it. */
+.xp-template-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-template-checkbox input {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin: var(--inset) 0 0;
+}
+
+.xp-template-checkbox span {
+  margin-top: var(--inset);
+}
+
+.xp-template-body input.xp-input:focus {
+  outline: 0;
+}
+
+.freecell-statistics-line {
+  position: relative;
+  height: 13px;
+}
+
+.freecell-statistics-line span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}

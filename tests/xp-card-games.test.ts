@@ -29,14 +29,6 @@ const games = [
     files: ["cards.dll", "mfc42u.dll", "mshearts.chm", "mshearts.exe"],
   },
   {
-    id: "freecell",
-    applicationId: "__freecell",
-    title: "FreeCell",
-    archive: "xp-freecell",
-    executable: "freecell.exe",
-    files: ["cards.dll", "freecell.exe"],
-  },
-  {
     id: "spider-solitaire",
     applicationId: "__spider-solitaire",
     title: "Spider Solitaire",
