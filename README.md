@@ -12,7 +12,7 @@ A Windows XP-style desktop that runs in your browser. Play classic games and use
 ## Features
 
 - **XP shell.** Explorer, Paint, Notepad, Pinball, themes, and settings.
-- **Original XP apps.** Such as Calculator, WordPad, and the card games.
+- **Original XP apps.** Such as Calculator and the card games.
 - **Real windows.** Drag game windows around, switch tasks, go fullscreen, and set the volume.
 - **Find games fast.** Favorites, recently played, categories, search, and deep links.
 - **Offline play.** With optional downloads for individual games.

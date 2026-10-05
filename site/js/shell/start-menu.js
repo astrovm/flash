@@ -972,7 +972,6 @@ const getAllProgramsTree = () => {
           action: openNotepad,
         },
         xpProgramMenuItem("__paint"),
-        xpProgramMenuItem("__wordpad"),
         {
           id: "windows-explorer",
           label: "Windows Explorer",

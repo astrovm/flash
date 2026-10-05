@@ -505,19 +505,6 @@
       "pixelSha256": "893735039091dc4dd0db921852ff545e4d65aa9d31624eca87099869690eda7d"
     }
   },
-  "assets/xp/icons/WordPad.png": {
-    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
-    "member": "I386/WORDPAD.EX_",
-    "sha256": "509b733cf7ad0cea2533a7c066d80522bea4925e49ba4bf06b8c848e9be3365c",
-    "resource": {
-      "parentSha256": "c0343d0642c6f5efad0d74ea3c6a14b96b209d2413f060039f0874aaf998c7a4",
-      "type": 14,
-      "id": 128,
-      "language": 1033,
-      "frame": "16x16x32",
-      "pixelSha256": "895d2d12e1ab1a359e5356a1476751669fa8ad291499bba3f1e8b474cd85e041"
-    }
-  },
   "assets/xp/icons/Notepad.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/NOTEPAD.EX_",

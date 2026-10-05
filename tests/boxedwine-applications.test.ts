@@ -14,19 +14,8 @@ const application = (index: number) => ({
 });
 
 describe("BoxedWine application catalog", () => {
-  test("registers Hearts and WordPad with only generic application data", () => {
-    expect(
-      boxedWineApplications.filter(({ id }) =>
-        ["hearts", "wordpad"].includes(id),
-      ),
-    ).toEqual([
-      {
-        id: "wordpad",
-        title: "WordPad",
-        icon: "WordPad.png",
-        executable: "wordpad/wordpad.exe",
-        packagePath: "site/iframe/wordpad/xp-wordpad.zip",
-      },
+  test("registers Hearts with only generic application data", () => {
+    expect(boxedWineApplications.filter(({ id }) => id === "hearts")).toEqual([
       {
         id: "hearts",
         title: "Hearts",

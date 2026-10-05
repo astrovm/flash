@@ -239,7 +239,6 @@ const XP_ICON_PATHS = Object.freeze({
   "WindowsMessenger.png": "assets/xp/icons/WindowsMessenger.png",
   "WindowsMessengerLarge.png": "assets/xp/icons/WindowsMessengerLarge.png",
   "WindowsMovieMaker.png": "assets/xp/icons/WindowsMovieMaker.png",
-  "WordPad.png": "assets/xp/icons/WordPad.png",
   "Display.png": "assets/xp/icons/Display.png",
   "Delete.png": "assets/xp/icons/Delete.png",
   "Rename.png": "assets/xp/icons/Rename.png",

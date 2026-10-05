@@ -16,7 +16,7 @@ import {
 const require = createRequire(import.meta.url);
 const { unzipSync } = require("fflate");
 const projectDirectory = join(dirname(fileURLToPath(import.meta.url)), "..");
-const appDirectory = join(projectDirectory, "site", "iframe", "wordpad");
+const appDirectory = join(projectDirectory, "site", "iframe", "calculator");
 const runtimeDirectory = join(
   projectDirectory,
   "site",
@@ -29,16 +29,16 @@ const sha256 = (content: Uint8Array) =>
 
 afterEach(cleanupShells);
 
-const launchWordPad = (shell) => {
+const launchCalculator = (shell) => {
   shell.document.getElementById("start-button").click();
   shell.document.getElementById("all-programs-button").click();
   const flyouts = shell.document.getElementById("start-menu-flyouts");
   flyouts.querySelector('[data-program-id="accessories"]').click();
-  flyouts.querySelector('[data-program-id="wordpad"]').click();
-  return shell.document.querySelector('.xp-window[data-game="__wordpad"]');
+  flyouts.querySelector('[data-program-id="calculator"]').click();
+  return shell.document.querySelector('.xp-window[data-game="__calculator"]');
 };
 
-describe("Windows XP WordPad through BoxedWine", () => {
+describe("Windows XP Calculator through BoxedWine", () => {
   test("fits proportionally when its native bounds do not fit", async () => {
     const shell = await login(await loadShell());
     const desktop = shell.document.getElementById("desktop");
@@ -47,12 +47,12 @@ describe("Windows XP WordPad through BoxedWine", () => {
       clientHeight: { configurable: true, value: 814 },
     });
 
-    const wordpadWindow = launchWordPad(shell);
+    const calculatorWindow = launchCalculator(shell);
 
-    expect(wordpadWindow.style.left).toBe("0px");
-    expect(wordpadWindow.style.top).toBe("0px");
-    expect(wordpadWindow.style.width).toBe("390px");
-    expect(wordpadWindow.style.height).toBe("297px");
+    expect(calculatorWindow.style.left).toBe("0px");
+    expect(calculatorWindow.style.top).toBe("0px");
+    expect(calculatorWindow.style.width).toBe("390px");
+    expect(calculatorWindow.style.height).toBe("297px");
 
     Object.defineProperties(desktop, {
       clientWidth: { configurable: true, value: 844 },
@@ -60,10 +60,10 @@ describe("Windows XP WordPad through BoxedWine", () => {
     });
     shell.window.dispatchEvent(new shell.window.Event("resize"));
 
-    expect(wordpadWindow.style.left).toBe("0px");
-    expect(wordpadWindow.style.top).toBe("0px");
-    expect(wordpadWindow.style.width).toBe("480px");
-    expect(wordpadWindow.style.height).toBe("360px");
+    expect(calculatorWindow.style.left).toBe("0px");
+    expect(calculatorWindow.style.top).toBe("0px");
+    expect(calculatorWindow.style.width).toBe("480px");
+    expect(calculatorWindow.style.height).toBe("360px");
 
     Object.defineProperties(desktop, {
       clientWidth: { configurable: true, value: 1024 },
@@ -71,8 +71,8 @@ describe("Windows XP WordPad through BoxedWine", () => {
     });
     shell.window.dispatchEvent(new shell.window.Event("resize"));
 
-    expect(parseFloat(wordpadWindow.style.width)).toBeLessThan(1024);
-    expect(parseFloat(wordpadWindow.style.height)).toBeLessThan(738);
+    expect(parseFloat(calculatorWindow.style.width)).toBeLessThan(1024);
+    expect(parseFloat(calculatorWindow.style.height)).toBeLessThan(738);
   });
 
   test("regrows with the work area while its native bounds still do not fit", async () => {
@@ -90,54 +90,54 @@ describe("Windows XP WordPad through BoxedWine", () => {
       clientHeight: { configurable: true, value: 360 },
     });
 
-    const wordpadWindow = launchWordPad(shell);
-    expect(wordpadWindow.style.width).toBe("480px");
-    expect(wordpadWindow.style.height).toBe("360px");
+    const calculatorWindow = launchCalculator(shell);
+    expect(calculatorWindow.style.width).toBe("480px");
+    expect(calculatorWindow.style.height).toBe("360px");
 
     // The generic provisional bounds still do not fit, so the window grows
     // proportionally as more space becomes available.
     resizeDesktop(900, 400);
 
-    expect(wordpadWindow.style.width).toBe("538px");
-    expect(wordpadWindow.style.height).toBe("400px");
+    expect(calculatorWindow.style.width).toBe("538px");
+    expect(calculatorWindow.style.height).toBe("400px");
   });
 
   test("mounts in the boot-prepared shared runtime as a resizable XP window", async () => {
     const shell = await login(await loadShell());
-    const wordpadWindow = launchWordPad(shell);
+    const calculatorWindow = launchCalculator(shell);
     const frame = shell.document.querySelector(
       ".boxedwine-shared-runtime-frame",
     );
     const url = new URL(frame.src);
 
-    expect(wordpadWindow.querySelector(".title-text").textContent).toBe(
-      "WordPad",
+    expect(calculatorWindow.querySelector(".title-text").textContent).toBe(
+      "Calculator",
     );
     expect(url.pathname).toBe("/vendor/boxedwine/26R1/index.html");
     expect(new URL(url.searchParams.get("appRoot")).pathname).toBe(
       "/iframe/boxedwine-runtime/",
     );
     expect(url.searchParams.get("archive")).toBe("xp-runtime");
-    expect(url.searchParams.get("executable")).toBe("wordpad/wordpad.exe");
+    expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
     expect(url.searchParams.get("resolution")).toBe("1024x738");
     expect(url.searchParams.get("persistent")).toBe("true");
     expect(url.searchParams.get("sound")).toBe("true");
     expect(
-      wordpadWindow.querySelector(".boxedwine-shared-app-host"),
+      calculatorWindow.querySelector(".boxedwine-shared-app-host"),
     ).not.toBeNull();
-    expect(wordpadWindow.querySelectorAll(".resize-handle")).toHaveLength(8);
-    expect(shell.window.location.hash).toBe("#wordpad");
+    expect(calculatorWindow.querySelectorAll(".resize-handle")).toHaveLength(8);
+    expect(shell.window.location.hash).toBe("#calculator");
     await flushShell();
-    expect(shell.offlineDownloads).toEqual(["wordpad"]);
+    expect(shell.offlineDownloads).toEqual(["calculator"]);
   });
 
-  test("opens WordPad from its deep link", async () => {
+  test("opens Calculator from its deep link", async () => {
     const shell = await loadShell();
-    shell.window.location.hash = "#wordpad";
+    shell.window.location.hash = "#calculator";
     await login(shell);
 
     expect(
-      shell.document.querySelector('.xp-window[data-game="__wordpad"]'),
+      shell.document.querySelector('.xp-window[data-game="__calculator"]'),
     ).not.toBeNull();
   });
 
@@ -148,24 +148,24 @@ describe("Windows XP WordPad through BoxedWine", () => {
     shell.document.head.prepend(base);
     shell.window.history.replaceState(null, "", "/releases/26.08.12-abcdef1/");
 
-    launchWordPad(shell);
+    launchCalculator(shell);
 
     expect(shell.window.location.pathname).toBe("/");
-    expect(shell.window.location.hash).toBe("#wordpad");
+    expect(shell.window.location.hash).toBe("#calculator");
   });
 
-  test("shares one runtime with Calculator while keeping separate shell windows", async () => {
+  test("shares one runtime with Hearts while keeping separate shell windows", async () => {
     const shell = await login(await loadShell());
-    const wordpadWindow = launchWordPad(shell);
+    const calculatorWindow = launchCalculator(shell);
     shell.document.getElementById("start-button").click();
     shell.document.getElementById("all-programs-button").click();
     const flyouts = shell.document.getElementById("start-menu-flyouts");
-    flyouts.querySelector('[data-program-id="accessories"]').click();
-    flyouts.querySelector('[data-program-id="calculator"]').click();
+    flyouts.querySelector('[data-program-id="games"]').click();
+    flyouts.querySelector('[data-program-id="hearts"]').click();
 
-    expect(wordpadWindow.isConnected).toBeTrue();
+    expect(calculatorWindow.isConnected).toBeTrue();
     expect(
-      shell.document.querySelector('.xp-window[data-game="__calculator"]'),
+      shell.document.querySelector('.xp-window[data-game="__hearts"]'),
     ).not.toBeNull();
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
@@ -197,11 +197,7 @@ describe("Windows XP WordPad through BoxedWine", () => {
     expect(sha256(packageBytes)).toBe(appSources.windowsXp.package.sha256);
 
     const files = unzipSync(packageBytes);
-    expect(Object.keys(files).sort()).toEqual([
-      "mfc42u.dll",
-      "wordpad.exe",
-      "wordpad.hlp",
-    ]);
+    expect(Object.keys(files).sort()).toEqual(["calc.chm", "calc.exe"]);
     for (const [filename, source] of Object.entries(
       appSources.windowsXp.files,
     )) {
