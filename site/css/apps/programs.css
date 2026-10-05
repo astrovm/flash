@@ -659,20 +659,20 @@
     sans-serif;
 }
 
+/* XP property sheet tabs, like Taskbar Properties. The selected tab isn't
+   bold. */
 .project-settings-tabs {
   position: absolute;
-  top: 8px;
+  z-index: 2;
+  top: 9px;
   left: 8px;
-  right: 8px;
   display: flex;
-  align-items: end;
-  gap: 1px;
-  border-bottom: 1px solid #919b9c;
+  align-items: flex-start;
 }
 
 .project-settings-tabs button {
-  height: 23px;
-  padding: 2px 11px;
+  height: 18px;
+  padding: 0 6px 1px;
   border: 1px solid #919b9c;
   border-bottom: 0;
   border-radius: 3px 3px 0 0;
@@ -681,11 +681,11 @@
 }
 
 .project-settings-tabs button.active {
-  position: relative;
-  height: 26px;
-  margin-bottom: -1px;
-  background: #fff;
-  font-weight: 700;
+  z-index: 1;
+  height: 21px;
+  margin: -2px -2px 0;
+  padding: 0 8px 3px;
+  background: #f5f3ed;
 }
 
 .project-settings-panel {

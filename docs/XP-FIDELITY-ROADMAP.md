@@ -13,6 +13,11 @@ and verification limits in the table below.
   usability. Do not resize screenshots
   to make comparisons fit. Record actual guest mode, browser viewport, and any
   unavailable display-density checks.
+- Zoom and display scaling must look sharp at any ratio. On fractional ratios
+  (125%, 150%, 175%) `site/js/shell/display-scale.js` lays the page out at
+  the next whole ratio and scales the frame down, so XP's one-pixel art never
+  lands between device pixels. Canvases draw at that whole ratio. Check new
+  work at 1× and 1.25×.
 - Blue, Olive Green, Silver, and Windows Classic must work throughout the app.
   Validate each area in all four schemes, rather than postponing themes.
 - Use native DOM text and the original extracted fonts globally. Browser text
