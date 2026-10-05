@@ -19,6 +19,10 @@ const minesweeperApplication = defineLazyApplication(minesweeperMetadata, () =>
     (module) => module.minesweeperApplication,
   ),
 );
+import { applicationMetadata as freecellMetadata } from "./freecell/metadata.js";
+const freecellApplication = defineLazyApplication(freecellMetadata, () =>
+  import("./freecell/index.js").then((module) => module.freecellApplication),
+);
 import { applicationMetadata as pinballMetadata } from "./pinball/metadata.js";
 const pinballApplication = defineLazyApplication(pinballMetadata, () =>
   import("./pinball/index.js").then((module) => module.pinballApplication),
@@ -29,6 +33,7 @@ export const applicationRegistry = createApplicationRegistry([
   ...systemToolApplications,
   ...systemApplications,
   ...boxedWineShellApplications,
+  freecellApplication,
   minesweeperApplication,
   notepadApplication,
   paintApplication,

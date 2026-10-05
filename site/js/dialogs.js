@@ -107,6 +107,7 @@
   //   modal    - block other UI and trap focus (default: true)
   //   onCancel - Escape/title-close behavior (default: close with null)
   //   help     - add the title bar ? button for "What's This?" help
+  //   systemMenu - false for dialogs without a close button (default: true)
   // Returns { el, body, close, onResult }.
   // XP's "What's This?" help: the title bar ? button arms help mode, and the
   // next click on a control shows its help text. Controls without help get
@@ -169,6 +170,7 @@
     modal = true,
     onCancel = null,
     help = false,
+    systemMenu = true,
   } = {}) => {
     const previouslyFocused = document.activeElement;
 
@@ -195,7 +197,7 @@
     closeBtn.title = "Close";
     closeBtn.setAttribute("aria-label", "Close");
     closeBtn.addEventListener("click", () => dialog.cancel());
-    titleButtons.appendChild(closeBtn);
+    if (systemMenu) titleButtons.appendChild(closeBtn);
     titleBar.append(titleText, titleButtons);
 
     const body = document.createElement("div");

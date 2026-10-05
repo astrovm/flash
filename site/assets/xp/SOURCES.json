@@ -279,6 +279,11 @@
     "member": "I386/NO_M.CU_",
     "sha256": "0cc2f6fc4136eac71c037393d603fa10e7fe173cad969959f1ea642b6f2aa3d1"
   },
+  "assets/xp/system/cursors/AlternateSelect.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/UP_M.CU_",
+    "sha256": "077aef0b68707aa38f68a039e968a16e63663283b4cb2c14ea78bb2d8612a359"
+  },
   "assets/xp/icons/ProgramAccessDefaultsSmall.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/MORICONS.DL_",
@@ -2762,6 +2767,19 @@
       "pixelSha256": "aab43d3bc1dfc29f169424ef6a3826730af8d5e983191e8ebf5a450880d00264"
     }
   },
+  "assets/xp/freecell/FreeCell-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FREECELL.EX_",
+    "sha256": "210e69c79159812ff680ac22485b0fbc03aee89467b2bd8b395a9929e18a18e6",
+    "resource": {
+      "parentSha256": "ba517f623b778f4b842f559ea344cb64d3cae9de172aecfa4e330c733baad601",
+      "type": 14,
+      "id": 601,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "a94328dfb4741fefb3439de9351ef0e76bcf54daa2a45016e0f0591b5a5c3e25"
+    }
+  },
   "assets/xp/taskbar/blue-toolbar-background-0.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -3713,176 +3731,176 @@
       "pixelSha256": "e4a58b426faf937bdcd910a1a2df716c7337c04405c6950d94126e8adc69b41f"
     }
   },
-  "assets/xp/solitaire/cards/1.png": {
+  "assets/xp/cards/faces/1.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "2362bad03c13e0562648d488efee2a6210a3b169898a2d4e7f01dd453f346727",
+    "sha256": "6d8b39b3da7e3d6e08b1ddedbbc9bd98e0f22d1d65377d6922ca73841ec3a99e",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 1,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "e78c5e6bb0b4e3076f48c281fc89fa274d4d5d9c86752f11a3fc9d167ff0aebe"
+      "pixelSha256": "8c2ac7ea48f4baf8aef1e1ef9d67b0e82ece8dc85b1cb5816d877083f78170da"
     }
   },
-  "assets/xp/solitaire/cards/2.png": {
+  "assets/xp/cards/faces/2.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "b85a940062bda45fbe928e810e273f4c189c9df847e0d0ae79018614907d9fb0",
+    "sha256": "4c10a212e3834d0e310397d9f4ba118459198d2dffc6afcd477993d35c1b14b8",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 2,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "e0d0842f6d9e962cf1acd91855c60911525bc14ace29abd21a2c324cdaf793af"
+      "pixelSha256": "43d5583e72ad8baa63a5180c0569709f9ab6a80d5fb3b64df8d181f8c95c8034"
     }
   },
-  "assets/xp/solitaire/cards/3.png": {
+  "assets/xp/cards/faces/3.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "55682c5683bd9d649ca4f2ecb3f8dbb4d468705cf414f561cd57f011d4d664a5",
+    "sha256": "1e167899c88b87970702ba1ed99082b954e9ef575cbc23e84ef9c4998cb74439",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 3,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "0a816b235160ccba0b57d58c91014b07094bf38c518d6394b61f9ce9074b99ca"
+      "pixelSha256": "baae0f08592d90c1611c5f7c898a134ca8564ce9528cfb7042d7315acf7ab552"
     }
   },
-  "assets/xp/solitaire/cards/4.png": {
+  "assets/xp/cards/faces/4.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "9287ec51e4f8575009e9dd9f570919776ecb980730a6d679ab785097e0f98c95",
+    "sha256": "7c710e4ad83b035ab2209552c3e66cd89d6ec5557a074e37590a235a517053a5",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 4,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "35d8b970a6e9d1d4d2430e50167c4ae78666f30a18f70242714edfd432e944d7"
+      "pixelSha256": "5d6281b209c8071d6ce2995ac926d9a677287790387fc57482abb57db58cfd49"
     }
   },
-  "assets/xp/solitaire/cards/5.png": {
+  "assets/xp/cards/faces/5.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "006315dfe03a7533e8278cae41ac50daf7342184de10fca6e752ea3213871128",
+    "sha256": "7ba8b028aa7f31bbe96cccc6201957332e32a52a8cd76029543dc0e450aaa60b",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 5,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "3d0db8f8ac4f1d1b31ba8f73bb82f46f4bf6b9ef015ab665629b5453346defa6"
+      "pixelSha256": "2539f2bff249c454e3a76169803a4df832231661502bd4638199a2df65a0ce79"
     }
   },
-  "assets/xp/solitaire/cards/6.png": {
+  "assets/xp/cards/faces/6.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "3940e53cafebf5c422b75115d23345e0bbf486cfb441c9832ab6a794bd355cf9",
+    "sha256": "02ee6e0b5af1763e928731aaa39d7f664e255a94e20d26401913034f94dcd3b3",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 6,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "92696e9d4e150590b7b7471dc2ece44ef27760f91d473ba490bd20339a0a5d83"
+      "pixelSha256": "a33a67e257e2ec831689fa65f967975232246c990f8081d864980af0be57656b"
     }
   },
-  "assets/xp/solitaire/cards/7.png": {
+  "assets/xp/cards/faces/7.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "28a5eff339e31319f3f3c667aa156976c461e3546f675858fcf857361bb8735f",
+    "sha256": "1af3bc511716a58829bc9bb7d7fd6afbeb85c9d5c49ec905318e5d90c61548f9",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 7,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "a2b8d7499f32967b254c70b63b50147d00968806aaf38bac2c6c77bfed5c532b"
+      "pixelSha256": "f39dd5d4ac44c1f6e6a1191f20e451b8aa44fdf1bfc0d44062571c17455d7e2c"
     }
   },
-  "assets/xp/solitaire/cards/8.png": {
+  "assets/xp/cards/faces/8.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "3449b6e4e6361f3f8c55333cb8ebb467a3fcae0f5fe10071101cfcbb941b730f",
+    "sha256": "aa1b98b401244acc664c42da8392244e941c5247ba6885f6ad25958677ff2dcf",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 8,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "7678225ce970fc0bc54916aa3a143ca758f9446935c04272982c2147d84516b5"
+      "pixelSha256": "8ee6016531aeaa74807056186597ea52d765771862e22b18f9f6c7a19bbb2cfe"
     }
   },
-  "assets/xp/solitaire/cards/9.png": {
+  "assets/xp/cards/faces/9.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "b1bbdf4b3958e5d966bbcf860d7d6b4a4207514087c57acaf6aee1d14c43a13d",
+    "sha256": "44dfb6c58f6d69f74ef98c8be75c0b73b9edd31e879769353b119dd81a8e874b",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 9,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "b81eb82402638ed0fde8ffaaf941c6f5f5134b9678ed2bfa3ffb0152e8c63478"
+      "pixelSha256": "f7b1c0aa4025869d98add989a7bdf14a985a0ae8e8b9ffbac517ae82b3cab7e7"
     }
   },
-  "assets/xp/solitaire/cards/10.png": {
+  "assets/xp/cards/faces/10.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "598d6ff7a67bb5aae584be6731b9d785f6f2935430080aa217feeedc64e069e3",
+    "sha256": "bcdd7a7cc844f107300de341189bd72ef0e5999f1e561dc4584a480b1412752f",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 10,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "f54d0bb6fbdb9c8ec3c57d30207c6ed251deb60ccbd83657b6748d3c4a94e3ed"
+      "pixelSha256": "22d331185324172c8c4dafa033a71b414f472b6a4aa317273aa2465323ba457b"
     }
   },
-  "assets/xp/solitaire/cards/11.png": {
+  "assets/xp/cards/faces/11.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "2702e26041b1a4381795ab5040b00469ba3c9fcf1a80562f15e2660ef3dd31f4",
+    "sha256": "8b767c9837d853f1fd7e3f6c0ae37021455a6174851fa4a1d4f330c96fc44dff",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 11,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "92206e4bed633fbba3aba04d96d807f6d7e5a97a3f534f818a9a5e43ca0b90a4"
+      "pixelSha256": "ae9c2ea570f720dcfdef6daec92201b4f2bce2d61037300298c2afc7217c6b7e"
     }
   },
-  "assets/xp/solitaire/cards/12.png": {
+  "assets/xp/cards/faces/12.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "91d2ac6e484924207084d9260464bee53b9b497275d597e630f1945baa633814",
+    "sha256": "01ce4e39d9488b255aeb79f968b6136d31c9231fe160be5afeaefd9d841db2c7",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 12,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "2e4efeac618d70d17dd8171996bdc205a689801e03a481f6556fd45dfe56110c"
+      "pixelSha256": "b7180ed95fcd212cc81093d0fcdec07255262b52c3640ecee9cfd5eb4dd4cb88"
     }
   },
-  "assets/xp/solitaire/cards/13.png": {
+  "assets/xp/cards/faces/13.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "1d1887a071fdeab17b9d8aadde206f6c1577519599a0bc5b25f47ff58d9fc9d4",
+    "sha256": "7f730887820dcddb758526de8e38b69d9ffbd7752e604d6f97107e860197f5de",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 13,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "94d215a5cc0b74fefbcce1b5af86d356aad1ed08896e89f819745f75e557c31f"
+      "pixelSha256": "4ed838ad0334a9fe5450cbd5d7663c96669482181e7eaa6be670f5ce63a46a0b"
     }
   },
-  "assets/xp/solitaire/cards/14.png": {
+  "assets/xp/cards/faces/14.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "0bf4d016613a6822ede742cfd80563a8a241e3f51795b69b854876ba7a18a1b6",
@@ -3895,7 +3913,7 @@
       "pixelSha256": "9ad8131d29520aa81f83b83e7a82b3436a582a816143cd72ed29023696a84d9d"
     }
   },
-  "assets/xp/solitaire/cards/15.png": {
+  "assets/xp/cards/faces/15.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "7d6260a958fd070e120e5953179ee3da1ec96916dd3e4416689b4c09016dc374",
@@ -3908,7 +3926,7 @@
       "pixelSha256": "46b5a2665ebf55776b33861e8dce1cc84d430917c5342bdb70fa18f0057bce86"
     }
   },
-  "assets/xp/solitaire/cards/16.png": {
+  "assets/xp/cards/faces/16.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "95a8cfd1d8ce3c3374bfdb4449967255ca748ab82dd61f55b9857569d9bf6e03",
@@ -3921,7 +3939,7 @@
       "pixelSha256": "d660d543bf818418874847d495dd358966ba6e5e3549d9bccc114fa2206fec1e"
     }
   },
-  "assets/xp/solitaire/cards/17.png": {
+  "assets/xp/cards/faces/17.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "47b84d6bdc8246ba0ad90313c0bccbc3d96b3d8bf87eb1d1df19a5cf275b981a",
@@ -3934,7 +3952,7 @@
       "pixelSha256": "491793153648471c58f8b1841b7fc94473ce4abd03eaefc2211465e8c30a1e13"
     }
   },
-  "assets/xp/solitaire/cards/18.png": {
+  "assets/xp/cards/faces/18.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "def69feab17aa30b2079a478397eea7e35e553e8531ec63be7761f6cbec5dcdc",
@@ -3947,7 +3965,7 @@
       "pixelSha256": "fd988efa757c9da7735dedd6270bd149154d4044e1dd8cd350e8b4ff6879f4e9"
     }
   },
-  "assets/xp/solitaire/cards/19.png": {
+  "assets/xp/cards/faces/19.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "2274d5ec207db05caa7819f39b6d08eb96a317e3a3b215d125f7833eeffcba14",
@@ -3960,7 +3978,7 @@
       "pixelSha256": "65cd8c210b5fc7759f4729d992855d243772372d1645da096180e016883e2118"
     }
   },
-  "assets/xp/solitaire/cards/20.png": {
+  "assets/xp/cards/faces/20.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "ad0393e28b87f1c7c5341a2121581da76b829d189189a05c3bfcd7c374652021",
@@ -3973,7 +3991,7 @@
       "pixelSha256": "77d93e4bc257a563b480614c99c36fc387a7063917243997a4a97995038d10ec"
     }
   },
-  "assets/xp/solitaire/cards/21.png": {
+  "assets/xp/cards/faces/21.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "c68e44de7a14b4e9d0e2adf2cc42be2c97dd67e47ca6d7bfba366661d1f6fa6a",
@@ -3986,7 +4004,7 @@
       "pixelSha256": "7a4ce3d46c48183bc99f8f59f882698e5f98bbefded8f38e458d0e2220028d76"
     }
   },
-  "assets/xp/solitaire/cards/22.png": {
+  "assets/xp/cards/faces/22.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "92b0fb34a0279ccbb0911c09d2b7dfe664fd3f5293e2a7220d458232acd8405f",
@@ -3999,7 +4017,7 @@
       "pixelSha256": "43410a58cb7dcd1bfa2a0da021cfdff1ca512187002f8806568f5f521b45f99d"
     }
   },
-  "assets/xp/solitaire/cards/23.png": {
+  "assets/xp/cards/faces/23.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "4c6182174fa72ed4d8cc7d401baa4d5155605879467b1707f5b325df33786bc6",
@@ -4012,46 +4030,46 @@
       "pixelSha256": "73f561b3258fe13bb3cc21c3477dd59074fe62d4fce96c9a478f55126ab6ecbd"
     }
   },
-  "assets/xp/solitaire/cards/24.png": {
+  "assets/xp/cards/faces/24.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "00da316dcf8a71fef49cbb930167f4e912c33d477546988fad51c36e66d2f13e",
+    "sha256": "554e6d2ca5dfbedaf70a5badccf274bc5a722d43eb44925f7b78725331eab86a",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 24,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "824d06b5ffa9d0f896273f401f2df2f419841c1dd54cd41a23ec8b7d2dc03cfa"
+      "pixelSha256": "e1168e5fac1812d93f765bc7d71d59f6dcb161ff6a26afa363b8863b5693fa63"
     }
   },
-  "assets/xp/solitaire/cards/25.png": {
+  "assets/xp/cards/faces/25.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "c5e82a547c1bf1f7876f1ef38cad48da2780947c95a0b9f03c27b7d4231988bd",
+    "sha256": "1d75afed8723606dc2a0b54559ae096d4a668d0e1fbe8e0a998f879cd6e16e47",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 25,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "ef13dc45a56309cceac922e46c3d6326d0c612831d2033a53cdf4efc4689da33"
+      "pixelSha256": "12f934af901f899c5150b537d41eda94aa42392166aa333bc15ed1bbe146a6e7"
     }
   },
-  "assets/xp/solitaire/cards/26.png": {
+  "assets/xp/cards/faces/26.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "7db5c0d4251396bcb25622d36e59ee88a93aed5935d12874af6e9f6f8ac8065f",
+    "sha256": "1fd9358b78de221eb026dbeb2dcd383a3e9e5dcf55b3fd3d36b79224bbd9d5fc",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 26,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "826b06f1a7de84b74a756e2a047e8d7a3747e55c19e83a18afd29df7ab28ddaa"
+      "pixelSha256": "3723250efa8516cc93fc3faff2aa7a14bb0c88cdd4b34950b40440affc3e0d73"
     }
   },
-  "assets/xp/solitaire/cards/27.png": {
+  "assets/xp/cards/faces/27.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "5a73a6a3e53e7dc353eec779e847a091c4bd751477e792dbebd18151de2f5c72",
@@ -4064,7 +4082,7 @@
       "pixelSha256": "33677908a8e36007e14425e310d8c67f6664e5ae708db99d9a2a4578f72d250e"
     }
   },
-  "assets/xp/solitaire/cards/28.png": {
+  "assets/xp/cards/faces/28.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "d217df1e343bd4af56e9256c413475e80d02271f0c2cb01b13daa05d70d84f4a",
@@ -4077,7 +4095,7 @@
       "pixelSha256": "b7ea2fe860a6a1dd1630e90243ff2628d4fe91748403e8535f77ec65e780e0f2"
     }
   },
-  "assets/xp/solitaire/cards/29.png": {
+  "assets/xp/cards/faces/29.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "d721a00f0b833178db817057cb44eb5818ceaa29b1758f9d108daa1a99e2a5d5",
@@ -4090,7 +4108,7 @@
       "pixelSha256": "c526f69a2bdcd8374f16ca169aee1e1dc3a2d5b2faf3969d355d2131cb7cb230"
     }
   },
-  "assets/xp/solitaire/cards/30.png": {
+  "assets/xp/cards/faces/30.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "6f5ba1d41c9921b64a2e82b8f85130877b6821bce137d68a43d4220894457f75",
@@ -4103,7 +4121,7 @@
       "pixelSha256": "c6c17c7f96613d0c31df6ad2555f9aed62d3fe2db3fde246ec79a51aae058031"
     }
   },
-  "assets/xp/solitaire/cards/31.png": {
+  "assets/xp/cards/faces/31.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "7a45854ac4944f805f8f40488c0ef7348ca6618cf0ce76a62c99f0e0d54c559a",
@@ -4116,7 +4134,7 @@
       "pixelSha256": "00b962abd9bab00de91d0a34975144f293c6d7562ee82d88fb8187705c98c1e3"
     }
   },
-  "assets/xp/solitaire/cards/32.png": {
+  "assets/xp/cards/faces/32.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "783001f2e53d9bcf75c2baa715767869ce1d4b4b5451f12b8ffc8b6d6ebe6999",
@@ -4129,7 +4147,7 @@
       "pixelSha256": "3b8c07586bc8f923ee6001fac9aa70cb8370db6cb834dd83cbad41b1ae5e8bce"
     }
   },
-  "assets/xp/solitaire/cards/33.png": {
+  "assets/xp/cards/faces/33.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "86c9adb0fc70821b5deae55432dd6590926fcad11f40fbc35a74d9a1d79c5c97",
@@ -4142,7 +4160,7 @@
       "pixelSha256": "3798c2c78598a1943fef0bec96a5219a3c48fed4a258464f7970dd7243bae163"
     }
   },
-  "assets/xp/solitaire/cards/34.png": {
+  "assets/xp/cards/faces/34.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "6789d34d1801665dea83344bfec0191e07446f87468e11a92a17e4a387f5ad0d",
@@ -4155,7 +4173,7 @@
       "pixelSha256": "10ae19ceb1fe54c56b9f4da9279f629d42785f981b32630487f22d7c9a53bca8"
     }
   },
-  "assets/xp/solitaire/cards/35.png": {
+  "assets/xp/cards/faces/35.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "19559142501cb016b199a89335e652b713e4b16405f8ed15b4c7c925af840fc2",
@@ -4168,7 +4186,7 @@
       "pixelSha256": "27fd2610ca86aeea14717cd866b4b1a9927ae29c609ecd311fc74558839e9901"
     }
   },
-  "assets/xp/solitaire/cards/36.png": {
+  "assets/xp/cards/faces/36.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "d4d537bb064ffe04252b3c01f3f116de66ea49f75cb21faa76dd9a6cd25d107f",
@@ -4181,215 +4199,215 @@
       "pixelSha256": "7a753a9e012ec5bc18547876e88908a4404aa11bcafcbc2a739fc834544b275f"
     }
   },
-  "assets/xp/solitaire/cards/37.png": {
+  "assets/xp/cards/faces/37.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "d30da3411686cdd31e64ba78f9fb41e9f58af8965bf2b3091a74a627f573536c",
+    "sha256": "7de58f636f41f2d934b547c9a87bf1e0644e9943b0e356828578a109cdae0286",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 37,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "afd7a82639e4fe70ca6cdd3d48427e097fd4cc89931cf77c6ac3b780a9702ffc"
+      "pixelSha256": "e0def3d99d4136ce2ce2f1d7a485509a1a07a897e3cc2a611d8c0506d51045f7"
     }
   },
-  "assets/xp/solitaire/cards/38.png": {
+  "assets/xp/cards/faces/38.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "bef2078a157f7a79a9a655e762973c2a7ebfd21a0db64b6183f5446d050c7285",
+    "sha256": "516c16a7633121da2a71e900c9daa5122d168dcb679712810b14bd5d231f24dc",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 38,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "693b51fe9281e9d6b3a8549b5b23497655df7f48b9c7b02ef17d872d6a1e55a5"
+      "pixelSha256": "0440d6e744227ef003a1f018b0bc68315f74fe805e33c91f9b38ad1d3b3c4f29"
     }
   },
-  "assets/xp/solitaire/cards/39.png": {
+  "assets/xp/cards/faces/39.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "a31b1dbe754b4d511674d9b2cad6c0e335b5b4db22296b00d0ce7c72aee64f7a",
+    "sha256": "20780eb90dd626ead2324fb03c143284a3e4deb38242abca9a0b997b8d833048",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 39,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "65612cada7f980e34a3674b0f77b9d8e92174fc6e76e870a51c1bd7328869a00"
+      "pixelSha256": "96db5e83c5c6c4014c3d6522c2ce4accaf9f029d46ea741e59e7c07eec04ee57"
     }
   },
-  "assets/xp/solitaire/cards/40.png": {
+  "assets/xp/cards/faces/40.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "2ea6921ad55d2a6d051ea2bf37f8e7ac57144d72062ba65f6303afd2ad91296e",
+    "sha256": "1b4eedc0e3463c5c42c186ec740d6ff28c0d2b8e7462d7f354622eb0a2e34beb",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 40,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "a287e34be53c3067c49a0d72de83da2c0ba13f12521e368ac0a3baa9b09db10d"
+      "pixelSha256": "b689c3c9989ec83942ccbca756fada6a70f94d628e2281677446f06f5093f36f"
     }
   },
-  "assets/xp/solitaire/cards/41.png": {
+  "assets/xp/cards/faces/41.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "f368c88b5fecbafbbe7f03061a2a4234f969a4043dcef37c6376f52fce8ce402",
+    "sha256": "6601af464f55dac3534cd4ec75157dc489a4b3defdd06c63b596f1715af2bc4a",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 41,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "4977fc6d47fa584a88c7d4883953eb24ae2f24534c1965a2ddbb4245c1ac8bfa"
+      "pixelSha256": "ff1a0e960aa61a71830df30c45e7ba04e27503ea36f6d7e03931281298745008"
     }
   },
-  "assets/xp/solitaire/cards/42.png": {
+  "assets/xp/cards/faces/42.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "43618d4c5895612dcb49b7c360588133c8212a4d0abb45716aa21e47c42fd851",
+    "sha256": "5a59813c17818f0a42a65722476bd184b1735fe995789cd38ed3eec9883e87af",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 42,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "04a8257677ec15f6dcf272fcf719ae659d20cf9c5cab2175f089747c8c06817d"
+      "pixelSha256": "6f50533518d99e07f5b9b2d23d668e4f72973752b62826ca4f612c0ad9bc4706"
     }
   },
-  "assets/xp/solitaire/cards/43.png": {
+  "assets/xp/cards/faces/43.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "9c584f04caf5863bf0f4f79a444fd35e0882bca3cc390d06de22db3bc0b45ce7",
+    "sha256": "b71bb39004d8d68979456ee6a9d62ec91ee63957ac0e0830ab6f0f7fa232e19a",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 43,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "ff0b0713c909ce90e7e779dcb8530706ca10af594e02c8ab5abcd20e68b516dd"
+      "pixelSha256": "ccddfe2c2b4715066426a37ea48517d6a71d08b167f9730d1dc82314885ea57f"
     }
   },
-  "assets/xp/solitaire/cards/44.png": {
+  "assets/xp/cards/faces/44.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "8af2aaaa00deb56ea4385ca22b85f7cb2a51e0ff24a9f70bce0b5f0494ba3023",
+    "sha256": "d0614780513fec0c42cead67aab1e776e4ffc63900abb354a6a1296a54829d1f",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 44,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "ae308674aa2e6d8a29aeeb32f80000d164703cbb8188127dde400067b65fc8df"
+      "pixelSha256": "3929f3fb65e668c8d5780bd40b716bc5234d61ba957744510112f1d2db79665f"
     }
   },
-  "assets/xp/solitaire/cards/45.png": {
+  "assets/xp/cards/faces/45.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "9ad0e9e0200e017105032e6013f663b8e3f5b83a8670a9cf66f354f64fdd6a3b",
+    "sha256": "e5f9f666dc3e29f351883a757aa1902ffbc9cd31625569fbf84dfcb13a60f7ce",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 45,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "036927591f86186e329b06fadd1ad0ca3584d5382c9cb88b07111fe17f3424cd"
+      "pixelSha256": "da8d4d67650242c7d1b6de130a8a5e4ca86863731324cd3104ac287506d65dee"
     }
   },
-  "assets/xp/solitaire/cards/46.png": {
+  "assets/xp/cards/faces/46.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "241d57af46de5c00f4c5e4ddb1a2b6461d305ae734653c62d5b62edd7935ccf2",
+    "sha256": "880c6947bf691d2ea1418716ed1c6b59c883753afe541c3d69f52fdd4be99456",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 46,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "b383bb4caa91c62bbebbacf12f2052beed5f057b3c08cce1cfb1830b236b8b3a"
+      "pixelSha256": "34829a82d57baeb0dcd5e6bf024ef0e398f9df4ad647f64c8d534fa55b8bc765"
     }
   },
-  "assets/xp/solitaire/cards/47.png": {
+  "assets/xp/cards/faces/47.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "323c261bddf43a9b92997f980df0907564e0410b458f35f4773204242580594f",
+    "sha256": "4ae39c0abb541eaea96882ee48da09326a9fd360c15b83e42a860a0e61e80f4a",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 47,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "496eb0e07d55e824a13e6c4600907f4a194ee3d184fb50dadc1168cfea1ea1a5"
+      "pixelSha256": "143b6ea9de9d8275ef2166568cd3c5f13d6c86e7fc70324bb4a414fc4aa7d18f"
     }
   },
-  "assets/xp/solitaire/cards/48.png": {
+  "assets/xp/cards/faces/48.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "1e7a08994e55d9e9946d9dca6172f7569d4345f2ee0050096687a6cd6a18a4a9",
+    "sha256": "134497218615556b6bdfdb506f3fd1daac501077f98a74550330bd3ab944ed0c",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 48,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "5754c496488dcf3ec5de1d88686fec99ed91607c1c2196fe652d6c8d83f12ca0"
+      "pixelSha256": "c8ed40fa22079dbfd75edd961c4de6e09c62111b38af28b4b9aba032568570da"
     }
   },
-  "assets/xp/solitaire/cards/49.png": {
+  "assets/xp/cards/faces/49.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "c678ae791ede455f3f98774cfb557d35b704bda1e042740434f89d9d3e11f245",
+    "sha256": "90625da526516b51b9c00a094bb73fb1f9b8a8bf984057711ca3116738c98792",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 49,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "9cc77bcfb38d8d2b975be4cde2e1f25b8e8fd2921164fb3a2ed8d26f6eae95cd"
+      "pixelSha256": "75cd3af0e22543954e5a034a0cc428f11c7c2d28561d7ad096fb93cb1f19491e"
     }
   },
-  "assets/xp/solitaire/cards/50.png": {
+  "assets/xp/cards/faces/50.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "e28bd0211c6d2e3522ff2d71925361a68b1c22b1502175ba2ce62ad7783e6818",
+    "sha256": "404a03ac31253f55d0fff5dfbc8cf3bfff8f12d6ce213960e74f5de75cb6c07f",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 50,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "87936ced1f6e4d32d669650b8377934eba12e6fbe925237d01adc405e0e5878b"
+      "pixelSha256": "4e12deafe87226628f881178cc4697a9b114ece75ed4170769fa1e4ad07276a8"
     }
   },
-  "assets/xp/solitaire/cards/51.png": {
+  "assets/xp/cards/faces/51.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "354df29bdbc4bfb6130961b4224a934e03b4ceab36e009ea7403a8aa6622d90d",
+    "sha256": "622320a130f704033b48125c7466aacbb63e2f17bf8fb6dd13b42793e3bea224",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 51,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "482d3910a0608e5a478a6ca9d7ecf512f1ac3782cd5830b78e3eb0b1c8f63cee"
+      "pixelSha256": "5173520aa94e39dae98de46892411048cdc067ba126f5dc2b49ced2d03993851"
     }
   },
-  "assets/xp/solitaire/cards/52.png": {
+  "assets/xp/cards/faces/52.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
-    "sha256": "8b6d129ba48ef1967b5bf408b10ed95b8ce29f8cb3e1714c012a3e1d6aa19fa3",
+    "sha256": "762c360cebd929e58390bf2714016308b1165674261d071553746d32e74fcf76",
     "resource": {
       "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
       "type": 2,
       "id": 52,
       "language": 1033,
       "frame": "71x96x32",
-      "pixelSha256": "92db27d1cd7d5010581d4d2db80790c29b8366921c8a2c552cdd17141cb15118"
+      "pixelSha256": "0eeb94888d11db4c1ebd18dc4dab801cdc73591780a19a6ae08ca6905f53500b"
     }
   },
-  "assets/xp/solitaire/backs/54.png": {
+  "assets/xp/cards/backs/54.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "b8e310aac0febfff97a19e11b55e8b091053f1d8b691412e5035d2c2fe252c7a",
@@ -4402,7 +4420,7 @@
       "pixelSha256": "c6caebdd601722d5d0af588f4b13c9ccfdc5a3fac21052886a474ca8e07e16ef"
     }
   },
-  "assets/xp/solitaire/backs/55.png": {
+  "assets/xp/cards/backs/55.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "5e7640a420ceddfd8a295b0eecc8c91ff3c9ece5e8f7b02e190b78536c05d5ba",
@@ -4415,7 +4433,7 @@
       "pixelSha256": "e4450e9614f01af323bf287174096dd0ecc80b1bd7c44c213ef697dcf24eae93"
     }
   },
-  "assets/xp/solitaire/backs/56.png": {
+  "assets/xp/cards/backs/56.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "13d442f072f85212f56cf3ce4c7e3b2c4827ebe4207fc5b571efe687a4d0d9fc",
@@ -4428,7 +4446,7 @@
       "pixelSha256": "56d725bf0000aa0a915f8d7595fba7fd26746ba33b49552bf8ee55bad0d470e4"
     }
   },
-  "assets/xp/solitaire/backs/57.png": {
+  "assets/xp/cards/backs/57.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "5ff450f9eda7c54653e36c5c6b2c5d5c757f29f74c38c89ddd71f38850f21471",
@@ -4441,7 +4459,7 @@
       "pixelSha256": "da52d59a6566cba5be1dbb7c9748b3b4b1df48e3eb109b3328ccf0803f31d398"
     }
   },
-  "assets/xp/solitaire/backs/58.png": {
+  "assets/xp/cards/backs/58.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "631888eb163f390b9fa3f4cdab7ff17b92eeb72b922a1c00a090bc79f082f577",
@@ -4454,7 +4472,7 @@
       "pixelSha256": "765e59ba73f3a0920937c9afe1449ef05bad8344bb8d4ae14b41f7db4f4cf728"
     }
   },
-  "assets/xp/solitaire/backs/59.png": {
+  "assets/xp/cards/backs/59.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "dd4a2584cf6a806534227f45431975f308711e38155371d798091b64caef3fc5",
@@ -4467,7 +4485,7 @@
       "pixelSha256": "6a23f2b686da18bcf2bc0bd27b3b13a1b206e06175aebe430f1a5bc555975f92"
     }
   },
-  "assets/xp/solitaire/backs/60.png": {
+  "assets/xp/cards/backs/60.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "cf9226315968171ca6ef4417efad5a56f3998fbd47519108418c1551d29b0ccf",
@@ -4480,7 +4498,7 @@
       "pixelSha256": "5743df3ee9d2260998bd5232fb3328e685dd8e92c939993ee99dc83433efbf90"
     }
   },
-  "assets/xp/solitaire/backs/61.png": {
+  "assets/xp/cards/backs/61.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "4b2cb1d1339e4a1740f853ca681f8857c2c0127b24dfbe5de9d3f559ebaac03a",
@@ -4493,7 +4511,7 @@
       "pixelSha256": "8a82147415f77b37b0427b91dc76d05e7ee83190e383fc05807f36a137622077"
     }
   },
-  "assets/xp/solitaire/backs/62.png": {
+  "assets/xp/cards/backs/62.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "daedb7e91ebe1e434c3832de3fe39440d3795ac373bab4e5d4900514c080b251",
@@ -4506,7 +4524,7 @@
       "pixelSha256": "35446b4745b96740684db6024f93ee49a5b861698da140a9f7270e390586aeee"
     }
   },
-  "assets/xp/solitaire/backs/63.png": {
+  "assets/xp/cards/backs/63.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "2ae0c431896a501da3db955d85120c755ba120d3637ac0355bdb58d7d31c1ea8",
@@ -4519,7 +4537,7 @@
       "pixelSha256": "f7bdf57384dadf6d09feef3d21f1b8019b37a73cd136608d3d3d55016800bd90"
     }
   },
-  "assets/xp/solitaire/backs/64.png": {
+  "assets/xp/cards/backs/64.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "14ada5be78bf432b5212c95b251876df78f02bbaafb76f765e6a1cec24d970ed",
@@ -4532,7 +4550,7 @@
       "pixelSha256": "16fd472a3d856664e9c36b2d8a31df9cd21558448d80fc602aab66184a65271f"
     }
   },
-  "assets/xp/solitaire/backs/65.png": {
+  "assets/xp/cards/backs/65.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/CARDS.DL_",
     "sha256": "e86fe0452f0eddfaca69e3e739915b7dcc4e3a5fd99542dc0ce8c600657dfe5e",
@@ -14820,6 +14838,45 @@
       "pixelSha256": "012d7b168e66b4476065cec3101f0e4ccf6d7eb7558e9701ab42534919bf0f9c"
     }
   },
+  "assets/xp/freecell/KingRight.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FREECELL.EX_",
+    "sha256": "6810be4dbb5506bd10016d6d11e561f606a2d1ca752f2dbfc16fb23216fa9414",
+    "resource": {
+      "parentSha256": "ba517f623b778f4b842f559ea344cb64d3cae9de172aecfa4e330c733baad601",
+      "type": 2,
+      "id": "KINGBITMAP",
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "19df3c0f5e1889980107f1fbc0b66c17d9800302b71cda91da1c3290843e3885"
+    }
+  },
+  "assets/xp/freecell/KingLeft.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FREECELL.EX_",
+    "sha256": "6a3becd919f7e753ad08f50daa3454c067f98446ac7c6bf8c6b1349149d3ea87",
+    "resource": {
+      "parentSha256": "ba517f623b778f4b842f559ea344cb64d3cae9de172aecfa4e330c733baad601",
+      "type": 2,
+      "id": "KINGLEFT",
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "c3a78852eba12706dc857376bdfd3cb07fc6f4591eb2032a749bd1af107b4a24"
+    }
+  },
+  "assets/xp/freecell/KingSmile.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FREECELL.EX_",
+    "sha256": "591743ed19690944dcc5614e74ff05362a0928f52acb04fdb169333d0af4d8e6",
+    "resource": {
+      "parentSha256": "ba517f623b778f4b842f559ea344cb64d3cae9de172aecfa4e330c733baad601",
+      "type": 2,
+      "id": "KINGSMILE",
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "4d01b2a31749b5560d7be5a0fb434804efb12a66829b26ba09a096047e58fc6e"
+    }
+  },
   "assets/xp/system/SecurityHelp.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/WSCUI.CP_",
@@ -15000,6 +15057,19 @@
       "language": 1033,
       "frame": "raw",
       "pixelSha256": "d492324891bbfd582a9d230f5720d1ea65bd06b69e10db5c44ddc7d6b172cc75"
+    }
+  },
+  "assets/xp/freecell/DownArrow.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/FREECELL.EX_",
+    "sha256": "b66bb089fb51774023eedbab4a02ce711d170514f065d5547df85a8b7a7e5f07",
+    "resource": {
+      "parentSha256": "ba517f623b778f4b842f559ea344cb64d3cae9de172aecfa4e330c733baad601",
+      "type": 1,
+      "id": 9,
+      "language": 1033,
+      "frame": "32x32x1 hotspot 13,25",
+      "pixelSha256": "99dda99357ce8896cea2635a260c17d2e62e869c35dd51539b8d57abcc2351cc"
     }
   }
 }

@@ -68,13 +68,6 @@ export const boxedWineApplications = validateBoxedWineApplications([
     packagePath: "site/iframe/solitaire/xp-solitaire.zip",
   },
   {
-    id: "freecell",
-    title: "FreeCell",
-    icon: "FreeCell.png",
-    executable: "freecell/freecell.exe",
-    packagePath: "site/iframe/freecell/xp-freecell.zip",
-  },
-  {
     id: "spider-solitaire",
     title: "Spider Solitaire",
     icon: "SpiderSolitaire.png",
