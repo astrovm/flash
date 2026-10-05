@@ -813,6 +813,26 @@ describe("Windows XP shell", () => {
     expect(shell.document.getElementById("tray-network-button")).toBeNull();
   });
 
+  test("draws the clock's second hand at any second of the minute", async () => {
+    const shell = await login(await loadShell());
+    shell.document
+      .getElementById("taskbar-clock")!
+      .dispatchEvent(new shell.window.MouseEvent("dblclick"));
+    const dialog = shell.document.querySelector(".datetime-dialog")!;
+    const time = dialog.querySelector<HTMLInputElement>(
+      ".datetime-time-input",
+    )!;
+
+    // The hand is drawn from the wall clock, so its sloped steps are only
+    // covered for some seconds. Walk the whole minute.
+    for (let seconds = 0; seconds < 60; seconds++) {
+      time.value = `10:09:${String(seconds).padStart(2, "0")} ${seconds < 12 ? "AM" : "PM"}`;
+      time.dispatchEvent(new shell.window.Event("change", { bubbles: true }));
+    }
+
+    expect(dialog.querySelector(".datetime-time-input")).not.toBeNull();
+  });
+
   test("lists system applications and games in the XP All Programs hierarchy", async () => {
     const shell = await login(await loadShell());
     shell.document.getElementById("start-button")!.click();
