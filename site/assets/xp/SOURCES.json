@@ -2736,6 +2736,19 @@
       "pixelSha256": "139109a609114bd6096a0a4357de7a24ec8a7065d58cf41815b92c25bca36b0e"
     }
   },
+  "assets/xp/icons/VolumeControl.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SNDVOL32.EX_",
+    "sha256": "813b3ee8689446b04c075bddbcbce0ba9685af8e88f22181159c9a7544f4737d",
+    "resource": {
+      "parentSha256": "760fbbecef10ebe18aa84b1eddbc2237efb914c29a4413fb3cb6a7c60759b4f6",
+      "type": 14,
+      "id": 300,
+      "language": 1033,
+      "frame": "16x16x32",
+      "pixelSha256": "38b93d90f967163c416bee15b5376c88dabb5f514ccc28d66b9b6c501e7c950a"
+    }
+  },
   "assets/xp/taskbar/blue-toolbar-background-0.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14638,19 +14651,6 @@
       "pixelSha256": "180629d89d4a24d9387a619c617ed97efc08a7148a24b810d68eecf56b789b36"
     }
   },
-  "assets/xp/controls/blue-trackbar-thumb.png": {
-    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
-    "member": "I386/LUNA.MS_",
-    "sha256": "651e91c6aa8d2ed3b93e9a18a05c3b822f69b0d09660b6b8d2e03a7dc2fb5bdd",
-    "resource": {
-      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
-      "type": 2,
-      "id": "BLUE_TRACKBARHORIZONTAL_BMP",
-      "language": 1033,
-      "frame": "11x105x32",
-      "pixelSha256": "f56830ff3a5b40444227b1c5b8e819cc1ba0c0801c25bb7b39d1a0dd1e4ab42a"
-    }
-  },
   "assets/xp/controls/blue-trackbar-thumb-vertical.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14662,19 +14662,6 @@
       "language": 1033,
       "frame": "21x55x32",
       "pixelSha256": "a936c5d01936ac348201d86ca300b048ad907f80a404f6907e74b8849fac6905"
-    }
-  },
-  "assets/xp/controls/olive-trackbar-thumb.png": {
-    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
-    "member": "I386/LUNA.MS_",
-    "sha256": "a8bca3ab443bc99060dee825c77032e073d60b86d137b0c43f64b406328e409a",
-    "resource": {
-      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
-      "type": 2,
-      "id": "HOMESTEAD_TRACKBARHORIZONTAL_BMP",
-      "language": 1033,
-      "frame": "11x105x32",
-      "pixelSha256": "f1168abcba9735c5226d3104a537d81b07183b20bd8dd7c475553ad6204c02b1"
     }
   },
   "assets/xp/controls/olive-trackbar-thumb-vertical.png": {
@@ -14690,19 +14677,6 @@
       "pixelSha256": "dadac78c925b4cab8ab6dd1bd9bb6a492afdc4888a54dc64ad060df0da19d1d4"
     }
   },
-  "assets/xp/controls/silver-trackbar-thumb.png": {
-    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
-    "member": "I386/LUNA.MS_",
-    "sha256": "2bf4cd792d7aec5a8e682d4bbcdfee398949245b0fccdf8c7b72f42093da5bd2",
-    "resource": {
-      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
-      "type": 2,
-      "id": "METALLIC_TRACKBARHORIZONTAL_BMP",
-      "language": 1033,
-      "frame": "11x105x32",
-      "pixelSha256": "84e00db661e00f6ace353a955ab2c1461eb9ea2b8ba5a42903b81d4c374c7cb7"
-    }
-  },
   "assets/xp/controls/silver-trackbar-thumb-vertical.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14714,6 +14688,45 @@
       "language": 1033,
       "frame": "21x55x32",
       "pixelSha256": "a47c3f73281167614eb76ffe3d986e203c54b32c8ed73c78e9ff353d6eebdbf7"
+    }
+  },
+  "assets/xp/controls/blue-trackbar-track.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4ed003cf91ccc18e63a2b757089ae9c5171093bed47fb9d3206d1c2d28019e7c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "BLUE_SLIDERTRACK_BMP",
+      "language": 1033,
+      "frame": "5x5x32",
+      "pixelSha256": "272b1fe9802df2adf59adbe3a08cd0d8d3117aa574a161ab9ede4baa2813086e"
+    }
+  },
+  "assets/xp/controls/olive-trackbar-track.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4ed003cf91ccc18e63a2b757089ae9c5171093bed47fb9d3206d1c2d28019e7c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "HOMESTEAD_SLIDERTRACK_BMP",
+      "language": 1033,
+      "frame": "5x5x32",
+      "pixelSha256": "272b1fe9802df2adf59adbe3a08cd0d8d3117aa574a161ab9ede4baa2813086e"
+    }
+  },
+  "assets/xp/controls/silver-trackbar-track.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/LUNA.MS_",
+    "sha256": "4ed003cf91ccc18e63a2b757089ae9c5171093bed47fb9d3206d1c2d28019e7c",
+    "resource": {
+      "parentSha256": "dd8e86e5a7c19ea9fe0e34992babefe592055d68eb8659763c8300558ca5dcb4",
+      "type": 2,
+      "id": "METALLIC_SLIDERTRACK_BMP",
+      "language": 1033,
+      "frame": "5x5x32",
+      "pixelSha256": "272b1fe9802df2adf59adbe3a08cd0d8d3117aa574a161ab9ede4baa2813086e"
     }
   },
   "assets/xp/system/SecurityHelp.png": {

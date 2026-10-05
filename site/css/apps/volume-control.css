@@ -1,29 +1,30 @@
 /* ============ Volume Control ============ */
 
-/* sndvol32's columns, from its dialog templates in MS Shell Dlg 8 dialog
-   units (1.5px across, 1.625px down). */
+/* sndvol32 as XP SP3 shows it in the reference VM (Intel AC97 audio).
+   Positions are measured from the window's client area; the columns start
+   below the menu bar's etched line. */
 
 :root {
-  --mixer-thumb: url("../../assets/xp/controls/blue-trackbar-thumb.png");
+  --mixer-track: url("../../assets/xp/controls/blue-trackbar-track.png");
   --mixer-thumb-vertical: url("../../assets/xp/controls/blue-trackbar-thumb-vertical.png");
 }
 
 html[data-xp-appearance="olive"] {
-  --mixer-thumb: url("../../assets/xp/controls/olive-trackbar-thumb.png");
+  --mixer-track: url("../../assets/xp/controls/olive-trackbar-track.png");
   --mixer-thumb-vertical: url("../../assets/xp/controls/olive-trackbar-thumb-vertical.png");
 }
 
 html[data-xp-appearance="silver"] {
-  --mixer-thumb: url("../../assets/xp/controls/silver-trackbar-thumb.png");
+  --mixer-track: url("../../assets/xp/controls/silver-trackbar-track.png");
   --mixer-thumb-vertical: url("../../assets/xp/controls/silver-trackbar-thumb-vertical.png");
 }
 
 .xp-native-program.xp-native-volume {
   position: relative;
-  padding: 0;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  padding: 0;
   background: var(--xp-beige);
   color: #000;
   font:
@@ -39,31 +40,32 @@ html[data-xp-appearance="silver"] {
 
 .xp-mixer-lines {
   position: absolute;
-  top: 20px;
+  top: 22px;
   left: 0;
   display: flex;
+  height: 223px;
 }
 
 .xp-mixer-line {
   position: relative;
-  width: 105px;
-  height: 244px;
-}
-
-/* Volume Control's column is wider and ends in an etched line. */
-.xp-mixer-line[data-line="master"] {
-  width: 137px;
-  border-right: 1px solid #aca899;
-  box-shadow: 1px 0 #fff;
-}
-
-.xp-mixer-single .xp-mixer-line[data-line="master"] {
-  border: 0;
-  box-shadow: none;
+  width: 101px;
+  height: 223px;
 }
 
 .xp-mixer-line[hidden] {
   display: none;
+}
+
+/* Master Volume ends in an etched line the full height. */
+.xp-mixer-line[data-line="master"] {
+  width: 138px;
+  background:
+    linear-gradient(#aca899, #aca899) 136px 0 / 1px 100% no-repeat,
+    linear-gradient(#fff, #fff) 137px 0 / 1px 100% no-repeat;
+}
+
+.xp-mixer-single .xp-mixer-line[data-line="master"] {
+  background: none;
 }
 
 .xp-mixer-line > * {
@@ -71,87 +73,84 @@ html[data-xp-appearance="silver"] {
   margin: 0;
 }
 
-.xp-mixer-line h2 {
-  top: 11px;
-  left: 11px;
-  width: 90px;
-  overflow: hidden;
-  font: inherit;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.xp-mixer-line[data-line="master"] h2 {
-  left: 6px;
-  width: 110px;
-}
-
-/* The etched line under the title. */
-.xp-mixer-line h2::after {
+/* Etched lines under the titles: Master Volume's own, then one across the
+   other lines. */
+.xp-mixer-line::before {
   content: "";
   position: absolute;
-  top: 20px;
-  left: 0;
-  width: 88px;
+  top: 29px;
+  right: 0;
+  left: 7px;
   height: 1px;
   background: #aca899;
   box-shadow: 0 1px #fff;
 }
 
-.xp-mixer-line[data-line="master"] h2::after {
-  width: 123px;
+.xp-mixer-line[data-line="master"]::before {
+  right: auto;
+  left: 5px;
+  width: 120px;
+}
+
+.xp-mixer-line h2 {
+  top: 8px;
+  left: 7px;
+  font: inherit;
+  white-space: nowrap;
 }
 
 .xp-mixer-caption {
-  top: 41px;
-  left: 11px;
+  top: 38px;
+  left: 7px;
 }
 
 .xp-mixer-volume-caption {
-  top: 94px;
+  top: 91px;
 }
 
 .xp-mixer-left,
 .xp-mixer-right {
-  top: 55px;
+  top: 59px;
   width: 32px;
   height: 32px;
 }
 
 .xp-mixer-left {
-  left: 0;
+  top: 58px;
+  left: 4px;
 }
 
 .xp-mixer-right {
-  left: 79px;
+  top: 58px;
+  left: 83px;
 }
 
 .xp-mixer-mute {
-  top: 200px;
-  left: 11px;
+  top: 201px;
+  left: 7px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 2px;
 }
 
 .xp-mixer-mute input {
   margin: 0;
 }
 
-.xp-mixer-line[data-line="master"] :is(.xp-mixer-caption, .xp-mixer-mute) {
-  left: 6px;
+.xp-mixer-line[data-line="master"] :is(h2, .xp-mixer-caption, .xp-mixer-mute) {
+  left: 5px;
 }
 
 .xp-mixer-line[data-line="master"] .xp-mixer-left {
-  left: 12px;
+  left: 19px;
 }
 
 .xp-mixer-line[data-line="master"] .xp-mixer-right {
-  left: 91px;
+  left: 98px;
 }
 
-/* Trackbars: a sunken 4px track, ticks on both sides, and Luna's thumbs
-   (normal, hot, pressed, and focused, one thumb apart). */
+/* Balance: Luna's track and downward thumb, with ticks below at left,
+   center, and right. */
 .xp-mixer-balance,
 .xp-mixer-volume {
   margin: 0;
@@ -161,59 +160,41 @@ html[data-xp-appearance="silver"] {
 }
 
 .xp-mixer-balance {
-  top: 57px;
-  left: 26px;
-  width: 60px;
-  height: 28px;
-  padding: 0 8px;
+  top: 52px;
+  left: 30px;
+  width: 44px;
+  height: 30px;
+}
+
+/* Balance ticks under the track, at left, center, and right. */
+.xp-mixer-line::after {
+  content: "";
+  position: absolute;
+  top: 80px;
+  left: 35px;
+  width: 34px;
+  height: 3px;
   background:
-    repeating-linear-gradient(90deg, #a1a192 0 1px, transparent 1px 11px) 13px
-      4px / 45px 2px no-repeat,
-    repeating-linear-gradient(90deg, #a1a192 0 1px, transparent 1px 11px) 13px
-      22px / 45px 2px no-repeat;
+    linear-gradient(#a1a192, #a1a192) 0 0 / 1px 3px no-repeat,
+    linear-gradient(#a1a192, #a1a192) 17px 0 / 1px 3px no-repeat,
+    linear-gradient(#a1a192, #a1a192) 33px 0 / 1px 3px no-repeat;
+}
+
+.xp-mixer-line[data-line="master"]::after {
+  left: 50px;
 }
 
 .xp-mixer-line[data-line="master"] .xp-mixer-balance {
-  left: 38px;
-}
-
-.xp-mixer-volume {
-  top: 109px;
-  left: 36px;
-  width: 38px;
-  height: 91px;
-  padding: 8px 0;
-  writing-mode: vertical-lr;
-  direction: rtl;
-  background:
-    repeating-linear-gradient(#a1a192 0 1px, transparent 1px 7.5px) 9px 13px /
-      2px 76px no-repeat,
-    repeating-linear-gradient(#a1a192 0 1px, transparent 1px 7.5px) 27px 13px /
-      2px 76px no-repeat;
-}
-
-.xp-mixer-line[data-line="master"] .xp-mixer-volume {
-  left: 48px;
-  width: 45px;
-}
-
-.xp-mixer-balance:focus,
-.xp-mixer-volume:focus {
-  outline: 0;
+  left: 45px;
 }
 
 .xp-mixer-balance::-webkit-slider-runnable-track {
-  height: 2px;
-  border: 1px solid;
-  border-color: #9d9c99 #fff #fff #9d9c99;
-  background: #f2f1e9;
-}
-
-.xp-mixer-volume::-webkit-slider-runnable-track {
-  width: 2px;
-  border: 1px solid;
-  border-color: #9d9c99 #fff #fff #9d9c99;
-  background: #f2f1e9;
+  box-sizing: border-box;
+  height: 4px;
+  border-style: solid;
+  border-width: 2px;
+  border-image: var(--mixer-track) 2 fill / 2px stretch;
+  background: none;
 }
 
 .xp-mixer-balance::-webkit-slider-thumb {
@@ -222,7 +203,57 @@ html[data-xp-appearance="silver"] {
   margin-top: -10px;
   appearance: none;
   border: 0;
-  background: var(--mixer-thumb) 0 0 / 11px 105px no-repeat;
+  background: var(--ctl-trackbar-thumb-down) 0 0 / 11px 105px no-repeat;
+}
+
+.xp-mixer-balance:hover::-webkit-slider-thumb {
+  background-position-y: -21px;
+}
+
+.xp-mixer-balance:active::-webkit-slider-thumb {
+  background-position-y: -42px;
+}
+
+.xp-mixer-balance:focus-visible::-webkit-slider-thumb {
+  background-position-y: -63px;
+}
+
+/* Volume: a vertical track with seven ticks on each side; the end ticks
+   are a pixel longer. */
+.xp-mixer-volume {
+  top: 115px;
+  left: 42px;
+  width: 21px;
+  height: 75px;
+  writing-mode: vertical-lr;
+  direction: rtl;
+}
+
+.xp-mixer-line[data-line="master"] .xp-mixer-volume {
+  left: 57px;
+}
+
+.xp-mixer-ticks {
+  top: 120px;
+  left: 37px;
+  width: 32px;
+  height: 65px;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='65' shape-rendering='crispEdges' fill='%23a1a192'%3E%3Cpath d='M0 0h4v1H0zM28 0h4v1H28zM1 11h3v1H1zM28 11h3v1H28zM1 22h3v1H1zM28 22h3v1H28zM1 32h3v1H1zM28 32h3v1H28zM1 43h3v1H1zM28 43h3v1H28zM1 54h3v1H1zM28 54h3v1H28zM0 64h4v1H0zM28 64h4v1H28z'/%3E%3C/svg%3E")
+    0 0 / 32px 65px no-repeat;
+}
+
+.xp-mixer-line[data-line="master"] .xp-mixer-ticks {
+  left: 52px;
+}
+
+.xp-mixer-volume::-webkit-slider-runnable-track {
+  box-sizing: border-box;
+  width: 4px;
+  border-style: solid;
+  border-width: 2px;
+  border-image: var(--mixer-track) 2 fill / 2px stretch;
+  background: none;
 }
 
 .xp-mixer-volume::-webkit-slider-thumb {
@@ -234,40 +265,61 @@ html[data-xp-appearance="silver"] {
   background: var(--mixer-thumb-vertical) 0 0 / 21px 55px no-repeat;
 }
 
-.xp-mixer-balance:hover::-webkit-slider-thumb {
-  background-position-y: -21px;
-}
-
 .xp-mixer-volume:hover::-webkit-slider-thumb {
   background-position-y: -11px;
-}
-
-.xp-mixer-balance:active::-webkit-slider-thumb {
-  background-position-y: -42px;
 }
 
 .xp-mixer-volume:active::-webkit-slider-thumb {
   background-position-y: -22px;
 }
 
-.xp-mixer-balance:focus-visible::-webkit-slider-thumb {
-  background-position-y: -63px;
-}
-
 .xp-mixer-volume:focus-visible::-webkit-slider-thumb {
   background-position-y: -33px;
 }
 
-/* The status bar names the mixer device. */
+.xp-mixer-balance:focus,
+.xp-mixer-volume:focus {
+  outline: 0;
+}
+
+/* The status bar names the mixer device in one pane. */
 .xp-mixer-status {
   position: absolute;
   right: 0;
   bottom: 0;
   left: 0;
-  height: 20px;
-  padding: 4px 3px 0;
-  border-top: 1px solid #fff;
-  box-shadow: inset 0 1px #aca899;
+  isolation: isolate;
+  display: flex;
+  height: 23px;
+}
+
+.xp-mixer-status::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-style: solid;
+  border-width: 5px 17px 9px 50px;
+  border-image: var(--tm-status-background) 5 17 9 50 fill / 5px 17px 9px 50px
+    stretch;
+}
+
+.xp-mixer-status span {
+  position: relative;
+  flex: 1;
+  padding: 5px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.xp-mixer-status span::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 0;
+  width: 2px;
+  height: 17px;
+  background: var(--tm-status-divider) 0 0 / 2px 11px repeat-y;
 }
 
 .xp-mixer-properties .dlg-body {
@@ -289,11 +341,24 @@ html[data-xp-appearance="silver"] {
   background: #fff;
 }
 
-/* Windows Classic draws a raised 3D thumb. */
+/* Windows Classic draws a raised 3D thumb and a flat status bar. */
 html[data-xp-appearance="classic"] .xp-mixer-balance::-webkit-slider-thumb,
 html[data-xp-appearance="classic"] .xp-mixer-volume::-webkit-slider-thumb {
   border: 1px solid;
   border-color: #fff #404040 #404040 #fff;
   background: var(--xp-beige);
   box-shadow: inset -1px -1px #808080;
+}
+
+html[data-xp-appearance="classic"]
+  .xp-mixer-balance::-webkit-slider-runnable-track,
+html[data-xp-appearance="classic"]
+  .xp-mixer-volume::-webkit-slider-runnable-track {
+  border-color: #808080 #fff #fff #808080;
+  border-image: none;
+  background: var(--xp-beige);
+}
+
+html[data-xp-appearance="classic"] .xp-mixer-status::before {
+  border: 0;
 }

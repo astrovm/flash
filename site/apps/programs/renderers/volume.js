@@ -1,7 +1,11 @@
 import { createProgramRoot } from "../ui.js";
 
-// sndvol32's mixer: a Volume Control column and a column per playback line,
-// laid out from its dialog templates. Every shell sound plays through Wave.
+// sndvol32's mixer, laid out as XP SP3 shows it with the reference VM's
+// Intel AC97 audio: a Master Volume column and a column per playback line.
+// Every shell sound plays through Wave.
+const DEVICE = "Intel(r) Integrated Audio";
+// Window sizes with and without the Wave column.
+const SIZES = { both: [247, 302], master: [145, 302] };
 const MENUS = [
   [
     "O&ptions",
@@ -20,10 +24,11 @@ const line = (id, title, muteLabel) => `
     <h2>${title}</h2>
     <span class="xp-mixer-caption">Balance:</span>
     <img class="xp-mixer-left" src="assets/xp/volume/balance-left.png" alt="">
-    <input class="xp-mixer-balance" type="range" min="-100" max="100" step="25" aria-label="${title} balance">
+    <input class="xp-mixer-balance" type="range" min="-100" max="100" aria-label="${title} balance">
     <img class="xp-mixer-right" src="assets/xp/volume/balance-right.png" alt="">
     <span class="xp-mixer-caption xp-mixer-volume-caption">Volume:</span>
-    <input class="xp-mixer-volume" type="range" min="0" max="100" step="5" aria-label="${title} volume">
+    <span class="xp-mixer-ticks" aria-hidden="true"></span>
+    <input class="xp-mixer-volume" type="range" min="0" max="100" aria-label="${title} volume">
     <label class="xp-mixer-mute"><input type="checkbox"><span>${muteLabel}</span></label>
   </section>`;
 
@@ -32,10 +37,12 @@ export const renderVolume = (context) => {
   content.innerHTML = `
     <div class="tm-menu-bar" role="menubar"></div>
     <div class="xp-mixer-lines">
-      ${line("master", "Volume Control", "<u>M</u>ute all")}
+      ${line("master", "Master Volume", "<u>M</u>ute all")}
       ${line("wave", "Wave", "<u>M</u>ute")}
     </div>
-    <div class="xp-mixer-status">Default Audio Device</div>`;
+    <div class="xp-mixer-status"><span>${DEVICE}</span></div>`;
+  // XP titles the window with the master line's name.
+  context.setTitle("Master Volume");
   const [master, wave] = content.querySelectorAll(".xp-mixer-line");
   const controls = (section) => ({
     balance: section.querySelector(".xp-mixer-balance"),
@@ -56,6 +63,7 @@ export const renderVolume = (context) => {
     waveControls.balance.value = String(mixer.waveBalance);
     wave.hidden = !mixer.showWave;
     content.classList.toggle("xp-mixer-single", !mixer.showWave);
+    context.setSize(...SIZES[mixer.showWave ? "both" : "master"]);
   };
   window.addEventListener("xp-volume-change", sync);
 
@@ -84,7 +92,7 @@ export const renderVolume = (context) => {
     const dialog = context.dialogs.createDialog({ title: "Properties" });
     dialog.el.classList.add("xp-mixer-properties");
     dialog.body.innerHTML = `
-      <label class="xp-mixer-device">Mixer device: <select disabled><option>Default Audio Device</option></select></label>
+      <label class="xp-mixer-device">Mixer device: <select disabled><option>${DEVICE}</option></select></label>
       <fieldset class="dlg-group"><legend>Adjust volume for</legend>
         <label><input type="radio" name="xp-mixer-adjust" checked> <u>P</u>layback</label>
         <label><input type="radio" name="xp-mixer-adjust" disabled> <u>R</u>ecording</label>

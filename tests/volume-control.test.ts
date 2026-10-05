@@ -53,8 +53,13 @@ test("Volume Control's Wave fader and mute scale every sound after Master", asyn
     return audio;
   };
   const win = await openVolumeControl(s);
+  // XP names the window and first column after the master line.
   expect(win.querySelector(".xp-mixer-line h2").textContent).toBe(
-    "Volume Control",
+    "Master Volume",
+  );
+  expect(win.querySelector(".title-text").textContent).toBe("Master Volume");
+  expect(win.querySelector(".xp-mixer-status").textContent).toBe(
+    "Intel(r) Integrated Audio",
   );
   expect(control(win, "wave", "volume").value).toBe("0");
   slide(s, control(win, "wave", "volume"), 50);
@@ -148,6 +153,7 @@ test("Volume Control's menus hide Wave, keep Advanced Controls gray and show Abo
   expect(win.querySelector('[data-line="wave"]').hidden).toBeFalse();
   await properties(false, "ok");
   expect(win.querySelector('[data-line="wave"]').hidden).toBeTrue();
+  expect(win.style.width).toBe("145px");
   expect(win.querySelector(".xp-native-volume").className).toContain(
     "xp-mixer-single",
   );

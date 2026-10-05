@@ -142,6 +142,11 @@ html[data-xp-appearance="silver"] {
   outline: 0;
 }
 
+/* Unavailable items are gray, like XP's. */
+.tm-menu > button:disabled {
+  color: #aca899;
+}
+
 .tm-menu kbd {
   padding-left: 9px;
   font: inherit;
