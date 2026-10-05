@@ -74,6 +74,17 @@ async function documents({ windowAnimations = true } = {}) {
   await settle();
   const taskButton = () =>
     s.document.querySelector('.task-button[data-game="__my-documents"]');
+  // Happy DOM has no layout, so the button needs a rectangle for the caption
+  // to aim at.
+  if (taskButton())
+    taskButton().getBoundingClientRect = () => ({
+      left: 104,
+      top: 742,
+      width: 160,
+      height: 26,
+      right: 264,
+      bottom: 768,
+    });
   const ghost = () => s.document.querySelector(".window-ghost");
   return { s, win, taskButton, ghost };
 }
@@ -116,6 +127,10 @@ test("restoring brings the caption back from the task button", async () => {
   taskButton().click();
   const bar = ghost();
   expect(bar.textContent).toContain("My Documents");
+  // The caption starts on the task button, not on the window.
+  expect(parseFloat(bar.style.top)).toBe(742);
+  expect(parseFloat(bar.style.left)).toBe(108);
+  expect(parseFloat(bar.style.width)).toBe(152);
   expect(win.style.display).toBe("none");
 
   await s.advanceTime(WHOLE_ANIMATION);
@@ -161,6 +176,22 @@ test("a caption animation that is interrupted finishes at once", async () => {
   await s.advanceTime(WHOLE_ANIMATION);
   expect(ghost()).toBeNull();
   expect(win.style.display).toBe("flex");
+});
+
+test("minimizing again while a restore is still running wins", async () => {
+  const { s, win, taskButton, ghost } = await documents();
+  win.querySelector(".minimize-btn").click();
+  await s.advanceTime(WHOLE_ANIMATION);
+
+  taskButton().click();
+  await s.advanceTime(32);
+  win.querySelector(".minimize-btn").click();
+
+  // The restore gave up, so the window never appears.
+  await s.advanceTime(WHOLE_ANIMATION);
+  expect(ghost()).toBeNull();
+  expect(win.style.display).toBe("none");
+  expect(taskButton().getAttribute("aria-label")).toContain("minimized");
 });
 
 test("a window without a task button still gets a caption to slide", async () => {

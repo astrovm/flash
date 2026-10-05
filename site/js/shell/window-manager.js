@@ -1057,11 +1057,12 @@ const animateCaption = (win, from, to, done) => {
   document.body.append(ghost);
   let step = 0;
   let timer = 0;
+  // Only one caption runs at a time, so finishing one always clears the slot.
   const animation = {
     complete() {
       clearTimeout(timer);
       ghost.remove();
-      if (win.windowAnimation === animation) win.windowAnimation = null;
+      win.windowAnimation = null;
       done();
     },
   };
