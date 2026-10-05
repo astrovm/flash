@@ -594,6 +594,7 @@ export async function updateHtml(
     "iframe/pink-panther-hokus-pokus/index.html",
     "iframe/pink-panther-passport-to-peril/index.html",
     "iframe/revcdos/index.html",
+    "iframe/re3/index.html",
   ]) {
     const absolutePath = join(paths.root, relativePath);
     if (!(await isFile(absolutePath))) continue;

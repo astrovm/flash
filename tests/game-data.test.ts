@@ -42,12 +42,17 @@ function createFixture() {
     "manifest.json": new FakeFileHandle(100),
     "assets-current.bin": new FakeFileHandle(900),
   });
+  const re3 = new FakeDirectory({
+    "manifest.json": new FakeFileHandle(10),
+    "assets-current.bin": new FakeFileHandle(990),
+  });
   const scummvm = new FakeDirectory({
     "peril-one.iso": new FakeFileHandle(500),
     "pokus-one.iso": new FakeFileHandle(600),
   });
   const root = new FakeDirectory({
     [gameData.REVCDOS_DIRECTORY]: revcdos,
+    [gameData.RE3_DIRECTORY]: re3,
     [gameData.SCUMMVM_DIRECTORY]: scummvm,
   });
   const removedKeys = [];
@@ -74,6 +79,7 @@ describe("game data", () => {
         detail: "Game data",
         bytes: 1000,
       },
+      { id: "re3", title: "re3", detail: "Game data", bytes: 1000 },
       {
         id: "scummvm:peril",
         title: "The Pink Panther: Passport to Peril",
@@ -103,6 +109,15 @@ describe("game data", () => {
     await manager.removeTemporary("scummvm:pokus", "pokus-temp.iso");
     expect(scummvm.values.has("pokus-temp.iso")).toBe(false);
     expect(scummvm.values.has("pokus-manifest.json")).toBe(false);
+  });
+
+  test("removes re3 data and notifies the service worker", async () => {
+    const { root, messages, manager } = createFixture();
+    await manager.remove("re3");
+    expect(root.values.has(gameData.RE3_DIRECTORY)).toBe(false);
+    expect(root.values.has(gameData.REVCDOS_DIRECTORY)).toBe(true);
+    expect(messages).toEqual([{ type: "RE3_PACK_UPDATED" }]);
+    await manager.removeTemporary("re3");
   });
 
   test("removes reVCDOS data and notifies the service worker", async () => {

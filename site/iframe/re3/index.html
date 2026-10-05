@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>re3</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #05070b;
+        color: #fff;
+        font:
+          13px Tahoma,
+          sans-serif;
+      }
+
+      #setup {
+        display: grid;
+        width: 100%;
+        height: 100%;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 25% 20%, #8a4a12 0, transparent 36%),
+          radial-gradient(circle at 80% 75%, #125b81 0, transparent 42%),
+          #080a12;
+      }
+
+      .setup-card {
+        width: min(560px, 100%);
+        padding: 24px;
+        border: 1px solid #8995aa;
+        background: rgba(7, 10, 18, 0.94);
+        box-shadow: 0 12px 40px #000;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        color: #ffa25c;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 8px 0;
+        line-height: 1.45;
+      }
+
+      .notice {
+        margin: 18px 0;
+        padding: 12px;
+        border-left: 4px solid #f0b43c;
+        background: #202331;
+      }
+
+      .setup-action {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 7px 16px;
+        border: 1px solid #fff;
+        background: linear-gradient(#f8f8f8, #c8c8c8);
+        color: #111;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .setup-action:active {
+        background: linear-gradient(#bbb, #eee);
+      }
+
+      .keep-copy {
+        display: block;
+        margin: 12px 0 2px;
+        text-align: left;
+      }
+
+      .hidden-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      #selection {
+        min-height: 18px;
+        color: #a9d8ff;
+      }
+
+      a {
+        color: #84c9ff;
+      }
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="setup">
+      <section class="setup-card">
+        <h1>re3</h1>
+        <p>
+          The re3 browser engine is installed. Game data is not included with
+          Astro Flash Collection.
+        </p>
+        <div class="notice">
+          Select the folder of your own copy of
+          <strong>Grand Theft Auto III</strong> for PC. The radio and music
+          streams are left out to save memory, so the radio is silent.
+        </div>
+        <label class="setup-action" for="file-input"
+          >Select your GTA III folder…</label
+        >
+        <input
+          id="file-input"
+          class="hidden-input"
+          type="file"
+          webkitdirectory
+          directory
+        />
+        <label class="keep-copy"
+          ><input id="keep-copy" type="checkbox" checked /> Keep the game data
+          in this browser for next time</label
+        >
+        <p id="selection" role="status"></p>
+        <p>
+          Built from the
+          <a
+            href="https://github.com/hezkore/hez-gta-re3"
+            target="_blank"
+            rel="noreferrer"
+            >hez-gta-re3</a
+          >
+          fork of the re3 reverse-engineered engine. Not affiliated with
+          Rockstar Games or Take-Two Interactive.
+        </p>
+      </section>
+    </main>
+
+    <script src="../../js/storage-policy.js"></script>
+    <script type="module">
+      import { loadPackedManifest, packFiles } from "./packed-store.js";
+
+      const storagePolicy = window.AstroStoragePolicy;
+      const input = document.getElementById("file-input");
+      const keepCopyInput = document.getElementById("keep-copy");
+      const setup = document.getElementById("setup");
+      const selection = document.getElementById("selection");
+      // The folder name leads every relative path; the game's own paths
+      // start below it. Videos and the user's MP3s stay out.
+      const SKIPPED = /^(?:movies|mp3)\//;
+      let gameFrame = null;
+      let sessionFiles = new Map();
+
+      const normalize = (path) =>
+        String(path).replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
+
+      const cacheEngineForOfflineUse = () => {
+        window.parent.postMessage(
+          { event: "astro.offline-game-ready", gameId: "re3" },
+          location.origin,
+        );
+      };
+
+      const startGame = (message, session = false) => {
+        selection.textContent = message;
+        gameFrame = document.createElement("iframe");
+        gameFrame.src = session ? "game.html?session=1" : "game.html";
+        gameFrame.allow = "fullscreen; autoplay; gamepad";
+        gameFrame.title = "re3";
+        setup.replaceWith(gameFrame);
+      };
+
+      const localAssetUrl = (path) =>
+        `local-assets/${path
+          .split("/")
+          .map((part) => encodeURIComponent(part))
+          .join("/")}`;
+
+      const waitForServiceWorkerController = async () => {
+        await navigator.serviceWorker.ready;
+        if (navigator.serviceWorker.controller) return;
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(
+            () =>
+              reject(
+                new Error(
+                  "The offline engine is not ready. Reload Astro Flash Collection and try again.",
+                ),
+              ),
+            10000,
+          );
+          navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => {
+              clearTimeout(timeout);
+              resolve();
+            },
+            { once: true },
+          );
+        });
+      };
+
+      const verifyPackedAssets = async (manifest) => {
+        const firstPath = Object.keys(manifest.files)[0];
+        if (!firstPath) throw new Error("The selected folder is empty.");
+        await waitForServiceWorkerController();
+        navigator.serviceWorker.controller.postMessage({
+          type: "RE3_PACK_UPDATED",
+        });
+        const response = await fetch(localAssetUrl(firstPath), {
+          cache: "no-store",
+          headers: { Range: "bytes=0-0" },
+        });
+        if (response.status !== 206) {
+          throw new Error(
+            "The offline data service is not ready. Install any pending Astro Flash Collection update, reload, and try again.",
+          );
+        }
+      };
+
+      // Files below the picked folder, without the folder's own name.
+      const gameEntries = (files) => {
+        const entries = files
+          .map((file) => [
+            normalize(file.webkitRelativePath).split("/").slice(1).join("/"),
+            file,
+          ])
+          .filter(([path]) => path && !SKIPPED.test(path));
+        if (!entries.some(([path]) => path === "models/gta3.img")) {
+          throw new Error(
+            "This doesn't look like a GTA III folder: models/gta3.img is missing.",
+          );
+        }
+        return entries;
+      };
+
+      const packAndStart = async (entries) => {
+        input.disabled = true;
+        keepCopyInput.disabled = true;
+        if (!keepCopyInput.checked) {
+          sessionFiles = new Map(entries);
+          startGame(
+            `${sessionFiles.size.toLocaleString()} files ready. Starting re3 directly from this session…`,
+            true,
+          );
+          return;
+        }
+
+        let lastUpdate = 0;
+        const manifest = await packFiles(entries, (packed, total, path) => {
+          const now = Date.now();
+          if (now - lastUpdate < 100 && packed !== total) return;
+          lastUpdate = now;
+          selection.textContent = `Optimizing offline data… ${(
+            (packed / total) *
+            100
+          ).toFixed(1)}% · ${path}`;
+        });
+        await verifyPackedAssets(manifest);
+        cacheEngineForOfflineUse();
+        window.parent.postMessage(
+          { event: "astro.game-data-retention", gameId: "re3", keep: true },
+          location.origin,
+        );
+        window.parent.postMessage(
+          { event: "astro.game-data-changed" },
+          location.origin,
+        );
+        startGame(
+          `${Object.keys(manifest.files).length.toLocaleString()} packed files ready. Starting re3…`,
+        );
+      };
+
+      input.addEventListener("change", async () => {
+        const files = Array.from(input.files);
+        if (!files.length) return;
+        try {
+          selection.textContent = keepCopyInput.checked
+            ? "Optimizing selected files for smooth offline play…"
+            : "Checking selected files for direct play…";
+          await packAndStart(gameEntries(files));
+        } catch (error) {
+          selection.textContent = `Unable to prepare selected files: ${storagePolicy.errorMessage(error)}`;
+          input.disabled = false;
+          keepCopyInput.disabled = false;
+          input.value = "";
+        }
+      });
+
+      window.addEventListener("message", async (event) => {
+        if (!gameFrame || event.source !== gameFrame.contentWindow) return;
+        const message = event.data;
+        if (!message || typeof message.event !== "string") return;
+        const [port] = event.ports;
+
+        if (message.event === "re3.file-list" && port) {
+          port.postMessage({
+            files: [...sessionFiles].map(([path, file]) => ({
+              path,
+              size: file.size,
+            })),
+          });
+        } else if (message.event === "re3.asset-request" && port) {
+          try {
+            const file = sessionFiles.get(normalize(message.path));
+            if (!file) {
+              throw new Error(`Game file not found: ${message.path}`);
+            }
+            const buffer = await file.arrayBuffer();
+            port.postMessage({ buffer }, [buffer]);
+          } catch (error) {
+            port.postMessage({ error: storagePolicy.errorMessage(error) });
+          }
+        } else if (message.event === "request-fullscreen") {
+          gameFrame.requestFullscreen?.();
+        }
+      });
+
+      const packedManifest = await loadPackedManifest();
+      if (packedManifest) {
+        try {
+          await verifyPackedAssets(packedManifest);
+          cacheEngineForOfflineUse();
+          startGame(
+            `${Object.keys(packedManifest.files).length.toLocaleString()} packed files ready. Starting re3…`,
+          );
+        } catch (error) {
+          selection.textContent = storagePolicy.errorMessage(error);
+        }
+      }
+    </script>
+  </body>
+</html>

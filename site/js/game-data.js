@@ -6,10 +6,25 @@
   "use strict";
 
   const REVCDOS_DIRECTORY = "astro-flash-revcdos";
-  const REVCDOS_KEYS = [
-    "astro-flash.revcdos.download-complete.v1",
-    "astro-flash.revcdos.download-source.v1",
-  ];
+  const RE3_DIRECTORY = "astro-flash-re3";
+  // Games that keep their data as one packed copy in browser storage.
+  const PACKED_GAMES = {
+    revcdos: {
+      title: "reVCDOS",
+      directory: REVCDOS_DIRECTORY,
+      keys: [
+        "astro-flash.revcdos.download-complete.v1",
+        "astro-flash.revcdos.download-source.v1",
+      ],
+      message: "REVCDOS_PACK_UPDATED",
+    },
+    re3: {
+      title: "re3",
+      directory: RE3_DIRECTORY,
+      keys: [],
+      message: "RE3_PACK_UPDATED",
+    },
+  };
   const SCUMMVM_DIRECTORY = "astro-flash-scummvm";
   const PINK_GAMES = {
     peril: "The Pink Panther: Passport to Peril",
@@ -47,15 +62,18 @@
   } = {}) => {
     const list = async () => {
       const items = [];
-      const revcdosDirectory = await getDirectory(storage, REVCDOS_DIRECTORY);
-      const revcdosBytes = await directoryBytes(revcdosDirectory);
-      if (revcdosBytes > 0) {
-        items.push({
-          id: "revcdos",
-          title: "reVCDOS",
-          detail: "Game data",
-          bytes: revcdosBytes,
-        });
+      for (const [id, game] of Object.entries(PACKED_GAMES)) {
+        const bytes = await directoryBytes(
+          await getDirectory(storage, game.directory),
+        );
+        if (bytes > 0) {
+          items.push({
+            id,
+            title: game.title,
+            detail: "Game data",
+            bytes,
+          });
+        }
       }
 
       const scummvmDirectory = await getDirectory(storage, SCUMMVM_DIRECTORY);
@@ -84,15 +102,16 @@
       const rootDirectory = storage?.getDirectory
         ? await storage.getDirectory()
         : null;
-      if (id === "revcdos") {
+      const packed = Object.hasOwn(PACKED_GAMES, id) && PACKED_GAMES[id];
+      if (packed) {
         if (rootDirectory) {
           await rootDirectory
-            .removeEntry(REVCDOS_DIRECTORY, { recursive: true })
+            .removeEntry(packed.directory, { recursive: true })
             .catch((error) => {
               if (error.name !== "NotFoundError") throw error;
             });
         }
-        REVCDOS_KEYS.forEach((key) => localStorageObject?.removeItem(key));
+        packed.keys.forEach((key) => localStorageObject?.removeItem(key));
         let registration = null;
         try {
           registration = await serviceWorker?.ready;
@@ -100,7 +119,7 @@
           // The directory is already gone; worker notification is best effort.
         }
         (serviceWorker?.controller || registration?.active)?.postMessage({
-          type: "REVCDOS_PACK_UPDATED",
+          type: packed.message,
         });
         return;
       }
@@ -120,7 +139,7 @@
     };
 
     const removeTemporary = async (id, fileName) => {
-      if (id === "revcdos") return remove(id);
+      if (Object.hasOwn(PACKED_GAMES, id)) return remove(id);
       const match = /^scummvm:(peril|pokus)$/.exec(id);
       if (
         !match ||
@@ -147,6 +166,7 @@
 
   return {
     REVCDOS_DIRECTORY,
+    RE3_DIRECTORY,
     SCUMMVM_DIRECTORY,
     PINK_GAMES,
     createManager,

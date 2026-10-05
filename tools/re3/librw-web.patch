@@ -1,0 +1,242 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 5b16901..89d7519 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -95,6 +95,10 @@ add_library(librw
+     ps2/rwps2impl.h
+     ps2/rwps2plg.h
+ )
++if(EMSCRIPTEN)
++    # The browser provides WebGL 2; glad's loader isn't needed.
++    set_source_files_properties(gl/glad/glad.c PROPERTIES HEADER_FILE_ONLY TRUE)
++endif()
+ add_library(librw::librw ALIAS librw)
+ 
+ target_include_directories(librw
+@@ -148,7 +152,12 @@ set_target_properties(librw
+         PREFIX ""
+ )
+ 
+-if(LIBRW_PLATFORM_GL3)
++if(LIBRW_PLATFORM_GL3 AND EMSCRIPTEN)
++    # Emscripten's GLFW port drives a WebGL 2 context.
++    # contrib.glfw3 is a full GLFW 3.4, gamepads included.
++    target_compile_options(librw PUBLIC --use-port=contrib.glfw3)
++    target_link_options(librw PUBLIC --use-port=contrib.glfw3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3=1)
++elseif(LIBRW_PLATFORM_GL3)
+     if (LIBRW_GL3_GFXLIB STREQUAL "GLFW")
+         find_package(glfw3 REQUIRED)
+         target_link_libraries(librw
+diff --git a/src/gl/gl3device.cpp b/src/gl/gl3device.cpp
+index 9df47ee..bc39f48 100644
+--- a/src/gl/gl3device.cpp
++++ b/src/gl/gl3device.cpp
+@@ -91,6 +91,17 @@ const char *shaderDecl100es =
+ "#define FRAGCOLOR(c) (gl_FragColor = c)\n"
+ "precision highp float;\n"
+ "precision highp int;\n";
++#ifdef __EMSCRIPTEN__
++// WebGL 2 only takes GLSL ES 3.00.
++const char *shaderDecl300es =
++"#version 300 es\n"
++"#define VSIN(index) layout(location = index) in\n"
++"#define VSOUT out\n"
++"#define FSIN in\n"
++"#define FRAGCOLOR(c) (fragColor = c)\n"
++"precision highp float;\n"
++"precision highp int;\n";
++#endif
+ const char *shaderDecl310es =
+ "#version 310 es\n"
+ "#define VSIN(index) layout(location = index) in\n"
+@@ -1739,12 +1750,19 @@ startGLFW(void)
+ 	}
+ 	glfwMakeContextCurrent(win);
+ 
++#ifdef __EMSCRIPTEN__
++	// Emscripten's GLFW makes a WebGL 2 context whatever profile is asked
++	// for, so the first profile always "works". WebGL 2 is OpenGL ES 3.0.
++	gl3Caps.gles = true;
++	gl3Caps.glversion = 30;
++#else
+ 	/* Init GLAD */
+ 	if (!((gl3Caps.gles ? gladLoadGLES2Loader : gladLoadGLLoader) ((GLADloadproc) glfwGetProcAddress, gl3Caps.glversion)) ) {
+ 		RWERROR((ERR_GENERAL, "gladLoadGLLoader failed"));
+ 		glfwDestroyWindow(win);
+ 		return 0;
+ 	}
++#endif
+ 
+ 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+ 
+@@ -1784,14 +1802,25 @@ initOpenGL(void)
+ //		printf("%d %s\n", i, ext);
+ 	}
+ */
++#ifdef __EMSCRIPTEN__
++	// No compressed textures or anisotropic filtering without extensions.
++	gl3Caps.dxtSupported = false;
++	gl3Caps.astcSupported = false;
++	gl3Caps.maxAnisotropy = 1.0f;
++#else
+ 	gl3Caps.dxtSupported = !!GLAD_GL_EXT_texture_compression_s3tc;
+ 	gl3Caps.astcSupported = !!GLAD_GL_KHR_texture_compression_astc_ldr;
+ 
+ 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl3Caps.maxAnisotropy);
++#endif
+ 
+ 	if(gl3Caps.gles){
+ 		if(gl3Caps.glversion >= 30)
++#ifdef __EMSCRIPTEN__
++			shaderDecl = shaderDecl300es;
++#else
+ 			shaderDecl = shaderDecl310es;
++#endif
+ 		else
+ 			shaderDecl = shaderDecl100es;
+ 	}else{
+@@ -1839,7 +1868,11 @@ initOpenGL(void)
+ 
+ 	resetRenderState();
+ 
++#ifdef __EMSCRIPTEN__
++	maxAnisotropy = 1.0f;
++#else
+ 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
++#endif
+ 
+ 	if(gl3Caps.glversion >= 30){
+ 		glGenVertexArrays(1, &vao);
+diff --git a/src/gl/gl3raster.cpp b/src/gl/gl3raster.cpp
+index b7c3941..e2f2a6d 100644
+--- a/src/gl/gl3raster.cpp
++++ b/src/gl/gl3raster.cpp
+@@ -214,12 +214,22 @@ rasterCreateCamera(Raster *raster)
+ 	// TODO: set/check width, height, depth, format?
+ 
+ 	// used for locking right now
++#ifdef __EMSCRIPTEN__
++	// WebGL 2 only reads pixels back as RGBA.
++	raster->format = Raster::C8888;
++	natras->internalFormat = GL_RGBA8;
++	natras->format = GL_RGBA;
++	natras->type = GL_UNSIGNED_BYTE;
++	natras->hasAlpha = 0;
++	natras->bpp = 4;
++#else
+ 	raster->format = Raster::C888;
+ 	natras->internalFormat = GL_RGB8;
+ 	natras->format = GL_RGB;
+ 	natras->type = GL_UNSIGNED_BYTE;
+ 	natras->hasAlpha = 0;
+ 	natras->bpp = 3;
++#endif
+ 
+ 	natras->autogenMipmap = 0;
+ 
+@@ -470,10 +480,12 @@ rasterLock(Raster *raster, int32 level, int32 lockMode)
+ 					assert(allocSz >= natras->backingStore->levels[level].size);
+ 					memcpy(px, natras->backingStore->levels[level].data, allocSz);
+ 				}else{
++#ifndef __EMSCRIPTEN__
+ 					// GLES is losing here
+ 					uint32 prev = bindTexture(natras->texid);
+ 					glGetCompressedTexImage(GL_TEXTURE_2D, level, px);
+ 					bindTexture(prev);
++#endif
+ 				}
+ 			}else if(gl3Caps.gles){
+ 				GLuint fbo;
+@@ -487,10 +499,12 @@ assert(natras->format == GL_RGBA);
+ 				bindFramebuffer(0);
+ 				glDeleteFramebuffers(1, &fbo);
+ 			}else{
++#ifndef __EMSCRIPTEN__
+ 				uint32 prev = bindTexture(natras->texid);
+ 				glPixelStorei(GL_PACK_ALIGNMENT, 1);
+ 				glGetTexImage(GL_TEXTURE_2D, level, natras->format, natras->type, px);
+ 				bindTexture(prev);
++#endif
+ 			}
+ 		}
+ 
+@@ -503,13 +517,12 @@ assert(natras->format == GL_RGBA);
+ 		raster->width = glGlobals.presentWidth;
+ 		raster->height = glGlobals.presentHeight;
+ 		raster->stride = raster->width*natras->bpp;
+-		assert(natras->bpp == 3);
+ 		allocSz = raster->height*raster->stride;
+ 		px = (uint8*)rwMalloc(allocSz, MEMDUR_EVENT | ID_DRIVER);
+ 		assert(raster->pixels == nil);
+ 		raster->pixels = px;
+ 		glReadBuffer(GL_BACK);
+-		glReadPixels(0, 0, raster->width, raster->height, GL_RGB, GL_UNSIGNED_BYTE, px);
++		glReadPixels(0, 0, raster->width, raster->height, natras->format, GL_UNSIGNED_BYTE, px);
+ 
+ 		raster->privateFlags = lockMode;
+ 		break;
+diff --git a/src/gl/rwgl3.h b/src/gl/rwgl3.h
+index 4b138ac..a82a3fa 100644
+--- a/src/gl/rwgl3.h
++++ b/src/gl/rwgl3.h
+@@ -1,4 +1,32 @@
+ #ifdef RW_GL3
++#ifdef __EMSCRIPTEN__
++// The browser's WebGL 2 is OpenGL ES 3.0; Emscripten provides its headers.
++// The desktop and extension tokens below only appear on paths that stay off
++// there, such as compressed textures and anisotropic filtering.
++#include <GLES3/gl3.h>
++#include <GLFW/glfw3.h>
++#ifndef GL_CLAMP_TO_BORDER
++#define GL_CLAMP_TO_BORDER 0x812D
++#endif
++#ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
++#define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
++#endif
++#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
++#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
++#endif
++#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
++#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT 0x83F0
++#endif
++#ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
++#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
++#endif
++#ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
++#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
++#endif
++#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
++#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
++#endif
++#else
+ #include "glad/glad.h"
+ #ifdef LIBRW_SDL2
+ #include <SDL.h>
+@@ -6,6 +34,7 @@
+ #include <GLFW/glfw3.h>
+ #endif
+ #endif
++#endif
+ 
+ namespace rw {
+ 
+diff --git a/src/gl/wdgl.cpp b/src/gl/wdgl.cpp
+index d1ac4b8..baaf654 100644
+--- a/src/gl/wdgl.cpp
++++ b/src/gl/wdgl.cpp
+@@ -14,8 +14,15 @@
+ #include "rwwdgl.h"
+ 
+ #ifdef RW_OPENGL
++#ifdef __EMSCRIPTEN__
++#include <GLES3/gl3.h>
++#ifndef GL_CLAMP_TO_BORDER
++#define GL_CLAMP_TO_BORDER 0x812D
++#endif
++#else
+ #include "glad/glad.h"
+ #endif
++#endif
+ 
+ #define PLUGIN_ID 2
+ 

@@ -125,6 +125,12 @@
     "retrieved": "2026-07-30",
     "sha256": "aad1b36cb0167a81302319e4697b4212bfd4567f97f9033bd5e19c1f9894362b"
   },
+  "re3": {
+    "file": "re3.png",
+    "source": "Original Astro Flash artwork",
+    "retrieved": "2026-10-05",
+    "sha256": "0f60c5bec5f3ccc837c06dc906f5a90081c0c9edd9bf107bb80a37c95b9c8f07"
+  },
   "eds-candy-machine": {
     "file": "eds-candy-machine.png",
     "source": "https://infinity.unstable.life/images/Logos/34/21/3421a170-8008-8f7a-90b9-f52629627b01.png",

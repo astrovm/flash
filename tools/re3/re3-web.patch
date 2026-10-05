@@ -1,0 +1,245 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 818d180f..aaadf655 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -168,3 +168,28 @@ if(${PROJECT}_INSTALL)
+ endif()
+ 
+ re3_platform_target(${EXECUTABLE} INSTALL)
++
++if(EMSCRIPTEN)
++    # The browser build: WebGL 2 through Emscripten's GLFW, Emscripten's OpenAL,
++    # and a main loop that hands each frame back to the browser (Asyncify).
++    # The page starts the game itself once the data files are in place.
++    target_include_directories(${EXECUTABLE} SYSTEM AFTER PRIVATE
++        "${PROJECT_SOURCE_DIR}/vendor/openal-soft/include")
++    set(${PROJECT}_WEB_FLAGS
++        -lopenal
++        -sASYNCIFY=1
++        -sASYNCIFY_STACK_SIZE=65536
++        -sALLOW_MEMORY_GROWTH=1
++        -sINITIAL_MEMORY=268435456
++        -sSTACK_SIZE=1048576
++        -sFORCE_FILESYSTEM=1
++        -sMODULARIZE=1
++        -sEXPORT_NAME=createRe3Module
++        -sINVOKE_RUN=0
++        -sEXIT_RUNTIME=0
++        -sEXPORTED_RUNTIME_METHODS=FS,callMain,ccall
++        -lidbfs.js
++    )
++    target_link_options(${EXECUTABLE} PRIVATE ${${PROJECT}_WEB_FLAGS})
++    set_target_properties(${EXECUTABLE} PROPERTIES SUFFIX ".js")
++endif()
+diff --git a/src/audio/oal/aldlist.cpp b/src/audio/oal/aldlist.cpp
+index 6024adf2..a30db9c2 100644
+--- a/src/audio/oal/aldlist.cpp
++++ b/src/audio/oal/aldlist.cpp
+@@ -40,7 +40,13 @@ ALDeviceList::ALDeviceList()
+ 
+ 	defaultDeviceIndex = 0;
+ 
++#ifdef __EMSCRIPTEN__
++	// Emscripten's OpenAL lists its one device but doesn't report
++	// ALC_ENUMERATION_EXT, so the list would stay empty.
++	if (true) {
++#else
+ 	if (alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT")) {
++#endif
+ 		devices = (char *)alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+ 		defaultDeviceName = (char *)alcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
+ 		
+diff --git a/src/audio/oal/oal_utils.cpp b/src/audio/oal/oal_utils.cpp
+index e4cb0b77..ca88bc1d 100644
+--- a/src/audio/oal/oal_utils.cpp
++++ b/src/audio/oal/oal_utils.cpp
+@@ -49,6 +49,12 @@ LPALGETFILTERFV alGetFilterfv;
+ 
+ using namespace re3_openal;
+ 
++#ifdef __EMSCRIPTEN__
++// Emscripten's OpenAL has no EFX and no alGetProcAddress; the EFX paths only
++// run when ALC_EXT_EFX is present, which it never is there.
++extern "C" void *alGetProcAddress(const ALchar *fname) { return nil; }
++#endif
++
+ void EFXInit()
+ {
+ 	/* Define a macro to help load the function pointers. */
+diff --git a/src/core/CdStreamPosix.cpp b/src/core/CdStreamPosix.cpp
+index bc9129eb..fb5613e0 100644
+--- a/src/core/CdStreamPosix.cpp
++++ b/src/core/CdStreamPosix.cpp
+@@ -122,9 +122,34 @@ int _gdwCdStreamFlags;
+ 
+ void *CdStreamThread(void* channelId);
+ 
++#ifdef __EMSCRIPTEN__
++// The browser has no threads here, and the "disc" is a virtual filesystem
++// with no seek time to hide, so reads run straight away on the main thread.
++static void
++CdStreamPerformReadSync(CdReadInfo *pChannel)
++{
++	pChannel->bReading = true;
++	if ( pChannel->nStatus == STREAM_NONE )
++	{
++		size_t requested = (size_t)pChannel->nSectorsToRead * (size_t)CDSTREAM_SECTOR_SIZE;
++		lseek(pChannel->hFile, (size_t)pChannel->nSectorOffset * (size_t)CDSTREAM_SECTOR_SIZE, SEEK_SET);
++		ssize_t got = read(pChannel->hFile, pChannel->pBuffer, requested);
++		if ( got == -1 || (size_t)got != requested )
++			pChannel->nStatus = STREAM_ERROR;
++	}
++	pChannel->nSectorsToRead = 0;
++	pChannel->bLocked = 0;
++	pChannel->bReading = false;
++}
++#endif
++
+ void
+ CdStreamInitThread(void)
+ {
++#ifdef __EMSCRIPTEN__
++	gCdStreamThreadStatus = 0;
++	return;
++#endif
+ 	int status;
+ #ifndef ONE_THREAD_PER_CHANNEL
+ 	gChannelRequestQ.items = (int32 *)calloc(gNumChannels + 1, sizeof(int32));
+@@ -268,6 +293,12 @@ GetGTA3ImgSize(void)
+ void
+ CdStreamShutdown(void)
+ {
++#ifdef __EMSCRIPTEN__
++	gCdStreamThreadStatus = 2;
++	free(gpReadInfo);
++	gpReadInfo = nil;
++	return;
++#endif
+     // Destroying semaphores and free(gpReadInfo) will be done at threads
+ #ifndef ONE_THREAD_PER_CHANNEL
+ 	gCdStreamThreadStatus = 2;
+@@ -316,7 +347,9 @@ CdStreamRead(int32 channel, void *buffer, uint32 offset, uint32 size)
+ 	pChannel->pBuffer = buffer;
+ 	pChannel->bLocked = 0;
+ 
+-#ifndef ONE_THREAD_PER_CHANNEL
++#ifdef __EMSCRIPTEN__
++	CdStreamPerformReadSync(pChannel);
++#elif !defined ONE_THREAD_PER_CHANNEL
+ 	AddToQueue(&gChannelRequestQ, channel);
+ 	if ( sem_post(gCdStreamSema) != 0 )
+ 		printf("Signal Sema Error\n");
+diff --git a/src/rw/RwHelper.cpp b/src/rw/RwHelper.cpp
+index 35593722..bff3fbcd 100644
+--- a/src/rw/RwHelper.cpp
++++ b/src/rw/RwHelper.cpp
+@@ -121,7 +121,7 @@ PushRendergroup(const char *name)
+ {
+ 	if(!bDebugRenderGroups)
+ 		return;
+-#if defined(RW_OPENGL)
++#if defined(RW_OPENGL) && !defined(__EMSCRIPTEN__)
+ 	if(GLAD_GL_KHR_debug)
+ 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
+ #elif defined(RW_D3D9)
+@@ -136,7 +136,7 @@ PopRendergroup(void)
+ {
+ 	if(!bDebugRenderGroups)
+ 		return;
+-#if defined(RW_OPENGL)
++#if defined(RW_OPENGL) && !defined(__EMSCRIPTEN__)
+ 	if(GLAD_GL_KHR_debug)
+ 		glPopDebugGroup();
+ #elif defined(RW_D3D9)
+diff --git a/src/skel/glfw/glfw.cpp b/src/skel/glfw/glfw.cpp
+index 336c4940..acb28802 100644
+--- a/src/skel/glfw/glfw.cpp
++++ b/src/skel/glfw/glfw.cpp
+@@ -70,6 +70,16 @@ long _dwOperatingSystemVersion;
+ #include <GLFW/glfw3native.h>
+ #endif
+ 
++#ifdef __EMSCRIPTEN__
++#include <emscripten.h>
++#include <emscripten/html5.h>
++// Waits for the browser's next animation frame. Asyncify unwinds the stack
++// while the page carries on.
++EM_ASYNC_JS(void, re3_wait_frame, (), {
++	await new Promise((resolve) => requestAnimationFrame(resolve));
++});
++#endif
++
+ #define MAX_SUBSYSTEMS		(16)
+ 
+ rw::EngineOpenParams openParams;
+@@ -258,6 +268,10 @@ psTimer(void)
+ double
+ psTimer(void)
+ {
++#ifdef __EMSCRIPTEN__
++	// clock_gettime doesn't track real time in this build.
++	return emscripten_get_now();
++#endif
+ 	struct timespec start; 
+ #if defined(CLOCK_MONOTONIC_RAW)
+ 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+@@ -564,6 +578,9 @@ psInitialize(void)
+ #elif defined (__SWITCH__)
+ 	svcGetInfo(&_dwMemAvailPhys, InfoType_UsedMemorySize, CUR_PROCESS_HANDLE, 0);
+ 	debug("Physical memory size %llu\n", _dwMemAvailPhys);
++#elif defined (__EMSCRIPTEN__)
++	// The page decides how much memory the game may grow to.
++	_dwMemAvailPhys = 1024u * 1024u * 1024u;
+ #else
+  	struct sysinfo systemInfo;
+ 	sysinfo(&systemInfo);
+@@ -859,8 +876,18 @@ psSelectDevice()
+ 		}
+ 
+ 		if(bestFsMode < 0){
+-			printf("WARNING: Cannot find desired video mode, selecting device cancelled\n");
+-			return FALSE;
++#ifdef __EMSCRIPTEN__
++			// A canvas has no exclusive fullscreen modes, so play in the
++			// window mode.
++			if(bestWndMode >= 0){
++				bestFsMode = bestWndMode;
++				FrontEndMenuManager.m_nPrefsWindowed = 1;
++			}else
++#endif
++			{
++				printf("WARNING: Cannot find desired video mode, selecting device cancelled\n");
++				return FALSE;
++			}
+ 		}
+ 		GcurSelVM = bestFsMode;
+ 
+@@ -878,8 +905,16 @@ psSelectDevice()
+ 		GcurSelVM = bestWndMode;
+ 
+ 	// Now GcurSelVM is 0 but vm has sizes(and fullscreen flag) of the video mode we want, that's why we changed the rwVIDEOMODEEXCLUSIVE conditions below
++#ifdef __EMSCRIPTEN__
++	// The window mode of a canvas can report 0 by 0.
++	if(vm.width > 0 && vm.height > 0){
++		FrontEndMenuManager.m_nPrefsWidth = vm.width;
++		FrontEndMenuManager.m_nPrefsHeight = vm.height;
++	}
++#else
+ 	FrontEndMenuManager.m_nPrefsWidth = vm.width;
+ 	FrontEndMenuManager.m_nPrefsHeight = vm.height;
++#endif
+ 	FrontEndMenuManager.m_nPrefsDepth = vm.depth;
+ #endif
+ 
+@@ -2094,6 +2129,11 @@ main(int argc, char *argv[])
+ 		while( !RsGlobal.quit && !FrontEndMenuManager.m_bWantToRestart && !glfwWindowShouldClose(PSGLOBAL(window)))
+ #endif
+ 		{
++#ifdef __EMSCRIPTEN__
++			// Hand the frame to the browser, which shows it and runs input
++			// handlers before the next one.
++			re3_wait_frame();
++#endif
+ 			glfwPollEvents();
+ #ifdef GET_KEYBOARD_INPUT_FROM_X11
+ 			checkKeyPresses();

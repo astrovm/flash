@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>re3</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        color: #ddd;
+        font:
+          13px Tahoma,
+          sans-serif;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        outline: 0;
+      }
+
+      #status {
+        position: fixed;
+        top: calc(50% + 16px);
+        left: 50%;
+        width: min(80vw, 480px);
+        transform: translateX(-50%);
+        text-align: center;
+      }
+
+      #status.error {
+        color: #ff8f8f;
+      }
+
+      #progress {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: min(70vw, 420px);
+        height: 10px;
+        transform: translate(-50%, -50%);
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgb(255 255 255 / 12%);
+      }
+
+      #progress::-webkit-progress-bar {
+        background: rgb(255 255 255 / 12%);
+      }
+
+      #progress::-webkit-progress-value {
+        background: rgb(255 255 255 / 78%);
+      }
+
+      #progress::-moz-progress-bar {
+        background: rgb(255 255 255 / 78%);
+      }
+
+      body.playing #status,
+      body.playing #progress {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" tabindex="0"></canvas>
+    <div id="status" role="status"></div>
+    <progress id="progress" hidden value="0" max="1"></progress>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

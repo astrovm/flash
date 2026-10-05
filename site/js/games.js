@@ -223,6 +223,13 @@ window.FLASH_GAMES = Object.freeze({
     category: "Action",
     icon: "assets/icons/revcdos.png",
   },
+  re3: {
+    title: "re3",
+    aspectRatio: 16 / 9,
+    type: "iframe",
+    category: "Action",
+    icon: "assets/icons/re3.png",
+  },
   "sugar-sugar": {
     icon: "assets/icons/sugar-sugar.png",
     title: "Sugar, Sugar",
