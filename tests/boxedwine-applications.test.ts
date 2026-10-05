@@ -15,9 +15,7 @@ const application = (index: number) => ({
 
 describe("BoxedWine application catalog", () => {
   test("registers Hearts with only generic application data", () => {
-    expect(
-      boxedWineApplications.filter(({ id }) => id === "hearts"),
-    ).toEqual([
+    expect(boxedWineApplications.filter(({ id }) => id === "hearts")).toEqual([
       {
         id: "hearts",
         title: "Hearts",
