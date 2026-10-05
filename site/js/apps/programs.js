@@ -526,8 +526,9 @@ const openXPProgram = (programId, options = {}) => {
       : preferredHeight;
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  el.style.left = `${program.window.left ?? Math.max(8, (desktopWidth - windowWidth) / 2)}px`;
-  el.style.top = `${program.window.top ?? Math.max(8, (desktopHeight - windowHeight) / 2)}px`;
+  // Whole pixels keep pixel art sharp in odd-sized windows.
+  el.style.left = `${program.window.left ?? Math.max(8, Math.floor((desktopWidth - windowWidth) / 2))}px`;
+  el.style.top = `${program.window.top ?? Math.max(8, Math.floor((desktopHeight - windowHeight) / 2))}px`;
   const win = {
     gameId: programId,
     el,

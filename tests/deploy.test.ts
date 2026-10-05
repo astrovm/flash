@@ -340,7 +340,7 @@ describe("build metadata", () => {
         'const options = { root: "xp-accessories" };',
       ].join("\n"),
       "iframe/boxedwine-runtime/xp-runtime.zip": "shared XP applications",
-      "iframe/solitaire/xp-solitaire.zip": "legacy Solitaire package",
+      "iframe/wordpad/xp-wordpad.zip": "legacy WordPad package",
     });
     await addGeneratedRuntime(root);
     const paths = new BuildPaths(root);
@@ -387,7 +387,7 @@ describe("build metadata", () => {
       /^sha384-[A-Za-z0-9+/]+={0,2}$/,
     );
     expect(manifest.games["boxedwine-runtime"]).toBeUndefined();
-    expect(manifest.games.solitaire.runtime).toBe("boxedwine");
+    expect(manifest.games.wordpad.runtime).toBe("boxedwine");
     expect(
       manifest.runtimes.boxedwine.files.some(
         (file: { url: string }) =>

@@ -115,10 +115,10 @@ const mountFreeCell = (context) => {
   root.className = "xp-native-program xp-freecell";
   root.tabIndex = 0;
   root.innerHTML = `
-    <div class="freecell-menu-bar" role="menubar"></div>
+    <div class="cards-menu-bar" role="menubar"></div>
     <span class="freecell-cards-left" aria-live="polite"></span>
     <canvas class="freecell-board" role="application" aria-label="FreeCell"></canvas>`;
-  const menuBar = root.querySelector(".freecell-menu-bar");
+  const menuBar = root.querySelector(".cards-menu-bar");
   const cardsLeftLabel = root.querySelector(".freecell-cards-left");
   const canvas = root.querySelector("canvas");
   const graphics = canvas.getContext("2d");

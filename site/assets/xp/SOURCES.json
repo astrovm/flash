@@ -2780,6 +2780,19 @@
       "pixelSha256": "a94328dfb4741fefb3439de9351ef0e76bcf54daa2a45016e0f0591b5a5c3e25"
     }
   },
+  "assets/xp/solitaire/Solitaire-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SOL.EX_",
+    "sha256": "4f6c19c4ee8d45ab8b430f04a8addd8dc77cad26ab6edd91e59340ac62299e98",
+    "resource": {
+      "parentSha256": "a6fc95a5b288593c9559bd177ec43bf9b30d8a98cf19e82bf5a1ba5600857f04",
+      "type": 14,
+      "id": 500,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "e8fedabf151d9342d15f13d268f8cf014cb165c88bcdf257f9eb6ac0595f0b5a"
+    }
+  },
   "assets/xp/taskbar/blue-toolbar-background-0.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14875,6 +14888,45 @@
       "language": 1033,
       "frame": "32x32x32",
       "pixelSha256": "4d01b2a31749b5560d7be5a0fb434804efb12a66829b26ba09a096047e58fc6e"
+    }
+  },
+  "assets/xp/cards/Empty.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CARDS.DL_",
+    "sha256": "5321d46dc41fd657eed632a54f41c89f30b297b88d23449f5d9bccad0d1ca431",
+    "resource": {
+      "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
+      "type": 2,
+      "id": 53,
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "eb3f5f853106947de444309f52ba019b1224431f6ea0c14d3f049c9b5b399fef"
+    }
+  },
+  "assets/xp/cards/X.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CARDS.DL_",
+    "sha256": "b9c4b10a5798580078cd260c3a53548e5218dc6cfe6c61a99a98f75869ab9b15",
+    "resource": {
+      "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
+      "type": 2,
+      "id": 67,
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "8fe0026be67c6e29141aa731c81c6cc71a6454153b2a0a82cf5999d13c435af5"
+    }
+  },
+  "assets/xp/cards/O.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CARDS.DL_",
+    "sha256": "57d01785f391e31ff68420a8b57d709e887c73263a3b5904359e1b3b154c7d7f",
+    "resource": {
+      "parentSha256": "0fb81e48d8b45e9995ae1e05fd28c1631dbbcdc71180904c1356bfa2c1ead506",
+      "type": 2,
+      "id": 68,
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "0633b2d22554690f8dea940bfe9ae6e52e882a7a27745bbc428f25c3af1f35b2"
     }
   },
   "assets/xp/system/SecurityHelp.png": {

@@ -13,96 +13,21 @@ import {
   loadShell,
   login,
 } from "./helpers/shell-harness";
+import { face, recordCardCanvas } from "./helpers/card-canvas";
 
 afterEach(cleanupShells);
 
-// The board's canvas reports XP's 632 by 426 client area. Its drawing calls
-// are recorded per frame, and card images keep their file names so a frame
-// shows which card is drawn where.
-const record = (window, { failImages = false, screenHeight } = {}) => {
-  const frames = [[]];
-  const proto = window.HTMLCanvasElement.prototype;
-  const getContext = proto.getContext;
-  const rendered = new Map();
-  proto.getContext = function () {
-    const canvas = this as HTMLCanvasElement;
-    const context = getContext.call(canvas);
-    const board = () => canvas.classList.contains("freecell-board");
-    context.drawImage = (image, x, y, ...size) => {
-      if (board()) {
-        frames.at(-1).push([image.dataset?.face ?? image.src, x, y, ...size]);
-        return;
-      }
-      const count = (rendered.get(image.src) || 0) + 1;
-      rendered.set(image.src, count);
-      canvas.dataset.face = `${image.src}${count === 2 ? " inverted" : ""}`;
-    };
-    context.fillRect = (x, y, width) => {
-      if (board() && x === 0 && y === 0 && width >= 500) frames.push([]);
-    };
-    // White and black pixels, so the inverted faces swap both.
-    context.getImageData = (x, y, width, height) => {
-      const data = new Uint8ClampedArray(width * height * 4);
-      for (let index = 0; index < data.length; index += 8)
-        data.fill(255, index, index + 4);
-      return { data, width, height };
-    };
-    return context;
-  };
-  for (const [property, value] of [
-    ["clientWidth", 632],
-    ["clientHeight", 426],
-  ])
-    Object.defineProperty(proto, property, {
-      configurable: true,
-      get() {
-        return this.classList.contains("freecell-board") ? value : 0;
-      },
-    });
-  proto.getBoundingClientRect = function () {
-    return {
-      left: 0,
-      top: 0,
-      width: 632,
-      height: 426,
-      right: 632,
-      bottom: 426,
-    };
-  };
-  if (screenHeight)
-    Object.defineProperty(window.screen, "height", { get: () => screenHeight });
-  window.Image = class extends window.EventTarget {
-    complete = false;
-    get src() {
-      return this.source;
-    }
-    set src(value) {
-      this.source = value.replace(/^.*?assets\//, "assets/");
-      queueMicrotask(() => {
-        if (failImages && value.includes("faces")) return this.onerror?.();
-        this.complete = true;
-        this.onload?.();
-        this.dispatchEvent(new window.Event("load"));
-      });
-    }
-  };
-  // Happy DOM never resizes, so tests call the observer themselves.
-  window.ResizeObserver = class {
-    constructor(callback) {
-      window.freecellResize = callback;
-    }
-    observe() {}
-    disconnect() {}
-  };
-  return frames;
-};
+const record = (window, options = {}) =>
+  recordCardCanvas(window, {
+    board: "freecell-board",
+    width: 632,
+    height: 426,
+    ...options,
+  });
 
 const COLUMNS = [7, 85, 163, 241, 319, 397, 475, 553];
 const SUITS = "CDHS";
 const RANKS = "A23456789TJQK";
-// cards.dll numbers its faces by suit, then rank.
-const face = (name, inverted = false) =>
-  `assets/xp/cards/faces/${SUITS.indexOf(name[1]) * 13 + RANKS.indexOf(name[0]) + 1}.png${inverted ? " inverted" : ""}`;
 const KING = (name) => `assets/xp/freecell/King${name}.png`;
 
 const open = async ({
@@ -769,7 +694,7 @@ test("statistics, options and About use freecell.exe's dialogs", async () => {
   expect(h.win.querySelector(".tm-menu")).toBeNull();
   h.win.querySelector('[data-freecell-menu="help"]').click();
   h.win
-    .querySelector(".freecell-menu-bar")
+    .querySelector(".cards-menu-bar")
     .dispatchEvent(
       new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
     );
@@ -826,7 +751,7 @@ test("small screens tighten the columns, and the window follows its size", async
   await h.play(1);
   expect(h.drawnAt(7, 100)).toBe(face("JD"));
   expect(h.drawnAt(7, 114)).toBe(face("KD"));
-  h.s.window.freecellResize();
+  h.s.window.cardGameResize();
   expect(h.drawnAt(7, 114)).toBe(face("KD"));
   await h.key("F10", { ctrlKey: true, shiftKey: true });
   await h.answer("abort");

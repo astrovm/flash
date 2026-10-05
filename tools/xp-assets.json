@@ -2170,6 +2170,16 @@
       "height": 32,
       "bitDepth": 32,
       "output": "site/assets/xp/freecell/FreeCell-32.png"
+    },
+    {
+      "member": "SOL.EX_",
+      "expandedName": "sol.exe",
+      "resourceType": 14,
+      "resourceId": 500,
+      "bitDepth": 32,
+      "width": 32,
+      "height": 32,
+      "output": "site/assets/xp/solitaire/Solitaire-32.png"
     }
   ],
   "resourceBitmaps": [
@@ -10958,6 +10968,27 @@
       "resourceType": 2,
       "resourceId": "KINGSMILE",
       "output": "site/assets/xp/freecell/KingSmile.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 53,
+      "output": "site/assets/xp/cards/Empty.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 67,
+      "output": "site/assets/xp/cards/X.png"
+    },
+    {
+      "member": "CARDS.DL_",
+      "expandedName": "cards.dll",
+      "resourceType": 2,
+      "resourceId": 68,
+      "output": "site/assets/xp/cards/O.png"
     }
   ],
   "resourcePngs": [

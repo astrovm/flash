@@ -14,7 +14,8 @@ const place = (element, [x, y, width, height]) => {
   });
 };
 
-// Controls: { type: "button" | "checkbox" | "edit" | "text", id, label,
+// Controls: { type: "button" | "checkbox" | "radio" | "group" | "edit" |
+// "text", id, label, group (a radio button's set),
 // rect: [x, y, width, height], isDefault, center }. `owner` holds the
 // owning window and its client area. `position` is the dialog's corner in
 // dialog units from the client area, or "center", the way freecell.exe
@@ -48,11 +49,18 @@ export const openTemplateDialog = ({
       element = dialogs.createDialogButton(control, (id) => dialog.close(id));
       if (control.isDefault) dialog.defaultButton = element;
       registerKey(control.label, element);
-    } else if (control.type === "checkbox") {
+    } else if (control.type === "group") {
+      element = document.createElement("fieldset");
+      element.className = "dlg-group xp-template-group";
+      const legend = document.createElement("legend");
+      setAccessKeyText(legend, control.label);
+      element.append(legend);
+    } else if (control.type === "checkbox" || control.type === "radio") {
       element = document.createElement("label");
       element.className = "xp-template-checkbox";
       const box = document.createElement("input");
-      box.type = "checkbox";
+      box.type = control.type;
+      if (control.group) box.name = control.group;
       const text = document.createElement("span");
       setAccessKeyText(text, control.label);
       element.append(box, text);
@@ -75,7 +83,7 @@ export const openTemplateDialog = ({
       element.textContent = control.label;
     }
     place(element, control.rect);
-    if (control.id && control.type !== "checkbox")
+    if (control.id && !["checkbox", "radio"].includes(control.type))
       elements[control.id] = element;
     body.append(element);
   });
