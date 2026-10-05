@@ -41,6 +41,7 @@ const manifest = JSON.parse(
   resourceBitmaps: { output: string; resourceId: number | string }[];
   resourcePngs?: { output: string; resourceId: number | string }[];
   resourceFiles?: { output: string; resourceId: number | string }[];
+  resourceCursors?: { output: string; resourceId: number | string }[];
   renderedAssets?: { output: string }[];
 };
 

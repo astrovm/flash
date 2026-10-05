@@ -25,8 +25,8 @@ const record = (window, { failImages = false, screenHeight } = {}) => {
   const getContext = proto.getContext;
   const rendered = new Map();
   proto.getContext = function () {
-    const context = getContext.call(this);
-    const canvas = this;
+    const canvas = this as HTMLCanvasElement;
+    const context = getContext.call(canvas);
     const board = () => canvas.classList.contains("freecell-board");
     context.drawImage = (image, x, y, ...size) => {
       if (board()) {
