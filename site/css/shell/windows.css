@@ -1337,6 +1337,7 @@ html:not(.keyboard-cues) .menu-accesskey {
 
 .internet-games-content {
   display: flex;
+  flex: 1;
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
@@ -1399,7 +1400,6 @@ html:not(.keyboard-cues) .menu-accesskey {
   padding-top: 4px;
   border-top: 2px solid #ffc73c;
   background: #fff;
-  font-weight: bold;
 }
 
 .internet-games-panel {

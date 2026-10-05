@@ -33,7 +33,7 @@
         return;
       }
       if (worker.state === "redundant") {
-        reject(new Error("The offline download was interrupted."));
+        reject(new Error("The download stopped. Try again."));
         return;
       }
       const onStateChange = () => {
@@ -42,7 +42,7 @@
           resolve();
         } else if (worker.state === "redundant") {
           worker.removeEventListener("statechange", onStateChange);
-          reject(new Error("The offline download was interrupted."));
+          reject(new Error("The download stopped. Try again."));
         }
       };
       worker.addEventListener("statechange", onStateChange);
@@ -89,7 +89,7 @@
       typeof manifest.games !== "object" ||
       Array.isArray(manifest.games)
     ) {
-      throw new Error("The offline game catalog is invalid.");
+      throw new Error("The game list didn't load. Try again.");
     }
     if (
       manifest.runtimes !== undefined &&
@@ -97,11 +97,11 @@
         typeof manifest.runtimes !== "object" ||
         Array.isArray(manifest.runtimes))
     ) {
-      throw new Error("The offline game catalog is invalid.");
+      throw new Error("The game list didn't load. Try again.");
     }
     for (const [id, entry] of Object.entries(manifest.runtimes || {})) {
       if (!/^[a-z0-9-]+$/.test(id) || !validateManifestEntry(entry)) {
-        throw new Error("The offline game catalog is invalid.");
+        throw new Error("The game list didn't load. Try again.");
       }
     }
     for (const [id, entry] of Object.entries(manifest.games)) {
@@ -114,7 +114,7 @@
           (!/^[a-z0-9-]+$/.test(entry.runtime) ||
             !manifest.runtimes?.[entry.runtime]))
       ) {
-        throw new Error("The offline game catalog is invalid.");
+        throw new Error("The game list didn't load. Try again.");
       }
     }
     return manifest;
@@ -375,7 +375,7 @@
         !state.automaticUpdatesEnabled
       ) {
         if ((await requestWorkerVersion(worker)) !== currentVersion) {
-          throw new Error("The downloaded system version is inconsistent.");
+          throw new Error("The download doesn't match. Try again.");
         }
         applyTargetVersion = null;
         setState({
@@ -473,8 +473,7 @@
           phase: "repair-required",
           updateReady: false,
           workerState: "active",
-          error:
-            "The active update contains inconsistent system files. Repair System Files to download a clean copy.",
+          error: "Some files don't match. Select Repair.",
         });
         return true;
       }
@@ -510,7 +509,7 @@
             phase: "error",
             workerState: "failed",
             error: isUpdate
-              ? "The update download did not complete. Repair System Files and try again."
+              ? "The update didn't finish. Select Repair."
               : "The system-file download did not complete.",
           });
         }
@@ -549,9 +548,7 @@
 
     const registerAndWait = async (targetVersion, inspectWaiting = true) => {
       if (!navigatorObject.serviceWorker) {
-        throw new Error(
-          "Offline system files are not supported by this browser.",
-        );
+        throw new Error("This browser can't work offline.");
       }
       const nextRegistration = await navigatorObject.serviceWorker.register(
         versionedServiceWorkerUrl(targetVersion),
@@ -584,7 +581,7 @@
       const activeWorker = nextRegistration.active || worker;
       if ((await requestWorkerVersion(activeWorker)) !== targetVersion) {
         scheduleUpdateRetry();
-        throw new Error("The downloaded system version is inconsistent.");
+        throw new Error("The download doesn't match. Try again.");
       }
       setState({ phase: "ready", workerState: "active", error: null });
       await refreshStorageEstimate();
@@ -593,7 +590,7 @@
 
     async function fetchVersion() {
       if (navigatorObject.onLine === false) {
-        throw new Error("Connect to the internet to check for updates.");
+        throw new Error("You're offline. Connect to check for updates.");
       }
       const separator = versionUrl.includes("?") ? "&" : "?";
       const response = await environment.fetch(
@@ -616,7 +613,7 @@
         !Number.isFinite(metadata.bundledGameBytes) ||
         metadata.bundledGameBytes <= 0
       ) {
-        throw new Error("The update server returned invalid version metadata.");
+        throw new Error("The update server sent bad data. Try again later.");
       }
       return metadata;
     }
@@ -631,7 +628,7 @@
       manifest = validateGameManifest(await response.json());
       if (manifest.version !== currentVersion) {
         manifest = null;
-        throw new Error("The offline game catalog version is inconsistent.");
+        throw new Error("The game list didn't load. Try again.");
       }
       setState({
         bundledGames: Object.entries(manifest.games).map(([id, entry]) => ({
@@ -753,7 +750,7 @@
       }
       const currentManifest = await ensureManifest();
       const entry = currentManifest.games[id];
-      if (!entry) throw new Error("This bundled game is unavailable.");
+      if (!entry) throw new Error("This game isn't available.");
       const runtimeEntry = entry.runtime
         ? currentManifest.runtimes?.[entry.runtime]
         : entry.type === "swf"
@@ -941,7 +938,7 @@
       reload = false,
     } = {}) => {
       if (!state.enabled) {
-        throw new Error("Enable offline access to use offline updates.");
+        throw new Error("Turn on offline use first.");
       }
       if (checkPromise) return checkPromise;
       checkPromise = (async () => {
@@ -1116,7 +1113,7 @@
           workerVersion !== state.availableVersion
         ) {
           scheduleUpdateRetry();
-          throw new Error("The update is not ready to install.");
+          throw new Error("The update isn't ready yet.");
         }
         reloadWhenControlled ||= reload;
         reloadTargetVersion = null;
@@ -1131,16 +1128,16 @@
       throw new Error(
         registration?.installing
           ? "The update is still downloading."
-          : "No update is ready to install.",
+          : "There's no update to install.",
       );
     };
 
     const repair = async () => {
       if (!state.enabled) {
-        throw new Error("Enable offline access before repairing system files.");
+        throw new Error("Turn on offline use first.");
       }
       if (navigatorObject.onLine === false) {
-        throw new Error("Connect to the internet to repair system files.");
+        throw new Error("You're offline. Connect to repair.");
       }
       reloadTargetVersion = null;
       reloadWhenControlled = false;

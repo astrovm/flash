@@ -146,7 +146,7 @@ describe("filesystem persistence failures", () => {
     await fs.ready;
     expect(fs.canWrite).toBeFalse();
     await expect(fs.createFile(fs.DESKTOP, "a.txt")).rejects.toThrow(
-      "Document storage is unavailable",
+      "Can't save files",
     );
     fs.close();
   });
@@ -182,7 +182,7 @@ describe("filesystem persistence failures", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(notified).toEqual([]);
     await expect(fs.createFile(fs.DESKTOP, "a.txt")).rejects.toThrow(
-      "Document storage is unavailable",
+      "Can't save files",
     );
   });
 
@@ -249,7 +249,7 @@ describe("filesystem persistence failures", () => {
     };
     try {
       await expect(fs.createFile(fs.DESKTOP, "big.txt")).rejects.toThrow(
-        "Browser storage is full",
+        "Storage is full",
       );
     } finally {
       prototype.put = put;

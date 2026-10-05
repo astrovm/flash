@@ -62,7 +62,7 @@ export const systemApplications = [
     "__astro-settings",
     "Astro Flash Settings",
     "ControlPanel.png",
-    { width: 540, height: 420 },
+    { width: 540, height: 450 },
     "project-settings",
   ),
   system(

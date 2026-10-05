@@ -355,7 +355,7 @@ describe("validateGameManifest", () => {
           files: [{ url: "../runtime.wasm", bytes: 1 }],
         },
       }),
-    ).toThrow(/invalid/);
+    ).toThrow(/didn't load/);
   });
 });
 
@@ -800,12 +800,12 @@ describe("offline manager", () => {
       quotaFailure.environment,
     );
     await expect(quotaFailureManager.downloadGame("doom")).rejects.toThrow(
-      /actual storage quota/,
+      /Storage is full/,
     );
     expect(quotaFailure.bundledCache.values.size).toBe(0);
     expect(quotaFailureManager.getSnapshot().downloadedGameIds).toEqual([]);
     expect(quotaFailureManager.getSnapshot().gameError).toMatch(
-      /actual storage quota/,
+      /Storage is full/,
     );
   });
 
@@ -942,7 +942,7 @@ describe("offline manager", () => {
     );
     expect(staleWaitingManager.getSnapshot().updateReady).toBe(false);
     await expect(staleWaitingManager.applyUpdate()).rejects.toThrow(
-      /not ready to install/,
+      /isn't ready/,
     );
     expect(staleWaitingRegistration.waiting.messages).toEqual([]);
     staleWaitingRegistration.waiting = new Worker(
@@ -1125,9 +1125,7 @@ describe("offline manager", () => {
     expect(inconsistentUpdate.getReloads()).toBe(0);
     await inconsistentManager.updateNow();
     expect(inconsistentManager.getSnapshot().phase).toBe("repair-required");
-    expect(inconsistentManager.getSnapshot().error).toMatch(
-      /Repair System Files/,
-    );
+    expect(inconsistentManager.getSnapshot().error).toMatch(/Select Repair/);
   });
 
   test("reports an error suggesting repair when an installing worker becomes redundant", async () => {
@@ -1145,7 +1143,7 @@ describe("offline manager", () => {
     );
     failedWorker.transition("redundant");
     expect(failedManager.getSnapshot().phase).toBe("error");
-    expect(failedManager.getSnapshot().error).toMatch(/Repair System Files/);
+    expect(failedManager.getSnapshot().error).toMatch(/Select Repair/);
   });
 });
 
@@ -1154,12 +1152,12 @@ describe("offline failure and lifecycle boundaries", () => {
     await waitForWorker(null);
     await waitForWorker(new Worker());
     await expect(waitForWorker(new Worker("redundant"))).rejects.toThrow(
-      "interrupted",
+      "download stopped",
     );
     const worker = new Worker("installing"),
       waiting = waitForWorker(worker);
     worker.transition("redundant");
-    await expect(waiting).rejects.toThrow("interrupted");
+    await expect(waiting).rejects.toThrow("download stopped");
     expect(worker.listeners.get("statechange").size).toBe(0);
   });
   for (const [label, change] of [
@@ -1202,7 +1200,7 @@ describe("offline failure and lifecycle boundaries", () => {
     test(`rejects ${label} manifests before downloading files`, () => {
       expect(() =>
         validateGameManifest(change(structuredClone(manifest))),
-      ).toThrow("catalog is invalid");
+      ).toThrow("game list didn't load");
     });
   test("invalid stored records are ignored and subscriptions receive isolated snapshots", async () => {
     for (const records of ["broken-json", "[]", "null"]) {
@@ -1241,14 +1239,12 @@ describe("offline failure and lifecycle boundaries", () => {
         "delay is invalid",
       );
     h.environment.navigator.onLine = false;
-    await expect(manager.repair()).rejects.toThrow("Connect to the internet");
-    await expect(manager.checkForUpdates()).rejects.toThrow(
-      "Connect to the internet",
-    );
+    await expect(manager.repair()).rejects.toThrow("You're offline");
+    await expect(manager.checkForUpdates()).rejects.toThrow("You're offline");
     await manager.setOfflineEnabled(false);
-    await expect(manager.repair()).rejects.toThrow("Enable offline access");
+    await expect(manager.repair()).rejects.toThrow("Turn on offline use");
     await expect(manager.checkForUpdates()).rejects.toThrow(
-      "Enable offline access",
+      "Turn on offline use",
     );
     await expect(manager.downloadAllGames()).rejects.toThrow(
       "Enable offline access",
@@ -1277,7 +1273,7 @@ describe("offline failure and lifecycle boundaries", () => {
     [
       "invalid metadata",
       () => Response.json({ version: "bad" }),
-      "invalid version metadata",
+      "sent bad data",
     ],
   ])
     test(`reports ${label} during update checks`, async () => {
@@ -1296,7 +1292,7 @@ describe("offline failure and lifecycle boundaries", () => {
     [
       "wrong version",
       () => Response.json({ ...manifest, version: "different" }),
-      "catalog version is inconsistent",
+      "game list didn't load",
     ],
   ])
     test(`reports catalog ${label} during initialization`, async () => {
@@ -1384,7 +1380,7 @@ describe("offline failure and lifecycle boundaries", () => {
       );
       if (finalState === "activated")
         expect(manager.getSnapshot().usage).toBe(100);
-      else expect(manager.getSnapshot().error).toContain("interrupted");
+      else expect(manager.getSnapshot().error).toContain("download stopped");
     }
   });
 });
@@ -1594,7 +1590,7 @@ describe("offline manager edge cases", () => {
     expect(manager.getSnapshot().phase).toBe("update-pending");
     await manager.checkForUpdates();
     registration.waiting = new Worker("installed", "26.07.29-intermediate");
-    await expect(manager.applyUpdate()).rejects.toThrow("not ready to install");
+    await expect(manager.applyUpdate()).rejects.toThrow("isn't ready");
     registration.waiting = null;
     registration.installing = worker;
     registration.dispatch("updatefound");
@@ -1636,7 +1632,7 @@ describe("offline manager edge cases", () => {
     const manager = await createInitializedManager(h.environment);
     await manager.checkForUpdates();
     registration.waiting = new Worker("installed", "26.07.29-intermediate");
-    await expect(manager.applyUpdate()).rejects.toThrow("not ready to install");
+    await expect(manager.applyUpdate()).rejects.toThrow("isn't ready");
     expect(h.timers.some(({ delay }) => delay === 30_000)).toBeFalse();
   });
 
@@ -1677,7 +1673,7 @@ describe("offline manager edge cases", () => {
     await flush();
     await flush();
     expect(h.timers.length).toBe(timerCount);
-    expect(manager.getSnapshot().error).toContain("Connect to the internet");
+    expect(manager.getSnapshot().error).toContain("You're offline");
   });
 
   test("cancels scheduled automatic updates and retries when automatic updates are turned off", async () => {
@@ -1693,7 +1689,7 @@ describe("offline manager edge cases", () => {
     h.environment.clearTimeout = (id) => cleared.push(id);
     const manager = await createInitializedManager(h.environment);
     registration.waiting = new Worker("installed", "26.07.29-intermediate");
-    await expect(manager.applyUpdate()).rejects.toThrow("not ready to install");
+    await expect(manager.applyUpdate()).rejects.toThrow("isn't ready");
     manager.setAutomaticUpdatesEnabled(false);
     expect(cleared.length).toBe(2);
     manager.setAutomaticUpdatesEnabled(false);
@@ -1719,7 +1715,7 @@ describe("offline manager edge cases", () => {
     };
     const manager = await createInitializedManager(h.environment);
     expect(manager.getSnapshot().phase).toBe("error");
-    expect(manager.getSnapshot().error).toContain("version is inconsistent");
+    expect(manager.getSnapshot().error).toContain("download doesn't match");
   });
 
   test("tracks an installing worker during a manual worker migration", async () => {
@@ -1797,7 +1793,7 @@ describe("offline manager edge cases", () => {
       availableVersion: manifest.version,
     });
     await expect(manager.applyUpdate()).rejects.toThrow(
-      "No update is ready to install.",
+      "There's no update to install.",
     );
     expect(h.sessionStorage.getItem("astroFlashActiveVersionReload")).toBe(
       null,
@@ -1888,7 +1884,7 @@ describe("offline manager edge cases", () => {
     const manager = await createInitializedManager(h.environment);
     expect(manager.getSnapshot()).toMatchObject({
       phase: "error",
-      error: "The downloaded system version is inconsistent.",
+      error: "The download doesn't match. Try again.",
     });
     expect(h.timers.some(({ delay }) => delay === 30_000)).toBeTrue();
   });
@@ -1899,12 +1895,12 @@ describe("offline manager edge cases", () => {
     const manager = await createInitializedManager(h.environment);
     expect(manager.getSnapshot()).toMatchObject({
       phase: "error",
-      error: "Offline system files are not supported by this browser.",
+      error: "This browser can't work offline.",
     });
     await manager.downloadGame("doom");
     expect(manager.getSnapshot().downloadedGameIds).toEqual(["doom"]);
     await expect(manager.downloadGame("missing")).rejects.toThrow(
-      "This bundled game is unavailable.",
+      "This game isn't available.",
     );
   });
 

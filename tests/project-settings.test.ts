@@ -126,7 +126,7 @@ test("settings renders update progress, scheduled releases, storage and disabled
   });
   expect(
     h.content.querySelector('[data-project-status="updates"]').textContent,
-  ).toContain("scheduled");
+  ).toMatch(/^Updates on .+\.$/);
   h.state({ phase: "update-ready", updateReady: true });
   expect(
     h.content.querySelector('[data-project-status="updates"]').textContent,
@@ -138,7 +138,7 @@ test("settings renders update progress, scheduled releases, storage and disabled
   h.state({ availableVersion: null });
   expect(
     h.content.querySelector('[data-project-status="updates"]').textContent,
-  ).toContain("up to date");
+  ).toContain("Up to date.");
   h.state({
     phase: "error",
     error: "Disk full",
@@ -149,6 +149,10 @@ test("settings renders update progress, scheduled releases, storage and disabled
   expect(
     h.content.querySelector('[data-project-status="updates"]').textContent,
   ).toBe("Disk full");
+  // A service worker that's still installing reads as getting ready.
+  expect(
+    h.content.querySelector('[data-project-value="offlineFiles"]').textContent,
+  ).toBe("Getting ready...");
   expect(h.action("update-now").disabled).toBeTrue();
   h.state({
     gamePhase: "downloading",
@@ -158,11 +162,16 @@ test("settings renders update progress, scheduled releases, storage and disabled
   });
   expect(h.content.querySelector("[data-project-game-progress]").value).toBe(2);
   h.state({ gamePhase: "removing", downloadedGameIds: ["freecell"] });
+  // The saved size shows once a game is saved.
+  expect(
+    h.content.querySelector('[data-project-value="offlineGameStorage"]')
+      .textContent,
+  ).toMatch(/^ \(.+\)$/);
   expect(h.action("remove-all-games").disabled).toBeTrue();
   h.state({ gamePhase: "idle", enabled: false, bundledGames: [] });
   expect(
     h.content.querySelector("[data-project-offline-games]").textContent,
-  ).toContain("Enable offline");
+  ).toBe("");
   h.state({ enabled: true });
   expect(
     h.content.querySelector("[data-project-offline-games]").textContent,
@@ -260,9 +269,10 @@ test("installed game data lists both stores, removes only the selected item and 
   h.content.querySelector('[data-game-data-id="iso"]').click();
   await h.answer();
   expect(removed).toEqual(["internet", "iso"]);
+  // With nothing installed, the group hides.
   expect(
-    h.content.querySelector("[data-project-game-data]").textContent,
-  ).toContain("No installed games");
+    h.content.querySelector("[data-project-game-data-group]").hidden,
+  ).toBeTrue();
   h.s.window.dispatchEvent(new h.s.window.StorageEvent("storage"));
   h.s.window.dispatchEvent(
     new h.s.window.MessageEvent("message", {
@@ -531,7 +541,7 @@ test("restoring the desktop and resetting reload the page or report failures", a
       await flushShell();
       expect(
         [...h.s.document.querySelectorAll(".xp-dialog")].at(-1).textContent,
-      ).toContain("The file operation failed.");
+      ).toContain("Something went wrong.");
       await h.answer("OK");
     }
   } finally {
@@ -632,8 +642,10 @@ test("settings describe unusual offline states", async () => {
   expect(value("downloadSize")).toBe("Checking...");
   expect(
     h.content.querySelector('[data-project-status="offline"]').textContent,
-  ).toContain("Offline status is unavailable.");
-  expect(h.content.textContent).toContain("Astro Flash update is ready");
+  ).toBe("");
+  expect(h.content.textContent).toContain(
+    "The update opens on your next visit.",
+  );
   expect(
     h.content.querySelector('[data-project-setting="update-delay"]').value,
   ).toBe("2");

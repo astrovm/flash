@@ -163,7 +163,7 @@ export const createSystemRuntime = (context) => {
                 <span class="display-adapter">Default Monitor on Web Browser</span>
                 <fieldset class="dlg-group display-resolution-group"><legend><span class="menu-accesskey">S</span>creen resolution</legend>
                     <span class="display-resolution-less">Less</span>
-                    <input id="display-resolution-slider" type="range" min="0" max="3" step="1" aria-label="Screen resolution" data-help="Sets the size of the simulated screen. The last stop uses the whole browser window.">
+                    <input id="display-resolution-slider" type="range" min="0" max="3" step="1" aria-label="Screen resolution" data-help="Sets the screen size. The last stop fills the browser window.">
                     <span class="display-resolution-more">More</span>
                     <select id="display-resolution" hidden><option value="800x600">800 by 600 pixels</option><option value="1024x768">1024 by 768 pixels</option><option value="1440x900">1440 by 900 pixels</option><option value="auto">Use browser size</option></select>
                     <p class="display-resolution-value"></p>
@@ -189,7 +189,7 @@ export const createSystemRuntime = (context) => {
       <header class="internet-games-header">
         <div>
           <h1>Internet Games</h1>
-          <p>Find and install playable Flash games from Flashpoint Archive.</p>
+          <p>Find more Flash games in the Flashpoint Archive.</p>
         </div>
         <img src="assets/xp/icons/AddRemovePrograms.png" alt="">
       </header>
@@ -199,13 +199,13 @@ export const createSystemRuntime = (context) => {
       </div>
       <section class="internet-games-panel" data-internet-panel="browse">
         <form class="internet-games-search" role="search">
-          <label for="internet-games-query">Search Flashpoint:</label>
+          <label for="internet-games-query">Game name:</label>
           <span>
             <input id="internet-games-query" class="xp-input" type="search" maxlength="100" autocomplete="off" placeholder="Try Bike Mania">
             <button class="xp-btn default" type="submit">Search</button>
           </span>
         </form>
-        <p class="internet-games-status" aria-live="polite">Enter a game title to search the archive.</p>
+        <p class="internet-games-status" aria-live="polite"></p>
         <div class="internet-games-results" aria-label="Game results"></div>
       </section>
       <section class="internet-games-panel" data-internet-panel="installed" hidden>

@@ -186,8 +186,8 @@ describe("Windows XP shell", () => {
         (tab) => tab.textContent,
       ),
     ).toEqual(["General", "Games", "Updates", "Recovery"]);
-    expect(settings.textContent).toContain("Built-in games for offline play");
-    expect(settings.textContent).toContain("Installed games and game files");
+    expect(settings.textContent).toContain("Offline games");
+    expect(settings.textContent).toContain("Installed games");
     const updateDelay = settings.querySelector<HTMLInputElement>(
       '[data-project-setting="update-delay"]',
     )!;
@@ -1738,7 +1738,7 @@ describe("Windows XP shell", () => {
           ? "Checking"
           : phase === "updating"
             ? "Downloading"
-            : "reloading",
+            : "Restarting",
       );
     },
   );

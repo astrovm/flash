@@ -5,8 +5,7 @@
   if (typeof module === "object" && module.exports) module.exports = api;
   root.AstroStoragePolicy = api;
 })(globalThis, function () {
-  const QUOTA_MESSAGE =
-    "The browser refused the storage write because its actual storage quota was reached.";
+  const QUOTA_MESSAGE = "Storage is full. Free up space and try again.";
 
   const isQuotaExceeded = (error) =>
     error?.name === "QuotaExceededError" ||

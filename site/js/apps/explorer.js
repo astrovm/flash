@@ -390,8 +390,7 @@ const createInternetGameCard = (game, win, { installed = false } = {}) => {
         ? "Not compatible"
         : "Install";
     if (includedGameId && !gamesList[gameId]) {
-      action.title =
-        "This game is already included with Astro Flash Collection.";
+      action.title = "Already included.";
     }
     action.disabled = game.potentiallyCompatible === false;
     action.addEventListener("click", async () => {
@@ -406,7 +405,7 @@ const createInternetGameCard = (game, win, { installed = false } = {}) => {
         const details = await gameLibrary.details(game.uuid);
         if (!details.compatible) {
           throw new Error(
-            details.incompatibleReason || "This game is not compatible.",
+            details.incompatibleReason || "This game doesn't work here.",
           );
         }
         action.textContent = "Downloading...";
@@ -423,7 +422,7 @@ const createInternetGameCard = (game, win, { installed = false } = {}) => {
         availableGameId = gameId;
         action.textContent = "Play";
         action.disabled = false;
-        status.textContent = `${details.title} was installed successfully.`;
+        status.textContent = `${details.title} is installed.`;
       } catch (error) {
         action.textContent = "Install";
         action.disabled = false;
@@ -449,8 +448,8 @@ const renderInstalledInternetGames = (win) => {
         .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
     : [];
   status.textContent = records.length
-    ? `${records.length} installed game${records.length === 1 ? "" : "s"}.`
-    : "No internet games are installed yet.";
+    ? `${records.length} ${records.length === 1 ? "game" : "games"}`
+    : "No games installed.";
   records.forEach((record) =>
     container.appendChild(
       createInternetGameCard(record, win, { installed: true }),
@@ -494,31 +493,30 @@ const wireInternetGames = (win) => {
     event.preventDefault();
     const term = query.value.trim();
     if (!term) {
-      status.textContent = "Enter a game title.";
+      status.textContent = "Type a game name.";
       query.focus();
       return;
     }
     if (!gameLibrary || gameLibraryError) {
       status.textContent =
         gameLibraryError?.message ||
-        "The Internet Games service is unavailable.";
+        "Internet Games isn't available right now.";
       return;
     }
     const submit = form.querySelector("button");
     submit.disabled = true;
-    status.textContent = `Searching for “${term}”...`;
+    status.textContent = "Searching...";
     results.replaceChildren();
     try {
       const games = await gameLibrary.search(term);
       status.textContent = games.length
-        ? `${games.length} result${games.length === 1 ? "" : "s"} found.`
+        ? `${games.length} ${games.length === 1 ? "game" : "games"}`
         : "No games found.";
       games.forEach((game) =>
         results.appendChild(createInternetGameCard(game, win)),
       );
     } catch (error) {
-      status.textContent =
-        error.message || "The Flashpoint catalog could not be searched.";
+      status.textContent = error.message || "Search didn't work. Try again.";
     } finally {
       submit.disabled = false;
     }

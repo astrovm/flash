@@ -22,7 +22,7 @@ test("game metadata persists, reopens and deletes records in IndexedDB", async (
   await reopened.delete("one");
   expect(await reopened.get("one")).toBeUndefined();
   reopened.close();
-  await expect(createMetadataStore(null)).rejects.toThrow("not supported");
+  await expect(createMetadataStore(null)).rejects.toThrow("can't");
   await expect(
     createMetadataStore({
       open: () => {
@@ -31,7 +31,7 @@ test("game metadata persists, reopens and deletes records in IndexedDB", async (
         return request;
       },
     }),
-  ).rejects.toThrow("Could not open");
+  ).rejects.toThrow("Can't open");
   expect(
     asGameConfig({
       id: "one",
@@ -64,11 +64,11 @@ test("downloads check HTTP failures and streamed/non-streamed size limits", asyn
   ).toEqual(bytes);
   expect(progress).toEqual([{ loaded: 3, total: null }]);
   await expect(readDownload(noStream, { maxBytes: 2 })).rejects.toThrow(
-    "download limit",
+    "too big",
   );
   await expect(
     readDownload(new Response(bytes), { maxBytes: 2 }),
-  ).rejects.toThrow("download limit");
+  ).rejects.toThrow("too big");
   expect(
     await readDownload(
       new Response(bytes, { headers: { "content-length": "3" } }),
@@ -128,9 +128,9 @@ test("temporary game archives stream to OPFS and clean up on success, size failu
       }),
     ).rejects.toThrow(
       failure === "size"
-        ? "download limit"
+        ? "too big"
         : failure === "no-body"
-          ? "no body"
+          ? "download was empty"
           : "cancelled",
     );
     expect(f.counts().removed).toBe(1);
@@ -154,8 +154,8 @@ test("temporary game archives stream to OPFS and clean up on success, size failu
       new Response("zip", { headers: { "Content-Length": "999" } }),
       { maxBytes: 10 },
     ),
-  ).rejects.toThrow("download limit");
+  ).rejects.toThrow("too big");
   await expect(
     createTemporaryArchive(new Response("zip"), { storageManager: {} }),
-  ).rejects.toThrow("temporary file storage");
+  ).rejects.toThrow("can't download games");
 });

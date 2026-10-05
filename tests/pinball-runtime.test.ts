@@ -97,7 +97,7 @@ test("Pinball loads resource slices, reports progress and resizes the live canva
   });
   m.canvas.dispatchEvent(lost);
   expect(lost.defaultPrevented).toBeTrue();
-  expect(h.messages.at(-1)[1]).toContain("graphics context was lost");
+  expect(h.messages.at(-1)[1]).toContain("stopped drawing");
   m.onHelpRequested();
   expect(h.messages.at(-1)[1]).toContain("Press F2");
   m.onExitRequested();
