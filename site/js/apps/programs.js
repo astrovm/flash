@@ -570,6 +570,8 @@ const openXPProgram = (programId, options = {}) => {
     wireSystemWindowControls(win);
   }
   focusWindow(programId);
+  // Some XP programs, like Spider Solitaire, open maximized.
+  if (program.window.startMaximized) toggleMaximize(programId);
   activateNativeGame();
   return win;
 };

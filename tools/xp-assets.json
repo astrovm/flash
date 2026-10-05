@@ -2180,6 +2180,56 @@
       "width": 32,
       "height": 32,
       "output": "site/assets/xp/solitaire/Solitaire-32.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 14,
+      "resourceId": 103,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/spider/Spider-32.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 14,
+      "resourceId": 120,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/spider/Club.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 14,
+      "resourceId": 121,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/spider/Diamond.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 14,
+      "resourceId": 122,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/spider/Heart.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 14,
+      "resourceId": 123,
+      "width": 32,
+      "height": 32,
+      "bitDepth": 4,
+      "output": "site/assets/xp/spider/Spade.png"
     }
   ],
   "resourceBitmaps": [
@@ -10989,6 +11039,398 @@
       "resourceType": 2,
       "resourceId": 68,
       "output": "site/assets/xp/cards/O.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD1",
+      "output": "site/assets/xp/spider/cards/1.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD2",
+      "output": "site/assets/xp/spider/cards/2.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD3",
+      "output": "site/assets/xp/spider/cards/3.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD4",
+      "output": "site/assets/xp/spider/cards/4.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD5",
+      "output": "site/assets/xp/spider/cards/5.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD6",
+      "output": "site/assets/xp/spider/cards/6.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD7",
+      "output": "site/assets/xp/spider/cards/7.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD8",
+      "output": "site/assets/xp/spider/cards/8.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD9",
+      "output": "site/assets/xp/spider/cards/9.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD10",
+      "output": "site/assets/xp/spider/cards/10.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD11",
+      "output": "site/assets/xp/spider/cards/11.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD12",
+      "output": "site/assets/xp/spider/cards/12.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD13",
+      "output": "site/assets/xp/spider/cards/13.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD14",
+      "output": "site/assets/xp/spider/cards/14.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD15",
+      "output": "site/assets/xp/spider/cards/15.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD16",
+      "output": "site/assets/xp/spider/cards/16.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD17",
+      "output": "site/assets/xp/spider/cards/17.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD18",
+      "output": "site/assets/xp/spider/cards/18.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD19",
+      "output": "site/assets/xp/spider/cards/19.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD20",
+      "output": "site/assets/xp/spider/cards/20.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD21",
+      "output": "site/assets/xp/spider/cards/21.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD22",
+      "output": "site/assets/xp/spider/cards/22.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD23",
+      "output": "site/assets/xp/spider/cards/23.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD24",
+      "output": "site/assets/xp/spider/cards/24.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD25",
+      "output": "site/assets/xp/spider/cards/25.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD26",
+      "output": "site/assets/xp/spider/cards/26.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD27",
+      "output": "site/assets/xp/spider/cards/27.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD28",
+      "output": "site/assets/xp/spider/cards/28.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD29",
+      "output": "site/assets/xp/spider/cards/29.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD30",
+      "output": "site/assets/xp/spider/cards/30.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD31",
+      "output": "site/assets/xp/spider/cards/31.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD32",
+      "output": "site/assets/xp/spider/cards/32.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD33",
+      "output": "site/assets/xp/spider/cards/33.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD34",
+      "output": "site/assets/xp/spider/cards/34.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD35",
+      "output": "site/assets/xp/spider/cards/35.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD36",
+      "output": "site/assets/xp/spider/cards/36.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD37",
+      "output": "site/assets/xp/spider/cards/37.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD38",
+      "output": "site/assets/xp/spider/cards/38.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD39",
+      "output": "site/assets/xp/spider/cards/39.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD40",
+      "output": "site/assets/xp/spider/cards/40.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD41",
+      "output": "site/assets/xp/spider/cards/41.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD42",
+      "output": "site/assets/xp/spider/cards/42.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD43",
+      "output": "site/assets/xp/spider/cards/43.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD44",
+      "output": "site/assets/xp/spider/cards/44.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD45",
+      "output": "site/assets/xp/spider/cards/45.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD46",
+      "output": "site/assets/xp/spider/cards/46.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD47",
+      "output": "site/assets/xp/spider/cards/47.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD48",
+      "output": "site/assets/xp/spider/cards/48.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD49",
+      "output": "site/assets/xp/spider/cards/49.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD50",
+      "output": "site/assets/xp/spider/cards/50.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD51",
+      "output": "site/assets/xp/spider/cards/51.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARD52",
+      "output": "site/assets/xp/spider/cards/52.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "CARDBACK",
+      "output": "site/assets/xp/spider/CardBack.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": "FELT",
+      "output": "site/assets/xp/spider/Felt.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": 108,
+      "output": "site/assets/xp/spider/Empty.png"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": 2,
+      "resourceId": 106,
+      "output": "site/assets/xp/spider/About.png"
     }
   ],
   "resourcePngs": [
@@ -11091,6 +11533,55 @@
       "resourceType": "WAVE",
       "resourceId": 434,
       "output": "site/assets/xp/minesweeper/Win.wav"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": "WAVE",
+      "resourceId": 124,
+      "output": "site/assets/xp/spider/Deal.wav"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": "WAVE",
+      "resourceId": 125,
+      "output": "site/assets/xp/spider/Drop.wav"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": "WAVE",
+      "resourceId": 126,
+      "output": "site/assets/xp/spider/Hint.wav"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": "WAVE",
+      "resourceId": 127,
+      "output": "site/assets/xp/spider/NoMoves.wav"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": "WAVE",
+      "resourceId": 128,
+      "output": "site/assets/xp/spider/PickUp.wav"
+    },
+    {
+      "member": "SPIDER.EX_",
+      "expandedName": "spider.exe",
+      "resourceType": "WAVE",
+      "resourceId": 129,
+      "output": "site/assets/xp/spider/Win.wav"
+    },
+    {
+      "member": "VGASYS.FO_",
+      "expandedName": "vgasys.fon",
+      "resourceType": 8,
+      "resourceId": 31,
+      "output": "site/assets/xp/fonts/System.fnt"
     }
   ],
   "resourceCursors": [

@@ -60,13 +60,6 @@ export const boxedWineApplications = validateBoxedWineApplications([
     executable: "hearts/mshearts.exe",
     packagePath: "site/iframe/hearts/xp-hearts.zip",
   },
-  {
-    id: "spider-solitaire",
-    title: "Spider Solitaire",
-    icon: "SpiderSolitaire.png",
-    executable: "spider-solitaire/spider.exe",
-    packagePath: "site/iframe/spider-solitaire/xp-spider-solitaire.zip",
-  },
 ]);
 
 const applicationsById = new Map(

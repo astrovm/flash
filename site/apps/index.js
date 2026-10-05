@@ -27,6 +27,12 @@ import { applicationMetadata as solitaireMetadata } from "./solitaire/metadata.j
 const solitaireApplication = defineLazyApplication(solitaireMetadata, () =>
   import("./solitaire/index.js").then((module) => module.solitaireApplication),
 );
+import { applicationMetadata as spiderMetadata } from "./spider-solitaire/metadata.js";
+const spiderApplication = defineLazyApplication(spiderMetadata, () =>
+  import("./spider-solitaire/index.js").then(
+    (module) => module.spiderApplication,
+  ),
+);
 import { applicationMetadata as pinballMetadata } from "./pinball/metadata.js";
 const pinballApplication = defineLazyApplication(pinballMetadata, () =>
   import("./pinball/index.js").then((module) => module.pinballApplication),
@@ -40,6 +46,7 @@ export const applicationRegistry = createApplicationRegistry([
   freecellApplication,
   minesweeperApplication,
   solitaireApplication,
+  spiderApplication,
   notepadApplication,
   paintApplication,
   pinballApplication,

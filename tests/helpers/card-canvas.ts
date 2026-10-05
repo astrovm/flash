@@ -72,7 +72,11 @@ export const recordCardCanvas = (
     set src(value) {
       this.source = value.replace(/^.*?assets\//, "assets/");
       queueMicrotask(() => {
-        if (failImages && value.includes("assets/xp/cards"))
+        if (
+          failImages &&
+          (value.includes("assets/xp/cards") ||
+            value.includes("assets/xp/spider"))
+        )
           return this.onerror?.();
         this.complete = true;
         this.onload?.();

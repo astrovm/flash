@@ -28,14 +28,6 @@ const games = [
     executable: "mshearts.exe",
     files: ["cards.dll", "mfc42u.dll", "mshearts.chm", "mshearts.exe"],
   },
-  {
-    id: "spider-solitaire",
-    applicationId: "__spider-solitaire",
-    title: "Spider Solitaire",
-    archive: "xp-spider-solitaire",
-    executable: "spider.exe",
-    files: ["spider.exe"],
-  },
 ];
 
 afterEach(cleanupShells);

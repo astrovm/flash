@@ -27,6 +27,11 @@
   color: var(--sys-highlight-text);
 }
 
+/* Menu items use the menu font, not the browser's button font. */
+.cards-menu-bar .tm-menu > button {
+  font: inherit;
+}
+
 .xp-window:not(.active) .cards-menu-bar > button {
   color: #aca899;
 }

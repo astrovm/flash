@@ -2793,6 +2793,71 @@
       "pixelSha256": "e8fedabf151d9342d15f13d268f8cf014cb165c88bcdf257f9eb6ac0595f0b5a"
     }
   },
+  "assets/xp/spider/Spider-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "3d2fcad21298673ae353ad517abf925ea9c7d58f8f2079286556aacc09d63467",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 14,
+      "id": 103,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "7e2286d4a8f9bdc968d43e5ceeacd7aa4c1a03c49ea63d99c998ebed8217ffe5"
+    }
+  },
+  "assets/xp/spider/Club.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "bb75244a670d5d385456e3088992023badf18c8cdf40bf71331cba7c7157d9d7",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 14,
+      "id": 120,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "c937ad984bf4e0ff406bba21c29d9e468cb613294f1a1c8adf01c34ecf322693"
+    }
+  },
+  "assets/xp/spider/Diamond.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "01a67b51fc684c50c03e46ebce207db3eb78f0e93ec8be88df3062aa379d6cc9",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 14,
+      "id": 121,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "1dd7c39cfd5ee0572479f35c7023cb4fc3adde88061783cccd899ed47f95d397"
+    }
+  },
+  "assets/xp/spider/Heart.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "da63834e5600a2d0297e981a52ceef405c107befef7f45b2490822e4c05880a9",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 14,
+      "id": 122,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "00ae2d21c6f75c30ecf58aa47b6e761f42c3d2a7193b7b1efc0a4005285fc7f6"
+    }
+  },
+  "assets/xp/spider/Spade.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "2ff1ef05678c5adaa10c45dfbe796f36d6240b1a6408468ec33e50a0b0d01cd6",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 14,
+      "id": 123,
+      "language": 1033,
+      "frame": "32x32x4",
+      "pixelSha256": "2bc80081994f98f3253ed8677e18ecb9993636ed66decd0b3917b48e8382ce65"
+    }
+  },
   "assets/xp/taskbar/blue-toolbar-background-0.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/LUNA.MS_",
@@ -14929,6 +14994,734 @@
       "pixelSha256": "0633b2d22554690f8dea940bfe9ae6e52e882a7a27745bbc428f25c3af1f35b2"
     }
   },
+  "assets/xp/spider/cards/1.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "6d8b39b3da7e3d6e08b1ddedbbc9bd98e0f22d1d65377d6922ca73841ec3a99e",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD1",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "8c2ac7ea48f4baf8aef1e1ef9d67b0e82ece8dc85b1cb5816d877083f78170da"
+    }
+  },
+  "assets/xp/spider/cards/2.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "4c10a212e3834d0e310397d9f4ba118459198d2dffc6afcd477993d35c1b14b8",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD2",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "43d5583e72ad8baa63a5180c0569709f9ab6a80d5fb3b64df8d181f8c95c8034"
+    }
+  },
+  "assets/xp/spider/cards/3.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "1e167899c88b87970702ba1ed99082b954e9ef575cbc23e84ef9c4998cb74439",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD3",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "baae0f08592d90c1611c5f7c898a134ca8564ce9528cfb7042d7315acf7ab552"
+    }
+  },
+  "assets/xp/spider/cards/4.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "7c710e4ad83b035ab2209552c3e66cd89d6ec5557a074e37590a235a517053a5",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD4",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "5d6281b209c8071d6ce2995ac926d9a677287790387fc57482abb57db58cfd49"
+    }
+  },
+  "assets/xp/spider/cards/5.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "7ba8b028aa7f31bbe96cccc6201957332e32a52a8cd76029543dc0e450aaa60b",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD5",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "2539f2bff249c454e3a76169803a4df832231661502bd4638199a2df65a0ce79"
+    }
+  },
+  "assets/xp/spider/cards/6.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "02ee6e0b5af1763e928731aaa39d7f664e255a94e20d26401913034f94dcd3b3",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD6",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "a33a67e257e2ec831689fa65f967975232246c990f8081d864980af0be57656b"
+    }
+  },
+  "assets/xp/spider/cards/7.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "1af3bc511716a58829bc9bb7d7fd6afbeb85c9d5c49ec905318e5d90c61548f9",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD7",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "f39dd5d4ac44c1f6e6a1191f20e451b8aa44fdf1bfc0d44062571c17455d7e2c"
+    }
+  },
+  "assets/xp/spider/cards/8.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "aa1b98b401244acc664c42da8392244e941c5247ba6885f6ad25958677ff2dcf",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD8",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "8ee6016531aeaa74807056186597ea52d765771862e22b18f9f6c7a19bbb2cfe"
+    }
+  },
+  "assets/xp/spider/cards/9.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "44dfb6c58f6d69f74ef98c8be75c0b73b9edd31e879769353b119dd81a8e874b",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD9",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "f7b1c0aa4025869d98add989a7bdf14a985a0ae8e8b9ffbac517ae82b3cab7e7"
+    }
+  },
+  "assets/xp/spider/cards/10.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "bcdd7a7cc844f107300de341189bd72ef0e5999f1e561dc4584a480b1412752f",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD10",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "22d331185324172c8c4dafa033a71b414f472b6a4aa317273aa2465323ba457b"
+    }
+  },
+  "assets/xp/spider/cards/11.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "8b767c9837d853f1fd7e3f6c0ae37021455a6174851fa4a1d4f330c96fc44dff",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD11",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "ae9c2ea570f720dcfdef6daec92201b4f2bce2d61037300298c2afc7217c6b7e"
+    }
+  },
+  "assets/xp/spider/cards/12.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "01ce4e39d9488b255aeb79f968b6136d31c9231fe160be5afeaefd9d841db2c7",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD12",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "b7180ed95fcd212cc81093d0fcdec07255262b52c3640ecee9cfd5eb4dd4cb88"
+    }
+  },
+  "assets/xp/spider/cards/13.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "7f730887820dcddb758526de8e38b69d9ffbd7752e604d6f97107e860197f5de",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD13",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "4ed838ad0334a9fe5450cbd5d7663c96669482181e7eaa6be670f5ce63a46a0b"
+    }
+  },
+  "assets/xp/spider/cards/14.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "0bf4d016613a6822ede742cfd80563a8a241e3f51795b69b854876ba7a18a1b6",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD14",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "9ad8131d29520aa81f83b83e7a82b3436a582a816143cd72ed29023696a84d9d"
+    }
+  },
+  "assets/xp/spider/cards/15.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "7d6260a958fd070e120e5953179ee3da1ec96916dd3e4416689b4c09016dc374",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD15",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "46b5a2665ebf55776b33861e8dce1cc84d430917c5342bdb70fa18f0057bce86"
+    }
+  },
+  "assets/xp/spider/cards/16.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "95a8cfd1d8ce3c3374bfdb4449967255ca748ab82dd61f55b9857569d9bf6e03",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD16",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "d660d543bf818418874847d495dd358966ba6e5e3549d9bccc114fa2206fec1e"
+    }
+  },
+  "assets/xp/spider/cards/17.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "47b84d6bdc8246ba0ad90313c0bccbc3d96b3d8bf87eb1d1df19a5cf275b981a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD17",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "491793153648471c58f8b1841b7fc94473ce4abd03eaefc2211465e8c30a1e13"
+    }
+  },
+  "assets/xp/spider/cards/18.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "def69feab17aa30b2079a478397eea7e35e553e8531ec63be7761f6cbec5dcdc",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD18",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "fd988efa757c9da7735dedd6270bd149154d4044e1dd8cd350e8b4ff6879f4e9"
+    }
+  },
+  "assets/xp/spider/cards/19.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "2274d5ec207db05caa7819f39b6d08eb96a317e3a3b215d125f7833eeffcba14",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD19",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "65cd8c210b5fc7759f4729d992855d243772372d1645da096180e016883e2118"
+    }
+  },
+  "assets/xp/spider/cards/20.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "ad0393e28b87f1c7c5341a2121581da76b829d189189a05c3bfcd7c374652021",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD20",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "77d93e4bc257a563b480614c99c36fc387a7063917243997a4a97995038d10ec"
+    }
+  },
+  "assets/xp/spider/cards/21.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "c68e44de7a14b4e9d0e2adf2cc42be2c97dd67e47ca6d7bfba366661d1f6fa6a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD21",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "7a4ce3d46c48183bc99f8f59f882698e5f98bbefded8f38e458d0e2220028d76"
+    }
+  },
+  "assets/xp/spider/cards/22.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "92b0fb34a0279ccbb0911c09d2b7dfe664fd3f5293e2a7220d458232acd8405f",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD22",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "43410a58cb7dcd1bfa2a0da021cfdff1ca512187002f8806568f5f521b45f99d"
+    }
+  },
+  "assets/xp/spider/cards/23.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "4c6182174fa72ed4d8cc7d401baa4d5155605879467b1707f5b325df33786bc6",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD23",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "73f561b3258fe13bb3cc21c3477dd59074fe62d4fce96c9a478f55126ab6ecbd"
+    }
+  },
+  "assets/xp/spider/cards/24.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "554e6d2ca5dfbedaf70a5badccf274bc5a722d43eb44925f7b78725331eab86a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD24",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "e1168e5fac1812d93f765bc7d71d59f6dcb161ff6a26afa363b8863b5693fa63"
+    }
+  },
+  "assets/xp/spider/cards/25.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "1d75afed8723606dc2a0b54559ae096d4a668d0e1fbe8e0a998f879cd6e16e47",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD25",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "12f934af901f899c5150b537d41eda94aa42392166aa333bc15ed1bbe146a6e7"
+    }
+  },
+  "assets/xp/spider/cards/26.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "1fd9358b78de221eb026dbeb2dcd383a3e9e5dcf55b3fd3d36b79224bbd9d5fc",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD26",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "3723250efa8516cc93fc3faff2aa7a14bb0c88cdd4b34950b40440affc3e0d73"
+    }
+  },
+  "assets/xp/spider/cards/27.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "5a73a6a3e53e7dc353eec779e847a091c4bd751477e792dbebd18151de2f5c72",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD27",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "33677908a8e36007e14425e310d8c67f6664e5ae708db99d9a2a4578f72d250e"
+    }
+  },
+  "assets/xp/spider/cards/28.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "d217df1e343bd4af56e9256c413475e80d02271f0c2cb01b13daa05d70d84f4a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD28",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "b7ea2fe860a6a1dd1630e90243ff2628d4fe91748403e8535f77ec65e780e0f2"
+    }
+  },
+  "assets/xp/spider/cards/29.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "d721a00f0b833178db817057cb44eb5818ceaa29b1758f9d108daa1a99e2a5d5",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD29",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "c526f69a2bdcd8374f16ca169aee1e1dc3a2d5b2faf3969d355d2131cb7cb230"
+    }
+  },
+  "assets/xp/spider/cards/30.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "6f5ba1d41c9921b64a2e82b8f85130877b6821bce137d68a43d4220894457f75",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD30",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "c6c17c7f96613d0c31df6ad2555f9aed62d3fe2db3fde246ec79a51aae058031"
+    }
+  },
+  "assets/xp/spider/cards/31.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "7a45854ac4944f805f8f40488c0ef7348ca6618cf0ce76a62c99f0e0d54c559a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD31",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "00b962abd9bab00de91d0a34975144f293c6d7562ee82d88fb8187705c98c1e3"
+    }
+  },
+  "assets/xp/spider/cards/32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "783001f2e53d9bcf75c2baa715767869ce1d4b4b5451f12b8ffc8b6d6ebe6999",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD32",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "3b8c07586bc8f923ee6001fac9aa70cb8370db6cb834dd83cbad41b1ae5e8bce"
+    }
+  },
+  "assets/xp/spider/cards/33.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "86c9adb0fc70821b5deae55432dd6590926fcad11f40fbc35a74d9a1d79c5c97",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD33",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "3798c2c78598a1943fef0bec96a5219a3c48fed4a258464f7970dd7243bae163"
+    }
+  },
+  "assets/xp/spider/cards/34.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "6789d34d1801665dea83344bfec0191e07446f87468e11a92a17e4a387f5ad0d",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD34",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "10ae19ceb1fe54c56b9f4da9279f629d42785f981b32630487f22d7c9a53bca8"
+    }
+  },
+  "assets/xp/spider/cards/35.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "19559142501cb016b199a89335e652b713e4b16405f8ed15b4c7c925af840fc2",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD35",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "27fd2610ca86aeea14717cd866b4b1a9927ae29c609ecd311fc74558839e9901"
+    }
+  },
+  "assets/xp/spider/cards/36.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "d4d537bb064ffe04252b3c01f3f116de66ea49f75cb21faa76dd9a6cd25d107f",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD36",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "7a753a9e012ec5bc18547876e88908a4404aa11bcafcbc2a739fc834544b275f"
+    }
+  },
+  "assets/xp/spider/cards/37.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "7de58f636f41f2d934b547c9a87bf1e0644e9943b0e356828578a109cdae0286",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD37",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "e0def3d99d4136ce2ce2f1d7a485509a1a07a897e3cc2a611d8c0506d51045f7"
+    }
+  },
+  "assets/xp/spider/cards/38.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "516c16a7633121da2a71e900c9daa5122d168dcb679712810b14bd5d231f24dc",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD38",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "0440d6e744227ef003a1f018b0bc68315f74fe805e33c91f9b38ad1d3b3c4f29"
+    }
+  },
+  "assets/xp/spider/cards/39.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "20780eb90dd626ead2324fb03c143284a3e4deb38242abca9a0b997b8d833048",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD39",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "96db5e83c5c6c4014c3d6522c2ce4accaf9f029d46ea741e59e7c07eec04ee57"
+    }
+  },
+  "assets/xp/spider/cards/40.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "1b4eedc0e3463c5c42c186ec740d6ff28c0d2b8e7462d7f354622eb0a2e34beb",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD40",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "b689c3c9989ec83942ccbca756fada6a70f94d628e2281677446f06f5093f36f"
+    }
+  },
+  "assets/xp/spider/cards/41.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "6601af464f55dac3534cd4ec75157dc489a4b3defdd06c63b596f1715af2bc4a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD41",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "ff1a0e960aa61a71830df30c45e7ba04e27503ea36f6d7e03931281298745008"
+    }
+  },
+  "assets/xp/spider/cards/42.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "5a59813c17818f0a42a65722476bd184b1735fe995789cd38ed3eec9883e87af",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD42",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "6f50533518d99e07f5b9b2d23d668e4f72973752b62826ca4f612c0ad9bc4706"
+    }
+  },
+  "assets/xp/spider/cards/43.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "b71bb39004d8d68979456ee6a9d62ec91ee63957ac0e0830ab6f0f7fa232e19a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD43",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "ccddfe2c2b4715066426a37ea48517d6a71d08b167f9730d1dc82314885ea57f"
+    }
+  },
+  "assets/xp/spider/cards/44.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "d0614780513fec0c42cead67aab1e776e4ffc63900abb354a6a1296a54829d1f",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD44",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "3929f3fb65e668c8d5780bd40b716bc5234d61ba957744510112f1d2db79665f"
+    }
+  },
+  "assets/xp/spider/cards/45.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "e5f9f666dc3e29f351883a757aa1902ffbc9cd31625569fbf84dfcb13a60f7ce",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD45",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "da8d4d67650242c7d1b6de130a8a5e4ca86863731324cd3104ac287506d65dee"
+    }
+  },
+  "assets/xp/spider/cards/46.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "880c6947bf691d2ea1418716ed1c6b59c883753afe541c3d69f52fdd4be99456",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD46",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "34829a82d57baeb0dcd5e6bf024ef0e398f9df4ad647f64c8d534fa55b8bc765"
+    }
+  },
+  "assets/xp/spider/cards/47.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "4ae39c0abb541eaea96882ee48da09326a9fd360c15b83e42a860a0e61e80f4a",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD47",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "143b6ea9de9d8275ef2166568cd3c5f13d6c86e7fc70324bb4a414fc4aa7d18f"
+    }
+  },
+  "assets/xp/spider/cards/48.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "134497218615556b6bdfdb506f3fd1daac501077f98a74550330bd3ab944ed0c",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD48",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "c8ed40fa22079dbfd75edd961c4de6e09c62111b38af28b4b9aba032568570da"
+    }
+  },
+  "assets/xp/spider/cards/49.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "90625da526516b51b9c00a094bb73fb1f9b8a8bf984057711ca3116738c98792",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD49",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "75cd3af0e22543954e5a034a0cc428f11c7c2d28561d7ad096fb93cb1f19491e"
+    }
+  },
+  "assets/xp/spider/cards/50.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "404a03ac31253f55d0fff5dfbc8cf3bfff8f12d6ce213960e74f5de75cb6c07f",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD50",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "4e12deafe87226628f881178cc4697a9b114ece75ed4170769fa1e4ad07276a8"
+    }
+  },
+  "assets/xp/spider/cards/51.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "622320a130f704033b48125c7466aacbb63e2f17bf8fb6dd13b42793e3bea224",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD51",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "5173520aa94e39dae98de46892411048cdc067ba126f5dc2b49ced2d03993851"
+    }
+  },
+  "assets/xp/spider/cards/52.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "762c360cebd929e58390bf2714016308b1165674261d071553746d32e74fcf76",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARD52",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "0eeb94888d11db4c1ebd18dc4dab801cdc73591780a19a6ae08ca6905f53500b"
+    }
+  },
+  "assets/xp/spider/CardBack.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "3d72f09f70388fa298d45908dde2a6b32d68716f1b2e7e4c44233f9a444a3389",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "CARDBACK",
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "f45448f9f0b2f9bbc2e8b96d226077bdcbea8518ce03edeae9e5cd45cca0e82b"
+    }
+  },
+  "assets/xp/spider/Felt.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "ea3793111af150f7d9d34d81741bf16f264486e606dea48992c0aeaca0ea039d",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": "FELT",
+      "language": 1033,
+      "frame": "64x64x32",
+      "pixelSha256": "eca48becadf052f40f971d48fb7569a28403826c3d20b883558271279a3f4712"
+    }
+  },
+  "assets/xp/spider/Empty.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "f5033b1fbed44489110bafcfcdb653719855b5843319487e44b4f8f3319a0707",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": 108,
+      "language": 1033,
+      "frame": "71x96x32",
+      "pixelSha256": "50599e7fa5d624968ab76b02d9f6cb0d40ad30d236f467988d58e9e0c60bcf83"
+    }
+  },
+  "assets/xp/spider/About.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "4f93729be80f1dd443e5228af067f79c4152065b37045ba538eb3cd5f28cc326",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": 2,
+      "id": 106,
+      "language": 1033,
+      "frame": "359x242x32",
+      "pixelSha256": "908b336324e0c563e72ab0c9defad02f249e1f7944fef8a8870ca344ec0b0cca"
+    }
+  },
   "assets/xp/system/SecurityHelp.png": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/WSCUI.CP_",
@@ -15109,6 +15902,97 @@
       "language": 1033,
       "frame": "raw",
       "pixelSha256": "d492324891bbfd582a9d230f5720d1ea65bd06b69e10db5c44ddc7d6b172cc75"
+    }
+  },
+  "assets/xp/spider/Deal.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "43c87d11954346b02fadfcfa0103d3ecfb6f9be21816ed0aff0c4c7138808419",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": "WAVE",
+      "id": 124,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "43c87d11954346b02fadfcfa0103d3ecfb6f9be21816ed0aff0c4c7138808419"
+    }
+  },
+  "assets/xp/spider/Drop.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "537575cf00806e0712eb271e0fe6f33b090186878661edec9e7f3535132e5e06",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": "WAVE",
+      "id": 125,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "537575cf00806e0712eb271e0fe6f33b090186878661edec9e7f3535132e5e06"
+    }
+  },
+  "assets/xp/spider/Hint.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "6be415fc39e7d77bebe7228dc4e97a4447d79c41b7b994367d3cba2485ccc72e",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": "WAVE",
+      "id": 126,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "6be415fc39e7d77bebe7228dc4e97a4447d79c41b7b994367d3cba2485ccc72e"
+    }
+  },
+  "assets/xp/spider/NoMoves.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "1d307efbfac101b7d11d37c9c9c0e9e26b514cacda3489c95ee8b1018ac1cfac",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": "WAVE",
+      "id": 127,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "1d307efbfac101b7d11d37c9c9c0e9e26b514cacda3489c95ee8b1018ac1cfac"
+    }
+  },
+  "assets/xp/spider/PickUp.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "564985bb6f083969752c99b66b0fc752b56ff3c8a82fa88cf291aca5e7ba2539",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": "WAVE",
+      "id": 128,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "564985bb6f083969752c99b66b0fc752b56ff3c8a82fa88cf291aca5e7ba2539"
+    }
+  },
+  "assets/xp/spider/Win.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/SPIDER.EX_",
+    "sha256": "18bc62150edbb6bc61908d59222f44729fa60292f4ace7c615a6667ce6bdf676",
+    "resource": {
+      "parentSha256": "d309a839843ccd8b9edef7a271a611eb7794f83a825b69a87cc259c9ede87288",
+      "type": "WAVE",
+      "id": 129,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "18bc62150edbb6bc61908d59222f44729fa60292f4ace7c615a6667ce6bdf676"
+    }
+  },
+  "assets/xp/fonts/System.fnt": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/VGASYS.FO_",
+    "sha256": "ce2cccc631d0db33c6464d84ce7d2c01659c8ce8d319b954e1e0aca628fb1a51",
+    "resource": {
+      "parentSha256": "7baefa14ef8ef2355374d0b5061043dd5f4f8c33ff57680366e4a725f91646f8",
+      "type": 8,
+      "id": 31,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "ce2cccc631d0db33c6464d84ce7d2c01659c8ce8d319b954e1e0aca628fb1a51"
     }
   },
   "assets/xp/freecell/DownArrow.png": {
