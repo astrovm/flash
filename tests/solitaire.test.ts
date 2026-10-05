@@ -14,7 +14,6 @@ const BACK = "assets/xp/cards/backs/56.png";
 // The XP VM dealt seed 30162; this clock reproduces it.
 const DEAL_TIME = 1790014930000;
 const TABLEAU = [11, 93, 175, 257, 339, 421, 503];
-const FOUNDATION = [257, 339, 421, 503];
 
 const open = async ({
   settings = {},
