@@ -283,6 +283,14 @@ html[data-xp-appearance="silver"] {
 }
 
 /* The status bar names the mixer device in one pane. */
+/* XP's bitmaps scale without smoothing on zoomed screens. */
+.xp-mixer-balance,
+.xp-mixer-volume,
+.xp-mixer-status::before,
+.xp-mixer-status span::after {
+  image-rendering: pixelated;
+}
+
 .xp-mixer-status {
   position: absolute;
   right: 0;

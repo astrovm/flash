@@ -580,32 +580,78 @@ const mountTaskManager = (context, { window: win }) => {
           networkHistory.every((sample) => sample.total <= limit),
         ) || 100
       : 100;
-  const renderNetworking = () => {
-    const canvas = root.querySelector(".tm-adapter canvas");
+  // Canvases draw at the screen's pixel density, in XP's logical pixels, so
+  // lines and labels stay sharp on zoomed and high-density screens. Filled
+  // rectangles snap to whole device pixels.
+  const prepare = (canvas, width, height) => {
+    const density = window.devicePixelRatio;
+    canvas.width = Math.round(width * density);
+    canvas.height = Math.round(height * density);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
     const graphics = canvas.getContext("2d");
-    const { width, height } = canvas;
+    const snap = (value) => Math.round(value * density);
+    // One-pixel lines keep one width everywhere instead of rounding to 1 or
+    // 2 device pixels.
+    const thin = Math.max(1, Math.floor(density));
+    const size = (start, length) =>
+      length === 1 ? thin : snap(start + length) - snap(start);
+    const fill = (x, y, w, h) =>
+      graphics.fillRect(snap(x), snap(y), size(x, w), size(y, h));
+    const text = (value, x, y, fontSize, align) => {
+      graphics.font = `${fontSize * density}px Arial`;
+      graphics.textAlign = align;
+      graphics.fillText(value, x * density, y * density);
+    };
+    const line = (points, color) => {
+      graphics.strokeStyle = color;
+      graphics.lineWidth = thin;
+      graphics.beginPath();
+      points.forEach(([x, y]) =>
+        graphics.lineTo((x + 0.5) * density, (y + 0.5) * density),
+      );
+      graphics.stroke();
+    };
+    // GDI draws graph and meter labels without smoothing.
+    const binarize = (x, y, w, h) => {
+      const label = graphics.getImageData(snap(x), snap(y), snap(w), snap(h));
+      for (let index = 0; index < label.data.length; index += 4) {
+        label.data[index] = (label.data[index] >> 7) * 255;
+        label.data[index + 1] = (label.data[index + 1] >> 7) * 255;
+        label.data[index + 2] = 0;
+        label.data[index + 3] = 255;
+      }
+      graphics.putImageData(label, snap(x), snap(y));
+    };
+    return { graphics, fill, text, line, binarize };
+  };
+
+  const renderNetworking = () => {
+    const [width, height] = [350, 222];
+    const { graphics, fill, text, line, binarize } = prepare(
+      root.querySelector(".tm-adapter canvas"),
+      width,
+      height,
+    );
     const scale = networkScale();
     // Show Scale gives the labels a 36px column and a yellow axis.
     const left = settings.showScale ? 37 : 0;
     graphics.fillStyle = "#000";
-    graphics.fillRect(0, 0, width, height);
+    fill(0, 0, width, height);
     graphics.fillStyle = "#008040";
-    for (let y = 4; y < height - 1; y += 31)
-      graphics.fillRect(left, y, width - left, 1);
+    for (let y = 4; y < height - 1; y += 31) fill(left, y, width - left, 1);
     for (let x = width - 1 - graphOffset; x >= left; x -= GRAPH_GRID)
-      graphics.fillRect(x, 0, 1, height);
+      fill(x, 0, 1, height);
     if (settings.showScale) {
-      graphics.fillRect(36, 0, 1, height);
+      fill(36, 0, 1, height);
       graphics.fillStyle = "#ff0";
-      graphics.fillRect(36, 0, 1, 4);
+      fill(36, 0, 1, 4);
       for (let y = 5; y < height; y += 31)
-        graphics.fillRect(36, y, 1, Math.min(30, height - y));
-      graphics.font = "10px Arial";
-      graphics.textAlign = "right";
-      graphics.fillText(`${scale} %`, 32, 10);
-      graphics.fillText(`${scale / 2} %`, 32, 115);
-      graphics.fillText("0 %", 32, 220);
-      binarize(graphics, 0, 0, 36, height);
+        fill(36, y, 1, Math.min(30, height - y));
+      text(`${scale} %`, 32, 10, 10, "right");
+      text(`${scale / 2} %`, 32, 115, 10, "right");
+      text("0 %", 32, 220, 10, "right");
+      binarize(0, 0, 36, height);
     }
     [
       ["sent", "#f00"],
@@ -613,16 +659,15 @@ const mountTaskManager = (context, { window: win }) => {
       ["total", "#0f0"],
     ]
       .filter(([key]) => settings.history[key])
-      .forEach(([key, color]) => {
-        graphics.strokeStyle = color;
-        graphics.beginPath();
-        networkHistory.forEach((sample, step) => {
-          const y =
-            height - 1 - Math.round((sample[key] / scale) * (height - 1));
-          graphics.lineTo(width - 1 - step * 2 + 0.5, y + 0.5);
-        });
-        graphics.stroke();
-      });
+      .forEach(([key, color]) =>
+        line(
+          networkHistory.map((sample, step) => [
+            width - 1 - step * 2,
+            height - 1 - Math.round((sample[key] / scale) * (height - 1)),
+          ]),
+          color,
+        ),
+      );
     renderList(
       $(".tm-adapters"),
       "adapters",
@@ -646,18 +691,6 @@ const mountTaskManager = (context, { window: win }) => {
     );
   };
 
-  // GDI draws graph and meter labels without smoothing.
-  const binarize = (graphics, x, y, width, height) => {
-    const label = graphics.getImageData(x, y, width, height);
-    for (let index = 0; index < label.data.length; index += 4) {
-      label.data[index] = (label.data[index] >> 7) * 255;
-      label.data[index + 1] = (label.data[index + 1] >> 7) * 255;
-      label.data[index + 2] = 0;
-      label.data[index + 3] = 255;
-    }
-    graphics.putImageData(label, x, y);
-  };
-
   // Performance: XP's LED meters and scrolling history graphs. A meter's
   // 28 bar rows light from the bottom; the label is a canvas below them.
   const drawMeter = (meter, fraction, text) => {
@@ -667,36 +700,32 @@ const mountTaskManager = (context, { window: win }) => {
     on.style.top = `${34 - lit}px`;
     on.style.height = `${lit}px`;
     on.style.backgroundPosition = `0 ${lit - 28}px`;
-    const graphics = meter.querySelector("canvas").getContext("2d");
-    graphics.fillStyle = "#000";
-    graphics.fillRect(0, 0, 68, 21);
-    graphics.fillStyle = "#0f0";
-    graphics.font = "11px Arial";
-    graphics.textAlign = "center";
-    graphics.fillText(text, 34, 15);
-    binarize(graphics, 0, 0, 68, 21);
+    const label = prepare(meter.querySelector("canvas"), 68, 21);
+    label.graphics.fillStyle = "#000";
+    label.fill(0, 0, 68, 21);
+    label.graphics.fillStyle = "#0f0";
+    label.text(text, 34, 15, 11, "center");
+    label.binarize(0, 0, 68, 21);
   };
   let graphOffset = 0;
   const drawGraph = (canvas, values, scale, color, kernel) => {
-    const graphics = canvas.getContext("2d");
-    const { width, height } = canvas;
+    const [width, height] = [229, 57];
+    const { graphics, fill, line } = prepare(canvas, width, height);
     graphics.fillStyle = "#000";
-    graphics.fillRect(0, 0, width, height);
+    fill(0, 0, width, height);
     graphics.fillStyle = "#008040";
     for (let y = GRAPH_GRID - 1; y < height; y += GRAPH_GRID)
-      graphics.fillRect(0, y, width, 1);
+      fill(0, y, width, 1);
     for (let x = width - 1 - graphOffset; x >= 0; x -= GRAPH_GRID)
-      graphics.fillRect(x, 0, 1, height);
-    const plot = (index, stroke) => {
-      graphics.strokeStyle = stroke;
-      graphics.beginPath();
-      values.forEach((value, step) => {
-        const y =
-          height - 1 - Math.round((value[index] / scale) * (height - 1));
-        graphics.lineTo(width - 1 - step * 2 + 0.5, y + 0.5);
-      });
-      graphics.stroke();
-    };
+      fill(x, 0, 1, height);
+    const plot = (index, stroke) =>
+      line(
+        values.map((value, step) => [
+          width - 1 - step * 2,
+          height - 1 - Math.round((value[index] / scale) * (height - 1)),
+        ]),
+        stroke,
+      );
     if (kernel) plot(1, "#f00");
     plot(0, color);
   };

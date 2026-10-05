@@ -602,6 +602,13 @@ html:not([data-xp-appearance="classic"]) .tm-page {
 }
 
 /* Offsets skip the 1px inner edge. */
+/* XP's bitmaps scale without smoothing on zoomed screens. */
+.tm-meter i,
+.tm-status::before,
+.tm-status span::after {
+  image-rendering: pixelated;
+}
+
 .tm-meter i {
   position: absolute;
   top: 7px;
