@@ -342,9 +342,12 @@ html[data-xp-appearance="classic"] {
     sans-serif;
 }
 
+/* Flex rows keep every label at the same x, even when a long label makes
+   the menu's width fractional on zoomed screens. */
 .xp-context-menu button {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   min-height: 17px;
   padding: 0 22px 0 2px;
@@ -358,6 +361,7 @@ html[data-xp-appearance="classic"] {
 
 .context-check {
   display: inline-block;
+  flex: none;
   width: 15px;
   color: currentColor;
   font-size: 15px;

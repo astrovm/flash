@@ -580,11 +580,11 @@ const mountTaskManager = (context, { window: win }) => {
           networkHistory.every((sample) => sample.total <= limit),
         ) || 100
       : 100;
-  // Canvases draw at the screen's pixel density, in XP's logical pixels, so
-  // lines and labels stay sharp on zoomed and high-density screens. Filled
-  // rectangles snap to whole device pixels.
+  // Canvases draw at the page's render density (the whole ratio the display
+  // scale lays out at), in XP's logical pixels, so lines and labels stay
+  // sharp on zoomed and high-density screens.
   const prepare = (canvas, width, height) => {
-    const density = window.devicePixelRatio;
+    const density = Math.ceil(window.devicePixelRatio - 0.01);
     canvas.width = Math.round(width * density);
     canvas.height = Math.round(height * density);
     canvas.style.width = `${width}px`;

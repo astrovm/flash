@@ -19,6 +19,7 @@ const scripts = [
 
 const shellScripts = [
   "site/js/main.js",
+  "site/js/shell/display-scale.js",
   "site/js/shell/window-manager.js",
   "site/js/apps/display-properties.js",
   "site/js/apps/explorer.js",
