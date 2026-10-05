@@ -614,6 +614,8 @@ describe("Windows XP Calculator through BoxedWine", () => {
     sendNativeWindow(shell, { type: "mapped", id: 41 }, runtimeWindow);
     expect(calculator.style.display).toBe("flex");
 
+    // A destroyed window cancels the minimize that's still waiting.
+    shell.window.setTimeout = nativeSetTimeout;
     sendNativeWindow(shell, { type: "unmapped", id: 41 }, runtimeWindow);
     sendNativeWindow(shell, { type: "destroyed", id: 41 }, runtimeWindow);
     expect(calculator.style.display).toBe("flex");

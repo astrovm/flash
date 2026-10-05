@@ -1908,3 +1908,53 @@ html[data-xp-appearance="silver"]
   border: 1px solid #000;
   font: inherit;
 }
+
+/* The copy of a window's caption that XP steps across the screen when a
+   window minimizes, maximizes or restores. It keeps the frame's 4px sides so
+   the caption's own edges show, and drops the frame's bottom edge. */
+.window-ghost {
+  position: fixed;
+  z-index: 2147483000;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 4px;
+  overflow: hidden;
+  background: none;
+  pointer-events: none;
+}
+
+.window-ghost::after {
+  display: none;
+}
+
+/* Menus fade in over 200 ms, XP's default transition. The Start menu's
+   own panels appear at once. */
+html:not([data-xp-menu-transition="none"])
+  [role="menu"]:not(.start-program-flyout):not([hidden]) {
+  animation: xp-menu-fade 200ms linear;
+}
+
+html[data-xp-menu-transition="scroll"]
+  [role="menu"]:not(.start-program-flyout):not([hidden]) {
+  animation: xp-menu-scroll 200ms linear;
+}
+
+@keyframes xp-menu-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes xp-menu-scroll {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  to {
+    clip-path: inset(0);
+  }
+}

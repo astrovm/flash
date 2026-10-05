@@ -981,7 +981,113 @@ const focusTopWindow = () => {
   }
 };
 
-const minimizeWindow = (gameId, { notifyApplication = true } = {}) => {
+// ---- XP's window animations ----
+// Minimizing, restoring and maximizing don't zoom the window. XP draws a
+// copy of its caption bar that steps from one rectangle to another, 16 times
+// at about 16 ms each, and only then changes the window.
+const GHOST_STEPS = 16;
+const GHOST_STEP_MS = 16;
+const GHOST_FRAME = 4;
+
+const animationsEnabled = () =>
+  !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+// The caption's rectangle for a window's own rectangle.
+const ghostRectFor = ({ left, top, width }) => ({
+  left: left + GHOST_FRAME,
+  top: top + GHOST_FRAME,
+  width: width - GHOST_FRAME * 2,
+});
+
+// XP pushes a maximized window's frame just past the work area.
+const maximizedPageRect = () => {
+  const desktop = document.getElementById("desktop").getBoundingClientRect();
+  return {
+    left: desktop.left - GHOST_FRAME,
+    top: desktop.top - GHOST_FRAME,
+    width: getVisibleWorkArea().width + GHOST_FRAME * 2,
+  };
+};
+
+// A window's rectangle in the page, even while it's hidden.
+const windowPageRect = (win) => {
+  const desktop = document.getElementById("desktop").getBoundingClientRect();
+  if (win.maximized) return maximizedPageRect();
+  const rect = win.el.getBoundingClientRect();
+  if (rect.width > 0) return rect;
+  return {
+    left: desktop.left + (parseFloat(win.el.style.left) || 0),
+    top: desktop.top + (parseFloat(win.el.style.top) || 0),
+    width: parseFloat(win.el.style.width) || 0,
+  };
+};
+
+const taskButtonGhostRect = (win) => {
+  const button = document.querySelector(
+    `.task-button[data-game="${win.gameId}"]`,
+  );
+  const rect = button?.getBoundingClientRect();
+  if (rect?.width > 0)
+    return {
+      left: rect.left + GHOST_FRAME,
+      top: rect.top,
+      width: rect.width - GHOST_FRAME * 2,
+    };
+  const source = windowPageRect(win);
+  return {
+    left: source.left + source.width / 2 - 40,
+    top: window.innerHeight - 24,
+    width: 80,
+  };
+};
+
+const finishWindowAnimation = (win) => win.windowAnimation?.complete();
+
+// Steps a caption bar from one rectangle to another, then runs `done`.
+// Starting another animation, or calling finishWindowAnimation(), runs the
+// first one's `done` straight away.
+const animateCaption = (win, from, to, done) => {
+  finishWindowAnimation(win);
+  const ghost = document.createElement("div");
+  ghost.className = "xp-window active window-ghost";
+  ghost.setAttribute("aria-hidden", "true");
+  const bar = win.el.querySelector(".title-bar").cloneNode(true);
+  bar.querySelector(".title-buttons")?.remove();
+  ghost.append(bar);
+  document.body.append(ghost);
+  let step = 0;
+  let timer = 0;
+  const animation = {
+    complete() {
+      clearTimeout(timer);
+      ghost.remove();
+      if (win.windowAnimation === animation) win.windowAnimation = null;
+      done();
+    },
+  };
+  win.windowAnimation = animation;
+  const tick = () => {
+    if (step >= GHOST_STEPS) {
+      animation.complete();
+      return;
+    }
+    const progress = step / GHOST_STEPS;
+    const between = (start, end) => start + (end - start) * progress;
+    Object.assign(ghost.style, {
+      left: `${Math.round(between(from.left, to.left))}px`,
+      top: `${Math.round(between(from.top, to.top))}px`,
+      width: `${Math.round(between(from.width, to.width))}px`,
+    });
+    step += 1;
+    timer = setTimeout(tick, GHOST_STEP_MS);
+  };
+  tick();
+};
+
+const minimizeWindow = (
+  gameId,
+  { notifyApplication = true, animate = false } = {},
+) => {
   const win = openWindows.get(gameId);
   if (!win || win.minimized) return;
 
@@ -989,35 +1095,20 @@ const minimizeWindow = (gameId, { notifyApplication = true } = {}) => {
     return;
   win.minimized = true;
   win.setOwnedWindowsVisible?.(false);
-  const taskButton = document.querySelector(
-    `.task-button[data-game="${gameId}"]`,
-  );
-  const target = taskButton?.getBoundingClientRect();
-  const source = win.el.getBoundingClientRect();
-  const deltaX = target
-    ? target.left + target.width / 2 - (source.left + source.width / 2)
-    : 0;
-  const deltaY = target ? target.top - source.bottom : 32;
-  const animation = win.el.animate(
-    [
-      { transform: "translate(0, 0) scale(1)", opacity: 1 },
-      {
-        transform: `translate(${deltaX}px, ${deltaY}px) scale(0.12, 0.05)`,
-        opacity: 0.35,
-      },
-    ],
-    { duration: 170, easing: "ease-in", fill: "forwards" },
-  );
-  animation.addEventListener(
-    "finish",
-    () => {
-      if (win.minimized) {
-        win.el.style.display = "none";
-      }
-      animation.cancel();
-    },
-    { once: true },
-  );
+  const hide = () => {
+    if (win.minimized) win.el.style.display = "none";
+  };
+  if (animate && animationsEnabled()) {
+    animateCaption(
+      win,
+      ghostRectFor(windowPageRect(win)),
+      taskButtonGhostRect(win),
+      hide,
+    );
+  } else {
+    finishWindowAnimation(win);
+    hide();
+  }
 
   if (focusedGameId === gameId) {
     focusedGameId = null;
@@ -1027,22 +1118,31 @@ const minimizeWindow = (gameId, { notifyApplication = true } = {}) => {
   }
 };
 
-const restoreWindow = (gameId, { notifyApplication = true } = {}) => {
+const restoreWindow = (
+  gameId,
+  { notifyApplication = true, animate = false } = {},
+) => {
   const win = openWindows.get(gameId);
   if (!win || !win.minimized) return;
 
   if (notifyApplication && win.mountedApplication?.restore?.() === false)
     return;
   win.minimized = false;
-  win.el.style.display = "flex";
   win.setOwnedWindowsVisible?.(true);
-  win.el.animate(
-    [
-      { transform: "scale(0.92)", opacity: 0.45 },
-      { transform: "scale(1)", opacity: 1 },
-    ],
-    { duration: 130, easing: "ease-out" },
-  );
+  const show = () => {
+    if (!win.minimized) win.el.style.display = "flex";
+  };
+  if (animate && animationsEnabled()) {
+    animateCaption(
+      win,
+      taskButtonGhostRect(win),
+      ghostRectFor(windowPageRect(win)),
+      show,
+    );
+  } else {
+    finishWindowAnimation(win);
+    show();
+  }
 };
 
 const minimizeAllWindows = () => {
@@ -1084,13 +1184,17 @@ const toggleShowDesktop = () => {
   minimizeAllWindows();
 };
 
-const toggleMaximize = (gameId) => {
+const toggleMaximize = (gameId, { animate = false } = {}) => {
   const win = openWindows.get(gameId);
   const handled = win.maximized
     ? win.mountedApplication?.restore?.()
     : win.mountedApplication?.maximize?.();
   if (handled === false) return;
-  if (!win.maximized) {
+  finishWindowAnimation(win);
+  const maximizing = !win.maximized;
+  const from = ghostRectFor(windowPageRect(win));
+  let to;
+  if (maximizing) {
     win.prevRect = {
       left: win.el.style.left,
       top: win.el.style.top,
@@ -1098,24 +1202,38 @@ const toggleMaximize = (gameId) => {
       height: win.el.style.height,
     };
     persistWindowPlacement(win);
-    win.el.classList.add("maximized");
-    win.maximized = true;
+    to = ghostRectFor(maximizedPageRect());
   } else {
-    win.el.classList.remove("maximized");
-    // Maximizing always records the restore geometry.
-    Object.assign(win.el.style, win.prevRect);
-    const position = clampWindowPosition(
-      win,
-      win.el.offsetLeft,
-      win.el.offsetTop,
-    );
-    win.el.style.left = `${position.left}px`;
-    win.el.style.top = `${position.top}px`;
-    win.maximized = false;
-    fitNativeProgramToWorkArea(win);
+    const desktop = document.getElementById("desktop").getBoundingClientRect();
+    to = ghostRectFor({
+      left: desktop.left + parseFloat(win.prevRect.left),
+      top: desktop.top + parseFloat(win.prevRect.top),
+      width: parseFloat(win.prevRect.width),
+    });
   }
-  updateMaximizeButton(win);
-  focusWindow(gameId);
+  win.maximized = maximizing;
+  // The window changes once its caption has stepped to the new rectangle.
+  const apply = () => {
+    if (maximizing) {
+      win.el.classList.add("maximized");
+    } else {
+      win.el.classList.remove("maximized");
+      // Maximizing always records the restore geometry.
+      Object.assign(win.el.style, win.prevRect);
+      const position = clampWindowPosition(
+        win,
+        win.el.offsetLeft,
+        win.el.offsetTop,
+      );
+      win.el.style.left = `${position.left}px`;
+      win.el.style.top = `${position.top}px`;
+      fitNativeProgramToWorkArea(win);
+    }
+    updateMaximizeButton(win);
+    focusWindow(gameId);
+  };
+  if (animate && animationsEnabled()) animateCaption(win, from, to, apply);
+  else apply();
 };
 
 const closeGameWindow = (
@@ -1286,7 +1404,7 @@ const wireDrag = (win) => {
 
   bar.addEventListener("dblclick", (e) => {
     if (e.target.closest(".title-buttons, .title-icon")) return;
-    toggleMaximize(win.gameId);
+    toggleMaximize(win.gameId, { animate: true });
   });
 
   // Right-clicking the title bar opens the window system menu.
@@ -1587,17 +1705,17 @@ const runSystemMenuCommand = (win, command) => {
   switch (command) {
     case "restore":
       if (win.minimized) {
-        restoreWindow(win.gameId);
+        restoreWindow(win.gameId, { animate: true });
         focusWindow(win.gameId);
         break;
       }
-      toggleMaximize(win.gameId);
+      toggleMaximize(win.gameId, { animate: true });
       break;
     case "maximize":
-      toggleMaximize(win.gameId);
+      toggleMaximize(win.gameId, { animate: true });
       break;
     case "minimize":
-      minimizeWindow(win.gameId);
+      minimizeWindow(win.gameId, { animate: true });
       break;
     case "close":
       closeGameWindow(win.gameId);

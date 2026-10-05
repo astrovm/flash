@@ -7,10 +7,14 @@ const wireSystemWindowControls = (win) => {
     .addEventListener("click", () => closeGameWindow(win.gameId));
   win.el
     .querySelector(".minimize-btn")
-    .addEventListener("click", () => minimizeWindow(win.gameId));
+    .addEventListener("click", () =>
+      minimizeWindow(win.gameId, { animate: true }),
+    );
   win.el
     .querySelector(".maximize-btn")
-    .addEventListener("click", () => toggleMaximize(win.gameId));
+    .addEventListener("click", () =>
+      toggleMaximize(win.gameId, { animate: true }),
+    );
   updateMaximizeButton(win);
   wireDrag(win);
   if (win.application?.window.resizable !== false) wireResize(win);
@@ -816,13 +820,6 @@ const openGameWindow = (gameId) => {
   el.style.width = `${winWidth}px`;
   el.style.height = `${winHeight}px`;
   document.getElementById("desktop").appendChild(el);
-  el.animate(
-    [
-      { transform: "scale(0.94)", opacity: 0.35 },
-      { transform: "scale(1)", opacity: 1 },
-    ],
-    { duration: 145, easing: "ease-out" },
-  );
 
   const win = {
     gameId,

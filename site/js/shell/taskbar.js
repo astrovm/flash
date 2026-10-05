@@ -82,9 +82,9 @@ const activateTaskButton = (gameId) => {
     !win.minimized &&
     !win.nativeOwnedWindows?.size
   ) {
-    minimizeWindow(gameId);
+    minimizeWindow(gameId, { animate: true });
   } else {
-    restoreWindow(gameId);
+    restoreWindow(gameId, { animate: true });
     focusWindow(gameId);
   }
 };
@@ -207,7 +207,7 @@ const renderTaskButtons = () => {
           item.setAttribute("role", "menuitem");
           item.addEventListener("click", () => {
             closeTaskbarMenus();
-            restoreWindow(id);
+            restoreWindow(id, { animate: true });
             focusWindow(id);
           });
           menu.append(item);

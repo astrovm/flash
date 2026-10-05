@@ -597,6 +597,7 @@ const applyDisplaySettings = (settings) => {
   document.documentElement.dataset.xpFontSize = settings.fontSize;
   document.documentElement.dataset.xpLargeIcons = String(settings.largeIcons);
   document.documentElement.dataset.xpMenuShadows = String(settings.menuShadows);
+  document.documentElement.dataset.xpMenuTransition = settings.transitionEffect;
   document.documentElement.dataset.xpKeyboardCues = String(
     settings.hideKeyboardCues,
   );
