@@ -1,7 +1,8 @@
+import { createControlPanel } from "./control-panel.js";
+
 export const createSystemRuntime = (context) => {
   const {
     XPDialogs,
-    XP_ICON_PATHS,
     closeGameWindow,
     confirmRecycleDelete,
     explorerBack,
@@ -10,18 +11,12 @@ export const createSystemRuntime = (context) => {
     fs,
     navigateExplorer,
     openAboutWindows,
-    openControlPanel,
-    openDateTimeProperties,
 
     openSearchDialog,
     openShellProperties,
-    openSystemWindow,
-    openTaskbarProperties,
-    openWindows,
     pasteIntoFolder,
     renderExplorerItems,
     renderExplorerTree,
-    renderTaskButtons,
     selectedExplorerNodes,
     renderExplorerSelection,
     setAccessKeyText,
@@ -29,241 +24,7 @@ export const createSystemRuntime = (context) => {
     wireProjectSettings,
   } = context;
 
-  const createControlPanelContent = () => {
-    const content = document.createElement("div");
-    content.className = "control-panel-content";
-    content.innerHTML = `
-    <div class="explorer-chrome control-panel-chrome">
-      <div class="explorer-menu-row">
-
-        <div class="explorer-brand" aria-hidden="true"><img src="assets/xp/WindowsFlag.png" alt=""></div>
-      </div>
-      <div class="explorer-toolbar">
-        <button type="button" disabled><img src="assets/xp/explorer/toolbar-back.png" alt=""> Back <span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-        <button type="button" disabled aria-label="Forward"><img src="assets/xp/explorer/toolbar-forward.png" alt=""><span class="toolbar-drop-arrow" aria-hidden="true">▾</span></button>
-        <button type="button" disabled aria-label="Up"><img src="assets/xp/explorer/toolbar-up.png" alt=""></button>
-        <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-        <button type="button" data-control-panel-action="search"><img src="assets/xp/explorer/toolbar-search.png" alt=""> Search</button>
-        <button type="button" data-control-panel-action="folders" aria-pressed="false"><img src="assets/xp/explorer/toolbar-folders.png" alt=""> Folders</button>
-        <span class="explorer-toolbar-separator" aria-hidden="true"></span>
-
-      </div>
-      <label class="explorer-address"><span>Address</span><span class="explorer-address-field"><img src="assets/xp/icons/ControlPanel.png" alt=""><input type="text" aria-label="Address" value="Control Panel" readonly></span></label>
-    </div>
-    <div class="control-panel-body">
-      <aside class="explorer-sidebar control-panel-sidebar">
-        <section>
-          <h3><button type="button" class="explorer-section-toggle" aria-expanded="true"><img src="assets/xp/icons/ControlPanel.png" alt=""><span>Control Panel</span><b aria-hidden="true">⌃</b></button></h3>
-          <div class="explorer-section-body"><button type="button" data-control-panel-action="classic"><img src="assets/xp/icons/FolderViewClassic.png" alt=""><span>Switch to Classic View</span></button></div>
-        </section>
-
-      </aside>
-      <main class="control-panel-main">
-        <h1>Pick a category</h1>
-        <div class="control-panel-categories"></div>
-      </main>
-    </div>
-  `;
-
-    const categories = [
-      [
-        "appearance",
-        "Appearance and Themes",
-        "AppearanceAndThemes.png",
-        "left",
-      ],
-
-      [
-        "datetime",
-        "Date, Time, Language, and Regional Options",
-        "DateTimeRegional.png",
-        "right",
-      ],
-    ];
-    const categoryGrid = content.querySelector(".control-panel-categories");
-    categories.forEach(([id, label, icon, column]) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.controlPanelCategory = id;
-      button.dataset.column = column;
-      const image = document.createElement("img");
-      image.src = XP_ICON_PATHS[icon];
-      image.alt = "";
-      const text = document.createElement("span");
-      text.textContent = label;
-      button.append(image, text);
-      categoryGrid.appendChild(button);
-    });
-    return content;
-  };
-
-  const wireControlPanel = (win) => {
-    const content = win.el.querySelector(".control-panel-content");
-    const titleText = win.el.querySelector(".title-text");
-    const titleIcon = win.el.querySelector(".title-icon img");
-    const address = content.querySelector(".explorer-address input");
-    const addressIcon = content.querySelector(".explorer-address-field img");
-    const backButton = content.querySelector(
-      '.explorer-toolbar button[aria-label="Back"], .explorer-toolbar button:first-child',
-    );
-    const upButton = content.querySelector(
-      '.explorer-toolbar button[aria-label="Up"]',
-    );
-    backButton.dataset.controlPanelAction = "back";
-    upButton.dataset.controlPanelAction = "back";
-    const categoryGrid = content.querySelector(".control-panel-categories");
-    const categoryMarkup = categoryGrid.innerHTML;
-    const classicIconPaths = {
-      "DateAndTime.png": "assets/xp/icons/DateAndTime.png",
-      "Display.png": "assets/xp/icons/Display.png",
-      "TaskbarAndStartMenu.png": "assets/xp/icons/TaskbarAndStartMenu.png",
-    };
-    const classicItems = [
-      ["date-time", "Date and Time", "DateAndTime.png"],
-      ["display", "Display", "Display.png"],
-
-      [
-        "taskbar-properties",
-        "Taskbar and Start Menu",
-        "TaskbarAndStartMenu.png",
-      ],
-    ];
-    const renderClassicItems = () => {
-      categoryGrid.innerHTML = classicItems
-        .map(
-          ([action, label, icon]) =>
-            `<button type="button" data-control-panel-action="${action}" title="${label}"><img src="${classicIconPaths[icon]}" alt=""><span>${label}</span></button>`,
-        )
-        .join("");
-    };
-
-    const setWindowIdentity = (title, icon) => {
-      win.title = title;
-      win.icon = icon;
-      titleText.textContent = title;
-      titleIcon.src = icon;
-      address.value = title;
-      addressIcon.src = icon;
-      renderTaskButtons();
-    };
-
-    const openDisplayTab = (tab) => {
-      openSystemWindow("__display-properties");
-      openWindows
-        .get("__display-properties")
-        ?.el.querySelector(`#display-tab-${tab}`)
-        ?.click();
-    };
-
-    const renderAppearanceCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Appearance and Themes",
-        XP_ICON_PATHS["AppearanceAndThemes.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-
-      `;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/AppearanceAndThemes.png" alt=""><strong>Appearance and Themes</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links">
-        <button type="button" data-control-panel-action="theme"><img src="assets/xp/icons/Go.png" alt=""><span>Change the computer's theme</span></button>
-        <button type="button" data-control-panel-action="desktop"><img src="assets/xp/icons/Go.png" alt=""><span>Change the desktop background</span></button>
-        <button type="button" data-control-panel-action="screen-saver"><img src="assets/xp/icons/Go.png" alt=""><span>Choose a screen saver</span></button>
-        <button type="button" data-control-panel-action="resolution"><img src="assets/xp/icons/Go.png" alt=""><span>Change the screen resolution</span></button>
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons">
-        <button type="button" data-control-panel-action="display"><img src="assets/xp/icons/Display.png" alt=""><span>Display</span></button>
-
-        <button type="button" data-control-panel-action="taskbar-properties"><img src="assets/xp/icons/TaskbarAndStartMenu.png" alt=""><span>Taskbar and Start Menu</span></button>
-      </div>`;
-    };
-
-    const renderDateRegionalCategory = () => {
-      content.classList.add("control-panel-category-page");
-      content.classList.remove("classic-view", "folders-visible");
-      setWindowIdentity(
-        "Date, Time, Language, and Regional Options",
-        XP_ICON_PATHS["DateTimeRegional.png"],
-      );
-      backButton.disabled = false;
-      upButton.disabled = false;
-      content.querySelector(".control-panel-sidebar").innerHTML = `
-      `;
-      content.querySelector(".control-panel-main").innerHTML = `
-      <div class="control-panel-category-heading"><img src="assets/xp/icons/DateTimeRegional.png" alt=""><strong>Date, Time, Language, and Regional Options</strong></div>
-      <h1>Pick a task...</h1>
-      <div class="control-panel-task-links">
-        <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/Go.png" alt=""><span>Change the date and time</span></button>
-
-      </div>
-      <h2>or pick a Control Panel icon</h2>
-      <div class="control-panel-category-icons date-regional-category-icons">
-        <button type="button" data-control-panel-action="date-time"><img src="assets/xp/icons/DateAndTime.png" alt=""><span>Date and Time</span></button>
-
-      </div>`;
-    };
-
-    const actions = {
-      appearance: renderAppearanceCategory,
-
-      datetime: renderDateRegionalCategory,
-    };
-    content.addEventListener("click", (event) => {
-      const sectionToggle = event.target.closest(".explorer-section-toggle");
-      if (sectionToggle) {
-        const collapsed = sectionToggle
-          .closest("section")
-          .classList.toggle("collapsed");
-        sectionToggle.setAttribute("aria-expanded", String(!collapsed));
-        sectionToggle.querySelector("b").textContent = collapsed ? "⌄" : "⌃";
-        return;
-      }
-      const category = event.target.closest("[data-control-panel-category]");
-      if (category) {
-        actions[category.dataset.controlPanelCategory]?.();
-        return;
-      }
-      const action = event.target.closest("[data-control-panel-action]")
-        ?.dataset.controlPanelAction;
-      if (action === "classic") {
-        const classic = content.classList.toggle("classic-view");
-        content.querySelector(".control-panel-main h1").textContent =
-          "Pick a category";
-        if (classic) renderClassicItems();
-        else categoryGrid.innerHTML = categoryMarkup;
-        event.target.closest("button").querySelector("span").textContent =
-          classic ? "Switch to Category View" : "Switch to Classic View";
-      } else if (action === "search") {
-        openSearchDialog();
-      } else if (action === "folders") {
-        const pressed = content.classList.toggle("folders-visible");
-        event.target
-          .closest("button")
-          .setAttribute("aria-pressed", String(pressed));
-      } else if (action === "back") {
-        closeGameWindow("__control-panel");
-        setTimeout(openControlPanel, 0);
-      } else if (action === "theme" || action === "display") {
-        openDisplayTab("themes");
-      } else if (action === "desktop") {
-        openDisplayTab("desktop");
-      } else if (action === "screen-saver") {
-        openDisplayTab("saver");
-      } else if (action === "resolution") {
-        openDisplayTab("settings");
-      } else if (action === "taskbar-properties") {
-        openTaskbarProperties();
-      } else if (action === "date-time") {
-        openDateTimeProperties();
-      }
-    });
-  };
+  const controlPanel = createControlPanel(context);
 
   const createSystemContentRoot = () => {
     const content = document.createElement("div");
@@ -272,9 +33,7 @@ export const createSystemRuntime = (context) => {
   };
 
   const XP_SYSTEM_RENDERERS = Object.freeze({
-    "__control-panel": (win) => {
-      return createControlPanelContent();
-    },
+    "__control-panel": () => controlPanel.render(),
     "__astro-settings": (win) => {
       const content = createSystemContentRoot();
 
@@ -1167,7 +926,7 @@ export const createSystemRuntime = (context) => {
     "project-settings": wireProjectSettings,
     search: context.wireSearchCompanion,
     "internet-games": context.wireInternetGames,
-    "control-panel": wireControlPanel,
+    "control-panel": controlPanel.wire,
   });
 
   return Object.freeze({

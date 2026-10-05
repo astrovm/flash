@@ -640,6 +640,7 @@ const systemApplicationContext = () => ({
   renderExplorerItems,
   renderExplorerTree,
   renderTaskButtons,
+  resolveShellCommand,
   selectedExplorerNodes,
   renderExplorerSelection,
   startExplorerRename,

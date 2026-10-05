@@ -1,7 +1,6 @@
 # Windows XP fidelity handoff
 
-Updated after the Volume Control pass. Areas 1 to 8 are done; area 9 is in
-progress. Each finished area links its evidence, decisions,
+Updated after the Control Panel pass. Areas 1 to 9 are done. Each finished area links its evidence, decisions,
 and verification limits in the table below.
 
 ## Working agreement
@@ -83,7 +82,7 @@ individual app scope decisions still require inspection.
 | 6     | Shared windows and dialogs               | Done. Luna frames, captions, menu bars, scrollbars, common controls, message boxes, property sheets with What's This help, the window menu, and Open/Save As compared and fixed ([evidence](reference/windows-dialogs/README.md)).                                                                                                              |
 | 7     | Explorer and the virtual filesystem      | Done. Explorer bands, toolbar icons, task pane, tiles, real My Computer contents, Shared Documents, Other Places, Details, inline rename, and Recycle Bin tasks compared and fixed ([evidence](reference/explorer/README.md)).                                                                                                                  |
 | 8     | Display Properties                       | Done. Dialog frame, ? help, all five tabs, Luna samples for the pending scheme, Windows and buttons, color quality, the trackbar, and the up-down compared and fixed ([evidence](reference/display-properties/README.md)).                                                                                                                      |
-| 9     | Remaining system utilities               | In progress. Date and Time Properties, Task Manager, and Volume Control done ([evidence](reference/system-utilities/README.md)). Next: Control Panel; each setting must affect real simulation state.                                                                                                                                           |
+| 9     | Remaining system utilities               | Done. Date and Time Properties, Task Manager, Volume Control, and Control Panel compared and fixed ([evidence](reference/system-utilities/README.md)).                                                                                                                                                                                          |
 | 10    | Applications and games                   | Inventory retained browser apps and original XP application runtimes. Finish one application at a time: launch, UI, input, file open/save where applicable, sound, focus, resize, close/reopen, and errors. Then verify game launch/runtime integration and session behavior. Do not restore removed Winamp or Security Center as placeholders. |
 | 11    | Astro Flash Settings and web integration | This is a product-specific area, not a native XP app to copy. Verify actual update/offline/download status, errors/retry, storage and reset, installed games, and deep links. Preserve manual-only update reload and accurate progress feedback.                                                                                                |
 | 12    | Logoff, restart, shutdown, and recovery  | Complete the end-of-session flow: dialogs, cancellation, unsaved work, session teardown, sounds, restart back through boot, and recovery from failed loading. Preserve already verified Welcome/session behavior.                                                                                                                               |

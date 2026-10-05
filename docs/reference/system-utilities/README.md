@@ -184,3 +184,49 @@ and the trackbar track and thumbs from Luna.msstyles.
 ### Remaining differences
 
 - Text rasterization differs from XP.
+
+## Control Panel
+
+| Page          | VM                                  | App                                  |
+| ------------- | ----------------------------------- | ------------------------------------ |
+| Category View | `xp-control-panel.png`              | `app-control-panel.png`              |
+| Category page | `xp-control-panel-appearance.png`   | `app-control-panel-appearance.png`   |
+| Classic View  | `xp-control-panel-classic-view.png` | `app-control-panel-classic-view.png` |
+| Olive Green   |                                     | `app-control-panel-olive.png`        |
+
+Colors come from XP's shell style files on the CD: `blue_ss.dll`,
+`home_ss.dll`, `metal_ss.dll`, and `class_ss.dll`. The special task group
+bitmaps come from Luna.msstyles, and the icons from shell32.dll.
+
+### Matched
+
+- Explorer's chrome, as in other folder windows: the File, Edit, View, and
+  Help menus, the toolbar with Views, and the address bar with Go.
+- The title bar and address name the page, and keep the Control Panel icon.
+- Back, Forward, and Up walk the pages like XP. Up from Control Panel opens
+  the Desktop folder.
+- The special Control Panel task group, with Luna's head, background, and
+  collapse button, and **Switch to Classic View** with shell32's icon.
+- Category View: XP's title, category positions, and infotips.
+- Category pages: the header band, **Pick a task...**, the tasks, and **or
+  pick a Control Panel icon**, at XP's positions.
+- Classic View: Icons and List views. A click selects, a double-click or
+  Enter opens. **File** → **Open**, **Edit** → **Select All** and **Invert
+  Selection** work.
+- The page and task pane colors follow Blue, Olive Green, Silver, and
+  Classic. The Explorer task pane now uses Olive Green's and Silver's colors
+  too.
+
+### Astro Flash adaptations
+
+- Only the categories, tasks, and icons that open working dialogs are shown:
+  Appearance and Themes (Display, Taskbar and Start Menu) and Date, Time,
+  Language, and Regional Options (Date and Time).
+- See Also, Troubleshooters, and Help are omitted: they open nothing here.
+- The address runs what it names, like Run.
+
+### Remaining differences
+
+- XP's task group header icon has a dark red check. It isn't among the icons
+  on the CD, so the Control Panel icon with its orange check is used.
+- Text rasterization differs from XP.
