@@ -340,7 +340,7 @@ async function run(input: string): Promise<string | null> {
     if (!command) return output;
     if (command === "help") {
       log(
-        "Commands: record-boot <directory>, screenshot [path], wait [timeout ms] [settle ms], until <x> <y> <rrggbb> [timeout ms], size, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], drag <x1> <y1> <x2> <y2> [width height], save <name>, load <name>, monitor <command>, status, quit. Clicks and drags use the screen size unless given another.",
+        "Commands: record-boot <directory>, screenshot [path], wait [timeout ms] [settle ms], until <x> <y> <rrggbb> [timeout ms], size, key <qcode> [...], chord <qcode> [...], click <x> <y> [width height] [left|right], record <directory> <ms> click <x> <y>|key <qcode>, drag <x1> <y1> <x2> <y2> [width height], save <name>, load <name>, monitor <command>, status, quit. Clicks and drags use the screen size unless given another.",
       );
     } else if (command === "record-boot") {
       if (!args[0]) throw new Error("record-boot requires an output directory");
@@ -364,6 +364,39 @@ async function run(input: string): Promise<string | null> {
         JSON.stringify(frames, null, 2),
       );
       log(`Recorded ${frames.length} frames in ${directory}`);
+    } else if (command === "record") {
+      // record <directory> <milliseconds> click <x> <y> | key <qcode>:
+      // starts the action, then dumps frames with their timestamps, for
+      // capturing animations.
+      const [directory, duration, action, ...rest] = args;
+      if (!directory || !Number.isFinite(Number(duration)) || !action)
+        throw new Error(
+          "record requires a directory, a duration and click <x> <y> or key <qcode>",
+        );
+      const target = resolve(directory);
+      await mkdir(target, { recursive: true });
+      const { width, height } = await screenSize();
+      const started = performance.now();
+      const acting =
+        action === "click"
+          ? click(Number(rest[0]), Number(rest[1]), width, height, "left")
+          : pressKey(rest[0]);
+      const frames: Array<{ file: string; elapsedMs: number }> = [];
+      while (performance.now() - started < Number(duration)) {
+        const file = `${String(frames.length).padStart(4, "0")}.ppm`;
+        const elapsedMs = performance.now() - started;
+        await execute("screendump", {
+          filename: resolve(target, file),
+          format: "ppm",
+        });
+        frames.push({ file, elapsedMs });
+      }
+      await acting;
+      await writeFile(
+        resolve(target, "frames.json"),
+        JSON.stringify(frames, null, 2),
+      );
+      log(`Recorded ${frames.length} frames in ${target}`);
     } else if (command === "screenshot") {
       const filename = resolve(
         sharedProjectDirectory,

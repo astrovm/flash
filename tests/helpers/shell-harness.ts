@@ -56,6 +56,9 @@ export async function loadShell({
   // Without memory-only documents and without IndexedDB, VirtualFS starts
   // read-only, as it does when browser site storage is blocked.
   documentStorage = "memory",
+  // Windows change at once in tests, as with a reduced-motion preference; the
+  // animation tests turn the caption animations on.
+  windowAnimations = false,
   // Runs before any shell script so tests can provide optional browser APIs.
   beforeScripts = (_window) => {},
   url = "http://127.0.0.1/",
@@ -85,6 +88,13 @@ export async function loadShell({
   // modules loaded by the test runner.
   window.__coverage__ = globalThis.__coverage__;
   const advanceTime = installVirtualTimers(window);
+  if (!windowAnimations) {
+    const matchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query) =>
+      query.includes("prefers-reduced-motion")
+        ? { ...matchMedia(query), matches: true }
+        : matchMedia(query);
+  }
   const { document } = window;
   activeWindows.add(window);
   for (const [key, value] of Object.entries(initialStorage)) {

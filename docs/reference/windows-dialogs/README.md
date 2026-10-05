@@ -60,6 +60,24 @@ Measurements were taken from pixel rows and columns of both captures.
   file name and file type fields beside the buttons.
 - Properties and file dialogs show Explorer's icons instead of an emoji.
 
+## Animations
+
+- Minimizing, restoring and maximizing do not zoom the window. XP steps a
+  copy of its caption bar, without its caption buttons, from the window's
+  rectangle to the destination rectangle, then changes the window. The copy
+  takes 16 steps at about 16 ms each, and its position and width follow the
+  rectangle.
+- The copy is a clone of the window's own caption, so its height, text,
+  icon, and theme match the window.
+- Menus fade in over 200 ms, or unroll from the top when the scroll
+  transition is chosen in Display Properties. With the transition effect
+  off, menus appear at once. The Start menu's own flyouts appear at once.
+- A reduced-motion browser preference stops the caption movement; the
+  window changes at once.
+
+Reference captures were recorded on the local XP VM with
+`bun run xp:vm send --instance <name> record <directory> <ms> click <x> <y>`.
+
 ## Astro Flash adaptations
 
 - Windows Classic keeps its own 3D frames, controls, and scrollbars.

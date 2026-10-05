@@ -251,6 +251,8 @@ test("effects restore scroll transitions and ClearType and can turn both off", a
   expect(dialog.querySelector('[data-effect="fontSmoothing"]').value).toBe(
     "cleartype",
   );
+  // Menus and tooltips pick up the saved effect straight away.
+  expect(s.document.documentElement.dataset.xpMenuTransition).toBe("scroll");
   dialog.querySelector('[data-effect-enabled="transition"]').click();
   dialog.querySelector('[data-effect-enabled="smoothing"]').click();
   [...dialog.querySelectorAll(".dlg-buttons button")]
@@ -260,6 +262,7 @@ test("effects restore scroll transitions and ClearType and can turn both off", a
   expect(
     JSON.parse(s.window.localStorage.getItem("displaySettings")),
   ).toMatchObject({ transitionEffect: "none", fontSmoothing: "none" });
+  expect(s.document.documentElement.dataset.xpMenuTransition).toBe("none");
 });
 
 test("the wallpaper list moves with the keyboard and skips hidden items", async () => {
