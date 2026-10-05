@@ -355,7 +355,7 @@ const createRuntime = (initialApplicationId) => {
     const instruction = document.querySelector(".welcome-instruction");
     if (instruction)
       instruction.textContent =
-        "Windows applications could not start. Reload this page to try again.";
+        "Windows programs didn't start. Reload the page to try again.";
     if (!mountedReadinessComplete)
       rejectMountedReady(
         new Error("The Windows application runtime did not start"),

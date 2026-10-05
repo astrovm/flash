@@ -45,9 +45,7 @@ describe("session close", () => {
     editor.dispatchEvent(new window.Event("input", { bubbles: true }));
     const setContent = fs.setContent;
     fs.setContent = () => {
-      throw new Error(
-        "Browser storage is full. Free some space and save again.",
-      );
+      throw new Error("Storage is full. Free up space and try again.");
     };
     editor.dispatchEvent(
       new window.KeyboardEvent("keydown", {
@@ -59,7 +57,7 @@ describe("session close", () => {
     await flushShell();
     fs.setContent = setContent;
     expect(document.querySelector(".xp-dialog").textContent).toContain(
-      "storage is full",
+      "Storage is full",
     );
     document.querySelector('.xp-dialog [data-action="ok"]').click();
     await flushShell();

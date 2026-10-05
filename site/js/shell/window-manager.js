@@ -823,12 +823,11 @@ const openGameProperties = (win) => {
   const nativeDescription = document.createElement("p");
   nativeDescription.className = "game-playback-note";
   nativeDescription.textContent = Number.isFinite(nativeFrameRate)
-    ? `This movie's native frame rate is ${nativeFrameRate} FPS.`
-    : "Native uses the frame rate stored in the movie.";
+    ? `Original: ${nativeFrameRate} FPS`
+    : "Native uses the game's own speed.";
   const warning = document.createElement("p");
   warning.className = "game-playback-note";
-  warning.textContent =
-    "Changing the frame rate may affect gameplay speed and audio timing.";
+  warning.textContent = "Other speeds can make the game run faster or slower.";
   const status = document.createElement("p");
   status.className = "game-playback-status";
   status.setAttribute("role", "alert");

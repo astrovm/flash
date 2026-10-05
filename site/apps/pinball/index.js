@@ -34,7 +34,7 @@ const createCanvas = (context) => {
       event.preventDefault();
       context.showMessage(
         TITLE,
-        "The Pinball graphics context was lost. Close and reopen Pinball to continue.",
+        "Pinball stopped drawing. Close it and open it again.",
       );
     },
     false,

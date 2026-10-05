@@ -132,22 +132,16 @@ const toggleTrayVolumePopup = () => {
 
 const offlineStatusText = (state) => {
   const messages = {
-    starting: "Preparing Astro Flash system files...",
-    downloading: "Downloading Astro Flash system files...",
-    ready: "Astro Flash system files are available offline.",
+    starting: "Getting files ready...",
+    downloading: "Downloading...",
     checking: "Checking for updates...",
-    updating: "Downloading the latest update...",
-    "update-available": "An update is available.",
-    "update-pending": "An automatic update is scheduled.",
-    "update-ready":
-      "An update is ready for your next visit. Select Update Now to reload now.",
-    "repair-required":
-      "The installed update is incomplete. Repair the system files.",
-    applying: "Applying the update...",
-    repairing: "Clearing and downloading system files again...",
-    error: "Offline system files are incomplete.",
+    updating: "Downloading the update...",
+    "repair-required": "The update didn't finish. Select Repair.",
+    applying: "Restarting...",
+    repairing: "Repairing...",
+    error: "Some files are missing. Select Repair.",
   };
-  const message = messages[state.phase] || "Offline status is unavailable.";
+  const message = messages[state.phase] || "";
   return state.error ? `${message} ${state.error}` : message;
 };
 
@@ -177,9 +171,6 @@ const projectStorageText = (state) => {
   if (state.usage === null) return "Unavailable";
   return formatProjectBytes(state.usage);
 };
-
-const formatProjectState = (value) =>
-  value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "Unavailable";
 
 // Runs once at startup. The development server serves no service worker.
 const initializeOfflineMode = () => {
@@ -238,42 +229,35 @@ const wireProjectSettings = (win) => {
         </div>
       </div>
       <fieldset>
-        <legend>Offline access</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="offline-enabled" checked> Keep Astro Flash available offline</label>
-        <p class="project-settings-description">Astro Flash saves its system files automatically so the desktop can start without an internet connection.</p>
+        <legend>Offline</legend>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="offline-enabled" checked> Use Astro Flash offline</label>
         <dl class="dlg-props-table project-settings-details">
           <dt>Status:</dt><dd data-project-value="offlineFiles"></dd>
-          <dt>System files:</dt><dd data-project-value="downloadSize"></dd>
+          <dt>Size:</dt><dd data-project-value="downloadSize"></dd>
+          <dt>Storage used:</dt><dd data-project-value="storage"></dd>
         </dl>
       </fieldset>
       <fieldset>
         <legend>Startup</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="full-startup"> Show the full startup sequence every time</label>
-        <p class="project-settings-description">After your first visit, Astro Flash shortens the boot and Welcome screens so the desktop opens sooner.</p>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="full-startup"> Always show the full startup</label>
       </fieldset>
-      <fieldset>
-        <legend>Storage</legend>
-        <p>Astro Flash uses <strong data-project-value="storage"></strong> of browser storage. This includes system files, games, and personal data.</p>
-      </fieldset>
-      <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send suggestions or report a problem</a>
+      <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send feedback</a>
     </section>
     <section class="project-settings-panel" id="project-panel-games" role="tabpanel" aria-labelledby="project-tab-games" hidden>
       <fieldset>
-        <legend>Built-in games for offline play</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="save-played-games" checked> Automatically save built-in games after I play them</label>
-        <p class="project-settings-description">Built-in games come with Astro Flash. Select the games that you want to use without an internet connection.</p>
-        <p><strong data-project-value="offlineGames"></strong> built-in games are available offline and use <strong data-project-value="offlineGameStorage"></strong>.</p>
-        <div class="project-offline-game-list" data-project-offline-games role="group" aria-label="Built-in games available offline"></div>
-        <progress class="project-settings-progress" data-project-game-progress aria-label="Built-in game download progress" hidden></progress>
+        <legend>Offline games</legend>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="save-played-games" checked> Save games I play for offline use</label>
+        <p><span data-project-value="offlineGames"></span> saved<span data-project-value="offlineGameStorage"></span></p>
+        <div class="project-offline-game-list" data-project-offline-games role="group" aria-label="Offline games"></div>
+        <progress class="project-settings-progress" data-project-game-progress aria-label="Game download progress" hidden></progress>
         <p class="project-settings-status" data-project-status="offline-games" aria-live="polite"></p>
         <div class="project-settings-actions">
-          <button type="button" class="xp-btn" data-project-action="download-all-games">Make All Available Offline</button>
-          <button type="button" class="xp-btn" data-project-action="remove-all-games">Remove Offline Copies</button>
+          <button type="button" class="xp-btn" data-project-action="download-all-games">Save All</button>
+          <button type="button" class="xp-btn" data-project-action="remove-all-games">Remove All</button>
         </div>
       </fieldset>
-      <fieldset>
-        <legend>Installed games and game files</legend>
-        <p class="project-settings-description">These games and files were downloaded separately. Removing an item preserves its saved games.</p>
+      <fieldset data-project-game-data-group hidden>
+        <legend>Installed games</legend>
         <div class="project-game-data-list" data-project-game-data aria-live="polite"></div>
         <p class="project-settings-status" data-project-status="game-data" aria-live="polite"></p>
       </fieldset>
@@ -281,44 +265,44 @@ const wireProjectSettings = (win) => {
     <section class="project-settings-panel" id="project-panel-updates" role="tabpanel" aria-labelledby="project-tab-updates" hidden>
       <fieldset>
         <legend>Automatic updates</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Download updates automatically</label>
-        <p class="project-settings-description">Astro Flash downloads updates after the selected delay. The new version opens on your next visit. Your current session stays open.</p>
-        <label class="project-update-delay">Wait before automatic update: <output data-project-value="update-delay">6 hours</output>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Update automatically</label>
+        <label class="project-update-delay">Wait: <output data-project-value="update-delay">6 hours</output>
           <input type="range" min="0" max="72" step="1" value="6" data-project-setting="update-delay">
-          <span><span>No delay</span><span>3 days</span></span>
+          <span><span>Now</span><span>3 days</span></span>
         </label>
+        <p class="project-settings-description">Updates open on your next visit.</p>
       </fieldset>
       <fieldset>
-        <legend>Update status</legend>
+        <legend>Version</legend>
         <dl class="dlg-props-table project-settings-details">
           <dt>Installed:</dt><dd data-project-value="version"></dd>
           <dt>Available:</dt><dd data-project-value="availableVersion"></dd>
           <dt>Last checked:</dt><dd data-project-value="lastChecked"></dd>
         </dl>
         <p class="project-settings-status" data-project-status="updates" aria-live="polite"></p>
-        <progress class="project-settings-progress" data-project-update-progress aria-label="System file download progress" hidden></progress>
+        <progress class="project-settings-progress" data-project-update-progress aria-label="Update download progress" hidden></progress>
         <div class="project-settings-actions">
           <button type="button" class="xp-btn" data-project-action="update-now">Update Now</button>
-          <button type="button" class="xp-btn" data-project-action="check">Check for Updates</button>
+          <button type="button" class="xp-btn" data-project-action="check">Check Now</button>
         </div>
       </fieldset>
     </section>
     <section class="project-settings-panel" id="project-panel-recovery" role="tabpanel" aria-labelledby="project-tab-recovery" hidden>
       <fieldset class="project-recovery-group">
-        <legend>Repair system files</legend>
-        <p>Download a clean copy of the Astro Flash system files. Built-in games and personal data are preserved.</p>
+        <legend>Repair</legend>
+        <p>Download the system files again. Your games and files stay.</p>
         <p class="project-settings-status" data-project-status="offline" aria-live="polite"></p>
-        <button type="button" class="xp-btn" data-project-action="repair">Repair System Files</button>
+        <button type="button" class="xp-btn" data-project-action="repair">Repair</button>
       </fieldset>
       <fieldset class="project-recovery-group">
-        <legend>Restore the desktop</legend>
-        <p>Restore all game shortcuts and their default positions. Personal files, installed games, offline copies, and preferences are preserved.</p>
-        <button type="button" class="xp-btn" data-project-action="restore-desktop">Restore Default Desktop</button>
+        <legend>Desktop</legend>
+        <p>Put every game shortcut back in its place. Nothing else changes.</p>
+        <button type="button" class="xp-btn" data-project-action="restore-desktop">Restore Desktop</button>
       </fieldset>
       <fieldset class="project-recovery-group project-recovery-danger">
-        <legend>Reset Astro Flash</legend>
-        <p>Permanently delete personal files and reset all preferences. Installed games and offline copies are preserved.</p>
-        <button type="button" class="xp-btn" data-project-action="reset">Reset Astro Flash</button>
+        <legend>Reset</legend>
+        <p>Delete your files and settings. Games stay.</p>
+        <button type="button" class="xp-btn" data-project-action="reset">Reset</button>
       </fieldset>
     </section>
   `;
@@ -338,6 +322,7 @@ const wireProjectSettings = (win) => {
   );
   const updateStatus = content.querySelector('[data-project-status="updates"]');
   const gameDataList = content.querySelector("[data-project-game-data]");
+  const gameDataGroup = content.querySelector("[data-project-game-data-group]");
   const gameDataStatus = content.querySelector(
     '[data-project-status="game-data"]',
   );
@@ -431,7 +416,7 @@ const wireProjectSettings = (win) => {
   let gameDataRefresh = 0;
   const renderGameData = async () => {
     const refresh = ++gameDataRefresh;
-    gameDataStatus.textContent = "Checking installed game data...";
+    gameDataStatus.textContent = "Checking...";
     try {
       const [internetGames, externalGames] = await Promise.all([
         gameLibrary?.getInstallations?.() || [],
@@ -452,12 +437,7 @@ const wireProjectSettings = (win) => {
         })),
       ];
       gameDataList.replaceChildren();
-      if (!items.length) {
-        const empty = document.createElement("p");
-        empty.className = "project-settings-description";
-        empty.textContent = "No installed games or separate game files found.";
-        gameDataList.appendChild(empty);
-      }
+      gameDataGroup.hidden = !items.length;
       items.forEach((item) => {
         const row = document.createElement("div");
         row.className = "project-game-data";
@@ -465,7 +445,7 @@ const wireProjectSettings = (win) => {
         const title = document.createElement("strong");
         title.textContent = item.title;
         const detail = document.createElement("small");
-        detail.textContent = `${item.detail} · ${formatProjectBytes(item.bytes)}`;
+        detail.textContent = `${item.detail}, ${formatProjectBytes(item.bytes)}`;
         text.append(title, detail);
         const remove = document.createElement("button");
         remove.type = "button";
@@ -477,9 +457,7 @@ const wireProjectSettings = (win) => {
         row.append(text, remove);
         gameDataList.appendChild(row);
       });
-      gameDataStatus.textContent = items.length
-        ? `${items.length} stored game ${items.length === 1 ? "item" : "items"} found.`
-        : "";
+      gameDataStatus.textContent = "";
     } catch (error) {
       if (refresh !== gameDataRefresh) return;
       gameDataStatus.textContent = error.message;
@@ -490,13 +468,13 @@ const wireProjectSettings = (win) => {
     const button = event.target.closest("[data-game-data-id]");
     if (!button) return;
     const accepted = await XPDialogs.confirm(
-      `Remove ${button.dataset.gameDataTitle} from browser storage?\n\nSaved games will be preserved.`,
-      "Remove Game Data",
+      `Remove ${button.dataset.gameDataTitle}?\n\nYour saves stay.`,
+      "Remove Game",
       "question",
     );
     if (!accepted) return;
     button.disabled = true;
-    gameDataStatus.textContent = "Removing game data...";
+    gameDataStatus.textContent = "Removing...";
     try {
       if (button.dataset.gameDataOwner === "internet") {
         await gameLibrary.uninstall(button.dataset.gameDataId);
@@ -528,12 +506,12 @@ const wireProjectSettings = (win) => {
     offlineListSignature = signature;
     offlineGamesList.replaceChildren();
     if (!state.bundledGames.length) {
-      const empty = document.createElement("p");
-      empty.className = "project-settings-description";
-      empty.textContent = state.enabled
-        ? "Loading the built-in game list..."
-        : "Enable offline access to select built-in games.";
-      offlineGamesList.appendChild(empty);
+      if (state.enabled) {
+        const loading = document.createElement("p");
+        loading.className = "project-settings-description";
+        loading.textContent = "Loading...";
+        offlineGamesList.appendChild(loading);
+      }
       return;
     }
     const games = [...state.bundledGames].sort((left, right) => {
@@ -576,66 +554,64 @@ const wireProjectSettings = (win) => {
     value("availableVersion").textContent = state.availableVersion
       ? state.availableVersion
       : state.lastChecked
-        ? "Up to date"
-        : "Not checked";
+        ? "None"
+        : "Unknown";
     value("downloadSize").textContent =
       state.downloadBytes === null
         ? state.downloadMetadataError
           ? "Unavailable"
           : "Checking..."
         : formatProjectBytes(state.downloadBytes);
-    value("connection").textContent = state.online
-      ? "Connected to the internet"
-      : "Working offline";
+    value("connection").textContent = state.online ? "Online" : "Offline";
     value("offlineFiles").textContent = !state.enabled
-      ? "Disabled"
+      ? "Off"
       : state.workerState === "active"
-        ? "Ready for offline use"
-        : formatProjectState(state.workerState);
+        ? "Ready"
+        : ["installing", "installed", "activating", "waiting"].includes(
+              state.workerState,
+            )
+          ? "Getting ready..."
+          : "Unavailable";
     value("offlineGames").textContent =
       `${state.downloadedGameIds.length} of ${state.bundledGames.length || bundledGameCount}`;
-    value("offlineGameStorage").textContent = formatProjectBytes(
-      state.downloadedGameBytes,
-    );
+    value("offlineGameStorage").textContent = state.downloadedGameIds.length
+      ? ` (${formatProjectBytes(state.downloadedGameBytes)})`
+      : "";
     value("storage").textContent = projectStorageText(state);
     value("lastChecked").textContent = formatUpdateCheckTime(state.lastChecked);
-    offlineStatus.textContent = state.enabled
-      ? offlineStatusText(state)
-      : "Offline access is disabled.";
+    offlineStatus.textContent = state.enabled ? offlineStatusText(state) : "";
     const activeGameTitle = state.activeGameId
       ? gamesList[state.activeGameId]?.title ||
         formatGameTitle(state.activeGameId)
-      : "built-in games";
+      : "games";
     offlineGamesStatus.textContent = state.gameError
       ? state.gameError
       : state.gamePhase === "downloading"
         ? `Downloading ${activeGameTitle}...`
         : state.gamePhase === "removing"
-          ? "Removing offline game files..."
-          : state.downloadedGameIds.length
-            ? "Selected built-in games are available offline."
-            : "No built-in games are available offline.";
+          ? "Removing..."
+          : "";
     const updateStage = {
-      starting: "Preparing system files...",
-      checking: "Checking for updates...",
-      downloading: "Downloading system files. Keep this page open...",
+      starting: "Getting files ready...",
+      checking: "Checking...",
+      downloading: "Downloading. Keep this page open...",
       updating: "Downloading the update. Keep this page open...",
-      applying: "Update downloaded. Applying it and reloading the desktop...",
-      repairing: "Repairing system files...",
+      applying: "Restarting...",
+      repairing: "Repairing...",
     }[state.phase];
     updateStatus.textContent = !state.enabled
-      ? "Enable offline access to use offline updates."
+      ? ""
       : updateStage
         ? updateStage
         : state.phase === "update-pending" && state.automaticUpdatesEnabled
-          ? `Automatic update is scheduled for ${formatUpdateCheckTime(state.updateEligibleAt)}. Select Update Now to download and reload immediately.`
+          ? `Updates on ${formatUpdateCheckTime(state.updateEligibleAt)}.`
           : state.updateReady
-            ? `Astro Flash ${state.availableVersion || "update"} is ready for your next visit. Select Update Now to reload now.`
+            ? `${state.availableVersion ? `Version ${state.availableVersion}` : "The update"} opens on your next visit.`
             : state.availableVersion
-              ? `Astro Flash ${state.availableVersion} is available.`
+              ? `Version ${state.availableVersion} is available.`
               : state.lastChecked
-                ? "Astro Flash is up to date."
-                : "Updates have not been checked yet.";
+                ? "Up to date."
+                : "";
     if (state.error) {
       updateStatus.textContent = state.error;
     }
@@ -734,8 +710,8 @@ const wireProjectSettings = (win) => {
   offlineEnabledCheckbox.addEventListener("change", async () => {
     if (!offlineEnabledCheckbox.checked) {
       const accepted = await XPDialogs.confirm(
-        "Turn off offline access and remove downloaded system files and built-in game copies?\n\nPersonal files, saved games, preferences, and installed games will be preserved.",
-        "Turn Off Offline Access",
+        "Stop using Astro Flash offline?\n\nThis removes the downloaded files and offline games. Your files, saves, settings and installed games stay.",
+        "Turn Off Offline",
         "question",
       );
       if (!accepted) {
@@ -771,8 +747,8 @@ const wireProjectSettings = (win) => {
   });
   repairButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
-      "Clear and download the Windows XP system files again?",
-      "Repair System Files",
+      "Download the system files again?",
+      "Repair",
       "question",
     );
     if (!accepted) return;
@@ -787,8 +763,8 @@ const wireProjectSettings = (win) => {
   });
   removeAllGamesButton.addEventListener("click", async () => {
     const accepted = await XPDialogs.confirm(
-      "Remove the offline copies of all built-in games? Installed games will be preserved.",
-      "Remove Offline Games",
+      "Remove all offline games?\n\nInstalled games stay.",
+      "Remove All",
       "question",
     );
     if (!accepted) return;
@@ -799,8 +775,8 @@ const wireProjectSettings = (win) => {
   restoreDesktopButton.addEventListener("click", async () => {
     try {
       const accepted = await XPDialogs.confirm(
-        "Restore all game shortcuts and the default desktop layout?\n\nYour personal files and other settings will be preserved.",
-        "Restore Default Desktop",
+        "Put every game shortcut back in its place?\n\nYour files and settings stay.",
+        "Restore Desktop",
         "question",
       );
       if (!accepted) return;
@@ -808,8 +784,8 @@ const wireProjectSettings = (win) => {
       window.location.reload();
     } catch (error) {
       await XPDialogs.alert(
-        error.message || "The file operation failed.",
-        "File operation",
+        error.message || "Something went wrong.",
+        "Astro Flash",
         "error",
       );
     }
@@ -817,8 +793,8 @@ const wireProjectSettings = (win) => {
   resetButton.addEventListener("click", async () => {
     try {
       const accepted = await XPDialogs.confirm(
-        "Reset Astro Flash Collection to its original state?\n\nThis will permanently delete your personal files and reset all preferences. This cannot be undone.",
-        "Reset Astro Flash",
+        "Delete your files and settings?\n\nThis can't be undone. Games stay.",
+        "Reset",
         "warning",
       );
       if (!accepted) return;
@@ -826,8 +802,8 @@ const wireProjectSettings = (win) => {
       window.location.reload();
     } catch (error) {
       await XPDialogs.alert(
-        error.message || "The file operation failed.",
-        "File operation",
+        error.message || "Something went wrong.",
+        "Astro Flash",
         "error",
       );
     }

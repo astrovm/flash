@@ -181,7 +181,7 @@ describe("game streaming", () => {
         storageManager,
         maxBytes: 3,
       }),
-    ).rejects.toThrow("download limit");
+    ).rejects.toThrow("too big");
     expect(files.size).toBe(0);
     expect(removed).toBe(2);
   });

@@ -63,7 +63,7 @@
   let operations = Promise.resolve();
   let initializationError;
   const readOnlyMessage =
-    "Document storage is unavailable. Enable browser site storage and reopen Astro Flash.";
+    "Can't save files. Allow site storage in your browser, then reopen Astro Flash.";
   const listeners = new Set();
   const fileTypeHandlers = new Map();
   let folderHandler = null;
@@ -204,10 +204,9 @@
       // Do not leave a successful-looking in-memory edit after a failed write.
       load();
       if (error.name === "QuotaExceededError" || error.code === 22) {
-        throw new Error(
-          "Browser storage is full. Free some space and save again.",
-          { cause: error },
-        );
+        throw new Error("Storage is full. Free up space and try again.", {
+          cause: error,
+        });
       }
       throw error;
     }
@@ -625,7 +624,7 @@
     }
     if (expectedContent !== undefined && node.content !== expectedContent) {
       throw new Error(
-        "This file changed in another window. Save a copy to preserve your draft.",
+        "This file changed in another window. Save a copy to keep your changes.",
       );
     }
     if (name !== undefined) {
@@ -823,14 +822,13 @@
           return commit(remainingRetries - 1);
         if (conflict)
           throw new Error(
-            "These files changed in another tab. Review the latest files and try again.",
+            "These files changed in another tab. Check them and try again.",
             { cause: error },
           );
         if (error.name === "QuotaExceededError")
-          throw new Error(
-            "Browser storage is full. Free some space and save again.",
-            { cause: error },
-          );
+          throw new Error("Storage is full. Free up space and try again.", {
+            cause: error,
+          });
         throw error;
       }
       nodes = candidate;

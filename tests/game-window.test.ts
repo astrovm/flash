@@ -363,7 +363,7 @@ test("installed Flash games rewrite asset URLs and use native frame rates by def
   win.querySelector('[data-game-action="properties"]').click();
   const dialog = s.document.querySelector(".xp-dialog");
   expect(dialog.textContent).toContain("Default (native)");
-  expect(dialog.textContent).toContain("Native uses the frame rate");
+  expect(dialog.textContent).toContain("Native uses the game's own speed");
   [...dialog.querySelectorAll("button")]
     .find((button) => button.textContent === "OK")
     .click();

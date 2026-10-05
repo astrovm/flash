@@ -265,9 +265,7 @@ describe("game library", () => {
       cache: quotaCache,
       storageManager: { estimate: async () => ({ usage: 1, quota: 1 }) },
     });
-    await expect(manager.install(details)).rejects.toThrow(
-      /actual storage quota/,
-    );
+    await expect(manager.install(details)).rejects.toThrow(/Storage is full/);
     expect(quotaCache.values.size).toBe(0);
     expect(store.values.size).toBe(0);
   });
@@ -394,28 +392,28 @@ describe("game library", () => {
         }),
         { maxBytes: 1 },
       ),
-    ).rejects.toThrow(/larger/);
+    ).rejects.toThrow(/too big/);
   });
 });
 
 describe("game library recovery", () => {
   test.each([
-    [{ installer: null }, "installer"],
-    [{ unzipSync: null, unzip: null }, "ZIP reader"],
+    [{ installer: null }, "Can't install games"],
+    [{ unzipSync: null, unzip: null }, "Can't install games"],
     [{ fetchObject: null }, "Network access"],
-    [{ cacheObject: null, cachesObject: null }, "cache storage"],
+    [{ cacheObject: null, cachesObject: null }, "can't install games"],
   ])("reports missing browser capabilities %#", (overrides, error) => {
     expect(() => createFixture({ overrides })).toThrow(error);
   });
   test("rejects writes before initialization and notifies subscribers only while subscribed", async () => {
     const f = createFixture(),
       snapshots = [];
-    await expect(f.manager.install(details)).rejects.toThrow("still starting");
+    await expect(f.manager.install(details)).rejects.toThrow("Still starting");
     await expect(f.manager.getInstallations()).rejects.toThrow(
-      "still starting",
+      "Still starting",
     );
-    await expect(f.manager.match("/asset")).rejects.toThrow("still starting");
-    await expect(f.manager.uninstall(uuid)).rejects.toThrow("still starting");
+    await expect(f.manager.match("/asset")).rejects.toThrow("Still starting");
+    await expect(f.manager.uninstall(uuid)).rejects.toThrow("Still starting");
     expect(f.manager.getRecord("absent")).toBeNull();
     await f.manager.initialize();
     const unsubscribe = f.manager.subscribe((games) => snapshots.push(games));
@@ -439,9 +437,9 @@ describe("game library recovery", () => {
     ],
     [
       () => new Response("<html>bad gateway</html>", { status: 502 }),
-      "returned 502",
+      "error 502",
     ],
-    [() => new Response(JSON.stringify({}), { status: 403 }), "returned 403"],
+    [() => new Response(JSON.stringify({}), { status: 403 }), "error 403"],
   ])(
     "catalog HTTP errors reach both search and details %#",
     async (response, error) => {
@@ -669,7 +667,7 @@ describe("game library browser integration", () => {
     expect(await store.list()).toEqual([]);
     store.close();
     await expect(library.createMetadataStore()).rejects.toThrow(
-      "Persistent game storage is not supported",
+      "can't save games",
     );
     const newer = indexedDB.open(library.DB_NAME, 5);
     await new Promise((resolve) => (newer.onsuccess = resolve));
@@ -922,7 +920,7 @@ describe("game library browser integration", () => {
         { ok: true, headers: new Headers(), body: null },
         { storageManager },
       ),
-    ).rejects.toThrow("Game download has no body.");
+    ).rejects.toThrow("The download was empty. Try again.");
   });
 
   test("reports temporary archive cleanup failures after installing", async () => {

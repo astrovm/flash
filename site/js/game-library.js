@@ -35,9 +35,7 @@
 
   const openDatabase = (indexedDBObject = root.indexedDB) => {
     if (!indexedDBObject) {
-      return Promise.reject(
-        new Error("Persistent game storage is not supported by this browser."),
-      );
+      return Promise.reject(new Error("This browser can't save games."));
     }
     return new Promise((resolve, reject) => {
       const request = indexedDBObject.open(DB_NAME, DB_VERSION);
@@ -48,7 +46,7 @@
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () =>
-        reject(request.error || new Error("Could not open game storage."));
+        reject(request.error || new Error("Can't open game storage."));
     });
   };
 
@@ -112,14 +110,12 @@
     }
     const expected = Number(response.headers.get("content-length")) || null;
     if (expected && expected > maxBytes) {
-      throw new Error("This game is larger than the supported download limit.");
+      throw new Error("This game is too big to download.");
     }
     if (!response.body?.getReader) {
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (bytes.byteLength > maxBytes) {
-        throw new Error(
-          "This game is larger than the supported download limit.",
-        );
+        throw new Error("This game is too big to download.");
       }
       onProgress?.({ loaded: bytes.byteLength, total: expected });
       return bytes;
@@ -134,9 +130,7 @@
       loaded += value.byteLength;
       if (loaded > maxBytes) {
         await reader.cancel();
-        throw new Error(
-          "This game is larger than the supported download limit.",
-        );
+        throw new Error("This game is too big to download.");
       }
       chunks.push(value);
       onProgress?.({ loaded, total: expected });
@@ -163,7 +157,7 @@
         // Upstream failure pages are not necessarily JSON.
       }
       throw new Error(
-        message || `The game catalog returned ${response.status}.`,
+        message || `The game list didn't load (error ${response.status}).`,
       );
     }
     return response.json();
@@ -205,11 +199,9 @@
       throw new Error(`Game download failed (${response.status}).`);
     const expected = Number(response.headers.get("Content-Length")) || null;
     if (expected && expected > maxBytes)
-      throw new Error("This game is larger than the supported download limit.");
+      throw new Error("This game is too big to download.");
     if (!storageManager?.getDirectory)
-      throw new Error(
-        "This browser does not support temporary file storage for game downloads.",
-      );
+      throw new Error("This browser can't download games.");
     const directory = await storageManager.getDirectory();
     const name = `astro-download-${root.crypto.randomUUID()}.zip`;
     const handle = await directory.getFileHandle(name, { create: true });
@@ -221,7 +213,7 @@
     try {
       signal?.throwIfAborted();
       writable = await handle.createWritable();
-      if (!response.body) throw new Error("Game download has no body.");
+      if (!response.body) throw new Error("The download was empty. Try again.");
       reader = response.body.getReader();
       signal?.addEventListener("abort", abort, { once: true });
       let received = 0;
@@ -231,9 +223,7 @@
         if (done) break;
         received += value.byteLength;
         if (received > maxBytes)
-          throw new Error(
-            "This game is larger than the supported download limit.",
-          );
+          throw new Error("This game is too big to download.");
         await writable.write(value);
         onProgress?.({ loaded: received, total: expected });
       }
@@ -267,13 +257,14 @@
     cacheObject = null,
     metadataStore = null,
   } = {}) => {
-    if (!installer) throw new Error("The game installer is unavailable.");
+    if (!installer)
+      throw new Error("Can't install games right now. Reload and try again.");
     if (typeof unzip !== "function" && typeof unzipSync !== "function")
-      throw new Error("The ZIP reader is unavailable.");
+      throw new Error("Can't install games right now. Reload and try again.");
     if (typeof fetchObject !== "function")
       throw new Error("Network access is unavailable.");
     if (!cachesObject && !cacheObject)
-      throw new Error("Browser cache storage is unavailable.");
+      throw new Error("This browser can't install games.");
 
     let cache;
     let store;
@@ -301,7 +292,8 @@
     };
 
     const requireReady = () => {
-      if (!initialized) throw new Error("The game library is still starting.");
+      if (!initialized)
+        throw new Error("Still starting. Try again in a moment.");
     };
 
     const installedAssetKey = (record, archivePath) =>

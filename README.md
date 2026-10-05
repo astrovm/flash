@@ -73,7 +73,7 @@ bun run dev -- --rebuild
 bun run preview
 ```
 
-Preview serves the real production service worker and gives every rebuild a new local version. It does not reload the page for you. Use **Settings → Updates → Check for Updates** to walk through the update flow.
+Preview serves the real production service worker and gives every rebuild a new local version. It does not reload the page for you. Use **Astro Flash Settings** → **Updates** → **Check Now** to walk through the update flow.
 
 ### XP reference VM
 

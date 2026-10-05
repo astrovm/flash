@@ -649,8 +649,6 @@
   flex: 1;
   position: relative;
   min-height: 0;
-  padding: 42px 14px 14px;
-  overflow: auto;
   background: var(--xp-beige);
   color: #111;
   font:
@@ -688,8 +686,29 @@
   background: #f5f3ed;
 }
 
+/* The tab page, like Taskbar Properties'. Long pages scroll inside it. */
 .project-settings-panel {
-  min-height: 310px;
+  position: absolute;
+  top: 27px;
+  right: 6px;
+  bottom: 6px;
+  left: 6px;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid #919b9c;
+  background: #f5f3ed;
+  box-shadow: inset 1px 1px #fff;
+}
+
+html:not([data-xp-appearance="classic"]) .project-settings-panel {
+  border-image: var(--ctl-tabpaneedge-normal) 2 4 4 2 fill / 2px 4px 4px 2px
+    stretch;
+  background: none;
+  box-shadow: none;
+}
+
+.project-settings-panel[hidden] {
+  display: none;
 }
 
 .project-settings-panel > fieldset {
@@ -732,16 +751,11 @@
 .project-offline-setting {
   display: block;
   margin: 0 0 7px;
-  font-weight: 700;
 }
 
 .project-update-delay {
   display: block;
   margin: 0 0 8px 20px;
-}
-
-.project-update-delay output {
-  font-weight: 700;
 }
 
 .project-update-delay input[type="range"] {

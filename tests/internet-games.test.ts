@@ -109,7 +109,7 @@ test("Internet Games search handles empty results, service errors, compatibility
   const h = await setup(),
     status = h.win.querySelector(".internet-games-status");
   await h.search("");
-  expect(status.textContent).toBe("Enter a game title.");
+  expect(status.textContent).toBe("Type a game name.");
   await h.search("nothing");
   expect(status.textContent).toBe("No games found.");
   h.failSearch("catalog offline");
@@ -128,7 +128,7 @@ test("Internet Games search handles empty results, service errors, compatibility
     { uuid: "three", title: "Big Truck Adventures", developer: "Author" },
   ]);
   await h.search("test");
-  expect(status.textContent).toBe("3 results found.");
+  expect(status.textContent).toBe("3 games");
   const cards = [
     ...h.win.querySelectorAll(".internet-games-results .internet-game-card"),
   ];
@@ -165,12 +165,12 @@ test("Internet Games installs, opens and uninstalls a game with retryable failur
   await flushShell();
   await flushShell();
   expect(install.textContent).toBe("Play");
-  expect(status.textContent).toContain("installed successfully");
+  expect(status.textContent).toContain("is installed.");
   const tab = h.win.querySelector('[data-internet-tab="installed"]');
   tab.click();
   expect(
     h.win.querySelector(".internet-games-installed-status").textContent,
-  ).toBe("1 installed game.");
+  ).toBe("1 game");
   h.win.querySelector(".internet-games-installed button").click();
   await flushShell();
   expect(
@@ -198,7 +198,7 @@ test("Internet Games installs, opens and uninstalls a game with retryable failur
   await h.answer("Yes");
   expect(
     h.win.querySelector(".internet-games-installed-status").textContent,
-  ).toContain("No internet games");
+  ).toContain("No games installed");
   expect(
     h.s.document.querySelector('.xp-window[data-game="flashpoint:one"]') ===
       null,
@@ -227,13 +227,11 @@ test("Internet Games describes sparse results and failures without messages", as
     status = h.win.querySelector(".internet-games-status");
   h.failSearch("");
   await h.search("game");
-  expect(status.textContent).toBe(
-    "The Flashpoint catalog could not be searched.",
-  );
+  expect(status.textContent).toBe("Search didn't work. Try again.");
   h.failSearch(null);
   h.setResults([{ uuid: "sparse", tags: "Flash only", compatible: false }]);
   await h.search("sparse");
-  expect(status.textContent).toBe("1 result found.");
+  expect(status.textContent).toBe("1 game");
   const card = h.win.querySelector(
     ".internet-games-results .internet-game-card",
   );
@@ -241,7 +239,7 @@ test("Internet Games describes sparse results and failures without messages", as
   expect(card.textContent).toContain("Unknown developer");
   card.querySelector("button").click();
   await flushShell();
-  expect(status.textContent).toBe("This game is not compatible.");
+  expect(status.textContent).toBe("This game doesn't work here.");
   h.setResults([{ uuid: "quiet", title: "Quiet", compatible: true }]);
   await h.search("quiet");
   h.failInstall("");
@@ -287,7 +285,7 @@ test("Internet Games lists several installed games, reinstalled results, and qui
   h.win.querySelector('[data-internet-tab="installed"]').click();
   expect(
     h.win.querySelector(".internet-games-installed-status").textContent,
-  ).toBe("2 installed games.");
+  ).toBe("2 games");
   h.failUninstall("");
   const untitled = [
     ...h.win.querySelectorAll(".internet-games-installed .internet-game-card"),
@@ -339,7 +337,7 @@ test("Internet Games reports an unavailable service without a message", async ()
   const h = await setup({ broken: true, brokenMessage: "" });
   await h.search("anything");
   expect(h.win.querySelector(".internet-games-status").textContent).toBe(
-    "The Internet Games service is unavailable.",
+    "Internet Games isn't available right now.",
   );
 });
 
@@ -382,7 +380,7 @@ test("Internet Games shows no installed games when the library cannot be created
   win.querySelector('[data-internet-tab="installed"]').click();
   expect(
     win.querySelector(".internet-games-installed-status").textContent,
-  ).toBe("No internet games are installed yet.");
+  ).toBe("No games installed.");
   win.querySelector("#internet-games-query").value = "anything";
   win
     .querySelector("form")
@@ -478,5 +476,5 @@ test("uninstalling a game that is not open only removes it from the library", as
   h.win.querySelector('[data-internet-tab="installed"]').click();
   expect(
     h.win.querySelector(".internet-games-installed-status").textContent,
-  ).toBe("No internet games are installed yet.");
+  ).toBe("No games installed.");
 });
