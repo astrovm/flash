@@ -94,8 +94,9 @@ const open = async ({
             if (source.includes("/spider/"))
               sounds.push(source.replace(/^.*\//, ""));
           }
+          // Browsers can refuse to play before the page is used.
           play() {
-            return Promise.resolve();
+            return Promise.reject(new Error("blocked"));
           }
           pause() {}
         };
@@ -364,6 +365,13 @@ test("the right button shows a covered card whole while it's held", async () => 
   await h.idle();
   expect(h.sounds.at(-1)).toBe("Drop.wav");
   h.fire("mouseup", [40, 50], { button: 2, buttons: 0 });
+  // The browser's context menu stays away.
+  const menu = new h.s.window.MouseEvent("contextmenu", {
+    bubbles: true,
+    cancelable: true,
+  });
+  h.canvas.dispatchEvent(menu);
+  expect(menu.defaultPrevented).toBeTrue();
   await h.idle();
   expect(h.frames.at(-1).at(-1)).not.toEqual([face("6S"), 28, 45]);
   // Face-down cards, empty table and the middle button show nothing.
