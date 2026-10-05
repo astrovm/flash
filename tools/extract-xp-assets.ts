@@ -509,9 +509,11 @@ async function extractBitmap(
       bitmap.colorMap?.map(({ from, to }) => [from.join(","), to]),
     );
     for (let source = 0, target = 0; source < decoded.data.length;) {
+      // Black-and-white palettes decode to a single gray channel.
+      const gray = decoded.channels === 1;
       const red = decoded.data[source++];
-      const green = decoded.data[source++];
-      const blue = decoded.data[source++];
+      const green = gray ? red : decoded.data[source++];
+      const blue = gray ? red : decoded.data[source++];
       const sourceAlpha = decoded.channels === 4 ? decoded.data[source++] : 255;
       const mapped = colorMap.get(`${red},${green},${blue}`);
       const transparent =

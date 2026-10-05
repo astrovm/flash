@@ -15,12 +15,13 @@ const place = (element, [x, y, width, height]) => {
 };
 
 // Controls: { type: "button" | "checkbox" | "radio" | "group" | "edit" |
-// "text", id, label, group (a radio button's set),
-// rect: [x, y, width, height], isDefault, center }. `owner` holds the
-// owning window and its client area. `position` is the dialog's corner in
-// dialog units from the client area, or "center", the way freecell.exe
-// centers its dialogs: over the client area, below a 26-pixel caption and a
-// 20-pixel menu bar.
+// "text" | "image", id, label, group (a radio button's set), src (an
+// image's file, shown at its own size), rect: [x, y, width, height],
+// isDefault, center }. `owner` holds the owning window and its client area.
+// `position` is the dialog's corner in dialog units from the client area;
+// "center", the way freecell.exe centers its dialogs: over the client area,
+// below a 26-pixel caption and a 20-pixel menu bar; or a function that
+// takes the dialog's size and returns its corner.
 export const openTemplateDialog = ({
   dialogs,
   setAccessKeyText,
@@ -71,6 +72,11 @@ export const openTemplateDialog = ({
       );
       registerKey(control.label, box);
       elements[control.id] = box;
+    } else if (control.type === "image") {
+      element = document.createElement("img");
+      element.className = "xp-template-image";
+      element.src = control.src;
+      element.alt = "";
     } else if (control.type === "edit") {
       element = document.createElement("input");
       element.type = "text";
@@ -83,6 +89,9 @@ export const openTemplateDialog = ({
       element.textContent = control.label;
     }
     place(element, control.rect);
+    // Icons keep their own size, whatever the control's rectangle.
+    if (control.type === "image")
+      element.style.width = element.style.height = "";
     if (control.id && !["checkbox", "radio"].includes(control.type))
       elements[control.id] = element;
     body.append(element);
@@ -90,7 +99,13 @@ export const openTemplateDialog = ({
   const clientRect = owner.client.getBoundingClientRect();
   let left;
   let top;
-  if (position === "center") {
+  if (typeof position === "function") {
+    const dialogRect = dialog.el.getBoundingClientRect();
+    ({ left, top } = position({
+      width: dialogRect.width,
+      height: dialogRect.height,
+    }));
+  } else if (position === "center") {
     const windowRect = owner.window.getBoundingClientRect();
     left =
       windowRect.left +

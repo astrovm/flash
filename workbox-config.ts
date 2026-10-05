@@ -12,6 +12,7 @@ export const PRECACHE_EXTENSIONS = [
   "bmp",
   "mp3",
   "wav",
+  "fnt",
   "png",
   "jpg",
   "jpeg",

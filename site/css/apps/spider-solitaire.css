@@ -1,0 +1,101 @@
+/* Spider Solitaire: spider.exe's felt table under a standard menu bar. */
+.xp-native-program.xp-spider {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: #008000;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-spider:focus {
+  outline: 0;
+}
+
+.spider-board {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  image-rendering: pixelated;
+}
+
+/* Deal! is a command right on the menu bar; grayed when there's nothing
+   left to deal. */
+.cards-menu-bar > button.disabled,
+.cards-menu-bar > button.disabled:hover {
+  background: transparent;
+  color: #aca899;
+}
+
+/* The Statistics tabs, at XP's tab control offsets. */
+.spider-stats-tabs {
+  position: absolute;
+  z-index: 2;
+  top: 13px;
+  left: 13px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.spider-stats-tabs button {
+  height: 18px;
+  padding: 0 6px 1px;
+  border: 1px solid #919b9c;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: var(--xp-beige);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.spider-stats-tabs button[aria-selected="true"] {
+  z-index: 1;
+  height: 21px;
+  margin: -2px -2px 0;
+  padding: 0 8px 3px;
+  background: #fcfcfe;
+}
+
+.spider-stats-page {
+  border: 1px solid #919b9c;
+  background: #fcfcfe;
+}
+
+/* Static text keeps the dialog color on the white tab page, as XP draws
+   it. */
+.spider-stats-text {
+  background: var(--xp-beige);
+}
+
+.spider-stats-value {
+  position: absolute;
+  left: 80px;
+}
+
+/* About Spider paints its art and copyright in client pixels. */
+.spider-about-art {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.spider-about-text {
+  position: absolute;
+  top: 110px;
+  left: 25px;
+  width: 240px;
+  height: 90px;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  white-space: pre-wrap;
+}
