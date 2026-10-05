@@ -9,6 +9,7 @@ site/iframe/revcdos/game.js
 site/iframe/revcdos/idbfs.js
 site/iframe/revcdos/index.js
 site/iframe/revcdos/jsdos-cloud-sdk.js
+site/iframe/re3/re3.js
 site/swf/
 site/vendor/
 # Paint is maintained in-tree, but its imported engine and historical help

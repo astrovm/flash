@@ -193,6 +193,32 @@ test("packed reVCDOS assets normalize paths, serve byte ranges, invalidate and r
   h.put(root + "pack.bin", "abcdefghij");
   expect(await (await h.request(path)).text()).toBe("cdefgh");
 });
+test("packed re3 files are served from their own store without the reVCDOS aliases", async () => {
+  const h = packedWorker();
+  h.put("astro-flash-re3/manifest.json", {
+    version: 1,
+    dataFile: "pack.bin",
+    size: 10,
+    files: { "models/gta3.img": { offset: 2, length: 6 } },
+  });
+  h.put("astro-flash-re3/pack.bin", "0123456789");
+  const path = "/releases/v1/iframe/re3.0123456789abcdef/local-assets/";
+  expect(await (await h.request(`${path}Models/GTA3.IMG`)).text()).toBe(
+    "234567",
+  );
+  const part = await h.request(`${path}models/gta3.img`, {
+    headers: { range: "bytes=2-3" },
+  });
+  expect([part.status, await part.text()]).toEqual([206, "45"]);
+  // reVCDOS's folder aliases don't apply, and its data isn't re3's.
+  expect((await h.request(`${path}fetched/models/gta3.img`)).status).toBe(404);
+  expect(
+    (await h.request("/releases/v1/iframe/revcdos/local-assets/x")).status,
+  ).toBe(503);
+  h.put("astro-flash-re3/pack.bin", "short");
+  h.notify({ type: "RE3_PACK_UPDATED" });
+  expect((await h.request(`${path}models/gta3.img`)).status).toBe(503);
+});
 test("ScummVM game files expose the index and safe ISO slices, refresh and reject invalid entries", async () => {
   const h = packedWorker(),
     root = "astro-flash-scummvm/",

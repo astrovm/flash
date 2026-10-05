@@ -148,10 +148,10 @@ Tests run in parallel worker processes. Each test file groups its tests under a 
 
 Catalog games live in `site/js/games.js`.
 
-| Game kind                                    | `type`     |
-| -------------------------------------------- | ---------- |
-| Ruffle                                       | `"swf"`    |
-| Embedded HTML5, js-dos, ScummVM, and reVCDOS | `"iframe"` |
+| Game kind                                         | `type`     |
+| ------------------------------------------------- | ---------- |
+| Ruffle                                            | `"swf"`    |
+| Embedded HTML5, js-dos, ScummVM, reVCDOS, and re3 | `"iframe"` |
 
 Original XP applications are registered in `site/apps/core/boxedwine-applications.js` and share one BoxedWine runtime. Windows XP Pinball is mounted directly from `site/apps/pinball/`.
 

@@ -1587,6 +1587,7 @@ window.addEventListener("message", (event) => {
   }
   const offlineGameIds = new Set([
     "revcdos",
+    "re3",
     "pink-panther-passport-to-peril",
     "pink-panther-hokus-pokus",
   ]);
@@ -1594,7 +1595,7 @@ window.addEventListener("message", (event) => {
   const win = openWindows.get(message.gameId);
   if (!win || event.source !== win.player?.contentWindow) return;
   offlineManager.downloadGame(message.gameId).catch((error) => {
-    console.error("Could not add reVCDOS to Offline Games:", error);
+    console.error("Could not add the game to Offline Games:", error);
   });
 });
 

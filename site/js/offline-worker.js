@@ -12,12 +12,34 @@
     "/vendor/boxedwine/",
     "/vendor/scummvm/",
   ];
-  const REVCDOS_ROUTE = /\/iframe\/revcdos(?:\.[a-f0-9]{16})?\/local-assets\//;
-  const REVCDOS_DIRECTORY = "astro-flash-revcdos";
-  const REVCDOS_MANIFEST = "manifest.json";
+  // Games whose data the user packs into one browser-storage file. Each has
+  // its own directory, update message and the folder names its engine asks
+  // for, which map onto the packed paths.
+  const PACKED_GAMES = [
+    {
+      id: "revcdos",
+      route: /\/iframe\/revcdos(?:\.[a-f0-9]{16})?\/local-assets\//,
+      directory: "astro-flash-revcdos",
+      message: "REVCDOS_PACK_UPDATED",
+      title: "reVCDOS",
+      aliases: [
+        [/^fetched\//, "vc-assets/local/"],
+        [/^vcsky\/fetched\//, "vc-assets/local/"],
+      ],
+    },
+    {
+      id: "re3",
+      route: /\/iframe\/re3(?:\.[a-f0-9]{16})?\/local-assets\//,
+      directory: "astro-flash-re3",
+      message: "RE3_PACK_UPDATED",
+      title: "re3",
+      aliases: [],
+    },
+  ];
+  const PACKED_MANIFEST = "manifest.json";
   const SCUMMVM_ROUTE = "/iframe/scummvm/local-games/";
   const SCUMMVM_DIRECTORY = "astro-flash-scummvm";
-  let revcdosStorePromise;
+  const packedStores = new Map();
   const scummvmStores = new Map();
   const releasePath = (path) => path.replace(/^\/releases\/[^/]+(?=\/)/, "");
 
@@ -27,12 +49,11 @@
       .replace(/^\/+/, "")
       .toLowerCase();
 
-  const findPackedAsset = (files, requestedPath) => {
+  const findPackedAsset = (files, requestedPath, aliases) => {
     const path = normalizeAssetPath(requestedPath);
     const candidates = [
       path,
-      path.replace(/^fetched\//, "vc-assets/local/"),
-      path.replace(/^vcsky\/fetched\//, "vc-assets/local/"),
+      ...aliases.map(([pattern, target]) => path.replace(pattern, target)),
     ];
     for (const candidate of candidates) {
       if (files[candidate]) return files[candidate];
@@ -40,22 +61,22 @@
     return null;
   };
 
-  const openRevcdosStore = async () => {
+  const openPackedStore = async ({ directory: name, title }) => {
     const root = await navigator.storage.getDirectory();
-    const directory = await root.getDirectoryHandle(REVCDOS_DIRECTORY);
-    const manifestHandle = await directory.getFileHandle(REVCDOS_MANIFEST);
+    const directory = await root.getDirectoryHandle(name);
+    const manifestHandle = await directory.getFileHandle(PACKED_MANIFEST);
     const manifest = JSON.parse(await (await manifestHandle.getFile()).text());
     if (
       manifest.version !== 1 ||
       typeof manifest.dataFile !== "string" ||
       typeof manifest.files !== "object"
     ) {
-      throw new Error("Invalid reVCDOS packed manifest");
+      throw new Error(`Invalid ${title} packed manifest`);
     }
     const dataHandle = await directory.getFileHandle(manifest.dataFile);
     const data = await dataHandle.getFile();
     if (data.size !== manifest.size) {
-      throw new Error("Incomplete reVCDOS packed data");
+      throw new Error(`Incomplete ${title} packed data`);
     }
     return { data, files: manifest.files };
   };
@@ -78,16 +99,17 @@
     return { start, end, partial: true };
   };
 
-  const serveRevcdosAsset = async (request, url) => {
+  const servePackedAsset = async (game, request, url) => {
     try {
-      revcdosStorePromise ||= openRevcdosStore();
-      const { data, files } = await revcdosStorePromise;
+      if (!packedStores.has(game.id))
+        packedStores.set(game.id, openPackedStore(game));
+      const { data, files } = await packedStores.get(game.id);
       // The fetch handler only routes matching paths here.
-      const [route] = url.pathname.match(REVCDOS_ROUTE);
+      const [route] = url.pathname.match(game.route);
       const requestedPath = url.pathname.slice(
         url.pathname.indexOf(route) + route.length,
       );
-      const asset = findPackedAsset(files, requestedPath);
+      const asset = findPackedAsset(files, requestedPath, game.aliases);
       if (!asset) return new Response("Asset not found", { status: 404 });
       const range = parseRange(request.headers.get("range"), asset.length);
       if (!range) {
@@ -114,7 +136,7 @@
         { status: range.partial ? 206 : 200, headers },
       );
     } catch (error) {
-      revcdosStorePromise = undefined;
+      packedStores.delete(game.id);
       return new Response(`Packed asset unavailable: ${error.message}`, {
         status: 503,
       });
@@ -199,8 +221,11 @@
   };
 
   self.addEventListener("message", (event) => {
-    if (event.data?.type === "REVCDOS_PACK_UPDATED") {
-      revcdosStorePromise = undefined;
+    const packed = PACKED_GAMES.find(
+      ({ message }) => message === event.data?.type,
+    );
+    if (packed) {
+      packedStores.delete(packed.id);
     } else if (event.data?.type === "SCUMMVM_GAME_UPDATED") {
       scummvmStores.delete(event.data.gameId);
     }
@@ -212,8 +237,11 @@
     if (url.origin !== self.location.origin) return;
     const path = releasePath(url.pathname);
     if (path === url.pathname) return;
-    if (REVCDOS_ROUTE.test(url.pathname)) {
-      event.respondWith(serveRevcdosAsset(event.request, url));
+    const packedGame = PACKED_GAMES.find(({ route }) =>
+      route.test(url.pathname),
+    );
+    if (packedGame) {
+      event.respondWith(servePackedAsset(packedGame, event.request, url));
       return;
     }
     if (path.startsWith(SCUMMVM_ROUTE)) {
