@@ -1909,22 +1909,60 @@ html[data-xp-appearance="silver"]
   font: inherit;
 }
 
-/* The copy of a window's caption that XP steps across the screen when a
-   window minimizes, maximizes or restores. It keeps the frame's 4px sides so
-   the caption's own edges show, and drops the frame's bottom edge. */
+/* The caption XP steps across the screen when a window minimizes, maximizes
+   or restores. It is drawn like DrawCaption: the caption's first color
+   behind the icon, then the scheme's caption gradient behind the title. */
 .window-ghost {
   position: fixed;
   z-index: 2147483000;
-  min-width: 0;
-  min-height: 0;
-  padding: 0 4px;
   overflow: hidden;
-  background: none;
   pointer-events: none;
+  --ghost-caption: var(--sys-inactive-caption);
+  --ghost-gradient: var(--sys-gradient-inactive-caption);
+  --ghost-text: var(--sys-inactive-caption-text);
 }
 
-.window-ghost::after {
-  display: none;
+.window-ghost.active {
+  --ghost-caption: var(--sys-active-caption);
+  --ghost-gradient: var(--sys-gradient-active-caption);
+  --ghost-text: var(--sys-caption-text);
+}
+
+.window-ghost-caption {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(
+      to right,
+      var(--ghost-caption),
+      var(--ghost-gradient)
+    )
+    no-repeat var(--ghost-caption);
+}
+
+.window-ghost-icon {
+  position: absolute;
+}
+
+/* The title keeps the caption's font, with no theme shadow. Luna's sits 1px
+   above where the window's own caption sets it. */
+.window-ghost-text {
+  position: absolute;
+  top: -2px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  color: var(--ghost-text);
+  font-family: "Trebuchet MS", var(--chrome-font);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+html[data-xp-appearance="classic"] .window-ghost-text {
+  top: -1px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  line-height: 16px;
 }
 
 /* Menus fade in over 200 ms, XP's default transition. The Start menu's
