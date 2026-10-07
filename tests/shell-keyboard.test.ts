@@ -415,18 +415,28 @@ test("visual viewport resizes relayout the shell unless a window resize just did
   const frame = () => new Promise((resolve) => s.window.setTimeout(resolve, 0));
   const performance = s.window.performance;
   const now = performance.now.bind(performance);
-  let offset = 1000;
-  performance.now = () => now() + offset;
+  let clock = now() + 1000;
+  performance.now = () => clock;
   try {
     viewport.dispatchEvent(new s.window.Event("resize"));
     for (let i = 0; i < 5 && !resizes.length; i++) await frame();
     await s.advanceTime(50);
     expect(resizes).toHaveLength(1);
-    offset += 10;
+    clock += 10;
     viewport.dispatchEvent(new s.window.Event("resize"));
     await s.advanceTime(50);
     await frame();
     expect(resizes).toHaveLength(1);
+    clock += 90;
+    viewport.dispatchEvent(new s.window.Event("resize"));
+    await s.advanceTime(50);
+    await frame();
+    expect(resizes).toHaveLength(1);
+    clock += 1;
+    viewport.dispatchEvent(new s.window.Event("resize"));
+    for (let i = 0; i < 5 && resizes.length < 2; i++) await frame();
+    await s.advanceTime(50);
+    expect(resizes).toHaveLength(2);
   } finally {
     performance.now = now;
   }
