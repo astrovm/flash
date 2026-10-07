@@ -303,3 +303,24 @@ test("an inactive window's caption keeps its inactive colors", async () => {
   expect(ghost().classList.contains("active")).toBeFalse();
   await s.advanceTime(WHOLE_ANIMATION);
 });
+
+test("a window without caption art or text still minimizes and restores", async () => {
+  const { s, win, taskButton, ghost } = await documents();
+  win.querySelector(".title-icon").remove();
+  win.querySelector(".title-text").textContent = "";
+  win.querySelector(".minimize-btn").click();
+  expect(ghost().querySelector(".window-ghost-icon")).toBeNull();
+  expect(ghost().querySelector(".window-ghost-text").textContent).toBe("");
+  expect(ghost().style.height).toBe("25px");
+  await s.advanceTime(WHOLE_ANIMATION);
+  expect(ghost()).toBeNull();
+  expect(win.style.display).toBe("none");
+
+  win.querySelector(".title-text").remove();
+  taskButton().click();
+  expect(ghost().querySelector(".window-ghost-icon")).toBeNull();
+  expect(ghost().querySelector(".window-ghost-text").textContent).toBe("");
+  await s.advanceTime(WHOLE_ANIMATION);
+  expect(ghost()).toBeNull();
+  expect(win.style.display).toBe("flex");
+});
