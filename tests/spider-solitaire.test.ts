@@ -791,6 +791,27 @@ test("releasing a card outside Spider's board ends the drag", async () => {
   expect(h.score()).toBe("Spider Solitaire. Score: 499. Moves: 1.");
 });
 
+test("releasing a right-button peek outside Spider's board allows the next drag", async () => {
+  const h = await open();
+  await h.drag([640, 60], [40, 80]);
+  h.fire("mousedown", [40, 50], { button: 2, buttons: 2 });
+  await h.idle();
+  expect(h.frames.at(-1).at(-1)).toEqual([face("6S"), 28, 45]);
+  h.s.document.dispatchEvent(
+    new h.s.window.MouseEvent("mouseup", {
+      bubbles: true,
+      button: 2,
+      clientX: 1100,
+      clientY: 720,
+    }),
+  );
+  await h.idle();
+  expect(h.frames.at(-1).at(-1)).not.toEqual([face("6S"), 28, 45]);
+  await h.drag([140, 60], [640, 80]);
+  expect(h.score()).toBe("Spider Solitaire. Score: 498. Moves: 2.");
+  expect(h.drawnAt(622, 45)).toBe(face("7S"));
+});
+
 test("damaged saves don't open, and odd settings fall back to spider.exe's", async () => {
   const bad = [
     "{",
