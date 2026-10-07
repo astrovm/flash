@@ -427,6 +427,11 @@ test("a finished run goes home for 100 points, and the last one wins with firewo
     mostWins: 1,
     high: 1199,
   });
+  h.s.document.dispatchEvent(
+    new h.s.window.MouseEvent("mouseup", { bubbles: true, button: 2 }),
+  );
+  expect(h.score()).toBe("Spider Solitaire. Score: 1199. Moves: 101.");
+  expect(h.dialogTitle()).toBe("Game Over");
   // The fireworks run behind the dialog; sparks die out and burst again.
   const frames = h.frames.length;
   await h.idle(10);
@@ -791,6 +796,28 @@ test("releasing a card outside Spider's board ends the drag", async () => {
   expect(h.score()).toBe("Spider Solitaire. Score: 499. Moves: 1.");
 });
 
+test("releasing a right-button peek outside Spider's board allows the next drag", async () => {
+  const h = await open();
+  await h.drag([640, 60], [40, 80]);
+  h.fire("mousedown", [40, 50], { button: 2, buttons: 2 });
+  await h.idle();
+  expect(h.frames.at(-1).at(-1)).toEqual([face("6S"), 28, 45]);
+  h.s.document.dispatchEvent(
+    new h.s.window.MouseEvent("mouseup", {
+      bubbles: true,
+      button: 2,
+      clientX: 1100,
+      clientY: 720,
+    }),
+  );
+  await h.idle();
+  expect(h.frames.at(-1).at(-1)).not.toEqual([face("6S"), 28, 45]);
+  await h.drag([40, 50], [140, 80]);
+  expect(h.score()).toBe("Spider Solitaire. Score: 498. Moves: 2.");
+  expect(h.drawnAt(127, 73)).toBe(face("6S"));
+  expect(h.drawnAt(127, 101)).toBe(face("5S"));
+});
+
 test("damaged saves don't open, and odd settings fall back to spider.exe's", async () => {
   const bad = [
     "{",
@@ -1019,6 +1046,13 @@ test("nothing happens while cards fly, and closing mid-flight stops them", async
   await h.key("F5");
   h.fire("mousedown", [40, 50]);
   h.fire("mouseup", [40, 50]);
+  const score = h.score();
+  const sounds = h.sounds.length;
+  h.s.document.dispatchEvent(
+    new h.s.window.MouseEvent("mouseup", { bubbles: true, button: 0 }),
+  );
+  expect(h.score()).toBe(score);
+  expect(h.sounds).toHaveLength(sounds);
   expect(h.dialog()).toBeUndefined();
   h.win.querySelector(".close-btn").click();
   h.dialog().querySelector('[data-action="no"]').click();

@@ -144,6 +144,30 @@ test("a new deal cancels a card's pending slide back", async () => {
   expect(h.score()).toBe("Score: 0 Time: 0");
 });
 
+test("repeated Escape and pointer events leave one slide back running", async () => {
+  const h = await open();
+  const pending = [];
+  h.s.window.requestAnimationFrame = (callback) => pending.push(callback);
+  h.fire("mousedown", [45, 157]);
+  h.fire("mousemove", [400, 330]);
+  await h.key("Escape");
+  expect(pending).toHaveLength(1);
+  const frameCount = h.frames.length;
+  await h.key("Escape");
+  h.fire("mousemove", [500, 350]);
+  h.fire("mouseup", [500, 350]);
+  expect(pending).toHaveLength(1);
+  expect(h.frames).toHaveLength(frameCount);
+  while (pending.length) {
+    pending.shift()();
+    await h.settle(1);
+  }
+  expect(h.drawnAt(11, 107)).toBe(face("QD"));
+  await h.press(DECK_TOP);
+  expect(h.drawnAt(121, 7)).toBe(face("7C"));
+  expect(h.score()).toBe("Score: 0 Time: 0");
+});
+
 test("releasing a card outside the board ends the drag", async () => {
   const h = await open({ settings: { outline: true } });
   h.fire("mousedown", [45, 157]);
