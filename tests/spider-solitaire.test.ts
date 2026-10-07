@@ -807,9 +807,10 @@ test("releasing a right-button peek outside Spider's board allows the next drag"
   );
   await h.idle();
   expect(h.frames.at(-1).at(-1)).not.toEqual([face("6S"), 28, 45]);
-  await h.drag([140, 60], [640, 80]);
+  await h.drag([40, 50], [140, 80]);
   expect(h.score()).toBe("Spider Solitaire. Score: 498. Moves: 2.");
-  expect(h.drawnAt(622, 45)).toBe(face("7S"));
+  expect(h.drawnAt(127, 73)).toBe(face("6S"));
+  expect(h.drawnAt(127, 101)).toBe(face("5S"));
 });
 
 test("damaged saves don't open, and odd settings fall back to spider.exe's", async () => {
