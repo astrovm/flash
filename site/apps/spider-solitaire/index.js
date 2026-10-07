@@ -1111,11 +1111,12 @@ const mountSpider = (context) => {
     busy = false;
   };
 
-  canvas.addEventListener("mouseup", (event) => {
-    if (busy || fireworks) return;
-    const point = pointerPoint(event);
+  // Letting go of a held card or peek is heard anywhere, so releasing the
+  // button off the board still ends it.
+  const release = (event) => {
+    if (busy || fireworks) return false;
     if (event.button === 2) {
-      if (!peek) return;
+      if (!peek) return false;
       // Letting go redraws the column from that card, green corners and
       // all.
       columns[peek.column]
@@ -1123,13 +1124,19 @@ const mountSpider = (context) => {
         .forEach((entry) => markResidue(entry, true, true));
       peek = null;
       draw();
-      return;
+      return true;
     }
-    if (event.button !== 0) return;
-    if (drag) {
-      void finishDrag();
-      return;
-    }
+    if (event.button !== 0 || !drag) return false;
+    void finishDrag();
+    return true;
+  };
+  const releaseOffBoard = (event) => {
+    if (event.target !== canvas) release(event);
+  };
+  document.addEventListener("mouseup", releaseOffBoard);
+  canvas.addEventListener("mouseup", (event) => {
+    if (busy || fireworks || release(event) || event.button !== 0) return;
+    const point = pointerPoint(event);
     if (over) return;
     const deck = stockRect();
     if (
@@ -1365,7 +1372,8 @@ const mountSpider = (context) => {
         "cancel",
       );
       if (answer === "cancel") return;
-      if (answer === "yes") await saveGame();
+      // A save that's declined or fails keeps the game in play.
+      if (answer === "yes" && !(await saveGame())) return;
     }
     const { dialog, elements } = template({
       title: "Difficulty",
@@ -1816,6 +1824,7 @@ const mountSpider = (context) => {
       currentSound?.pause();
       resizeObserver.disconnect();
       document.removeEventListener("pointerdown", closeMenusOutside);
+      document.removeEventListener("mouseup", releaseOffBoard);
       context.windowElement.removeEventListener("keydown", handleKeydown);
     },
   };

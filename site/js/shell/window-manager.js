@@ -1059,10 +1059,13 @@ const animateCaption = (win, from, to, done) => {
   let timer = 0;
   // Only one caption runs at a time, so finishing one always clears the slot.
   const animation = {
-    complete() {
+    cancel() {
       clearTimeout(timer);
       ghost.remove();
       win.windowAnimation = null;
+    },
+    complete() {
+      animation.cancel();
       done();
     },
   };
@@ -1285,6 +1288,8 @@ const closeGameWindow = (
         return closeGameWindow(gameId, { skipBeforeClose: true });
       });
   }
+  // A closed window drops its caption without changing.
+  win.windowAnimation?.cancel();
   persistWindowPlacement(win);
   if (!skipUnmount) win.mountedApplication?.unmount?.();
   win.el.remove();
