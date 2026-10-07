@@ -528,7 +528,7 @@ const mountSolitaire = (context) => {
   });
 
   const followPointer = (event) => {
-    if (!drag) return;
+    if (!drag || drag.sliding) return;
     const point = pointerPoint(event);
     drag.x = point.x + drag.offsetX;
     drag.y = point.y + drag.offsetY;
@@ -538,25 +538,39 @@ const mountSolitaire = (context) => {
   };
   canvas.addEventListener("mousemove", followPointer);
 
-  // Dropped cards that land nowhere slide back, one step per 35 pixels.
+  // Dropped cards that land nowhere slide back, one step per 35 pixels. A
+  // new deal or undo during the slide ends it.
   const slideBack = async () => {
+    const sliding = drag;
+    if (sliding.sliding) return;
+    sliding.sliding = true;
     if (!settings.outline) {
-      const distance = Math.hypot(drag.x - drag.startX, drag.y - drag.startY);
+      const distance = Math.hypot(
+        sliding.x - sliding.startX,
+        sliding.y - sliding.startY,
+      );
       const steps = Math.floor(distance / 35);
-      const fromX = drag.x;
-      const fromY = drag.y;
+      const fromX = sliding.x;
+      const fromY = sliding.y;
       for (let step = 1; step <= steps; step += 1) {
-        drag.x = Math.round(fromX + ((drag.startX - fromX) * step) / steps);
-        drag.y = Math.round(fromY + ((drag.startY - fromY) * step) / steps);
+        sliding.x = Math.round(
+          fromX + ((sliding.startX - fromX) * step) / steps,
+        );
+        sliding.y = Math.round(
+          fromY + ((sliding.startY - fromY) * step) / steps,
+        );
         draw();
         await new Promise((resolve) => requestAnimationFrame(resolve));
+        if (drag !== sliding) return;
       }
     }
     drag = null;
     draw();
   };
+  // The drop is heard anywhere, so releasing the button off the board still
+  // ends the drag.
   const drop = (event) => {
-    if (!drag || event.button !== 0) return;
+    if (!drag || drag.sliding || event.button !== 0) return;
     if (drag.moving) followPointer(event);
     const { target, source, index } = drag;
     if (target === null) {
@@ -566,7 +580,7 @@ const mountSolitaire = (context) => {
     drag = null;
     move(source, index, target);
   };
-  canvas.addEventListener("mouseup", drop);
+  document.addEventListener("mouseup", drop);
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 
   // ---- Winning: the cards bounce off the table, kings first ----
@@ -933,6 +947,7 @@ const mountSolitaire = (context) => {
       context.windowElement.removeEventListener("keydown", stopOnInput);
       resizeObserver.disconnect();
       document.removeEventListener("pointerdown", closeMenusOutside);
+      document.removeEventListener("mouseup", drop);
       context.windowElement.removeEventListener("keydown", handleKeydown);
     },
   };

@@ -253,3 +253,20 @@ test("a reduced-motion preference changes windows at once", async () => {
   expect(ghost()).toBeNull();
   expect(win.classList.contains("maximized")).toBeTrue();
 });
+
+test("closing a window clears its pending caption animation", async () => {
+  for (const command of ["minimize", "maximize", "restore"]) {
+    const { s, win, taskButton, ghost } = await documents();
+    if (command === "restore") {
+      win.querySelector(".minimize-btn").click();
+      await s.advanceTime(WHOLE_ANIMATION);
+      taskButton().click();
+    } else win.querySelector(`.${command}-btn`).click();
+    expect(ghost()).not.toBeNull();
+    win.querySelector(".close-btn").click();
+    expect(win.isConnected).toBeFalse();
+    expect(ghost()).toBeNull();
+    await s.advanceTime(WHOLE_ANIMATION);
+    expect(taskButton()).toBeNull();
+  }
+});

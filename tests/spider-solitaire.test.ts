@@ -747,6 +747,50 @@ test("games save and open, asking before they replace or discard one", async () 
   await h.answer("ok");
 });
 
+test("Difficulty keeps the current game when its save is cancelled or fails", async () => {
+  const h = await open({ storage: { spiderSavedGame: savedGame() } });
+  await h.drag([640, 60], [40, 80]);
+  await h.key("F3");
+  await h.answer("yes");
+  await h.answer("no");
+  expect(h.dialog()).toBeUndefined();
+  expect(h.score()).toBe("Spider Solitaire. Score: 499. Moves: 1.");
+  const storage = h.s.window.localStorage;
+  Object.defineProperty(h.s.window, "localStorage", {
+    configurable: true,
+    value: {
+      getItem: (name) => storage.getItem(name),
+      setItem: () => {
+        throw new Error("full");
+      },
+    },
+  });
+  await h.key("F3");
+  await h.answer("yes");
+  await h.answer("yes");
+  expect(h.dialog().textContent).toContain("Unable to save game.");
+  await h.answer("ok");
+  expect(h.dialog()).toBeUndefined();
+  expect(h.score()).toBe("Spider Solitaire. Score: 499. Moves: 1.");
+});
+
+test("releasing a card outside Spider's board ends the drag", async () => {
+  const h = await open();
+  h.fire("mousedown", [640, 60]);
+  h.fire("mousemove", [500, 400]);
+  h.s.document.dispatchEvent(
+    new h.s.window.MouseEvent("mouseup", {
+      bubbles: true,
+      button: 0,
+      clientX: 1100,
+      clientY: 720,
+    }),
+  );
+  await h.idle();
+  await h.drag([640, 60], [40, 80]);
+  expect(h.score()).toBe("Spider Solitaire. Score: 499. Moves: 1.");
+});
+
 test("damaged saves don't open, and odd settings fall back to spider.exe's", async () => {
   const bad = [
     "{",
