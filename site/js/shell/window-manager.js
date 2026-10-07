@@ -982,12 +982,21 @@ const focusTopWindow = () => {
 };
 
 // ---- XP's window animations ----
-// Minimizing, restoring and maximizing don't zoom the window. XP draws a
-// copy of its caption bar that steps from one rectangle to another, 16 times
-// at about 16 ms each, and only then changes the window.
+// Minimizing, restoring and maximizing don't zoom the window. XP draws the
+// window's caption the way DrawCaption does, without the theme's caption
+// art or buttons, and steps it from one rectangle to another, 16 times at
+// about 16 ms each. Only then does the window change.
 const GHOST_STEPS = 16;
 const GHOST_STEP_MS = 16;
 const GHOST_FRAME = 4;
+// Measured on the XP VM: Luna's 25px caption puts the icon 5px in and 4px
+// down and the title 26px in; Classic's 18px caption puts them 2px in and
+// 1px down, and 20px in. Everything left of the title is the caption's
+// first color, and the gradient runs from the title to the far end.
+const GHOST_CAPTIONS = {
+  luna: { height: 25, icon: [5, 4], text: 26 },
+  classic: { height: 18, icon: [2, 1], text: 20 },
+};
 
 const animationsEnabled = () =>
   !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -1043,17 +1052,50 @@ const taskButtonGhostRect = (win) => {
 
 const finishWindowAnimation = (win) => win.windowAnimation?.complete();
 
+// The caption XP steps across the screen. Like DrawCaption it is drawn once,
+// as wide as the wider rectangle, and each step shows its left part.
+const createCaptionGhost = (win, width, active) => {
+  const classic = document.documentElement.dataset.xpAppearance === "classic";
+  const metrics = GHOST_CAPTIONS[classic ? "classic" : "luna"];
+  const ghost = document.createElement("div");
+  ghost.className = `window-ghost${active ? " active" : ""}`;
+  ghost.setAttribute("aria-hidden", "true");
+  ghost.style.height = `${metrics.height}px`;
+  const caption = document.createElement("div");
+  caption.className = "window-ghost-caption";
+  Object.assign(caption.style, {
+    width: `${Math.max(0, Math.round(width))}px`,
+    backgroundPosition: `${metrics.text}px 0`,
+    backgroundSize: `${Math.max(0, Math.round(width) - metrics.text)}px 100%`,
+  });
+  const icon = win.el.querySelector(".title-icon")?.cloneNode(true);
+  if (icon) {
+    icon.classList.add("window-ghost-icon");
+    icon.style.left = `${metrics.icon[0]}px`;
+    icon.style.top = `${metrics.icon[1]}px`;
+    caption.append(icon);
+  }
+  const title = document.createElement("span");
+  title.className = "window-ghost-text";
+  title.style.left = `${metrics.text}px`;
+  title.textContent = win.el.querySelector(".title-text")?.textContent || "";
+  caption.append(title);
+  ghost.append(caption);
+  return ghost;
+};
+
 // Steps a caption bar from one rectangle to another, then runs `done`.
 // Starting another animation, or calling finishWindowAnimation(), runs the
 // first one's `done` straight away.
-const animateCaption = (win, from, to, done) => {
+const animateCaption = (
+  win,
+  from,
+  to,
+  done,
+  active = win.el.classList.contains("active"),
+) => {
   finishWindowAnimation(win);
-  const ghost = document.createElement("div");
-  ghost.className = "xp-window active window-ghost";
-  ghost.setAttribute("aria-hidden", "true");
-  const bar = win.el.querySelector(".title-bar").cloneNode(true);
-  bar.querySelector(".title-buttons")?.remove();
-  ghost.append(bar);
+  const ghost = createCaptionGhost(win, Math.max(from.width, to.width), active);
   document.body.append(ghost);
   let step = 0;
   let timer = 0;
@@ -1137,11 +1179,13 @@ const restoreWindow = (
     if (!win.minimized) win.el.style.display = "flex";
   };
   if (animate && animationsEnabled()) {
+    // The restored window is about to be the active one.
     animateCaption(
       win,
       taskButtonGhostRect(win),
       ghostRectFor(windowPageRect(win)),
       show,
+      true,
     );
   } else {
     finishWindowAnimation(win);

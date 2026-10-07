@@ -94,13 +94,21 @@ test("minimizing slides the caption to the task button and hides the window", as
 
   win.querySelector(".minimize-btn").click();
 
-  // XP copies the caption, without its buttons, and only that.
+  // XP draws the caption the way DrawCaption does: Luna's 25px caption bar
+  // with the window's icon and title, and no buttons or theme art.
   const bar = ghost();
-  expect(bar.textContent).toContain("My Documents");
+  expect(bar.textContent).toBe("My Documents");
   expect(bar.querySelector(".title-buttons")).toBeNull();
-  // The ghost is the caption itself, so it is as tall as the caption.
-  expect(bar.style.height).toBe("");
+  expect(bar.querySelector(".window-ghost-icon")).not.toBeNull();
+  expect(bar.classList.contains("active")).toBeTrue();
+  expect(bar.style.height).toBe("25px");
   expect(parseFloat(bar.style.width)).toBe(CAPTION_WIDTH);
+  // The caption is drawn once at the window's width; the gradient starts at
+  // the title.
+  const caption = bar.querySelector(".window-ghost-caption");
+  expect(caption.style.width).toBe(`${CAPTION_WIDTH}px`);
+  expect(caption.style.backgroundPosition).toBe("26px 0px");
+  expect(caption.style.backgroundSize).toBe(`${CAPTION_WIDTH - 26}px 100%`);
   expect(parseFloat(bar.style.top)).toBe(84);
   // The window stays where it is until its caption has arrived.
   expect(win.style.display).toBe("");
@@ -131,6 +139,12 @@ test("restoring brings the caption back from the task button", async () => {
   expect(parseFloat(bar.style.top)).toBe(742);
   expect(parseFloat(bar.style.left)).toBe(108);
   expect(parseFloat(bar.style.width)).toBe(152);
+  // It is drawn at the window's wider caption, active, and cropped to the
+  // button.
+  expect(bar.classList.contains("active")).toBeTrue();
+  expect(bar.querySelector(".window-ghost-caption").style.width).toBe(
+    `${CAPTION_WIDTH}px`,
+  );
   expect(win.style.display).toBe("none");
 
   await s.advanceTime(WHOLE_ANIMATION);
@@ -269,4 +283,23 @@ test("closing a window clears its pending caption animation", async () => {
     await s.advanceTime(WHOLE_ANIMATION);
     expect(taskButton()).toBeNull();
   }
+});
+
+test("Classic draws its 18px caption with Tahoma's offsets", async () => {
+  const { s, win, ghost } = await documents();
+  s.document.documentElement.dataset.xpAppearance = "classic";
+  win.querySelector(".minimize-btn").click();
+  const bar = ghost();
+  expect(bar.style.height).toBe("18px");
+  expect(bar.querySelector(".window-ghost-icon").style.left).toBe("2px");
+  expect(bar.querySelector(".window-ghost-text").style.left).toBe("20px");
+  await s.advanceTime(WHOLE_ANIMATION);
+});
+
+test("an inactive window's caption keeps its inactive colors", async () => {
+  const { s, win, ghost } = await documents();
+  win.classList.remove("active");
+  win.querySelector(".minimize-btn").click();
+  expect(ghost().classList.contains("active")).toBeFalse();
+  await s.advanceTime(WHOLE_ANIMATION);
 });

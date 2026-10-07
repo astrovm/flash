@@ -63,12 +63,22 @@ Measurements were taken from pixel rows and columns of both captures.
 ## Animations
 
 - Minimizing, restoring and maximizing do not zoom the window. XP steps a
-  copy of its caption bar, without its caption buttons, from the window's
-  rectangle to the destination rectangle, then changes the window. The copy
-  takes 16 steps at about 16 ms each, and its position and width follow the
-  rectangle.
-- The copy is a clone of the window's own caption, so its height, text,
-  icon, and theme match the window.
+  caption from the window's rectangle, inset by its 4px frame, to the
+  destination rectangle, then changes the window. The caption takes 16 steps
+  at about 16 ms each, and its position and width follow the rectangle. The
+  task button's rectangle is inset 4px at each side, and the last step drawn
+  is the 15th, so the caption never lands on the destination.
+- The caption is drawn the way DrawCaption draws it, not with the theme's
+  caption art: Luna's 25px caption bar (Classic's 18px), with no caption
+  buttons, frame or text shadow. The icon sits 5px in and 4px down (2px and
+  1px in Classic), and the title starts 26px in (20px in Classic), 1px
+  higher than on the window. The area behind the icon is the scheme's
+  ActiveCaption color, and the gradient to GradientActiveCaption runs from
+  the title to the end. The caption is drawn once, as wide as the wider
+  rectangle, and each step shows its left part: a minimizing window's
+  gradient is cut short, and a restoring one's runs past the task button.
+- A window that isn't active steps an inactive caption. A restoring window
+  steps an active one.
 - Menus fade in over 200 ms, or unroll from the top when the scroll
   transition is chosen in Display Properties. With the transition effect
   off, menus appear at once. The Start menu's own flyouts appear at once.
