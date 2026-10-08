@@ -25,6 +25,8 @@ const open = async ({
   storage = {},
   time = GAME_714,
   failImages = false,
+  failFont = false,
+  rejectPlay = false,
   name = "astro",
 } = {}) => {
   let frames;
@@ -32,9 +34,20 @@ const open = async ({
   const queued = [];
   const sounds = [];
   const marks = [];
+  // The pass button's caption: each System font pixel's color.
+  const caption = [];
   const s = await login(
     await loadShell({
       initialStorage: storage,
+      fetchObject: async (url) => {
+        if (failFont) return new Response(null, { status: 404 });
+        const path = String(url).replace(/^.*?assets\//, "assets/");
+        return new Response(
+          await Bun.file(
+            new URL(`../site/${path}`, import.meta.url),
+          ).arrayBuffer(),
+        );
+      },
       beforeScripts: (window) => {
         frames = recordCardCanvas(window, {
           board: "hearts-board",
@@ -47,6 +60,10 @@ const open = async ({
         const getContext = proto.getContext;
         proto.getContext = function (...args) {
           const context = getContext.apply(this, args);
+          if (this.closest?.(".hearts-pass")) {
+            context.clearRect = () => (caption.length = 0);
+            context.fillRect = () => caption.push(context.fillStyle);
+          }
           if (this.classList.contains("hearts-board") && !context.marked) {
             const fillRect = context.fillRect;
             context.fillRect = (x, y, width, height) => {
@@ -90,7 +107,10 @@ const open = async ({
           }
           play() {
             this.playing = true;
-            return Promise.resolve();
+            // Browsers refuse sound before the page is used.
+            return rejectPlay
+              ? Promise.reject(new Error("NotAllowedError"))
+              : Promise.resolve();
           }
           pause() {
             this.playing = false;
@@ -170,6 +190,7 @@ const open = async ({
     queued,
     sounds,
     marks,
+    caption,
     dialog,
     answer,
     run,
@@ -230,7 +251,9 @@ describe("starting", () => {
     const h = await open({ name: null });
     await h.key("F9");
     expect(h.s.document.querySelectorAll(".xp-dialog")).toHaveLength(1);
-    h.dialog().remove();
+    h.dialog().closest(".xp-dialog-overlay").remove();
+    await h.key("F9");
+    expect(h.dialog()).toBeUndefined();
     await h.key("F8");
     expect(h.s.window.localStorage.getItem("heartsSettings")).toBeNull();
   });
@@ -318,14 +341,34 @@ describe("starting", () => {
     expect(storage.getItem("heartsSettings")).toBeNull();
   });
 
-  test("tells the player when the cards can't load", async () => {
+  test("tells the player when the cards can't load, and still deals", async () => {
     const h = await open({ failImages: true, name: null });
     await h.settle();
-    expect(
-      [...h.s.document.querySelectorAll(".xp-dialog")].some((element) =>
-        element.textContent.includes("The cards didn't load."),
-      ),
-    ).toBeTrue();
+    const alert = [...h.s.document.querySelectorAll(".xp-dialog")].find(
+      (element) => element.textContent.includes("The cards didn't load."),
+    );
+    expect(alert).toBeDefined();
+    alert.querySelector("button").click();
+    await h.settle();
+    h.dialog().querySelector("input").value = "astro";
+    await h.answer("ok");
+    expect(h.status()).toBe("Select three cards to pass to Pauline.");
+    expect(h.lastFrame()).toEqual([]);
+  });
+
+  test("draws the pass button's caption in the System font, gray while disabled", async () => {
+    const h = await open();
+    expect(new Set(h.caption)).toEqual(new Set(["#a1a192"]));
+    const pixels = h.caption.length;
+    for (const index of [2, 7, 10]) await h.press(slotPoint(index));
+    expect(new Set(h.caption)).toEqual(new Set(["#000"]));
+    expect(h.caption).toHaveLength(pixels);
+  });
+
+  test("labels the pass button even without the System font", async () => {
+    const h = await open({ failFont: true });
+    expect(h.caption).toEqual([]);
+    expect(h.button().getAttribute("aria-label")).toBe("Pass Left");
   });
 });
 
@@ -400,6 +443,9 @@ describe("the deal and the pass", () => {
     // Above an unraised card nothing happens; above a raised one it counts.
     await h.press(slotPoint(0, -10));
     expect(h.drawnAt(139, 298)).toBe(face("2C"));
+    // Too far right of any raised card's reach.
+    await h.press(slotPoint(12, -10));
+    expect(h.drawnAt(319, 298)).toBe(face("TH"));
     await h.press(slotPoint(10, -10));
     expect(h.button().disabled).toBeTrue();
     expect(h.drawnAt(289, 298)).toBe(face("KS"));
@@ -791,6 +837,43 @@ describe("menus and dialogs", () => {
     expect(sound.playing).toBeTrue();
     await h.key("F8");
     expect(sound.playing).toBeFalse();
+  });
+
+  test("a sound the browser refuses doesn't stop the game", async () => {
+    const h = await open({
+      rejectPlay: true,
+      storage: { heartsSettings: JSON.stringify({ sound: true }) },
+    });
+    await passKings(h);
+    for (let guard = 0; guard < 60; guard += 1) {
+      await h.key(" ");
+      await h.run();
+      if (h.sounds.some(({ src }) => src.startsWith("assets/xp/hearts/")))
+        break;
+    }
+    await h.settle();
+    expect(h.status()).not.toBe("");
+  });
+
+  test("OK on a Score Sheet left open after closing the window deals nothing", async () => {
+    const h = await open({ time: WINNING_GAME });
+    for (let guard = 0; guard < 300 && !h.dialog(); guard += 1) {
+      const pass = h.button();
+      if (!pass.hidden) {
+        if (pass.getAttribute("aria-label") !== "OK")
+          for (const index of [10, 11, 12]) await h.press(slotPoint(index));
+        pass.click();
+        await h.settle(2);
+      } else await h.key(" ");
+      await h.run();
+    }
+    const sheet = h.dialog();
+    h.win.querySelector(".close-btn").click();
+    await h.settle();
+    const drawn = h.frames.length;
+    sheet.querySelector('[data-action="ok"]')?.click();
+    await h.settle();
+    expect(h.frames.length).toBe(drawn);
   });
 
   test("Quote shows Julius Caesar's line", async () => {

@@ -451,11 +451,10 @@ const mountHearts = (context) => {
   };
 
   const finishTrickFlow = async () => {
-    const run = generation;
     const winner = finishTrick(round);
-    // The trick stays on the table for a second.
+    // The trick stays on the table for a second. Closing the window clears
+    // the timer, so the rest never runs.
     await heartsPause(1000);
-    if (run !== generation) return;
     const { trick } = round;
     round.gathered = [];
     for (let offset = 3; offset >= 0; offset -= 1) {
@@ -582,7 +581,8 @@ const mountHearts = (context) => {
     if (phase === "passing") {
       if (selectedCount(round.slots[0]) !== 3) return;
       exchangeCards(round);
-      passMode = passMode + 1 > NO_PASS ? 0 : passMode + 1;
+      // Left, right, across, then the no-pass hand.
+      passMode += 1;
       marksShown = false;
       phase = "accepting";
       setPassButton({ label: "OK", enabled: true });
