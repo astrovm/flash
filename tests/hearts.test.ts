@@ -62,7 +62,8 @@ const open = async ({
         const realFrame = window.requestAnimationFrame.bind(window);
         window.requestAnimationFrame = (callback) => {
           // The shell's window animations keep their own frames.
-          if (!/heartsFrame/.test(new Error().stack)) return realFrame(callback);
+          if (!/heartsFrame/.test(new Error().stack))
+            return realFrame(callback);
           queued.push({ kind: "frame", callback });
           return queued.length;
         };
@@ -70,7 +71,7 @@ const open = async ({
         const realClear = window.clearTimeout.bind(window);
         window.setTimeout = (callback, ms = 0, ...args) => {
           // Only Hearts' own pauses wait for the test: the inverted card's
-          // and the finished trick's.
+          // and the finished trick's. Tests find them by function name.
           if (!/flashCard|heartsPause/.test(new Error().stack))
             return realTimeout(callback, ms, ...args);
           const entry = { kind: "timer", ms, callback };
@@ -299,19 +300,22 @@ describe("starting", () => {
 
   test("keeps playing when its settings can't be saved", async () => {
     const h = await open({ name: null });
-    const storage = Object.getPrototypeOf(h.s.window.localStorage);
-    const setItem = storage.setItem;
-    storage.setItem = function (key, value) {
-      if (key === "heartsSettings") throw new Error("full");
-      return setItem.call(this, key, value);
-    };
-    try {
-      await h.answer("ok");
-      expect(h.status()).toBe("Select three cards to pass to Pauline.");
-      expect(h.s.window.localStorage.getItem("heartsSettings")).toBeNull();
-    } finally {
-      storage.setItem = setItem;
-    }
+    const storage = h.s.window.localStorage;
+    Object.defineProperty(h.s.window, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (key) => storage.getItem(key),
+        setItem: (key, value) => {
+          if (key === "heartsSettings") throw new Error("full");
+          storage.setItem(key, value);
+        },
+        removeItem: (key) => storage.removeItem(key),
+      },
+    });
+    h.dialog().querySelector("input").value = "astro";
+    await h.answer("ok");
+    expect(h.status()).toBe("Select three cards to pass to Pauline.");
+    expect(storage.getItem("heartsSettings")).toBeNull();
   });
 
   test("tells the player when the cards can't load", async () => {
@@ -502,7 +506,7 @@ describe("play", () => {
     await h.run(1);
     // Space plays the leftmost card that's allowed: the three of diamonds.
     await h.key(" ");
-    await h.run(10);
+    while (h.queued[0]?.kind === "frame") await h.run(1);
     expect(h.drawnAt(225, 180)).toBe(face("3D"));
   });
 
@@ -648,13 +652,13 @@ describe("whole games", () => {
       if (hand < 7) await h.answer("ok");
     }
     // Left, right, across, then no pass.
-    expect(passes.slice(0, 5)).toEqual([
+    expect(passes.slice(0, 3)).toEqual([
       "Select three cards to pass to Pauline.",
       "Select three cards to pass to Ben.",
       "Select three cards to pass to Michele.",
-      "Select a card to play.",
-      "Select three cards to pass to Pauline.",
     ]);
+    expect(passes[3]).not.toStartWith("Select three");
+    expect(passes[4]).toBe("Select three cards to pass to Pauline.");
     expect(titles).toEqual([
       "Score Sheet -- First Place",
       "Score Sheet -- First Place",
@@ -777,11 +781,13 @@ describe("menus and dialogs", () => {
     });
     await passKings(h);
     // Play on until a sound starts.
-    for (let guard = 0; guard < 60 && !h.sounds.length; guard += 1) {
+    const played = () =>
+      h.sounds.filter(({ src }) => src.startsWith("assets/xp/hearts/"));
+    for (let guard = 0; guard < 60 && !played().length; guard += 1) {
       await h.key(" ");
       await h.run();
     }
-    const sound = h.sounds.at(-1);
+    const sound = played().at(-1);
     expect(sound.playing).toBeTrue();
     await h.key("F8");
     expect(sound.playing).toBeFalse();

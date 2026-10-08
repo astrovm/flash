@@ -350,7 +350,7 @@ const mountHearts = (context) => {
   };
 
   // ---- Timing ----
-  const wait = (ms) =>
+  const heartsPause = (ms) =>
     new Promise((resolve) => {
       const timer = setTimeout(() => {
         timers.delete(timer);
