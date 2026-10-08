@@ -461,6 +461,38 @@ describe("Hearts games", () => {
     ]);
   });
 
+  // The XP VM's game 31324, passing the three rightmost cards every hand.
+  // The VM run's input went astray after hand 6, so only those rows count.
+  test("replays the XP VM's game 31324 for six hands", () => {
+    const generator = createGenerator(0);
+    generator.seed(31324);
+    const rows = [];
+    let scores = [0, 0, 0, 0];
+    let passMode = 0;
+    for (let hand = 1; hand <= 6; hand += 1) {
+      const round = createRound(dealHands(generator.next), passMode);
+      if (passMode !== NO_PASS) {
+        chooseComputerPasses(round);
+        [10, 11, 12].forEach((index) => {
+          round.slots[0][index].state = SELECTED;
+        });
+        exchangeCards(round);
+        passMode += 1;
+      } else passMode = 0;
+      playHand(round, leftmostLegal);
+      ({ scores } = scoreRound(round, scores));
+      rows.push(scores);
+    }
+    expect(rows).toEqual([
+      [12, 0, 14, 0],
+      [31, 0, 20, 1],
+      [50, 0, 24, 4],
+      [50, 0, 28, 26],
+      [58, 0, 28, 44],
+      [61, 0, 28, 67],
+    ]);
+  });
+
   test("computers play only legal cards through whole games", () => {
     let moons = 0;
     for (let seed = 1; seed <= 60; seed += 1) {
