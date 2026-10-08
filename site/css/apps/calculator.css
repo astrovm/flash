@@ -107,22 +107,39 @@ html:not([data-xp-appearance="classic"]) .calculator-key.pressed::before {
   border-image-source: var(--ctl-button-pressed);
 }
 
-/* Statistics Box. */
-.calculator-statistics {
+/* Statistics Box: a list box, not the themed drop-down list. */
+html:not([data-xp-appearance="classic"])
+  .xp-window
+  select.calculator-statistics:is(*, :focus, :hover) {
+  padding: 0;
   border: 1px solid #7f9db9;
-  border-radius: 0;
   background: #fff;
+  color: #000;
   font:
     11px/13px Tahoma,
     "Segoe UI",
     sans-serif;
   outline: 0;
+  overflow-y: auto;
 }
 
 .calculator-statistics option {
   padding: 0 2px;
 }
 
+.calculator-statistics option:checked {
+  background: var(--sys-highlight)
+    linear-gradient(var(--sys-highlight), var(--sys-highlight));
+  color: var(--sys-highlight-text);
+}
+
 .calculator-count-label {
   text-align: right;
+}
+
+/* calc.exe grays unavailable labels with the theme's #aca899. */
+html:not([data-xp-appearance="classic"])
+  .xp-calculator
+  .calculator-key:disabled {
+  color: #aca899;
 }

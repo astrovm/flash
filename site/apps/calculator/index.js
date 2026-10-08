@@ -469,7 +469,9 @@ const mountCalculator = (context) => {
       left: `${dialogUnitsX(3)}px`,
       top: `${dialogUnitsY(3)}px`,
       width: `${dialogUnitsX(140)}px`,
-      height: `${dialogUnitsY(50)}px`,
+      // The list box keeps a whole number of rows, which leaves it 56
+      // pixels tall rather than the template's 50 units.
+      height: "56px",
     });
     dialog.body.prepend(list);
     statistics = { dialog, list, count: elements.count };
