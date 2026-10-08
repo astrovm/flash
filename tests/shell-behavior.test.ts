@@ -1146,7 +1146,6 @@ describe("Windows XP shell", () => {
   test("opens native games from their public deep links", async () => {
     for (const [deepLink, applicationId] of [
       ["freecell", "__freecell"],
-      ["hearts", "__hearts"],
       ["minesweeper", "__minesweeper"],
       ["pinball", "__pinball"],
       ["solitaire", "__solitaire"],
@@ -1175,7 +1174,7 @@ describe("Windows XP shell", () => {
     const shell = await loadShell({
       offlineSettings: { savePlayedGamesOffline: false },
     });
-    shell.window.location.hash = "#calculator";
+    shell.window.location.hash = "#hearts";
     await login(shell);
     await flushShell();
     expect(shell.offlineDownloads).toEqual([]);
@@ -1191,7 +1190,7 @@ describe("Windows XP shell", () => {
     });
     const warnings: unknown[][] = [];
     shell.window.console.warn = (...args: unknown[]) => warnings.push(args);
-    shell.window.location.hash = "#calculator";
+    shell.window.location.hash = "#hearts";
     await login(shell);
     await flushShell();
     await flushShell();
@@ -1201,7 +1200,7 @@ describe("Windows XP shell", () => {
       ),
     ).toEqual([
       "Could not save game for offline play:",
-      "Calculator",
+      "Hearts",
       expect.any(Error),
     ]);
   });

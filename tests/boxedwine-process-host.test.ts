@@ -100,7 +100,7 @@ describe("persistent BoxedWine process host", () => {
     host.tick();
     host.send({
       type: "boxedwine-launch-process",
-      appId: "calculator",
+      appId: "hearts",
       launchToken: "2022",
       requestId: "second",
     });
@@ -113,7 +113,7 @@ describe("persistent BoxedWine process host", () => {
         launchToken: "1011",
       },
       {
-        executable: "calculator/calc.exe",
+        executable: "hearts/mshearts.exe",
         launchToken: "2022",
       },
     ]);
@@ -133,7 +133,7 @@ describe("persistent BoxedWine process host", () => {
       },
       {
         type: "boxedwine-process-launched",
-        appId: "calculator",
+        appId: "hearts",
         launchToken: "2022",
         requestId: "second",
         processId: 102,
@@ -278,7 +278,7 @@ describe("BoxedWine process host failures", () => {
     installBoxedWineProcessHostBridge(host.hostWindow, processHost.module);
     processHost.module.onRuntimeInitialized();
     launch(host);
-    launch(host, { appId: "calculator", requestId: "queued" });
+    launch(host, { appId: "hearts", requestId: "queued" });
     host.tick();
     host.tick();
     const types = () => host.messages.map(({ message }) => message.type);
@@ -293,7 +293,7 @@ describe("BoxedWine process host failures", () => {
         .find(({ type }) => type === "boxedwine-process-launched"),
     ).toMatchObject({ requestId: "launch", processId: 101, error: 0 });
     expect(processHost.launchedExecutables.at(-1).executable).toBe(
-      "calculator/calc.exe",
+      "hearts/mshearts.exe",
     );
   });
 

@@ -302,12 +302,16 @@ const mountHearts = (context) => {
     if (!round) return;
     // Seats draw from the trick's leader, so played cards stack in order.
     const first = Math.max(0, round.trick.leader);
-    for (let offset = 0; offset < 4; offset += 1) drawSeat((first + offset) % 4);
+    for (let offset = 0; offset < 4; offset += 1)
+      drawSeat((first + offset) % 4);
     if (marksShown) {
       // White marks beside the cards each computer chose to pass.
       graphics.fillStyle = "#fff";
       for (let seat = 1; seat < 4; seat += 1) {
-        const { marks, hand: { dx, dy } } = SEATS[seat];
+        const {
+          marks,
+          hand: { dx, dy },
+        } = SEATS[seat];
         round.slots[seat].forEach((slot, index) => {
           if (slot.state === SELECTED)
             graphics.fillRect(marks.x + dx * index, marks.y + dy * index, 2, 2);
@@ -432,7 +436,14 @@ const mountHearts = (context) => {
     const { card } = round.slots[seat][index];
     const from = slotPosition(seat, index);
     playCard(round, seat, index).forEach(playSound);
-    if (!(await glide(card, from, SEATS[seat].played, PLAY_SPEEDS[settings.speed])))
+    if (
+      !(await glide(
+        card,
+        from,
+        SEATS[seat].played,
+        PLAY_SPEEDS[settings.speed],
+      ))
+    )
       return;
     draw();
     if (trickComplete(round)) await finishTrickFlow();
@@ -638,7 +649,10 @@ const mountHearts = (context) => {
         entry.type = "button";
         entry.setAttribute("role", "menuitem");
         entry.dataset.command = command;
-        entry.classList.toggle("checked", command === "sound" && settings.sound);
+        entry.classList.toggle(
+          "checked",
+          command === "sound" && settings.sound,
+        );
         const text = document.createElement("span");
         context.setAccessKeyText(text, itemLabel);
         const key = document.createElement("kbd");

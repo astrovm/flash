@@ -191,7 +191,9 @@ describe("Hearts passing", () => {
 
   test("a computer passes the high spades, high hearts, then short suits", () => {
     const pass = (text) =>
-      names(choosePass(slots(text)).map((index) => card(text.split(" ")[index])));
+      names(
+        choosePass(slots(text)).map((index) => card(text.split(" ")[index])),
+      );
     expect(pass("AS KS QS 2C 3C 4C 5C 6C 7C 8C 2D 3D 4D")).toBe("AS KS QS");
     expect(pass("AH KH 2S 2C 3C 4C 5C 6C 7C 8C 2D 3D 4D")).toBe("AH KH 2S");
     // Diamonds hold a single low card, so their high cards go, then the
@@ -294,9 +296,9 @@ describe("Hearts moves", () => {
     play(round, 2, "6C");
     play(round, 3, "8C");
     // The human holds a club and must play it.
-    expect(
-      checkMove(round.slots[0], indexOf(round, 0, "AH"), round).id,
-    ).toBe(312);
+    expect(checkMove(round.slots[0], indexOf(round, 0, "AH"), round).id).toBe(
+      312,
+    );
     round.slots[0][indexOf(round, 0, "3C")].card = card("2S");
     // A spade is no point card, so hearts and the queen must wait.
     for (const value of ["AH", "QS"])
@@ -372,9 +374,7 @@ describe("Hearts scoring", () => {
   });
 
   test("shooting the moon gives everyone else 26", () => {
-    const all = cards(
-      "QS AH 2H 3H 4H 5H 6H 7H 8H 9H TH JH QH KH",
-    );
+    const all = cards("QS AH 2H 3H 4H 5H 6H 7H 8H 9H TH JH QH KH");
     const round = { taken: [[], all, [], []] };
     expect(scoreRound(round, [5, 50, 0, 0])).toEqual({
       scores: [31, 50, 26, 26],

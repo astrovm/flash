@@ -36,8 +36,7 @@ export const isPointCard = (card) =>
 export const pointsOf = (cards) =>
   cards.reduce(
     (total, card) =>
-      total +
-      (card === QUEEN_OF_SPADES ? 13 : suitOf(card) === HEARTS ? 1 : 0),
+      total + (card === QUEEN_OF_SPADES ? 13 : suitOf(card) === HEARTS ? 1 : 0),
     0,
   );
 
@@ -67,7 +66,8 @@ export const dealHands = (random) => {
   return hands;
 };
 
-export const inHand = (slot) => slot.state === IN_HAND || slot.state === SELECTED;
+export const inHand = (slot) =>
+  slot.state === IN_HAND || slot.state === SELECTED;
 export const handCards = (slots) =>
   slots.filter((slot) => slot.card !== -1).map((slot) => slot.card);
 
@@ -147,7 +147,8 @@ export const forgetCards = (unseen, cards) =>
 
 const unseenBetween = (unseen, suit, from, to) => {
   let count = 0;
-  for (let rank = from; rank <= to; rank += 1) if (unseen[suit][rank]) count += 1;
+  for (let rank = from; rank <= to; rank += 1)
+    if (unseen[suit][rank]) count += 1;
   return count;
 };
 const unseenAbove = (unseen, suit, rank) =>
@@ -187,7 +188,9 @@ export const trickWinner = (trick) => {
 export const checkMove = (slots, index, round, seat = 0) => {
   const { trick } = round;
   const card = slots[index].card;
-  const held = slots.filter((slot) => slot.card !== -1).map((slot) => slot.card);
+  const held = slots
+    .filter((slot) => slot.card !== -1)
+    .map((slot) => slot.card);
   const lead = leadCard(trick);
   if (trick.leader === seat) {
     if (
@@ -403,7 +406,8 @@ const chooseLead = (info, unseen, round) => {
 const chooseDiscard = (info, unseen, round) => {
   const firstTrick = info.lead === TWO_OF_CLUBS;
   if (!firstTrick && info.queen !== -1) return info.queen;
-  if (!round.queenPlayed && info.highRank[SPADES] > 11) return info.high[SPADES];
+  if (!round.queenPlayed && info.highRank[SPADES] > 11)
+    return info.high[SPADES];
   let suit = riskiestSuit(info, unseen, !firstTrick);
   // The queen can't go on the first trick.
   if (
@@ -416,7 +420,8 @@ const chooseDiscard = (info, unseen, round) => {
     else suit = HEARTS;
   }
   const highest = info.high[suit];
-  if (!moonWatch(round, info.seat) || highest === info.low[suit]) return highest;
+  if (!moonWatch(round, info.seat) || highest === info.low[suit])
+    return highest;
   // The suit holds a lower card, since its lowest isn't its highest.
   return nextLower(info, highest);
 };
@@ -596,9 +601,7 @@ export const collectTrick = (round, winner) => {
 // Adds the hand's points to the running scores. Taking every heart and
 // the queen gives everyone else 26 instead.
 export const scoreRound = (round, scores) => {
-  const next = scores.map(
-    (score, seat) => score + pointsOf(round.taken[seat]),
-  );
+  const next = scores.map((score, seat) => score + pointsOf(round.taken[seat]));
   const shooter = round.taken.findIndex((cards) => cards.length === 14);
   if (shooter === -1) return { scores: next, shooter };
   return {
@@ -615,12 +618,16 @@ export const addToSheet = (sheet, scores) =>
   [...sheet, [...scores]].slice(-SHEET_ROWS);
 
 export const GAME_OVER_SCORE = 100;
-export const isGameOver = (scores) =>
-  Math.max(...scores) >= GAME_OVER_SCORE;
+export const isGameOver = (scores) => Math.max(...scores) >= GAME_OVER_SCORE;
 export const lowestScore = (scores) => Math.min(...scores);
 
 // Places count the opponents with fewer points; ties share the better one.
-export const PLACES = ["First Place", "Second Place", "Third Place", "Last Place"];
+export const PLACES = [
+  "First Place",
+  "Second Place",
+  "Third Place",
+  "Last Place",
+];
 export const placeOf = (scores, seat = 0) =>
   scores.filter((score, other) => other !== seat && score < scores[seat])
     .length;
