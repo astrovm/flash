@@ -92,17 +92,10 @@ const openXPProgram = (programId, options = {}) => {
     }
     program = program.loaded;
   }
-  const activateNativeGame = () => {
-    if (program.kind !== "native-game") return;
-    if (program.offlineGameId) {
-      saveBundledGameForOffline(program.offlineGameId);
-    }
-  };
   const existing = openWindows.get(programId);
   if (existing) {
     restoreWindow(programId);
     focusWindow(programId);
-    activateNativeGame();
     return options.file
       ? existing.mountedApplication?.openFile?.(options.file)
       : existing;
@@ -175,7 +168,6 @@ const openXPProgram = (programId, options = {}) => {
   focusWindow(programId);
   // Some XP programs, like Spider Solitaire, open maximized.
   if (program.window.startMaximized) toggleMaximize(programId);
-  activateNativeGame();
   return win;
 };
 

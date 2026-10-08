@@ -260,8 +260,7 @@ export async function loadShell({
     availableVersion: null,
     bundledGames: [
       { id: "freecell" },
-      { id: "calculator" },
-      { id: "hearts" },
+      { id: "inside-the-firewall" },
       { id: "solitaire" },
       { id: "spider-solitaire" },
     ],

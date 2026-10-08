@@ -1158,7 +1158,7 @@ describe("Windows XP shell", () => {
     const shell = await loadShell({
       offlineSettings: { savePlayedGamesOffline: false },
     });
-    shell.window.location.hash = "#calculator";
+    shell.window.location.hash = "#inside-the-firewall";
     await login(shell);
     await flushShell();
     expect(shell.offlineDownloads).toEqual([]);
@@ -1174,7 +1174,7 @@ describe("Windows XP shell", () => {
     });
     const warnings: unknown[][] = [];
     shell.window.console.warn = (...args: unknown[]) => warnings.push(args);
-    shell.window.location.hash = "#calculator";
+    shell.window.location.hash = "#inside-the-firewall";
     await login(shell);
     await flushShell();
     await flushShell();
@@ -1184,7 +1184,7 @@ describe("Windows XP shell", () => {
       ),
     ).toEqual([
       "Could not save game for offline play:",
-      "Calculator",
+      "Inside the Firewall",
       expect.any(Error),
     ]);
   });
