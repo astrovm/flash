@@ -37,6 +37,10 @@ const calculatorApplication = defineLazyApplication(calculatorMetadata, () =>
     (module) => module.calculatorApplication,
   ),
 );
+import { applicationMetadata as heartsMetadata } from "./hearts/metadata.js";
+const heartsApplication = defineLazyApplication(heartsMetadata, () =>
+  import("./hearts/index.js").then((module) => module.heartsApplication),
+);
 import { applicationMetadata as pinballMetadata } from "./pinball/metadata.js";
 const pinballApplication = defineLazyApplication(pinballMetadata, () =>
   import("./pinball/index.js").then((module) => module.pinballApplication),
@@ -48,6 +52,7 @@ export const applicationRegistry = createApplicationRegistry([
   ...systemApplications,
   calculatorApplication,
   freecellApplication,
+  heartsApplication,
   minesweeperApplication,
   solitaireApplication,
   spiderApplication,

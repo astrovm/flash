@@ -100,7 +100,7 @@ const isCorner = (x, y) =>
   );
 
 // cards.dll draws every card's outline in black, over the red outline of
-// the hearts and diamonds bitmaps.
+// the hearts and diamonds bitmaps, except when it inverts a card.
 const isOutline = (x, y) => {
   const right = CARD_WIDTH - 1;
   const bottom = CARD_HEIGHT - 1;
@@ -129,8 +129,12 @@ const renderFace = (image, card, inverted) => {
         data[offset + 3] = 0;
         continue;
       }
-      if (isOutline(x, y)) data.fill(0, offset, offset + 3);
-      if (!inverted) continue;
+      // Inverted, cards.dll leaves the bitmap's own outline, so red
+      // cards' outlines turn cyan.
+      if (!inverted) {
+        if (isOutline(x, y)) data.fill(0, offset, offset + 3);
+        continue;
+      }
       if (isMonochromeBlack(card) && data[offset] === 255) {
         data[offset] = 0;
         continue;
