@@ -164,6 +164,11 @@
     "member": "I386/XPSTARTU.WA_",
     "sha256": "8f859ebb90247036ced11db854848abe1434dc3ffdfa5795f7c5f06db9a423d5"
   },
+  "assets/xp/sounds/ding.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/XPDING.WA_",
+    "sha256": "20fc59d9f846bc32b899880fae0878208856718b75e6158526308b900af8a9bd"
+  },
   "assets/xp/cursor.cur": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/ARROW_M.CU_",
@@ -412,6 +417,19 @@
       "language": 1033,
       "frame": "16x16x32",
       "pixelSha256": "01704878decef1ef84c9a05a6bad7ef2ba0f3321f0cfaa4d443a6c6ccaefeabe"
+    }
+  },
+  "assets/xp/calculator/Calculator-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CALC.EX_",
+    "sha256": "c381d8e7cc7091b4a305ca950e812de2d29d0863661e9ad44caa80c2770abcb7",
+    "resource": {
+      "parentSha256": "37121ecb7c1e112b735bd21b0dfe3e526352ecb98c434c5f40e6a2a582380cdd",
+      "type": 14,
+      "id": "SC",
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "8a39c4cde28a9cc838c5deb90a019ad2dde738d619593e77863514fd8159ba88"
     }
   },
   "assets/xp/icons/CommandPrompt.png": {
@@ -2778,6 +2796,19 @@
       "language": 1033,
       "frame": "32x32x32",
       "pixelSha256": "e8fedabf151d9342d15f13d268f8cf014cb165c88bcdf257f9eb6ac0595f0b5a"
+    }
+  },
+  "assets/xp/hearts/Hearts-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSHEARTS.EX_",
+    "sha256": "99a9b27427a4f9ba3e76983a292d0eb083901950ed29210010a713f96c3e6bbd",
+    "resource": {
+      "parentSha256": "df1f92fa1102e7956867a47f27c76f2ca404a354a01387b7165745e9c41f0d7e",
+      "type": 14,
+      "id": 31234,
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "6ff7bd6ba45ff938fefa6cadf7f9892468198272694aca5b64ac4d0ef4d8a3b6"
     }
   },
   "assets/xp/spider/Spider-32.png": {
@@ -15967,6 +15998,32 @@
       "language": 1033,
       "frame": "raw",
       "pixelSha256": "18bc62150edbb6bc61908d59222f44729fa60292f4ace7c615a6667ce6bdf676"
+    }
+  },
+  "assets/xp/hearts/HeartsBroken.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSHEARTS.EX_",
+    "sha256": "006b3acdb317f519bf9dc3f4490f0ec0660ab89a53d4a233406111fe48481d5d",
+    "resource": {
+      "parentSha256": "df1f92fa1102e7956867a47f27c76f2ca404a354a01387b7165745e9c41f0d7e",
+      "type": "WAVE",
+      "id": 401,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "006b3acdb317f519bf9dc3f4490f0ec0660ab89a53d4a233406111fe48481d5d"
+    }
+  },
+  "assets/xp/hearts/Queen.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/MSHEARTS.EX_",
+    "sha256": "b13fb3dd3c57fe86282dd8e5e3d0a30197ecdc5d55ee43d835ec080090da1ce8",
+    "resource": {
+      "parentSha256": "df1f92fa1102e7956867a47f27c76f2ca404a354a01387b7165745e9c41f0d7e",
+      "type": "WAVE",
+      "id": 402,
+      "language": 1033,
+      "frame": "raw",
+      "pixelSha256": "b13fb3dd3c57fe86282dd8e5e3d0a30197ecdc5d55ee43d835ec080090da1ce8"
     }
   },
   "assets/xp/fonts/System.fnt": {

@@ -722,7 +722,7 @@ test("offline initialization failures and played-game downloads are reported", a
     configurable: true,
     value: false,
   });
-  s.window.history.replaceState(null, "", "#hearts");
+  s.window.history.replaceState(null, "", "#inside-the-firewall");
   s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
   await flushShell();
   expect(warnings.length + errors.length).toBeGreaterThan(0);

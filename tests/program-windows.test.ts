@@ -110,6 +110,45 @@ test("programs report load failures and honor custom window options", async () =
   );
 });
 
+test("programs launch other applications, save files and set the wallpaper", async () => {
+  const s = await login(await loadShell());
+  let context;
+  overrideRegistry(s, {
+    __notepad: {
+      id: "__notepad",
+      title: "Notepad",
+      icon: "Notepad.png",
+      kind: "program",
+      window: { width: 200, height: 120 },
+      mount: (programContext) => {
+        context = programContext;
+        return { element: s.document.createElement("div"), unmount() {} };
+      },
+    },
+  });
+  await runCommand(s, "notepad");
+
+  expect(context.launchApplication("missing")).toBeFalse();
+  expect(context.launchApplication("__my-documents")).toBeTrue();
+  await settle();
+  expect(
+    !!s.document.querySelector('.xp-window[data-game="__my-documents"]'),
+  ).toBeTrue();
+
+  const fs = s.window.VirtualFS;
+  const file = context.createFile(fs.MY_DOCUMENTS, "saved.txt", "old");
+  expect(fs.getContent(file.id)).toBe("old");
+  context.setFileContent(file.id, "new");
+  expect(fs.getContent(file.id)).toBe("new");
+
+  context.setWallpaper("data:image/png;base64,AAAA");
+  const desktop = s.document.getElementById("desktop");
+  expect(desktop.dataset.wallpaperPosition).toBe("center");
+  expect(desktop.style.getPropertyValue("--desktop-background")).toBe(
+    'url("data:image/png;base64,AAAA")',
+  );
+});
+
 test("desktop items open games, system windows, and survive failing files", async () => {
   const s = await login(
     await loadShell({

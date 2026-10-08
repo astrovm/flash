@@ -1,5 +1,4 @@
 import { defineApplication } from "../core/application.js";
-import { boxedWineApplications } from "../core/boxedwine-applications.js";
 import { applicationMetadata } from "./metadata.js";
 
 const USER = "astro";
@@ -71,12 +70,8 @@ const PROGRAM_IMAGES = {
   "__command-prompt": ["cmd.exe", 1612],
   "__volume-control": ["sndvol32.exe", 2148],
   "__task-manager": ["taskmgr.exe", 3744],
-  ...Object.fromEntries(
-    boxedWineApplications.map((application) => [
-      `__${application.id}`,
-      [application.executable.split("/").at(-1), 3360],
-    ]),
-  ),
+  __calculator: ["calc.exe", 3360],
+  __hearts: ["mshearts.exe", 3360],
 };
 const GAME_IMAGES = {
   swf: ["SAFlashPlayer.exe", 18240],

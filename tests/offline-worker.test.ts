@@ -31,7 +31,7 @@ describe("offline service worker", () => {
       open: async () => ({
         match: async (key) =>
           key ===
-          "https://flash.example/vendor/boxedwine/26R1/boxedwine.12345678.wasm"
+          "https://flash.example/vendor/scummvm/2026.3.0/scummvm.12345678.wasm"
             ? stale.clone()
             : undefined,
       }),
@@ -40,7 +40,7 @@ describe("offline service worker", () => {
     require(workerPath);
 
     const request = new Request(
-      "https://flash.example/releases/26.08.01-1234567/vendor/boxedwine/26R1/boxedwine.12345678.wasm",
+      "https://flash.example/releases/26.08.01-1234567/vendor/scummvm/2026.3.0/scummvm.12345678.wasm",
     );
     let responsePromise;
     listeners.get("fetch")({

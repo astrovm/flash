@@ -1,11 +1,5 @@
-// @ts-nocheck -- Happy DOM's element types intentionally replace lib.dom here.
-import { afterEach, describe, expect, test } from "bun:test";
-import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
+// @ts-nocheck -- Calculator's window, used through Happy DOM.
+import { afterEach, expect, test } from "bun:test";
 import {
   cleanupShells,
   flushShell,
@@ -13,635 +7,535 @@ import {
   login,
 } from "./helpers/shell-harness";
 
-const require = createRequire(import.meta.url);
-const { unzipSync } = require("fflate");
-const projectDirectory = join(dirname(fileURLToPath(import.meta.url)), "..");
-const calculatorDirectory = join(
-  projectDirectory,
-  "site",
-  "iframe",
-  "calculator",
-);
-const sha256 = (content: Uint8Array) =>
-  createHash("sha256").update(content).digest("hex");
-
 afterEach(cleanupShells);
 
-const openCalculator = (shell) => {
-  shell.document.getElementById("start-button").click();
-  shell.document.getElementById("all-programs-button").click();
-  const flyouts = shell.document.getElementById("start-menu-flyouts");
-  flyouts.querySelector('[data-program-id="accessories"]').click();
-  flyouts.querySelector('[data-program-id="calculator"]').click();
-  const calculator = shell.document.querySelector(
-    '.xp-window[data-game="__calculator"]',
+const open = async ({
+  storage = {},
+  clipboard = "",
+  clipboardFails = false,
+  noClipboard = false,
+  failStorage = false,
+} = {}) => {
+  const sounds = [];
+  const copied = [];
+  const s = await login(
+    await loadShell({
+      initialStorage: storage,
+      beforeScripts: (window) => {
+        window.Audio = class {
+          constructor(source) {
+            this.source = source;
+            sounds.push(this);
+          }
+          // Browsers can refuse to play before the page is used.
+          play() {
+            return Promise.reject(new Error("blocked"));
+          }
+          pause() {
+            this.paused = true;
+          }
+        };
+        Object.defineProperty(window.navigator, "clipboard", {
+          configurable: true,
+          value: noClipboard
+            ? undefined
+            : {
+                writeText: (text) => {
+                  copied.push(text);
+                  return clipboardFails
+                    ? Promise.reject(new Error("denied"))
+                    : Promise.resolve();
+                },
+                readText: () =>
+                  clipboardFails
+                    ? Promise.reject(new Error("denied"))
+                    : Promise.resolve(clipboard),
+              },
+        });
+      },
+    }),
   );
-  return calculator;
-};
-
-const launchCalculator = async () => {
-  const shell = await login(await loadShell());
-  const calculator = openCalculator(shell);
-  return { shell, calculator };
-};
-
-const sendNativeWindow = (shell, detail, runtimeWindow) => {
-  const frame = shell.document.querySelector(".boxedwine-shared-runtime-frame");
-  const event = new shell.window.Event("message");
-  Object.defineProperties(event, {
-    data: {
-      value: { type: "boxedwine-native-window", window: detail },
-    },
-    origin: { value: shell.window.location.origin },
-    source: { value: runtimeWindow || frame.contentWindow },
-  });
-  shell.window.dispatchEvent(event);
-};
-
-// Happy DOM fires an error on the runtime iframe, which would restart the
-// runtime and drop its native windows; suppress it so lifecycle messages that
-// arrive after the first frame still reach the shell.
-const silenceRuntimeFrameErrors = (shell) => {
-  const addFrameListener =
-    shell.window.HTMLIFrameElement.prototype.addEventListener;
-  shell.window.HTMLIFrameElement.prototype.addEventListener = function (
+  if (failStorage)
+    s.window.localStorage.setItem = () => {
+      throw new Error("full");
+    };
+  s.window.history.replaceState(null, "", "#calculator");
+  s.window.dispatchEvent(new s.window.HashChangeEvent("hashchange"));
+  const settle = async (times = 6) => {
+    for (let index = 0; index < times; index += 1) await flushShell();
+  };
+  await settle();
+  const win = s.document.querySelector('.xp-window[data-game="__calculator"]');
+  const display = () => win.querySelector(".calculator-display").textContent;
+  const button = (command) =>
+    win.querySelector(`.calculator-key[data-command="${command}"]`);
+  const click = (...commands) =>
+    commands.forEach((command) => button(command).click());
+  const key = (name, init = {}) => {
+    const event = new s.window.KeyboardEvent("keydown", {
+      key: name,
+      bubbles: true,
+      cancelable: true,
+      ...init,
+    });
+    win.querySelector(".xp-calculator").dispatchEvent(event);
+    return event;
+  };
+  const type = (text) => [...text].forEach((character) => key(character));
+  const menu = async (name, command) => {
+    win.querySelector(`[data-calculator-menu="${name}"]`).click();
+    const item = win.querySelector(`.tm-menu [data-command="${command}"]`);
+    item.click();
+    await settle();
+  };
+  const menuItems = (name) => {
+    win.querySelector(`[data-calculator-menu="${name}"]`).click();
+    const items = [...win.querySelectorAll(".tm-menu > button")].map(
+      (item) =>
+        `${item.textContent}${item.classList.contains("radio") ? " (o)" : ""}${item.classList.contains("checked") ? " (v)" : ""}`,
+    );
+    win.querySelector(`[data-calculator-menu="${name}"]`).click();
+    return items;
+  };
+  const paste = (text, data = true) => {
+    const event = new s.window.Event("paste", {
+      bubbles: true,
+      cancelable: true,
+    });
+    event.clipboardData = data ? { getData: () => text } : null;
+    win.querySelector(".xp-calculator").dispatchEvent(event);
+  };
+  const saved = () =>
+    JSON.parse(s.window.localStorage.getItem("calculatorSettings"));
+  const statisticsBox = () =>
+    [...s.document.querySelectorAll(".xp-dialog")].find(
+      (dialog) =>
+        dialog.querySelector(".title-text").textContent === "Statistics Box",
+    );
+  return {
+    s,
+    win,
+    display,
+    button,
+    click,
+    key,
     type,
-    ...arguments_
-  ) {
-    if (type === "error") return;
-    return addFrameListener.call(this, type, ...arguments_);
+    menu,
+    menuItems,
+    paste,
+    saved,
+    settle,
+    sounds,
+    copied,
+    statisticsBox,
   };
 };
 
-const nativeLaunchToken = (shell) =>
-  new URL(
-    shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
-  ).searchParams.get("launchToken");
+test("opens in Standard view, laid out from dialog 102", async () => {
+  const h = await open();
+  expect(h.win.style.width).toBe("260px");
+  expect(h.win.style.height).toBe("260px");
+  expect(h.win.classList.contains("dialog-frame")).toBeTrue();
+  expect(Boolean(h.win.querySelector(".resize-handle"))).toBeFalse();
+  expect(h.win.querySelector(".maximize-btn").disabled).toBeTrue();
+  expect(h.display()).toBe("0.");
+  const client = h.win.querySelector(".calculator-client");
+  expect(client.style.width).toBe("254px");
+  expect(client.style.height).toBe("208px");
+  const display = h.win.querySelector(".calculator-display");
+  expect([display.style.left, display.style.top]).toEqual(["8px", "2px"]);
+  expect([display.style.width, display.style.height]).toEqual([
+    "239px",
+    "23px",
+  ]);
+  const memoryClear = h.button("mc");
+  expect([memoryClear.style.left, memoryClear.style.top]).toEqual([
+    "8px",
+    "73px",
+  ]);
+  expect([memoryClear.style.width, memoryClear.style.height]).toEqual([
+    "36px",
+    "29px",
+  ]);
+  expect(memoryClear.classList.contains("red")).toBeTrue();
+  expect(h.button("digit7").classList.contains("blue")).toBeTrue();
+  expect(h.button("sqrt").textContent).toBe("sqrt");
+  expect(h.win.querySelectorAll(".calculator-key")).toHaveLength(27);
+  expect(Boolean(h.win.querySelector(".calculator-choice"))).toBeFalse();
+  expect(h.win.querySelector(".title-text").textContent).toBe("Calculator");
+});
 
-const showNativeCalculator = (
-  shell,
-  id = 41,
-  runtimeWindow = shell.document.querySelector(
-    ".boxedwine-shared-runtime-frame",
-  ).contentWindow,
-  { includeFrame = true, capabilities = {} } = {},
-) => {
-  runtimeWindow.__boxedwineTestFrames ||= new Map();
-  runtimeWindow.BoxedWineFrames ||= {
-    read(windowId, previousGeneration) {
-      const frame = runtimeWindow.__boxedwineTestFrames.get(windowId);
-      return frame?.generation === previousGeneration ? null : frame;
-    },
-    setProcessVisible() {},
-  };
-  const launchToken = new URL(
-    shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
-  ).searchParams.get("launchToken");
-  sendNativeWindow(
-    shell,
-    {
-      type: "created",
-      id,
-      parentId: 1,
-      processId: 10,
-      launchToken,
-      x: 0,
-      y: 0,
-      width: 260,
-      height: 260,
-      canResize: false,
-      canMaximize: false,
-      canMinimize: true,
-      ...capabilities,
-    },
-    runtimeWindow,
+test("buttons calculate", async () => {
+  const h = await open();
+  h.click("digit2", "add", "digit3", "mul", "digit4", "equals");
+  expect(h.display()).toBe("20.");
+  h.click("clear", "digit9", "sqrt");
+  expect(h.display()).toBe("3.");
+  h.click("ms");
+  expect(h.win.querySelector(".calculator-indicator").textContent).toBe(" M");
+  h.click("mc");
+  expect(h.win.querySelector(".calculator-indicator").textContent).toBe("");
+  h.click("digit1", "div", "digit0", "equals");
+  expect(h.display()).toBe("Cannot divide by zero.");
+  h.click("digit5");
+  expect(h.sounds.at(-1).source).toBe("assets/xp/sounds/ding.wav");
+  h.click("digit5");
+  expect(h.sounds.at(-2).paused).toBeTrue();
+  h.click("clearEntry");
+  expect(h.display()).toBe("0.");
+});
+
+test("the keyboard follows calc.exe's accelerators", async () => {
+  const h = await open();
+  h.type("12+3=");
+  expect(h.display()).toBe("15.");
+  h.key("Escape");
+  h.type("200+10%");
+  expect(h.display()).toBe("20.");
+  h.key("Enter");
+  expect(h.display()).toBe("220.");
+  h.key("Escape");
+  h.type("9@");
+  expect(h.display()).toBe("3.");
+  h.type("4r");
+  expect(h.display()).toBe("0.25");
+  h.key("Escape");
+  h.type("123");
+  h.key("Backspace");
+  expect(h.display()).toBe("12.");
+  h.key("F9");
+  expect(h.display()).toBe("-12.");
+  h.key("Delete");
+  expect(h.display()).toBe("0.");
+  h.type("1,5");
+  expect(h.display()).toBe("1.5");
+  h.key("m", { ctrlKey: true });
+  expect(h.win.querySelector(".calculator-indicator").textContent).toBe(" M");
+  h.key("Escape");
+  h.key("r", { ctrlKey: true });
+  expect(h.display()).toBe("1.5");
+  h.key("p", { ctrlKey: true });
+  h.key("r", { ctrlKey: true });
+  expect(h.display()).toBe("3.");
+  h.key("l", { ctrlKey: true });
+  expect(h.win.querySelector(".calculator-indicator").textContent).toBe("");
+  // Keys without a command, Alt and Meta combinations, and Ctrl+Shift
+  // combinations other than Ctrl+Shift+K do nothing.
+  for (const [name, init] of [
+    ["q", {}],
+    ["?", {}],
+    ["5", { altKey: true }],
+    ["5", { metaKey: true }],
+    ["z", { ctrlKey: true }],
+    ["s", { ctrlKey: true, shiftKey: true }],
+  ])
+    expect([name, h.key(name, init).defaultPrevented]).toEqual([name, false]);
+  expect(h.display()).toBe("3.");
+  // The flash: the button looks pressed for 20 ms.
+  h.key("7");
+  expect(h.button("digit7").classList.contains("pressed")).toBeTrue();
+  await h.s.advanceTime(40);
+  expect(h.button("digit7").classList.contains("pressed")).toBeFalse();
+  // Keys for buttons Standard lacks still work.
+  h.key("Escape");
+  h.type("30s");
+  expect(h.display()).toBe("0.5");
+});
+
+test("Scientific view, with bases, word sizes, angles, Inv and Hyp", async () => {
+  const h = await open();
+  await h.menu("view", "scientific");
+  expect(h.win.style.width).toBe("480px");
+  expect(h.win.style.height).toBe("317px");
+  expect(h.saved()).toEqual({ view: "scientific", grouping: false });
+  expect(h.win.querySelectorAll(".calculator-key")).toHaveLength(58);
+  expect(h.button("sin").classList.contains("purple")).toBeTrue();
+  expect(h.button("pi").classList.contains("blue")).toBeTrue();
+  expect(h.button("digit10").disabled).toBeTrue();
+  expect(h.button("ave").disabled).toBeTrue();
+  const radio = (command) =>
+    h.win.querySelector(`.calculator-choice input`) &&
+    [...h.win.querySelectorAll(".calculator-choice")].find(
+      (choice) => choice.textContent === command,
+    );
+  expect(radio("Dec").querySelector("input").checked).toBeTrue();
+  expect(radio("Degrees").querySelector("input").checked).toBeTrue();
+  expect(radio("Qword").hidden).toBeTrue();
+  h.type("2+3*4=");
+  expect(h.display()).toBe("14.");
+  h.type("255");
+  radio("Hex").querySelector("input").click();
+  expect(h.display()).toBe("FF");
+  expect(radio("Degrees").hidden).toBeTrue();
+  expect(radio("Qword").querySelector("input").checked).toBeTrue();
+  expect(h.button("digit10").disabled).toBeFalse();
+  expect(h.button("sin").disabled).toBeTrue();
+  expect(h.button("digit9").disabled).toBeFalse();
+  h.key("F4");
+  expect(radio("Byte").querySelector("input").checked).toBeTrue();
+  h.key("F8");
+  expect(h.display()).toBe("11111111");
+  expect(h.button("digit2").disabled).toBeTrue();
+  h.key("F6");
+  h.key("F3");
+  expect(radio("Radians").querySelector("input").checked).toBeTrue();
+  h.key("Escape");
+  h.type("1");
+  const inv = radio("Inv").querySelector("input");
+  inv.click();
+  expect(inv.checked).toBeTrue();
+  radio("Hyp").querySelector("input").click();
+  expect(radio("Hyp").querySelector("input").checked).toBeTrue();
+  h.type("s");
+  expect(h.display()).toBe("0.88137358701954302523260932497979");
+  expect(inv.checked).toBeFalse();
+  h.type("(2+3");
+  expect(h.win.querySelectorAll(".calculator-indicator")[1].textContent).toBe(
+    "(=1",
   );
-  sendNativeWindow(
-    shell,
-    { type: "title", id, title: "Calculator" },
-    runtimeWindow,
+  h.type(")");
+  expect(h.win.querySelectorAll(".calculator-indicator")[1].textContent).toBe(
+    "",
   );
-  sendNativeWindow(shell, { type: "mapped", id }, runtimeWindow);
-  if (includeFrame)
-    sendNativeWindow(
-      shell,
-      {
-        type: "metadata",
-        lifecycleType: "bounds",
-        id,
-        parentId: 1,
-        processId: 10,
-        launchToken,
-        outerX: 0,
-        outerY: 0,
-        outerWidth: 260,
-        outerHeight: 260,
-        clientWidth: 260,
-        clientHeight: 209,
-        frameLeft: 0,
-        frameTop: 51,
-        menuHeight: 23,
-        frameRight: 0,
-        frameBottom: 0,
-        canResize: false,
-        canMaximize: false,
-        canMinimize: true,
-        ...capabilities,
-        win32Metrics: true,
-      },
-      runtimeWindow,
-    );
-  const generation =
-    (runtimeWindow.__boxedwineTestFrames.get(id)?.generation || 0) + 1;
-  runtimeWindow.__boxedwineTestFrames.set(id, {
-    generation,
-    width: 260,
-    height: 260,
-    rgba: new Uint8ClampedArray(260 * 260 * 4),
+  h.type("7%3=");
+  expect(h.display()).toBe("1.");
+  await h.menu("view", "standard");
+  expect(h.win.style.width).toBe("260px");
+  expect(h.saved()).toEqual({ view: "standard", grouping: false });
+  // Choosing the current view again changes nothing.
+  await h.menu("view", "standard");
+  expect(h.win.style.width).toBe("260px");
+});
+
+test("the View menu follows the base, and digit grouping persists", async () => {
+  const h = await open({
+    storage: { calculatorSettings: JSON.stringify({ view: "scientific" }) },
   });
-  sendNativeWindow(
-    shell,
-    { type: "frame", id, width: 260, height: 260, generation },
-    runtimeWindow,
+  expect(h.win.style.width).toBe("480px");
+  // Centered on Happy DOM's empty desktop, which leaves the 8-pixel margin.
+  expect(h.win.style.left).toBe("8px");
+  expect(h.menuItems("edit")).toEqual(["CopyCtrl+C", "PasteCtrl+V"]);
+  expect(h.menuItems("help")).toEqual(["About Calculator"]);
+  expect(h.menuItems("view")).toEqual([
+    "Standard",
+    "Scientific (o)",
+    "HexF5",
+    "DecimalF6 (o)",
+    "OctalF7",
+    "BinaryF8",
+    "DegreesF2 (o)",
+    "RadiansF3",
+    "GradsF4",
+    "Digit grouping",
+  ]);
+  await h.menu("view", "hex");
+  expect(h.menuItems("view")).toEqual([
+    "Standard",
+    "Scientific (o)",
+    "HexF5 (o)",
+    "DecimalF6",
+    "OctalF7",
+    "BinaryF8",
+    "QwordF12 (o)",
+    "DwordF2",
+    "WordF3",
+    "ByteF4",
+    "Digit grouping",
+  ]);
+  await h.menu("view", "grouping");
+  expect(h.saved()).toEqual({ view: "scientific", grouping: true });
+  h.type("ffffffff");
+  expect(h.display()).toBe("FFFF FFFF");
+  expect(h.menuItems("view").at(-1)).toBe("Digit grouping (v)");
+  // Clicking a menu twice closes it, and so does a click elsewhere.
+  const viewMenu = h.win.querySelector('[data-calculator-menu="view"]');
+  viewMenu.click();
+  viewMenu.click();
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeFalse();
+  viewMenu.click();
+  h.win
+    .querySelector(".tm-menu")
+    .dispatchEvent(
+      new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+    );
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeTrue();
+  viewMenu.click();
+  viewMenu.click();
+  h.s.document.body.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
   );
-  return runtimeWindow;
-};
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeFalse();
+  h.s.document.body.dispatchEvent(
+    new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+  );
+  // A key closes an open menu and still runs.
+  viewMenu.click();
+  h.key("Escape");
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeFalse();
+});
 
-describe("Windows XP Calculator through BoxedWine", () => {
-  test("launches the authentic XP executable in its fixed Standard window", async () => {
-    const { shell, calculator } = await launchCalculator();
-    const frame = shell.document.querySelector(
-      ".boxedwine-shared-runtime-frame",
-    );
-    const url = new URL(frame.src);
-    showNativeCalculator(shell);
-    await flushShell();
+test("missing, corrupt or unwritable settings fall back to Standard", async () => {
+  for (const value of ["{", "null", '"scientific"', '{"view":"other"}']) {
+    const h = await open({ storage: { calculatorSettings: value } });
+    expect(h.win.style.width).toBe("260px");
+    cleanupShells();
+  }
+  const h = await open({ failStorage: true });
+  await h.menu("view", "scientific");
+  expect(h.win.style.width).toBe("480px");
+});
 
-    expect(calculator.style.width).toBe("260px");
-    expect(calculator.style.height).toBe("260px");
-    expect(
-      calculator.classList.contains("xp-boxedwine-shared-window"),
-    ).toBeTrue();
-    const resizeHandles = [...calculator.querySelectorAll(".resize-handle")];
-    expect(resizeHandles.length).toBeGreaterThan(0);
-    expect(resizeHandles.every((handle) => handle.hidden)).toBeTrue();
-    expect(
-      calculator.querySelector(".boxedwine-shared-app-host"),
-    ).not.toBeNull();
-    expect(url.searchParams.get("archive")).toBe("xp-runtime");
-    expect(url.searchParams.get("root")).toBe("xp-accessories");
-    expect(url.searchParams.get("executable")).toBe("calculator/calc.exe");
-    expect(url.searchParams.get("resolution")).toBe("1024x738");
-    expect(url.searchParams.get("persistent")).toBe("true");
-    expect(url.searchParams.get("cache")).toBe("false");
-    expect(url.searchParams.get("trace")).toBe("false");
+test("Copy and Paste", async () => {
+  const h = await open({ clipboard: "12*3=" });
+  h.type("8");
+  await h.menu("edit", "copy");
+  expect(h.copied).toEqual(["8"]);
+  h.key("c", { ctrlKey: true });
+  h.key("Insert", { ctrlKey: true });
+  expect(h.copied).toEqual(["8", "8", "8"]);
+  h.type("+0.5=");
+  h.key("c", { ctrlKey: true });
+  expect(h.copied.at(-1)).toBe("8.5");
+  await h.menu("edit", "paste");
+  expect(h.display()).toBe("36.");
+  h.key("Insert", { shiftKey: true });
+  await h.settle();
+  expect(h.display()).toBe("36.");
+  // Ctrl+V waits for the browser's paste event.
+  expect(h.key("v", { ctrlKey: true }).defaultPrevented).toBeFalse();
+  h.paste("2+2=");
+  expect(h.display()).toBe("4.");
+  // Garbage stops the paste at the first character calc.exe has no key for.
+  h.key("Escape");
+  h.paste("12😀3");
+  expect(h.display()).toBe("12.");
+  h.key("Escape");
+  h.paste("١٢٣");
+  expect(h.display()).toBe("0.");
+  h.paste("1/0=5+");
+  expect(h.display()).toBe("Cannot divide by zero.");
+  h.key("Escape");
+  h.paste("", false);
+  expect(h.display()).toBe("0.");
+  // Standard's % is percent, in pastes too.
+  h.paste("200+10%");
+  expect(h.display()).toBe("20.");
+});
+
+test("a refused or missing clipboard changes nothing", async () => {
+  const h = await open({ clipboardFails: true });
+  h.type("5");
+  await h.menu("edit", "copy");
+  await h.menu("edit", "paste");
+  expect(h.display()).toBe("5.");
+  cleanupShells();
+  const bare = await open({ noClipboard: true });
+  bare.type("5");
+  await bare.menu("edit", "copy");
+  await bare.menu("edit", "paste");
+  expect(bare.display()).toBe("5.");
+});
+
+test("About Calculator, from the menu or Ctrl+Shift+K", async () => {
+  const h = await open();
+  await h.menu("help", "about");
+  const about = [...h.s.document.querySelectorAll(".xp-dialog")].at(-1);
+  expect(about.querySelector(".title-text").textContent).toBe(
+    "About Calculator",
+  );
+  expect(about.querySelector(".about-windows-icon").getAttribute("src")).toBe(
+    "assets/xp/calculator/Calculator-32.png",
+  );
+  // Keys go to the dialog while it is open.
+  h.type("5");
+  expect(h.display()).toBe("0.");
+  about.querySelector('[data-action="ok"]').click();
+  h.key("K", { ctrlKey: true, shiftKey: true });
+  expect(h.s.document.querySelectorAll(".about-windows-dialog")).toHaveLength(
+    1,
+  );
+});
+
+test("the Statistics Box", async () => {
+  const h = await open({
+    storage: { calculatorSettings: JSON.stringify({ view: "scientific" }) },
   });
+  h.key("s", { ctrlKey: true });
+  const box = h.statisticsBox();
+  expect(Boolean(box)).toBeTrue();
+  expect(box.parentElement.classList.contains("xp-dialog-modeless")).toBeTrue();
+  expect(h.button("ave").disabled).toBeFalse();
+  const list = box.querySelector(".calculator-statistics");
+  const count = () =>
+    [...box.querySelectorAll(".xp-template-text")].at(-1).textContent;
+  expect(count()).toBe("0");
+  // Keys typed in the box stay there.
+  list.dispatchEvent(
+    new h.s.window.KeyboardEvent("keydown", { key: "5", bubbles: true }),
+  );
+  expect(h.display()).toBe("0.");
+  const action = (id) => box.querySelector(`[data-action="${id}"]`).click();
+  const before = h.sounds.length;
+  action("load");
+  action("cd");
+  expect(h.sounds.length - before).toBe(2);
+  h.type("1");
+  h.key("Insert");
+  h.type("2");
+  h.click("dat");
+  h.type("4.5");
+  h.key("Insert");
+  expect([...list.options].map((option) => option.text)).toEqual([
+    "1.",
+    "2.",
+    "4.5",
+  ]);
+  expect(list.selectedIndex).toBe(2);
+  expect(count()).toBe("3");
+  h.key("a", { ctrlKey: true });
+  expect(h.display()).toBe("2.5");
+  h.key("t", { ctrlKey: true });
+  expect(h.display()).toBe("7.5");
+  h.key("d", { ctrlKey: true });
+  expect(h.display()).toBe("1.8027756377319946465596106337352");
+  list.selectedIndex = 0;
+  action("load");
+  expect(h.display()).toBe("1.");
+  list.selectedIndex = 1;
+  list.dispatchEvent(new h.s.window.MouseEvent("dblclick", { bubbles: true }));
+  expect(h.display()).toBe("2.");
+  action("cd");
+  expect([...list.options].map((option) => option.text)).toEqual(["1.", "4.5"]);
+  expect(list.selectedIndex).toBe(1);
+  action("ret");
+  expect(
+    h.s.document.activeElement === h.win.querySelector(".xp-calculator"),
+  ).toBeTrue();
+  // Sta again focuses the open box.
+  h.click("sta");
+  expect(h.s.document.activeElement === list).toBeTrue();
+  action("cad");
+  expect(list.options).toHaveLength(0);
+  expect(count()).toBe("0");
+  // Closing the box clears it and disables the statistics keys.
+  box.querySelector(".close-btn").click();
+  expect(Boolean(h.statisticsBox())).toBeFalse();
+  expect(h.button("ave").disabled).toBeTrue();
+  // Changing the view closes it too.
+  h.click("sta");
+  await h.menu("view", "standard");
+  expect(Boolean(h.statisticsBox())).toBeFalse();
+});
 
-  test("waits for native frame metrics instead of exposing Wine chrome", async () => {
-    const { shell, calculator } = await launchCalculator();
-    showNativeCalculator(shell, 41, undefined, { includeFrame: false });
-    await flushShell();
-
-    expect(
-      calculator.querySelector(".boxedwine-shared-loading"),
-    ).not.toBeNull();
-    expect(calculator.querySelector(".boxedwine-native-window")).toBeNull();
+test("closing Calculator closes its Statistics Box", async () => {
+  const h = await open({
+    storage: { calculatorSettings: JSON.stringify({ view: "scientific" }) },
   });
-
-  test("gives resizable native windows a generic content-safe launch area", async () => {
-    const { shell, calculator } = await launchCalculator();
-    showNativeCalculator(shell, 41, undefined, {
-      capabilities: { canResize: true, canMaximize: true },
-    });
-    const launchToken = nativeLaunchToken(shell);
-    await flushShell();
-
-    expect(calculator.style.width).toBe("768px");
-    expect(calculator.style.height).toBe("560px");
-    expect(calculator.querySelector(".resize-handle").hidden).toBeFalse();
-    expect(calculator.querySelector(".maximize-btn").disabled).toBeFalse();
-
-    // A controller poll can still contain the old native size while the shell
-    // resize command is in flight. That stale echo must not collapse the app.
-    sendNativeWindow(shell, {
-      type: "metadata",
-      id: 41,
-      parentId: 1,
-      processId: 10,
-      launchToken,
-      outerX: 0,
-      outerY: 0,
-      outerWidth: 160,
-      outerHeight: 48,
-      clientWidth: 160,
-      clientHeight: 20,
-      frameTop: 28,
-      canResize: true,
-      canMaximize: true,
-      canMinimize: true,
-      win32Metrics: true,
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("768px");
-    expect(calculator.style.height).toBe("560px");
-  });
-
-  test("uses a landscape runtime and proportional shell on a phone", async () => {
-    const shell = await login(await loadShell());
-    const desktop = shell.document.getElementById("desktop");
-    Object.defineProperties(desktop, {
-      clientWidth: { configurable: true, value: 390 },
-      clientHeight: { configurable: true, value: 814 },
-    });
-    Object.defineProperties(shell.window, {
-      innerWidth: { configurable: true, value: 390 },
-      innerHeight: { configurable: true, value: 844 },
-    });
-    const calculator = openCalculator(shell);
-    showNativeCalculator(shell, 41, undefined, {
-      capabilities: {
-        canResize: true,
-        canMaximize: true,
-        outerWidth: 600,
-        outerHeight: 428,
-        clientWidth: 600,
-        clientHeight: 400,
-        frameTop: 28,
-        menuHeight: 0,
-      },
-    });
-    await flushShell();
-
-    const runtimeUrl = new URL(
-      shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
-    );
-    expect(runtimeUrl.searchParams.get("resolution")).toBe("1086x814");
-    expect(calculator.style.width).toBe("390px");
-    expect(calculator.style.height).toBe("310px");
-    expect(calculator.style.height).not.toBe("814px");
-  });
-
-  test("reuses one persistent runtime for repeated Calculator launches", async () => {
-    const { shell } = await launchCalculator();
-    shell.document.getElementById("start-button").click();
-    shell.document.getElementById("all-programs-button").click();
-    const flyouts = shell.document.getElementById("start-menu-flyouts");
-    flyouts.querySelector('[data-program-id="accessories"]').click();
-    flyouts.querySelector('[data-program-id="calculator"]').click();
-
-    expect(
-      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
-    ).toHaveLength(1);
-    expect(
-      shell.document.querySelectorAll(".boxedwine-shared-app-host"),
-    ).toHaveLength(1);
-  });
-
-  test("restores and clamps saved native placement before applying defaults", async () => {
-    const shell = await login(await loadShell());
-    shell.window.localStorage.setItem(
-      "windowPlacements",
-      JSON.stringify({
-        __calculator: {
-          left: 4000,
-          top: 3000,
-          width: 260,
-          height: 260,
-        },
-      }),
-    );
-    const calculator = openCalculator(shell);
-    showNativeCalculator(shell);
-    await flushShell();
-
-    expect(calculator.style.width).toBe("260px");
-    expect(calculator.style.height).toBe("260px");
-    expect(Number.parseFloat(calculator.style.left)).toBeLessThanOrEqual(764);
-    expect(Number.parseFloat(calculator.style.top)).toBeLessThanOrEqual(478);
-  });
-
-  test("repairs an unusably small saved size from native launch metadata", async () => {
-    const shell = await login(await loadShell());
-    shell.window.localStorage.setItem(
-      "windowPlacements",
-      JSON.stringify({
-        __calculator: { left: 40, top: 30, width: 170, height: 48 },
-      }),
-    );
-    const calculator = openCalculator(shell);
-
-    // Native placement is deferred until metadata supplies capabilities, so a
-    // stale placement cannot resize the process before its default is known.
-    expect(calculator.style.width).toBe("640px");
-    expect(calculator.style.height).toBe("470px");
-
-    showNativeCalculator(shell, 41, undefined, {
-      capabilities: { canResize: true, canMaximize: true },
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("768px");
-    expect(calculator.style.height).toBe("560px");
-    expect(calculator.style.left).toBe("40px");
-    expect(calculator.style.top).toBe("30px");
-  });
-
-  test("keeps a usable saved size for a resizable native window", async () => {
-    const shell = await login(await loadShell());
-    shell.window.localStorage.setItem(
-      "windowPlacements",
-      JSON.stringify({
-        __calculator: { left: 24, top: 18, width: 700, height: 500 },
-      }),
-    );
-    const calculator = openCalculator(shell);
-    showNativeCalculator(shell, 41, undefined, {
-      capabilities: { canResize: true, canMaximize: true },
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("700px");
-    expect(calculator.style.height).toBe("500px");
-    expect(calculator.style.left).toBe("24px");
-    expect(calculator.style.top).toBe("18px");
-  });
-
-  test("ignores transient 1x1 startup metadata", async () => {
-    const { shell, calculator } = await launchCalculator();
-    showNativeCalculator(shell, 41, undefined, { includeFrame: false });
-    const launchToken = nativeLaunchToken(shell);
-
-    sendNativeWindow(shell, {
-      type: "metadata",
-      id: 41,
-      parentId: 1,
-      processId: 10,
-      launchToken,
-      outerX: 0,
-      outerY: 0,
-      outerWidth: 1,
-      outerHeight: 1,
-      clientWidth: 1,
-      clientHeight: 1,
-      canResize: false,
-      canMaximize: false,
-      canMinimize: true,
-      win32Metrics: true,
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("640px");
-    expect(calculator.style.height).toBe("470px");
-  });
-
-  test("follows the native window when Scientific mode resizes it", async () => {
-    const shell = await login(await loadShell());
-    silenceRuntimeFrameErrors(shell);
-    const calculator = openCalculator(shell);
-    showNativeCalculator(shell);
-    await flushShell();
-    expect(calculator.style.width).toBe("260px");
-
-    sendNativeWindow(shell, {
-      type: "metadata",
-      id: 41,
-      parentId: 1,
-      processId: 10,
-      launchToken: nativeLaunchToken(shell),
-      outerX: 0,
-      outerY: 0,
-      outerWidth: 544,
-      outerHeight: 348,
-      clientWidth: 544,
-      clientHeight: 297,
-      frameTop: 51,
-      menuHeight: 23,
-      win32Metrics: true,
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("544px");
-    expect(calculator.style.height).toBe("348px");
-
-    sendNativeWindow(shell, {
-      type: "metadata",
-      id: 41,
-      parentId: 1,
-      processId: 10,
-      launchToken: nativeLaunchToken(shell),
-      outerX: 0,
-      outerY: 0,
-      outerWidth: 1,
-      outerHeight: 1,
-      clientWidth: 1,
-      clientHeight: 1,
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("544px");
-    expect(calculator.style.height).toBe("348px");
-  });
-
-  test("keeps following native sizes after restoring a saved placement", async () => {
-    const shell = await login(await loadShell());
-    silenceRuntimeFrameErrors(shell);
-    shell.window.localStorage.setItem(
-      "windowPlacements",
-      JSON.stringify({
-        __calculator: { left: 20, top: 20, width: 260, height: 260 },
-      }),
-    );
-    const calculator = openCalculator(shell);
-    showNativeCalculator(shell);
-    await flushShell();
-
-    sendNativeWindow(shell, {
-      type: "metadata",
-      id: 41,
-      parentId: 1,
-      processId: 10,
-      launchToken: nativeLaunchToken(shell),
-      outerX: 0,
-      outerY: 0,
-      outerWidth: 544,
-      outerHeight: 348,
-      clientWidth: 544,
-      clientHeight: 297,
-      frameTop: 51,
-      menuHeight: 23,
-      win32Metrics: true,
-    });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("544px");
-    expect(calculator.style.height).toBe("348px");
-  });
-
-  test("ignores metadata from a second top-level window of the same launch", async () => {
-    const shell = await login(await loadShell());
-    silenceRuntimeFrameErrors(shell);
-    const calculator = openCalculator(shell);
-    showNativeCalculator(shell);
-    await flushShell();
-    const launchToken = nativeLaunchToken(shell);
-
-    sendNativeWindow(shell, {
-      type: "created",
-      id: 42,
-      parentId: 1,
-      processId: 11,
-      launchToken,
-      x: 0,
-      y: 0,
-      width: 900,
-      height: 700,
-      clientWidth: 900,
-      clientHeight: 672,
-      frameTop: 28,
-    });
-    sendNativeWindow(shell, { type: "title", id: 42, title: "Helper" });
-    sendNativeWindow(shell, { type: "mapped", id: 42 });
-    await flushShell();
-
-    expect(calculator.style.width).toBe("260px");
-    expect(calculator.style.height).toBe("260px");
-    expect(calculator.querySelector(".title-text").textContent).toBe(
-      "Calculator",
-    );
-  });
-
-  test("keeps the runtime alive without relaunching a closed application", async () => {
-    const shell = await login(await loadShell());
-    const addFrameListener =
-      shell.window.HTMLIFrameElement.prototype.addEventListener;
-    shell.window.HTMLIFrameElement.prototype.addEventListener = function (
-      type,
-      ...arguments_
-    ) {
-      if (type === "error") return;
-      return addFrameListener.call(this, type, ...arguments_);
-    };
-    const calculator = openCalculator(shell);
-    const runtimeWindow = shell.document.querySelector(
-      ".boxedwine-shared-runtime-frame",
-    ).contentWindow;
-    const requests = [];
-    runtimeWindow.postMessage = (message) => requests.push(message);
-    const nativeSetTimeout = shell.window.setTimeout.bind(shell.window);
-    shell.window.setTimeout = (callback, delay, ...arguments_) => {
-      if (delay === 500) {
-        callback(...arguments_);
-        return -1;
-      }
-      return nativeSetTimeout(callback, delay, ...arguments_);
-    };
-    showNativeCalculator(shell, 41, runtimeWindow);
-
-    calculator.querySelector(".close-btn").click();
-    expect(requests).toContainEqual(
-      expect.objectContaining({
-        type: "boxedwine-terminate-process",
-        appId: "calculator",
-        processId: 10,
-      }),
-    );
-
-    const event = new shell.window.Event("message");
-    Object.defineProperties(event, {
-      data: {
-        value: {
-          type: "boxedwine-process-terminated",
-          appId: "calculator",
-          launchToken: new URL(
-            shell.document.querySelector(".boxedwine-shared-runtime-frame").src,
-          ).searchParams.get("launchToken"),
-          processId: 10,
-          error: 0,
-        },
-      },
-      origin: { value: shell.window.location.origin },
-      source: { value: runtimeWindow },
-    });
-    shell.window.dispatchEvent(event);
-
-    expect(
-      requests.filter(({ type }) => type === "boxedwine-launch-process"),
-    ).toEqual([]);
-    expect(
-      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
-    ).toHaveLength(1);
-  });
-
-  test("distinguishes native minimize from a replacement Calculator window", async () => {
-    const shell = await login(await loadShell());
-    const addFrameListener =
-      shell.window.HTMLIFrameElement.prototype.addEventListener;
-    shell.window.HTMLIFrameElement.prototype.addEventListener = function (
-      type,
-      ...arguments_
-    ) {
-      if (type === "error") return;
-      return addFrameListener.call(this, type, ...arguments_);
-    };
-    const calculator = openCalculator(shell);
-    const nativeSetTimeout = shell.window.setTimeout.bind(shell.window);
-    shell.window.setTimeout = (callback, delay, ...arguments_) => {
-      if (delay === 100) {
-        callback(...arguments_);
-        return -1;
-      }
-      return nativeSetTimeout(callback, delay, ...arguments_);
-    };
-    shell.window.ImageData = class ImageData {
-      constructor(data, width, height) {
-        Object.assign(this, { data, width, height });
-      }
-    };
-    const getCanvasContext =
-      shell.window.HTMLCanvasElement.prototype.getContext;
-    shell.window.HTMLCanvasElement.prototype.getContext = function (...args) {
-      const context = getCanvasContext.apply(this, args);
-      context.clearRect ||= () => {};
-      return context;
-    };
-    const runtimeWindow = showNativeCalculator(shell);
-    sendNativeWindow(shell, { type: "unmapped", id: 41 }, runtimeWindow);
-    await flushShell();
-    await flushShell();
-    expect(calculator.style.display).toBe("none");
-
-    sendNativeWindow(shell, { type: "mapped", id: 41 }, runtimeWindow);
-    expect(calculator.style.display).toBe("flex");
-
-    // A destroyed window cancels the minimize that's still waiting.
-    shell.window.setTimeout = nativeSetTimeout;
-    sendNativeWindow(shell, { type: "unmapped", id: 41 }, runtimeWindow);
-    sendNativeWindow(shell, { type: "destroyed", id: 41 }, runtimeWindow);
-    expect(calculator.style.display).toBe("flex");
-    expect(calculator.textContent).toContain("Updating Windows application");
-
-    showNativeCalculator(shell, 42, runtimeWindow);
-    expect(calculator.style.display).toBe("flex");
-    expect(
-      calculator.querySelector('[data-boxedwine-window="42"]'),
-    ).not.toBeNull();
-  });
-
-  test("packages the original executable and complete help", async () => {
-    const manifest = JSON.parse(
-      await readFile(join(calculatorDirectory, "SOURCES.json"), "utf8"),
-    );
-    const packageContent = new Uint8Array(
-      await readFile(join(calculatorDirectory, "xp-calculator.zip")),
-    );
-    const files = unzipSync(packageContent);
-
-    expect(packageContent.byteLength).toBe(manifest.windowsXp.package.bytes);
-    expect(sha256(packageContent)).toBe(manifest.windowsXp.package.sha256);
-    expect(Object.keys(files).sort()).toEqual(["calc.chm", "calc.exe"]);
-    for (const [name, source] of Object.entries(manifest.windowsXp.files)) {
-      expect(sha256(files[name])).toBe(source.sha256);
-    }
-  });
+  h.click("sta");
+  h.win.querySelector(".close-btn").click();
+  await h.settle();
+  expect(Boolean(h.statisticsBox())).toBeFalse();
+  expect(
+    Boolean(h.s.document.querySelector('.xp-window[data-game="__calculator"]')),
+  ).toBeFalse();
 });

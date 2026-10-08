@@ -3,8 +3,6 @@ import { accessoryApplications } from "./catalog/accessories.js";
 import { systemToolApplications } from "./catalog/system-tools.js";
 import { systemApplications } from "./catalog/system-applications.js";
 import { createApplicationRegistry } from "./core/registry.js";
-import { boxedWineShellApplications } from "./core/boxedwine-application.js";
-import "./core/boxedwine-preload.js";
 import { applicationMetadata as paintMetadata } from "./paint/metadata.js";
 const paintApplication = defineLazyApplication(paintMetadata, () =>
   import("./paint/index.js").then((module) => module.paintApplication),
@@ -33,6 +31,16 @@ const spiderApplication = defineLazyApplication(spiderMetadata, () =>
     (module) => module.spiderApplication,
   ),
 );
+import { applicationMetadata as calculatorMetadata } from "./calculator/metadata.js";
+const calculatorApplication = defineLazyApplication(calculatorMetadata, () =>
+  import("./calculator/index.js").then(
+    (module) => module.calculatorApplication,
+  ),
+);
+import { applicationMetadata as heartsMetadata } from "./hearts/metadata.js";
+const heartsApplication = defineLazyApplication(heartsMetadata, () =>
+  import("./hearts/index.js").then((module) => module.heartsApplication),
+);
 import { applicationMetadata as pinballMetadata } from "./pinball/metadata.js";
 const pinballApplication = defineLazyApplication(pinballMetadata, () =>
   import("./pinball/index.js").then((module) => module.pinballApplication),
@@ -42,8 +50,9 @@ export const applicationRegistry = createApplicationRegistry([
   ...accessoryApplications,
   ...systemToolApplications,
   ...systemApplications,
-  ...boxedWineShellApplications,
+  calculatorApplication,
   freecellApplication,
+  heartsApplication,
   minesweeperApplication,
   solitaireApplication,
   spiderApplication,

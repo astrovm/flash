@@ -875,18 +875,11 @@ describe("Windows XP shell", () => {
     const calculatorWindow = shell.document.querySelector(
       '.xp-window[data-game="__calculator"]',
     )!;
-    const calculatorUrl = new URL(
-      shell.document.querySelector<HTMLIFrameElement>(
-        ".boxedwine-shared-runtime-frame",
-      )!.src,
+    // Calculator is web-native.
+    expect(Boolean(calculatorWindow.querySelector(".xp-calculator"))).toBe(
+      true,
     );
-    expect(
-      calculatorWindow.querySelector(".boxedwine-shared-app-host"),
-    ).not.toBeNull();
-    expect(calculatorUrl.searchParams.get("archive")).toBe("xp-runtime");
-    expect(calculatorUrl.searchParams.get("executable")).toBe(
-      "calculator/calc.exe",
-    );
+    expect(shell.document.querySelector("iframe")).toBeNull();
 
     shell.document.getElementById("start-button")!.click();
     shell.document.getElementById("all-programs-button")!.click();
@@ -1014,18 +1007,8 @@ describe("Windows XP shell", () => {
     const solitaireWindow = shell.document.querySelector(
       '.xp-window[data-game="__solitaire"]',
     )!;
-    // Solitaire is web-native; Calculator keeps the one BoxedWine runtime.
     expect(solitaireWindow.querySelector(".solitaire-board")).not.toBeNull();
-    expect(
-      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
-    ).toHaveLength(1);
-    expect(
-      new URL(
-        shell.document.querySelector<HTMLIFrameElement>(
-          ".boxedwine-shared-runtime-frame",
-        )!.src,
-      ).searchParams.get("executable"),
-    ).toBe("calculator/calc.exe");
+    expect(shell.document.querySelector("iframe")).toBeNull();
 
     shell.document.getElementById("start-button")!.click();
     shell.document.getElementById("all-programs-button")!.click();
@@ -1146,6 +1129,7 @@ describe("Windows XP shell", () => {
   test("opens native games from their public deep links", async () => {
     for (const [deepLink, applicationId] of [
       ["freecell", "__freecell"],
+      ["hearts", "__hearts"],
       ["minesweeper", "__minesweeper"],
       ["pinball", "__pinball"],
       ["solitaire", "__solitaire"],
@@ -1174,10 +1158,63 @@ describe("Windows XP shell", () => {
     const shell = await loadShell({
       offlineSettings: { savePlayedGamesOffline: false },
     });
-    shell.window.location.hash = "#hearts";
+    shell.window.location.hash = "#inside-the-firewall";
     await login(shell);
     await flushShell();
     expect(shell.offlineDownloads).toEqual([]);
+  });
+
+  test("does not download a played built-in game that is already saved offline", async () => {
+    const shell = await loadShell({
+      offlineSettings: { downloadedGameIds: ["inside-the-firewall"] },
+    });
+    shell.window.location.hash = "#inside-the-firewall";
+    await login(shell);
+    await flushShell();
+    await flushShell();
+    expect(
+      shell.document.querySelector('[data-game="inside-the-firewall"]'),
+    ).not.toBeNull();
+    expect(shell.offlineDownloads).toEqual([]);
+  });
+
+  test("opens an installed-game deep link after the library becomes ready", async () => {
+    let releaseLibrary;
+    const gameLibraryManager = {
+      subscribe: () => () => {},
+      initialize: () =>
+        new Promise((resolve) => {
+          releaseLibrary = resolve;
+        }),
+      search: async () => [],
+      details: async () => null,
+      install: async () => {},
+      uninstall: async () => {},
+      getRecord: () => null,
+      match: async () => null,
+    };
+    const shell = await loadShell({ gameLibraryManager });
+    shell.window.location.hash = "#delayed-installed-game";
+    await login(shell);
+    expect(
+      shell.document.querySelector('[data-game="delayed-installed-game"]'),
+    ).toBeNull();
+
+    releaseLibrary({
+      "delayed-installed-game": {
+        ...shell.window.FLASH_GAMES["bike-mania"],
+        id: "delayed-installed-game",
+        title: "Delayed Installed Game",
+      },
+    });
+    await flushShell();
+    await flushShell();
+
+    expect(
+      shell.document.querySelector(
+        '.xp-window[data-game="delayed-installed-game"]',
+      ),
+    ).not.toBeNull();
   });
 
   test("reports a played built-in game that can't be saved for offline play", async () => {
@@ -1190,7 +1227,7 @@ describe("Windows XP shell", () => {
     });
     const warnings: unknown[][] = [];
     shell.window.console.warn = (...args: unknown[]) => warnings.push(args);
-    shell.window.location.hash = "#hearts";
+    shell.window.location.hash = "#inside-the-firewall";
     await login(shell);
     await flushShell();
     await flushShell();
@@ -1200,7 +1237,7 @@ describe("Windows XP shell", () => {
       ),
     ).toEqual([
       "Could not save game for offline play:",
-      "Hearts",
+      "Inside the Firewall",
       expect.any(Error),
     ]);
   });

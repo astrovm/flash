@@ -1,0 +1,195 @@
+/* Hearts: mshearts.exe's green table and status bar inside a sunken client
+   edge, under a standard menu bar. */
+.xp-native-program.xp-hearts {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: var(--xp-beige);
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
+.xp-hearts:focus {
+  outline: 0;
+}
+
+/* WS_EX_CLIENTEDGE: two pixels, dark at the top and left. */
+.hearts-edge {
+  flex: none;
+  align-self: flex-start;
+  box-sizing: content-box;
+  border: 1px solid;
+  border-color: #aca899 #fff #fff #aca899;
+}
+
+.hearts-client {
+  position: relative;
+  width: 530px;
+  height: 424px;
+  box-sizing: content-box;
+  border: 1px solid;
+  border-color: #716f64 #f1efe2 #f1efe2 #716f64;
+  overflow: hidden;
+}
+
+.hearts-board {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 530px;
+  height: 401px;
+  image-rendering: pixelated;
+}
+
+/* Player names: bold Tahoma in a 13-pixel cell, black on the table. */
+.hearts-names {
+  position: absolute;
+  inset: 0 0 23px;
+  pointer-events: none;
+}
+
+.hearts-name {
+  position: absolute;
+  color: #000;
+  font:
+    bold 11px/13px Tahoma,
+    sans-serif;
+  white-space: pre;
+}
+
+.xp-template-body .hearts-pass,
+.hearts-pass {
+  position: absolute;
+  min-width: 0;
+  padding: 0;
+}
+
+.hearts-pass[hidden] {
+  display: none;
+}
+
+.hearts-pass canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+/* A simple-mode status bar: Luna's status background and pane divider,
+   the text in one pane across the bar. */
+html {
+  --hearts-status-background: url("../../assets/xp/controls/blue-status-background.png");
+  --hearts-status-divider: url("../../assets/xp/controls/blue-status-divider.png");
+}
+
+html[data-xp-appearance="olive"] {
+  --hearts-status-background: url("../../assets/xp/controls/olive-status-background.png");
+  --hearts-status-divider: url("../../assets/xp/controls/olive-status-divider.png");
+}
+
+html[data-xp-appearance="silver"] {
+  --hearts-status-background: url("../../assets/xp/controls/silver-status-background.png");
+  --hearts-status-divider: url("../../assets/xp/controls/silver-status-divider.png");
+}
+
+.hearts-status {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  isolation: isolate;
+  height: 23px;
+  box-sizing: border-box;
+  padding: 6px 0 0 1px;
+  overflow: hidden;
+  color: #000;
+  font:
+    11px/13px Tahoma,
+    sans-serif;
+  white-space: pre;
+}
+
+.hearts-status::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-style: solid;
+  border-width: 5px 17px 9px 50px;
+  border-image: var(--hearts-status-background) 5 17 9 50 fill / 5px 17px 9px
+    50px stretch;
+  image-rendering: pixelated;
+}
+
+.hearts-status::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 0;
+  width: 2px;
+  height: 17px;
+  background: var(--hearts-status-divider) 0 0 / 2px 11px repeat-y;
+  image-rendering: pixelated;
+}
+
+html[data-xp-appearance="classic"] .hearts-status::before,
+html[data-xp-appearance="classic"] .hearts-status::after {
+  display: none;
+}
+
+/* Score Sheet columns, drawn with bold Tahoma in 13-pixel cells. */
+.hearts-score-column {
+  position: absolute;
+  top: 5px;
+  color: #000;
+  font:
+    bold 11px/13px Tahoma,
+    sans-serif;
+  text-align: center;
+  white-space: pre;
+}
+
+.hearts-score-column.leader {
+  color: #00f;
+}
+
+.hearts-score-column.winner {
+  color: #7f0000;
+}
+
+.hearts-score-column .struck {
+  text-decoration: line-through;
+}
+
+.hearts-score-icon {
+  position: absolute;
+  top: 75px;
+}
+
+/* The quote's caption is cut short with an ellipsis, as XP does. */
+.hearts-quote .title-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hearts-quote .title-buttons {
+  flex: none;
+}
+
+/* The pass button takes the focus when it lights up, and XP shows it. */
+html:not([data-xp-appearance="classic"]) .hearts-pass:focus::before {
+  border-image-source: var(--ctl-button-default);
+}
+
+.hearts-pass:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}

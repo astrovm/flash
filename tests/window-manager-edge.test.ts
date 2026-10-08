@@ -140,6 +140,29 @@ test("closing a maximized window remembers its restored geometry", async () => {
   });
 });
 
+test("a window placed only by layout remembers its laid-out geometry", async () => {
+  const { s, win } = await documents();
+  // No inline geometry, so the shell reads the layout's offsets instead.
+  win.removeAttribute("style");
+  for (const [prop, value] of Object.entries({
+    offsetLeft: 30,
+    offsetTop: 40,
+    offsetWidth: 320,
+    offsetHeight: 240,
+  }))
+    Object.defineProperty(win, prop, { configurable: true, value });
+  win.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 });
+  win.querySelector(".maximize-btn").click();
+  expect(win.classList.contains("maximized")).toBeTrue();
+  win.querySelector(".close-btn").click();
+  await settle();
+  expect(
+    JSON.parse(s.window.localStorage.getItem("windowPlacements"))[
+      "__my-documents"
+    ],
+  ).toEqual({ left: 30, top: 40, width: 320, height: 240 });
+});
+
 test("browser resizes leave maximized windows alone", async () => {
   const { s, win } = await documents();
   win.querySelector(".maximize-btn").click();

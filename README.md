@@ -23,7 +23,7 @@ A Windows XP-style desktop that runs in your browser. Play classic games and use
 - **The shell is cached automatically.** The XP desktop works offline without doing anything.
 - **Included games cache themselves.** Opening one starts a background download so it works offline next time.
 - **Manage downloads.** **Settings → Games** downloads or removes games one at a time or all together.
-- **Runtimes load on demand.** The shared Ruffle, ScummVM, and BoxedWine runtimes download only when a game needs them.
+- **Runtimes load on demand.** The shared Ruffle and ScummVM runtimes download only when a game needs them.
 - **Updates don't interrupt you.** They install in the background and leave the current page alone.
 - **Switching versions.** Reopen the site to get the new version, or press **Update Now** to reload right away.
 - **Internet Games are stored separately.** They live in IndexedDB and Cache Storage.
@@ -127,19 +127,18 @@ Tests run in parallel worker processes. Each test file groups its tests under a 
 <details>
 <summary><b>Project layout</b></summary>
 
-| Path                                          | Contents                                                   |
-| --------------------------------------------- | ---------------------------------------------------------- |
-| `site/apps/`                                  | First-party applications, manifests, and lifecycle modules |
-| `site/js/shell/`                              | Desktop, windows, taskbar, Start menu, and shell services  |
-| `site/js/apps/`                               | Temporary shell adapters used by application modules       |
-| `site/css/shell/`, `site/css/apps/`           | Shell and application styles                               |
-| `site/assets/xp/`                             | Assets extracted from the configured Windows XP media      |
-| `native/pinball/`                             | MIT Space Cadet source for the Pinball WebAssembly build   |
-| `native/boxedwine/`, `site/vendor/boxedwine/` | Native window control and the patched BoxedWine runtime    |
-| `worker/`                                     | Cloudflare Worker for the Internet Games catalog           |
-| `tools/`                                      | Build, validation, and asset maintenance scripts           |
-| `tests/`                                      | Bun and TypeScript tests                                   |
-| `dist/`                                       | Generated production build, ignored by Git                 |
+| Path                                | Contents                                                   |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `site/apps/`                        | First-party applications, manifests, and lifecycle modules |
+| `site/js/shell/`                    | Desktop, windows, taskbar, Start menu, and shell services  |
+| `site/js/apps/`                     | Temporary shell adapters used by application modules       |
+| `site/css/shell/`, `site/css/apps/` | Shell and application styles                               |
+| `site/assets/xp/`                   | Assets extracted from the configured Windows XP media      |
+| `native/pinball/`                   | MIT Space Cadet source for the Pinball WebAssembly build   |
+| `worker/`                           | Cloudflare Worker for the Internet Games catalog           |
+| `tools/`                            | Build, validation, and asset maintenance scripts           |
+| `tests/`                            | Bun and TypeScript tests                                   |
+| `dist/`                             | Generated production build, ignored by Git                 |
 
 </details>
 
@@ -153,7 +152,7 @@ Catalog games live in `site/js/games.js`.
 | Ruffle                                            | `"swf"`    |
 | Embedded HTML5, js-dos, ScummVM, reVCDOS, and re3 | `"iframe"` |
 
-Original XP applications are registered in `site/apps/core/boxedwine-applications.js` and share one BoxedWine runtime. Windows XP Pinball is mounted directly from `site/apps/pinball/`.
+XP applications are web-native rebuilds, one folder each in `site/apps/` and registered in `site/apps/index.js`. Windows XP Pinball runs its MIT Space Cadet WebAssembly build from `site/apps/pinball/`.
 
 </details>
 
