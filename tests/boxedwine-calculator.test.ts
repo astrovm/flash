@@ -154,6 +154,20 @@ describe("Windows XP Calculator through BoxedWine", () => {
     expect(shell.window.location.hash).toBe("#calculator");
   });
 
+  test("reopens in the runtime that's already running", async () => {
+    const shell = await login(await loadShell());
+    launchCalculator(shell)!
+      .querySelector<HTMLButtonElement>(".close-btn")!
+      .click();
+    await flushShell();
+    const reopened = launchCalculator(shell);
+
+    expect(reopened.isConnected).toBeTrue();
+    expect(
+      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+    ).toHaveLength(1);
+  });
+
   test("packages the pinned runtime and original XP files", async () => {
     const runtimeSources = JSON.parse(
       await readFile(join(runtimeDirectory, "SOURCES.json"), "utf8"),
