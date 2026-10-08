@@ -40,13 +40,6 @@ export const validateBoxedWineApplications = (definitions) => {
 
 export const boxedWineApplications = validateBoxedWineApplications([
   {
-    id: "calculator",
-    title: "Calculator",
-    icon: "Calculator.png",
-    executable: "calculator/calc.exe",
-    packagePath: "site/iframe/calculator/xp-calculator.zip",
-  },
-  {
     id: "hearts",
     title: "Hearts",
     icon: "Hearts.png",

@@ -21,7 +21,8 @@ const place = (element, [x, y, width, height]) => {
 // `position` is the dialog's corner in dialog units from the client area;
 // "center", the way freecell.exe centers its dialogs: over the client area,
 // below a 26-pixel caption and a 20-pixel menu bar; or a function that
-// takes the dialog's size and returns its corner.
+// takes the dialog's size and returns its corner. Modeless dialogs, such as
+// Calculator's Statistics Box, leave their owner usable.
 export const openTemplateDialog = ({
   dialogs,
   setAccessKeyText,
@@ -32,8 +33,9 @@ export const openTemplateDialog = ({
   position = "center",
   systemMenu = true,
   help = false,
+  modal = true,
 }) => {
-  const dialog = dialogs.createDialog({ title, systemMenu, help });
+  const dialog = dialogs.createDialog({ title, systemMenu, help, modal });
   dialog.el.classList.add("xp-template-dialog");
   const { body } = dialog;
   body.classList.add("xp-template-body");

@@ -1,0 +1,122 @@
+/* Calculator: calc.exe's dialog templates under a standard menu bar. */
+.xp-window.xp-calculator-window {
+  min-width: 0;
+  min-height: 0;
+}
+
+.xp-native-program.xp-calculator {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: var(--xp-beige);
+  color: #000;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+  user-select: none;
+}
+
+.xp-calculator:focus {
+  outline: 0;
+}
+
+.calculator-client {
+  position: relative;
+  flex: none;
+}
+
+.calculator-client > * {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* The display: a read-only edit control, right-aligned, with Luna's
+   #7f9db9 border. */
+.calculator-display {
+  padding: 0 5px 0 2px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font: 11px/21px Tahoma, "Segoe UI", sans-serif;
+  text-align: right;
+  white-space: pre;
+  overflow: hidden;
+}
+
+/* The memory and parenthesis indicators: sunken statics, text centered. */
+.calculator-indicator {
+  display: grid;
+  place-items: center;
+  border: 2px solid;
+  border-color: #aca899 #fff #fff #aca899;
+  box-shadow:
+    inset 1px 1px #716f64,
+    inset -1px -1px #f1efe2;
+  white-space: pre;
+}
+
+.calculator-group {
+  padding: 0;
+}
+
+/* Radio buttons and check boxes: XP's 13-pixel glyph, then the label. */
+.calculator-choice {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.calculator-choice[hidden] {
+  display: none;
+}
+
+.calculator-choice input {
+  margin: 0;
+}
+
+/* Luna push buttons with calc.exe's label colors. */
+.xp-calculator .calculator-key {
+  min-width: 0;
+  /* XP centers the label a pixel higher than the browser does. */
+  padding: 0 0 2px;
+  font: inherit;
+  line-height: 13px;
+}
+
+.xp-calculator .calculator-key.blue {
+  color: #00f;
+}
+
+.xp-calculator .calculator-key.red {
+  color: #f00;
+}
+
+.xp-calculator .calculator-key.purple {
+  color: #f0f;
+}
+
+html:not([data-xp-appearance="classic"]) .calculator-key.pressed::before {
+  border-image-source: var(--ctl-button-pressed);
+}
+
+/* Statistics Box. */
+.calculator-statistics {
+  border: 1px solid #7f9db9;
+  border-radius: 0;
+  background: #fff;
+  font: 11px/13px Tahoma, "Segoe UI", sans-serif;
+  outline: 0;
+}
+
+.calculator-statistics option {
+  padding: 0 2px;
+}
+
+.calculator-count-label {
+  text-align: right;
+}
