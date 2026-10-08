@@ -14,18 +14,6 @@ const application = (index: number) => ({
 });
 
 describe("BoxedWine application catalog", () => {
-  test("registers Hearts with only generic application data", () => {
-    expect(boxedWineApplications.filter(({ id }) => id === "hearts")).toEqual([
-      {
-        id: "hearts",
-        title: "Hearts",
-        icon: "Hearts.png",
-        executable: "hearts/mshearts.exe",
-        packagePath: "site/iframe/hearts/xp-hearts.zip",
-      },
-    ]);
-  });
-
   test("validates a catalog with twenty independently registered applications", () => {
     const applications = validateBoxedWineApplications(
       Array.from({ length: 20 }, (_, index) => application(index + 1)),

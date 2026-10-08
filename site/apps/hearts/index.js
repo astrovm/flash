@@ -358,7 +358,7 @@ const mountHearts = (context) => {
       }, ms);
       timers.add(timer);
     });
-  const nextFrame = () =>
+  const heartsFrame = () =>
     new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
   // Moves a card across the table one step a frame. Returns false when a
@@ -368,7 +368,7 @@ const mountHearts = (context) => {
     for (const point of glidePath(from, to, speed)) {
       gliding = { card, ...point };
       draw();
-      await nextFrame();
+      await heartsFrame();
       if (run !== generation) return false;
     }
     gliding = null;
@@ -454,7 +454,7 @@ const mountHearts = (context) => {
     const run = generation;
     const winner = finishTrick(round);
     // The trick stays on the table for a second.
-    await wait(1000);
+    await heartsPause(1000);
     if (run !== generation) return;
     const { trick } = round;
     round.gathered = [];
@@ -488,24 +488,9 @@ const mountHearts = (context) => {
     const run = generation;
     await showScore();
     if (run !== generation) return;
-    if (!isGameOver(scores)) {
-      await dealHand();
-      return;
-    }
-    // mshearts.exe beeps MB_ICONQUESTION first when Sound is on; XP's
-    // default scheme gives that event no sound.
-    const again = await dialogs.message({
-      title: TITLE,
-      text: "Do you want to play again?",
-      icon: "question",
-      buttons: [
-        { id: "yes", label: "&Yes", isDefault: true },
-        { id: "no", label: "&No", isCancel: true },
-      ],
-    });
-    if (run !== generation) return;
-    if (again === "yes") startGame();
-    else context.close();
+    // At 100 the next game starts by itself.
+    if (isGameOver(scores)) startGame();
+    else await dealHand();
   };
 
   // ---- The human's moves ----
