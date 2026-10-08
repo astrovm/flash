@@ -872,10 +872,14 @@ describe("Windows XP shell", () => {
       '[data-program-id="calculator"]',
     )!;
     calculator.click();
-    await flushShell();
-    expect(
-      shell.document.querySelector('.xp-window[data-game="__calculator"]'),
-    ).not.toBeNull();
+    const calculatorWindow = shell.document.querySelector(
+      '.xp-window[data-game="__calculator"]',
+    )!;
+    // Calculator is web-native.
+    expect(Boolean(calculatorWindow.querySelector(".xp-calculator"))).toBe(
+      true,
+    );
+    expect(shell.document.querySelector("iframe")).toBeNull();
 
     shell.document.getElementById("start-button")!.click();
     shell.document.getElementById("all-programs-button")!.click();

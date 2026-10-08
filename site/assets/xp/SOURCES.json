@@ -164,6 +164,11 @@
     "member": "I386/XPSTARTU.WA_",
     "sha256": "8f859ebb90247036ced11db854848abe1434dc3ffdfa5795f7c5f06db9a423d5"
   },
+  "assets/xp/sounds/ding.wav": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/XPDING.WA_",
+    "sha256": "20fc59d9f846bc32b899880fae0878208856718b75e6158526308b900af8a9bd"
+  },
   "assets/xp/cursor.cur": {
     "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
     "member": "I386/ARROW_M.CU_",
@@ -412,6 +417,19 @@
       "language": 1033,
       "frame": "16x16x32",
       "pixelSha256": "01704878decef1ef84c9a05a6bad7ef2ba0f3321f0cfaa4d443a6c6ccaefeabe"
+    }
+  },
+  "assets/xp/calculator/Calculator-32.png": {
+    "isoSha256": "fd8c8d42c1581e8767217fe800bfc0d5649c0ad20d754c927d6c763e446d1927",
+    "member": "I386/CALC.EX_",
+    "sha256": "c381d8e7cc7091b4a305ca950e812de2d29d0863661e9ad44caa80c2770abcb7",
+    "resource": {
+      "parentSha256": "37121ecb7c1e112b735bd21b0dfe3e526352ecb98c434c5f40e6a2a582380cdd",
+      "type": 14,
+      "id": "SC",
+      "language": 1033,
+      "frame": "32x32x32",
+      "pixelSha256": "8a39c4cde28a9cc838c5deb90a019ad2dde738d619593e77863514fd8159ba88"
     }
   },
   "assets/xp/icons/CommandPrompt.png": {

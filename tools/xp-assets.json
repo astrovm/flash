@@ -140,6 +140,10 @@
       "output": "site/assets/xp/sounds/startup.wav"
     },
     {
+      "member": "XPDING.WA_",
+      "output": "site/assets/xp/sounds/ding.wav"
+    },
+    {
       "member": "ARROW_M.CU_",
       "output": "site/assets/xp/cursor.cur"
     },
@@ -348,6 +352,16 @@
       "height": 16,
       "bitDepth": 32,
       "output": "site/assets/xp/icons/Calculator.png"
+    },
+    {
+      "member": "CALC.EX_",
+      "expandedName": "calc.exe",
+      "resourceType": 14,
+      "resourceId": "SC",
+      "width": 32,
+      "height": 32,
+      "bitDepth": 32,
+      "output": "site/assets/xp/calculator/Calculator-32.png"
     },
     {
       "member": "CMD.EX_",
