@@ -2172,6 +2172,16 @@
       "output": "site/assets/xp/solitaire/Solitaire-32.png"
     },
     {
+      "member": "MSHEARTS.EX_",
+      "expandedName": "mshearts.exe",
+      "resourceType": 14,
+      "resourceId": 31234,
+      "bitDepth": 32,
+      "width": 32,
+      "height": 32,
+      "output": "site/assets/xp/hearts/Hearts-32.png"
+    },
+    {
       "member": "SPIDER.EX_",
       "expandedName": "spider.exe",
       "resourceType": 14,
@@ -11565,6 +11575,20 @@
       "resourceType": "WAVE",
       "resourceId": 129,
       "output": "site/assets/xp/spider/Win.wav"
+    },
+    {
+      "member": "MSHEARTS.EX_",
+      "expandedName": "mshearts.exe",
+      "resourceType": "WAVE",
+      "resourceId": 401,
+      "output": "site/assets/xp/hearts/HeartsBroken.wav"
+    },
+    {
+      "member": "MSHEARTS.EX_",
+      "expandedName": "mshearts.exe",
+      "resourceType": "WAVE",
+      "resourceId": 402,
+      "output": "site/assets/xp/hearts/Queen.wav"
     },
     {
       "member": "VGASYS.FO_",

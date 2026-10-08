@@ -46,13 +46,6 @@ export const boxedWineApplications = validateBoxedWineApplications([
     executable: "calculator/calc.exe",
     packagePath: "site/iframe/calculator/xp-calculator.zip",
   },
-  {
-    id: "hearts",
-    title: "Hearts",
-    icon: "Hearts.png",
-    executable: "hearts/mshearts.exe",
-    packagePath: "site/iframe/hearts/xp-hearts.zip",
-  },
 ]);
 
 const applicationsById = new Map(
