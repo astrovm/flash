@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  boxedWineApplications,
-  validateBoxedWineApplications,
-} from "../site/apps/core/boxedwine-applications.js";
+import { validateBoxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
 
 const application = (index: number) => ({
   id: `application-${index}`,

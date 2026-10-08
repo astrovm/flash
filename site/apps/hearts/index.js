@@ -931,10 +931,12 @@ const mountHearts = (context) => {
       if (phase !== "welcome") run(commands[event.key]);
       return;
     }
-    // Esc hides the game, mshearts.exe's boss key.
+    // Esc closes an open menu; otherwise it hides the game, mshearts.exe's
+    // boss key.
     if (event.key === "Escape") {
       event.preventDefault();
-      context.minimize();
+      if (openMenu) closeMenu();
+      else context.minimize();
       return;
     }
     // Space plays the leftmost card that's allowed.

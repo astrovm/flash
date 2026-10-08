@@ -941,6 +941,11 @@ describe("menus and dialogs", () => {
 
   test("Esc hides the window and Exit closes it", async () => {
     const h = await open();
+    // With a menu open, Esc only closes the menu.
+    h.win.querySelector('[data-hearts-menu="game"]').click();
+    await h.key("Escape");
+    expect(h.win.querySelector(".tm-menu")).toBeNull();
+    expect(h.win.style.display).not.toBe("none");
     await h.key("Escape");
     expect(h.win.style.display).toBe("none");
     cleanupShells();
