@@ -1,8 +1,9 @@
 /* ============ Small screens ============ */
 
 @media (max-width: 560px) {
+  /* Wide enough for My Recent Documents; the left column shrinks. */
   .start-menu-right {
-    width: 128px;
+    width: min(176px, 48%);
   }
 
   #all-programs-panel {
@@ -90,5 +91,18 @@
     top: 66px;
     margin-top: 0;
     width: calc(100% - 14px);
+  }
+}
+
+/* Short screens, like a phone held sideways: the Start menu shrinks to fit
+   above the taskbar, so All Programs and Turn Off Computer stay in reach. */
+@media (max-height: 560px) {
+  #start-menu {
+    max-height: 100%;
+  }
+
+  .start-menu-body {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }

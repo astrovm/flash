@@ -113,19 +113,24 @@ const openXPProgram = (programId, options = {}) => {
     el.style.minWidth = `${preferredWidth}px`;
     el.style.minHeight = `${preferredHeight}px`;
   }
+  // A fixed-size window keeps its size; it's fitted after it mounts.
+  const fixedSize = program.window.resizable === false;
   const windowWidth =
-    desktopWidth > 16
+    desktopWidth > 16 && !fixedSize
       ? Math.min(preferredWidth, desktopWidth - 16)
       : preferredWidth;
   const windowHeight =
-    desktopHeight > 16
+    desktopHeight > 16 && !fixedSize
       ? Math.min(preferredHeight, desktopHeight - 16)
       : preferredHeight;
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
-  // Whole pixels keep pixel art sharp in odd-sized windows.
-  el.style.left = `${program.window.left ?? Math.max(8, Math.floor((desktopWidth - windowWidth) / 2))}px`;
-  el.style.top = `${program.window.top ?? Math.max(8, Math.floor((desktopHeight - windowHeight) / 2))}px`;
+  // Whole pixels keep pixel art sharp in odd-sized windows. A fixed XP
+  // position moves back on a screen too small to show the whole window.
+  const fitStart = (start, size, available) =>
+    available > 16 ? Math.min(start, Math.max(0, available - size)) : start;
+  el.style.left = `${fitStart(program.window.left ?? Math.max(8, Math.floor((desktopWidth - windowWidth) / 2)), windowWidth, desktopWidth)}px`;
+  el.style.top = `${fitStart(program.window.top ?? Math.max(8, Math.floor((desktopHeight - windowHeight) / 2)), windowHeight, desktopHeight)}px`;
   const win = {
     gameId: programId,
     el,
@@ -156,8 +161,9 @@ const openXPProgram = (programId, options = {}) => {
     maximize.disabled = true;
     maximize.setAttribute("aria-disabled", "true");
   }
-  if (program.window.resizable === false) {
+  if (fixedSize) {
     el.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());
+    fitFixedWindow(win, mounted.element);
   }
   if (program.window.customChrome) {
     win.el.addEventListener("pointerdown", () => focusWindow(win.gameId));
@@ -286,8 +292,14 @@ const openSystemWindow = (shortcutId) => {
   el.querySelectorAll(".game-menu-bar, .game-menu").forEach((node) =>
     node.remove(),
   );
-  const windowWidth = Math.min(application.window.width, desktopWidth - 16);
-  const windowHeight = Math.min(application.window.height, desktopHeight - 16);
+  // A fixed-size dialog keeps its size; it's fitted after it mounts.
+  const fixedSize = application.window.dialogControls === true;
+  const windowWidth = fixedSize
+    ? application.window.width
+    : Math.min(application.window.width, desktopWidth - 16);
+  const windowHeight = fixedSize
+    ? application.window.height
+    : Math.min(application.window.height, desktopHeight - 16);
   el.style.width = `${windowWidth}px`;
   el.style.height = `${windowHeight}px`;
   const defaultLeft = Math.max(8, (desktopWidth - windowWidth) / 2);
@@ -340,6 +352,7 @@ const openSystemWindow = (shortcutId) => {
     el.querySelector(".minimize-btn").remove();
     el.querySelector(".maximize-btn").remove();
     XPDialogs.addWhatsThisHelp(el, mounted.element);
+    fitFixedWindow(win, mounted.element);
   }
   application.activate?.(context, { application, window: win }, mounted);
   focusWindow(shortcutId);

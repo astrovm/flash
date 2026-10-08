@@ -1,7 +1,12 @@
 import { applicationMetadata } from "./metadata.js";
 import { defineApplication } from "../core/application.js";
 import { createRandom } from "../freecell/game.js";
-import { CARD_HEIGHT, CARD_WIDTH } from "../cards/cards.js";
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  measureBoard,
+  prepareBoard,
+} from "../cards/cards.js";
 import { dialogUnitsY, openTemplateDialog } from "../cards/template-dialog.js";
 import { drawText, loadSystemFont, measureText } from "../cards/system-font.js";
 import {
@@ -399,8 +404,8 @@ const mountSpider = (context) => {
 
   // ---- Layout, from spider.exe's client size ----
   const measure = () => {
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    // Ten columns with a 2 pixel gap on each side.
+    const { width, height } = measureBoard(canvas, 732);
     const gap = Math.trunc((width - 710) / 11);
     layout = { width, height, gap, margin: Math.max(0, gap) };
   };
@@ -605,13 +610,7 @@ const mountSpider = (context) => {
     });
   };
   const draw = () => {
-    const density = Math.ceil(window.devicePixelRatio - 0.01);
-    if (canvas.width !== layout.width * density)
-      canvas.width = layout.width * density;
-    if (canvas.height !== layout.height * density)
-      canvas.height = layout.height * density;
-    graphics.setTransform(density, 0, 0, density, 0, 0);
-    graphics.imageSmoothingEnabled = false;
+    prepareBoard(canvas, graphics, layout);
     if (fireworks) {
       drawFireworks();
       return;
