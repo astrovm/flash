@@ -554,8 +554,20 @@ const mountCalculator = (context) => {
       );
       if (radix === 10)
         view.push(
-          ["D&egrees", "degrees", "F2", calculator.angle === "degrees", "radio"],
-          ["&Radians", "radians", "F3", calculator.angle === "radians", "radio"],
+          [
+            "D&egrees",
+            "degrees",
+            "F2",
+            calculator.angle === "degrees",
+            "radio",
+          ],
+          [
+            "&Radians",
+            "radians",
+            "F3",
+            calculator.angle === "radians",
+            "radio",
+          ],
           ["&Grads", "grads", "F4", calculator.angle === "grads", "radio"],
           "-",
         );
@@ -568,7 +580,13 @@ const mountCalculator = (context) => {
           "-",
         );
     }
-    view.push(["D&igit grouping", "grouping", "", settings.grouping, "checked"]);
+    view.push([
+      "D&igit grouping",
+      "grouping",
+      "",
+      settings.grouping,
+      "checked",
+    ]);
     return [
       [
         "&Edit",

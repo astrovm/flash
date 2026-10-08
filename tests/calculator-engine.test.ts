@@ -94,9 +94,7 @@ describe("display", () => {
     expect(calculator.display).toBe("-1,234,567.8912");
     calculator.press("add");
     expect(calculator.display).toBe("-1,234,567.8912");
-    expect(formatNumber(n(65535), { radix: 16, grouping: true })).toBe(
-      "FFFF",
-    );
+    expect(formatNumber(n(65535), { radix: 16, grouping: true })).toBe("FFFF");
     expect(formatNumber(n(2 ** 36 - 1), { radix: 16, grouping: true })).toBe(
       "F FFFF FFFF",
     );
@@ -395,7 +393,9 @@ describe("functions", () => {
     expect(shows("1 inv tan")).toBe("45.");
     expect(shows("1 exp 40 inv tan")).toBe("90.");
     expect(shows("1 exp 40 = sign inv tan")).toBe("-90.");
-    expect(shows("radians 1 inv sin")).toBe("1.5707963267948966192313216916398");
+    expect(shows("radians 1 inv sin")).toBe(
+      "1.5707963267948966192313216916398",
+    );
     expect(shows("grads 1 inv sin")).toBe("100.");
   });
 
@@ -407,7 +407,9 @@ describe("functions", () => {
     expect(shows("300 hyp tan")).toBe("1.");
     expect(shows("300 sign hyp tan")).toBe("-1.");
     expect(shows("1 inv hyp sin")).toBe("0.88137358701954302523260932497979");
-    expect(shows("1 sign inv hyp sin")).toBe("-0.88137358701954302523260932497979");
+    expect(shows("1 sign inv hyp sin")).toBe(
+      "-0.88137358701954302523260932497979",
+    );
     expect(shows("2 inv hyp cos")).toBe("1.316957896924816708625046347308");
     expect(shows("0.5 inv hyp cos")).toBe("Invalid input for function.");
     expect(shows("0.5 inv hyp tan")).toBe("0.54930614433405484569762261846126");
@@ -423,12 +425,20 @@ describe("functions", () => {
   test("factorial and the gamma function", () => {
     expect(shows("0 factorial")).toBe("1.");
     expect(shows("5 factorial")).toBe("120.");
-    expect(shows("171 factorial")).toBe("1.2410180702176678234248405241031e+309");
+    expect(shows("171 factorial")).toBe(
+      "1.2410180702176678234248405241031e+309",
+    );
     expect(shows("3.5 factorial")).toBe("11.631728396567448929144224109426");
     expect(shows("2.5 factorial")).toBe("3.3233509704478425511840640312646");
-    expect(shows("0.5 sign factorial")).toBe("1.7724538509055160272981674833411");
-    expect(shows("1.5 sign factorial")).toBe("-3.5449077018110320545963349666823");
-    expect(shows("60.5 factorial")).toBe("6.4855950590872362691527350244497e+82");
+    expect(shows("0.5 sign factorial")).toBe(
+      "1.7724538509055160272981674833411",
+    );
+    expect(shows("1.5 sign factorial")).toBe(
+      "-3.5449077018110320545963349666823",
+    );
+    expect(shows("60.5 factorial")).toBe(
+      "6.4855950590872362691527350244497e+82",
+    );
     expect(shows("1 sign factorial")).toBe("Invalid input for function.");
     expect(shows("30000 factorial")).toBe("Invalid input for function.");
     expect(shows("30000.5 factorial")).toBe("Invalid input for function.");
@@ -556,7 +566,9 @@ describe("statistics", () => {
     expect(box(`${data} s`).display).toBe("1.4930394055974097653871929250543");
     expect(box(`${data} inv ave`).display).toBe("8.5625");
     expect(box(`${data} inv sum`).display).toBe("34.25");
-    expect(box(`${data} inv s`).display).toBe("1.2930100540985750587173249303284");
+    expect(box(`${data} inv s`).display).toBe(
+      "1.2930100540985750587173249303284",
+    );
     expect(box(`${data} inv s`).inv).toBe(false);
   });
 
@@ -648,7 +660,13 @@ describe("paste", () => {
     expect(pasteCommands("12😀3", 10)).toEqual(["digit1", "digit2"]);
     expect(pasteCommands("١٢٣", 10)).toEqual([]);
     expect(pasteCommands("12ñ3", 10)).toEqual(["digit1", "digit2"]);
-    expect(pasteCommands("hello", 10)).toEqual(["hyp", "exp", "log", "log", "cos"]);
+    expect(pasteCommands("hello", 10)).toEqual([
+      "hyp",
+      "exp",
+      "log",
+      "log",
+      "cos",
+    ]);
     expect(pasteCommands("", 10)).toEqual([]);
   });
 });
@@ -671,7 +689,9 @@ describe("numbers", () => {
   });
 
   test("magnitude limits", () => {
-    expect(() => N.number(1n, 1n, 100000)).toThrow("Invalid input for function.");
+    expect(() => N.number(1n, 1n, 100000)).toThrow(
+      "Invalid input for function.",
+    );
     expect(N.number(1n, 1n, -100001)).toBe(N.ZERO);
     expect(N.decimalPlaces(N.number(1n, 3n), 5)).toBe(5);
     expect(N.isInteger(N.number(5n, 1n, 3))).toBe(true);

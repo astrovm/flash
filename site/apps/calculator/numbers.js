@@ -291,8 +291,7 @@ export const power = (x, y) => {
     // Results past 10^MAX_EXPONENT fail before they are worked out.
     const { digits, point } = significantDigits(x, 17);
     const size = (point + Math.log10(Number(`0.${digits}`))) * Number(exponent);
-    if (size > MAX_EXPONENT + 1)
-      fail("domain");
+    if (size > MAX_EXPONENT + 1) fail("domain");
     if (size < -MAX_EXPONENT) return ZERO;
     let result = integer(1);
     let base = exponent < 0n ? divide(integer(1), x) : x;

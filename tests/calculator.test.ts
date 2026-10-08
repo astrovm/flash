@@ -355,7 +355,9 @@ test("the View menu follows the base, and digit grouping persists", async () => 
   viewMenu.click();
   h.win
     .querySelector(".tm-menu")
-    .dispatchEvent(new h.s.window.PointerEvent("pointerdown", { bubbles: true }));
+    .dispatchEvent(
+      new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
+    );
   expect(Boolean(h.win.querySelector(".tm-menu"))).toBeTrue();
   viewMenu.click();
   viewMenu.click();
@@ -506,7 +508,9 @@ test("the Statistics Box", async () => {
   expect([...list.options].map((option) => option.text)).toEqual(["1.", "4.5"]);
   expect(list.selectedIndex).toBe(1);
   action("ret");
-  expect(h.s.document.activeElement === h.win.querySelector(".xp-calculator")).toBeTrue();
+  expect(
+    h.s.document.activeElement === h.win.querySelector(".xp-calculator"),
+  ).toBeTrue();
   // Sta again focuses the open box.
   h.click("sta");
   expect(h.s.document.activeElement === list).toBeTrue();

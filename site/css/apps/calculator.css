@@ -41,7 +41,10 @@
   padding: 0 5px 0 2px;
   border: 1px solid #7f9db9;
   background: #fff;
-  font: 11px/21px Tahoma, "Segoe UI", sans-serif;
+  font:
+    11px/21px Tahoma,
+    "Segoe UI",
+    sans-serif;
   text-align: right;
   white-space: pre;
   overflow: hidden;
@@ -109,7 +112,10 @@ html:not([data-xp-appearance="classic"]) .calculator-key.pressed::before {
   border: 1px solid #7f9db9;
   border-radius: 0;
   background: #fff;
-  font: 11px/13px Tahoma, "Segoe UI", sans-serif;
+  font:
+    11px/13px Tahoma,
+    "Segoe UI",
+    sans-serif;
   outline: 0;
 }
 
