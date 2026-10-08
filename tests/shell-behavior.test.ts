@@ -1164,6 +1164,59 @@ describe("Windows XP shell", () => {
     expect(shell.offlineDownloads).toEqual([]);
   });
 
+  test("does not download a played built-in game that is already saved offline", async () => {
+    const shell = await loadShell({
+      offlineSettings: { downloadedGameIds: ["inside-the-firewall"] },
+    });
+    shell.window.location.hash = "#inside-the-firewall";
+    await login(shell);
+    await flushShell();
+    await flushShell();
+    expect(
+      shell.document.querySelector('[data-game="inside-the-firewall"]'),
+    ).not.toBeNull();
+    expect(shell.offlineDownloads).toEqual([]);
+  });
+
+  test("opens an installed-game deep link after the library becomes ready", async () => {
+    let releaseLibrary;
+    const gameLibraryManager = {
+      subscribe: () => () => {},
+      initialize: () =>
+        new Promise((resolve) => {
+          releaseLibrary = resolve;
+        }),
+      search: async () => [],
+      details: async () => null,
+      install: async () => {},
+      uninstall: async () => {},
+      getRecord: () => null,
+      match: async () => null,
+    };
+    const shell = await loadShell({ gameLibraryManager });
+    shell.window.location.hash = "#delayed-installed-game";
+    await login(shell);
+    expect(
+      shell.document.querySelector('[data-game="delayed-installed-game"]'),
+    ).toBeNull();
+
+    releaseLibrary({
+      "delayed-installed-game": {
+        ...shell.window.FLASH_GAMES["bike-mania"],
+        id: "delayed-installed-game",
+        title: "Delayed Installed Game",
+      },
+    });
+    await flushShell();
+    await flushShell();
+
+    expect(
+      shell.document.querySelector(
+        '.xp-window[data-game="delayed-installed-game"]',
+      ),
+    ).not.toBeNull();
+  });
+
   test("reports a played built-in game that can't be saved for offline play", async () => {
     const shell = await loadShell({
       offlineMethods: {

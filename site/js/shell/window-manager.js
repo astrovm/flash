@@ -118,20 +118,14 @@ const persistWindowPlacement = (win) => {
   });
 };
 
-const restoreWindowPlacement = (win, { restoreSize = true } = {}) => {
+const restoreWindowPlacement = (win) => {
   const saved = getWindowPlacements()[win.gameId];
   if (!saved) return;
   const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
-  const width = restoreSize
-    ? desktopWidth > 0
-      ? Math.min(saved.width, desktopWidth)
-      : saved.width
-    : parseWindowLength(win.el.style.width, win.el.offsetWidth);
-  const height = restoreSize
-    ? desktopHeight > 0
-      ? Math.min(saved.height, desktopHeight)
-      : saved.height
-    : parseWindowLength(win.el.style.height, win.el.offsetHeight);
+  const width =
+    desktopWidth > 0 ? Math.min(saved.width, desktopWidth) : saved.width;
+  const height =
+    desktopHeight > 0 ? Math.min(saved.height, desktopHeight) : saved.height;
   Object.assign(win.el.style, {
     width: `${width}px`,
     height: `${height}px`,
@@ -1044,7 +1038,6 @@ const minimizeWindow = (gameId, { animate = false } = {}) => {
   const win = openWindows.get(gameId);
   if (!win || win.minimized) return;
 
-  if (win.mountedApplication?.minimize?.() === false) return;
   win.minimized = true;
   const hide = () => {
     if (win.minimized) win.el.style.display = "none";
@@ -1073,7 +1066,6 @@ const restoreWindow = (gameId, { animate = false } = {}) => {
   const win = openWindows.get(gameId);
   if (!win || !win.minimized) return;
 
-  if (win.mountedApplication?.restore?.() === false) return;
   win.minimized = false;
   const show = () => {
     if (!win.minimized) win.el.style.display = "flex";
@@ -1095,8 +1087,6 @@ const restoreWindow = (gameId, { animate = false } = {}) => {
 
 const minimizeAllWindows = () => {
   openWindows.forEach((win) => {
-    // Apps hear about it so the later restore() is balanced.
-    if (!win.minimized) win.mountedApplication?.minimize?.();
     win.minimized = true;
     win.el.style.display = "none";
   });
@@ -1133,10 +1123,6 @@ const toggleShowDesktop = () => {
 
 const toggleMaximize = (gameId, { animate = false } = {}) => {
   const win = openWindows.get(gameId);
-  const handled = win.maximized
-    ? win.mountedApplication?.restore?.()
-    : win.mountedApplication?.maximize?.();
-  if (handled === false) return;
   finishWindowAnimation(win);
   const maximizing = !win.maximized;
   const from = ghostRectFor(windowPageRect(win));
