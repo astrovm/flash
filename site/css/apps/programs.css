@@ -749,20 +749,93 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
 }
 
 .project-offline-setting {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0 0 7px;
+}
+
+.project-offline-setting input {
+  margin: 0;
 }
 
 .project-update-delay {
   display: block;
-  margin: 0 0 8px 20px;
+  margin: 0 0 8px 17px;
 }
 
+/* XP's trackbar, like the Display Properties resolution slider: a sunken
+   track and the Luna thumb (normal, hot, pressed, focused, 21px apart). */
 .project-update-delay input[type="range"] {
   display: block;
   box-sizing: border-box;
   width: 100%;
-  margin: 8px 0 2px;
+  height: 24px;
+  margin: 4px 0 0;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.project-update-delay input[type="range"]:focus {
+  outline: 0;
+}
+
+.project-update-delay input[type="range"]:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -1px;
+}
+
+.project-update-delay input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  border: 1px solid;
+  border-color: #9d9c99 #fff #fff #9d9c99;
+  background: #f2f1e9;
+}
+
+.project-update-delay input[type="range"]::-webkit-slider-thumb {
+  width: 11px;
+  height: 21px;
+  margin-top: -9px;
+  appearance: none;
+  border: 0;
+  background: var(--ctl-trackbar-thumb-down) 0 0 / 11px 105px no-repeat;
+}
+
+.project-update-delay input[type="range"]:hover::-webkit-slider-thumb {
+  background-position-y: -21px;
+}
+
+.project-update-delay input[type="range"]:active::-webkit-slider-thumb {
+  background-position-y: -42px;
+}
+
+.project-update-delay input[type="range"]:focus-visible::-webkit-slider-thumb {
+  background-position-y: -63px;
+}
+
+.project-update-delay input[type="range"]::-moz-range-track {
+  box-sizing: border-box;
+  height: 4px;
+  border: 1px solid;
+  border-color: #9d9c99 #fff #fff #9d9c99;
+  background: #f2f1e9;
+}
+
+.project-update-delay input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 21px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ctl-trackbar-thumb-down) 0 0 / 11px 105px no-repeat;
+}
+
+.project-update-delay input[type="range"]:hover::-moz-range-thumb {
+  background-position-y: -21px;
+}
+
+.project-update-delay input[type="range"]:active::-moz-range-thumb {
+  background-position-y: -42px;
 }
 
 .project-update-delay > span {
@@ -837,13 +910,18 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
 }
 
 .project-settings-description {
-  margin-left: 20px !important;
+  margin-left: 17px !important;
 }
 
 .project-settings-status {
   min-height: 14px;
   margin: 0 0 10px !important;
   color: #444;
+}
+
+/* Statuses only take space when they say something. */
+.project-settings-status:empty {
+  display: none;
 }
 
 .project-settings-progress {
@@ -866,10 +944,6 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
 .project-recovery-group p {
   margin: 0 0 10px;
   color: #444;
-}
-
-.project-recovery-danger {
-  border-color: #b46a5d;
 }
 
 .project-suggestions-link {

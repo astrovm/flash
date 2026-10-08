@@ -299,7 +299,7 @@ const wireProjectSettings = (win) => {
         <p>Put every game shortcut back in its place. Nothing else changes.</p>
         <button type="button" class="xp-btn" data-project-action="restore-desktop">Restore Desktop</button>
       </fieldset>
-      <fieldset class="project-recovery-group project-recovery-danger">
+      <fieldset class="project-recovery-group">
         <legend>Reset</legend>
         <p>Delete your files and settings. Games stay.</p>
         <button type="button" class="xp-btn" data-project-action="reset">Reset</button>
