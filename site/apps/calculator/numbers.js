@@ -219,9 +219,9 @@ const fixedSinCos = (a) => {
     term = -fixedMultiply(term, square) / (k * (k + 1n));
     cos += term;
   }
-  // The last few units are rounding noise, as in sin(pi).
+  // The last few units are rounding noise, as in sin(pi). The reduced
+  // angle's cosine is never that small.
   if (absBig(sin) < 1000n) sin = 0n;
-  if (absBig(cos) < 1000n) cos = 0n;
   const turn = Number(((quarter % 4n) + 4n) % 4n);
   return [
     [sin, cos],

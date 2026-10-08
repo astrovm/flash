@@ -678,7 +678,6 @@ const mountCalculator = (context) => {
   const handleKeydown = (event) => {
     if (document.querySelector(".xp-dialog-overlay:not(.xp-dialog-modeless)"))
       return;
-    if (statistics?.dialog.el.contains(event.target)) return;
     // Ctrl+V arrives as a paste event, with the clipboard's text.
     if (event.ctrlKey && event.key.toLowerCase() === "v") return;
     const command = commandForKey(event);

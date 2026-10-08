@@ -134,6 +134,7 @@ describe("number entry", () => {
     expect(shows("1 exp 5")).toBe("1.e+5");
     expect(shows("1 exp 5 sign")).toBe("1.e-5");
     expect(shows("1 exp 5 =")).toBe("100000.");
+    expect(shows("1 exp 2 sign =")).toBe("0.01");
     expect(shows("1 exp 0 5")).toBe("1.e+5");
     expect(calculate("1 exp 99999").beeps).toBe(1);
     expect(calculate("1 exp exp").beeps).toBe(1);
