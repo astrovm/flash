@@ -328,10 +328,15 @@ const mountHearts = (context) => {
     if (!systemFont) return;
     const x = Math.trunc((BUTTON.width - measureText(systemFont, text)) / 2);
     const y = Math.trunc((BUTTON.height - systemFont.height) / 2);
-    if (passButton.disabled) {
-      drawText(label, systemFont, text, x + 1, y + 1, "#fff");
-      drawText(label, systemFont, text, x, y, "#aca899");
-    } else drawText(label, systemFont, text, x, y, "#000");
+    // Luna grays a disabled button's text without XP Classic's emboss.
+    drawText(
+      label,
+      systemFont,
+      text,
+      x,
+      y,
+      passButton.disabled ? "#a1a192" : "#000",
+    );
   };
   const setPassButton = ({ label, enabled, shown = true }) => {
     if (label !== undefined) passButton.dataset.label = label;
@@ -472,8 +477,24 @@ const mountHearts = (context) => {
     const run = generation;
     await showScore();
     if (run !== generation) return;
-    if (isGameOver(scores)) startGame();
-    else await dealHand();
+    if (!isGameOver(scores)) {
+      await dealHand();
+      return;
+    }
+    // mshearts.exe beeps MB_ICONQUESTION first when Sound is on; XP's
+    // default scheme gives that event no sound.
+    const again = await dialogs.message({
+      title: TITLE,
+      text: "Do you want to play again?",
+      icon: "question",
+      buttons: [
+        { id: "yes", label: "&Yes", isDefault: true },
+        { id: "no", label: "&No", isCancel: true },
+      ],
+    });
+    if (run !== generation) return;
+    if (again === "yes") startGame();
+    else context.close();
   };
 
   // ---- The human's moves ----
@@ -652,9 +673,10 @@ const mountHearts = (context) => {
       ...options,
     });
   };
-  // Centered over the table, above the status bar.
+  // Centered over the client area. mshearts.exe means to leave out the
+  // status bar but subtracts a height it never sets.
   const overTable = ({ width, height }) => {
-    const rect = canvas.getBoundingClientRect();
+    const rect = root.querySelector(".hearts-client").getBoundingClientRect();
     return {
       left: rect.left + Math.trunc((rect.width - width) / 2),
       top: rect.top + Math.trunc((rect.height - height) / 2),

@@ -46,7 +46,7 @@
   image-rendering: pixelated;
 }
 
-/* Player names: bold 13-pixel Tahoma, black on the table. */
+/* Player names: bold Tahoma in a 13-pixel cell, black on the table. */
 .hearts-names {
   position: absolute;
   inset: 0 0 23px;
@@ -57,7 +57,7 @@
   position: absolute;
   color: #000;
   font:
-    bold 13px/13px Tahoma,
+    bold 11px/13px Tahoma,
     sans-serif;
   white-space: pre;
 }
@@ -142,13 +142,13 @@ html[data-xp-appearance="classic"] .hearts-status::after {
   display: none;
 }
 
-/* Score Sheet columns, drawn with bold 13-pixel Tahoma. */
+/* Score Sheet columns, drawn with bold Tahoma in 13-pixel cells. */
 .hearts-score-column {
   position: absolute;
   top: 5px;
   color: #000;
   font:
-    bold 13px/13px Tahoma,
+    bold 11px/13px Tahoma,
     sans-serif;
   text-align: center;
   white-space: pre;
@@ -173,7 +173,23 @@ html[data-xp-appearance="classic"] .hearts-status::after {
 
 /* The quote's caption is cut short with an ellipsis, as XP does. */
 .hearts-quote .title-text {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.hearts-quote .title-buttons {
+  flex: none;
+}
+
+/* The pass button takes the focus when it lights up, and XP shows it. */
+html:not([data-xp-appearance="classic"]) .hearts-pass:focus::before {
+  border-image-source: var(--ctl-button-default);
+}
+
+.hearts-pass:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
 }

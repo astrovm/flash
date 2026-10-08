@@ -154,7 +154,7 @@ describe("Windows XP Calculator through BoxedWine", () => {
     expect(shell.window.location.hash).toBe("#calculator");
   });
 
-  test("shares one runtime with Hearts while keeping separate shell windows", async () => {
+  test("runs beside web-native Hearts in its own shell window", async () => {
     const shell = await login(await loadShell());
     const calculatorWindow = launchCalculator(shell);
     shell.document.getElementById("start-button").click();
@@ -162,17 +162,20 @@ describe("Windows XP Calculator through BoxedWine", () => {
     const flyouts = shell.document.getElementById("start-menu-flyouts");
     flyouts.querySelector('[data-program-id="games"]').click();
     flyouts.querySelector('[data-program-id="hearts"]').click();
+    await flushShell();
+    await flushShell();
 
     expect(calculatorWindow.isConnected).toBeTrue();
-    expect(
-      shell.document.querySelector('.xp-window[data-game="__hearts"]'),
-    ).not.toBeNull();
+    const heartsWindow = shell.document.querySelector(
+      '.xp-window[data-game="__hearts"]',
+    );
+    expect(heartsWindow.querySelector(".hearts-board")).not.toBeNull();
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
     ).toHaveLength(1);
     expect(
       shell.document.querySelectorAll(".boxedwine-shared-app-host"),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
 
   test("packages the pinned runtime and original XP files", async () => {

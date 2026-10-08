@@ -14,14 +14,14 @@ const application = (index: number) => ({
 });
 
 describe("BoxedWine application catalog", () => {
-  test("registers Hearts with only generic application data", () => {
-    expect(boxedWineApplications.filter(({ id }) => id === "hearts")).toEqual([
+  test("registers Calculator with only generic application data", () => {
+    expect(boxedWineApplications).toEqual([
       {
-        id: "hearts",
-        title: "Hearts",
-        icon: "Hearts.png",
-        executable: "hearts/mshearts.exe",
-        packagePath: "site/iframe/hearts/xp-hearts.zip",
+        id: "calculator",
+        title: "Calculator",
+        icon: "Calculator.png",
+        executable: "calculator/calc.exe",
+        packagePath: "site/iframe/calculator/xp-calculator.zip",
       },
     ]);
   });
