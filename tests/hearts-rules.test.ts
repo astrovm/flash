@@ -142,6 +142,7 @@ describe("Hearts deals", () => {
     const gone = { card: -1, state: GONE };
     expect(compareSlots(gone, gone)).toBe(0);
     expect(compareSlots(gone, slots("2C")[0])).toBe(1);
+    expect(compareSlots(slots("2C")[0], gone)).toBe(-1);
   });
 
   test("card helpers", () => {
@@ -513,6 +514,67 @@ describe("Hearts games", () => {
     );
     expect(checkMove(round.slots[seat], index, round, seat)).toBeNull();
     expect(name(round.slots[seat][index].card)).toBe("AH");
+  });
+});
+
+describe("Hearts computer discards", () => {
+  // Seat 0 leads the two of clubs; seat 1 has no clubs.
+  const firstTrickDiscard = (hand) => {
+    const round = roundOf([
+      "2C 3C 4C 5C 6C 7C 8C 9C TC JC QC KC AC",
+      hand,
+      "2D 3D 4D 5D 6D 7D 8D 9D TD JD QD KD AD",
+      "2S 3S 4S 5S 6S 7S 8S 9S TS JS KS AS KH",
+    ]);
+    play(round, 0, "2C");
+    const index = choosePlay(round.slots[1], round.memory[1], round, 1);
+    expect(checkMove(round.slots[1], index, round, 1)).toBeNull();
+    return name(round.slots[1][index].card);
+  };
+
+  test("the queen of spades waits out the first trick", () => {
+    // Diamonds go instead when there are any, else a lower spade.
+    expect(firstTrickDiscard("QS 2D 3D AH 2H 3H 4H 5H 6H 7H 8H 9H TH")).toBe(
+      "3D",
+    );
+    expect(firstTrickDiscard("QS 2S AH 2H 3H 4H 5H 6H 7H 8H 9H TH JH")).toBe(
+      "2S",
+    );
+  });
+
+  test("a hand of hearts throws its highest heart on the first trick", () => {
+    expect(firstTrickDiscard("AH 2H 3H 4H 5H 6H 7H 8H 9H TH JH QH KH")).toBe(
+      "AH",
+    );
+  });
+
+  test("a computer keeps a high card while the human could shoot the moon", () => {
+    const round = roundOf(
+      [
+        "AC 3C 4C 5C 6C 7C 8C 9C TC JC QC KC 2H",
+        "2D 3D 4D 5D 6D 7D 8D 9D TD JD QD KD AD",
+        "2S 3S 4S 5S 6S 7S 8S 9S TS JS KS AS 3H",
+        "2C 4H 5H 6H 7H 8H 9H TH JH QH KH AH QS",
+      ],
+      {
+        trick: createTrick(0),
+        queenPlayed: true,
+        moonPlayer: 0,
+        moonByHuman: true,
+      },
+    );
+    round.trick.played[0] = card("AC");
+    round.trick.current = 1;
+    const discard = choosePlay(round.slots[1], round.memory[1], round, 1);
+    // Not the ace of diamonds, the next one down.
+    expect(name(round.slots[1][discard].card)).toBe("KD");
+    round.moonByHuman = false;
+    expect(
+      name(
+        round.slots[1][choosePlay(round.slots[1], round.memory[1], round, 1)]
+          .card,
+      ),
+    ).toBe("AD");
   });
 });
 

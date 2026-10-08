@@ -417,8 +417,8 @@ const chooseDiscard = (info, unseen, round) => {
   }
   const highest = info.high[suit];
   if (!moonWatch(round, info.seat) || highest === info.low[suit]) return highest;
-  const lower = nextLower(info, highest);
-  return lower === -1 ? highest : lower;
+  // The suit holds a lower card, since its lowest isn't its highest.
+  return nextLower(info, highest);
 };
 
 const chooseFollow = (info, unseen, round) => {
