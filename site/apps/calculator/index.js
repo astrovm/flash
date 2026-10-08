@@ -329,10 +329,7 @@ const mountCalculator = (context) => {
       const box = document.createElement("input");
       box.type = type;
       box.tabIndex = -1;
-      box.addEventListener("click", (event) => {
-        event.preventDefault();
-        run(command);
-      });
+      box.addEventListener("click", () => run(command));
       const text = document.createElement("span");
       text.textContent = label;
       element.append(box, text);
@@ -450,7 +447,13 @@ const mountCalculator = (context) => {
       help: true,
       position: () => ({ left: dialogUnitsX(80), top: dialogUnitsY(80) }),
       controls: [
-        { type: "button", id: "ret", label: "&RET", rect: [4, 58, 28, 14] },
+        {
+          type: "button",
+          id: "ret",
+          label: "&RET",
+          rect: [4, 58, 28, 14],
+          isDefault: true,
+        },
         { type: "button", id: "load", label: "&LOAD", rect: [40, 58, 28, 14] },
         { type: "button", id: "cd", label: "&CD", rect: [76, 58, 28, 14] },
         { type: "button", id: "cad", label: "C&AD", rect: [112, 58, 28, 14] },
@@ -470,7 +473,6 @@ const mountCalculator = (context) => {
     });
     dialog.body.prepend(list);
     statistics = { dialog, list, count: elements.count };
-    dialog.defaultButton = elements.ret;
     const load = () => {
       if (list.selectedIndex < 0) return beep();
       calculator.loadStatistic(list.selectedIndex);

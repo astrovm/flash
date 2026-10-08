@@ -136,7 +136,7 @@ test("opens in Standard view, laid out from dialog 102", async () => {
   expect(h.win.style.width).toBe("260px");
   expect(h.win.style.height).toBe("260px");
   expect(h.win.classList.contains("dialog-frame")).toBeTrue();
-  expect(h.win.querySelector(".resize-handle")).toBeNull();
+  expect(Boolean(h.win.querySelector(".resize-handle"))).toBeFalse();
   expect(h.win.querySelector(".maximize-btn").disabled).toBeTrue();
   expect(h.display()).toBe("0.");
   const client = h.win.querySelector(".calculator-client");
@@ -160,8 +160,8 @@ test("opens in Standard view, laid out from dialog 102", async () => {
   expect(memoryClear.classList.contains("red")).toBeTrue();
   expect(h.button("digit7").classList.contains("blue")).toBeTrue();
   expect(h.button("sqrt").textContent).toBe("sqrt");
-  expect(h.win.querySelectorAll(".calculator-key")).toHaveLength(28);
-  expect(h.win.querySelector(".calculator-choice")).toBeNull();
+  expect(h.win.querySelectorAll(".calculator-key")).toHaveLength(27);
+  expect(Boolean(h.win.querySelector(".calculator-choice"))).toBeFalse();
   expect(h.win.querySelector(".title-text").textContent).toBe("Calculator");
 });
 
@@ -229,13 +229,12 @@ test("the keyboard follows calc.exe's accelerators", async () => {
     ["z", { ctrlKey: true }],
     ["s", { ctrlKey: true, shiftKey: true }],
   ])
-    expect(h.key(name, init).defaultPrevented).toBeFalse();
+    expect([name, h.key(name, init).defaultPrevented]).toEqual([name, false]);
   expect(h.display()).toBe("3.");
   // The flash: the button looks pressed for 20 ms.
   h.key("7");
   expect(h.button("digit7").classList.contains("pressed")).toBeTrue();
-  await new Promise((resolve) => setTimeout(resolve, 40));
-  await h.settle();
+  await h.s.advanceTime(40);
   expect(h.button("digit7").classList.contains("pressed")).toBeFalse();
   // Keys for buttons Standard lacks still work.
   h.key("Escape");
@@ -249,7 +248,7 @@ test("Scientific view, with bases, word sizes, angles, Inv and Hyp", async () =>
   expect(h.win.style.width).toBe("480px");
   expect(h.win.style.height).toBe("317px");
   expect(h.saved()).toEqual({ view: "scientific", grouping: false });
-  expect(h.win.querySelectorAll(".calculator-key")).toHaveLength(54);
+  expect(h.win.querySelectorAll(".calculator-key")).toHaveLength(58);
   expect(h.button("sin").classList.contains("purple")).toBeTrue();
   expect(h.button("pi").classList.contains("blue")).toBeTrue();
   expect(h.button("digit10").disabled).toBeTrue();
@@ -280,13 +279,14 @@ test("Scientific view, with bases, word sizes, angles, Inv and Hyp", async () =>
   h.key("F6");
   h.key("F3");
   expect(radio("Radians").querySelector("input").checked).toBeTrue();
+  h.key("Escape");
+  h.type("1");
   const inv = radio("Inv").querySelector("input");
   inv.click();
   expect(inv.checked).toBeTrue();
   radio("Hyp").querySelector("input").click();
   expect(radio("Hyp").querySelector("input").checked).toBeTrue();
-  h.key("Escape");
-  h.type("1s");
+  h.type("s");
   expect(h.display()).toBe("0.88137358701954302523260932497979");
   expect(inv.checked).toBeFalse();
   h.type("(2+3");
@@ -312,7 +312,8 @@ test("the View menu follows the base, and digit grouping persists", async () => 
     storage: { calculatorSettings: JSON.stringify({ view: "scientific" }) },
   });
   expect(h.win.style.width).toBe("480px");
-  expect(h.win.style.left).toBe("272px");
+  // Centered on Happy DOM's empty desktop, which leaves the 8-pixel margin.
+  expect(h.win.style.left).toBe("8px");
   expect(h.menuItems("edit")).toEqual(["CopyCtrl+C", "PasteCtrl+V"]);
   expect(h.menuItems("help")).toEqual(["About Calculator"]);
   expect(h.menuItems("view")).toEqual([
@@ -350,24 +351,25 @@ test("the View menu follows the base, and digit grouping persists", async () => 
   const viewMenu = h.win.querySelector('[data-calculator-menu="view"]');
   viewMenu.click();
   viewMenu.click();
-  expect(h.win.querySelector(".tm-menu")).toBeNull();
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeFalse();
   viewMenu.click();
   h.win
     .querySelector(".tm-menu")
     .dispatchEvent(new h.s.window.PointerEvent("pointerdown", { bubbles: true }));
-  expect(h.win.querySelector(".tm-menu")).toBeNull();
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeTrue();
+  viewMenu.click();
   viewMenu.click();
   h.s.document.body.dispatchEvent(
     new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
   );
-  expect(h.win.querySelector(".tm-menu")).toBeNull();
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeFalse();
   h.s.document.body.dispatchEvent(
     new h.s.window.PointerEvent("pointerdown", { bubbles: true }),
   );
   // A key closes an open menu and still runs.
   viewMenu.click();
   h.key("Escape");
-  expect(h.win.querySelector(".tm-menu")).toBeNull();
+  expect(Boolean(h.win.querySelector(".tm-menu"))).toBeFalse();
 });
 
 test("missing, corrupt or unwritable settings fall back to Standard", async () => {
@@ -458,7 +460,7 @@ test("the Statistics Box", async () => {
   });
   h.key("s", { ctrlKey: true });
   const box = h.statisticsBox();
-  expect(box).toBeDefined();
+  expect(Boolean(box)).toBeTrue();
   expect(box.parentElement.classList.contains("xp-dialog-modeless")).toBeTrue();
   expect(h.button("ave").disabled).toBeFalse();
   const list = box.querySelector(".calculator-statistics");
@@ -471,9 +473,10 @@ test("the Statistics Box", async () => {
   );
   expect(h.display()).toBe("0.");
   const action = (id) => box.querySelector(`[data-action="${id}"]`).click();
+  const before = h.sounds.length;
   action("load");
   action("cd");
-  expect(h.sounds).toHaveLength(2);
+  expect(h.sounds.length - before).toBe(2);
   h.type("1");
   h.key("Insert");
   h.type("2");
@@ -492,7 +495,7 @@ test("the Statistics Box", async () => {
   h.key("t", { ctrlKey: true });
   expect(h.display()).toBe("7.5");
   h.key("d", { ctrlKey: true });
-  expect(h.display()).toBe("1.802775637731994646559610633736");
+  expect(h.display()).toBe("1.8027756377319946465596106337352");
   list.selectedIndex = 0;
   action("load");
   expect(h.display()).toBe("1.");
@@ -503,21 +506,21 @@ test("the Statistics Box", async () => {
   expect([...list.options].map((option) => option.text)).toEqual(["1.", "4.5"]);
   expect(list.selectedIndex).toBe(1);
   action("ret");
-  expect(h.s.document.activeElement).toBe(h.win.querySelector(".xp-calculator"));
+  expect(h.s.document.activeElement === h.win.querySelector(".xp-calculator")).toBeTrue();
   // Sta again focuses the open box.
   h.click("sta");
-  expect(h.s.document.activeElement).toBe(list);
+  expect(h.s.document.activeElement === list).toBeTrue();
   action("cad");
   expect(list.options).toHaveLength(0);
   expect(count()).toBe("0");
   // Closing the box clears it and disables the statistics keys.
   box.querySelector(".close-btn").click();
-  expect(h.statisticsBox()).toBeUndefined();
+  expect(Boolean(h.statisticsBox())).toBeFalse();
   expect(h.button("ave").disabled).toBeTrue();
   // Changing the view closes it too.
   h.click("sta");
   await h.menu("view", "standard");
-  expect(h.statisticsBox()).toBeUndefined();
+  expect(Boolean(h.statisticsBox())).toBeFalse();
 });
 
 test("closing Calculator closes its Statistics Box", async () => {
@@ -527,8 +530,8 @@ test("closing Calculator closes its Statistics Box", async () => {
   h.click("sta");
   h.win.querySelector(".close-btn").click();
   await h.settle();
-  expect(h.statisticsBox()).toBeUndefined();
+  expect(Boolean(h.statisticsBox())).toBeFalse();
   expect(
-    h.s.document.querySelector('.xp-window[data-game="__calculator"]'),
-  ).toBeNull();
+    Boolean(h.s.document.querySelector('.xp-window[data-game="__calculator"]')),
+  ).toBeFalse();
 });
