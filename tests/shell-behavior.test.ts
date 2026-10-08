@@ -875,18 +875,13 @@ describe("Windows XP shell", () => {
     const calculatorWindow = shell.document.querySelector(
       '.xp-window[data-game="__calculator"]',
     )!;
-    const calculatorUrl = new URL(
-      shell.document.querySelector<HTMLIFrameElement>(
-        ".boxedwine-shared-runtime-frame",
-      )!.src,
+    // Calculator is web-native, without the BoxedWine runtime.
+    expect(Boolean(calculatorWindow.querySelector(".xp-calculator"))).toBe(
+      true,
     );
     expect(
-      calculatorWindow.querySelector(".boxedwine-shared-app-host"),
-    ).not.toBeNull();
-    expect(calculatorUrl.searchParams.get("archive")).toBe("xp-runtime");
-    expect(calculatorUrl.searchParams.get("executable")).toBe(
-      "calculator/calc.exe",
-    );
+      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
+    ).toHaveLength(0);
 
     shell.document.getElementById("start-button")!.click();
     shell.document.getElementById("all-programs-button")!.click();
@@ -1014,18 +1009,8 @@ describe("Windows XP shell", () => {
     const solitaireWindow = shell.document.querySelector(
       '.xp-window[data-game="__solitaire"]',
     )!;
-    // Solitaire is web-native; Calculator keeps the one BoxedWine runtime.
+    // Solitaire is web-native too.
     expect(solitaireWindow.querySelector(".solitaire-board")).not.toBeNull();
-    expect(
-      shell.document.querySelectorAll(".boxedwine-shared-runtime-frame"),
-    ).toHaveLength(1);
-    expect(
-      new URL(
-        shell.document.querySelector<HTMLIFrameElement>(
-          ".boxedwine-shared-runtime-frame",
-        )!.src,
-      ).searchParams.get("executable"),
-    ).toBe("calculator/calc.exe");
 
     shell.document.getElementById("start-button")!.click();
     shell.document.getElementById("all-programs-button")!.click();
