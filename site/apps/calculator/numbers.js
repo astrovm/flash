@@ -66,7 +66,7 @@ export const number = (n, d = 1n, e = 0) => {
     return number(n, 1n, e - shift);
   }
   const magnitude = digitCount(n) - digitCount(d) + e;
-  if (magnitude > MAX_EXPONENT + 1) fail("domain");
+  if (magnitude > MAX_EXPONENT) fail("domain");
   if (magnitude < -MAX_EXPONENT) return ZERO;
   return { n, d, e };
 };
@@ -219,6 +219,9 @@ const fixedSinCos = (a) => {
     term = -fixedMultiply(term, square) / (k * (k + 1n));
     cos += term;
   }
+  // The last few units are rounding noise, as in sin(pi).
+  if (absBig(sin) < 1000n) sin = 0n;
+  if (absBig(cos) < 1000n) cos = 0n;
   const turn = Number(((quarter % 4n) + 4n) % 4n);
   return [
     [sin, cos],

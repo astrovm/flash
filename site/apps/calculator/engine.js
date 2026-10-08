@@ -154,7 +154,7 @@ export const formatDecimal = (x, { fe = false, grouping = false } = {}) => {
   return `${sign}${groupInteger(whole, 10, grouping)}.${digits.slice(point)}`;
 };
 
-export const formatNumber = (x, { radix = 10, fe, grouping } = {}) =>
+export const formatNumber = (x, { radix = 10, fe, grouping }) =>
   radix === 10
     ? formatDecimal(x, { fe, grouping })
     : groupInteger(toBigInt(x).toString(radix).toUpperCase(), radix, grouping);
@@ -689,7 +689,8 @@ export const createCalculator = ({ scientific = false } = {}) => {
         entry.whole = "0";
         entry.negative = false;
       } else return beep();
-    } else if (command === "exp") {
+    } else {
+      // Exp.
       if (integerMode() || entry.exponent) return beep();
       entry.exponent = { digits: "", negative: false };
     }
