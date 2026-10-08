@@ -25,7 +25,6 @@ import { fileURLToPath } from "node:url";
 import { compress as compressWoff2 } from "wawoff2";
 import { generateSW, type ManifestTransform } from "workbox-build";
 import workboxConfig, { PRECACHE_EXTENSIONS } from "../workbox-config";
-import { boxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
 
 const PROJECT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const SOURCE_DIR = join(PROJECT_DIR, "site");
@@ -629,113 +628,6 @@ export async function updateHtml(
     await writeFile(paths.captureHtml, capture);
   }
 
-  const boxedWineRoot = join(paths.root, "vendor", "boxedwine", "26R1");
-  if (await isDirectory(boxedWineRoot)) {
-    const wasmPath = join(boxedWineRoot, "boxedwine.wasm");
-    const javaScriptPath = join(boxedWineRoot, "boxedwine.js");
-    const shellPath = join(boxedWineRoot, "boxedwine-shell.js");
-    const indexPath = join(boxedWineRoot, "index.html");
-    const rootZipPath = join(boxedWineRoot, "xp-accessories.zip");
-    const rootZipName = `xp-accessories-${await getShortHash(rootZipPath)}.zip`;
-    const wasmName = `boxedwine.${await getShortHash(wasmPath)}.wasm`;
-    let javaScript = await readFile(javaScriptPath, "utf8");
-    javaScript = await replaceExactlyOnce(
-      javaScript,
-      /locateFile\((['"])boxedwine\.wasm\1\)/g,
-      `locateFile('${wasmName}')`,
-      "Could not version the BoxedWine WebAssembly reference",
-    );
-    await writeFile(javaScriptPath, javaScript);
-    const javaScriptName = `boxedwine.${await getShortHash(javaScriptPath)}.js`;
-    const shellName = `boxedwine-shell.${await getShortHash(shellPath)}.js`;
-    let boxedWineIndex = await readFile(indexPath, "utf8");
-    boxedWineIndex = await replaceExactlyOnce(
-      boxedWineIndex,
-      /boxedwine-shell\.js"/g,
-      `${shellName}"`,
-      "Could not version the BoxedWine shell reference",
-    );
-    boxedWineIndex = await replaceExactlyOnce(
-      boxedWineIndex,
-      /boxedwine\.js"/g,
-      `${javaScriptName}"`,
-      "Could not version the BoxedWine JavaScript reference",
-    );
-    await writeFile(indexPath, boxedWineIndex);
-    const indexName = `index.${await getShortHash(indexPath)}.html`;
-    const preloadPath = join(boxedWineRoot, "preload.json");
-    if (await isFile(preloadPath)) {
-      await writeFile(
-        preloadPath,
-        `${JSON.stringify(
-          {
-            files: [
-              "boxedwine-startup.js",
-              shellName,
-              javaScriptName,
-              wasmName,
-              indexName,
-              rootZipName,
-            ],
-          },
-          null,
-          2,
-        )}\n`,
-      );
-    }
-    const sharedRuntimePath = join(
-      paths.root,
-      "apps",
-      "core",
-      "boxedwine-runtime.js",
-    );
-    if (await isFile(sharedRuntimePath)) {
-      let sharedRuntime = await readFile(sharedRuntimePath, "utf8");
-      sharedRuntime = await replaceExactlyOnce(
-        sharedRuntime,
-        /const ROOT_ARCHIVE = "xp-accessories";/g,
-        `const ROOT_ARCHIVE = "${rootZipName.slice(0, -4)}";`,
-        "Could not version the shared BoxedWine root filesystem reference",
-      );
-      sharedRuntime = await replaceExactlyOnce(
-        sharedRuntime,
-        /`\$\{RUNTIME_ROOT\}index\.html`/g,
-        `\`\${RUNTIME_ROOT}${indexName}\``,
-        "Could not version the shared BoxedWine runner reference",
-      );
-      await writeFile(sharedRuntimePath, sharedRuntime);
-    }
-    const persistentProofPath = join(
-      paths.root,
-      "iframe",
-      "boxedwine-runtime",
-      "index.html",
-    );
-    if (await isFile(persistentProofPath)) {
-      let persistentProof = await readFile(persistentProofPath, "utf8");
-      persistentProof = await replaceExactlyOnce(
-        persistentProof,
-        /\.\.\/\.\.\/vendor\/boxedwine\/26R1\/index\.html/g,
-        `../../vendor/boxedwine/26R1/${indexName}`,
-        "Could not version the persistent BoxedWine runner reference",
-      );
-      persistentProof = await replaceExactlyOnce(
-        persistentProof,
-        /root: "xp-accessories"/g,
-        `root: "${rootZipName.slice(0, -4)}"`,
-        "Could not version the persistent BoxedWine root reference",
-      );
-      await writeFile(persistentProofPath, persistentProof);
-    }
-    await Promise.all([
-      rename(indexPath, join(boxedWineRoot, indexName)),
-      rename(wasmPath, join(boxedWineRoot, wasmName)),
-      rename(javaScriptPath, join(boxedWineRoot, javaScriptName)),
-      rename(shellPath, join(boxedWineRoot, shellName)),
-      rename(rootZipPath, join(boxedWineRoot, rootZipName)),
-      rm(join(boxedWineRoot, "boxedwine.zip")),
-    ]);
-  }
   console.log(`  - Set deployment version to ${version}`);
   return hashedAssets;
 }
@@ -746,7 +638,6 @@ export function isOptionalOfflinePath(relativePath: string): boolean {
     path.startsWith("swf/") ||
     path.startsWith("iframe/") ||
     path.startsWith("dos/") ||
-    path.startsWith("vendor/boxedwine/") ||
     path.startsWith("vendor/scummvm/") ||
     (path.startsWith("js/") &&
       (path.endsWith(".wasm") ||
@@ -812,9 +703,6 @@ export async function versionGamePackages(
   const gameRuntimes: Record<string, string> = {
     "pink-panther-hokus-pokus": "scummvm",
     "pink-panther-passport-to-peril": "scummvm",
-    ...Object.fromEntries(
-      boxedWineApplications.map(({ id }) => [id, "boxedwine"]),
-    ),
   };
   const packages: VersionedGamePackages = {};
   for (const gameId of [...gameIds].sort()) {
@@ -883,7 +771,6 @@ export async function writeOfflineGameManifest(
     .toSorted();
 
   const sharedRuntimes: Record<string, string[]> = {
-    boxedwine: [join(paths.root, "vendor", "boxedwine", "26R1")],
     scummvm: [
       join(paths.root, "iframe", "scummvm"),
       join(paths.root, "vendor", "scummvm", "2026.3.0"),
@@ -891,14 +778,6 @@ export async function writeOfflineGameManifest(
   };
   const games = await versionGamePackages(paths);
   await injectGameRoots(paths, games);
-  const boxedWineApplicationPackage = games["boxedwine-runtime"];
-  if (boxedWineApplicationPackage) {
-    sharedRuntimes.boxedwine.push(
-      join(paths.root, boxedWineApplicationPackage.root),
-    );
-  }
-  const publicGames = { ...games };
-  delete publicGames["boxedwine-runtime"];
 
   const runtimes = Object.fromEntries(
     await Promise.all(
@@ -938,7 +817,7 @@ export async function writeOfflineGameManifest(
   );
   const runtimeRevision = await offlineRevision(paths.root, runtimeFiles);
   const manifest: OfflineManifest = {
-    games: publicGames,
+    games,
     runtime: {
       bytes: (
         await Promise.all(

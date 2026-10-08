@@ -35,7 +35,7 @@ export const coverageIncludes = [
   /^catalog\/.+\.ts$/,
   /^rtc\/.+\.ts$/,
   /^worker\/.+\.ts$/,
-  /^tools\/(deploy|dev-server|extract-swf|validate-icons|validate-javascript|build-boxedwine-xp-filesystem)\.ts$/,
+  /^tools\/(deploy|dev-server|extract-swf|validate-icons|validate-javascript)\.ts$/,
 ];
 export const coverageExcludes = [
   /^site\/apps\/paint\/(lib|src)\//,

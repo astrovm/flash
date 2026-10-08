@@ -416,8 +416,6 @@ const setupScreenFlow = () => {
     event.preventDefault();
     finishBootSequence();
   });
-  // Hide BoxedWine preparation behind the normal boot and Welcome screens.
-  // Do not make either screen wait when the browser needs more time.
   document
     .getElementById("welcome-screen")
     .addEventListener("click", (event) => {

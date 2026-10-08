@@ -8,7 +8,6 @@ import {
 } from "../site/apps/core/lazy-application.js";
 import { createApplicationRegistry } from "../site/apps/core/registry.js";
 import { defineProgram } from "../site/apps/programs/define-program.js";
-import { validateBoxedWineApplications } from "../site/apps/core/boxedwine-applications.js";
 
 const element = { nodeType: 1 };
 const metadata = {
@@ -91,36 +90,5 @@ describe("application definitions", () => {
       createApplicationRegistry([{ id: "same" }, { id: "same" }]),
     ).toThrow("Duplicate application id: same");
     expect(createApplicationRegistry([{ id: "one" }]).get("two")).toBeNull();
-  });
-});
-
-describe("BoxedWine application catalog validation", () => {
-  const valid = {
-    id: "calculator",
-    title: "Calculator",
-    icon: "Calculator.png",
-    executable: "calculator/calc.exe",
-    packagePath: "site/iframe/calculator/xp-calculator.zip",
-  };
-
-  test.each([
-    ["a non-array catalog", null, "must be an array"],
-    ["a missing definition", [null], "Invalid BoxedWine application ID"],
-    ["an invalid ID", [{ ...valid, id: "Bad ID" }], "application ID"],
-    ["a duplicate ID", [valid, valid], "Duplicate BoxedWine application ID"],
-    ["a blank title", [{ ...valid, title: "" }], "application title"],
-    ["a non-PNG icon", [{ ...valid, icon: "icon.gif" }], "application icon"],
-    [
-      "an escaping executable",
-      [{ ...valid, executable: "calculator/../calc.exe" }],
-      "executable",
-    ],
-    [
-      "a package outside the iframe folder",
-      [{ ...valid, packagePath: "site/other/calc.zip" }],
-      "package path",
-    ],
-  ])("rejects %s", (_label, definitions, message) => {
-    expect(() => validateBoxedWineApplications(definitions)).toThrow(message);
   });
 });

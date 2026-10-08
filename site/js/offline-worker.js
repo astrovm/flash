@@ -5,13 +5,7 @@
   // automatic application-shell precache; this handler serves only the
   // optional bundled games and shared Ruffle runtime selected by the user.
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
-  const OPTIONAL_PATHS = [
-    "/swf/",
-    "/iframe/",
-    "/dos/",
-    "/vendor/boxedwine/",
-    "/vendor/scummvm/",
-  ];
+  const OPTIONAL_PATHS = ["/swf/", "/iframe/", "/dos/", "/vendor/scummvm/"];
   // Games whose data the user packs into one browser-storage file. Each has
   // its own directory, update message and the folder names its engine asks
   // for, which map onto the packed paths.

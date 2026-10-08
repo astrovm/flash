@@ -77,11 +77,7 @@ const wireTaskbarMenuKeyboard = (menu) => {
 // Task buttons and menu entries exist only for open windows.
 const activateTaskButton = (gameId) => {
   const win = openWindows.get(gameId);
-  if (
-    gameId === focusedGameId &&
-    !win.minimized &&
-    !win.nativeOwnedWindows?.size
-  ) {
+  if (gameId === focusedGameId && !win.minimized) {
     minimizeWindow(gameId, { animate: true });
   } else {
     restoreWindow(gameId, { animate: true });

@@ -153,7 +153,7 @@ const clampWindowPosition = (win, left, top, { fullyVisible = false } = {}) => {
   const { width: desktopWidth, height: desktopHeight } = getVisibleWorkArea();
   const width = parseWindowLength(win.el.style.width, win.el.offsetWidth);
   const height = parseWindowLength(win.el.style.height, win.el.offsetHeight);
-  if (fullyVisible || win.application?.window.nativeMetadata) {
+  if (fullyVisible) {
     return {
       left: Math.min(Math.max(left, 0), Math.max(0, desktopWidth - width)),
       top: Math.min(Math.max(top, 0), Math.max(0, desktopHeight - height)),
@@ -165,97 +165,12 @@ const clampWindowPosition = (win, left, top, { fullyVisible = false } = {}) => {
   };
 };
 
-// Native windows take the size their application reports, which may not fit
-// the visible work area.
-const fitNativeProgramToWorkArea = (win) => {
-  if (!win.application?.window.nativeMetadata || win.maximized) return false;
-
-  const { width: visibleWidth, height: visibleHeight } = getVisibleWorkArea();
-  if (visibleWidth <= 0 || visibleHeight <= 0) return false;
-  const actualWidth = parseWindowLength(win.el.style.width, win.el.offsetWidth);
-  const actualHeight = parseWindowLength(
-    win.el.style.height,
-    win.el.offsetHeight,
-  );
-  if (win.workAreaFitRect) {
-    const originalWidth = parseWindowLength(
-      win.workAreaFitRect.width,
-      actualWidth,
-    );
-    const originalHeight = parseWindowLength(
-      win.workAreaFitRect.height,
-      actualHeight,
-    );
-    if (originalWidth <= visibleWidth && originalHeight <= visibleHeight) {
-      Object.assign(win.el.style, win.workAreaFitRect);
-      win.workAreaFitRect = null;
-      return true;
-    }
-    // The original size still does not fit, so scale it again for the current
-    // work area.
-  } else if (actualWidth <= visibleWidth && actualHeight <= visibleHeight) {
-    return false;
-  }
-
-  // Remembering the size measured at this exact moment (rather than the
-  // application's own stable declared size) let it capture a value already
-  // corrupted by a mid-update read. Since a metadata echo can retrigger this
-  // same capture-then-restore path on every resize confirmation, a corrupted
-  // capture becomes a new, larger "original" each cycle instead of ever
-  // converging back to the true size - unbounded growth on every echo.
-  win.workAreaFitRect ||= {
-    left: win.el.style.left,
-    top: win.el.style.top,
-    width: `${win.nativePreferredShellSize?.width || actualWidth}px`,
-    height: `${win.nativePreferredShellSize?.height || actualHeight}px`,
-    minWidth: win.el.style.minWidth,
-    minHeight: win.el.style.minHeight,
-  };
-
-  const preferredWidth = parseWindowLength(
-    win.workAreaFitRect.width,
-    actualWidth,
-  );
-  const preferredHeight = parseWindowLength(
-    win.workAreaFitRect.height,
-    actualHeight,
-  );
-  const caption = parseWindowLength(
-    win.el.ownerDocument.defaultView
-      ?.getComputedStyle?.(win.el)
-      ?.getPropertyValue("--boxedwine-shell-caption-height"),
-    28,
-  );
-  const preferredClientHeight = Math.max(1, preferredHeight - caption);
-  const scale = Math.min(
-    1,
-    visibleWidth / preferredWidth,
-    Math.max(1, visibleHeight - caption) / preferredClientHeight,
-  );
-  const fittedWidth = Math.max(1, Math.floor(preferredWidth * scale));
-  const fittedHeight = Math.max(
-    caption + 1,
-    Math.floor(preferredClientHeight * scale) + caption,
-  );
-
-  Object.assign(win.el.style, {
-    left: "0px",
-    top: "0px",
-    width: `${fittedWidth}px`,
-    height: `${fittedHeight}px`,
-    minWidth: "0px",
-    minHeight: "0px",
-  });
-  return true;
-};
-
 const keepWindowsInWorkArea = () => {
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   if (desktopWidth === 0 || desktopHeight === 0) return;
 
   openWindows.forEach((win) => {
     if (win.maximized) return;
-    if (fitNativeProgramToWorkArea(win)) return;
     const el = win.el;
     const width = parseWindowLength(el.style.width, el.offsetWidth);
     const height = parseWindowLength(el.style.height, el.offsetHeight);
@@ -898,10 +813,7 @@ const loadIframe = (gameId, win) => {
   );
 };
 
-const focusWindow = (
-  gameId,
-  { notifyApplication = true, focusOwnedWindow = true } = {},
-) => {
+const focusWindow = (gameId) => {
   const win = openWindows.get(gameId);
   if (!win) return;
 
@@ -916,8 +828,7 @@ const focusWindow = (
     win.el.classList.contains("active")
   ) {
     win.lastUsed = Date.now();
-    if (notifyApplication) win.mountedApplication?.focus?.();
-    if (focusOwnedWindow) win.focusOwnedWindow?.();
+    win.mountedApplication?.focus?.();
     return;
   }
 
@@ -926,12 +837,11 @@ const focusWindow = (
   win.lastUsed = Date.now();
   win.zIndex = ++zIndexCounter;
   win.el.style.zIndex = win.alwaysOnTop ? TOPMOST_Z_INDEX : win.zIndex;
-  if (notifyApplication) win.mountedApplication?.focus?.();
+  win.mountedApplication?.focus?.();
 
   openWindows.forEach((w, id) => {
     w.el.classList.toggle("active", id === gameId);
   });
-  if (focusOwnedWindow) win.focusOwnedWindow?.();
 
   applyFocusVolumes();
   syncWindowVolumeUI(win);
@@ -1130,17 +1040,12 @@ const animateCaption = (
   tick();
 };
 
-const minimizeWindow = (
-  gameId,
-  { notifyApplication = true, animate = false } = {},
-) => {
+const minimizeWindow = (gameId, { animate = false } = {}) => {
   const win = openWindows.get(gameId);
   if (!win || win.minimized) return;
 
-  if (notifyApplication && win.mountedApplication?.minimize?.() === false)
-    return;
+  if (win.mountedApplication?.minimize?.() === false) return;
   win.minimized = true;
-  win.setOwnedWindowsVisible?.(false);
   const hide = () => {
     if (win.minimized) win.el.style.display = "none";
   };
@@ -1164,17 +1069,12 @@ const minimizeWindow = (
   }
 };
 
-const restoreWindow = (
-  gameId,
-  { notifyApplication = true, animate = false } = {},
-) => {
+const restoreWindow = (gameId, { animate = false } = {}) => {
   const win = openWindows.get(gameId);
   if (!win || !win.minimized) return;
 
-  if (notifyApplication && win.mountedApplication?.restore?.() === false)
-    return;
+  if (win.mountedApplication?.restore?.() === false) return;
   win.minimized = false;
-  win.setOwnedWindowsVisible?.(true);
   const show = () => {
     if (!win.minimized) win.el.style.display = "flex";
   };
@@ -1199,7 +1099,6 @@ const minimizeAllWindows = () => {
     if (!win.minimized) win.mountedApplication?.minimize?.();
     win.minimized = true;
     win.el.style.display = "none";
-    win.setOwnedWindowsVisible?.(false);
   });
   focusedGameId = null;
   applyFocusVolumes();
@@ -1275,7 +1174,6 @@ const toggleMaximize = (gameId, { animate = false } = {}) => {
       );
       win.el.style.left = `${position.left}px`;
       win.el.style.top = `${position.top}px`;
-      fitNativeProgramToWorkArea(win);
     }
     updateMaximizeButton(win);
     focusWindow(gameId);
@@ -1284,10 +1182,7 @@ const toggleMaximize = (gameId, { animate = false } = {}) => {
   else apply();
 };
 
-const closeGameWindow = (
-  gameId,
-  { skipBeforeClose = false, skipUnmount = false } = {},
-) => {
+const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
   const win = openWindows.get(gameId);
   if (!win) return true;
   if (!skipBeforeClose && win.closePromise) return win.closePromise;
@@ -1335,7 +1230,7 @@ const closeGameWindow = (
   // A closed window drops its caption without changing.
   win.windowAnimation?.cancel();
   persistWindowPlacement(win);
-  if (!skipUnmount) win.mountedApplication?.unmount?.();
+  win.mountedApplication?.unmount?.();
   win.el.remove();
   openWindows.delete(gameId);
 
@@ -1349,10 +1244,7 @@ const closeGameWindow = (
 };
 
 const wireDrag = (win) => {
-  // Native windows need their first metadata before a stored size can be
-  // validated. Applying it here can resize the native window to stale or
-  // corrupted geometry before its real default size and capabilities arrive.
-  if (!win.application?.window.nativeMetadata) restoreWindowPlacement(win);
+  restoreWindowPlacement(win);
   const bar = win.el.querySelector(".title-bar");
   const titleIcon = bar.querySelector(".title-icon");
 

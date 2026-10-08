@@ -39,7 +39,6 @@ export default {
     "swf/**",
     "iframe/**",
     "dos/**",
-    "vendor/boxedwine/**",
     "vendor/scummvm/**",
     "js/*.wasm",
     "js/core.ruffle.*.js",

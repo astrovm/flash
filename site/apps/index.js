@@ -3,8 +3,6 @@ import { accessoryApplications } from "./catalog/accessories.js";
 import { systemToolApplications } from "./catalog/system-tools.js";
 import { systemApplications } from "./catalog/system-applications.js";
 import { createApplicationRegistry } from "./core/registry.js";
-import { boxedWineShellApplications } from "./core/boxedwine-application.js";
-import "./core/boxedwine-preload.js";
 import { applicationMetadata as paintMetadata } from "./paint/metadata.js";
 const paintApplication = defineLazyApplication(paintMetadata, () =>
   import("./paint/index.js").then((module) => module.paintApplication),
@@ -42,7 +40,6 @@ export const applicationRegistry = createApplicationRegistry([
   ...accessoryApplications,
   ...systemToolApplications,
   ...systemApplications,
-  ...boxedWineShellApplications,
   freecellApplication,
   minesweeperApplication,
   solitaireApplication,
