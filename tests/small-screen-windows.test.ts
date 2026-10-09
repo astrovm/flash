@@ -207,3 +207,80 @@ test("card boards draw at the render density and smooth only uneven scales", () 
     globalThis.window = previous;
   }
 });
+
+test("fixed-size windows refit when the screen turns", async () => {
+  const s = await openPhone();
+  s.document.getElementById("desktop-icons").dispatchEvent(
+    new s.window.MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  s.document
+    .querySelector('#desktop-context-menu [data-action="properties"]')
+    .click();
+  await settle();
+  const win = windowFor(s, "__display-properties");
+  const client = win.querySelector(".display-properties-content");
+  const turn = async (width, height) => {
+    Object.defineProperties(s.document.getElementById("desktop"), {
+      clientWidth: { configurable: true, value: width },
+      clientHeight: { configurable: true, value: height - 30 },
+    });
+    Object.defineProperties(s.window, {
+      innerWidth: { configurable: true, value: width },
+      innerHeight: { configurable: true, value: height },
+    });
+    s.window.dispatchEvent(new s.window.Event("resize"));
+    await settle();
+  };
+  // Sideways, there's room across but only 360 pixels down.
+  await turn(844, 390);
+  expect(win.style.height).toBe("360px");
+  expect(Number(client.style.zoom)).toBeCloseTo(360 / 455, 6);
+  expect(win.style.top).toBe("0px");
+  // Upright again on a bigger screen, the dialog is its own size.
+  await turn(1024, 768);
+  expect(win.style.width).toBe("404px");
+  expect(win.style.height).toBe("455px");
+  expect(client.style.zoom).toBe("");
+  // It no longer holds the smaller size as its minimum.
+  expect(win.style.minWidth).toBe("");
+  expect(win.style.minHeight).toBe("");
+});
+
+test("a screen smaller than a window's frame leaves the window alone", async () => {
+  const s = await openPhone();
+  // A 50 pixel frame around the client area, on a 40 by 40 screen.
+  Object.defineProperty(s.window.HTMLElement.prototype, "offsetWidth", {
+    configurable: true,
+    get() {
+      return this.classList.contains("xp-window") ? 50 : 0;
+    },
+  });
+  Object.defineProperties(s.document.getElementById("desktop"), {
+    clientWidth: { configurable: true, value: 40 },
+    clientHeight: { configurable: true, value: 600 },
+  });
+  Object.defineProperty(s.window, "innerWidth", {
+    configurable: true,
+    value: 40,
+  });
+  try {
+    s.document.getElementById("desktop-icons").dispatchEvent(
+      new s.window.MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    s.document
+      .querySelector('#desktop-context-menu [data-action="properties"]')
+      .click();
+    await settle();
+  } finally {
+    delete s.window.HTMLElement.prototype.offsetWidth;
+  }
+  const win = windowFor(s, "__display-properties");
+  expect(win.style.width).toBe("404px");
+  expect(win.querySelector(".display-properties-content").style.zoom).toBe("");
+});

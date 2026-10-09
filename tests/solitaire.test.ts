@@ -20,6 +20,8 @@ const open = async ({
   storage = {},
   failImages = false,
   time = DEAL_TIME,
+  width = 585,
+  height = 384,
 } = {}) => {
   let frames;
   const s = await login(
@@ -31,8 +33,8 @@ const open = async ({
       beforeScripts: (window) => {
         frames = recordCardCanvas(window, {
           board: "solitaire-board",
-          width: 585,
-          height: 384,
+          width,
+          height,
           failImages,
         });
         window.Date.now = () => time;
@@ -128,6 +130,19 @@ const open = async ({
 };
 
 const DECK_TOP = [50, 57];
+
+test("the deal draws at full size, and scales down to fit a phone", async () => {
+  const full = await open();
+  expect(full.frames.transform).toEqual([1, 0, 0, 1, 0, 0]);
+  // 390 pixels show sol.exe's 585 pixel table at two thirds size, cards
+  // where they always are, and taps land on the scaled cards.
+  const phone = await open({ width: 390, height: 400 });
+  expect(phone.frames.transform[0]).toBeCloseTo(390 / 585, 6);
+  expect(phone.drawnAt(503, 125)).toBe(face("7S"));
+  // 12 pixels in is 18 on the table: the deck, whose top card starts at 15.
+  await phone.press([12, 40]);
+  expect(phone.drawnAt(121, 7)).toBe(face("7C"));
+});
 
 test("a new deal cancels a card's pending slide back", async () => {
   const h = await open();
