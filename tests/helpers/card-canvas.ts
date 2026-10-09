@@ -30,6 +30,10 @@ export const recordCardCanvas = (
       rendered.set(image.src, count);
       canvas.dataset.face = `${image.src}${count === 2 ? " inverted" : ""}`;
     };
+    // The board's last transform: its scale shows how the deal fits.
+    context.setTransform = (...values) => {
+      if (board()) frames.transform = values;
+    };
     context.fillRect = (x, y, width) => {
       if (board() && x === 0 && y === 0 && width >= 500) frames.push([]);
     };

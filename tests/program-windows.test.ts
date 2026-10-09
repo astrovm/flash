@@ -103,6 +103,9 @@ test("programs report load failures and honor custom window options", async () =
   await runCommand(s, "notepad");
   const win = s.document.querySelector('.xp-window[data-game="__notepad"]');
   expect(win.style.width).toBe("200px");
+  // A desktop that small isn't laid out yet, so the start position stays.
+  expect(win.style.left).toBe("8px");
+  expect(win.style.top).toBe("8px");
   expect(win.querySelector(".maximize-btn").disabled).toBeTrue();
   expect(win.querySelectorAll(".resize-handle")).toHaveLength(0);
   win.dispatchEvent(

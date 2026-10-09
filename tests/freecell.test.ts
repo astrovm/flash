@@ -35,6 +35,7 @@ const open = async ({
   storage = {},
   failImages = false,
   screenHeight,
+  width,
 } = {}) => {
   let frames;
   const s = await login(
@@ -44,7 +45,11 @@ const open = async ({
         ...storage,
       },
       beforeScripts: (window) => {
-        frames = record(window, { failImages, screenHeight });
+        frames = record(window, {
+          failImages,
+          screenHeight,
+          ...(width ? { width } : {}),
+        });
       },
     }),
   );
@@ -958,4 +963,12 @@ test("without card images the table still plays", async () => {
   await h.play(1);
   expect(h.cardsLeft()).toBe("Cards Left: 52");
   expect(h.drawnAt(7, 106)).toBeUndefined();
+});
+
+test("the table draws at full size, and scales down to fit a phone", async () => {
+  const full = await open();
+  expect(full.frames.transform).toEqual([1, 0, 0, 1, 0, 0]);
+  // Eight cards side by side need 568 pixels.
+  const phone = await open({ width: 390 });
+  expect(phone.frames.transform[0]).toBeCloseTo(390 / 568, 6);
 });
