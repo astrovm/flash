@@ -159,12 +159,91 @@ const clampWindowPosition = (win, left, top, { fullyVisible = false } = {}) => {
   };
 };
 
+// Fixed-size XP windows keep their measured layouts. On a screen smaller
+// than one, the window shrinks to fit and its client area scales down with
+// CSS zoom. A program that resizes its own window, like Minesweeper for an
+// Expert board, sets a new natural size and gets fitted again.
+const fitFixedWindow = (win, client) => {
+  const { el } = win;
+  let natural = null;
+  let fitted = null;
+  const readSize = () => ({
+    width: parseWindowLength(el.style.width, el.offsetWidth),
+    height: parseWindowLength(el.style.height, el.offsetHeight),
+  });
+  const fit = () => {
+    const { width: areaWidth, height: areaHeight } = getVisibleWorkArea();
+    // A desktop this small hasn't been laid out yet.
+    if (!natural || areaWidth <= 16 || areaHeight <= 16) return;
+    client.style.zoom = "";
+    // The frame, title bar and menus keep their size; only the client scales.
+    const chrome = (outer, inner) => Math.max(0, outer - inner || 0);
+    const chromeWidth = chrome(el.offsetWidth, client.offsetWidth);
+    const chromeHeight = chrome(el.offsetHeight, client.offsetHeight);
+    const scale = (area, size, chrome) =>
+      area > chrome && size > area ? (area - chrome) / (size - chrome) : 1;
+    const zoom = Math.min(
+      scale(areaWidth, natural.width, chromeWidth),
+      scale(areaHeight, natural.height, chromeHeight),
+    );
+    const width = Math.floor(
+      chromeWidth + (natural.width - chromeWidth) * zoom,
+    );
+    const height = Math.floor(
+      chromeHeight + (natural.height - chromeHeight) * zoom,
+    );
+    Object.assign(el.style, {
+      width: `${width}px`,
+      height: `${height}px`,
+      minWidth: zoom < 1 ? `${width}px` : natural.minWidth,
+      minHeight: zoom < 1 ? `${height}px` : natural.minHeight,
+    });
+    // Compared as the element keeps them, so a value the browser rewrites
+    // doesn't read as the program resizing its window.
+    fitted = { width: el.style.width, height: el.style.height };
+    client.style.zoom = zoom < 1 ? String(zoom) : "";
+    const left = parseWindowLength(el.style.left, el.offsetLeft);
+    const top = parseWindowLength(el.style.top, el.offsetTop);
+    // Positions like Volume Control's one pixel above the screen stay.
+    if (left + width <= areaWidth && top + height <= areaHeight) return;
+    const position = clampWindowPosition(win, left, top, {
+      fullyVisible: true,
+    });
+    el.style.left = `${position.left}px`;
+    el.style.top = `${position.top}px`;
+  };
+  const remember = () => {
+    if (
+      fitted &&
+      el.style.width === fitted.width &&
+      el.style.height === fitted.height
+    )
+      return;
+    natural = {
+      ...readSize(),
+      minWidth: el.style.minWidth,
+      minHeight: el.style.minHeight,
+    };
+    fit();
+  };
+  win.fitToWorkArea = fit;
+  remember();
+  new MutationObserver(remember).observe(el, {
+    attributes: true,
+    attributeFilter: ["style"],
+  });
+};
+
 const keepWindowsInWorkArea = () => {
   const { width: desktopWidth, height: desktopHeight } = getDesktopSize();
   if (desktopWidth === 0 || desktopHeight === 0) return;
 
   openWindows.forEach((win) => {
     if (win.maximized) return;
+    if (win.fitToWorkArea) {
+      win.fitToWorkArea();
+      return;
+    }
     const el = win.el;
     const width = parseWindowLength(el.style.width, el.offsetWidth);
     const height = parseWindowLength(el.style.height, el.offsetHeight);

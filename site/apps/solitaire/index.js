@@ -6,6 +6,8 @@ import {
   CARD_WIDTH,
   loadCardArt,
   loadCardFaces,
+  measureBoard,
+  prepareBoard,
   shrinkLikeGdi,
 } from "../cards/cards.js";
 import { openTemplateDialog } from "../cards/template-dialog.js";
@@ -116,12 +118,10 @@ const mountSolitaire = (context) => {
 
   // ---- Layout, from sol.exe's client width ----
   const measure = () => {
-    const width = canvas.clientWidth;
-    const gap = Math.max(
-      Math.floor(CARD_WIDTH / 8) + 3,
-      Math.floor((width - CARD_WIDTH * 7) / 8),
-    );
-    layout = { width, height: canvas.clientHeight, gap };
+    const minGap = Math.floor(CARD_WIDTH / 8) + 3;
+    const { width, height } = measureBoard(canvas, CARD_WIDTH * 7 + minGap * 8);
+    const gap = Math.max(minGap, Math.floor((width - CARD_WIDTH * 7) / 8));
+    layout = { width, height, gap };
   };
   const pileBase = (pile) => {
     const { gap } = layout;
@@ -174,13 +174,7 @@ const mountSolitaire = (context) => {
     );
   };
   const draw = () => {
-    const density = Math.ceil(window.devicePixelRatio - 0.01);
-    if (canvas.width !== layout.width * density)
-      canvas.width = layout.width * density;
-    if (canvas.height !== layout.height * density)
-      canvas.height = layout.height * density;
-    graphics.setTransform(density, 0, 0, density, 0, 0);
-    graphics.imageSmoothingEnabled = false;
+    prepareBoard(canvas, graphics, layout);
     if (winning) return;
     graphics.fillStyle = GREEN;
     graphics.fillRect(0, 0, layout.width, layout.height);

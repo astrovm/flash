@@ -981,6 +981,20 @@ test("columns squeeze to fit above the stock, and narrow windows overlap them", 
   h.s.window.cardGameResize?.();
 });
 
+test("a phone-narrow table scales all ten columns down instead of cutting them off", async () => {
+  const columns = [...Array.from({ length: 9 }, () => []), [up("KS")]];
+  const h = await open({
+    settings: { animate: false, loadAtStart: true },
+    storage: { spiderSavedGame: savedGame({ columns }) },
+    start: null,
+    width: 390,
+    height: 700,
+  });
+  // The deal is laid out 732 wide, a column every 73, and drawn scaled down.
+  expect(h.drawnAt(2, 10)).toBe(EMPTY);
+  expect(h.drawnAt(659, 10)).toBe(face("KS"));
+});
+
 test("empty columns take any card, and hints point at them", async () => {
   const columns = [
     [up("9H")],

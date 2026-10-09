@@ -247,3 +247,27 @@ export const shrinkLikeGdi = (source, width, height) => {
   context.putImageData(output, 0, 0);
   return canvas;
 };
+
+// A phone is narrower than a deal. A board below its minimum width keeps
+// the full layout and draws it scaled down to fit, so every pile shows.
+export const measureBoard = (canvas, minWidth) => {
+  const { clientWidth, clientHeight } = canvas;
+  if (clientWidth <= 0 || clientWidth >= minWidth)
+    return { width: clientWidth, height: clientHeight };
+  const zoom = clientWidth / minWidth;
+  return { width: minWidth, height: Math.round(clientHeight / zoom) };
+};
+
+// Sizes the canvas to its CSS box at the whole-pixel render density and
+// maps the board's layout onto it.
+export const prepareBoard = (canvas, graphics, { width, height }) => {
+  const density = Math.ceil(window.devicePixelRatio - 0.01);
+  const pixelWidth = Math.round((canvas.clientWidth || width) * density);
+  const pixelHeight = Math.round((canvas.clientHeight || height) * density);
+  if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
+  if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+  const scale = width > 0 ? pixelWidth / width : density;
+  graphics.setTransform(scale, 0, 0, scale, 0, 0);
+  // Smoothing keeps scaled-down art even; whole steps stay crisp.
+  graphics.imageSmoothingEnabled = !Number.isInteger(scale);
+};

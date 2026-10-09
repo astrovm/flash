@@ -1,6 +1,12 @@
 import { applicationMetadata } from "./metadata.js";
 import { defineApplication } from "../core/application.js";
-import { CARD_HEIGHT, CARD_WIDTH, loadCardFaces } from "../cards/cards.js";
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  loadCardFaces,
+  measureBoard,
+  prepareBoard,
+} from "../cards/cards.js";
 import { openTemplateDialog } from "../cards/template-dialog.js";
 import {
   EMPTY,
@@ -155,8 +161,7 @@ const mountFreeCell = (context) => {
 
   // ---- Layout, from freecell.exe's client width ----
   const measure = () => {
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    const { width, height } = measureBoard(canvas, CARD_WIDTH * 8);
     const small = window.screen.height < 351;
     const gap = Math.max(0, Math.floor((width - CARD_WIDTH * 8) / 9));
     const columns = Array.from(
@@ -245,13 +250,7 @@ const mountFreeCell = (context) => {
     selection.row === place.row;
 
   const draw = () => {
-    const density = Math.ceil(window.devicePixelRatio - 0.01);
-    if (canvas.width !== layout.width * density)
-      canvas.width = layout.width * density;
-    if (canvas.height !== layout.height * density)
-      canvas.height = layout.height * density;
-    graphics.setTransform(density, 0, 0, density, 0, 0);
-    graphics.imageSmoothingEnabled = false;
+    prepareBoard(canvas, graphics, layout);
     graphics.fillStyle = GREEN;
     graphics.fillRect(0, 0, layout.width, layout.height);
     const shown = moving ? moving.board : board;
