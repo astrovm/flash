@@ -172,8 +172,9 @@ const fitFixedWindow = (win, client) => {
     height: parseWindowLength(el.style.height, el.offsetHeight),
   });
   const fit = () => {
-    if (!natural) return;
     const { width: areaWidth, height: areaHeight } = getVisibleWorkArea();
+    // A desktop this small hasn't been laid out yet.
+    if (!natural || areaWidth <= 16 || areaHeight <= 16) return;
     client.style.zoom = "";
     // The frame, title bar and menus keep their size; only the client scales.
     const chromeWidth = Math.max(0, el.offsetWidth - client.offsetWidth);

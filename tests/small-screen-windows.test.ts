@@ -52,14 +52,12 @@ test("programs with an XP position move back onto a narrow screen", async () => 
 
 test("fixed-size dialogs shrink to the screen and scale their client area", async () => {
   const s = await openPhone();
-  s.document
-    .getElementById("desktop-icons")
-    .dispatchEvent(
-      new s.window.MouseEvent("contextmenu", {
-        bubbles: true,
-        cancelable: true,
-      }),
-    );
+  s.document.getElementById("desktop-icons").dispatchEvent(
+    new s.window.MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
   s.document
     .querySelector('#desktop-context-menu [data-action="properties"]')
     .click();

@@ -404,8 +404,13 @@ const mountSpider = (context) => {
 
   // ---- Layout, from spider.exe's client size ----
   const measure = () => {
-    // Ten columns with a 2 pixel gap on each side.
-    const { width, height } = measureBoard(canvas, 732);
+    // Narrow windows overlap the columns as XP does. On a phone they would
+    // run off the right edge, so the whole deal scales down instead: ten
+    // columns with a 2 pixel gap on each side.
+    const { width, height } =
+      canvas.clientWidth < 600
+        ? measureBoard(canvas, 732)
+        : { width: canvas.clientWidth, height: canvas.clientHeight };
     const gap = Math.trunc((width - 710) / 11);
     layout = { width, height, gap, margin: Math.max(0, gap) };
   };
