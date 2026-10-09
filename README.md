@@ -118,7 +118,7 @@ Run these before pushing:
 
 Typechecking uses the native TypeScript 7 compiler from `@typescript/native`. TypeScript 6 stays installed because TypeScript ESLint still needs it.
 
-Tests run in parallel worker processes. Each test file groups its tests under a `describe` that names the subject, and each test name is a lowercase, present-tense behavior that reads as a sentence after it, for example `Flash URL router` › `rejects ambiguous and unsafe routes`. Shell tests move XP timers forward with `shell.advanceTime(ms)` from `tests/helpers/shell-harness.ts` instead of waiting in real time.
+Tests run in 4 parallel worker processes. More workers barely speed them up and slow down the rest of the computer. Each test file groups its tests under a `describe` that names the subject, and each test name is a lowercase, present-tense behavior that reads as a sentence after it, for example `Flash URL router` › `rejects ambiguous and unsafe routes`. Shell tests move XP timers forward with `shell.advanceTime(ms)` from `tests/helpers/shell-harness.ts` instead of waiting in real time.
 
 `bun run test:coverage` instruments first-party code with Istanbul, including the classic scripts the shell harness loads into Happy DOM. It writes an HTML report to `coverage/index.html` and fails unless lines, statements, functions, and branches are all at 100%. Instrumentation slows the suite, so this run allows each test 30 seconds. CI enforces the same threshold on every pull request.
 
