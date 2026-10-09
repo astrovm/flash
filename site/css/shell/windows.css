@@ -443,7 +443,9 @@ html:not(.keyboard-cues) .menu-accesskey {
 }
 
 .menu-check {
-  width: 16px;
+  /* Spans the whole left padding so checkable labels line up with the rest. */
+  flex: none;
+  width: 18px;
   margin-left: -18px;
   color: transparent;
   font-weight: 700;
@@ -779,7 +781,7 @@ html:not(.keyboard-cues) .menu-accesskey {
 }
 
 .explorer-menu .menu-check {
-  width: 14px;
+  width: 15px;
   margin-left: -15px;
   font-size: 15px;
   line-height: 12px;
