@@ -71,6 +71,34 @@ test("fixed-size dialogs shrink to the screen and scale their client area", asyn
   expect(Number(client.style.zoom)).toBeCloseTo(390 / 404, 6);
 });
 
+test("fixed-size windows fit once when the page reports no layout sizes", async () => {
+  const s = await openPhone();
+  const sizes = ["offsetWidth", "offsetHeight", "offsetLeft", "offsetTop"];
+  for (const name of sizes)
+    Object.defineProperty(s.window.HTMLElement.prototype, name, {
+      configurable: true,
+      get: () => undefined,
+    });
+  try {
+    s.document.getElementById("desktop-icons").dispatchEvent(
+      new s.window.MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    s.document
+      .querySelector('#desktop-context-menu [data-action="properties"]')
+      .click();
+    await settle();
+  } finally {
+    for (const name of sizes) delete s.window.HTMLElement.prototype[name];
+  }
+  // Fitted from the sizes it was given, without refitting forever.
+  const win = windowFor(s, "__display-properties");
+  expect(win.style.width).toBe("390px");
+  expect(win.style.height).toBe("439px");
+});
+
 test("fixed-size programs refit when they resize themselves", async () => {
   const s = await openPhone();
   s.window.history.replaceState(null, "", "#minesweeper");

@@ -175,10 +175,12 @@ const fitFixedWindow = (win, client) => {
     const { width: areaWidth, height: areaHeight } = getVisibleWorkArea();
     // A desktop this small hasn't been laid out yet.
     if (!natural || areaWidth <= 16 || areaHeight <= 16) return;
+    if (!(natural.width > 0 && natural.height > 0)) return;
     client.style.zoom = "";
     // The frame, title bar and menus keep their size; only the client scales.
-    const chromeWidth = Math.max(0, el.offsetWidth - client.offsetWidth);
-    const chromeHeight = Math.max(0, el.offsetHeight - client.offsetHeight);
+    const chrome = (outer, inner) => Math.max(0, outer - inner || 0);
+    const chromeWidth = chrome(el.offsetWidth, client.offsetWidth);
+    const chromeHeight = chrome(el.offsetHeight, client.offsetHeight);
     const scale = (area, size, chrome) =>
       area > chrome && size > area ? (area - chrome) / (size - chrome) : 1;
     const zoom = Math.min(
@@ -191,13 +193,15 @@ const fitFixedWindow = (win, client) => {
     const height = Math.floor(
       chromeHeight + (natural.height - chromeHeight) * zoom,
     );
-    fitted = { width: `${width}px`, height: `${height}px` };
     Object.assign(el.style, {
-      width: fitted.width,
-      height: fitted.height,
-      minWidth: zoom < 1 ? fitted.width : (natural.minWidth ?? ""),
-      minHeight: zoom < 1 ? fitted.height : (natural.minHeight ?? ""),
+      width: `${width}px`,
+      height: `${height}px`,
+      minWidth: zoom < 1 ? `${width}px` : (natural.minWidth ?? ""),
+      minHeight: zoom < 1 ? `${height}px` : (natural.minHeight ?? ""),
     });
+    // Compared as the element keeps them, so a value the browser rewrites
+    // doesn't read as the program resizing its window.
+    fitted = { width: el.style.width, height: el.style.height };
     client.style.zoom = zoom < 1 ? String(zoom) : "";
     const left = parseWindowLength(el.style.left, el.offsetLeft);
     const top = parseWindowLength(el.style.top, el.offsetTop);
