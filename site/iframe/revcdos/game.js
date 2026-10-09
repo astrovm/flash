@@ -15,7 +15,7 @@ function stopWatchingForStartupErrors() {
 }
 
 function showStartupError(message, error) {
-  startupErrorTitle.textContent = "Unable to start reVCDOS";
+  startupErrorTitle.textContent = "Unable to start reVC";
   startupErrorMessage.textContent = message;
   startupError.hidden = false;
   progressElement.hidden = true;

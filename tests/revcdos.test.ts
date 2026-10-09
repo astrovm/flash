@@ -17,7 +17,7 @@ describe("reVCDOS", () => {
   test("registers as a bundled iframe application", async () => {
     const shell = await loadShell();
     expect(shell.window.FLASH_GAMES.revcdos).toEqual({
-      title: "reVCDOS",
+      title: "reVC",
       aspectRatio: 16 / 9,
       type: "iframe",
       category: "Action",

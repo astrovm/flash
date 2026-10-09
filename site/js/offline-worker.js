@@ -15,7 +15,7 @@
       route: /\/iframe\/revcdos(?:\.[a-f0-9]{16})?\/local-assets\//,
       directory: "astro-flash-revcdos",
       message: "REVCDOS_PACK_UPDATED",
-      title: "reVCDOS",
+      title: "reVC",
       aliases: [
         [/^fetched\//, "vc-assets/local/"],
         [/^vcsky\/fetched\//, "vc-assets/local/"],

@@ -75,7 +75,7 @@ describe("game data", () => {
     expect(await manager.list()).toEqual([
       {
         id: "revcdos",
-        title: "reVCDOS",
+        title: "reVC",
         detail: "Game data",
         bytes: 1000,
       },
@@ -153,7 +153,7 @@ describe("game data edge cases", () => {
       },
     });
     expect(await manager.list()).toEqual([
-      { id: "revcdos", title: "reVCDOS", detail: "Game data", bytes: 6 },
+      { id: "revcdos", title: "reVC", detail: "Game data", bytes: 6 },
     ]);
   });
 
