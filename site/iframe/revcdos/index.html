@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
     />
-    <title>reVCDOS</title>
+    <title>reVC</title>
     <style>
       * {
         box-sizing: border-box;
@@ -133,7 +133,7 @@
   <body>
     <main id="setup">
       <section class="setup-card">
-        <h1>reVCDOS</h1>
+        <h1>reVC</h1>
         <p>
           The reVCDOS browser engine is installed. Compatible game data is not
           included with Astro Flash Collection.
@@ -232,7 +232,7 @@
         gameFrame = document.createElement("iframe");
         gameFrame.src = session ? "game.html?session=1" : "game.html";
         gameFrame.allow = "fullscreen";
-        gameFrame.title = "reVCDOS";
+        gameFrame.title = "reVC";
         setup.replaceWith(gameFrame);
       };
 
@@ -363,7 +363,7 @@
           setSessionFiles(entries);
           activeTorrentSession = torrentSession || null;
           startGame(
-            `${sessionFiles.size.toLocaleString()} files ready. Starting reVCDOS directly from this session…`,
+            `${sessionFiles.size.toLocaleString()} files ready. Starting reVC directly from this session…`,
             true,
           );
           return;
@@ -399,7 +399,7 @@
           location.origin,
         );
         startGame(
-          `${Object.keys(manifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
+          `${Object.keys(manifest.files).length.toLocaleString()} packed files ready. Starting reVC…`,
         );
       };
 
@@ -748,7 +748,7 @@
           await verifyPackedAssets(packedManifest);
           cacheEngineForOfflineUse();
           startGame(
-            `${Object.keys(packedManifest.files).length.toLocaleString()} packed files ready. Starting reVCDOS…`,
+            `${Object.keys(packedManifest.files).length.toLocaleString()} packed files ready. Starting reVC…`,
           );
         } catch (error) {
           selection.textContent = storagePolicy.errorMessage(error);

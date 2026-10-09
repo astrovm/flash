@@ -10,7 +10,7 @@
   // Games that keep their data as one packed copy in browser storage.
   const PACKED_GAMES = {
     revcdos: {
-      title: "reVCDOS",
+      title: "reVC",
       directory: REVCDOS_DIRECTORY,
       keys: [
         "astro-flash.revcdos.download-complete.v1",

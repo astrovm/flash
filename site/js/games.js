@@ -217,7 +217,7 @@ window.FLASH_GAMES = Object.freeze({
     icon: "assets/icons/doom.png",
   },
   revcdos: {
-    title: "reVCDOS",
+    title: "reVC",
     aspectRatio: 16 / 9,
     type: "iframe",
     category: "Action",
