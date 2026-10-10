@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "group:all"]
+  "extends": ["config:recommended", "group:all"],
+  "packageRules": [
+    {
+      "description": "Plain typescript only feeds typescript-eslint, which doesn't support TS 7 yet. Typecheck uses @typescript/native.",
+      "matchDepNames": ["typescript"],
+      "allowedVersions": "<7"
+    }
+  ]
 }
