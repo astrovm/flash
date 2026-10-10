@@ -1,5 +1,5 @@
 {
-  "packageManager": "bun@1.4.2",
+  "packageManager": "bun@1.4.3",
   "scripts": {
     "test": "bun run typecheck && bun test --parallel=4 --timeout 30000 && bun run validate:javascript && bun run validate:icons",
     "test:coverage": "COVERAGE=1 bun test --parallel=4 --timeout 30000 && bun tools/coverage-report.ts --skip-full",
@@ -38,17 +38,17 @@
     "eslint-config-prettier": "10.1.8",
     "fake-indexeddb": "^6.2.5",
     "globals": "17.13.0",
-    "happy-dom": "20.14.5",
+    "happy-dom": "20.14.6",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-instrument": "^6.0.3",
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
-    "prettier": "3.9.9",
+    "prettier": "3.9.10",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.1",
     "wawoff2": "2.0.1",
     "workbox-build": "^7.4.1",
-    "wrangler": "4.148.0"
+    "wrangler": "4.149.0"
   },
   "dependencies": {
     "@nktkas/bmp": "^5.0.0",
