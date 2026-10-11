@@ -198,6 +198,11 @@ const seedOldOrigin = async (env) => {
   const documents = await createDatabase(env, "astro-documents", 1, (db) => {
     const store = db.createObjectStore("files", { keyPath: "path" });
     store.createIndex("byFolder", "folder", { unique: false });
+    db.createObjectStore("log", { autoIncrement: true }).createIndex(
+      "byId",
+      "id",
+      { unique: true, multiEntry: true },
+    );
   });
   await putRecords(
     documents,
@@ -294,7 +299,20 @@ describe("storage copy", () => {
     expect(store.keyPath).toBe("path");
     expect(store.index("byFolder").keyPath).toBe("folder");
     expect(database.version).toBe(1);
+    const log = database.transaction("log").objectStore("log");
+    expect(log.autoIncrement).toBe(true);
+    expect(log.index("byId").unique).toBe(true);
+    expect(log.index("byId").multiEntry).toBe(true);
+    expect(store.autoIncrement).toBe(false);
     database.close();
+    // Every connection is closed on both sides, so nothing blocks upgrades.
+    for (const env of [from, to]) {
+      const deleting = env.indexedDB.deleteDatabase("astro-documents");
+      let blocked = false;
+      deleting.onblocked = () => (blocked = true);
+      await request(deleting);
+      expect(blocked).toBe(false);
+    }
     expect(await readAll(to, "/saves", "FILE_DATA")).toEqual([
       ["/saves/slot1", { contents: new Uint8Array([1, 2, 3]) }],
     ]);
@@ -318,6 +336,15 @@ describe("storage copy", () => {
     expect(swf.headers.get("Content-Type")).toBe("application/x");
   });
 
+  test("reads records in small batches", async () => {
+    const from = makeEnv(OLD);
+    await seedOldOrigin(from);
+    const batches = (await collect(from))
+      .filter((item) => item.kind === "records" && item.store === "files")
+      .map((item) => item.keys.length);
+    expect(batches).toEqual([50, 50, 20]);
+  });
+
   test("never replaces data the new site already has", async () => {
     const from = makeEnv(OLD);
     const to = makeEnv(NEW);
@@ -330,7 +357,7 @@ describe("storage copy", () => {
       [undefined, { path: "/doc-000", folder: "/new" }],
     ]);
     documents.close();
-    const saves = await createDatabase(to, "/saves", 21, (db) =>
+    const saves = await createDatabase(to, "/saves", 3, (db) =>
       db.createObjectStore("OTHER"),
     );
     saves.close();
@@ -359,6 +386,10 @@ describe("storage copy", () => {
     expect(copied[1][1].folder).toBe("/");
     // The new site already owns this database, so missing stores stay out.
     expect(await readAll(to, "/saves", "OTHER")).toEqual([]);
+    const existing = await request(to.indexedDB.open("/saves"));
+    expect(existing.version).toBe(3);
+    expect([...existing.objectStoreNames]).toEqual(["OTHER"]);
+    existing.close();
     const file = await (await data.getFileHandle("gta3.img")).getFile();
     expect(await file.text()).toBe("new data");
     expect(
@@ -429,8 +460,10 @@ describe("storage copy", () => {
         file: new File([], "b"),
       }),
     ).rejects.toThrow("Storage is locked");
-    to.opfs.getFileHandle = async () => {
-      throw new Error("Storage is broken");
+    const getFileHandle = to.opfs.getFileHandle.bind(to.opfs);
+    to.opfs.getFileHandle = async (name, options) => {
+      if (!options) throw new Error("Storage is broken");
+      return getFileHandle(name, options);
     };
     expect(
       importer.write({ kind: "file", path: ["b"], file: new File([], "b") }),
@@ -541,6 +574,7 @@ describe("moving between domains", () => {
     expect(await readAll(to, "astro-documents", "files")).toHaveLength(120);
     expect(progress.at(-1)).toBe(progress.length);
     expect(from.errors).toEqual([]);
+    expect(from.listeners.size).toBe(0);
   });
 
   test("moves only once", async () => {
