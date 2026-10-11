@@ -1,8 +1,13 @@
-name = "astro-flash-catalog"
+name = "astro-xp"
 main = "catalog-worker.ts"
 compatibility_date = "2026-07-29"
 workers_dev = false
 
 [[routes]]
-pattern = "flash.4st.li/api/*"
+pattern = "xp.4st.li/api/*"
+zone_name = "4st.li"
+
+# The old domain: moves stored data to xp.4st.li, then redirects there.
+[[routes]]
+pattern = "flash.4st.li/*"
 zone_name = "4st.li"

@@ -314,9 +314,7 @@ const restoreWindowState = (snapshot) => {
 };
 
 const updateDocumentTitle = () => {
-  document.title = focusedGameId
-    ? formatGameTitle(focusedGameId)
-    : "Astro Flash Collection";
+  document.title = focusedGameId ? formatGameTitle(focusedGameId) : "Astro XP";
 };
 
 const applyFocusVolumes = () => {
@@ -574,7 +572,7 @@ const createWindowElement = (gameId) => {
   );
 
   const helpMenu = makeMenu("help");
-  helpMenu.append(makeMenuItem("&About Astro Flash", "project"));
+  helpMenu.append(makeMenuItem("&About Astro XP", "project"));
 
   const quickActions = document.createElement("div");
   quickActions.className = "game-quick-actions";
@@ -1264,7 +1262,7 @@ const closeGameWindow = (gameId, { skipBeforeClose = false } = {}) => {
         .catch((error) => {
           void XPDialogs.alert(
             error.message || "The window could not be closed.",
-            "Astro Flash",
+            "Astro XP",
             "error",
           );
           return false;

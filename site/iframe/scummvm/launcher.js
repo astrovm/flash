@@ -15,9 +15,9 @@
   );
   const SCUMMVM_DATA_ROUTE = `${SCUMMVM_DATA_PATH}/`;
   const SCUMMVM_DATA_URL = new URL(`${SCUMMVM_ROOT}data/`, location.href);
-  const STORAGE_DIRECTORY = "astro-flash-scummvm";
+  const STORAGE_DIRECTORY = "astro-xp-scummvm";
   const MAX_CD_IMAGE_SIZE = 800 * 1024 * 1024;
-  const metadataKey = `astro-flash.scummvm.${game.id}.iso.v1`;
+  const metadataKey = `astro-xp.scummvm.${game.id}.iso.v1`;
   const runtimeManifestName = `${game.id}-manifest.json`;
   let currentVolume = 1;
   let outputGain = null;

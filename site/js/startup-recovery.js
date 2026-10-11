@@ -8,9 +8,9 @@
     createStartupRecovery(root);
   }
 })(globalThis, () => {
-  const RECOVERY_KEY = "astroFlashStartupRecovery";
+  const RECOVERY_KEY = "astroXpStartupRecovery";
   const RECOVERY_PARAMETER = "__astro_recovery";
-  const SHELL_CACHE_PREFIX = "astro-flash-";
+  const SHELL_CACHE_PREFIX = "astro-xp-";
 
   const createStartupRecovery = (
     environment,

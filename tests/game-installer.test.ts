@@ -49,7 +49,7 @@ function createDeps() {
   const cache = new Cache();
   const stored = new Map();
   const deps = {
-    origin: "https://flash.example",
+    origin: "https://xp.example",
     cache,
     store: {
       put: async (v) => stored.set(v.id, v),
@@ -119,12 +119,12 @@ describe("game installer", () => {
     const { cache, stored, deps } = createDeps();
     const result = await installer.install(record, createGameZip(), deps);
     expect(result.launchPath).toBe(
-      "https://flash.example/__installed-games/" +
+      "https://xp.example/__installed-games/" +
         uuid +
         "/content/localflash/game/main.swf",
     );
     expect(result.basePath).toBe(
-      "https://flash.example/__installed-games/" +
+      "https://xp.example/__installed-games/" +
         uuid +
         "/content/localflash/game/",
     );

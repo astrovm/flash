@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 async function fixture(platform: "mac" | "windows", swf: Buffer) {
-  const directory = await mkdtemp(join(tmpdir(), "astro-flash-extract-"));
+  const directory = await mkdtemp(join(tmpdir(), "astro-xp-extract-"));
   temporaryDirectories.push(directory);
   const input = join(directory, platform === "mac" ? "game.app" : "game.exe");
   const trailer = Buffer.alloc(8);

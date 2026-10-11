@@ -43,7 +43,7 @@ position and size. It builds on the shared window and dialog pass.
   item, or the selected items only when they apply. Empty folders are blank.
 - Clicking empty space clears the selection.
 
-## Astro Flash adaptations
+## Astro XP adaptations
 
 - My Network Places, Favorites, and Tools are omitted because the simulation
   has no network, favorites, or folder options.

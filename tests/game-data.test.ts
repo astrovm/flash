@@ -99,7 +99,7 @@ describe("game data", () => {
     const { scummvm, removedKeys, manager } = createFixture();
     await manager.remove("scummvm:peril");
     expect(scummvm.values.has("peril-one.iso")).toBe(false);
-    expect(removedKeys).toContain("astro-flash.scummvm.peril.iso.v1");
+    expect(removedKeys).toContain("astro-xp.scummvm.peril.iso.v1");
   });
 
   test("removes temporary ScummVM files and their manifest", async () => {

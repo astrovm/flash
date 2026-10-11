@@ -288,7 +288,7 @@ const closeCurrentSession = () => {
     .catch((error) => {
       void XPDialogs.alert(
         error.message || "The session could not be closed.",
-        "Astro Flash",
+        "Astro XP",
         "error",
       );
       return false;

@@ -1619,7 +1619,7 @@ const restoreDefaultDesktop = async () => {
   await syncGameFiles();
 };
 
-const resetAstroFlash = async () => {
+const resetAstroXp = async () => {
   USER_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
   await fs.reset();
   await syncGameFiles();

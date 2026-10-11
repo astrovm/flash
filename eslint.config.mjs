@@ -100,6 +100,18 @@ export default defineConfig(
     },
   },
   {
+    files: ["worker/**/*.js"],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "script",
+      globals: { ...globals.browser, module: "readonly" },
+    },
+    rules: {
+      "no-unused-vars": ["error", { varsIgnorePattern: "^_" }],
+    },
+  },
+  {
     files: [
       "catalog/**/*.ts",
       "tests/**/*.ts",

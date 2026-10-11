@@ -405,7 +405,7 @@ html[data-xp-appearance="classic"]
 }
 
 .screen-saver-preview[data-saver="marquee"]::after {
-  content: "Astro Flash";
+  content: "Astro XP";
   display: block;
   padding: 48px 12px;
   color: #0f0;

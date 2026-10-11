@@ -9,7 +9,7 @@
 - `re3.wasm` SHA-256: `f113e62e9966f8420fa35ba3c18d1e852ec03e4d612f94cbf9a69e8a0c4cc66c`
 - `re3.js` SHA-256: `9b140c725f61128f8044aa31f707df0b61f09971003b9014e2d2fe775623366c`
 
-Astro Flash's changes to the fork are in `tools/re3/re3-web.patch` and
+Astro XP's changes to the fork are in `tools/re3/re3-web.patch` and
 `tools/re3/librw-web.patch`, and `tools/re3/build.sh` rebuilds the runtime.
 They make CD streaming run without threads, hand each frame to the browser
 (Asyncify), and move librw's OpenGL layer onto WebGL 2. The audio code runs

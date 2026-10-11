@@ -346,8 +346,8 @@ test("installed Flash games rewrite asset URLs and use native frame rates by def
       title: "Installed",
       type: "swf",
       installed: true,
-      url: "https://flash.example/__installed-games/game.swf",
-      base: "https://flash.example/__installed-games/",
+      url: "https://xp.example/__installed-games/game.swf",
+      base: "https://xp.example/__installed-games/",
     },
   };
   const { s, players, open } = await flashGame({

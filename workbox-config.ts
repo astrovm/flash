@@ -48,7 +48,7 @@ export default {
   dontCacheBustURLsMatching: /\.[a-f0-9]{8}\.[^./]+$/,
   ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^v$/],
   sourcemap: false,
-  cacheId: "astro-flash",
+  cacheId: "astro-xp",
   cleanupOutdatedCaches: true,
   skipWaiting: false,
   clientsClaim: true,

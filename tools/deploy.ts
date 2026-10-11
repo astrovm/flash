@@ -56,7 +56,7 @@ export const PRECACHE_FILE_SUFFIXES = new Set(
 );
 const APP_VERSION_PATTERN = /const APP_VERSION = "[^"]+";/g;
 const VERSIONED_SERVICE_WORKER_MARKER =
-  "\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n";
+  "\nself.__ASTRO_XP_IMMUTABLE_WORKER__=true;\n";
 
 type WorkboxGenerator = typeof generateSW;
 
@@ -965,9 +965,9 @@ export async function generateServiceWorker(
   }
   let workerSource = await readFile(serviceWorker, "utf8");
   if (version) {
-    workerSource += `\nself.__ASTRO_FLASH_VERSION__=${JSON.stringify(
+    workerSource += `\nself.__ASTRO_XP_VERSION__=${JSON.stringify(
       version,
-    )};self.addEventListener("message",event=>{if(event.data?.type==="GET_VERSION")event.ports[0]?.postMessage({version:self.__ASTRO_FLASH_VERSION__})});\n`;
+    )};self.addEventListener("message",event=>{if(event.data?.type==="GET_VERSION")event.ports[0]?.postMessage({version:self.__ASTRO_XP_VERSION__})});\n`;
     await writeFile(serviceWorker, workerSource);
   }
   for (const path of await getWorkboxFiles(outputDir)) {
@@ -1289,8 +1289,8 @@ export async function assembleReleaseOutput(
     "Could not set the immutable release base URL",
   ).then((content) =>
     content.replaceAll(
-      "https://flash.4st.li/assets/",
-      `https://flash.4st.li/${releasePath}/assets/`,
+      "https://xp.4st.li/assets/",
+      `https://xp.4st.li/${releasePath}/assets/`,
     ),
   );
 

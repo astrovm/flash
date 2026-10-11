@@ -14,7 +14,7 @@ import {
 
 const temporaryDirectories = [];
 const makeTemporaryDirectory = async () => {
-  const path = await mkdtemp(join(tmpdir(), "astro-flash-dev-wiring-test-"));
+  const path = await mkdtemp(join(tmpdir(), "astro-xp-dev-wiring-test-"));
   temporaryDirectories.push(path);
   return path;
 };

@@ -1,4 +1,4 @@
-const DIRECTORY_NAME = "astro-flash-re3";
+const DIRECTORY_NAME = "astro-xp-re3";
 const MANIFEST_NAME = "manifest.json";
 const FORMAT_VERSION = 1;
 const DATA_PREFIX = "assets-";

@@ -53,7 +53,7 @@ disposable snapshot. The app was captured in headless Chromium at the same
   Panel, Expand My Documents, Expand My Pictures, and Show Small Icons, which
   also removes the side banner like XP.
 
-## Astro Flash adaptations
+## Astro XP adaptations
 
 - The pinned item is Internet Games, shown like XP's pinned items with a bold
   name, a gray "Flashpoint Archive" subtitle, and a separator. The Internet

@@ -248,7 +248,7 @@ const fetchText = async (
   url: string | URL,
 ): Promise<string> => {
   const response = await fetcher(url, {
-    headers: { "User-Agent": "Astro-Flash-Catalog/1.0" },
+    headers: { "User-Agent": "Astro-XP-Catalog/1.0" },
   });
   if (!response.ok) {
     throw new Error(`Flashpoint upstream returned ${response.status}.`);
@@ -405,7 +405,7 @@ export async function handleCatalogRequest(
               `content/${launchUrl?.hostname}${launchUrl?.pathname}`,
             );
       const upstream = await fetcher(upstreamUrl as string, {
-        headers: { "User-Agent": "Astro-Flash-Catalog/1.0" },
+        headers: { "User-Agent": "Astro-XP-Catalog/1.0" },
       });
       if (!upstream.ok) {
         return json(
@@ -426,7 +426,7 @@ export async function handleCatalogRequest(
       }
       const upstream = await fetcher(
         legacyAssetUrl(url.searchParams.get("path")),
-        { headers: { "User-Agent": "Astro-Flash-Catalog/1.0" } },
+        { headers: { "User-Agent": "Astro-XP-Catalog/1.0" } },
       );
       if (!upstream.ok) {
         return json(

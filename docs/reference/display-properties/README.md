@@ -51,7 +51,7 @@ on the shared window and dialog pass.
 - Scrollbar thumbs show their gripper again. The thumb's border image had
   been painting over it.
 
-## Astro Flash adaptations
+## Astro XP adaptations
 
 - Save As and Delete on the Themes page are omitted. The simulation has no
   theme files.

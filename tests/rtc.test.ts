@@ -21,7 +21,7 @@ const upstreamServers = [
 describe("RTC server proxy", () => {
   test("returns only fresh ICE configuration without caching metadata", async () => {
     const response = await handleRtcRequest(
-      new Request("https://flash.example/api/rtc"),
+      new Request("https://xp.example/api/rtc"),
       async () => Response.json(upstreamServers),
     );
 
@@ -36,14 +36,14 @@ describe("RTC server proxy", () => {
     expect(
       (
         await handleRtcRequest(
-          new Request("https://flash.example/api/rtc", { method: "POST" }),
+          new Request("https://xp.example/api/rtc", { method: "POST" }),
         )
       ).status,
     ).toBe(405);
     expect(
       (
         await handleRtcRequest(
-          new Request("https://flash.example/api/rtc"),
+          new Request("https://xp.example/api/rtc"),
           async () => Response.json([]),
         )
       ).status,
@@ -56,7 +56,7 @@ describe("RTC server proxy", () => {
       globalThis.fetch = (async () =>
         Response.json(upstreamServers)) as unknown as typeof fetch;
       const response = await catalogWorker.fetch(
-        new Request("https://flash.example/api/rtc"),
+        new Request("https://xp.example/api/rtc"),
       );
       expect(response.status).toBe(200);
       expect((await response.json()).iceServers).toHaveLength(2);
@@ -68,7 +68,7 @@ describe("RTC server proxy", () => {
 
 describe("RTC server proxy edge cases", () => {
   const request = (method = "GET") =>
-    new Request("https://flash.example/api/rtc", { method });
+    new Request("https://xp.example/api/rtc", { method });
 
   test("filters malformed regions and servers and answers HEAD without a body", async () => {
     const response = await handleRtcRequest(request("HEAD"), async () =>

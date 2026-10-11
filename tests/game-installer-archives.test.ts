@@ -14,7 +14,7 @@ const record = {
   platform: "Flash",
   status: "Playable",
   applicationPath: "Flash Player",
-  downloadUrl: "https://flash.example/api/game/download",
+  downloadUrl: "https://xp.example/api/game/download",
   launchCommand: "https://game.example/main.swf",
 };
 const legacyRecord = { ...record, packageType: "legacy" };
@@ -52,7 +52,7 @@ const makeDependencies = () => {
     cached,
     metadata,
     dependencies: {
-      origin: "https://flash.example",
+      origin: "https://xp.example",
       Inflate: AsyncInflate,
       cache: {
         async put(key, response) {
@@ -84,7 +84,7 @@ const makeDependencies = () => {
 };
 
 const withLocation = async (callback) => {
-  globalThis.location = { origin: "https://flash.example" };
+  globalThis.location = { origin: "https://xp.example" };
   try {
     return await callback();
   } finally {
@@ -638,13 +638,13 @@ describe("buffered and legacy installation failures", () => {
         gameZip(),
         withoutOrigin,
       );
-      expect(paged.launchPath.startsWith("https://flash.example/")).toBeTrue();
+      expect(paged.launchPath.startsWith("https://xp.example/")).toBeTrue();
       const legacy = await installer.installLegacy(
         mirroredLegacyRecord,
         new Uint8Array([1]),
         withoutOrigin,
       );
-      expect(legacy.launchPath.startsWith("https://flash.example/")).toBeTrue();
+      expect(legacy.launchPath.startsWith("https://xp.example/")).toBeTrue();
       await installer.uninstall(uuid, withoutOrigin);
     });
     await installer.installLegacy(

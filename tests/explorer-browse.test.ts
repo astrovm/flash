@@ -349,7 +349,7 @@ test("Explorer shows game icons, descriptions, and survives failing file handler
       title: "Iconless",
       type: "swf",
       installed: true,
-      url: "https://flash.example/iconless.swf",
+      url: "https://xp.example/iconless.swf",
     },
   };
   const h = await openDocuments({

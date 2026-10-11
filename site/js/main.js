@@ -11,7 +11,7 @@ const MOVE_SIZE_STEP = 8;
 const BOOT_MINIMUM_DURATION_MS = 2000 + 1800;
 const WELCOME_DURATION_MS = 1200;
 // After the first complete startup, later visits play a short version unless
-// the user asks for the full sequence in Astro Flash Settings.
+// the user asks for the full sequence in Astro XP Settings.
 const QUICK_BOOT_MINIMUM_DURATION_MS = 900;
 const QUICK_WELCOME_DURATION_MS = 400;
 const STARTUP_SEEN_KEY = "startupSeen";
@@ -320,7 +320,7 @@ const systemShortcuts = {
     desktop: false,
   },
   "__astro-settings": {
-    title: "Astro Flash Settings",
+    title: "Astro XP Settings",
     icon: "assets/xp/icons/ControlPanel.png",
   },
   "__internet-games": {

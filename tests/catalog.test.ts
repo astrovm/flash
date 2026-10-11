@@ -64,16 +64,12 @@ describe("Flashpoint catalog parsing", () => {
   });
 
   test("parses GameZIP and Legacy compatibility", () => {
-    const details = parseGameDetails(
-      detailsHtml,
-      "https://flash.example",
-      uuid,
-    );
+    const details = parseGameDetails(detailsHtml, "https://xp.example", uuid);
     expect(details).toMatchObject({
       compatible: true,
       packageType: "gamezip",
       legacyFallback: true,
-      downloadUrl: `https://flash.example/api/games/${uuid}/download`,
+      downloadUrl: `https://xp.example/api/games/${uuid}/download`,
       tags: ["Sports", "Motocross"],
     });
 
@@ -81,13 +77,13 @@ describe("Flashpoint catalog parsing", () => {
       detailsHtml
         .replace(/data-game-zip="[^"]+"/, 'data-game-zip=""')
         .replace(/data-legacy-server="[^"]+"/, 'data-legacy-server=""'),
-      "https://flash.example",
+      "https://xp.example",
       uuid,
     );
     expect(unsupported.compatible).toBeFalse();
     const legacy = parseGameDetails(
       detailsHtml.replace(/data-game-zip="[^"]+"/, 'data-game-zip=""'),
-      "https://flash.example",
+      "https://xp.example",
       uuid,
     );
     expect(legacy.compatible).toBeTrue();
@@ -110,9 +106,7 @@ describe("shared catalog request handler", () => {
       new Response(searchHtml, {
         headers: { "Content-Type": "text/html; charset=utf-8" },
       });
-    const request = new Request(
-      "https://flash.example/api/games?q=bike%20mania",
-    );
+    const request = new Request("https://xp.example/api/games?q=bike%20mania");
     const localResponse = await handleCatalogRequest(request, fetcher);
     expect(localResponse.status).toBe(200);
     expect((await localResponse.json()).games[0].title).toBe(
@@ -136,7 +130,7 @@ describe("shared catalog request handler", () => {
     expect(
       (
         await handleCatalogRequest(
-          new Request("https://flash.example/api/games", {
+          new Request("https://xp.example/api/games", {
             method: "POST",
           }),
         )
@@ -145,14 +139,14 @@ describe("shared catalog request handler", () => {
     expect(
       (
         await handleCatalogRequest(
-          new Request("https://flash.example/api/games?q="),
+          new Request("https://xp.example/api/games?q="),
         )
       ).status,
     ).toBe(400);
     expect(
       (
         await handleCatalogRequest(
-          new Request("https://flash.example/api/games/not-a-uuid"),
+          new Request("https://xp.example/api/games/not-a-uuid"),
         )
       ).status,
     ).toBe(404);
@@ -161,7 +155,7 @@ describe("shared catalog request handler", () => {
 
 describe("catalog proxy and upstream failures", () => {
   const request = (path: string, method = "GET") =>
-    new Request(`https://flash.example${path}`, { method });
+    new Request(`https://xp.example${path}`, { method });
   const legacyHtml = detailsHtml.replace(
     /data-game-zip="[^"]+"/,
     'data-game-zip=""',
@@ -190,7 +184,7 @@ describe("catalog proxy and upstream failures", () => {
     const body = await result.json();
     expect(body.uuid).toBe(uuid);
     expect(body.downloadUrl).toBe(
-      `https://flash.example/api/games/${uuid}/download`,
+      `https://xp.example/api/games/${uuid}/download`,
     );
     expect(body.gameZipUrl).toBeUndefined();
     expect(body.legacyServerUrl).toBeUndefined();
@@ -391,7 +385,7 @@ describe("catalog proxy and upstream failures", () => {
     ]) {
       const details = parseGameDetails(
         detailsHtml.replace(/data-game-zip="[^"]+"/, `data-game-zip="${url}"`),
-        "https://flash.example",
+        "https://xp.example",
         uuid,
       );
       expect(details.packageType).toBe("legacy");
@@ -443,7 +437,7 @@ describe("catalog parsing edge cases", () => {
   test("describes pages without metadata as incompatible and keeps the first row", () => {
     const details = parseGameDetails(
       '<div class="row"><div class="field">Platform:</div><div class="value">Flash</div></div><div class="row"><div class="field">Platform:</div><div class="value">HTML5</div></div>',
-      "https://flash.example",
+      "https://xp.example",
       uuid.toUpperCase(),
     );
     expect(details).toMatchObject({
@@ -458,25 +452,19 @@ describe("catalog parsing edge cases", () => {
       packageType: null,
       compatible: false,
     });
-    expect(parseGameDetails("", "https://flash.example", uuid).platform).toBe(
-      "",
-    );
+    expect(parseGameDetails("", "https://xp.example", uuid).platform).toBe("");
     expect(() =>
-      parseGameDetails(detailsHtml, "https://flash.example", "bad"),
+      parseGameDetails(detailsHtml, "https://xp.example", "bad"),
     ).toThrow("Invalid game UUID");
   });
 
   test("routes the root path and missing queries", async () => {
     expect(
-      (await handleCatalogRequest(new Request("https://flash.example/")))
-        .status,
+      (await handleCatalogRequest(new Request("https://xp.example/"))).status,
     ).toBe(404);
     expect(
-      (
-        await handleCatalogRequest(
-          new Request("https://flash.example/api/games/"),
-        )
-      ).status,
+      (await handleCatalogRequest(new Request("https://xp.example/api/games/")))
+        .status,
     ).toBe(400);
   });
 });
