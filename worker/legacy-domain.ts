@@ -27,6 +27,7 @@ const page = (body: string, script: string) => `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>Astro XP</title>
+    <link rel="icon" href="data:," />
     <style>
       body {
         margin: 0;
@@ -36,6 +37,15 @@ const page = (body: string, script: string) => `<!doctype html>
         background: #000;
         color: #fff;
         font: 13px Tahoma, Verdana, sans-serif;
+        text-align: center;
+      }
+      button {
+        font: inherit;
+        padding: 4px 16px;
+      }
+      a {
+        color: #9cf;
+        margin-left: 12px;
       }
     </style>
   </head>
@@ -55,7 +65,7 @@ const htmlResponse = (html: string, policy: string) =>
   new Response(html, {
     headers: {
       "Cache-Control": "no-store",
-      "Content-Security-Policy": `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; ${policy}`,
+      "Content-Security-Policy": `default-src 'none'; img-src data:; script-src 'unsafe-inline'; style-src 'unsafe-inline'; ${policy}`,
       "Content-Type": "text/html; charset=utf-8",
       "Referrer-Policy": "no-referrer",
       "X-Content-Type-Options": "nosniff",
@@ -65,14 +75,35 @@ const htmlResponse = (html: string, policy: string) =>
 export const movePage = () =>
   htmlResponse(
     page(
-      `<p id="status" role="status">Moving to xp.4st.li…</p>`,
+      `<main>
+      <p id="status" role="status">Moving to xp.4st.li…</p>
+      <p id="ask" hidden>
+        <button id="move" type="button">Move my files</button>
+        <a id="skip" href="${SITE_ORIGIN}/">Not now</a>
+      </p>
+    </main>`,
       `const status = document.getElementById("status");
+const ask = document.getElementById("ask");
 AstroDomainMove.runExport(window, {
   targetOrigin: ${JSON.stringify(SITE_ORIGIN)},
   importPath: ${JSON.stringify(IMPORT_PATH)},
   onProgress: (count) => {
     status.textContent = "Moving your files to xp.4st.li… " + count;
   },
+  requestWindow: (url) =>
+    new Promise((resolve) => {
+      status.textContent = "Your files are still on flash.4st.li.";
+      ask.hidden = false;
+      document.getElementById("move").addEventListener("click", () => {
+        ask.hidden = true;
+        status.textContent = "Moving your files to xp.4st.li…";
+        resolve(window.open(url, "astro-xp-move", "popup,width=360,height=160"));
+      });
+      document.getElementById("skip").addEventListener("click", (event) => {
+        event.preventDefault();
+        resolve(null);
+      });
+    }),
 });`,
     ),
     `frame-src ${SITE_ORIGIN}; frame-ancestors 'none'`,
@@ -81,7 +112,7 @@ AstroDomainMove.runExport(window, {
 export const importPage = () =>
   htmlResponse(
     page(
-      "",
+      `<p role="status">Moving your files to xp.4st.li…</p>`,
       `AstroDomainMove.runImport(window, {
   sourceOrigin: ${JSON.stringify(LEGACY_ORIGIN)},
 });`,

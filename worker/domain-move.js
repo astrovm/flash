@@ -2,8 +2,9 @@
 
 // Moves browser storage from the old flash.4st.li origin to xp.4st.li. The old
 // domain's top-level page reads everything and streams it into a hidden
-// xp.4st.li frame. Both hosts are on the same site, so neither side is
-// partitioned. Imports only fill gaps: they never replace data the new origin
+// xp.4st.li frame. Both hosts are on the same site, so Chrome and Firefox
+// don't partition the frame. Safari does, so there the user opens a popup
+// instead. Imports only fill gaps: they never replace data the new origin
 // already has.
 (function exposeDomainMove(root, factory) {
   const domainMove = factory();
@@ -280,9 +281,14 @@
     return { write, finish };
   };
 
-  // Runs inside the hidden xp.4st.li frame.
-  const runImport = (env, { sourceOrigin }) => {
+  // Runs on xp.4st.li, in the hidden frame or in the popup that replaces it.
+  const runImport = async (env, { sourceOrigin }) => {
     const imported = env.localStorage.getItem(IMPORTED_KEY) === "1";
+    // Safari gives same-site frames their own IndexedDB, OPFS and caches.
+    // Only a top-level window can reach the real ones there.
+    const shared = env.document.hasStorageAccess
+      ? await env.document.hasStorageAccess()
+      : true;
     env.addEventListener("message", (event) => {
       if (event.origin !== sourceOrigin || event.data?.type !== START_TYPE) {
         return;
@@ -299,10 +305,13 @@
         }
       };
     });
-    env.parent.postMessage({ type: READY_TYPE, imported }, sourceOrigin);
+    (env.opener ?? env.parent).postMessage(
+      { type: READY_TYPE, imported, shared },
+      sourceOrigin,
+    );
   };
 
-  const waitForReady = (env, frame, targetOrigin, timeout) =>
+  const waitForReady = (env, getSource, targetOrigin, timeout) =>
     new Promise((resolve, reject) => {
       const timer = env.setTimeout(() => {
         env.removeEventListener("message", onMessage);
@@ -311,7 +320,7 @@
       const onMessage = (event) => {
         if (
           event.origin !== targetOrigin ||
-          event.source !== frame.contentWindow ||
+          event.source !== getSource() ||
           event.data?.type !== READY_TYPE
         ) {
           return;
@@ -323,24 +332,48 @@
       env.addEventListener("message", onMessage);
     });
 
-  const connect = (env, frame, targetOrigin) => {
+  const transfer = async (env, target, targetOrigin, onProgress) => {
     const channel = new env.MessageChannel();
-    frame.contentWindow.postMessage({ type: START_TYPE }, targetOrigin, [
-      channel.port2,
-    ]);
-    return (message) =>
+    target.postMessage({ type: START_TYPE }, targetOrigin, [channel.port2]);
+    const send = (message) =>
       new Promise((resolve) => {
         channel.port1.onmessage = ({ data }) => resolve(data);
         channel.port1.postMessage(message);
       });
+    let failures = 0;
+    let moved = 0;
+    for await (const item of readStorage(env, {
+      fromOrigin: env.location.origin,
+      toOrigin: targetOrigin,
+    })) {
+      const reply = await send({ type: "write", item });
+      if (reply.ok) moved += 1;
+      else {
+        failures += 1;
+        env.console.error("Couldn't move an item:", reply.error);
+      }
+      onProgress?.(moved);
+    }
+    if (failures) throw new Error(`${failures} items didn't move`);
+    await send({ type: "finish" });
   };
 
   // Runs as the old domain's top-level page. Always ends on the new site.
+  // `requestWindow` asks the user before opening the popup, since browsers
+  // only allow popups from a click. It resolves to null when they decline.
   const runExport = async (
     env,
-    { targetOrigin, importPath = "/api/import", timeout = 15_000, onProgress },
+    {
+      targetOrigin,
+      importPath = "/api/import",
+      timeout = 15_000,
+      onProgress,
+      requestWindow,
+    },
   ) => {
     const destination = `${targetOrigin}${env.location.pathname}${env.location.search}${env.location.hash}`;
+    const importUrl = `${targetOrigin}${importPath}`;
+    let popup = null;
     try {
       if (
         env.localStorage.getItem(MOVED_KEY) !== "1" &&
@@ -348,33 +381,35 @@
       ) {
         const frame = env.document.createElement("iframe");
         frame.hidden = true;
-        frame.src = `${targetOrigin}${importPath}`;
-        const ready = waitForReady(env, frame, targetOrigin, timeout);
+        frame.src = importUrl;
+        const frameReady = waitForReady(
+          env,
+          () => frame.contentWindow,
+          targetOrigin,
+          timeout,
+        );
         env.document.body.append(frame);
-        if (!(await ready).imported) {
-          const send = connect(env, frame, targetOrigin);
-          let failures = 0;
-          let moved = 0;
-          for await (const item of readStorage(env, {
-            fromOrigin: env.location.origin,
-            toOrigin: targetOrigin,
-          })) {
-            const reply = await send({ type: "write", item });
-            if (reply.ok) moved += 1;
-            else {
-              failures += 1;
-              env.console.error("Couldn't move an item:", reply.error);
-            }
-            onProgress?.(moved);
+        let target = frame.contentWindow;
+        let ready = await frameReady;
+        if (!ready.shared) {
+          frame.remove();
+          popup = await requestWindow(importUrl);
+          if (!popup) {
+            env.location.replace(destination);
+            return;
           }
-          if (failures) throw new Error(`${failures} items didn't move`);
-          await send({ type: "finish" });
+          ready = await waitForReady(env, () => popup, targetOrigin, timeout);
+          target = popup;
+        }
+        if (!ready.imported) {
+          await transfer(env, target, targetOrigin, onProgress);
         }
       }
       env.localStorage.setItem(MOVED_KEY, "1");
     } catch (error) {
       env.console.error("Moving storage to the new site failed:", error);
     }
+    popup?.close();
     env.location.replace(destination);
   };
 

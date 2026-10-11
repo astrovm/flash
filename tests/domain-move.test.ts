@@ -130,6 +130,7 @@ const makeEnv = (origin) => {
     indexedDB: new IDBFactory(),
     localStorage: new MemoryStorage(),
     navigator: { storage: { getDirectory: async () => root } },
+    document: {},
     opfs: root,
     addEventListener: (type, listener) => listeners.add(listener),
     removeEventListener: (type, listener) => listeners.delete(listener),
@@ -513,7 +514,10 @@ describe("storage copy", () => {
 // Connects an exporting page to an importing frame the way the browser does:
 // window messages carry an origin, and the frame answers its parent.
 const connectFrame = (from, to) => {
-  const frame = { contentWindow: { postMessage: () => {} } };
+  const frame = {
+    contentWindow: { postMessage: () => {} },
+    remove: () => (frame.removed = true),
+  };
   from.document = {
     createElement: () => frame,
     body: {
@@ -533,6 +537,31 @@ const connectFrame = (from, to) => {
     },
   };
   return frame;
+};
+
+// A popup answers through `opener` instead of `parent`.
+const openPopup = (from, to, { answer = true } = {}) => {
+  const popup = {
+    postMessage: (data, targetOrigin, ports) => {
+      if (targetOrigin !== NEW) return;
+      to.dispatch({ data, origin: OLD, ports });
+    },
+    close: () => (popup.closed = true),
+  };
+  to.opener = {
+    postMessage: (data, targetOrigin) => {
+      if (targetOrigin !== OLD) return;
+      from.dispatch({ data, origin: NEW, source: popup });
+    },
+  };
+  if (answer) setTimeout(() => runImport(to, { sourceOrigin: OLD }));
+  return popup;
+};
+
+const partitioned = () => {
+  const env = makeEnv(NEW);
+  env.document = { hasStorageAccess: async () => false };
+  return env;
 };
 
 const exportEnv = (path = "/play/sonic?full=1#start") => {
@@ -671,13 +700,93 @@ describe("moving between domains", () => {
     expect(String(from.errors[2][1])).toContain("2 items didn't move");
   });
 
+  test("moves through a popup when the frame's storage is separate", async () => {
+    const from = exportEnv();
+    const frameEnv = partitioned();
+    const to = makeEnv(NEW);
+    to.document = { hasStorageAccess: async () => true };
+    await seedOldOrigin(from);
+    const frame = connectFrame(from, frameEnv);
+    let popup;
+    const requested = [];
+
+    await runExport(from, {
+      targetOrigin: NEW,
+      requestWindow: async (url) => {
+        requested.push(url);
+        popup = openPopup(from, to);
+        return popup;
+      },
+    });
+
+    expect(requested).toEqual([`${NEW}/api/import`]);
+    expect(frame.removed).toBe(true);
+    expect(popup.closed).toBe(true);
+    expect(from.replaced()).toBe(`${NEW}/play/sonic?full=1#start`);
+    expect(from.localStorage.getItem(MOVED_KEY)).toBe("1");
+    expect(to.localStorage.getItem(IMPORTED_KEY)).toBe("1");
+    expect(await readAll(to, "astro-documents", "files")).toHaveLength(120);
+    // Nothing lands in the frame's separate storage.
+    expect(frameEnv.localStorage.length).toBe(0);
+    expect(await frameEnv.indexedDB.databases()).toEqual([]);
+    expect(from.errors).toEqual([]);
+    expect(from.listeners.size).toBe(0);
+  });
+
+  test("Not now opens the new site and asks again next time", async () => {
+    const from = exportEnv("/");
+    await seedOldOrigin(from);
+    connectFrame(from, partitioned());
+    await runExport(from, {
+      targetOrigin: NEW,
+      requestWindow: async () => null,
+    });
+    expect(from.replaced()).toBe(`${NEW}/`);
+    expect(from.localStorage.getItem(MOVED_KEY)).toBeNull();
+    expect(from.errors).toEqual([]);
+  });
+
+  test("closes a popup that never answers", async () => {
+    const from = exportEnv("/");
+    await seedOldOrigin(from);
+    connectFrame(from, partitioned());
+    let popup;
+    await runExport(from, {
+      targetOrigin: NEW,
+      timeout: 10,
+      requestWindow: async () =>
+        (popup = openPopup(from, makeEnv(NEW), { answer: false })),
+    });
+    expect(popup.closed).toBe(true);
+    expect(from.replaced()).toBe(`${NEW}/`);
+    expect(from.localStorage.getItem(MOVED_KEY)).toBeNull();
+    expect(String(from.errors[0][1])).toContain("didn't answer");
+  });
+
+  test("a popup answers its opener", async () => {
+    const to = makeEnv(NEW);
+    const sent = [];
+    to.opener = { postMessage: (...args) => sent.push(args) };
+    to.parent = {
+      postMessage: () => {
+        throw new Error("Popups have no parent frame");
+      },
+    };
+    to.localStorage.setItem(IMPORTED_KEY, "1");
+    to.document = { hasStorageAccess: async () => true };
+    await runImport(to, { sourceOrigin: OLD });
+    expect(sent).toEqual([
+      [{ type: "astro-xp-import-ready", imported: true, shared: true }, OLD],
+    ]);
+  });
+
   test("the import frame only listens to the old domain", async () => {
     const to = makeEnv(NEW);
     const sent = [];
     to.parent = { postMessage: (...args) => sent.push(args) };
-    runImport(to, { sourceOrigin: OLD });
+    await runImport(to, { sourceOrigin: OLD });
     expect(sent).toEqual([
-      [{ type: "astro-xp-import-ready", imported: false }, OLD],
+      [{ type: "astro-xp-import-ready", imported: false, shared: true }, OLD],
     ]);
     const channel = new MessageChannel();
     let replies = 0;
@@ -702,7 +811,7 @@ describe("moving between domains", () => {
   test("reports write errors", async () => {
     const to = makeEnv(NEW);
     to.parent = { postMessage: () => {} };
-    runImport(to, { sourceOrigin: OLD });
+    await runImport(to, { sourceOrigin: OLD });
     const channel = new MessageChannel();
     const replies = [];
     channel.port1.onmessage = ({ data }) => replies.push(data);

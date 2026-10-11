@@ -7,7 +7,9 @@ A Windows XP-style desktop that runs in your browser. Play classic games and use
 ## 🚀 Use
 
 - Open [xp.4st.li](https://xp.4st.li/). There's nothing to install.
-- Used flash.4st.li before? Open it once. Your files, saves, settings and games move to xp.4st.li by themselves.
+- Used flash.4st.li before? Open it once. Your files, saves, settings and games move to xp.4st.li.
+  - Safari asks for one click on **Move my files**.
+  - Still have an old tab open? Close it and open flash.4st.li again.
 - Want a game offline? Open an included game once, or download it in **Settings → Games**.
 
 ## Features

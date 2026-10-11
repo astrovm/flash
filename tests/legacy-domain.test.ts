@@ -36,6 +36,11 @@ describe("old domain", () => {
     expect(html).toContain('targetOrigin: "https://xp.4st.li"');
     expect(html).toContain('importPath: "/api/import"');
     expect(html).toContain('<meta name="robots" content="noindex" />');
+    // Safari keeps the frame's storage apart, so it asks for one click.
+    expect(html).toContain(
+      '<button id="move" type="button">Move my files</button>',
+    );
+    expect(html).toContain('href="https://xp.4st.li/">Not now</a>');
   });
 
   test("the inlined script can't close its own script tag", () => {
