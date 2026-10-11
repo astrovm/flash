@@ -496,6 +496,18 @@ html:not([data-xp-appearance="classic"]) .xp-window select:focus {
     #fff;
 }
 
+/* The open list keeps window colors and the field's font. Options would
+   otherwise inherit the focused field's white highlight text and vanish
+   against the list's white background. */
+.xp-window select:not([multiple], [size]) option {
+  background: #fff;
+  color: #000;
+  font:
+    11px Tahoma,
+    "Segoe UI",
+    sans-serif;
+}
+
 html:not([data-xp-appearance="classic"]) .xp-window select:hover {
   background:
     var(--ctl-combobuttonglyph-hot) right 4px center / 10px 7px no-repeat,
