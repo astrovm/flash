@@ -45,7 +45,7 @@ async function setup({
         ...details,
         installed: true,
         type: "iframe",
-        url: "https://flash.example/game/",
+        url: "https://xp.example/game/",
       };
       notify({ ...installed });
     },

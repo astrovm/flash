@@ -30,7 +30,7 @@ window.ASTRO_DEV = true;
       const names = await caches.keys();
       await Promise.all(
         names
-          .filter((name) => name.startsWith("astro-flash"))
+          .filter((name) => name.startsWith("astro-xp"))
           .map((name) => caches.delete(name)),
       );
     }
@@ -47,7 +47,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(
-      names.filter((name) => name.startsWith("astro-flash")).map((name) => caches.delete(name)),
+      names.filter((name) => name.startsWith("astro-xp")).map((name) => caches.delete(name)),
     );
     await self.registration.unregister();
     const windows = await clients.matchAll({ type: "window" });

@@ -8,7 +8,7 @@ const windows = [];
 afterEach(() => {
   for (const w of windows.splice(0)) w.close();
 });
-const key = "astro-flash.scummvm.peril.iso.v1";
+const key = "astro-xp.scummvm.peril.iso.v1";
 const tick = async () => {
   for (let i = 0; i < 12; i++) await new Promise((r) => setTimeout(r, 0));
 };

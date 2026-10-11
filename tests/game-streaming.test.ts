@@ -11,7 +11,7 @@ const record = {
   platform: "Flash",
   status: "Playable",
   applicationPath: "Flash Player",
-  downloadUrl: "https://flash.example/api/game/download",
+  downloadUrl: "https://xp.example/api/game/download",
   launchCommand: "https://game.example/main.swf",
 };
 const makeDependencies = () => {
@@ -21,7 +21,7 @@ const makeDependencies = () => {
     cached,
     metadata,
     dependencies: {
-      origin: "https://flash.example",
+      origin: "https://xp.example",
       Inflate: AsyncInflate,
       cache: {
         async put(key, response) {

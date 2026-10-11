@@ -57,8 +57,8 @@ const details = {
   platform: "Flash",
   status: "Playable",
   applicationPath: "FPSoftware\\Flash\\flashplayer_32_sa.exe",
-  downloadUrl: `https://flash.example/api/games/${uuid}/download`,
-  logoUrl: `https://flash.example/api/games/${uuid}/logo`,
+  downloadUrl: `https://xp.example/api/games/${uuid}/download`,
+  logoUrl: `https://xp.example/api/games/${uuid}/logo`,
   launchCommand: "http://localflash/bikemaniaarena1/bike-mania-arena-1.swf",
   tags: ["Sports", "Racing"],
   compatible: true,
@@ -71,8 +71,8 @@ const legacyDetails = {
   uuid: legacyUuid,
   title: "Bike Mania 3 on Ice",
   packageType: "legacy",
-  downloadUrl: `https://flash.example/api/games/${legacyUuid}/download`,
-  logoUrl: `https://flash.example/api/games/${legacyUuid}/logo`,
+  downloadUrl: `https://xp.example/api/games/${legacyUuid}/download`,
+  logoUrl: `https://xp.example/api/games/${legacyUuid}/logo`,
   launchCommand: "http://localflash/bikemania3/bikemaniaonice.swf",
 };
 
@@ -136,7 +136,7 @@ function createFixture({
     cacheObject: cache,
     metadataStore: store,
     storageManager,
-    origin: "https://flash.example",
+    origin: "https://xp.example",
     ...overrides,
   });
   return {
@@ -176,7 +176,7 @@ async function bytesOf(response) {
 function rewrite(library, id, url) {
   for (const [pattern, replacement] of library.assetRewriteRules(
     id,
-    "https://flash.example",
+    "https://xp.example",
   )) {
     if (pattern.test(url)) return url.replace(pattern, replacement);
   }
@@ -198,7 +198,7 @@ describe("game library", () => {
     expect(
       library.asGameConfig({
         ...details,
-        iconPath: `https://flash.example/__installed-games/${uuid}/logo.jpg`,
+        iconPath: `https://xp.example/__installed-games/${uuid}/logo.jpg`,
       }).icon,
     ).toBe(details.logoUrl);
   });
@@ -287,7 +287,7 @@ describe("game library", () => {
     expect(await bytesOf(lazyAsset)).toEqual([6, 7]);
     expect(
       cache.values.has(
-        `https://flash.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/config.bin`,
+        `https://xp.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/config.bin`,
       ),
     ).toBe(true);
   });
@@ -332,12 +332,12 @@ describe("game library", () => {
     expect(await manager.match(secondScoped)).toBeInstanceOf(Response);
     expect(
       cache.values.has(
-        `https://flash.example/__installed-games/${legacyUuid}/content/cdn.example/shared.bin`,
+        `https://xp.example/__installed-games/${legacyUuid}/content/cdn.example/shared.bin`,
       ),
     ).toBe(true);
     expect(
       cache.values.has(
-        `https://flash.example/__installed-games/${uuid}/content/cdn.example/shared.bin`,
+        `https://xp.example/__installed-games/${uuid}/content/cdn.example/shared.bin`,
       ),
     ).toBe(true);
   });
@@ -369,7 +369,7 @@ describe("game library", () => {
     expect(await bytesOf(uncachedAsset)).toEqual([6, 7]);
     expect(
       cache.values.has(
-        `https://flash.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/optional.bin`,
+        `https://xp.example/__installed-games/${legacyUuid}/content/localflash/bikemania3/data/optional.bin`,
       ),
     ).toBe(false);
   });
@@ -378,7 +378,7 @@ describe("game library", () => {
     const { manager, cache } = await createLegacyFixture();
     const sizeBefore = cache.values.size;
     expect(
-      await manager.match("https://flash.example/js/runtime.wasm"),
+      await manager.match("https://xp.example/js/runtime.wasm"),
     ).toBeNull();
     expect(cache.values.size).toBe(sizeBefore);
   });
@@ -515,7 +515,7 @@ describe("game library recovery", () => {
     expect(installed.iconPath).toBeUndefined();
     expect(
       await f.cache.match(
-        `https://flash.example/__installed-games/${uuid}/logo.jpg`,
+        `https://xp.example/__installed-games/${uuid}/logo.jpg`,
       ),
     ).toBeNull();
     expect(await bytesOf(await f.manager.match(installed.url))).toEqual([4, 5]);
@@ -537,7 +537,7 @@ describe("game library recovery", () => {
     await f.manager.initialize();
     const installed = await f.manager.install(details);
     expect(deleted).toEqual([
-      `https://flash.example/__installed-games/${uuid}/logo.jpg`,
+      `https://xp.example/__installed-games/${uuid}/logo.jpg`,
     ]);
     expect(installed.iconPath).toBeUndefined();
     expect(await bytesOf(await f.manager.match(installed.url))).toEqual([4, 5]);
@@ -560,7 +560,7 @@ describe("game library recovery", () => {
     });
     await f.manager.initialize();
     await f.manager.install(legacyDetails);
-    const path = `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/missing.txt`;
+    const path = `https://xp.example/__installed-games/${legacyUuid}/content/remote.example/missing.txt`;
     expect(await f.manager.match(path)).toBeNull();
     expect(await f.manager.match(path)).toBeNull();
     expect(requests).toBe(1);
@@ -773,7 +773,7 @@ describe("game library browser integration", () => {
         fflate,
         indexedDB,
         document: {},
-        location: { origin: "https://flash.example" },
+        location: { origin: "https://xp.example" },
         caches: { open: async () => new FakeCache() },
       },
       async () => {
@@ -806,7 +806,7 @@ describe("game library browser integration", () => {
         fetchObject: base.fetchObject,
         cacheObject: new FakeCache(),
         metadataStore: new FakeStore(),
-        origin: "https://flash.example",
+        origin: "https://xp.example",
       });
       await manager.initialize();
       const game = await manager.install({ ...details, logoUrl: undefined });
@@ -971,17 +971,14 @@ describe("game library browser integration", () => {
     const f = await createInitializedFixture();
     const installed = await f.manager.install(details);
     await f.manager.install(legacyDetails);
-    const prefix = `https://flash.example/__installed-games/${uuid}/`;
+    const prefix = `https://xp.example/__installed-games/${uuid}/`;
     await f.cache.put(
       `${prefix}sized.bin`,
       new Response(new Uint8Array(3), { headers: { "Content-Length": "5" } }),
     );
     f.cache.values.set(`${prefix}unsized.bin`, new Response(new Uint8Array(2)));
     f.cache.values.set(`${prefix}gone.bin`, null);
-    f.cache.values.set(
-      "https://flash.example/unrelated.bin",
-      new Response("x"),
-    );
+    f.cache.values.set("https://xp.example/unrelated.bin", new Response("x"));
     for (const key of [...f.cache.values.keys()])
       if (key.includes(legacyUuid)) f.cache.values.delete(key);
     const installations = await f.manager.getInstallations();
@@ -1016,7 +1013,7 @@ describe("game library browser integration", () => {
     });
     await f.manager.initialize();
     await f.manager.install(legacyDetails);
-    const asset = `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/a.bin`;
+    const asset = `https://xp.example/__installed-games/${legacyUuid}/content/remote.example/a.bin`;
     expect(await bytesOf(await f.manager.match(asset))).toEqual([6]);
     expect(
       await bytesOf(await f.manager.match(new Request(`${asset}?v=2`))),
@@ -1024,11 +1021,11 @@ describe("game library browser integration", () => {
     expect(assetRequests).toBe(1);
     for (let index = 0; index < 258; index++)
       await f.manager.match(
-        `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/missing-${index}.bin`,
+        `https://xp.example/__installed-games/${legacyUuid}/content/remote.example/missing-${index}.bin`,
       );
     expect(
       await f.manager.match(
-        `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/missing-0.bin`,
+        `https://xp.example/__installed-games/${legacyUuid}/content/remote.example/missing-0.bin`,
       ),
     ).toBeNull();
     expect(assetRequests).toBe(260);
@@ -1039,7 +1036,7 @@ describe("game library browser integration", () => {
     await f.manager.install({ ...details, legacyFallback: false });
     expect(
       await f.manager.match(
-        `https://flash.example/__installed-games/${uuid}/content/remote.example/a.bin`,
+        `https://xp.example/__installed-games/${uuid}/content/remote.example/a.bin`,
       ),
     ).toBeNull();
     expect(f.assetRequests()).toBe(0);
@@ -1054,7 +1051,7 @@ describe("game library browser integration", () => {
     };
     await expect(
       f.manager.match(
-        `https://flash.example/__installed-games/${legacyUuid}/content/remote.example/new.bin`,
+        `https://xp.example/__installed-games/${legacyUuid}/content/remote.example/new.bin`,
       ),
     ).rejects.toThrow("cache corrupted");
   });

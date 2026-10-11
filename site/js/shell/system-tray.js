@@ -214,7 +214,7 @@ const wireProjectSettings = (win) => {
   const content = win.el.querySelector(".project-settings-content");
   const bundledGameCount = Object.keys(window.FLASH_GAMES).length;
   content.innerHTML = `
-    <div class="project-settings-tabs" role="tablist" aria-label="Astro Flash Settings">
+    <div class="project-settings-tabs" role="tablist" aria-label="Astro XP Settings">
       <button type="button" role="tab" class="active" id="project-tab-general" aria-controls="project-panel-general" aria-selected="true">General</button>
       <button type="button" role="tab" id="project-tab-games" aria-controls="project-panel-games" aria-selected="false" tabindex="-1">Games</button>
       <button type="button" role="tab" id="project-tab-updates" aria-controls="project-panel-updates" aria-selected="false" tabindex="-1">Updates</button>
@@ -224,13 +224,13 @@ const wireProjectSettings = (win) => {
       <div class="project-settings-product">
         <img src="assets/xp/icons/ControlPanel.png" alt="">
         <div>
-          <h2>Astro Flash</h2>
+          <h2>Astro XP</h2>
           <p data-project-value="connection"></p>
         </div>
       </div>
       <fieldset>
         <legend>Offline</legend>
-        <label class="project-offline-setting"><input type="checkbox" data-project-setting="offline-enabled" checked> Use Astro Flash offline</label>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="offline-enabled" checked> Use Astro XP offline</label>
         <dl class="dlg-props-table project-settings-details">
           <dt>Status:</dt><dd data-project-value="offlineFiles"></dd>
           <dt>Size:</dt><dd data-project-value="downloadSize"></dd>
@@ -241,7 +241,7 @@ const wireProjectSettings = (win) => {
         <legend>Startup</legend>
         <label class="project-offline-setting"><input type="checkbox" data-project-setting="full-startup"> Always show the full startup</label>
       </fieldset>
-      <a class="project-suggestions-link" href="https://github.com/astrovm/flash/issues" target="_blank" rel="noopener noreferrer">Send feedback</a>
+      <a class="project-suggestions-link" href="https://github.com/astrovm/xp/issues" target="_blank" rel="noopener noreferrer">Send feedback</a>
     </section>
     <section class="project-settings-panel" id="project-panel-games" role="tabpanel" aria-labelledby="project-tab-games" hidden>
       <fieldset>
@@ -710,7 +710,7 @@ const wireProjectSettings = (win) => {
   offlineEnabledCheckbox.addEventListener("change", async () => {
     if (!offlineEnabledCheckbox.checked) {
       const accepted = await XPDialogs.confirm(
-        "Stop using Astro Flash offline?\n\nThis removes the downloaded files and offline games. Your files, saves, settings and installed games stay.",
+        "Stop using Astro XP offline?\n\nThis removes the downloaded files and offline games. Your files, saves, settings and installed games stay.",
         "Turn Off Offline",
         "question",
       );
@@ -785,7 +785,7 @@ const wireProjectSettings = (win) => {
     } catch (error) {
       await XPDialogs.alert(
         error.message || "Something went wrong.",
-        "Astro Flash",
+        "Astro XP",
         "error",
       );
     }
@@ -798,12 +798,12 @@ const wireProjectSettings = (win) => {
         "warning",
       );
       if (!accepted) return;
-      await resetAstroFlash();
+      await resetAstroXp();
       window.location.reload();
     } catch (error) {
       await XPDialogs.alert(
         error.message || "Something went wrong.",
-        "Astro Flash",
+        "Astro XP",
         "error",
       );
     }

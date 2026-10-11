@@ -45,7 +45,7 @@ import { bunCommand } from "./helpers/coverage";
 const temporaryDirectories: string[] = [];
 
 async function makeTemporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), "astro-flash-deploy-test-"));
+  const path = await mkdtemp(join(tmpdir(), "astro-xp-deploy-test-"));
   temporaryDirectories.push(path);
   return path;
 }
@@ -534,10 +534,10 @@ describe("Workbox and artifact validation", () => {
       await Bun.file(join(root, "workbox-f9030226.js")).exists(),
     ).toBeFalse();
     expect(await readFile(join(root, "sw.js"), "utf8")).toContain(
-      'self.__ASTRO_FLASH_VERSION__="26.07.28-abcdef1"',
+      'self.__ASTRO_XP_VERSION__="26.07.28-abcdef1"',
     );
     expect(await readFile(join(root, "sw.26.07.28-abcdef1.js"), "utf8")).toBe(
-      `${await readFile(join(root, "sw.js"), "utf8")}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
+      `${await readFile(join(root, "sw.js"), "utf8")}\nself.__ASTRO_XP_IMMUTABLE_WORKER__=true;\n`,
     );
   });
 
@@ -1068,7 +1068,7 @@ async function makeRelease({
     "sw.js": rootWorker,
     [`sw.${releaseVersion}.js`]:
       versionedWorker ??
-      `${rootWorker}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
+      `${rootWorker}\nself.__ASTRO_XP_IMMUTABLE_WORKER__=true;\n`,
     [`${release}/offline-games.12345678.json`]: "{}",
     [`${release}/apps/index.js`]: "apps",
     [`${release}/assets/xp/bliss.jpg`]: "wallpaper",
@@ -1363,8 +1363,7 @@ describe("build helpers", () => {
         await cp(join(directory, "sw.js"), join(directory, `sw.${version}.js`));
         await editFile(
           join(directory, `sw.${version}.js`),
-          (worker) =>
-            `${worker}\nself.__ASTRO_FLASH_IMMUTABLE_WORKER__=true;\n`,
+          (worker) => `${worker}\nself.__ASTRO_XP_IMMUTABLE_WORKER__=true;\n`,
         );
       },
     });

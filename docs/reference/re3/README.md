@@ -2,7 +2,7 @@
 
 re3 runs Grand Theft Auto III in the browser through a WebAssembly build of
 the [hez-gta-re3](https://github.com/hezkore/hez-gta-re3) fork, the same way
-reVCDOS runs Vice City: Astro Flash ships the engine, and you bring your own
+reVCDOS runs Vice City: Astro XP ships the engine, and you bring your own
 game files.
 
 ## How it works

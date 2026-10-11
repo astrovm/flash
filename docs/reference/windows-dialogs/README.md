@@ -88,7 +88,7 @@ Measurements were taken from pixel rows and columns of both captures.
 Reference captures were recorded on the local XP VM with
 `bun run xp:vm send --instance <name> record <directory> <ms> click <x> <y>`.
 
-## Astro Flash adaptations
+## Astro XP adaptations
 
 - Windows Classic keeps its own 3D frames, controls, and scrollbars.
 - The Places bar offers Desktop, My Documents, and My Computer. My Recent

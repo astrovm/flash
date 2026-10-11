@@ -99,7 +99,7 @@ jobs:
             --request POST \
             --header "Authorization: Bearer $CLOUDFLARE_CACHE_TOKEN" \
             --header "Content-Type: application/json" \
-            --data '{"hosts":["flash.4st.li"]}' \
+            --data '{"hosts":["xp.4st.li"]}' \
             "https://api.cloudflare.com/client/v4/zones/2da89ffd98b154334e04add0a5034e9b/invalidate_cache"
 
   deploy-worker:
@@ -132,6 +132,15 @@ jobs:
         run: |
           response="$(curl --fail-with-body --silent --show-error \
             --retry 5 --retry-all-errors --retry-delay 2 \
-            'https://flash.4st.li/api/games?q=bike%20mania')"
+            'https://xp.4st.li/api/games?q=bike%20mania')"
           RESPONSE="$response" bun -e \
             'const payload = JSON.parse(process.env.RESPONSE); if (!Array.isArray(payload.games)) throw new Error("Invalid catalog response");'
+
+      - name: Smoke-test the old domain redirect
+        shell: bash
+        run: |
+          location="$(curl --fail-with-body --silent --show-error \
+            --retry 5 --retry-all-errors --retry-delay 2 \
+            --output /dev/null --write-out '%{redirect_url}' \
+            'https://flash.4st.li/swf/?q=1')"
+          test "$location" = 'https://xp.4st.li/swf/?q=1'

@@ -72,12 +72,12 @@ pixel identity on every host display or exhaust every combination of settings.
 
 ## Issue fixes and limits
 
-[#152](https://github.com/astrovm/flash/issues/152): narrow CSS overrides moved
+[#152](https://github.com/astrovm/xp/issues/152): narrow CSS overrides moved
 Volume onto the Luna tray's decorative left edge. Removing those overrides
 preserves the original padding. Crowded bands also retain their overflow menus;
 when there are more minimum-width bands than fit, they can scroll horizontally.
 
-[#151](https://github.com/astrovm/flash/issues/151): startup playback now owns one
+[#151](https://github.com/astrovm/xp/issues/151): startup playback now owns one
 Audio element across retries, shares an in-flight playback request, and pauses
 that element when ending/restarting the session. A synthetic regression covers
 Restart before the old sound has finished. An instrumented fresh build produced

@@ -13,7 +13,7 @@
     {
       id: "revcdos",
       route: /\/iframe\/revcdos(?:\.[a-f0-9]{16})?\/local-assets\//,
-      directory: "astro-flash-revcdos",
+      directory: "astro-xp-revcdos",
       message: "REVCDOS_PACK_UPDATED",
       title: "reVC",
       aliases: [
@@ -24,7 +24,7 @@
     {
       id: "re3",
       route: /\/iframe\/re3(?:\.[a-f0-9]{16})?\/local-assets\//,
-      directory: "astro-flash-re3",
+      directory: "astro-xp-re3",
       message: "RE3_PACK_UPDATED",
       title: "re3",
       aliases: [],
@@ -32,7 +32,7 @@
   ];
   const PACKED_MANIFEST = "manifest.json";
   const SCUMMVM_ROUTE = "/iframe/scummvm/local-games/";
-  const SCUMMVM_DIRECTORY = "astro-flash-scummvm";
+  const SCUMMVM_DIRECTORY = "astro-xp-scummvm";
   const packedStores = new Map();
   const scummvmStores = new Map();
   const releasePath = (path) => path.replace(/^\/releases\/[^/]+(?=\/)/, "");

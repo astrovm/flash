@@ -19,7 +19,7 @@ describe("offline service worker", () => {
   test("prefers the network for optional runtime assets and falls back offline", async () => {
     const listeners = new Map();
     globalThis.self = {
-      location: { origin: "https://flash.example" },
+      location: { origin: "https://xp.example" },
       addEventListener(type, listener) {
         listeners.set(type, listener);
       },
@@ -31,7 +31,7 @@ describe("offline service worker", () => {
       open: async () => ({
         match: async (key) =>
           key ===
-          "https://flash.example/vendor/scummvm/2026.3.0/scummvm.12345678.wasm"
+          "https://xp.example/vendor/scummvm/2026.3.0/scummvm.12345678.wasm"
             ? stale.clone()
             : undefined,
       }),
@@ -40,7 +40,7 @@ describe("offline service worker", () => {
     require(workerPath);
 
     const request = new Request(
-      "https://flash.example/releases/26.08.01-1234567/vendor/scummvm/2026.3.0/scummvm.12345678.wasm",
+      "https://xp.example/releases/26.08.01-1234567/vendor/scummvm/2026.3.0/scummvm.12345678.wasm",
     );
     let responsePromise;
     listeners.get("fetch")({
@@ -72,7 +72,7 @@ describe("offline service worker", () => {
     expect(await (await responsePromise).text()).toBe("stale runtime");
 
     const uncached = new Request(
-      "https://flash.example/releases/26.08.01-1234567/swf/missing.swf",
+      "https://xp.example/releases/26.08.01-1234567/swf/missing.swf",
     );
     listeners.get("fetch")({
       request: uncached,
@@ -114,7 +114,7 @@ function packedWorker() {
     },
   });
   globalThis.self = {
-    location: { origin: "https://flash.example" },
+    location: { origin: "https://xp.example" },
     addEventListener: (type, cb) => listeners.set(type, cb),
   };
   delete require.cache[workerPath];
@@ -131,7 +131,7 @@ function packedWorker() {
       let response;
       listeners.get("fetch")({
         request: new Request(
-          path.startsWith("http") ? path : `https://flash.example${path}`,
+          path.startsWith("http") ? path : `https://xp.example${path}`,
           options,
         ),
         respondWith: (p) => {
@@ -144,7 +144,7 @@ function packedWorker() {
 }
 test("packed reVCDOS assets normalize paths, serve byte ranges, invalidate and reject broken storage", async () => {
   const h = packedWorker(),
-    root = "astro-flash-revcdos/";
+    root = "astro-xp-revcdos/";
   const manifest = {
     version: 1,
     dataFile: "pack.bin",
@@ -195,13 +195,13 @@ test("packed reVCDOS assets normalize paths, serve byte ranges, invalidate and r
 });
 test("packed re3 files are served from their own store without the reVCDOS aliases", async () => {
   const h = packedWorker();
-  h.put("astro-flash-re3/manifest.json", {
+  h.put("astro-xp-re3/manifest.json", {
     version: 1,
     dataFile: "pack.bin",
     size: 10,
     files: { "models/gta3.img": { offset: 2, length: 6 } },
   });
-  h.put("astro-flash-re3/pack.bin", "0123456789");
+  h.put("astro-xp-re3/pack.bin", "0123456789");
   const path = "/releases/v1/iframe/re3.0123456789abcdef/local-assets/";
   expect(await (await h.request(`${path}Models/GTA3.IMG`)).text()).toBe(
     "234567",
@@ -215,13 +215,13 @@ test("packed re3 files are served from their own store without the reVCDOS alias
   expect(
     (await h.request("/releases/v1/iframe/revcdos/local-assets/x")).status,
   ).toBe(503);
-  h.put("astro-flash-re3/pack.bin", "short");
+  h.put("astro-xp-re3/pack.bin", "short");
   h.notify({ type: "RE3_PACK_UPDATED" });
   expect((await h.request(`${path}models/gta3.img`)).status).toBe(503);
 });
 test("ScummVM game files expose the index and safe ISO slices, refresh and reject invalid entries", async () => {
   const h = packedWorker(),
-    root = "astro-flash-scummvm/",
+    root = "astro-xp-scummvm/",
     path = "/releases/v1/iframe/scummvm/local-games/game/";
   const manifest = {
     version: 1,

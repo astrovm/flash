@@ -27,7 +27,7 @@ import { bunCommand } from "./helpers/coverage";
 const temporaryDirectories: string[] = [];
 
 async function makeTemporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), "astro-flash-dev-server-test-"));
+  const path = await mkdtemp(join(tmpdir(), "astro-xp-dev-server-test-"));
   temporaryDirectories.push(path);
   return path;
 }
@@ -136,12 +136,12 @@ describe("development build synchronization", () => {
 describe("Bun request handler", () => {
   test("serves static files without caching and blocks traversal", async () => {
     const root = await makeTemporaryDirectory();
-    await writeFile(join(root, "index.html"), "<h1>Astro Flash</h1>");
+    await writeFile(join(root, "index.html"), "<h1>Astro XP</h1>");
     const handler = createRequestHandler(root);
 
     const response = await handler(new Request("http://localhost/"));
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain("Astro Flash");
+    expect(await response.text()).toContain("Astro XP");
     expect(response.headers.get("cache-control")).toContain("no-store");
 
     const traversal = await handler(
@@ -238,7 +238,7 @@ describe("Bun request handler", () => {
 
     const response = await handler(new Request("http://localhost/sw.js"));
     const worker = await response.text();
-    expect(worker).toContain('name.startsWith("astro-flash")');
+    expect(worker).toContain('name.startsWith("astro-xp")');
     expect(worker).toContain("self.registration.unregister()");
     expect(response.headers.get("cache-control")).toContain("no-store");
     liveReload.close();

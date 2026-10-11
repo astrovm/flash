@@ -177,7 +177,7 @@ for (const entry of [
 }
 
 const makeEnvironment = ({
-  assetBaseUrl = "https://flash.example/",
+  assetBaseUrl = "https://xp.example/",
   registration = new Registration({
     active: new Worker("activated", manifest.version),
   }),
@@ -206,7 +206,7 @@ const makeEnvironment = ({
   const shellCache = new MemoryCache();
   const deletedCaches = [];
   const storage = new MemoryStorage({
-    astroFlashLastUpdateCheck: "1800000000000",
+    astroXpLastUpdateCheck: "1800000000000",
     ...storageValues,
   });
   const sessionStorage = new MemoryStorage(sessionValues);
@@ -226,8 +226,8 @@ const makeEnvironment = ({
     sessionStorage,
     MessageChannel,
     location: {
-      href: "https://flash.example/",
-      origin: "https://flash.example",
+      href: "https://xp.example/",
+      origin: "https://xp.example",
       reload: () => {
         reloads += 1;
       },
@@ -243,7 +243,7 @@ const makeEnvironment = ({
       visibilityState: "visible",
     }),
     caches: {
-      keys: async () => ["astro-flash-precache", BUNDLED_GAME_CACHE],
+      keys: async () => ["astro-xp-precache", BUNDLED_GAME_CACHE],
       open: async (name) =>
         name === BUNDLED_GAME_CACHE ? bundledCache : shellCache,
       delete: async (name) => {
@@ -316,8 +316,8 @@ const countVersionFetches = ({ fetches }) =>
 const makeDisabledEnvironment = () =>
   makeEnvironment({
     storageValues: {
-      astroFlashOfflineEnabled: "false",
-      astroFlashOfflineGameRecords: JSON.stringify({
+      astroXpOfflineEnabled: "false",
+      astroXpOfflineGameRecords: JSON.stringify({
         "synthetic-game": {
           bytes: 4,
           files: ["swf/synthetic-game/main.swf"],
@@ -391,10 +391,10 @@ describe("offline manager", () => {
         String(url).startsWith("/version.json"),
       ),
     ).toBe(false);
-    expect(disabled.deletedCaches).toContain("astro-flash-precache");
+    expect(disabled.deletedCaches).toContain("astro-xp-precache");
     expect(disabled.deletedCaches).toContain(BUNDLED_GAME_CACHE);
     expect(
-      JSON.parse(disabled.storage.getItem("astroFlashOfflineGameRecords")),
+      JSON.parse(disabled.storage.getItem("astroXpOfflineGameRecords")),
     ).toEqual({});
     expect(disabled.storage.getItem("syntheticPersonalPreference")).toBe(
       "preserve-me",
@@ -411,7 +411,7 @@ describe("offline manager", () => {
   test("persists the save-played-games preference", async () => {
     const { disabled, manager } = await makeReenabledManager();
     manager.setSavePlayedGamesOffline(false);
-    expect(disabled.storage.getItem("astroFlashSavePlayedGamesOffline")).toBe(
+    expect(disabled.storage.getItem("astroXpSavePlayedGamesOffline")).toBe(
       "false",
     );
   });
@@ -457,7 +457,7 @@ describe("offline manager", () => {
 
   test("installs a manual update and reloads only once when automatic updates are disabled", async () => {
     const manualUpdates = makeEnvironment({
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manualUpdatesManager = await createInitializedManager(
       manualUpdates.environment,
@@ -519,7 +519,7 @@ describe("offline manager", () => {
     });
     const manualMigration = makeEnvironment({
       registration: manualMigrationRegistration,
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manualMigrationWorker = new Worker("installed", manifest.version);
     manualMigration.serviceWorker.register = async (...args) => {
@@ -555,7 +555,7 @@ describe("offline manager", () => {
 
   test("caches game files relative to a versioned asset base URL", async () => {
     const versioned = makeEnvironment({
-      assetBaseUrl: `https://flash.example/releases/${manifest.version}/`,
+      assetBaseUrl: `https://xp.example/releases/${manifest.version}/`,
     });
     const versionedManager = await createInitializedManager(
       versioned.environment,
@@ -564,30 +564,30 @@ describe("offline manager", () => {
     expect(
       versioned.fetches.some(
         ({ url }) =>
-          new URL(url, `https://flash.example/releases/${manifest.version}/`)
+          new URL(url, `https://xp.example/releases/${manifest.version}/`)
             .href ===
-          `https://flash.example/releases/${manifest.version}/swf/bike-mania.bike-1/main.swf`,
+          `https://xp.example/releases/${manifest.version}/swf/bike-mania.bike-1/main.swf`,
       ),
     ).toBe(true);
     expect(
       versioned.bundledCache.values.has(
-        "https://flash.example/swf/bike-mania.bike-1/main.swf",
+        "https://xp.example/swf/bike-mania.bike-1/main.swf",
       ),
     ).toBe(true);
   });
 
   test("keeps downloaded games offline after an update to a new release", async () => {
     const before = makeEnvironment({
-      assetBaseUrl: "https://flash.example/releases/26.07.28-old/",
+      assetBaseUrl: "https://xp.example/releases/26.07.28-old/",
     });
     const oldManager = await createInitializedManager(before.environment);
     await oldManager.downloadGame("bike-mania");
     const legacyKey =
-      "https://flash.example/releases/26.07.28-old/swf/legacy/main.swf";
+      "https://xp.example/releases/26.07.28-old/swf/legacy/main.swf";
     await before.bundledCache.put(legacyKey, new Response("old layout"));
 
     const after = makeEnvironment({
-      assetBaseUrl: `https://flash.example/releases/${manifest.version}/`,
+      assetBaseUrl: `https://xp.example/releases/${manifest.version}/`,
       storageValues: Object.fromEntries(before.storage.values),
     });
     after.bundledCache.values = before.bundledCache.values;
@@ -599,8 +599,8 @@ describe("offline manager", () => {
       after.fetches.some(({ url }) => String(url).includes("main.swf")),
     ).toBeFalse();
     expect([...after.bundledCache.values.keys()].sort()).toEqual([
-      "https://flash.example/js/runtime.wasm?rev=runtime-1",
-      "https://flash.example/swf/bike-mania.bike-1/main.swf",
+      "https://xp.example/js/runtime.wasm?rev=runtime-1",
+      "https://xp.example/swf/bike-mania.bike-1/main.swf",
     ]);
   });
 
@@ -624,7 +624,7 @@ describe("offline manager", () => {
 
   test("keeps synchronizing when an old release file cannot be deleted", async () => {
     const h = makeEnvironment();
-    const legacyKey = "https://flash.example/releases/26.07.28-old/swf/a.swf";
+    const legacyKey = "https://xp.example/releases/26.07.28-old/swf/a.swf";
     await h.bundledCache.put(legacyKey, new Response("old layout"));
     h.bundledCache.delete = async () => {
       throw new Error("synthetic cache failure");
@@ -637,7 +637,7 @@ describe("offline manager", () => {
   test("keeps older game records that never listed their files", async () => {
     const legacy = makeEnvironment({
       storageValues: {
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpOfflineGameRecords: JSON.stringify({
           doom: { bytes: 6, revision: "doom-1", type: "iframe" },
         }),
       },
@@ -676,7 +676,7 @@ describe("offline manager", () => {
     const initial = makeEnvironment();
     const manager = await createInitializedManager(initial.environment);
     await manager.downloadGame("bike-mania");
-    const bikeUrl = "https://flash.example/swf/bike-mania.bike-1/main.swf";
+    const bikeUrl = "https://xp.example/swf/bike-mania.bike-1/main.swf";
     await initial.bundledCache.delete(bikeUrl);
     await manager.downloadGame("bike-mania");
     expect(initial.bundledCache.values.has(bikeUrl)).toBe(true);
@@ -696,7 +696,7 @@ describe("offline manager", () => {
     expect(manager.getSnapshot().downloadedGameBytes).toBe(6);
     expect(
       initial.bundledCache.values.has(
-        "https://flash.example/js/runtime.wasm?rev=runtime-1",
+        "https://xp.example/js/runtime.wasm?rev=runtime-1",
       ),
     ).toBe(false);
 
@@ -738,14 +738,14 @@ describe("offline manager", () => {
     expect(interrupted.bundledCache.values.size).toBe(0);
     expect(
       JSON.parse(
-        interrupted.storage.getItem("astroFlashOfflineGameRecords") || "{}",
+        interrupted.storage.getItem("astroXpOfflineGameRecords") || "{}",
       ),
     ).toEqual({});
   });
 
   test("repairs system files by unregistering, clearing caches, and activating without reloading", async () => {
     const repaired = makeEnvironment({
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const repairedManager = await createInitializedManager(
       repaired.environment,
@@ -760,7 +760,7 @@ describe("offline manager", () => {
     // Repair does not reload the current session.
     expect(repaired.getReloads()).toBe(0);
     expect(repaired.registration.unregisterCalls).toBe(1);
-    expect(repaired.deletedCaches).toContain("astro-flash-precache");
+    expect(repaired.deletedCaches).toContain("astro-xp-precache");
     expect(repaired.registration.waiting.messages).toEqual([
       { type: "SKIP_WAITING" },
     ]);
@@ -812,7 +812,7 @@ describe("offline manager", () => {
   test("keeps the previous game revision when upgrading a downloaded game fails", async () => {
     const failedUpgrade = makeEnvironment({
       storageValues: {
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpOfflineGameRecords: JSON.stringify({
           __runtime__: {
             bytes: 10,
             files: ["js/runtime.wasm?rev=runtime-old"],
@@ -828,7 +828,7 @@ describe("offline manager", () => {
         }),
       },
     });
-    const oldBikeUrl = "https://flash.example/swf/bike-mania.old/main.swf";
+    const oldBikeUrl = "https://xp.example/swf/bike-mania.old/main.swf";
     await failedUpgrade.bundledCache.put(oldBikeUrl, new Response("old game"));
     const upgradePut = failedUpgrade.bundledCache.put.bind(
       failedUpgrade.bundledCache,
@@ -848,7 +848,7 @@ describe("offline manager", () => {
     }
     expect(failedUpgrade.bundledCache.values.has(oldBikeUrl)).toBe(true);
     expect(
-      JSON.parse(failedUpgrade.storage.getItem("astroFlashOfflineGameRecords"))[
+      JSON.parse(failedUpgrade.storage.getItem("astroXpOfflineGameRecords"))[
         "bike-mania"
       ].revision,
     ).toBe("old");
@@ -865,7 +865,7 @@ describe("offline manager", () => {
     await sharedRuntimeManager.removeGame("pink-panther-passport-to-peril");
     expect(
       sharedRuntime.bundledCache.values.has(
-        "https://flash.example/vendor/scummvm/scummvm.wasm?rev=scummvm-1",
+        "https://xp.example/vendor/scummvm/scummvm.wasm?rev=scummvm-1",
       ),
     ).toBe(true);
     await sharedRuntimeManager.removeGame("pink-panther-hokus-pokus");
@@ -875,7 +875,7 @@ describe("offline manager", () => {
   test("refreshes a stale downloaded runtime to the current revision", async () => {
     const staleRuntime = makeEnvironment({
       storageValues: {
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpOfflineGameRecords: JSON.stringify({
           __runtime__: {
             bytes: 10,
             files: ["js/old-runtime.wasm"],
@@ -894,13 +894,13 @@ describe("offline manager", () => {
     await createInitializedManager(staleRuntime.environment);
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const saved = JSON.parse(
-        staleRuntime.storage.getItem("astroFlashOfflineGameRecords"),
+        staleRuntime.storage.getItem("astroXpOfflineGameRecords"),
       );
       if (saved.__runtime__?.revision === manifest.runtime.revision) break;
       await flush();
     }
     expect(
-      JSON.parse(staleRuntime.storage.getItem("astroFlashOfflineGameRecords"))
+      JSON.parse(staleRuntime.storage.getItem("astroXpOfflineGameRecords"))
         .__runtime__.revision,
     ).toBe(manifest.runtime.revision);
   });
@@ -1023,7 +1023,7 @@ describe("offline manager", () => {
       remoteVersion: "26.07.30-config123",
       remoteReleasedAt: new Date(configurableReleaseTime).toISOString(),
       storageValues: {
-        astroFlashAutomaticUpdateDelay: String(12 * 60 * 60 * 1000),
+        astroXpAutomaticUpdateDelay: String(12 * 60 * 60 * 1000),
       },
     });
     const configurableManager = await createInitializedManager(
@@ -1075,18 +1075,18 @@ describe("offline manager", () => {
   test("persists the automatic update delay and clears it when reset", async () => {
     const configurable = makeEnvironment({
       storageValues: {
-        astroFlashAutomaticUpdateDelay: String(12 * 60 * 60 * 1000),
+        astroXpAutomaticUpdateDelay: String(12 * 60 * 60 * 1000),
       },
     });
     const configurableManager = await createInitializedManager(
       configurable.environment,
     );
     configurableManager.setAutomaticUpdateDelay(0);
-    expect(configurable.storage.getItem("astroFlashAutomaticUpdateDelay")).toBe(
+    expect(configurable.storage.getItem("astroXpAutomaticUpdateDelay")).toBe(
       "0",
     );
     configurableManager.setAutomaticUpdateDelay(null);
-    expect(configurable.storage.getItem("astroFlashAutomaticUpdateDelay")).toBe(
+    expect(configurable.storage.getItem("astroXpAutomaticUpdateDelay")).toBe(
       null,
     );
   });
@@ -1115,7 +1115,7 @@ describe("offline manager", () => {
       }),
       remoteVersion: "26.07.30-bbbbbbb",
       sessionValues: {
-        astroFlashActiveVersionReload: "26.07.30-bbbbbbb",
+        astroXpActiveVersionReload: "26.07.30-bbbbbbb",
       },
     });
     const inconsistentManager = await createInitializedManager(
@@ -1205,7 +1205,7 @@ describe("offline failure and lifecycle boundaries", () => {
   test("invalid stored records are ignored and subscriptions receive isolated snapshots", async () => {
     for (const records of ["broken-json", "[]", "null"]) {
       const h = makeEnvironment({
-        storageValues: { astroFlashOfflineGameRecords: records },
+        storageValues: { astroXpOfflineGameRecords: records },
       });
       const manager = await createInitializedManager(h.environment),
         snapshots = [];
@@ -1434,7 +1434,7 @@ describe("offline manager edge cases", () => {
 
   test("uses the global environment when none is provided", () => {
     globalThis.localStorage = new MemoryStorage({
-      astroFlashOfflineEnabled: "false",
+      astroXpOfflineEnabled: "false",
     });
     try {
       const manager = createManager({ currentVersion: manifest.version });
@@ -1450,10 +1450,10 @@ describe("offline manager edge cases", () => {
   test("restores cached download metadata and ignores malformed stored numbers", () => {
     const cached = makeEnvironment({
       storageValues: {
-        astroFlashDownloadVersion: manifest.version,
-        astroFlashDownloadBytes: "1234",
-        astroFlashLastUpdateCheck: "",
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpDownloadVersion: manifest.version,
+        astroXpDownloadBytes: "1234",
+        astroXpLastUpdateCheck: "",
+        astroXpOfflineGameRecords: JSON.stringify({
           doom: { bytes: "many", files: [], revision: "doom-1" },
         }),
       },
@@ -1467,8 +1467,8 @@ describe("offline manager edge cases", () => {
     });
     const malformed = makeEnvironment({
       storageValues: {
-        astroFlashDownloadVersion: manifest.version,
-        astroFlashDownloadBytes: "junk",
+        astroXpDownloadVersion: manifest.version,
+        astroXpDownloadBytes: "junk",
       },
     });
     expect(
@@ -1479,7 +1479,7 @@ describe("offline manager edge cases", () => {
   test("synchronizes stored games with the catalog on startup", async () => {
     const h = makeEnvironment({
       storageValues: {
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpOfflineGameRecords: JSON.stringify({
           "bike-mania": {
             bytes: "many",
             files: ["swf/bike-mania.old/main.swf"],
@@ -1506,17 +1506,17 @@ describe("offline manager edge cases", () => {
         }),
       },
     });
-    const staleUrl = "https://flash.example/swf/bike-mania.old/main.swf";
+    const staleUrl = "https://xp.example/swf/bike-mania.old/main.swf";
     await h.bundledCache.put(staleUrl, new Response("old"));
     for (const { url } of manifest.games.doom.files) {
       await h.bundledCache.put(
-        new URL(url, "https://flash.example/").href,
+        new URL(url, "https://xp.example/").href,
         new Response("cached"),
       );
     }
     const manager = await createInitializedManager(h.environment);
     const records = () =>
-      JSON.parse(h.storage.getItem("astroFlashOfflineGameRecords"));
+      JSON.parse(h.storage.getItem("astroXpOfflineGameRecords"));
     await flushUntil(
       () =>
         records()["__runtime__:scummvm"]?.revision === "scummvm-1" &&
@@ -1599,7 +1599,7 @@ describe("offline manager edge cases", () => {
     manager.setAutomaticUpdatesEnabled(false);
     await manager.downloadGame("doom");
     expect([...h.bundledCache.values.keys()]).toContain(
-      "https://flash.example/iframe/doom.doom-1/index.html",
+      "https://xp.example/iframe/doom.doom-1/index.html",
     );
     await manager.setOfflineEnabled(false);
   });
@@ -1627,7 +1627,7 @@ describe("offline manager edge cases", () => {
     const h = makeEnvironment({
       registration,
       remoteVersion: "26.07.30-bbbbbbb",
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manager = await createInitializedManager(h.environment);
     await manager.checkForUpdates();
@@ -1640,7 +1640,7 @@ describe("offline manager edge cases", () => {
     const h = makeEnvironment({
       remoteVersion: "26.07.30-bbbbbbb",
       remoteReleasedAt: new Date(now).toISOString(),
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manager = await createInitializedManager(h.environment);
     const snapshot = await manager.checkForUpdates();
@@ -1706,7 +1706,7 @@ describe("offline manager edge cases", () => {
     });
     const h = makeEnvironment({
       registration,
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     h.serviceWorker.register = async (...args) => {
       h.serviceWorker.registerCalls.push(args);
@@ -1729,7 +1729,7 @@ describe("offline manager edge cases", () => {
     });
     const h = makeEnvironment({
       registration,
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     h.serviceWorker.register = async (...args) => {
       h.serviceWorker.registerCalls.push(args);
@@ -1751,7 +1751,7 @@ describe("offline manager edge cases", () => {
         active: new Worker("activated", manifest.version),
         waiting,
       }),
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     h.serviceWorker.getRegistration = async () => null;
     const manager = await createInitializedManager(h.environment);
@@ -1784,7 +1784,7 @@ describe("offline manager edge cases", () => {
     });
     const h = makeEnvironment({
       registration,
-      sessionValues: { astroFlashActiveVersionReload: manifest.version },
+      sessionValues: { astroXpActiveVersionReload: manifest.version },
     });
     const manager = await createInitializedManager(h.environment);
     const snapshot = await manager.checkForUpdates();
@@ -1795,9 +1795,7 @@ describe("offline manager edge cases", () => {
     await expect(manager.applyUpdate()).rejects.toThrow(
       "There's no update to install.",
     );
-    expect(h.sessionStorage.getItem("astroFlashActiveVersionReload")).toBe(
-      null,
-    );
+    expect(h.sessionStorage.getItem("astroXpActiveVersionReload")).toBe(null);
     registration.installing = new Worker("installing");
     registration.active = null;
     await expect(manager.applyUpdate()).rejects.toThrow(
@@ -2002,7 +2000,7 @@ describe("offline manager edge cases", () => {
     test("discards an upgrade while old files are being removed", async () => {
       const h = makeEnvironment({
         storageValues: {
-          astroFlashOfflineGameRecords: JSON.stringify({
+          astroXpOfflineGameRecords: JSON.stringify({
             doom: {
               bytes: 6,
               files: ["iframe/doom.old/index.html"],
@@ -2035,7 +2033,7 @@ describe("offline manager edge cases", () => {
       await manager.setOfflineEnabled(true);
       failDeletes = true;
       h.storage.setItem(
-        "astroFlashOfflineGameRecords",
+        "astroXpOfflineGameRecords",
         JSON.stringify({
           doom: {
             bytes: 6,
@@ -2062,7 +2060,7 @@ describe("offline manager edge cases", () => {
   test("upgrades a game even when an old file cannot be deleted", async () => {
     const h = makeEnvironment({
       storageValues: {
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpOfflineGameRecords: JSON.stringify({
           doom: {
             bytes: 6,
             files: ["iframe/doom.old/index.html"],
@@ -2083,7 +2081,7 @@ describe("offline manager edge cases", () => {
   test("keeps the shared Flash runtime while another Flash game is installed", async () => {
     const h = makeEnvironment({
       storageValues: {
-        astroFlashOfflineGameRecords: JSON.stringify({
+        astroXpOfflineGameRecords: JSON.stringify({
           "other-flash-game": {
             bytes: 1,
             files: [],
@@ -2097,7 +2095,7 @@ describe("offline manager edge cases", () => {
     await manager.downloadGame("bike-mania");
     await manager.removeGame("bike-mania");
     expect(
-      JSON.parse(h.storage.getItem("astroFlashOfflineGameRecords")).__runtime__,
+      JSON.parse(h.storage.getItem("astroXpOfflineGameRecords")).__runtime__,
     ).toBeTruthy();
   });
 
@@ -2315,7 +2313,7 @@ describe("offline manager edge cases", () => {
         active: new Worker("activated", "26.07.30-bbbbbbb"),
       }),
       remoteVersion: "26.07.30-bbbbbbb",
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manager = await createInitializedManager(h.environment);
     await manager.checkForUpdates();
@@ -2337,7 +2335,7 @@ describe("offline manager edge cases", () => {
     });
     const h = makeEnvironment({
       registration,
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manager = await createInitializedManager(h.environment);
     expect(h.serviceWorker.registerCalls.length).toBe(1);
@@ -2353,7 +2351,7 @@ describe("offline manager version reporting", () => {
         active: new Worker("activated", version),
       }),
       remoteVersion: version,
-      storageValues: { astroFlashAutomaticUpdatesEnabled: "false" },
+      storageValues: { astroXpAutomaticUpdatesEnabled: "false" },
     });
     const manager = await createInitializedManager(h.environment);
     await manager.checkForUpdates();

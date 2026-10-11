@@ -5,16 +5,16 @@
 })(globalThis, function (root) {
   "use strict";
 
-  const REVCDOS_DIRECTORY = "astro-flash-revcdos";
-  const RE3_DIRECTORY = "astro-flash-re3";
+  const REVCDOS_DIRECTORY = "astro-xp-revcdos";
+  const RE3_DIRECTORY = "astro-xp-re3";
   // Games that keep their data as one packed copy in browser storage.
   const PACKED_GAMES = {
     revcdos: {
       title: "reVC",
       directory: REVCDOS_DIRECTORY,
       keys: [
-        "astro-flash.revcdos.download-complete.v1",
-        "astro-flash.revcdos.download-source.v1",
+        "astro-xp.revcdos.download-complete.v1",
+        "astro-xp.revcdos.download-source.v1",
       ],
       message: "REVCDOS_PACK_UPDATED",
     },
@@ -25,13 +25,13 @@
       message: "RE3_PACK_UPDATED",
     },
   };
-  const SCUMMVM_DIRECTORY = "astro-flash-scummvm";
+  const SCUMMVM_DIRECTORY = "astro-xp-scummvm";
   const PINK_GAMES = {
     peril: "The Pink Panther: Passport to Peril",
     pokus: "The Pink Panther: Hokus Pokus Pink",
   };
 
-  const metadataKey = (id) => `astro-flash.scummvm.${id}.iso.v1`;
+  const metadataKey = (id) => `astro-xp.scummvm.${id}.iso.v1`;
 
   const getDirectory = async (storage, name) => {
     if (!storage?.getDirectory) return null;

@@ -998,7 +998,7 @@ const getAllProgramsTree = () => {
     { separator: true },
     {
       id: "astro-settings",
-      label: "Astro Flash Settings",
+      label: "Astro XP Settings",
       icon: "ControlPanel.png",
       action: openProjectSettings,
     },

@@ -60,7 +60,7 @@
 }
 
 #screen-saver-overlay[data-saver="marquee"]::after {
-  content: "Astro Flash";
+  content: "Astro XP";
   position: absolute;
   top: 45%;
   left: 0;

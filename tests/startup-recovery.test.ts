@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 const makeEnvironment = ({ htmlVersion = "26.08.12-abcdef1" } = {}) => {
-  const window = new Window({ url: "https://flash.example/" });
+  const window = new Window({ url: "https://xp.example/" });
   windows.push(window);
   const values = new Map();
   const timers = [];
@@ -29,7 +29,7 @@ const makeEnvironment = ({ htmlVersion = "26.08.12-abcdef1" } = {}) => {
     Date: { now: () => 1_800_000_000_000 },
     caches: {
       keys: async () => [
-        "astro-flash-precache-v2",
+        "astro-xp-precache-v2",
         "astro-bundled-games-v1",
         "astro-installed-games-v1",
       ],
@@ -55,7 +55,7 @@ const makeEnvironment = ({ htmlVersion = "26.08.12-abcdef1" } = {}) => {
       },
     },
     location: {
-      href: "https://flash.example/",
+      href: "https://xp.example/",
       replace: (url) => {
         replacement = url;
       },
@@ -104,11 +104,11 @@ describe("startup recovery", () => {
     await recovery.timers[0].callback();
 
     expect(recovery.getUnregisters()).toBe(1);
-    expect(recovery.deletedCaches).toEqual(["astro-flash-precache-v2"]);
+    expect(recovery.deletedCaches).toEqual(["astro-xp-precache-v2"]);
     expect(recovery.getReplacement()).toContain(
       "__astro_recovery=26.08.12-abcdef1-1800000000000",
     );
-    expect(recovery.values.has("astroFlashStartupRecovery")).toBeTrue();
+    expect(recovery.values.has("astroXpStartupRecovery")).toBeTrue();
     expect(recovery.errors).toEqual([]);
   });
 
@@ -128,16 +128,14 @@ describe("startup recovery", () => {
   test("cancels recovery and cleans its URL after a successful startup", () => {
     const recovery = makeEnvironment();
     recovery.environment.location.href =
-      "https://flash.example/?__astro_recovery=old#game";
-    recovery.values.set("astroFlashStartupRecovery", "previous");
+      "https://xp.example/?__astro_recovery=old#game";
+    recovery.values.set("astroXpStartupRecovery", "previous");
     const manager = createStartupRecovery(recovery.environment);
 
     manager.markReady();
 
-    expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
-    expect(recovery.getHistoryReplacement()).toBe(
-      "https://flash.example/#game",
-    );
+    expect(recovery.values.has("astroXpStartupRecovery")).toBeFalse();
+    expect(recovery.getHistoryReplacement()).toBe("https://xp.example/#game");
   });
 });
 
@@ -170,7 +168,7 @@ describe("startup recovery edge cases", () => {
     expect(ready.getHistoryReplacement()).toBeNull();
 
     const attempted = makeEnvironment();
-    attempted.values.set("astroFlashStartupRecovery", "1");
+    attempted.values.set("astroXpStartupRecovery", "1");
     await createStartupRecovery(attempted.environment).recover();
     expect(attempted.getReplacement()).toBeNull();
 
@@ -216,7 +214,7 @@ describe("startup recovery edge cases", () => {
     expect(recovery.getUnregisters()).toBe(0);
     expect(recovery.deletedCaches).toEqual([]);
     expect(recovery.getReplacement()).toBeNull();
-    expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
+    expect(recovery.values.has("astroXpStartupRecovery")).toBeFalse();
   });
 
   test("does not reload when startup finishes while caches are cleared", async () => {
@@ -224,13 +222,13 @@ describe("startup recovery edge cases", () => {
     const startup = createStartupRecovery(recovery.environment);
     recovery.environment.caches.keys = async () => {
       startup.markReady();
-      return ["astro-flash-precache-v2"];
+      return ["astro-xp-precache-v2"];
     };
 
     await recovery.timers[0].callback();
 
     expect(recovery.getReplacement()).toBeNull();
-    expect(recovery.values.has("astroFlashStartupRecovery")).toBeFalse();
+    expect(recovery.values.has("astroXpStartupRecovery")).toBeFalse();
   });
 
   test("stops retrying when startup finishes before a check fails", async () => {

@@ -77,7 +77,7 @@ export async function loadShell({
   Object.defineProperty(window.navigator, "locks", {
     value: {
       request: (_name, _options, callback) =>
-        Promise.resolve(callback({ name: "astro-flash-files" })),
+        Promise.resolve(callback({ name: "astro-xp-files" })),
     },
   });
   if (documentStorage === "memory") window.ASTRO_FS_MEMORY_ONLY = true;

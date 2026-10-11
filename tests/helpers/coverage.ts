@@ -34,7 +34,7 @@ export const coverageIncludes = [
   /^site\/iframe\/scummvm\/.+\.js$/,
   /^catalog\/.+\.ts$/,
   /^rtc\/.+\.ts$/,
-  /^worker\/.+\.ts$/,
+  /^worker\/.+\.(js|ts)$/,
   /^tools\/(deploy|dev-server|extract-swf|validate-icons|validate-javascript)\.ts$/,
 ];
 export const coverageExcludes = [
@@ -93,7 +93,9 @@ export const emptyFileCoverage = (code: string, path: string) => {
 // ES modules and TypeScript load through a Bun plugin. Browser scripts that
 // export through `module.exports` must stay CommonJS, which Bun plugins cannot
 // produce, so those load through the CommonJS extension hook instead.
-const moduleFilter = /\/(site\/apps|catalog|rtc|worker|tools)\/.+\.(js|ts)$/;
+// Worker browser scripts are CommonJS too, and the Worker imports them as text.
+const moduleFilter =
+  /\/(site\/apps|catalog|rtc|tools)\/.+\.(js|ts)$|\/worker\/.+\.ts$/;
 const loadInstrumented = ({ path }: { path: string }) => ({
   contents: instrumentSource(readFileSync(path, "utf8"), path),
   loader: path.endsWith(".ts") ? ("ts" as const) : ("js" as const),

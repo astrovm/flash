@@ -1,4 +1,4 @@
-# Astro Flash Collection
+# Astro XP
 
 **Classic games and Windows XP apps, right in your browser.**
 
@@ -6,7 +6,8 @@ A Windows XP-style desktop that runs in your browser. Play classic games and use
 
 ## 🚀 Use
 
-- Open [flash.4st.li](https://flash.4st.li/). There's nothing to install.
+- Open [xp.4st.li](https://xp.4st.li/). There's nothing to install.
+- Used flash.4st.li before? Open it once. Your files, saves, settings and games move to xp.4st.li by themselves.
 - Want a game offline? Open an included game once, or download it in **Settings → Games**.
 
 ## Features
@@ -73,7 +74,7 @@ bun run dev -- --rebuild
 bun run preview
 ```
 
-Preview serves the real production service worker and gives every rebuild a new local version. It does not reload the page for you. Use **Astro Flash Settings** → **Updates** → **Check Now** to walk through the update flow.
+Preview serves the real production service worker and gives every rebuild a new local version. It does not reload the page for you. Use **Astro XP Settings** → **Updates** → **Check Now** to walk through the update flow.
 
 ### XP reference VM
 

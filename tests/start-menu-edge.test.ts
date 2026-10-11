@@ -46,7 +46,7 @@ test("All Programs groups recent and favorite games and skips unknown ones", asy
             title: "Plain Game",
             type: "swf",
             installed: true,
-            url: "https://flash.example/plain.swf",
+            url: "https://xp.example/plain.swf",
           },
         }),
         getRecord: () => null,

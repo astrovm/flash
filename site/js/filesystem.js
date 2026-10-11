@@ -63,7 +63,7 @@
   let operations = Promise.resolve();
   let initializationError;
   const readOnlyMessage =
-    "Can't save files. Allow site storage in your browser, then reopen Astro Flash.";
+    "Can't save files. Allow site storage in your browser, then reopen Astro XP.";
   const listeners = new Set();
   const fileTypeHandlers = new Map();
   let folderHandler = null;

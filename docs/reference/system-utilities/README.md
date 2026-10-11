@@ -48,7 +48,7 @@ VM dialog's position. The images are 1:1 crops of the dialog from the
 - Silver dialogs used the Blue and Olive Green button face. They now use
   Silver's #E0DFE3, read from Luna.msstyles.
 
-### Astro Flash adaptations
+### Astro XP adaptations
 
 - The host clock stands in for the Internet time server.
 - Time zones keep their standard offsets. Daylight saving changes are not
@@ -119,7 +119,7 @@ and the list header and status bar from Luna.msstyles.
   Users can disconnect or log off the session.
 - About shows XP's About Windows Task Manager.
 
-### Astro Flash adaptations
+### Astro XP adaptations
 
 - The reference install's background processes keep fixed memory, handles,
   and threads. Program windows add, grow, and end processes. Winamp's agent
@@ -172,7 +172,7 @@ and the trackbar track and thumbs from Luna.msstyles.
 - **Options** → **Properties** shows or hides the Wave column, and the
   window resizes like XP's. **Exit** and **About Volume Control** work.
 
-### Astro Flash adaptations
+### Astro XP adaptations
 
 - SW Synth and CD Player are left out: nothing in the browser plays through
   them. The window is narrower for it.
@@ -217,7 +217,7 @@ bitmaps come from Luna.msstyles, and the icons from shell32.dll.
   Classic. The Explorer task pane now uses Olive Green's and Silver's colors
   too.
 
-### Astro Flash adaptations
+### Astro XP adaptations
 
 - Only the categories, tasks, and icons that open working dialogs are shown:
   Appearance and Themes (Display, Taskbar and Start Menu) and Date, Time,

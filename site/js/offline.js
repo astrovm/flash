@@ -12,15 +12,15 @@
     root.AstroOffline = api;
   }
 })(globalThis, (storagePolicy) => {
-  const LAST_CHECKED_KEY = "astroFlashLastUpdateCheck";
-  const DOWNLOAD_VERSION_KEY = "astroFlashDownloadVersion";
-  const DOWNLOAD_BYTES_KEY = "astroFlashDownloadBytes";
-  const GAME_RECORDS_KEY = "astroFlashOfflineGameRecords";
-  const ACTIVE_VERSION_RELOAD_KEY = "astroFlashActiveVersionReload";
-  const AUTOMATIC_UPDATE_DELAY_KEY = "astroFlashAutomaticUpdateDelay";
-  const OFFLINE_ENABLED_KEY = "astroFlashOfflineEnabled";
-  const SAVE_PLAYED_GAMES_KEY = "astroFlashSavePlayedGamesOffline";
-  const AUTOMATIC_UPDATES_KEY = "astroFlashAutomaticUpdatesEnabled";
+  const LAST_CHECKED_KEY = "astroXpLastUpdateCheck";
+  const DOWNLOAD_VERSION_KEY = "astroXpDownloadVersion";
+  const DOWNLOAD_BYTES_KEY = "astroXpDownloadBytes";
+  const GAME_RECORDS_KEY = "astroXpOfflineGameRecords";
+  const ACTIVE_VERSION_RELOAD_KEY = "astroXpActiveVersionReload";
+  const AUTOMATIC_UPDATE_DELAY_KEY = "astroXpAutomaticUpdateDelay";
+  const OFFLINE_ENABLED_KEY = "astroXpOfflineEnabled";
+  const SAVE_PLAYED_GAMES_KEY = "astroXpSavePlayedGamesOffline";
+  const AUTOMATIC_UPDATES_KEY = "astroXpAutomaticUpdatesEnabled";
   const BUNDLED_GAME_CACHE = "astro-bundled-games-v1";
   const RELEASE_PREFIX = /^\/releases\/[^/]+(?=\/)/;
   const DEFAULT_CHECK_INTERVAL = 60 * 60 * 1000;
@@ -126,7 +126,7 @@
     serviceWorkerUrl = "/sw.{version}.js",
     versionUrl = "/version.json",
     gameManifestUrl = "offline-games.json",
-    cachePrefix = "astro-flash",
+    cachePrefix = "astro-xp",
     bundledCacheName = BUNDLED_GAME_CACHE,
     checkInterval = DEFAULT_CHECK_INTERVAL,
   }) => {
