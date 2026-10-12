@@ -67,7 +67,7 @@ export async function loadShell({
     width: 1024,
     height: 768,
     settings: {
-      disableCSSFileLoading: true,
+      enableIframePageLoading: true,
       disableJavaScriptFileLoading: true,
       enableJavaScriptEvaluation: false,
       handleDisabledFileLoadingAsSuccess: true,
