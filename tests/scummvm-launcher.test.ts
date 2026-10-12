@@ -17,7 +17,6 @@ async function launch(options = {}) {
     url: "https://flash.test/iframe/peril/",
     settings: {
       disableJavaScriptFileLoading: true,
-      disableCSSFileLoading: true,
       enableJavaScriptEvaluation: true,
       handleDisabledFileLoadingAsSuccess: true,
       suppressInsecureJavaScriptEnvironmentWarning: true,

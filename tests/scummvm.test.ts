@@ -96,7 +96,6 @@ const wrapperConfiguration = async (relativePath: string) => {
   const window = new Window({
     url: `http://127.0.0.1/${relativePath}`,
     settings: {
-      disableCSSFileLoading: true,
       disableJavaScriptFileLoading: true,
       enableJavaScriptEvaluation: false,
       handleDisabledFileLoadingAsSuccess: true,
@@ -153,7 +152,6 @@ describe("ScummVM", () => {
     const window = new Window({
       url: "http://127.0.0.1/releases/test/iframe/passport.hash/",
       settings: {
-        disableCSSFileLoading: true,
         disableJavaScriptFileLoading: true,
         enableJavaScriptEvaluation: true,
         handleDisabledFileLoadingAsSuccess: true,
