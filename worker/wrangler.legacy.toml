@@ -1,0 +1,9 @@
+name = "astro-xp-legacy"
+main = "legacy-worker.ts"
+compatibility_date = "2026-07-29"
+workers_dev = false
+
+# The old domain: moves stored data to xp.4st.li, then redirects there.
+[[routes]]
+pattern = "flash.4st.li/*"
+zone_name = "4st.li"

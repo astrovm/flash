@@ -1300,8 +1300,7 @@ export async function assembleReleaseOutput(
       entry.name === RELEASES_PATH ||
       entry.name === "index.html" ||
       entry.name === "sw.js" ||
-      entry.name === "version.json" ||
-      entry.name === "CNAME"
+      entry.name === "version.json"
     ) {
       continue;
     }
@@ -1317,7 +1316,6 @@ export async function validateReleaseOutput(
   const releasePath = releaseRelativePath(version);
   const releaseDir = join(outputDir, ...releasePath.split("/"));
   const allowedRootEntries = new Set([
-    "CNAME",
     "index.html",
     "releases",
     "sw.js",

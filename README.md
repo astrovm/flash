@@ -169,7 +169,7 @@ Installing a game streams the download into a temporary file in the browser's pr
 <details>
 <summary><b>Deployment</b></summary>
 
-Pull requests run formatting, lint, tests, the coverage check, and a production build. The protected `main` branch requires passing PR checks. Pushes to `main` build, deploy and smoke-test the Cloudflare Worker, and then publish the site to GitHub Pages.
+Pull requests run formatting, lint, tests, the coverage check, and a production build. The protected `main` branch requires passing PR checks. Pushes to `main` build the site, deploy it with the catalog Worker to Cloudflare (Workers static assets), and smoke-test production.
 
 CI needs these GitHub Actions secrets:
 
@@ -178,9 +178,10 @@ CI needs these GitHub Actions secrets:
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                                                                                 |
 | `CLOUDFLARE_API_TOKEN`  | Token with **Workers Scripts: Edit** on the account and **Workers Routes: Edit** on the `4st.li` zone |
 
-To deploy the Worker by hand:
+To deploy the site and Workers by hand (build first):
 
 ```bash
+bun run build
 bun run deploy:worker
 ```
 
