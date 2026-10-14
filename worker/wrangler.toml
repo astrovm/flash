@@ -3,11 +3,12 @@ main = "catalog-worker.ts"
 compatibility_date = "2026-07-29"
 workers_dev = false
 
-[[routes]]
-pattern = "xp.4st.li/api/*"
-zone_name = "4st.li"
+# The built site. Files are served from the edge; the Worker only runs for
+# /api/* and for paths that match no file.
+[assets]
+directory = "../dist"
+run_worker_first = ["/api/*"]
 
-# The old domain: moves stored data to xp.4st.li, then redirects there.
 [[routes]]
-pattern = "flash.4st.li/*"
+pattern = "xp.4st.li/*"
 zone_name = "4st.li"

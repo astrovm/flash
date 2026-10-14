@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
 import catalogWorker from "../worker/catalog-worker";
+import legacyWorker from "../worker/legacy-worker";
 import {
   RETIRED_SERVICE_WORKER,
   handleLegacyRequest,
@@ -20,7 +21,7 @@ const pageLoad = (url: string, init: RequestInit = {}) =>
 
 describe("old domain", () => {
   test("page loads get the move page", async () => {
-    const response = await catalogWorker.fetch(
+    const response = await legacyWorker.fetch(
       pageLoad("https://flash.4st.li/?game=sonic"),
     );
     expect(response.status).toBe(200);
@@ -53,7 +54,7 @@ describe("old domain", () => {
       new Request("http://flash.4st.li/js/main.js?v=2"),
       pageLoad("https://flash.4st.li/js/main.js?v=2", { method: "HEAD" }),
     ]) {
-      const response = await catalogWorker.fetch(request);
+      const response = await legacyWorker.fetch(request);
       expect(response.status).toBe(308);
       expect(response.headers.get("Location")).toBe(
         "https://xp.4st.li/js/main.js?v=2",
