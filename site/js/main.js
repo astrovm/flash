@@ -542,20 +542,39 @@ const displayBackground = (settings) =>
     ? `url("${settings.customWallpaper}")`
     : DISPLAY_WALLPAPERS[settings.wallpaper];
 
+// Mobile Chrome reports innerWidth and innerHeight in zoomed units once
+// display-scale zooms the root, so layout sized from them overshoots the
+// screen and the taskbar lands under the browser's toolbar. The visual
+// viewport is not affected. Pinch zoom shrinks it, so a pinched page keeps
+// using the window size.
+const getViewportSize = () => {
+  const viewport = window.visualViewport;
+  const useVisual =
+    viewport &&
+    viewport.scale <= 1.001 &&
+    document.documentElement.style.zoom !== "" &&
+    window.matchMedia?.("(pointer: coarse)").matches;
+  return useVisual
+    ? { width: viewport.width, height: viewport.height }
+    : { width: window.innerWidth, height: window.innerHeight };
+};
+const getViewportWidth = () => getViewportSize().width;
+const getViewportHeight = () => getViewportSize().height;
+
 const getSimulatedMonitorSize = (resolution = activeMonitorResolution) => {
   const requested = SIMULATED_RESOLUTIONS[resolution];
   if (!requested)
     return {
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: getViewportWidth(),
+      height: getViewportHeight(),
       limited: false,
     };
   return {
-    width: Math.min(requested.width, window.innerWidth),
-    height: Math.min(requested.height, window.innerHeight),
+    width: Math.min(requested.width, getViewportWidth()),
+    height: Math.min(requested.height, getViewportHeight()),
     limited:
-      requested.width > window.innerWidth ||
-      requested.height > window.innerHeight,
+      requested.width > getViewportWidth() ||
+      requested.height > getViewportHeight(),
   };
 };
 
@@ -569,10 +588,13 @@ const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
   activeMonitorResolution = resolution;
   const desktop = document.getElementById("desktop");
   const monitor = getSimulatedMonitorSize(resolution);
-  const left = Math.max(0, Math.round((window.innerWidth - monitor.width) / 2));
+  const left = Math.max(
+    0,
+    Math.round((getViewportWidth() - monitor.width) / 2),
+  );
   const top = Math.max(
     0,
-    Math.round((window.innerHeight - monitor.height) / 2),
+    Math.round((getViewportHeight() - monitor.height) / 2),
   );
   layoutTaskbar(monitor, left, top);
   desktop.dataset.monitorResolution = resolution;

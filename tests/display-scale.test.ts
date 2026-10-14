@@ -99,3 +99,35 @@ test("a ratio change before the first frames drops the old scale", async () => {
   await frames(s);
   expect([root.zoom, root.transform]).toEqual(["", ""]);
 });
+
+test("a touch screen sizes the zoomed root from the visual viewport", async () => {
+  // Mobile Chrome reports inner sizes in zoomed units once the root is zoomed,
+  // which pushed the taskbar under the browser's toolbar.
+  const s = await loadShell({
+    beforeScripts: (window) => {
+      display(2.625).beforeScripts(window);
+      const matchMedia = window.matchMedia;
+      window.matchMedia = (media) => {
+        const query = matchMedia(media);
+        query.matches = media === "(pointer: coarse)";
+        return query;
+      };
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: Object.assign(new window.EventTarget(), {
+          width: 411,
+          height: 735,
+          scale: 1,
+        }),
+      });
+      window.happyDOM.setViewport({ width: 469, height: 839 });
+    },
+  });
+  const root = s.document.documentElement.style;
+  expect([root.width, root.height]).toEqual(["411px", "735px"]);
+
+  // A pinched page keeps the window size.
+  s.window.visualViewport.scale = 2;
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  expect([root.width, root.height]).toEqual(["469px", "839px"]);
+});

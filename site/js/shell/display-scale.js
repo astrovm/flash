@@ -45,8 +45,8 @@ const applyDisplayScale = () => {
 function sizeDisplayScaleRoot() {
   const root = document.documentElement;
   const zoomed = root.style.zoom !== "";
-  root.style.width = zoomed ? `${window.innerWidth}px` : "";
-  root.style.height = zoomed ? `${window.innerHeight}px` : "";
+  root.style.width = zoomed ? `${Math.round(getViewportWidth())}px` : "";
+  root.style.height = zoomed ? `${Math.round(getViewportHeight())}px` : "";
 }
 
 // Browser zoom and moving between monitors resize the window. The media

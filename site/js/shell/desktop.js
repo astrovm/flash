@@ -727,7 +727,7 @@ const addDesktopSubmenu = (menu, label, buildItems) => {
     child.style.left = "100%";
     child.style.top = "-2px";
     const rect = child.getBoundingClientRect();
-    if (rect.right > window.innerWidth)
+    if (rect.right > getViewportWidth())
       child.style.left = `${-child.offsetWidth + 2}px`;
     const bottom = document
       .getElementById("desktop")

@@ -1026,7 +1026,7 @@ const taskButtonGhostRect = (win) => {
   const source = windowPageRect(win);
   return {
     left: source.left + source.width / 2 - 40,
-    top: window.innerHeight - 24,
+    top: getViewportHeight() - 24,
     width: 80,
   };
 };
