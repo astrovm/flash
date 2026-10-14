@@ -883,8 +883,8 @@ const positionStartFlyout = (panel, anchor) => {
   panel.style.maxHeight = `${Math.max(80, taskbarTop - 4)}px`;
   const width = panel.offsetWidth;
   const height = panel.offsetHeight;
-  const right = rect.right + width <= innerWidth - 2;
-  panel.style.left = `${Math.max(2, Math.min(right ? rect.right : rect.left - width, innerWidth - width - 2))}px`;
+  const right = rect.right + width <= getViewportWidth() - 2;
+  panel.style.left = `${Math.max(2, Math.min(right ? rect.right : rect.left - width, getViewportWidth() - width - 2))}px`;
   // All Programs grows upward from its button, like XP; submenus open at
   // their item and only move up when they would cross the taskbar.
   const preferredTop =
@@ -1200,8 +1200,8 @@ const openStartMenu = () => {
   const edge = getTaskbarSettings().edge;
   menu.style.position = "fixed";
   menu.style.bottom = "auto";
-  menu.style.left = `${Math.max(0, Math.min(edge === "left" ? document.getElementById("taskbar").getBoundingClientRect().right : edge === "right" ? rect.left - menu.offsetWidth : rect.left, innerWidth - menu.offsetWidth))}px`;
-  menu.style.top = `${Math.max(0, Math.min(edge === "bottom" ? rect.top - menu.offsetHeight : edge === "top" ? rect.bottom : rect.top, innerHeight - menu.offsetHeight))}px`;
+  menu.style.left = `${Math.max(0, Math.min(edge === "left" ? document.getElementById("taskbar").getBoundingClientRect().right : edge === "right" ? rect.left - menu.offsetWidth : rect.left, getViewportWidth() - menu.offsetWidth))}px`;
+  menu.style.top = `${Math.max(0, Math.min(edge === "bottom" ? rect.top - menu.offsetHeight : edge === "top" ? rect.bottom : rect.top, getViewportHeight() - menu.offsetHeight))}px`;
 
   document.getElementById("start-button").classList.add("active");
   document.getElementById("start-button").focus({ preventScroll: true });

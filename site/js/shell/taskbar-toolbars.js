@@ -125,8 +125,8 @@ const toolbarMenu = (anchor, actions) => {
           submenu.hidden = false;
           item.setAttribute("aria-expanded", "true");
           const rect = item.getBoundingClientRect();
-          submenu.style.left = `${Math.min(innerWidth - submenu.offsetWidth - 2, rect.right)}px`;
-          submenu.style.top = `${Math.min(innerHeight - submenu.offsetHeight - 2, rect.top)}px`;
+          submenu.style.left = `${Math.min(getViewportWidth() - submenu.offsetWidth - 2, rect.right)}px`;
+          submenu.style.top = `${Math.min(getViewportHeight() - submenu.offsetHeight - 2, rect.top)}px`;
         };
         const close = () => {
           submenu.hidden = true;
@@ -390,11 +390,11 @@ const wireToolbarDrag = (handle, element, id, resize = false) => {
           width: initial.floating ? initial.width : 300,
           x: Math.max(
             0,
-            Math.min(innerWidth - 60, rect.left + e.clientX - start.x),
+            Math.min(getViewportWidth() - 60, rect.left + e.clientX - start.x),
           ),
           y: Math.max(
             0,
-            Math.min(innerHeight - 40, rect.top + e.clientY - start.y),
+            Math.min(getViewportHeight() - 40, rect.top + e.clientY - start.y),
           ),
         });
     };
@@ -663,8 +663,8 @@ const renderTaskbarToolbars = () => {
       toolbarContext(id, toolbar);
     });
     if (layout.floating) {
-      toolbar.style.left = `${Math.max(0, Math.min(innerWidth - Math.min(layout.width, innerWidth), layout.x))}px`;
-      toolbar.style.top = `${Math.max(0, Math.min(innerHeight - 60, layout.y))}px`;
+      toolbar.style.left = `${Math.max(0, Math.min(getViewportWidth() - Math.min(layout.width, getViewportWidth()), layout.x))}px`;
+      toolbar.style.top = `${Math.max(0, Math.min(getViewportHeight() - 60, layout.y))}px`;
       const close = document.createElement("button");
       close.className = "toolbar-close";
       close.textContent = "";

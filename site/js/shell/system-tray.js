@@ -114,11 +114,11 @@ const openTrayVolumePopup = () => {
     4,
     Math.min(
       rect.left + rect.width / 2 - popup.offsetWidth / 2,
-      window.innerWidth - popup.offsetWidth - 4,
+      getViewportWidth() - popup.offsetWidth - 4,
     ),
   );
   popup.style.left = `${left}px`;
-  popup.style.top = `${Math.max(0, Math.min(getTaskbarSettings().edge === "top" ? rect.bottom + 4 : rect.top - popup.offsetHeight - 4, innerHeight - popup.offsetHeight))}px`;
+  popup.style.top = `${Math.max(0, Math.min(getTaskbarSettings().edge === "top" ? rect.bottom + 4 : rect.top - popup.offsetHeight - 4, getViewportHeight() - popup.offsetHeight))}px`;
   document.getElementById("tray-volume-slider").focus();
 };
 

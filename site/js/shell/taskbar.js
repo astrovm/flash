@@ -26,8 +26,8 @@ const positionTaskbarMenu = (menu, clientX, clientY) => {
   menu.hidden = false;
   menu.style.left = "0";
   menu.style.top = "0";
-  menu.style.left = `${Math.max(2, Math.min(clientX, innerWidth - menu.offsetWidth - 2))}px`;
-  menu.style.top = `${Math.max(2, Math.min(getTaskbarSettings().edge === "bottom" ? clientY - menu.offsetHeight : clientY, innerHeight - menu.offsetHeight - 2))}px`;
+  menu.style.left = `${Math.max(2, Math.min(clientX, getViewportWidth() - menu.offsetWidth - 2))}px`;
+  menu.style.top = `${Math.max(2, Math.min(getTaskbarSettings().edge === "bottom" ? clientY - menu.offsetHeight : clientY, getViewportHeight() - menu.offsetHeight - 2))}px`;
   menu.querySelector("button:not(:disabled)")?.focus();
 };
 
@@ -654,7 +654,7 @@ const setupTaskbarContextMenu = () => {
     toolbarParent.classList.add("open");
     toolbarButton.setAttribute("aria-expanded", "true");
     toolbarSubmenu.style.left = "calc(100% - 2px)";
-    if (toolbarSubmenu.getBoundingClientRect().right > innerWidth)
+    if (toolbarSubmenu.getBoundingClientRect().right > getViewportWidth())
       toolbarSubmenu.style.left = `${-toolbarSubmenu.offsetWidth + 5}px`;
   };
   const closeToolbarSubmenu = () => {

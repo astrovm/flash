@@ -399,7 +399,7 @@ const wireDisplayProperties = (win) => {
     const monitor = getSimulatedMonitorSize(pending.resolution);
     controls.resolutionValue.textContent =
       pending.resolution === "auto"
-        ? `${window.innerWidth} by ${window.innerHeight} pixels`
+        ? `${getViewportWidth()} by ${getViewportHeight()} pixels`
         : `${pending.resolution.replace("x", " by ")} pixels${monitor.limited ? ` (limited to ${monitor.width} by ${monitor.height})` : ""}`;
     controls.apply.disabled =
       JSON.stringify(pending) === JSON.stringify(current);

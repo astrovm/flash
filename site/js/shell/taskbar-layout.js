@@ -428,8 +428,8 @@ const setupTaskbarLayout = () => {
   bar.addEventListener("pointermove", (event) => {
     if (!drag || drag.id !== event.pointerId) return;
     const monitor = getSimulatedMonitorSize(activeMonitorResolution);
-    const left = Math.max(0, (innerWidth - monitor.width) / 2);
-    const top = Math.max(0, (innerHeight - monitor.height) / 2);
+    const left = Math.max(0, (getViewportWidth() - monitor.width) / 2);
+    const top = Math.max(0, (getViewportHeight() - monitor.height) / 2);
     const x = event.clientX - left,
       y = event.clientY - top;
     if (drag.resize) {
