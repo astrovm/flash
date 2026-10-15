@@ -178,11 +178,11 @@ CI needs these GitHub Actions secrets:
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID                                                                                 |
 | `CLOUDFLARE_API_TOKEN`  | Token with **Workers Scripts: Edit** on the account and **Workers Routes: Edit** on the `4st.li` zone |
 
-To deploy the site and Workers by hand (build first):
+To deploy the site and Workers by hand, start from a clean checkout of a pushed commit. Browsers cache each release folder for a year, so uncommitted changes would stick under that commit's version.
 
 ```bash
 bun run build
-bun run deploy:worker
+bun run deploy
 ```
 
 </details>

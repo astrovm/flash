@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 const workflow = YAML.parse(
   await Bun.file(
-    new URL("../.github/workflows/pages.yml", import.meta.url),
+    new URL("../.github/workflows/ci.yml", import.meta.url),
   ).text(),
 ) as {
   jobs: Record<string, { steps: { name: string; run?: string }[] }>;

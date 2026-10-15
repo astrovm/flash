@@ -563,18 +563,13 @@ const getViewportHeight = () => getViewportSize().height;
 
 const getSimulatedMonitorSize = (resolution = activeMonitorResolution) => {
   const requested = SIMULATED_RESOLUTIONS[resolution];
-  if (!requested)
-    return {
-      width: getViewportWidth(),
-      height: getViewportHeight(),
-      limited: false,
-    };
+  const viewport = getViewportSize();
+  if (!requested) return { ...viewport, limited: false };
   return {
-    width: Math.min(requested.width, getViewportWidth()),
-    height: Math.min(requested.height, getViewportHeight()),
+    width: Math.min(requested.width, viewport.width),
+    height: Math.min(requested.height, viewport.height),
     limited:
-      requested.width > getViewportWidth() ||
-      requested.height > getViewportHeight(),
+      requested.width > viewport.width || requested.height > viewport.height,
   };
 };
 
@@ -588,14 +583,9 @@ const applySimulatedMonitor = (resolution, { reflow = true } = {}) => {
   activeMonitorResolution = resolution;
   const desktop = document.getElementById("desktop");
   const monitor = getSimulatedMonitorSize(resolution);
-  const left = Math.max(
-    0,
-    Math.round((getViewportWidth() - monitor.width) / 2),
-  );
-  const top = Math.max(
-    0,
-    Math.round((getViewportHeight() - monitor.height) / 2),
-  );
+  const viewport = getViewportSize();
+  const left = Math.max(0, Math.round((viewport.width - monitor.width) / 2));
+  const top = Math.max(0, Math.round((viewport.height - monitor.height) / 2));
   layoutTaskbar(monitor, left, top);
   desktop.dataset.monitorResolution = resolution;
   if (resolution === "auto") delete desktop.dataset.monitorLimited;
