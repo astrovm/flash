@@ -839,10 +839,26 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
   background-position-y: -42px;
 }
 
+.project-settings-slider:has(input:disabled) {
+  color: #aca899;
+}
+
+.project-settings-slider input[type="range"]:disabled::-webkit-slider-thumb {
+  background-position-y: -84px;
+}
+
+.project-settings-slider input[type="range"]:disabled::-moz-range-thumb {
+  background-position-y: -84px;
+}
+
 .project-settings-slider > span {
   display: flex;
   justify-content: space-between;
   color: #555;
+}
+
+.project-settings-slider:has(input:disabled) > span {
+  color: inherit;
 }
 
 .project-offline-game-list {
