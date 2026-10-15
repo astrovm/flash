@@ -1306,6 +1306,12 @@ export async function assembleReleaseOutput(
     await rename(join(stagingDir, entry.name), join(releaseDir, entry.name));
   }
   await writeFile(rootHtml, html);
+  // Cloudflare reads _headers instead of serving it. A release path never
+  // changes content, so browsers can skip revalidating it.
+  await writeFile(
+    join(stagingDir, "_headers"),
+    `/${RELEASES_PATH}/*\n  Cache-Control: public, max-age=31536000, immutable\n`,
+  );
 }
 
 export async function validateReleaseOutput(
@@ -1315,6 +1321,7 @@ export async function validateReleaseOutput(
   const releasePath = releaseRelativePath(version);
   const releaseDir = join(outputDir, ...releasePath.split("/"));
   const allowedRootEntries = new Set([
+    "_headers",
     "index.html",
     "releases",
     "sw.js",

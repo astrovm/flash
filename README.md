@@ -182,7 +182,7 @@ To deploy the site and Workers by hand (build first):
 
 ```bash
 bun run build
-bun run deploy:worker
+bun run deploy
 ```
 
 </details>

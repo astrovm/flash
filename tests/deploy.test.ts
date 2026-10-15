@@ -653,6 +653,9 @@ describe("atomic build", () => {
     expect(metadata.version).toBe("26.07.28-abcdef1");
     expect(metadata.releasedAt).toBe("2026-07-28T12:00:00.000Z");
     expect(metadata.stabilityDelayMs).toBe(2 * 60 * 60 * 1000);
+    expect(await readFile(join(output, "_headers"), "utf8")).toBe(
+      "/releases/*\n  Cache-Control: public, max-age=31536000, immutable\n",
+    );
 
     await writeFile(
       scummvmIndexPath,

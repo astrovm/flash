@@ -7,7 +7,7 @@
     "build:pinball-runtime": "bun tools/build-pinball-runtime.ts",
     "dev": "bun tools/dev-server.ts",
     "preview": "bun tools/dev-server.ts --production",
-    "deploy:worker": "wrangler deploy --config worker/wrangler.toml && wrangler deploy --config worker/wrangler.legacy.toml",
+    "deploy": "wrangler deploy --config worker/wrangler.toml && wrangler deploy --config worker/wrangler.legacy.toml",
     "extract:xp-assets": "bun tools/extract-xp-assets.ts",
     "extract:pinball-assets": "bun tools/extract-pinball-assets.ts",
     "compare:xp-ui": "bun tools/compare-xp-ui.ts",
