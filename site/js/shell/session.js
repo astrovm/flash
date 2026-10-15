@@ -51,7 +51,13 @@ const resetStartupSound = () => {
 // Retry the same media element after an autoplay rejection. Retaining its
 // ownership also lets a later session stop audio that has not finished yet.
 const playStartupSound = () => {
-  startupAudio ||= createXPSound("startup");
+  const { enabled, volume } = getStartupSound();
+  // Muted counts as played, so no later gesture retries it.
+  if (!enabled || volume === 0) return Promise.resolve(true);
+  if (!startupAudio) {
+    startupAudio = createXPSound("startup");
+    startupAudio.volume *= volume / 100;
+  }
   return startupAudio.play().then(
     () => true,
     () => false,

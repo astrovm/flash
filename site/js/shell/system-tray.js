@@ -240,6 +240,11 @@ const wireProjectSettings = (win) => {
       <fieldset>
         <legend>Startup</legend>
         <label class="project-offline-setting"><input type="checkbox" data-project-setting="full-startup"> Always show the full startup</label>
+        <label class="project-offline-setting"><input type="checkbox" data-project-setting="startup-sound"> Play the startup sound</label>
+        <label class="project-settings-slider">Volume: <output data-project-value="startup-sound-volume"></output>
+          <input type="range" min="0" max="100" step="5" data-project-setting="startup-sound-volume">
+          <span><span>Low</span><span>High</span></span>
+        </label>
       </fieldset>
       <a class="project-suggestions-link" href="https://github.com/astrovm/xp/issues" target="_blank" rel="noopener noreferrer">Send feedback</a>
     </section>
@@ -266,7 +271,7 @@ const wireProjectSettings = (win) => {
       <fieldset>
         <legend>Automatic updates</legend>
         <label class="project-offline-setting"><input type="checkbox" data-project-setting="automatic-updates" checked> Update automatically</label>
-        <label class="project-update-delay">Wait: <output data-project-value="update-delay">6 hours</output>
+        <label class="project-settings-slider">Wait: <output data-project-value="update-delay">6 hours</output>
           <input type="range" min="0" max="72" step="1" value="6" data-project-setting="update-delay">
           <span><span>Now</span><span>3 days</span></span>
         </label>
@@ -352,6 +357,32 @@ const wireProjectSettings = (win) => {
   fullStartupCheckbox.checked = readStartupFlag(FULL_STARTUP_KEY);
   fullStartupCheckbox.addEventListener("change", () => {
     setStartupFlag(FULL_STARTUP_KEY, fullStartupCheckbox.checked);
+  });
+  const startupSoundCheckbox = content.querySelector(
+    '[data-project-setting="startup-sound"]',
+  );
+  const startupSoundVolumeInput = content.querySelector(
+    '[data-project-setting="startup-sound-volume"]',
+  );
+  const startupSoundVolumeOutput = value("startup-sound-volume");
+  const renderStartupSound = () => {
+    const { enabled, volume } = getStartupSound();
+    startupSoundCheckbox.checked = enabled;
+    startupSoundVolumeInput.disabled = !enabled;
+    startupSoundVolumeInput.value = String(volume);
+    startupSoundVolumeOutput.value = `${volume}%`;
+  };
+  renderStartupSound();
+  startupSoundCheckbox.addEventListener("change", () => {
+    setStartupSound({ enabled: startupSoundCheckbox.checked });
+    renderStartupSound();
+  });
+  startupSoundVolumeInput.addEventListener("input", () => {
+    startupSoundVolumeOutput.value = `${startupSoundVolumeInput.value}%`;
+  });
+  startupSoundVolumeInput.addEventListener("change", () => {
+    setStartupSound({ volume: Number(startupSoundVolumeInput.value) });
+    renderStartupSound();
   });
   const automaticUpdatesCheckbox = content.querySelector(
     '[data-project-setting="automatic-updates"]',

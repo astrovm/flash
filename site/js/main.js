@@ -33,6 +33,35 @@ const setStartupFlag = (key, value) => {
     // Storage can be unavailable; startup simply stays at full length.
   }
 };
+// The startup sound has its own switch and level in Astro XP Settings, on top
+// of Volume Control. It starts at half volume so a first visit is not loud.
+const STARTUP_SOUND_KEY = "startupSound";
+const DEFAULT_STARTUP_SOUND_VOLUME = 50;
+const getStartupSound = () => {
+  let stored = null;
+  try {
+    stored = JSON.parse(localStorage.getItem(STARTUP_SOUND_KEY));
+  } catch {
+    // Unreadable or corrupted storage falls back to the defaults.
+  }
+  const volume = Number(stored?.volume);
+  return {
+    enabled: stored?.enabled !== false,
+    volume: Number.isFinite(volume)
+      ? Math.min(Math.max(Math.round(volume), 0), 100)
+      : DEFAULT_STARTUP_SOUND_VOLUME,
+  };
+};
+const setStartupSound = (changes) => {
+  try {
+    localStorage.setItem(
+      STARTUP_SOUND_KEY,
+      JSON.stringify({ ...getStartupSound(), ...changes }),
+    );
+  } catch {
+    // Storage can be unavailable; the change lasts until the page reloads.
+  }
+};
 const APP_VERSION = "26.07.28-2";
 const offlineManager = window.AstroOffline.createManager({
   currentVersion: APP_VERSION,
