@@ -397,12 +397,16 @@ test("menu typeahead skips items that are not rendered", async () => {
   expect(rest).toContain(s.document.activeElement);
 });
 
-test("visual viewport resizes relayout the shell unless a window resize just did", async () => {
+test("visual viewport changes reflow once and duplicate resize events do not", async () => {
   let viewport;
   const s = await login(
     await loadShell({
       beforeScripts: (window) => {
-        viewport = new window.EventTarget();
+        viewport = Object.assign(new window.EventTarget(), {
+          width: 411,
+          height: 735,
+          scale: 1,
+        });
         Object.defineProperty(window, "visualViewport", {
           configurable: true,
           value: viewport,
@@ -410,34 +414,22 @@ test("visual viewport resizes relayout the shell unless a window resize just did
       },
     }),
   );
-  const resizes = [];
-  s.window.addEventListener("resize", (event) => resizes.push(event));
-  const frame = () => new Promise((resolve) => s.window.setTimeout(resolve, 0));
-  const performance = s.window.performance;
-  const now = performance.now.bind(performance);
-  let clock = now() + 1000;
-  performance.now = () => clock;
-  try {
+  let resizes = 0;
+  s.window.addEventListener("resize", () => resizes++);
+  const frame = () =>
+    new Promise((resolve) => s.window.requestAnimationFrame(resolve));
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  expect(resizes).toBe(1);
+  viewport.dispatchEvent(new s.window.Event("resize"));
+  await frame();
+  expect(resizes).toBe(1);
+
+  for (const change of [{ width: 400 }, { height: 500 }, { scale: 2 }]) {
+    const before = resizes;
+    Object.assign(viewport, change);
     viewport.dispatchEvent(new s.window.Event("resize"));
-    for (let i = 0; i < 5 && !resizes.length; i++) await frame();
-    await s.advanceTime(50);
-    expect(resizes).toHaveLength(1);
-    clock += 10;
     viewport.dispatchEvent(new s.window.Event("resize"));
-    await s.advanceTime(50);
     await frame();
-    expect(resizes).toHaveLength(1);
-    clock += 90;
-    viewport.dispatchEvent(new s.window.Event("resize"));
-    await s.advanceTime(50);
-    await frame();
-    expect(resizes).toHaveLength(1);
-    clock += 1;
-    viewport.dispatchEvent(new s.window.Event("resize"));
-    for (let i = 0; i < 5 && resizes.length < 2; i++) await frame();
-    await s.advanceTime(50);
-    expect(resizes).toHaveLength(2);
-  } finally {
-    performance.now = now;
+    expect(resizes).toBe(before + 1);
   }
 });

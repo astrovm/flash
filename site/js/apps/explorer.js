@@ -1587,7 +1587,6 @@ window.addEventListener("message", (event) => {
   }
   const offlineGameIds = new Set([
     "revcdos",
-    "re3",
     "pink-panther-passport-to-peril",
     "pink-panther-hokus-pokus",
   ]);

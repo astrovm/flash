@@ -6,7 +6,6 @@
   "use strict";
 
   const REVCDOS_DIRECTORY = "astro-xp-revcdos";
-  const RE3_DIRECTORY = "astro-xp-re3";
   // Games that keep their data as one packed copy in browser storage.
   const PACKED_GAMES = {
     revcdos: {
@@ -17,12 +16,6 @@
         "astro-xp.revcdos.download-source.v1",
       ],
       message: "REVCDOS_PACK_UPDATED",
-    },
-    re3: {
-      title: "re3",
-      directory: RE3_DIRECTORY,
-      keys: [],
-      message: "RE3_PACK_UPDATED",
     },
   };
   const SCUMMVM_DIRECTORY = "astro-xp-scummvm";
@@ -166,7 +159,6 @@
 
   return {
     REVCDOS_DIRECTORY,
-    RE3_DIRECTORY,
     SCUMMVM_DIRECTORY,
     PINK_GAMES,
     createManager,
