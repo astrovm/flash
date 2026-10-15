@@ -759,14 +759,14 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
   margin: 0;
 }
 
-.project-update-delay {
+.project-settings-slider {
   display: block;
   margin: 0 0 8px 17px;
 }
 
 /* XP's trackbar, like the Display Properties resolution slider: a sunken
    track and the Luna thumb (normal, hot, pressed, focused, 21px apart). */
-.project-update-delay input[type="range"] {
+.project-settings-slider input[type="range"] {
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -777,23 +777,23 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
   background: transparent;
 }
 
-.project-update-delay input[type="range"]:focus {
+.project-settings-slider input[type="range"]:focus {
   outline: 0;
 }
 
-.project-update-delay input[type="range"]:focus-visible {
+.project-settings-slider input[type="range"]:focus-visible {
   outline: 1px dotted #000;
   outline-offset: -1px;
 }
 
-.project-update-delay input[type="range"]::-webkit-slider-runnable-track {
+.project-settings-slider input[type="range"]::-webkit-slider-runnable-track {
   height: 2px;
   border: 1px solid;
   border-color: #9d9c99 #fff #fff #9d9c99;
   background: #f2f1e9;
 }
 
-.project-update-delay input[type="range"]::-webkit-slider-thumb {
+.project-settings-slider input[type="range"]::-webkit-slider-thumb {
   width: 11px;
   height: 21px;
   margin-top: -9px;
@@ -802,19 +802,20 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
   background: var(--ctl-trackbar-thumb-down) 0 0 / 11px 105px no-repeat;
 }
 
-.project-update-delay input[type="range"]:hover::-webkit-slider-thumb {
+.project-settings-slider input[type="range"]:hover::-webkit-slider-thumb {
   background-position-y: -21px;
 }
 
-.project-update-delay input[type="range"]:active::-webkit-slider-thumb {
+.project-settings-slider input[type="range"]:active::-webkit-slider-thumb {
   background-position-y: -42px;
 }
 
-.project-update-delay input[type="range"]:focus-visible::-webkit-slider-thumb {
+.project-settings-slider
+  input[type="range"]:focus-visible::-webkit-slider-thumb {
   background-position-y: -63px;
 }
 
-.project-update-delay input[type="range"]::-moz-range-track {
+.project-settings-slider input[type="range"]::-moz-range-track {
   box-sizing: border-box;
   height: 4px;
   border: 1px solid;
@@ -822,7 +823,7 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
   background: #f2f1e9;
 }
 
-.project-update-delay input[type="range"]::-moz-range-thumb {
+.project-settings-slider input[type="range"]::-moz-range-thumb {
   width: 11px;
   height: 21px;
   border: 0;
@@ -830,18 +831,34 @@ html:not([data-xp-appearance="classic"]) .project-settings-panel {
   background: var(--ctl-trackbar-thumb-down) 0 0 / 11px 105px no-repeat;
 }
 
-.project-update-delay input[type="range"]:hover::-moz-range-thumb {
+.project-settings-slider input[type="range"]:hover::-moz-range-thumb {
   background-position-y: -21px;
 }
 
-.project-update-delay input[type="range"]:active::-moz-range-thumb {
+.project-settings-slider input[type="range"]:active::-moz-range-thumb {
   background-position-y: -42px;
 }
 
-.project-update-delay > span {
+.project-settings-slider:has(input:disabled) {
+  color: #aca899;
+}
+
+.project-settings-slider input[type="range"]:disabled::-webkit-slider-thumb {
+  background-position-y: -84px;
+}
+
+.project-settings-slider input[type="range"]:disabled::-moz-range-thumb {
+  background-position-y: -84px;
+}
+
+.project-settings-slider > span {
   display: flex;
   justify-content: space-between;
   color: #555;
+}
+
+.project-settings-slider:has(input:disabled) > span {
+  color: inherit;
 }
 
 .project-offline-game-list {

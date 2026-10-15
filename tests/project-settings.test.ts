@@ -63,6 +63,29 @@ test("settings tabs, startup and update preferences invoke the manager and forma
   expect(h.s.window.localStorage.getItem("fullStartup")).toBe("true");
   h.setting("full-startup", false);
   expect(h.s.window.localStorage.getItem("fullStartup")).toBeNull();
+  const startupVolume = h.content.querySelector(
+    '[data-project-setting="startup-sound-volume"]',
+  );
+  const startupVolumeLabel = h.content.querySelector(
+    '[data-project-value="startup-sound-volume"]',
+  );
+  const startupSound = () =>
+    JSON.parse(h.s.window.localStorage.getItem("startupSound"));
+  expect(
+    h.content.querySelector('[data-project-setting="startup-sound"]').checked,
+  ).toBeTrue();
+  expect(startupVolume.value).toBe("50");
+  expect(startupVolumeLabel.value).toBe("50%");
+  startupVolume.value = "25";
+  startupVolume.dispatchEvent(new h.s.window.Event("input"));
+  expect(startupVolumeLabel.value).toBe("25%");
+  h.setting("startup-sound-volume", 25);
+  expect(startupSound()).toEqual({ enabled: true, volume: 25 });
+  h.setting("startup-sound", false);
+  expect(startupSound()).toEqual({ enabled: false, volume: 25 });
+  expect(startupVolume.disabled).toBeTrue();
+  h.setting("startup-sound", true);
+  expect(startupVolume.disabled).toBeFalse();
   h.setting("save-played-games", false);
   expect(h.s.offlineSnapshot.savePlayedGamesOffline).toBeFalse();
   h.setting("automatic-updates", false);

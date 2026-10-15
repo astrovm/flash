@@ -144,6 +144,38 @@ test("muted sessions start silently and failed sounds do not block logging off",
   expect(visible(s, "welcome-screen")).toBeTrue();
 });
 
+test("the startup sound follows its Astro XP Settings switch and level", async () => {
+  const startupVolumes = async (initialStorage) => {
+    const s = await loadShell({ initialStorage });
+    const sounds = [];
+    s.window.Audio = function Audio(path) {
+      const sound = {
+        path,
+        volume: 1,
+        pause() {},
+        play: () => Promise.resolve(),
+      };
+      sounds.push(sound);
+      return sound;
+    };
+    await login(s);
+    return sounds
+      .filter(({ path }) => path.endsWith("/startup.wav"))
+      .map(({ volume }) => volume);
+  };
+  expect(await startupVolumes({})).toEqual([0.5]);
+  expect(
+    await startupVolumes({
+      volume: "50",
+      startupSound: JSON.stringify({ volume: 80 }),
+    }),
+  ).toEqual([0.4]);
+  expect(
+    await startupVolumes({ startupSound: JSON.stringify({ enabled: false }) }),
+  ).toEqual([]);
+  expect(await startupVolumes({ startupSound: "{" })).toEqual([0.5]);
+});
+
 test("standby resumes from a pointer press on its screen", async () => {
   const s = await login(await loadShell());
   click(s, "turn-off-button");
