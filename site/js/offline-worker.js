@@ -21,14 +21,6 @@
         [/^vcsky\/fetched\//, "vc-assets/local/"],
       ],
     },
-    {
-      id: "re3",
-      route: /\/iframe\/re3(?:\.[a-f0-9]{16})?\/local-assets\//,
-      directory: "astro-xp-re3",
-      message: "RE3_PACK_UPDATED",
-      title: "re3",
-      aliases: [],
-    },
   ];
   const PACKED_MANIFEST = "manifest.json";
   const SCUMMVM_ROUTE = "/iframe/scummvm/local-games/";

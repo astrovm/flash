@@ -153,7 +153,7 @@ Catalog games live in `site/js/games.js`.
 | Game kind                                         | `type`     |
 | ------------------------------------------------- | ---------- |
 | Ruffle                                            | `"swf"`    |
-| Embedded HTML5, js-dos, ScummVM, reVCDOS, and re3 | `"iframe"` |
+| Embedded HTML5, js-dos, ScummVM, and reVCDOS | `"iframe"` |
 
 XP applications are web-native rebuilds, one folder each in `site/apps/` and registered in `site/apps/index.js`. Windows XP Pinball runs its MIT Space Cadet WebAssembly build from `site/apps/pinball/`.
 

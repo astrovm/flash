@@ -223,7 +223,7 @@ const seedOldOrigin = async (env) => {
   saves.close();
   (await createDatabase(env, "empty", 1, () => {})).close();
 
-  const games = await env.opfs.getDirectoryHandle("astro-flash-re3", {
+  const games = await env.opfs.getDirectoryHandle("astro-flash-revcdos", {
     create: true,
   });
   const data = await games.getDirectoryHandle("data", { create: true });
@@ -265,7 +265,7 @@ describe("legacy names", () => {
     expect(renameLegacy("astroFlashOfflineEnabled")).toBe(
       "astroXpOfflineEnabled",
     );
-    expect(renameLegacy("astro-flash-re3")).toBe("astro-xp-re3");
+    expect(renameLegacy("astro-flash-revcdos")).toBe("astro-xp-revcdos");
     expect(renameLegacy("astro-flash.scummvm.astro-flash.v1")).toBe(
       "astro-xp.scummvm.astro-xp.v1",
     );
@@ -321,8 +321,8 @@ describe("storage copy", () => {
     expect([...empty.objectStoreNames]).toEqual([]);
     empty.close();
 
-    const re3 = await to.opfs.getDirectoryHandle("astro-xp-re3");
-    const data = await re3.getDirectoryHandle("data");
+    const revcdos = await to.opfs.getDirectoryHandle("astro-xp-revcdos");
+    const data = await revcdos.getDirectoryHandle("data");
     const file = await (await data.getFileHandle("gta3.img")).getFile();
     expect(await file.text()).toBe("game data");
 
@@ -362,10 +362,10 @@ describe("storage copy", () => {
       db.createObjectStore("OTHER"),
     );
     saves.close();
-    const re3 = await to.opfs.getDirectoryHandle("astro-xp-re3", {
+    const revcdos = await to.opfs.getDirectoryHandle("astro-xp-revcdos", {
       create: true,
     });
-    const data = await re3.getDirectoryHandle("data", { create: true });
+    const data = await revcdos.getDirectoryHandle("data", { create: true });
     const writable = await (
       await data.getFileHandle("gta3.img", { create: true })
     ).createWritable();
@@ -498,7 +498,7 @@ describe("storage copy", () => {
     expect(await hasStoredData(env)).toBe(true);
 
     const files = makeEnv(OLD);
-    await files.opfs.getDirectoryHandle("astro-flash-re3", { create: true });
+    await files.opfs.getDirectoryHandle("astro-flash-revcdos", { create: true });
     expect(await hasStoredData(files)).toBe(true);
 
     const databases = makeEnv(OLD);
