@@ -131,3 +131,40 @@ test("a touch screen sizes the zoomed root from the visual viewport", async () =
   s.window.dispatchEvent(new s.window.Event("resize"));
   expect([root.width, root.height]).toEqual(["469px", "839px"]);
 });
+
+test("visual viewport changes immediately after a window resize still reflow the shell", async () => {
+  const s = await loadShell({
+    beforeScripts: (window) => {
+      display(2.625).beforeScripts(window);
+      const matchMedia = window.matchMedia;
+      window.matchMedia = (media) => {
+        const query = matchMedia(media);
+        query.matches = media === "(pointer: coarse)";
+        return query;
+      };
+      Object.defineProperty(window, "visualViewport", {
+        configurable: true,
+        value: Object.assign(new window.EventTarget(), {
+          width: 411,
+          height: 735,
+          scale: 1,
+        }),
+      });
+      // Browser chrome and keyboards can change the visible area in the
+      // same frame as a window resize. Time alone cannot deduplicate them.
+      window.performance.now = () => 1000;
+    },
+  });
+  s.window.dispatchEvent(new s.window.Event("resize"));
+  s.window.visualViewport.height = 500;
+  s.window.visualViewport.dispatchEvent(new s.window.Event("resize"));
+  await frames(s);
+  expect(s.document.documentElement.style.height).toBe("500px");
+  expect(s.document.getElementById("taskbar").style.top).toBe("470px");
+
+  let resizes = 0;
+  s.window.addEventListener("resize", () => resizes++);
+  s.window.visualViewport.dispatchEvent(new s.window.Event("resize"));
+  await frames(s);
+  expect(resizes).toBe(0);
+});

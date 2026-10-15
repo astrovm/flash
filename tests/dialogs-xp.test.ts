@@ -214,3 +214,30 @@ test("access-key underlines follow keyboard or mouse use", async () => {
   );
   expect(root.classList.contains("keyboard-cues")).toBeFalse();
 });
+
+test("What's This help stays inside the visible mobile viewport", async () => {
+  const s = await login(await loadShell());
+  s.document.documentElement.style.zoom = "1.142857";
+  s.window.matchMedia = () => ({ matches: true });
+  Object.defineProperty(s.window, "visualViewport", {
+    configurable: true,
+    value: { width: 411, height: 735, scale: 1 },
+  });
+  const dialog = s.window.XPDialogs.createDialog({
+    title: "Properties",
+    help: true,
+  });
+  const control = s.document.createElement("button");
+  control.dataset.help = "A control near the edge of the screen.";
+  dialog.body.append(control);
+  dialog.el.querySelector(".help-btn").click();
+  click(s, control, 1000, 1000);
+  const popup = s.document.querySelector(".xp-help-popup");
+  expect(parseFloat(popup.style.left) + popup.offsetWidth).toBeLessThanOrEqual(
+    409,
+  );
+  expect(parseFloat(popup.style.top) + popup.offsetHeight).toBeLessThanOrEqual(
+    733,
+  );
+  dialog.close();
+});

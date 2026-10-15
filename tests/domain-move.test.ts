@@ -227,7 +227,7 @@ const seedOldOrigin = async (env) => {
     create: true,
   });
   const data = await games.getDirectoryHandle("data", { create: true });
-  const file = await data.getFileHandle("gta3.img", { create: true });
+  const file = await data.getFileHandle("gta-vc.img", { create: true });
   const writable = await file.createWritable();
   await writable.write("game data");
   await writable.close();
@@ -323,7 +323,7 @@ describe("storage copy", () => {
 
     const revcdos = await to.opfs.getDirectoryHandle("astro-xp-revcdos");
     const data = await revcdos.getDirectoryHandle("data");
-    const file = await (await data.getFileHandle("gta3.img")).getFile();
+    const file = await (await data.getFileHandle("gta-vc.img")).getFile();
     expect(await file.text()).toBe("game data");
 
     expect([...to.caches.stores.keys()]).toEqual(["astro-bundled-games-v1"]);
@@ -367,7 +367,7 @@ describe("storage copy", () => {
     });
     const data = await revcdos.getDirectoryHandle("data", { create: true });
     const writable = await (
-      await data.getFileHandle("gta3.img", { create: true })
+      await data.getFileHandle("gta-vc.img", { create: true })
     ).createWritable();
     await writable.write("new data");
     await writable.close();
@@ -391,7 +391,7 @@ describe("storage copy", () => {
     expect(existing.version).toBe(3);
     expect([...existing.objectStoreNames]).toEqual(["OTHER"]);
     existing.close();
-    const file = await (await data.getFileHandle("gta3.img")).getFile();
+    const file = await (await data.getFileHandle("gta-vc.img")).getFile();
     expect(await file.text()).toBe("new data");
     expect(
       await to.caches.stores
@@ -498,7 +498,9 @@ describe("storage copy", () => {
     expect(await hasStoredData(env)).toBe(true);
 
     const files = makeEnv(OLD);
-    await files.opfs.getDirectoryHandle("astro-flash-revcdos", { create: true });
+    await files.opfs.getDirectoryHandle("astro-flash-revcdos", {
+      create: true,
+    });
     expect(await hasStoredData(files)).toBe(true);
 
     const databases = makeEnv(OLD);

@@ -125,8 +125,10 @@
     helpPopup.setAttribute("role", "tooltip");
     helpPopup.textContent = text;
     document.body.appendChild(helpPopup);
-    helpPopup.style.left = `${Math.max(2, Math.min(x, innerWidth - helpPopup.offsetWidth - 2))}px`;
-    helpPopup.style.top = `${Math.max(2, Math.min(y, innerHeight - helpPopup.offsetHeight - 2))}px`;
+    const width = window.visualViewport?.width || innerWidth;
+    const height = window.visualViewport?.height || innerHeight;
+    helpPopup.style.left = `${Math.max(2, Math.min(x, width - helpPopup.offsetWidth - 2))}px`;
+    helpPopup.style.top = `${Math.max(2, Math.min(y, height - helpPopup.offsetHeight - 2))}px`;
     const dismiss = () => {
       closeHelpPopup();
       document.removeEventListener("pointerdown", dismiss, true);

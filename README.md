@@ -150,9 +150,9 @@ Tests run in 4 parallel worker processes. More workers barely speed them up and 
 
 Catalog games live in `site/js/games.js`.
 
-| Game kind                                         | `type`     |
-| ------------------------------------------------- | ---------- |
-| Ruffle                                            | `"swf"`    |
+| Game kind                                    | `type`     |
+| -------------------------------------------- | ---------- |
+| Ruffle                                       | `"swf"`    |
 | Embedded HTML5, js-dos, ScummVM, and reVCDOS | `"iframe"` |
 
 XP applications are web-native rebuilds, one folder each in `site/apps/` and registered in `site/apps/index.js`. Windows XP Pinball runs its MIT Space Cadet WebAssembly build from `site/apps/pinball/`.
